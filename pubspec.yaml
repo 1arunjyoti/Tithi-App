@@ -28,6 +28,8 @@ dependencies:
   nominatim_geocoding: ^0.0.6 # FOSS: OpenStreetMap Nominatim API for reverse geocoding
   flutter_local_notifications: ^19.0.0 # FOSS: Native notifications, no GMS required
   timezone: ^0.10.0 # For scheduling notifications at specific times
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
 
 dev_dependencies:
   flutter_test:

@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../screens/settings_screen.dart';
 import '../providers/version_provider.dart';
+import '../providers/view_mode_provider.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
@@ -53,6 +54,9 @@ class AppDrawer extends ConsumerWidget {
                       vertical: 24,
                     ),
                     children: [
+                      // View Mode Toggle
+                      _buildViewModeToggle(context, ref),
+
                       _buildDrawerItem(
                         context,
                         icon: Icons.settings_rounded,
@@ -68,7 +72,6 @@ class AppDrawer extends ConsumerWidget {
                         },
                       ),
 
-                      // ...
                       _buildDrawerItem(
                         context,
                         icon: Icons.share_rounded,
@@ -97,11 +100,11 @@ class AppDrawer extends ConsumerWidget {
                           }
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
                       Divider(
                         color: context.colors.onSurface.withValues(alpha: 0.1),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 12),
                       _buildDrawerItem(
                         context,
                         icon: Icons.info_outline_rounded,
@@ -236,6 +239,59 @@ class AppDrawer extends ConsumerWidget {
           Icons.chevron_right_rounded,
           size: 16,
           color: context.colors.onSurface.withValues(alpha: 0.4),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewModeToggle(BuildContext context, WidgetRef ref) {
+    final currentMode = ref.watch(homeViewModeProvider);
+    final isSchedule = currentMode == HomeViewMode.schedule;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+      child: ListTile(
+        onTap: () {
+          ref.read(homeViewModeProvider.notifier).toggle();
+          Navigator.pop(context);
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: context.colors.onSurface.withValues(alpha: 0.05),
+            ),
+          ),
+          child: Icon(
+            isSchedule
+                ? Icons.calendar_month_rounded
+                : Icons.view_agenda_rounded,
+            color: context.colors.primary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          isSchedule ? 'Calendar View' : 'Schedule View',
+          style: context.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          isSchedule ? 'Switch to month calendar' : 'Switch to event list',
+          style: context.textTheme.bodySmall?.copyWith(
+            color: context.colors.onSurface.withValues(alpha: 0.5),
+            fontSize: 12,
+          ),
+        ),
+        trailing: Icon(
+          Icons.swap_horiz_rounded,
+          size: 20,
+          color: context.colors.primary.withValues(alpha: 0.7),
         ),
       ),
     );

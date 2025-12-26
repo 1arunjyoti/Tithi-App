@@ -31,7 +31,12 @@ final currentLocationProvider = FutureProvider<LocationData?>((ref) async {
   final isEnabled = await service.isLocationEnabled();
 
   if (!isEnabled) {
-    // Return default location if user disabled location
+    // Check if Home Location is set
+    final home = service.getHomeLocation();
+    if (home != null) {
+      return home;
+    }
+    // Return default location if user disabled location and no home set
     return LocationData.defaultLocation;
   }
 
@@ -66,4 +71,10 @@ final refreshLocationProvider = FutureProvider.family<LocationData?, void>((
 ) async {
   ref.invalidate(currentLocationProvider);
   return ref.read(currentLocationProvider.future);
+});
+
+/// Provider for Home Location
+final homeLocationProvider = Provider<LocationData?>((ref) {
+  final service = ref.watch(locationServiceProvider);
+  return service.getHomeLocation();
 });

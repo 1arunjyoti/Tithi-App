@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/accessibility_provider.dart';
 
 /// Theme configuration for the Tithi app
 /// Modern, vibrant design targeting younger generation
@@ -170,8 +172,9 @@ class AppTheme {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: seedColor,
       brightness: Brightness.dark,
-      primary: const Color(0xFFFFB74D), // Lighter Gold for dark mode visibility
-      background: Colors.black, // True OLED Black
+      primary: const Color(
+        0xFFFFA000,
+      ), // Richer/Darker Gold for better contrast
       surface: const Color(0xFF141414), // Very dark grey for cards
       onSurface: const Color(0xFFE0E0E0), // High legibility white
     );
@@ -259,20 +262,29 @@ class AppTheme {
     double blur = 20,
     double borderRadius = 24,
     Border? border,
+    WidgetRef? ref, // Added ref parameter
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPureDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;
 
-    // Use solid material cards for Pure Dark theme
-    if (isPureDark) {
+    // Check accessibility overrides
+    bool isHighContrast = false;
+    if (ref != null) {
+      isHighContrast = ref.watch(accessibilityProvider).highContrast;
+    }
+
+    // High Contrast Mode / Pure Dark
+    if (isPureDark || isHighContrast) {
       return BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Solid dark grey surface
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
-        border:
-            border ??
-            Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1),
-        // No shadow/Minimal shadow for clean look
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+          width: 1,
+        ),
       );
     }
 
