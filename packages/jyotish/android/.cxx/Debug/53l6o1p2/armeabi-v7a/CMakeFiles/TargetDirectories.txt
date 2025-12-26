@@ -1,0 +1,3 @@
+D:/Projects/Tithi_Project/tithi/packages/jyotish/android/.cxx/Debug/53l6o1p2/armeabi-v7a/CMakeFiles/swisseph.dir
+D:/Projects/Tithi_Project/tithi/packages/jyotish/android/.cxx/Debug/53l6o1p2/armeabi-v7a/CMakeFiles/edit_cache.dir
+D:/Projects/Tithi_Project/tithi/packages/jyotish/android/.cxx/Debug/53l6o1p2/armeabi-v7a/CMakeFiles/rebuild_cache.dir
