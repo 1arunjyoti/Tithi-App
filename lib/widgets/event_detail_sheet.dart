@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
 
 /// Bottom sheet showing festival details with glassmorphism
-class EventDetailSheet extends StatelessWidget {
+class EventDetailSheet extends ConsumerWidget {
   final Festival festival;
   final PanchangData panchang;
 
@@ -15,7 +16,7 @@ class EventDetailSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
       minChildSize: 0.3,
@@ -72,7 +73,8 @@ class EventDetailSheet extends StatelessWidget {
                       padding: const EdgeInsets.all(16),
                       decoration: AppTheme.glassmorphism(
                         context: context,
-                        opacity: 0.15,
+                        opacity: 0.1,
+                        ref: ref,
                       ),
                       child: Text(
                         festival.description,
@@ -127,7 +129,8 @@ class EventDetailSheet extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: AppTheme.glassmorphism(
                           context: context,
-                          opacity: 0.15,
+                          opacity: 0.1,
+                          ref: ref,
                         ),
                         child: Column(
                           children: festival.rituals.map((ritual) {

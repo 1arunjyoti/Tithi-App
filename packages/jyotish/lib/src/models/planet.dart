@@ -65,13 +65,13 @@ enum Planet {
   /// Vesta
   vesta(SwissEphConstants.vesta, 'Vesta');
 
+  const Planet(this.swissEphId, this.displayName);
+
   /// The Swiss Ephemeris constant for this planet
   final int swissEphId;
 
   /// The display name of this planet
   final String displayName;
-
-  const Planet(this.swissEphId, this.displayName);
 
   /// Returns a list of major planets (Sun through Pluto).
   static List<Planet> get majorPlanets => [

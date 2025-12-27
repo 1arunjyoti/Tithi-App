@@ -1,0 +1,13 @@
+# ninja log v5
+6	384	7885309172264250	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swedate.c.o	ba0a5e5381f05d2c
+29	433	7885309172767685	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swemmoon.c.o	ce780da632cccb36
+44	479	7885309173195118	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swemplan.c.o	7e25565e5ab0f085
+23	498	7885309173415482	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swejpl.c.o	c8f89ba7422d6066
+17	826	7885309176702754	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swehel.c.o	4ced415e25c2d76e
+11	865	7885309177108595	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swehouse.c.o	3247aa84959f467b
+52	936	7885309177801020	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swephlib.c.o	41ee692534909a45
+1	1303	7885309181494213	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/swecl.c.o	e30aa5674620f8ab
+36	1778	7885309186197894	CMakeFiles/swisseph.dir/D_/Projects/Tithi_Project/tithi/packages/jyotish/native/swisseph/swisseph-master/src/sweph.c.o	64b37979075e3e16
+1778	1863	7885309187035966	D:/Projects/Tithi_Project/tithi/build/jyotish/intermediates/cxx/RelWithDebInfo/2u2y1e1w/obj/arm64-v8a/libswisseph.so	1dc9323f7c5f56cd
+15	530	7885328099047539	D:/Projects/Tithi_Project/tithi/build/jyotish/intermediates/cxx/RelWithDebInfo/2u2y1e1w/obj/arm64-v8a/libswisseph.so	1dc9323f7c5f56cd
+2	306	7885335361378612	D:/Projects/Tithi_Project/tithi/build/jyotish/intermediates/cxx/RelWithDebInfo/2u2y1e1w/obj/arm64-v8a/libswisseph.so	1dc9323f7c5f56cd

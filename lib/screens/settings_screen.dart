@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/version_provider.dart';
 
 import '../theme/app_theme.dart';
+import 'privacy_policy_screen.dart';
+import '../providers/accessibility_provider.dart';
+import '../screens/location_picker_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -65,6 +70,7 @@ class SettingsScreen extends ConsumerWidget {
                 _buildSectionHeader(context, 'PREFERENCES'),
                 _buildSettingsCard(
                   context,
+                  ref: ref,
                   children: [
                     Consumer(
                       builder: (context, ref, _) {
@@ -74,31 +80,115 @@ class SettingsScreen extends ConsumerWidget {
                         final notificationService = ref.read(
                           notificationServiceProvider,
                         );
+                        final notifTime = ref.watch(notificationTimeProvider);
+                        // We also need to listen to enabled state effectively
+                        // For now we rely on the FutureBuilder below for switch, but simpler to check enabled state for time picker visibility
 
                         return FutureBuilder<bool>(
                           future: notificationService.isEnabled(),
                           builder: (context, snapshot) {
                             final isEnabled = snapshot.data ?? false;
-                            return _buildSwitchTile(
-                              context,
-                              icon: Icons.notifications_active_rounded,
-                              title: 'Daily Notifications',
-                              subtitle: isEnabled
-                                  ? 'Scheduled at 8:00 AM'
-                                  : 'Get notified about Tithi daily',
-                              value: isEnabled,
-                              onChanged: (val) async {
-                                if (val) {
-                                  // Request permission first
-                                  final granted = await notificationService
-                                      .requestPermission();
-                                  if (!granted) {
-                                    return;
-                                  }
-                                }
-                                await notificationService.setEnabled(val);
-                                ref.invalidate(loadNotificationStateProvider);
-                              },
+
+                            return Column(
+                              children: [
+                                _buildSwitchTile(
+                                  context,
+                                  icon: Icons.notifications_active_rounded,
+                                  title: 'Daily Notifications',
+                                  subtitle: isEnabled
+                                      ? 'Scheduled daily'
+                                      : 'Get notified about Tithi daily',
+                                  value: isEnabled,
+                                  ref: ref,
+                                  onChanged: (val) async {
+                                    if (val) {
+                                      // Request permission first
+                                      final granted = await notificationService
+                                          .requestPermission();
+                                      if (!granted) {
+                                        return;
+                                      }
+                                    }
+                                    await notificationService.setEnabled(val);
+                                    ref.invalidate(
+                                      loadNotificationStateProvider,
+                                    );
+                                  },
+                                ),
+
+                                // Time Picker (Only show if enabled)
+                                if (isEnabled) ...[
+                                  Divider(
+                                    height: 1,
+                                    color: context.colors.onSurface.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                  ),
+                                  _buildActionTile(
+                                    context,
+                                    icon: Icons.access_time_rounded,
+                                    title: 'Notification Time',
+                                    ref: ref,
+                                    trailing: Text(
+                                      _formatTime(
+                                        TimeOfDay(
+                                          hour: notifTime.hour,
+                                          minute: notifTime.minute,
+                                        ),
+                                        context,
+                                      ),
+                                      style: context.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: context.colors.primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    onTap: () async {
+                                      final time = await showTimePicker(
+                                        context: context,
+                                        initialTime: TimeOfDay(
+                                          hour: notifTime.hour,
+                                          minute: notifTime.minute,
+                                        ),
+                                        builder: (context, child) {
+                                          return Theme(
+                                            data: context.theme.copyWith(
+                                              timePickerTheme:
+                                                  TimePickerThemeData(
+                                                    backgroundColor:
+                                                        context.colors.surface,
+                                                    hourMinuteTextColor:
+                                                        context.colors.primary,
+                                                    dayPeriodTextColor: context
+                                                        .colors
+                                                        .onSurface,
+                                                    dialHandColor:
+                                                        context.colors.primary,
+                                                    dialBackgroundColor: context
+                                                        .colors
+                                                        .onSurface
+                                                        .withValues(alpha: 0.1),
+                                                  ),
+                                            ),
+                                            child: child!,
+                                          );
+                                        },
+                                      );
+
+                                      if (time != null) {
+                                        await notificationService
+                                            .setNotificationTime(
+                                              time.hour,
+                                              time.minute,
+                                            );
+                                        ref.invalidate(
+                                          loadNotificationStateProvider,
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ],
                             );
                           },
                         );
@@ -133,6 +223,7 @@ class SettingsScreen extends ConsumerWidget {
                                 error: (_, _) => 'Location unavailable',
                               ),
                               value: isEnabled,
+                              ref: ref,
                               onChanged: (val) async {
                                 await locationService.setLocationEnabled(val);
                                 if (val) {
@@ -150,28 +241,201 @@ class SettingsScreen extends ConsumerWidget {
                         );
                       },
                     ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final homeLocation = ref.watch(homeLocationProvider);
+
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.home_rounded,
+                          title: 'Home Location',
+                          ref: ref,
+                          trailing: SizedBox(
+                            width: 120,
+                            child: Text(
+                              homeLocation?.cityName ?? 'Not set',
+                              textAlign: TextAlign.end,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.textTheme.labelSmall?.copyWith(
+                                color: context.colors.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
+                              ),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const LocationPickerScreen(),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ],
                 ),
 
                 const SizedBox(height: 32),
 
-                _buildSectionHeader(context, 'ABOUT'),
+                _buildSectionHeader(context, 'CALENDAR'),
                 _buildSettingsCard(
                   context,
+                  ref: ref,
                   children: [
                     Consumer(
                       builder: (context, ref, _) {
-                        final versionAsync = ref.watch(versionStringProvider);
+                        final startOfWeek = ref.watch(startOfWeekProvider);
                         return _buildActionTile(
                           context,
-                          icon: Icons.info_rounded,
-                          title: 'Version',
-                          trailing: versionAsync.when(
-                            data: (v) => v,
-                            loading: () => '...',
-                            error: (_, _) => '?',
+                          icon: Icons.calendar_today_rounded,
+                          title: 'Start of Week',
+                          ref: ref,
+                          trailing: Text(
+                            startOfWeek == StartingDayOfWeek.sunday
+                                ? 'Sunday'
+                                : 'Monday',
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          onTap: () {},
+                          onTap: () async {
+                            final newValue =
+                                startOfWeek == StartingDayOfWeek.sunday
+                                ? StartingDayOfWeek.monday
+                                : StartingDayOfWeek.sunday;
+                            await ref
+                                .read(startOfWeekProvider.notifier)
+                                .setStartOfWeek(newValue);
+                          },
+                        );
+                      },
+                    ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final primaryView = ref.watch(primaryEventViewProvider);
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.view_agenda_rounded,
+                          title: 'Primary View',
+                          ref: ref,
+                          trailing: Text(
+                            primaryView == PrimaryEventView.tithi
+                                ? 'Tithi'
+                                : primaryView == PrimaryEventView.festival
+                                ? 'Festival'
+                                : 'Moon',
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () {
+                            // Cycle through views
+                            final nextIndex =
+                                (primaryView.index + 1) %
+                                PrimaryEventView.values.length;
+                            ref
+                                .read(primaryEventViewProvider.notifier)
+                                .setPrimaryView(
+                                  PrimaryEventView.values[nextIndex],
+                                );
+                          },
+                        );
+                      },
+                    ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final primarySystem = ref.watch(
+                          primaryCalendarSystemProvider,
+                        );
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.event_note_rounded,
+                          title: 'Primary Calendar',
+                          ref: ref,
+                          trailing: Text(
+                            primarySystem.label,
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () => _showCalendarSystemPicker(
+                            context,
+                            ref,
+                            isPrimary: true,
+                          ),
+                        );
+                      },
+                    ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final secondarySystem = ref.watch(
+                          secondaryCalendarSystemProvider,
+                        );
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.event_available_rounded,
+                          title: 'Secondary Calendar',
+                          ref: ref,
+                          trailing: Text(
+                            secondarySystem.label,
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () => _showCalendarSystemPicker(
+                            context,
+                            ref,
+                            isPrimary: false,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                _buildSectionHeader(context, 'DATA & STORAGE'),
+                _buildSettingsCard(
+                  context,
+                  ref: ref,
+                  children: [
+                    _buildActionTile(
+                      context,
+                      icon: Icons.cleaning_services_rounded,
+                      title: 'Clear Location Cache',
+                      ref: ref,
+                      onTap: () async {
+                        final scaffold = ScaffoldMessenger.of(context);
+                        await ref.read(locationServiceProvider).clearCache();
+                        ref.invalidate(currentLocationProvider);
+                        scaffold.showSnackBar(
+                          const SnackBar(
+                            content: Text('Location cache cleared'),
+                          ),
                         );
                       },
                     ),
@@ -181,14 +445,167 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     _buildActionTile(
                       context,
-                      icon: Icons.privacy_tip_rounded,
-                      title: 'Privacy Policy',
-                      onTap: () {},
+                      icon: Icons.restore_rounded,
+                      title: 'Reset App Settings',
+                      ref: ref,
+                      trailing: const Text(
+                        'Using default',
+                        style: TextStyle(color: Colors.transparent),
+                      ), // Just spacer
+                      onTap: () async {
+                        // Show confirmation dialog
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (c) => AlertDialog(
+                            title: const Text('Reset Settings?'),
+                            content: const Text(
+                              'This will reset all your preferences and data to default. This cannot be undone.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(c, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(c, true),
+                                child: const Text(
+                                  'Reset',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirm == true) {
+                          final box = Hive.box('settings');
+                          await box.clear();
+                          // notification_settings handled separately usually, but good to clear too
+                          // Ideally we access the specific service clearing methods, but Hive.deleteFromDisk or iteration works
+                          // For now just settings box which covers theme/calendar
+                          await ref
+                              .read(locationServiceProvider)
+                              .setLocationEnabled(false);
+
+                          // Reset providers
+                          ref.invalidate(startOfWeekProvider);
+                          ref.invalidate(primaryEventViewProvider);
+                          ref.invalidate(themeOverrideProvider);
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('App reset complete'),
+                              ),
+                            );
+                          }
+                        }
+                      },
                     ),
                   ],
                 ),
 
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
+
+                _buildSectionHeader(context, 'ACCESSIBILITY'),
+                _buildSettingsCard(
+                  context,
+                  ref: ref,
+                  children: [
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final accessibility = ref.watch(accessibilityProvider);
+                        final notifier = ref.read(
+                          accessibilityProvider.notifier,
+                        );
+
+                        return Column(
+                          children: [
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.motion_photos_off_outlined,
+                              title: 'Reduce Motion',
+                              subtitle: 'Disable animations & effects',
+                              value: accessibility.reduceMotion,
+                              ref: ref,
+                              onChanged: notifier.toggleReduceMotion,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.vibration_rounded,
+                              title: 'Haptic Feedback',
+                              subtitle: 'Vibrate on touch interactions',
+                              value: accessibility.hapticFeedback,
+                              ref: ref,
+                              onChanged: notifier.toggleHapticFeedback,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.contrast_rounded,
+                              title: 'High Contrast',
+                              subtitle:
+                                  'Solid backgrounds for better readability',
+                              value: accessibility.highContrast,
+                              ref: ref,
+                              onChanged: notifier.toggleHighContrast,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.text_fields_rounded,
+                              title: 'Large Text',
+                              subtitle: 'Increase text size globally',
+                              value: accessibility.largeText,
+                              ref: ref,
+                              onChanged: notifier.toggleLargeText,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                _buildSectionHeader(context, 'ABOUT'),
+                _buildSettingsCard(
+                  context,
+                  ref: ref,
+                  children: [
+                    _buildActionTile(
+                      context,
+                      icon: Icons.privacy_tip_rounded,
+                      title: 'Privacy Policy',
+                      ref: ref,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacyPolicyScreen(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
                 Center(
                   child: Text(
                     'Made with ❤️ for Sanatan Dharma',
@@ -226,8 +643,9 @@ class SettingsScreen extends ConsumerWidget {
     return Container(
       decoration: AppTheme.glassmorphism(
         context: context,
-        opacity: 0.6,
+        opacity: 0.1,
         borderRadius: 24,
+        ref: ref,
       ),
       padding: const EdgeInsets.all(16),
       child: Wrap(
@@ -286,7 +704,12 @@ class SettingsScreen extends ConsumerWidget {
     required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        if (ref.read(accessibilityProvider).hapticFeedback) {
+          HapticFeedback.selectionClick();
+        }
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -321,12 +744,14 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildSettingsCard(
     BuildContext context, {
     required List<Widget> children,
+    required WidgetRef ref,
   }) {
     return Container(
       decoration: AppTheme.glassmorphism(
         context: context,
-        opacity: 0.6,
+        opacity: 0.1,
         borderRadius: 24,
+        ref: ref,
       ),
       child: Column(children: children),
     );
@@ -339,6 +764,7 @@ class SettingsScreen extends ConsumerWidget {
     required String subtitle,
     required bool value,
     required Function(bool) onChanged,
+    WidgetRef? ref,
   }) {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -374,7 +800,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
           Switch(
             value: value,
-            onChanged: onChanged,
+            onChanged: (val) {
+              if (ref != null &&
+                  ref.read(accessibilityProvider).hapticFeedback) {
+                HapticFeedback.lightImpact();
+              }
+              onChanged(val);
+            },
             activeThumbColor: context.colors.primary,
           ),
         ],
@@ -386,11 +818,22 @@ class SettingsScreen extends ConsumerWidget {
     BuildContext context, {
     required IconData icon,
     required String title,
-    String? trailing,
+    Widget? trailing,
     required VoidCallback onTap,
+    WidgetRef? ref, // Optional ref to check accessibility
   }) {
     return ListTile(
-      onTap: onTap,
+      onTap: () {
+        if (ref != null && ref.read(accessibilityProvider).hapticFeedback) {
+          HapticFeedback.lightImpact();
+        } else if (ref == null) {
+          // Fallback or skip?
+          // We can't check setting without ref.
+          // Let's enforce ref or check if we can read it from context (no).
+          // We'll skip if no ref.
+        }
+        onTap();
+      },
       contentPadding: const EdgeInsets.all(16),
       leading: Container(
         padding: const EdgeInsets.all(10),
@@ -409,13 +852,7 @@ class SettingsScreen extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (trailing != null)
-            Text(
-              trailing,
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: context.colors.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
+          if (trailing != null) trailing,
           const SizedBox(width: 8),
           Icon(
             Icons.chevron_right_rounded,
@@ -423,6 +860,85 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  String _formatTime(TimeOfDay time, BuildContext context) {
+    final localizations = MaterialLocalizations.of(context);
+    return localizations.formatTimeOfDay(time);
+  }
+
+  Future<void> _showCalendarSystemPicker(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool isPrimary,
+  }) async {
+    final currentSystem = isPrimary
+        ? ref.read(primaryCalendarSystemProvider)
+        : ref.read(secondaryCalendarSystemProvider);
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isPrimary
+                    ? 'Select Primary Calendar'
+                    : 'Select Secondary Calendar',
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...AppCalendarSystem.values.map((system) {
+                final isSelected = system == currentSystem;
+                return ListTile(
+                  title: Text(
+                    system.label,
+                    style: TextStyle(
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? context.colors.primary
+                          : context.colors.onSurface,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          color: context.colors.primary,
+                        )
+                      : null,
+                  onTap: () async {
+                    if (isPrimary) {
+                      await ref
+                          .read(primaryCalendarSystemProvider.notifier)
+                          .setSystem(system);
+                    } else {
+                      await ref
+                          .read(secondaryCalendarSystemProvider.notifier)
+                          .setSystem(system);
+                    }
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 }

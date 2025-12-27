@@ -1,16 +1,15 @@
+import '../exceptions/jyotish_exception.dart';
+import '../models/calculation_flags.dart';
+import '../models/geographic_location.dart';
 import '../models/planet.dart';
 import '../models/planet_position.dart';
-import '../models/geographic_location.dart';
-import '../models/calculation_flags.dart';
 import '../models/vedic_chart.dart';
-import '../exceptions/jyotish_exception.dart';
 import 'ephemeris_service.dart';
 
 /// Service for calculating Vedic astrology charts.
 class VedicChartService {
-  final EphemerisService _ephemerisService;
-
   VedicChartService(this._ephemerisService);
+  final EphemerisService _ephemerisService;
 
   /// Calculates a complete Vedic astrology chart.
   ///

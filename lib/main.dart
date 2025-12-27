@@ -6,6 +6,8 @@ import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/accessibility_provider.dart';
+import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -30,12 +32,25 @@ class TithiApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = ref.watch(effectiveThemeProvider);
+    final themeMode = ref.watch(themeModeProvider);
+    final darkTheme = ref.watch(darkThemeProvider);
+    final accessibility = ref.watch(accessibilityProvider);
 
     return MaterialApp(
       title: 'Tithi',
       debugShowCheckedModeBanner: false,
-      theme: theme,
+      themeMode: themeMode,
+      theme: AppTheme.shuklaTheme,
+      darkTheme: darkTheme,
+      builder: (context, child) {
+        final scale = accessibility.largeText ? 1.3 : 1.0;
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
+        );
+      },
       home: const LocationPermissionWrapper(),
     );
   }
