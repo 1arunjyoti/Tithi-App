@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/panchang_data.dart';
+import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/panchang_provider.dart';
+import '../providers/accessibility_provider.dart';
+import '../providers/view_mode_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/calendar_widget.dart';
 import '../widgets/event_list_widget.dart';
+import '../widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
 
 /// Main home screen with calendar and event list
@@ -15,6 +20,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final todayPanchang = ref.watch(todayPanchangProvider);
     final cityName = ref.watch(cityNameProvider);
+    final accessibility = ref.watch(accessibilityProvider);
+    final viewMode = ref.watch(homeViewModeProvider);
+    final isScheduleView = viewMode == HomeViewMode.schedule;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -26,12 +34,24 @@ class HomeScreen extends ConsumerWidget {
           // Location refresh button
           IconButton(
             icon: Icon(
-              Icons.location_on_outlined,
+              Icons.my_location_rounded,
               color: context.colors.onSurface,
             ),
             tooltip: 'Refresh Location',
             onPressed: () => _refreshLocation(context, ref),
           ),
+
+          // Go to Today button
+          IconButton(
+            icon: Icon(Icons.today_rounded, color: context.colors.onSurface),
+            tooltip: 'Go to Today',
+            onPressed: () {
+              final now = DateTime.now();
+              ref.read(focusedMonthProvider.notifier).state = now;
+              ref.read(selectedDateProvider.notifier).state = now;
+            },
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Stack(
@@ -40,96 +60,133 @@ class HomeScreen extends ConsumerWidget {
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: context.theme.scaffoldBackgroundColor == Colors.black
-                      ? [Colors.black, Colors.black, Colors.black]
-                      : context.isDark
-                      ? [
-                          const Color(0xFF10002B),
-                          const Color(0xFF240046),
-                          const Color(0xFF10002B),
-                        ]
-                      : [
-                          const Color(0xFFFFFDF7),
-                          const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                          const Color(0xFFFFFDF7),
-                        ],
-                ),
+                gradient: accessibility.reduceMotion
+                    ? null
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors:
+                            context.theme.scaffoldBackgroundColor ==
+                                Colors.black
+                            ? [Colors.black, Colors.black, Colors.black]
+                            : context.isDark
+                            ? [
+                                const Color(0xFF10002B),
+                                const Color(0xFF240046),
+                                const Color(0xFF10002B),
+                              ]
+                            : [
+                                const Color(0xFFFFFDF7),
+                                const Color(0xFFFFECB3).withValues(alpha: 0.3),
+                                const Color(0xFFFFFDF7),
+                              ],
+                      ),
+                color: accessibility.reduceMotion
+                    ? context.theme.scaffoldBackgroundColor
+                    : null,
               ),
             ),
           ),
 
           SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-
-                // Paksha indicator with city name
-                todayPanchang.when(
-                  data: (panchang) => _buildPakshaIndicator(
-                    context,
-                    panchang.paksha,
-                    cityName.when(
-                      data: (city) => city,
-                      loading: () => null,
-                      error: (_, _) => null,
-                    ),
-                  ),
-                  loading: () => const SizedBox(height: 40),
-                  error: (_, _) => const SizedBox(height: 40),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Calendar
-                const CalendarWidget(),
-
-                const SizedBox(height: 8),
-
-                // Modern Divider with text
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
+            child: isScheduleView
+                ? Column(
                     children: [
-                      Expanded(
-                        child: Divider(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.1,
+                      const SizedBox(height: 8),
+
+                      // Paksha indicator with city name (shown in both views)
+                      todayPanchang.when(
+                        data: (panchang) => _buildPakshaIndicator(
+                          context,
+                          ref,
+                          panchang,
+                          cityName.when(
+                            data: (city) => city,
+                            loading: () => null,
+                            error: (_, _) => null,
                           ),
-                          thickness: 1,
                         ),
+                        loading: () => const SizedBox(height: 40),
+                        error: (_, _) => const SizedBox(height: 40),
                       ),
+
+                      const SizedBox(height: 8),
+
+                      // Schedule View (scrollable event list)
+                      const Expanded(child: ScheduleViewWidget()),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      const SizedBox(height: 8),
+
+                      // Paksha indicator with city name
+                      todayPanchang.when(
+                        data: (panchang) => _buildPakshaIndicator(
+                          context,
+                          ref,
+                          panchang,
+                          cityName.when(
+                            data: (city) => city,
+                            loading: () => null,
+                            error: (_, _) => null,
+                          ),
+                        ),
+                        loading: () => const SizedBox(height: 40),
+                        error: (_, _) => const SizedBox(height: 40),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Calendar
+                      const CalendarWidget(),
+
+                      const SizedBox(height: 8),
+
+                      // Modern Divider with text
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          "UPCOMING EVENTS",
-                          style: context.textTheme.labelSmall?.copyWith(
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.bold,
-                            color: context.colors.primary,
-                          ),
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Divider(
+                                color: context.colors.onSurface.withValues(
+                                  alpha: 0.1,
+                                ),
+                                thickness: 1,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Text(
+                                "EVENTS",
+                                style: context.textTheme.labelSmall?.copyWith(
+                                  letterSpacing: 1.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.colors.primary,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(
+                                color: context.colors.onSurface.withValues(
+                                  alpha: 0.1,
+                                ),
+                                thickness: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Expanded(
-                        child: Divider(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.1,
-                          ),
-                          thickness: 1,
-                        ),
-                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Event list
+                      const Expanded(child: EventListWidget()),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Event list
-                const Expanded(child: EventListWidget()),
-              ],
-            ),
           ),
         ],
       ),
@@ -138,35 +195,75 @@ class HomeScreen extends ConsumerWidget {
 
   Widget _buildPakshaIndicator(
     BuildContext context,
-    String paksha,
+    WidgetRef ref,
+    PanchangData panchang,
     String? cityName,
   ) {
-    final isShukla = paksha == 'Shukla';
+    final primaryView = ref.watch(primaryEventViewProvider);
+    final isShukla = panchang.paksha == 'Shukla';
+
+    // Determine what to show based on preference
+    String title;
+    String subtitle;
+    IconData icon;
+
+    switch (primaryView) {
+      case PrimaryEventView.festival:
+        // Show first major festival or first festival, else fallback to Tithi
+        if (panchang.festivals.isNotEmpty) {
+          final festival = panchang.festivals.firstWhere(
+            (f) => f.category == 'major',
+            orElse: () => panchang.festivals.first,
+          );
+          title = festival.name;
+          subtitle = 'Today\'s Festival';
+          icon = Icons.celebration_rounded;
+        } else {
+          // Fallback if no festival
+          title = panchang.tithiName;
+          subtitle = 'Tithi • No Festivals Today';
+          icon = isShukla
+              ? Icons.brightness_high_rounded
+              : Icons.nights_stay_rounded;
+        }
+        break;
+
+      case PrimaryEventView.tithi:
+        title = panchang.tithiName;
+        subtitle = '${panchang.paksha} Paksha';
+        icon = isShukla
+            ? Icons.brightness_high_rounded
+            : Icons.nights_stay_rounded;
+        break;
+
+      case PrimaryEventView.moonPhase:
+        title = '${panchang.paksha} Paksha';
+        subtitle = isShukla ? 'Waxing Moon Phase' : 'Waning Moon Phase';
+        icon = isShukla
+            ? Icons.brightness_high_rounded
+            : Icons.nights_stay_rounded;
+        break;
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
       decoration: AppTheme.glassmorphism(
         context: context,
         opacity: 0.1,
-        borderRadius: 50, // Pill shape
+        borderRadius: 30, // Pill shape
+        ref: ref,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            isShukla
-                ? Icons.brightness_high_rounded
-                : Icons.nights_stay_rounded,
-            size: 20,
-            color: context.colors.primary,
-          ),
+          Icon(icon, size: 20, color: context.colors.primary),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$paksha Paksha',
+                title,
                 style: TextStyle(
                   color: context.colors.onSurface,
                   fontWeight: FontWeight.bold,
@@ -174,7 +271,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                isShukla ? 'Waxing Moon Phase' : 'Waning Moon Phase',
+                subtitle,
                 style: TextStyle(
                   color: context.colors.onSurface.withValues(alpha: 0.6),
                   fontSize: 12,

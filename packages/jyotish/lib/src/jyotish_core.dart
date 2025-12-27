@@ -1,11 +1,11 @@
+import 'exceptions/jyotish_exception.dart';
+import 'models/calculation_flags.dart';
 import 'models/geographic_location.dart';
 import 'models/planet.dart';
 import 'models/planet_position.dart';
-import 'models/calculation_flags.dart';
 import 'models/vedic_chart.dart';
 import 'services/ephemeris_service.dart';
 import 'services/vedic_chart_service.dart';
-import 'exceptions/jyotish_exception.dart';
 
 /// The main entry point for the Jyotish library.
 ///
@@ -29,22 +29,21 @@ import 'exceptions/jyotish_exception.dart';
 /// print('Sun longitude: ${position.longitude}');
 /// ```
 class Jyotish {
-  static Jyotish? _instance;
-  EphemerisService? _ephemerisService;
-  VedicChartService? _vedicChartService;
-  bool _isInitialized = false;
+  /// Gets the singleton instance of Jyotish.
+  factory Jyotish() {
+    _instance ??= Jyotish._();
+    return _instance!;
+  }
 
   /// Creates a new instance of Jyotish.
   ///
   /// Use [initialize] to set up the Swiss Ephemeris data path before
   /// performing calculations.
   Jyotish._();
-
-  /// Gets the singleton instance of Jyotish.
-  factory Jyotish() {
-    _instance ??= Jyotish._();
-    return _instance!;
-  }
+  static Jyotish? _instance;
+  EphemerisService? _ephemerisService;
+  VedicChartService? _vedicChartService;
+  bool _isInitialized = false;
 
   /// Initializes the Swiss Ephemeris library.
   ///

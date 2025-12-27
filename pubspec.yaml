@@ -28,6 +28,11 @@ dependencies:
   nominatim_geocoding: ^0.0.6 # FOSS: OpenStreetMap Nominatim API for reverse geocoding
   flutter_local_notifications: ^19.0.0 # FOSS: Native notifications, no GMS required
   timezone: ^0.10.0 # For scheduling notifications at specific times
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+  path: ^1.9.1
+
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -36,6 +41,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -44,6 +50,8 @@ flutter:
   assets:
     - assets/ephe/
     - assets/festivals.json
+    - assets/images/
+    - assets/icons/
 
   # fonts:
   #   - family: Schyler

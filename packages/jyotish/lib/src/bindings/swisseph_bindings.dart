@@ -1,11 +1,17 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'dart:ffi' as ffi;
 import 'dart:io';
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart';
 
 /// FFI bindings for Swiss Ephemeris C library.
 ///
 /// This class provides low-level bindings to the Swiss Ephemeris shared library.
 class SwissEphBindings {
+  SwissEphBindings() {
+    _lib = _loadLibrary();
+  }
   late final ffi.DynamicLibrary _lib;
 
   // Function signatures
@@ -82,10 +88,6 @@ class SwissEphBindings {
         ffi.Pointer<ffi.Double>,
       )>('swe_houses');
 
-  SwissEphBindings() {
-    _lib = _loadLibrary();
-  }
-
   /// Loads the appropriate Swiss Ephemeris library for the platform.
   ffi.DynamicLibrary _loadLibrary() {
     // Try custom path first (from environment or development location)
@@ -94,7 +96,9 @@ class SwissEphBindings {
       try {
         return ffi.DynamicLibrary.open(customPath);
       } catch (e) {
-        print('Failed to load from custom path: $customPath');
+        if (kDebugMode) {
+          print('Failed to load from custom path: $customPath');
+        }
       }
     }
 

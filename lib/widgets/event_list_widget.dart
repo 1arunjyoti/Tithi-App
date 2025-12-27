@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
+import '../providers/accessibility_provider.dart';
 import '../theme/app_theme.dart';
 import 'event_detail_sheet.dart';
+import 'package:flutter/services.dart';
 
 /// Widget showing events/festivals for the selected date
 class EventListWidget extends ConsumerWidget {
@@ -16,7 +18,7 @@ class EventListWidget extends ConsumerWidget {
     final panchangAsync = ref.watch(panchangForDateProvider(selectedDate));
 
     return panchangAsync.when(
-      data: (panchang) => _buildEventList(context, panchang),
+      data: (panchang) => _buildEventList(context, ref, panchang),
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(32),
@@ -35,14 +37,18 @@ class EventListWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildEventList(BuildContext context, PanchangData panchang) {
+  Widget _buildEventList(
+    BuildContext context,
+    WidgetRef ref,
+    PanchangData panchang,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Panchang summary card
-          _buildPanchangCard(context, panchang),
+          _buildPanchangCard(context, ref, panchang),
           const SizedBox(height: 16),
 
           // Festivals section
@@ -53,10 +59,11 @@ class EventListWidget extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
             ...panchang.festivals.map(
-              (festival) => _buildFestivalCard(context, festival, panchang),
+              (festival) =>
+                  _buildFestivalCard(context, ref, festival, panchang),
             ),
           ] else
-            _buildNoFestivalsCard(context),
+            _buildNoFestivalsCard(context, ref),
 
           const SizedBox(height: 24),
         ],
@@ -64,14 +71,22 @@ class EventListWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildPanchangCard(BuildContext context, PanchangData panchang) {
+  Widget _buildPanchangCard(
+    BuildContext context,
+    WidgetRef ref,
+    PanchangData panchang,
+  ) {
     final isShukla = panchang.isShukla;
     final moonIcon = isShukla ? Icons.brightness_3 : Icons.brightness_2;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphism(context: context, opacity: 0.2),
+      decoration: AppTheme.glassmorphism(
+        context: context,
+        opacity: 0.1,
+        ref: ref,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -126,20 +141,27 @@ class EventListWidget extends ConsumerWidget {
 
   Widget _buildFestivalCard(
     BuildContext context,
+    WidgetRef ref,
     dynamic festival,
     PanchangData panchang,
   ) {
     final isMajor = festival.category == 'major';
 
     return GestureDetector(
-      onTap: () => _showFestivalDetail(context, festival, panchang),
+      onTap: () {
+        if (ref.read(accessibilityProvider).hapticFeedback) {
+          HapticFeedback.selectionClick();
+        }
+        _showFestivalDetail(context, festival, panchang);
+      },
       child: Container(
         width: double.infinity,
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: AppTheme.glassmorphism(
           context: context,
-          opacity: isMajor ? 0.25 : 0.15,
+          opacity: isMajor ? 0.2 : 0.1,
+          ref: ref,
         ),
         child: Row(
           children: [
@@ -188,11 +210,15 @@ class EventListWidget extends ConsumerWidget {
     );
   }
 
-  Widget _buildNoFestivalsCard(BuildContext context) {
+  Widget _buildNoFestivalsCard(BuildContext context, WidgetRef ref) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(context: context, opacity: 0.1),
+      decoration: AppTheme.glassmorphism(
+        context: context,
+        opacity: 0.1,
+        ref: ref,
+      ),
       child: Column(
         children: [
           Icon(

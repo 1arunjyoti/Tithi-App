@@ -11,9 +11,9 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     
     <application
-        android:label="tithi"
+        android:label="Tithi"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

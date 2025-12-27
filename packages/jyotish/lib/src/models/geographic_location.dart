@@ -3,42 +3,13 @@
 /// This class is used to specify the location for which planetary
 /// positions should be calculated.
 class GeographicLocation {
-  /// Latitude in decimal degrees.
-  /// Positive values represent North, negative values represent South.
-  /// Valid range: -90.0 to 90.0
-  final double latitude;
-
-  /// Longitude in decimal degrees.
-  /// Positive values represent East, negative values represent West.
-  /// Valid range: -180.0 to 180.0
-  final double longitude;
-
-  /// Altitude/elevation above sea level in meters.
-  /// Defaults to 0.0 (sea level).
-  final double altitude;
-
-  /// Creates a new [GeographicLocation].
-  ///
-  /// [latitude] - Latitude in decimal degrees (-90.0 to 90.0).
-  /// [longitude] - Longitude in decimal degrees (-180.0 to 180.0).
-  /// [altitude] - Optional altitude in meters above sea level (defaults to 0.0).
-  ///
-  /// Throws [ArgumentError] if latitude or longitude is out of range.
-  GeographicLocation({
-    required this.latitude,
-    required this.longitude,
-    this.altitude = 0.0,
-  }) {
-    if (latitude < -90.0 || latitude > 90.0) {
-      throw ArgumentError(
-        'Latitude must be between -90.0 and 90.0, got $latitude',
-      );
-    }
-    if (longitude < -180.0 || longitude > 180.0) {
-      throw ArgumentError(
-        'Longitude must be between -180.0 and 180.0, got $longitude',
-      );
-    }
+  /// Creates a location from a JSON map.
+  factory GeographicLocation.fromJson(Map<String, dynamic> json) {
+    return GeographicLocation(
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+      altitude: (json['altitude'] as num?)?.toDouble() ?? 0.0,
+    );
   }
 
   /// Creates a location from degrees, minutes, and seconds.
@@ -72,6 +43,44 @@ class GeographicLocation {
       altitude: altitude,
     );
   }
+
+  /// Creates a new [GeographicLocation].
+  ///
+  /// [latitude] - Latitude in decimal degrees (-90.0 to 90.0).
+  /// [longitude] - Longitude in decimal degrees (-180.0 to 180.0).
+  /// [altitude] - Optional altitude in meters above sea level (defaults to 0.0).
+  ///
+  /// Throws [ArgumentError] if latitude or longitude is out of range.
+  GeographicLocation({
+    required this.latitude,
+    required this.longitude,
+    this.altitude = 0.0,
+  }) {
+    if (latitude < -90.0 || latitude > 90.0) {
+      throw ArgumentError(
+        'Latitude must be between -90.0 and 90.0, got $latitude',
+      );
+    }
+    if (longitude < -180.0 || longitude > 180.0) {
+      throw ArgumentError(
+        'Longitude must be between -180.0 and 180.0, got $longitude',
+      );
+    }
+  }
+
+  /// Latitude in decimal degrees.
+  /// Positive values represent North, negative values represent South.
+  /// Valid range: -90.0 to 90.0
+  final double latitude;
+
+  /// Longitude in decimal degrees.
+  /// Positive values represent East, negative values represent West.
+  /// Valid range: -180.0 to 180.0
+  final double longitude;
+
+  /// Altitude/elevation above sea level in meters.
+  /// Defaults to 0.0 (sea level).
+  final double altitude;
 
   /// Converts DMS (Degrees, Minutes, Seconds) to decimal degrees.
   static double _dmsToDecimal(
@@ -160,14 +169,5 @@ class GeographicLocation {
       'longitude': longitude,
       'altitude': altitude,
     };
-  }
-
-  /// Creates a location from a JSON map.
-  factory GeographicLocation.fromJson(Map<String, dynamic> json) {
-    return GeographicLocation(
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      altitude: (json['altitude'] as num?)?.toDouble() ?? 0.0,
-    );
   }
 }

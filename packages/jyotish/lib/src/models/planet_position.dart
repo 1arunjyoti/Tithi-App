@@ -5,6 +5,51 @@ import 'planet.dart';
 /// This class contains the ecliptic longitude, latitude, distance, and speed
 /// of a celestial body as calculated by Swiss Ephemeris.
 class PlanetPosition {
+  /// Creates a position from raw Swiss Ephemeris calculation results.
+  factory PlanetPosition.fromSwissEph({
+    required Planet planet,
+    required DateTime dateTime,
+    required List<double> results,
+    double? sunLongitude,
+  }) {
+    return PlanetPosition(
+      planet: planet,
+      dateTime: dateTime,
+      longitude: results[0],
+      latitude: results[1],
+      distance: results[2],
+      longitudeSpeed: results[3],
+      latitudeSpeed: results[4],
+      distanceSpeed: results[5],
+      isCombust: sunLongitude != null
+          ? calculateCombustion(planet, results[0], sunLongitude)
+          : false,
+    );
+  }
+
+  /// Creates a new [PlanetPosition].
+  ///
+  /// [planet] - The planet this position is for.
+  /// [dateTime] - The date and time of calculation.
+  /// [longitude] - Ecliptic longitude in degrees.
+  /// [latitude] - Ecliptic latitude in degrees.
+  /// [distance] - Distance from Earth in AU.
+  /// [longitudeSpeed] - Speed of longitude change in degrees/day.
+  /// [latitudeSpeed] - Speed of latitude change in degrees/day.
+  /// [distanceSpeed] - Speed of distance change in AU/day.
+  /// [isCombust] - Whether the planet is combust (optional, defaults to false).
+  const PlanetPosition({
+    required this.planet,
+    required this.dateTime,
+    required this.longitude,
+    required this.latitude,
+    required this.distance,
+    required this.longitudeSpeed,
+    required this.latitudeSpeed,
+    required this.distanceSpeed,
+    this.isCombust = false,
+  }) : isRetrograde = longitudeSpeed < 0;
+
   /// The planet this position is for.
   final Planet planet;
 
@@ -35,29 +80,6 @@ class PlanetPosition {
   /// Whether the planet is combust (too close to the Sun).
   /// Only applicable to planets other than the Sun itself.
   final bool isCombust;
-
-  /// Creates a new [PlanetPosition].
-  ///
-  /// [planet] - The planet this position is for.
-  /// [dateTime] - The date and time of calculation.
-  /// [longitude] - Ecliptic longitude in degrees.
-  /// [latitude] - Ecliptic latitude in degrees.
-  /// [distance] - Distance from Earth in AU.
-  /// [longitudeSpeed] - Speed of longitude change in degrees/day.
-  /// [latitudeSpeed] - Speed of latitude change in degrees/day.
-  /// [distanceSpeed] - Speed of distance change in AU/day.
-  /// [isCombust] - Whether the planet is combust (optional, defaults to false).
-  const PlanetPosition({
-    required this.planet,
-    required this.dateTime,
-    required this.longitude,
-    required this.latitude,
-    required this.distance,
-    required this.longitudeSpeed,
-    required this.latitudeSpeed,
-    required this.distanceSpeed,
-    this.isCombust = false,
-  }) : isRetrograde = longitudeSpeed < 0;
 
   /// Calculates if a planet is combust (too close to the Sun).
   /// Uses traditional Vedic astrology combustion distances.
@@ -179,28 +201,6 @@ class PlanetPosition {
       'nakshatraIndex': nakshatraIndex,
       'nakshatraPada': nakshatraPada,
     };
-  }
-
-  /// Creates a position from raw Swiss Ephemeris calculation results.
-  factory PlanetPosition.fromSwissEph({
-    required Planet planet,
-    required DateTime dateTime,
-    required List<double> results,
-    double? sunLongitude,
-  }) {
-    return PlanetPosition(
-      planet: planet,
-      dateTime: dateTime,
-      longitude: results[0],
-      latitude: results[1],
-      distance: results[2],
-      longitudeSpeed: results[3],
-      latitudeSpeed: results[4],
-      distanceSpeed: results[5],
-      isCombust: sunLongitude != null
-          ? calculateCombustion(planet, results[0], sunLongitude)
-          : false,
-    );
   }
 
   @override

@@ -40,6 +40,10 @@ class LocationService {
   static const String _keyCachedCity = 'cached_city';
   static const String _keyCachedLat = 'cached_lat';
   static const String _keyCachedLng = 'cached_lng';
+  // Home location keys
+  static const String _keyHomeLat = 'home_lat';
+  static const String _keyHomeLng = 'home_lng';
+  static const String _keyHomeAddress = 'home_address';
 
   Box? _box;
   bool _isInitialized = false;
@@ -239,6 +243,44 @@ class LocationService {
     if (cityName != null) {
       await _box?.put(_keyCachedCity, cityName);
     }
+  }
+
+  /// Clear cached location data
+  Future<void> clearCache() async {
+    _ensureInitialized();
+    await _box?.delete(_keyCachedLat);
+    await _box?.delete(_keyCachedLng);
+    await _box?.delete(_keyCachedCity);
+    if (kDebugMode) {
+      print('Location cache cleared');
+    }
+  }
+
+  /// SET home location manually
+  Future<void> setHomeLocation(double lat, double lng, String address) async {
+    _ensureInitialized();
+    await _box?.put(_keyHomeLat, lat);
+    await _box?.put(_keyHomeLng, lng);
+    await _box?.put(_keyHomeAddress, address);
+  }
+
+  /// GET home location manually
+  /// Returns null if not set
+  LocationData? getHomeLocation() {
+    _ensureInitialized();
+    final lat = _box?.get(_keyHomeLat) as double?;
+    final lng = _box?.get(_keyHomeLng) as double?;
+    final address = _box?.get(_keyHomeAddress) as String?;
+
+    if (lat != null && lng != null) {
+      return LocationData(
+        latitude: lat,
+        longitude: lng,
+        cityName: address, // Using address as "city name" for UI display
+        timestamp: DateTime.now(),
+      );
+    }
+    return null;
   }
 
   void _ensureInitialized() {

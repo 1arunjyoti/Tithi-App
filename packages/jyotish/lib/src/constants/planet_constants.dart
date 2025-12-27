@@ -2,6 +2,7 @@
 ///
 /// These constants correspond to the planet numbers used by Swiss Ephemeris.
 class SwissEphConstants {
+  SwissEphConstants._();
   // Main planets
   static const int sun = 0;
   static const int moon = 1;
@@ -96,6 +97,4 @@ class SwissEphConstants {
   static const String housePolich = 'T';
   static const String houseAlcabitus = 'B';
   static const String houseKrusinski = 'U';
-
-  SwissEphConstants._();
 }

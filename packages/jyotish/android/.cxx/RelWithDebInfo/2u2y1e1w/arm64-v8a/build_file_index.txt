@@ -1,0 +1,1 @@
+D:\Projects\Tithi_Project\tithi\packages\jyotish\android\src\main\cpp\CMakeLists.txt

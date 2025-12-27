@@ -1,11 +1,14 @@
 import 'dart:ffi' as ffi;
+
 import 'package:ffi/ffi.dart';
+import 'package:flutter/foundation.dart';
+
 import '../bindings/swisseph_bindings.dart';
+import '../exceptions/jyotish_exception.dart';
+import '../models/calculation_flags.dart';
+import '../models/geographic_location.dart';
 import '../models/planet.dart';
 import '../models/planet_position.dart';
-import '../models/geographic_location.dart';
-import '../models/calculation_flags.dart';
-import '../exceptions/jyotish_exception.dart';
 
 /// Service for calculating planetary positions using Swiss Ephemeris.
 ///
@@ -36,7 +39,9 @@ class EphemerisService {
 
       // Test that the library is working
       final version = _bindings!.getVersion();
-      print('Swiss Ephemeris initialized. Version: $version');
+      if (kDebugMode) {
+        print('Swiss Ephemeris initialized. Version: $version');
+      }
 
       _isInitialized = true;
     } catch (e, stackTrace) {

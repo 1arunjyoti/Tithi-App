@@ -3,21 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../theme/app_theme.dart';
 
-/// Provider for the current theme based on time (Day/Night)
-final themeProvider = Provider<ThemeData>((ref) {
-  // We can add a timer here to update theme automatically if needed,
-  // but for now, checking on build/rebuild is sufficient.
-  // To make it reactive to time changes, we could use a StreamProvider.
-  // For simplicity and performance, we'll stick to build-time check or
-  // maybe a minute-ticker if strictly required.
-  // Given user request "based on the time(day and night)", simple check is good.
-
-  final now = DateTime.now();
-  final isDay = now.hour >= 6 && now.hour < 18; // 6 AM to 6 PM is Day
-
-  return isDay ? AppTheme.shuklaTheme : AppTheme.pureDarkTheme;
-});
-
 /// Notifier for manually overriding theme with Hive persistence
 class ThemeOverrideNotifier extends Notifier<String?> {
   static const _boxName = 'settings';
@@ -46,24 +31,33 @@ final themeOverrideProvider = NotifierProvider<ThemeOverrideNotifier, String?>(
   ThemeOverrideNotifier.new,
 );
 
-/// Combined theme provider that respects manual override
-/// Overrides: 'Shukla', 'PureDark', 'Krishna'
-final effectiveThemeProvider = Provider<ThemeData>((ref) {
+/// Determines the ThemeMode to use
+/// Returns ThemeMode.system if no override is set (Auto)
+final themeModeProvider = Provider<ThemeMode>((ref) {
   final override = ref.watch(themeOverrideProvider);
 
-  if (override != null) {
-    switch (override) {
-      case 'Shukla':
-        return AppTheme.shuklaTheme;
-      case 'PureDark':
-        return AppTheme.pureDarkTheme;
-      case 'Krishna':
-        return AppTheme.krishnaTheme;
-      default:
-        // Fallback or legacy handling
-        return AppTheme.shuklaTheme;
-    }
+  if (override == null) {
+    return ThemeMode.system;
   }
 
-  return ref.watch(themeProvider);
+  // 'Shukla' is our Light theme
+  if (override == 'Shukla') {
+    return ThemeMode.light;
+  }
+
+  // 'PureDark' and 'Krishna' are Dark themes
+  return ThemeMode.dark;
+});
+
+/// Determines which Dark Theme data to use
+/// This allows switching between Pure Dark and Krishna themes while in Dark Mode
+final darkThemeProvider = Provider<ThemeData>((ref) {
+  final override = ref.watch(themeOverrideProvider);
+
+  if (override == 'Krishna') {
+    return AppTheme.krishnaTheme;
+  }
+
+  // Default to Pure Dark for system dark mode or explicit PureDark selection
+  return AppTheme.pureDarkTheme;
 });
