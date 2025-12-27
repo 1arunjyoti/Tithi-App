@@ -1,5 +1,6 @@
-import 'package:test/test.dart';
+import 'package:flutter/foundation.dart';
 import 'package:jyotish/jyotish.dart';
+import 'package:test/test.dart';
 
 /// Unit tests for Jyotish library models and calculations.
 /// These tests verify mathematical calculations without requiring Swiss Ephemeris.
@@ -105,7 +106,7 @@ void main() {
     });
 
     test('calculates nakshatras correctly', () {
-      final nakshatraWidth = 360.0 / 27;
+      const nakshatraWidth = 360.0 / 27;
 
       for (var i = 0; i < 27; i++) {
         final longitude = (i * nakshatraWidth) + (nakshatraWidth / 2);
@@ -149,7 +150,10 @@ void main() {
       try {
         await jyotish.initialize();
       } catch (e) {
-        print('⚠️  Swiss Ephemeris not found. See SETUP.md for installation.');
+        if (kDebugMode) {
+          print(
+              '⚠️  Swiss Ephemeris not found. See SETUP.md for installation.');
+        }
         rethrow;
       }
     });
@@ -180,7 +184,7 @@ void main() {
         longitude: 85.3240,
       );
 
-      final flags = CalculationFlags(
+      const flags = CalculationFlags(
         siderealMode: SiderealMode.lahiri,
         calculateSpeed: true,
       );

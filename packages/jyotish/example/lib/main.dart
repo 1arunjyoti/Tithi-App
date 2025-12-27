@@ -37,7 +37,7 @@ class _PlanetaryPositionsScreenState extends State<PlanetaryPositionsScreen> {
   bool _useSidereal = false;
 
   // Default location: Kathmandu, Nepal
-  GeographicLocation _location = GeographicLocation(
+  final GeographicLocation _location = GeographicLocation(
     latitude: 27.7172,
     longitude: 85.3240,
     altitude: 1400,
@@ -169,6 +169,7 @@ class _PlanetaryPositionsScreenState extends State<PlanetaryPositionsScreen> {
                   lastDate: DateTime(2100),
                 );
                 if (date != null) {
+                  if (!mounted) return;
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay.fromDateTime(_selectedDateTime),
@@ -183,7 +184,8 @@ class _PlanetaryPositionsScreenState extends State<PlanetaryPositionsScreen> {
                         time.minute,
                       );
                     });
-                    _calculatePositions();
+                    if (!mounted) return;
+                    await _calculatePositions();
                   }
                 }
               },
@@ -231,7 +233,7 @@ class _PlanetaryPositionsScreenState extends State<PlanetaryPositionsScreen> {
             const SizedBox(height: 16),
             ..._positions!.entries.map((entry) {
               return _buildPlanetCard(entry.value);
-            }).toList(),
+            }),
           ],
         ),
       ),

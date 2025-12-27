@@ -78,8 +78,11 @@ class AppDrawer extends ConsumerWidget {
                         title: 'Share App',
                         onTap: () {
                           Navigator.pop(context);
-                          Share.share(
-                            'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
+                          SharePlus.instance.share(
+                            ShareParams(
+                              text:
+                                  'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
+                            ),
                           );
                         },
                       ),

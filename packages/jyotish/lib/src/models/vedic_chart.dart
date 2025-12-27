@@ -3,6 +3,13 @@ import '../models/planet_position.dart';
 
 /// Represents Vedic astrology house system information.
 class HouseSystem {
+  const HouseSystem({
+    required this.system,
+    required this.cusps,
+    required this.ascendant,
+    required this.midheaven,
+  });
+
   /// The house system used (default: Whole Sign)
   final String system;
 
@@ -14,13 +21,6 @@ class HouseSystem {
 
   /// The Midheaven (MC) degree
   final double midheaven;
-
-  const HouseSystem({
-    required this.system,
-    required this.cusps,
-    required this.ascendant,
-    required this.midheaven,
-  });
 
   /// Gets the house number (1-12) for a given longitude
   int getHouseForLongitude(double longitude) {
@@ -67,10 +67,10 @@ class HouseSystem {
 /// Represents Ketu (South Node) position.
 /// Ketu is always 180° opposite to Rahu.
 class KetuPosition {
+  const KetuPosition({required this.rahuPosition});
+
   /// The planet position of Rahu used to calculate Ketu
   final PlanetPosition rahuPosition;
-
-  const KetuPosition({required this.rahuPosition});
 
   /// Ketu's longitude (180° opposite to Rahu)
   double get longitude => (rahuPosition.longitude + 180) % 360;
@@ -188,10 +188,10 @@ enum PlanetaryDignity {
   debilitated('Debilitated', 'Neecha'),
   moolaTrikona('Moola Trikona', 'Moola Trikona');
 
+  const PlanetaryDignity(this.english, this.sanskrit);
+
   final String english;
   final String sanskrit;
-
-  const PlanetaryDignity(this.english, this.sanskrit);
 
   @override
   String toString() => english;
@@ -199,6 +199,15 @@ enum PlanetaryDignity {
 
 /// Vedic-specific planetary information.
 class VedicPlanetInfo {
+  const VedicPlanetInfo({
+    required this.position,
+    required this.house,
+    required this.dignity,
+    this.isCombust = false,
+    this.exaltationDegree,
+    this.debilitationDegree,
+  });
+
   /// The base planet position
   final PlanetPosition position;
 
@@ -216,15 +225,6 @@ class VedicPlanetInfo {
 
   /// Debilitation degree
   final double? debilitationDegree;
-
-  const VedicPlanetInfo({
-    required this.position,
-    required this.house,
-    required this.dignity,
-    this.isCombust = false,
-    this.exaltationDegree,
-    this.debilitationDegree,
-  });
 
   /// Gets the planet
   Planet get planet => position.planet;
@@ -250,6 +250,17 @@ class VedicPlanetInfo {
 
 /// Complete Vedic astrology chart data.
 class VedicChart {
+  const VedicChart({
+    required this.dateTime,
+    required this.location,
+    required this.latitude,
+    required this.longitudeCoord,
+    required this.houses,
+    required this.planets,
+    required this.rahu,
+    required this.ketu,
+  });
+
   /// Date and time of the chart
   final DateTime dateTime;
 
@@ -273,17 +284,6 @@ class VedicChart {
 
   /// Ketu (South Node) position
   final KetuPosition ketu;
-
-  const VedicChart({
-    required this.dateTime,
-    required this.location,
-    required this.latitude,
-    required this.longitudeCoord,
-    required this.houses,
-    required this.planets,
-    required this.rahu,
-    required this.ketu,
-  });
 
   /// Gets the Ascendant sign
   String get ascendantSign => houses.ascendantSign;

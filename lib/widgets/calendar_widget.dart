@@ -352,7 +352,9 @@ class CalendarWidget extends ConsumerWidget {
     }
 
     final List<DateTime?> grid = [];
-    for (int i = 0; i < offset; i++) grid.add(null);
+    for (int i = 0; i < offset; i++) {
+      grid.add(null);
+    }
 
     for (int i = 0; i < daysInMonth; i++) {
       grid.add(startDate.add(Duration(days: i)));
