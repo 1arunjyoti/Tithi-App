@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
@@ -11,6 +12,7 @@ import '../widgets/calendar_widget.dart';
 import '../widgets/event_list_widget.dart';
 import '../widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/moon_animation_widget.dart';
 
 /// Main home screen with calendar and event list
 class HomeScreen extends ConsumerWidget {
@@ -23,12 +25,13 @@ class HomeScreen extends ConsumerWidget {
     final accessibility = ref.watch(accessibilityProvider);
     final viewMode = ref.watch(homeViewModeProvider);
     final isScheduleView = viewMode == HomeViewMode.schedule;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       drawer: const AppDrawer(),
       appBar: AppBar(
-        title: const Text('Tithi'),
+        title: Text(l10n?.appTitle ?? 'Tithi'),
         backgroundColor: Colors.transparent,
         actions: [
           // Location refresh button
@@ -37,14 +40,14 @@ class HomeScreen extends ConsumerWidget {
               Icons.my_location_rounded,
               color: context.colors.onSurface,
             ),
-            tooltip: 'Refresh Location',
+            tooltip: l10n?.refreshLocation ?? 'Refresh Location',
             onPressed: () => _refreshLocation(context, ref),
           ),
 
           // Go to Today button
           IconButton(
             icon: Icon(Icons.today_rounded, color: context.colors.onSurface),
-            tooltip: 'Go to Today',
+            tooltip: l10n?.goToToday ?? 'Go to Today',
             onPressed: () {
               final now = DateTime.now();
               ref.read(focusedMonthProvider.notifier).state = now;
@@ -161,7 +164,7 @@ class HomeScreen extends ConsumerWidget {
                                 horizontal: 16,
                               ),
                               child: Text(
-                                "EVENTS",
+                                l10n?.events ?? "EVENTS",
                                 style: context.textTheme.labelSmall?.copyWith(
                                   letterSpacing: 1.5,
                                   fontWeight: FontWeight.bold,
@@ -201,12 +204,11 @@ class HomeScreen extends ConsumerWidget {
   ) {
     final primaryView = ref.watch(primaryEventViewProvider);
     final isShukla = panchang.paksha == 'Shukla';
+    final l10n = AppLocalizations.of(context);
 
     // Determine what to show based on preference
     String title;
     String subtitle;
-    IconData icon;
-
     switch (primaryView) {
       case PrimaryEventView.festival:
         // Show first major festival or first festival, else fallback to Tithi
@@ -216,32 +218,28 @@ class HomeScreen extends ConsumerWidget {
             orElse: () => panchang.festivals.first,
           );
           title = festival.name;
-          subtitle = 'Today\'s Festival';
-          icon = Icons.celebration_rounded;
+          subtitle = l10n?.todaysFestival ?? 'Today\'s Festival';
         } else {
           // Fallback if no festival
           title = panchang.tithiName;
-          subtitle = 'Tithi • No Festivals Today';
-          icon = isShukla
-              ? Icons.brightness_high_rounded
-              : Icons.nights_stay_rounded;
+          subtitle = l10n?.noFestivalsToday ?? 'Tithi • No Festivals Today';
         }
         break;
 
       case PrimaryEventView.tithi:
         title = panchang.tithiName;
-        subtitle = '${panchang.paksha} Paksha';
-        icon = isShukla
-            ? Icons.brightness_high_rounded
-            : Icons.nights_stay_rounded;
+        subtitle =
+            l10n?.pakshaWithName(panchang.paksha) ??
+            '${panchang.paksha} Paksha';
         break;
 
       case PrimaryEventView.moonPhase:
-        title = '${panchang.paksha} Paksha';
-        subtitle = isShukla ? 'Waxing Moon Phase' : 'Waning Moon Phase';
-        icon = isShukla
-            ? Icons.brightness_high_rounded
-            : Icons.nights_stay_rounded;
+        title =
+            l10n?.pakshaWithName(panchang.paksha) ??
+            '${panchang.paksha} Paksha';
+        subtitle = isShukla
+            ? (l10n?.waxingMoonPhase ?? 'Waxing Moon Phase')
+            : (l10n?.waningMoonPhase ?? 'Waning Moon Phase');
         break;
     }
 
@@ -257,8 +255,13 @@ class HomeScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: context.colors.primary),
-          const SizedBox(width: 12),
+          // Icon(icon, size: 20, color: context.colors.primary),
+          MoonAnimationWidget(
+            paksha: panchang.paksha,
+            tithi: panchang.tithiNumber,
+            size: 40,
+          ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

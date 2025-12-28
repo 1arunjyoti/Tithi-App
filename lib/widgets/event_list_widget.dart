@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
@@ -25,15 +26,19 @@ class EventListWidget extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, stack) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'Error loading panchang: $error',
-            style: TextStyle(color: context.colors.error),
+      error: (error, stack) {
+        final l10n = AppLocalizations.of(context);
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              l10n?.errorLoadingPanchang(error.toString()) ??
+                  'Error loading panchang: $error',
+              style: TextStyle(color: context.colors.error),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -54,7 +59,8 @@ class EventListWidget extends ConsumerWidget {
           // Festivals section
           if (panchang.hasFestivals) ...[
             Text(
-              'Festivals & Events',
+              AppLocalizations.of(context)?.festivalsAndEvents ??
+                  'Festivals & Events',
               style: context.textTheme.headlineMedium?.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 12),
@@ -99,7 +105,10 @@ class EventListWidget extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${panchang.paksha} Paksha',
+                      AppLocalizations.of(
+                            context,
+                          )?.pakshaWithName(panchang.paksha) ??
+                          '${panchang.paksha} Paksha',
                       style: context.textTheme.headlineMedium?.copyWith(
                         fontSize: 20,
                         color: context.colors.primary,
@@ -228,7 +237,8 @@ class EventListWidget extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No festivals on this day',
+            AppLocalizations.of(context)?.noFestivalsOnThisDay ??
+                'No festivals on this day',
             style: context.textTheme.bodyLarge?.copyWith(
               color: context.colors.onSurface.withValues(alpha: 0.6),
             ),

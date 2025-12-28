@@ -1,0 +1,140 @@
+{
+  "@@locale": "hi",
+  
+  "appTitle": "तिथि",
+  "vedaCalendar": "वैदिक पंचांग",
+  
+  "settings": "सेटिंग्स",
+  "appearance": "प्रदर्शन",
+  "preferences": "प्राथमिकताएँ",
+  "calendar": "पंचांग",
+  "dataStorage": "डेटा और संग्रहण",
+  "accessibility": "सुगम्यता",
+  "about": "परिचय",
+  
+  "themeAuto": "स्वचालित",
+  "themeShukla": "शुक्ल",
+  "themeDark": "गहरा",
+  "themeKrishna": "कृष्ण",
+  
+  "dailyNotifications": "दैनिक सूचनाएँ",
+  "notificationScheduled": "दैनिक निर्धारित",
+  "getNotifiedTithiDaily": "प्रतिदिन तिथि की सूचना प्राप्त करें",
+  "notificationTime": "सूचना समय",
+  
+  "autoLocation": "स्वचालित स्थान",
+  "useGpsForTithi": "सटीक तिथि गणना के लिए GPS का उपयोग करें",
+  "usingLocation": "उपयोग: {cityName}",
+  "fetchingLocation": "स्थान प्राप्त हो रहा है...",
+  "locationUnavailable": "स्थान अनुपलब्ध",
+  
+  "homeLocation": "घर का स्थान",
+  "notSet": "सेट नहीं",
+  "setHomeLocation": "घर का स्थान सेट करें",
+  "dragMapToPin": "पिन को अपने घर पर लगाने के लिए नक्शा खींचें",
+  "setThisLocation": "यह स्थान सेट करें",
+  "homeLocationSetTo": "घर का स्थान {address} पर सेट किया गया",
+  "errorSettingLocation": "स्थान सेट करने में त्रुटि: {error}",
+  
+  "startOfWeek": "सप्ताह की शुरुआत",
+  "sunday": "रविवार",
+  "monday": "सोमवार",
+  
+  "primaryView": "प्राथमिक दृश्य",
+  "tithi": "तिथि",
+  "festival": "त्योहार",
+  "moon": "चंद्रमा",
+  
+  "primaryCalendar": "प्राथमिक पंचांग",
+  "secondaryCalendar": "द्वितीयक पंचांग",
+  "selectPrimaryCalendar": "प्राथमिक पंचांग चुनें",
+  "selectSecondaryCalendar": "द्वितीयक पंचांग चुनें",
+  
+  "clearLocationCache": "स्थान कैश साफ़ करें",
+  "locationCacheCleared": "स्थान कैश साफ़ किया गया",
+  "resetAppSettings": "ऐप सेटिंग्स रीसेट करें",
+  "resetSettingsTitle": "सेटिंग्स रीसेट करें?",
+  "resetSettingsMessage": "यह आपकी सभी प्राथमिकताओं और डेटा को डिफ़ॉल्ट पर रीसेट कर देगा। यह पूर्ववत नहीं किया जा सकता।",
+  "cancel": "रद्द करें",
+  "reset": "रीसेट",
+  "appResetComplete": "ऐप रीसेट पूर्ण",
+  
+  "reduceMotion": "गति कम करें",
+  "disableAnimations": "एनिमेशन और इफेक्ट्स बंद करें",
+  "hapticFeedback": "हैप्टिक फीडबैक",
+  "vibrateOnTouch": "स्पर्श पर कंपन",
+  "highContrast": "उच्च कंट्रास्ट",
+  "solidBackgrounds": "बेहतर पठनीयता के लिए ठोस पृष्ठभूमि",
+  "largeText": "बड़ा टेक्स्ट",
+  "increaseTextSize": "वैश्विक रूप से टेक्स्ट का आकार बढ़ाएं",
+  
+  "language": "भाषा",
+  "selectLanguage": "भाषा चुनें",
+  "systemDefault": "सिस्टम डिफ़ॉल्ट",
+  
+  "privacyPolicy": "गोपनीयता नीति",
+  "madeWithLove": "सनातन धर्म के लिए ❤️ से बनाया गया",
+  
+  "shareApp": "ऐप शेयर करें",
+  "shareAppMessage": "तिथि देखें - वैदिक पंचांग ऐप! अभी डाउनलोड करें: https://example.com/tithi",
+  "rateUs": "रेट करें",
+  "aboutApp": "परिचय",
+  
+  "calendarView": "पंचांग दृश्य",
+  "scheduleView": "अनुसूची दृश्य",
+  "switchToCalendar": "मासिक पंचांग पर जाएँ",
+  "switchToSchedule": "कार्यक्रम सूची पर जाएँ",
+  
+  "versionText": "संस्करण {version}",
+  
+  "events": "कार्यक्रम",
+  "festivalsAndEvents": "त्योहार और कार्यक्रम",
+  "noFestivalsOnThisDay": "आज कोई त्योहार नहीं",
+  "todaysFestival": "आज का त्योहार",
+  "noFestivalsToday": "तिथि • आज कोई त्योहार नहीं",
+  
+  "errorLoadingPanchang": "पंचांग लोड करने में त्रुटि: {error}",
+  
+  "panchangDetails": "पंचांग विवरण",
+  "paksha": "पक्ष",
+  "pakshaWithName": "{paksha} पक्ष",
+  "waxing": "शुक्ल",
+  "waning": "कृष्ण",
+  "waxingMoonPhase": "शुक्ल पक्ष - बढ़ता चंद्रमा",
+  "waningMoonPhase": "कृष्ण पक्ष - घटता चंद्रमा",
+  "category": "श्रेणी",
+  "general": "सामान्य",
+  
+  "ritualsAndPractices": "विधि और साधना",
+  
+  "locationAccess": "स्थान पहुँच",
+  "enableLocation": "स्थान सक्षम करें",
+  "skip": "छोड़ें",
+  "locationAccessDescription": "तिथि आपके शहर के लिए सटीक पंचांग डेटा की गणना के लिए आपके स्थान का उपयोग करता है।",
+  "locationAccessBenefits": "• अधिक सटीक तिथि गणना\n• स्थान-विशिष्ट चंद्रोदय/सूर्यास्त समय\n• आपका स्थान डेटा आपके डिवाइस पर रहता है",
+  
+  "locationDisabled": "स्थान अक्षम",
+  "locationDisabledMessage": "स्थान अक्षम है। अपने शहर के आधार पर अधिक सटीक पंचांग गणना के लिए इसे सक्षम करें।",
+  "notNow": "अभी नहीं",
+  "enable": "सक्षम करें",
+  
+  "pleaseEnableLocationServices": "कृपया अपने डिवाइस पर स्थान सेवाएँ सक्षम करें",
+  "locationPermissionDenied": "स्थान अनुमति अस्वीकृत। डिफ़ॉल्ट स्थान का उपयोग कर रहे हैं।",
+  "locationEnabledSuccess": "स्थान सफलतापूर्वक सक्षम!",
+  
+  "refreshLocation": "स्थान रीफ्रेश करें",
+  "goToToday": "आज पर जाएँ",
+  "initializing": "प्रारंभ हो रहा है...",
+  
+  "privacyYourDataStays": "आपका डेटा आपके पास रहता है",
+  "privacyYourDataDesc": "तिथि को गोपनीयता-प्रथम, ऑफ़लाइन-प्रथम वास्तुकला के साथ डिज़ाइन किया गया है। सभी खगोलीय गणनाएँ, पंचांग निर्माण और कार्यक्रम प्रसंस्करण सीधे आपके डिवाइस पर होते हैं। हम किसी भी बाहरी सर्वर पर आपका व्यक्तिगत डेटा एकत्र, संग्रहीत या प्रेषित नहीं करते।",
+  "privacyLocationUsage": "स्थान उपयोग",
+  "privacyLocationDesc": "हम केवल सटीक तिथि, नक्षत्र और सूर्योदय/सूर्यास्त समय की गणना के लिए आपके स्थान तक पहुँच का अनुरोध करते हैं, जो आपके विशिष्ट भौगोलिक निर्देशांकों पर निर्भर करते हैं। आपका स्थान डेटा स्थानीय रूप से ऐप द्वारा संसाधित होता है।",
+  "privacyOffline": "ऑफ़लाइन कार्यक्षमता",
+  "privacyOfflineDesc": "प्रारंभिक डाउनलोड के बाद ऐप पूरी तरह से ऑफ़लाइन काम करता है। इसमें उच्च-सटीकता ग्रहीय गणनाओं के लिए आवश्यक स्विस एफेमेरिस डेटा एम्बेडेड है।",
+  "privacyOpenSource": "ओपन सोर्स पारदर्शिता",
+  "privacyOpenSourceDesc": "तिथि एक ओपन-सोर्स प्रोजेक्ट है। हमारा कोड ऑडिट के लिए सार्वजनिक रूप से उपलब्ध है, यह सुनिश्चित करते हुए कि हमारी गोपनीयता प्रतिबद्धताएँ सत्यापित पारदर्शिता द्वारा समर्थित हैं।",
+  "lastUpdated": "अंतिम अपडेट: दिसंबर 2025",
+  
+  "applicationLegalese": "© 2025 तिथि प्रोजेक्ट\nसनातन धर्म के लिए ❤️ से बनाया गया"
+}

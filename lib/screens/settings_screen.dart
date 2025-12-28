@@ -7,6 +7,8 @@ import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/notification_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/locale_provider.dart';
+import '../l10n/app_localizations.dart';
 
 import '../theme/app_theme.dart';
 import 'privacy_policy_screen.dart';
@@ -18,10 +20,11 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(l10n?.settings ?? 'Settings'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -62,12 +65,15 @@ class SettingsScreen extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                _buildSectionHeader(context, 'APPEARANCE'),
+                _buildSectionHeader(context, l10n?.appearance ?? 'APPEARANCE'),
                 _buildThemeCard(context, ref),
 
                 const SizedBox(height: 32),
 
-                _buildSectionHeader(context, 'PREFERENCES'),
+                _buildSectionHeader(
+                  context,
+                  l10n?.preferences ?? 'PREFERENCES',
+                ),
                 _buildSettingsCard(
                   context,
                   ref: ref,
@@ -94,10 +100,14 @@ class SettingsScreen extends ConsumerWidget {
                                 _buildSwitchTile(
                                   context,
                                   icon: Icons.notifications_active_rounded,
-                                  title: 'Daily Notifications',
+                                  title:
+                                      l10n?.dailyNotifications ??
+                                      'Daily Notifications',
                                   subtitle: isEnabled
-                                      ? 'Scheduled daily'
-                                      : 'Get notified about Tithi daily',
+                                      ? (l10n?.notificationScheduled ??
+                                            'Scheduled daily')
+                                      : (l10n?.getNotifiedTithiDaily ??
+                                            'Get notified about Tithi daily'),
                                   value: isEnabled,
                                   ref: ref,
                                   onChanged: (val) async {
@@ -127,7 +137,9 @@ class SettingsScreen extends ConsumerWidget {
                                   _buildActionTile(
                                     context,
                                     icon: Icons.access_time_rounded,
-                                    title: 'Notification Time',
+                                    title:
+                                        l10n?.notificationTime ??
+                                        'Notification Time',
                                     ref: ref,
                                     trailing: Text(
                                       _formatTime(
@@ -214,13 +226,23 @@ class SettingsScreen extends ConsumerWidget {
                             return _buildSwitchTile(
                               context,
                               icon: Icons.location_on_rounded,
-                              title: 'Auto Location',
+                              title: l10n?.autoLocation ?? 'Auto Location',
                               subtitle: locationAsync.when(
-                                data: (loc) => loc?.cityName != null
-                                    ? 'Using: ${loc!.cityName}'
-                                    : 'Use GPS for precise Tithi calculation',
-                                loading: () => 'Fetching location...',
-                                error: (_, _) => 'Location unavailable',
+                                data: (loc) {
+                                  final cityName = loc?.cityName;
+                                  if (cityName != null) {
+                                    return l10n?.usingLocation(cityName) ??
+                                        'Using: $cityName';
+                                  }
+                                  return l10n?.useGpsForTithi ??
+                                      'Use GPS for precise Tithi calculation';
+                                },
+                                loading: () =>
+                                    l10n?.fetchingLocation ??
+                                    'Fetching location...',
+                                error: (_, _) =>
+                                    l10n?.locationUnavailable ??
+                                    'Location unavailable',
                               ),
                               value: isEnabled,
                               ref: ref,
@@ -252,12 +274,13 @@ class SettingsScreen extends ConsumerWidget {
                         return _buildActionTile(
                           context,
                           icon: Icons.home_rounded,
-                          title: 'Home Location',
+                          title: l10n?.homeLocation ?? 'Home Location',
                           ref: ref,
                           trailing: SizedBox(
                             width: 120,
                             child: Text(
-                              homeLocation?.cityName ?? 'Not set',
+                              homeLocation?.cityName ??
+                                  (l10n?.notSet ?? 'Not set'),
                               textAlign: TextAlign.end,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -279,12 +302,42 @@ class SettingsScreen extends ConsumerWidget {
                         );
                       },
                     ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    // Language Selection
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final currentLocale = ref.watch(localeProvider);
+                        final l10n = AppLocalizations.of(context);
+                        final currentName = currentLocale == null
+                            ? l10n?.systemDefault ?? 'System Default'
+                            : findSupportedLocale(currentLocale)?.nativeName ??
+                                  currentLocale.languageCode;
+
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.language_rounded,
+                          title: l10n?.language ?? 'Language',
+                          ref: ref,
+                          trailing: Text(
+                            currentName,
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () => _showLanguagePicker(context, ref),
+                        );
+                      },
+                    ),
                   ],
                 ),
 
                 const SizedBox(height: 32),
 
-                _buildSectionHeader(context, 'CALENDAR'),
+                _buildSectionHeader(context, l10n?.calendar ?? 'CALENDAR'),
                 _buildSettingsCard(
                   context,
                   ref: ref,
@@ -295,12 +348,12 @@ class SettingsScreen extends ConsumerWidget {
                         return _buildActionTile(
                           context,
                           icon: Icons.calendar_today_rounded,
-                          title: 'Start of Week',
+                          title: l10n?.startOfWeek ?? 'Start of Week',
                           ref: ref,
                           trailing: Text(
                             startOfWeek == StartingDayOfWeek.sunday
-                                ? 'Sunday'
-                                : 'Monday',
+                                ? (l10n?.sunday ?? 'Sunday')
+                                : (l10n?.monday ?? 'Monday'),
                             style: context.textTheme.bodyMedium?.copyWith(
                               color: context.colors.primary,
                               fontWeight: FontWeight.bold,
@@ -328,14 +381,14 @@ class SettingsScreen extends ConsumerWidget {
                         return _buildActionTile(
                           context,
                           icon: Icons.view_agenda_rounded,
-                          title: 'Primary View',
+                          title: l10n?.primaryView ?? 'Primary View',
                           ref: ref,
                           trailing: Text(
                             primaryView == PrimaryEventView.tithi
-                                ? 'Tithi'
+                                ? (l10n?.tithi ?? 'Tithi')
                                 : primaryView == PrimaryEventView.festival
-                                ? 'Festival'
-                                : 'Moon',
+                                ? (l10n?.festival ?? 'Festival')
+                                : (l10n?.moon ?? 'Moon'),
                             style: context.textTheme.bodyMedium?.copyWith(
                               color: context.colors.primary,
                               fontWeight: FontWeight.bold,
@@ -367,7 +420,7 @@ class SettingsScreen extends ConsumerWidget {
                         return _buildActionTile(
                           context,
                           icon: Icons.event_note_rounded,
-                          title: 'Primary Calendar',
+                          title: l10n?.primaryCalendar ?? 'Primary Calendar',
                           ref: ref,
                           trailing: Text(
                             primarySystem.label,
@@ -396,7 +449,8 @@ class SettingsScreen extends ConsumerWidget {
                         return _buildActionTile(
                           context,
                           icon: Icons.event_available_rounded,
-                          title: 'Secondary Calendar',
+                          title:
+                              l10n?.secondaryCalendar ?? 'Secondary Calendar',
                           ref: ref,
                           trailing: Text(
                             secondarySystem.label,
@@ -418,7 +472,10 @@ class SettingsScreen extends ConsumerWidget {
 
                 const SizedBox(height: 32),
 
-                _buildSectionHeader(context, 'DATA & STORAGE'),
+                _buildSectionHeader(
+                  context,
+                  l10n?.dataStorage ?? 'DATA & STORAGE',
+                ),
                 _buildSettingsCard(
                   context,
                   ref: ref,
@@ -426,15 +483,18 @@ class SettingsScreen extends ConsumerWidget {
                     _buildActionTile(
                       context,
                       icon: Icons.cleaning_services_rounded,
-                      title: 'Clear Location Cache',
+                      title: l10n?.clearLocationCache ?? 'Clear Location Cache',
                       ref: ref,
                       onTap: () async {
                         final scaffold = ScaffoldMessenger.of(context);
                         await ref.read(locationServiceProvider).clearCache();
                         ref.invalidate(currentLocationProvider);
                         scaffold.showSnackBar(
-                          const SnackBar(
-                            content: Text('Location cache cleared'),
+                          SnackBar(
+                            content: Text(
+                              l10n?.locationCacheCleared ??
+                                  'Location cache cleared',
+                            ),
                           ),
                         );
                       },
@@ -446,7 +506,7 @@ class SettingsScreen extends ConsumerWidget {
                     _buildActionTile(
                       context,
                       icon: Icons.restore_rounded,
-                      title: 'Reset App Settings',
+                      title: l10n?.resetAppSettings ?? 'Reset App Settings',
                       ref: ref,
                       trailing: const Text(
                         'Using default',
@@ -457,20 +517,23 @@ class SettingsScreen extends ConsumerWidget {
                         final confirm = await showDialog<bool>(
                           context: context,
                           builder: (c) => AlertDialog(
-                            title: const Text('Reset Settings?'),
-                            content: const Text(
-                              'This will reset all your preferences and data to default. This cannot be undone.',
+                            title: Text(
+                              l10n?.resetSettingsTitle ?? 'Reset Settings?',
+                            ),
+                            content: Text(
+                              l10n?.resetSettingsMessage ??
+                                  'This will reset all your preferences and data to default. This cannot be undone.',
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(c, false),
-                                child: const Text('Cancel'),
+                                child: Text(l10n?.cancel ?? 'Cancel'),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(c, true),
-                                child: const Text(
-                                  'Reset',
-                                  style: TextStyle(color: Colors.red),
+                                child: Text(
+                                  l10n?.reset ?? 'Reset',
+                                  style: const TextStyle(color: Colors.red),
                                 ),
                               ),
                             ],
@@ -494,8 +557,11 @@ class SettingsScreen extends ConsumerWidget {
 
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('App reset complete'),
+                              SnackBar(
+                                content: Text(
+                                  l10n?.appResetComplete ??
+                                      'App reset complete',
+                                ),
                               ),
                             );
                           }
@@ -507,7 +573,10 @@ class SettingsScreen extends ConsumerWidget {
 
                 const SizedBox(height: 32),
 
-                _buildSectionHeader(context, 'ACCESSIBILITY'),
+                _buildSectionHeader(
+                  context,
+                  l10n?.accessibility ?? 'ACCESSIBILITY',
+                ),
                 _buildSettingsCard(
                   context,
                   ref: ref,
@@ -524,8 +593,10 @@ class SettingsScreen extends ConsumerWidget {
                             _buildSwitchTile(
                               context,
                               icon: Icons.motion_photos_off_outlined,
-                              title: 'Reduce Motion',
-                              subtitle: 'Disable animations & effects',
+                              title: l10n?.reduceMotion ?? 'Reduce Motion',
+                              subtitle:
+                                  l10n?.disableAnimations ??
+                                  'Disable animations & effects',
                               value: accessibility.reduceMotion,
                               ref: ref,
                               onChanged: notifier.toggleReduceMotion,
@@ -539,8 +610,10 @@ class SettingsScreen extends ConsumerWidget {
                             _buildSwitchTile(
                               context,
                               icon: Icons.vibration_rounded,
-                              title: 'Haptic Feedback',
-                              subtitle: 'Vibrate on touch interactions',
+                              title: l10n?.hapticFeedback ?? 'Haptic Feedback',
+                              subtitle:
+                                  l10n?.vibrateOnTouch ??
+                                  'Vibrate on touch interactions',
                               value: accessibility.hapticFeedback,
                               ref: ref,
                               onChanged: notifier.toggleHapticFeedback,
@@ -554,8 +627,9 @@ class SettingsScreen extends ConsumerWidget {
                             _buildSwitchTile(
                               context,
                               icon: Icons.contrast_rounded,
-                              title: 'High Contrast',
+                              title: l10n?.highContrast ?? 'High Contrast',
                               subtitle:
+                                  l10n?.solidBackgrounds ??
                                   'Solid backgrounds for better readability',
                               value: accessibility.highContrast,
                               ref: ref,
@@ -570,8 +644,10 @@ class SettingsScreen extends ConsumerWidget {
                             _buildSwitchTile(
                               context,
                               icon: Icons.text_fields_rounded,
-                              title: 'Large Text',
-                              subtitle: 'Increase text size globally',
+                              title: l10n?.largeText ?? 'Large Text',
+                              subtitle:
+                                  l10n?.increaseTextSize ??
+                                  'Increase text size globally',
                               value: accessibility.largeText,
                               ref: ref,
                               onChanged: notifier.toggleLargeText,
@@ -585,7 +661,7 @@ class SettingsScreen extends ConsumerWidget {
 
                 const SizedBox(height: 32),
 
-                _buildSectionHeader(context, 'ABOUT'),
+                _buildSectionHeader(context, l10n?.about ?? 'ABOUT'),
                 _buildSettingsCard(
                   context,
                   ref: ref,
@@ -593,7 +669,7 @@ class SettingsScreen extends ConsumerWidget {
                     _buildActionTile(
                       context,
                       icon: Icons.privacy_tip_rounded,
-                      title: 'Privacy Policy',
+                      title: l10n?.privacyPolicy ?? 'Privacy Policy',
                       ref: ref,
                       onTap: () => Navigator.push(
                         context,
@@ -608,7 +684,7 @@ class SettingsScreen extends ConsumerWidget {
                 const SizedBox(height: 32),
                 Center(
                   child: Text(
-                    'Made with ❤️ for Sanatan Dharma',
+                    l10n?.madeWithLove ?? 'Made with ❤️ for Sanatan Dharma',
                     style: context.textTheme.labelSmall?.copyWith(
                       color: context.colors.onSurface.withValues(alpha: 0.5),
                     ),
@@ -930,6 +1006,76 @@ class SettingsScreen extends ConsumerWidget {
                           .read(secondaryCalendarSystemProvider.notifier)
                           .setSystem(system);
                     }
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showLanguagePicker(BuildContext context, WidgetRef ref) async {
+    final currentLocale = ref.read(localeProvider);
+    final l10n = AppLocalizations.of(context);
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n?.selectLanguage ?? 'Select Language',
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // System Default option
+              ListTile(
+                title: Text(l10n?.systemDefault ?? 'System Default'),
+                trailing: currentLocale == null
+                    ? Icon(
+                        Icons.check_circle_rounded,
+                        color: context.colors.primary,
+                      )
+                    : null,
+                onTap: () async {
+                  await ref.read(localeProvider.notifier).clearLocale();
+                  if (context.mounted) Navigator.pop(context);
+                },
+              ),
+              const Divider(),
+              // Supported locales
+              ...supportedLocales.map((supported) {
+                final isSelected =
+                    supported.locale.languageCode ==
+                    currentLocale?.languageCode;
+                return ListTile(
+                  title: Text(supported.nativeName),
+                  subtitle: Text(supported.name),
+                  trailing: isSelected
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          color: context.colors.primary,
+                        )
+                      : null,
+                  onTap: () async {
+                    await ref
+                        .read(localeProvider.notifier)
+                        .setLocale(supported.locale);
                     if (context.mounted) Navigator.pop(context);
                   },
                 );

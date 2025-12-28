@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -60,7 +61,9 @@ class AppDrawer extends ConsumerWidget {
                       _buildDrawerItem(
                         context,
                         icon: Icons.settings_rounded,
-                        title: 'Settings',
+                        title:
+                            AppLocalizations.of(context)?.settings ??
+                            'Settings',
                         onTap: () {
                           Navigator.pop(context);
                           Navigator.push(
@@ -75,12 +78,17 @@ class AppDrawer extends ConsumerWidget {
                       _buildDrawerItem(
                         context,
                         icon: Icons.share_rounded,
-                        title: 'Share App',
+                        title:
+                            AppLocalizations.of(context)?.shareApp ??
+                            'Share App',
                         onTap: () {
                           Navigator.pop(context);
                           SharePlus.instance.share(
                             ShareParams(
                               text:
+                                  AppLocalizations.of(
+                                    context,
+                                  )?.shareAppMessage ??
                                   'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
                             ),
                           );
@@ -89,7 +97,8 @@ class AppDrawer extends ConsumerWidget {
                       _buildDrawerItem(
                         context,
                         icon: Icons.star_rounded,
-                        title: 'Rate Us',
+                        title:
+                            AppLocalizations.of(context)?.rateUs ?? 'Rate Us',
                         onTap: () async {
                           Navigator.pop(context);
                           final Uri url = Uri.parse(
@@ -111,16 +120,18 @@ class AppDrawer extends ConsumerWidget {
                       _buildDrawerItem(
                         context,
                         icon: Icons.info_outline_rounded,
-                        title: 'About',
+                        title:
+                            AppLocalizations.of(context)?.aboutApp ?? 'About',
                         onTap: () async {
                           Navigator.pop(context);
                           final version = await ref.read(
                             versionStringProvider.future,
                           );
+                          final l10n = AppLocalizations.of(context);
                           if (context.mounted) {
                             showAboutDialog(
                               context: context,
-                              applicationName: 'Tithi',
+                              applicationName: l10n?.appTitle ?? 'Tithi',
                               applicationVersion: version,
                               applicationIcon: Container(
                                 padding: const EdgeInsets.all(8),
@@ -135,6 +146,7 @@ class AppDrawer extends ConsumerWidget {
                                 ),
                               ),
                               applicationLegalese:
+                                  l10n?.applicationLegalese ??
                                   '© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma',
                             );
                           }
@@ -153,6 +165,7 @@ class AppDrawer extends ConsumerWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
       decoration: BoxDecoration(
@@ -186,14 +199,14 @@ class AppDrawer extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Tithi',
+                l10n?.appTitle ?? 'Tithi',
                 style: context.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: context.colors.onSurface,
                 ),
               ),
               Text(
-                'Vedic Calendar',
+                l10n?.vedaCalendar ?? 'Vedic Calendar',
                 style: context.textTheme.bodySmall?.copyWith(
                   color: context.colors.onSurface.withValues(alpha: 0.7),
                 ),
@@ -250,6 +263,7 @@ class AppDrawer extends ConsumerWidget {
   Widget _buildViewModeToggle(BuildContext context, WidgetRef ref) {
     final currentMode = ref.watch(homeViewModeProvider);
     final isSchedule = currentMode == HomeViewMode.schedule;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -278,14 +292,18 @@ class AppDrawer extends ConsumerWidget {
           ),
         ),
         title: Text(
-          isSchedule ? 'Calendar View' : 'Schedule View',
+          isSchedule
+              ? (l10n?.calendarView ?? 'Calendar View')
+              : (l10n?.scheduleView ?? 'Schedule View'),
           style: context.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w500,
             fontSize: 15,
           ),
         ),
         subtitle: Text(
-          isSchedule ? 'Switch to month calendar' : 'Switch to event list',
+          isSchedule
+              ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
+              : (l10n?.switchToSchedule ?? 'Switch to event list'),
           style: context.textTheme.bodySmall?.copyWith(
             color: context.colors.onSurface.withValues(alpha: 0.5),
             fontSize: 12,
