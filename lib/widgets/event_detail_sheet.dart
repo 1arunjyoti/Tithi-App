@@ -119,7 +119,7 @@ class EventDetailSheet extends ConsumerWidget {
                     ),
 
                     // Rituals
-                    if (festival.rituals.isNotEmpty) ...[
+                    if (festival.rituals.steps.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Text(
                         AppLocalizations.of(context)?.ritualsAndPractices ??
@@ -137,7 +137,7 @@ class EventDetailSheet extends ConsumerWidget {
                           ref: ref,
                         ),
                         child: Column(
-                          children: festival.rituals.asMap().entries.map((
+                          children: festival.rituals.steps.asMap().entries.map((
                             entry,
                           ) {
                             final index = entry.key;

@@ -22,9 +22,11 @@ final panchangForDateProvider = FutureProvider.family<PanchangData, DateTime>((
 ) async {
   // Ensure service is initialized
   await ref.watch(panchangInitProvider.future);
+  // Ensure festivals are loaded
+  await ref.watch(festivalInitProvider.future);
 
   final service = ref.read(panchangServiceProvider);
-  final festivals = await ref.watch(festivalProvider.future);
+  final festivals = ref.read(festivalProvider);
 
   // Get user's location coordinates (defaults to Delhi if unavailable)
   final coords = ref.watch(coordinatesProvider);

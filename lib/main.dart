@@ -13,12 +13,23 @@ import 'providers/accessibility_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'models/festival.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Hive for offline storage
   await Hive.initFlutter();
+
+  // Register Adapters
+  Hive.registerAdapter(FestivalAdapter());
+  Hive.registerAdapter(NameRegionalAdapter());
+  Hive.registerAdapter(VisualsAdapter());
+  Hive.registerAdapter(PurposeAdapter());
+  Hive.registerAdapter(PanchangRulesAdapter());
+  Hive.registerAdapter(RitualsAdapter());
+  Hive.registerAdapter(MediaAdapter());
+
   await Hive.openBox('settings');
 
   // Initialize timezone for notifications
