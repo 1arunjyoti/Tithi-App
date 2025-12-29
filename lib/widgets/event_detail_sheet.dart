@@ -9,13 +9,9 @@ import 'ritual_checklist_widget.dart';
 /// Bottom sheet showing festival details with glassmorphism
 class EventDetailSheet extends ConsumerWidget {
   final Festival festival;
-  final PanchangData panchang;
+  final PanchangData? panchang;
 
-  const EventDetailSheet({
-    super.key,
-    required this.festival,
-    required this.panchang,
-  });
+  const EventDetailSheet({super.key, required this.festival, this.panchang});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -97,18 +93,34 @@ class EventDetailSheet extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildInfoRow(
-                      context,
-                      Icons.brightness_3,
-                      AppLocalizations.of(context)?.paksha ?? 'Paksha',
-                      '${panchang.paksha} (${panchang.isShukla ? (AppLocalizations.of(context)?.waxing ?? "Waxing") : (AppLocalizations.of(context)?.waning ?? "Waning")})',
-                    ),
-                    _buildInfoRow(
-                      context,
-                      Icons.calendar_today,
-                      AppLocalizations.of(context)?.tithi ?? 'Tithi',
-                      '${panchang.tithiName} (T${panchang.tithiNumber})',
-                    ),
+                    if (panchang != null) ...[
+                      _buildInfoRow(
+                        context,
+                        Icons.brightness_3,
+                        AppLocalizations.of(context)?.paksha ?? 'Paksha',
+                        '${panchang!.paksha} (${panchang!.isShukla ? (AppLocalizations.of(context)?.waxing ?? "Waxing") : (AppLocalizations.of(context)?.waning ?? "Waning")})',
+                      ),
+                      _buildInfoRow(
+                        context,
+                        Icons.calendar_today,
+                        AppLocalizations.of(context)?.tithi ?? 'Tithi',
+                        '${panchang!.tithiName} (T${panchang!.tithiNumber})',
+                      ),
+                    ] else ...[
+                      // Generic info from festival object
+                      _buildInfoRow(
+                        context,
+                        Icons.brightness_3,
+                        AppLocalizations.of(context)?.paksha ?? 'Paksha',
+                        festival.paksha,
+                      ),
+                      _buildInfoRow(
+                        context,
+                        Icons.calendar_today,
+                        AppLocalizations.of(context)?.tithi ?? 'Tithi',
+                        'Tithi ${festival.tithi}',
+                      ),
+                    ],
                     _buildInfoRow(
                       context,
                       Icons.category,
@@ -145,9 +157,14 @@ class EventDetailSheet extends ConsumerWidget {
 
                             // Create a stable ID for this ritual instance
                             // Format: YYYY-MM-DD_FestivalID_Index
-                            final dateStr = panchang.date
-                                .toIso8601String()
-                                .split('T')[0];
+                            // Format: YYYY-MM-DD_FestivalID_Index
+                            // If panchang is null (search view), use a generic date prefix so it doesn't crash,
+                            // or maybe just disable interactivity? For now let's use a dummy date.
+                            final dateStr =
+                                panchang?.date.toIso8601String().split(
+                                  'T',
+                                )[0] ??
+                                'generic';
                             final ritualId = '${dateStr}_${festival.id}_$index';
 
                             return RitualChecklistWidget(

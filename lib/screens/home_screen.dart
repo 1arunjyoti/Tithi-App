@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
@@ -13,6 +14,8 @@ import '../widgets/event_list_widget.dart';
 import '../widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/moon_animation_widget.dart';
+import '../widgets/festival_search_delegate.dart';
+import '../widgets/weather_sheet.dart';
 
 /// Main home screen with calendar and event list
 class HomeScreen extends ConsumerWidget {
@@ -24,7 +27,20 @@ class HomeScreen extends ConsumerWidget {
     final cityName = ref.watch(cityNameProvider);
     final accessibility = ref.watch(accessibilityProvider);
     final viewMode = ref.watch(homeViewModeProvider);
+    final focusedMonth = ref.watch(focusedMonthProvider);
+    final selectedDate = ref.watch(selectedDateProvider);
     final isScheduleView = viewMode == HomeViewMode.schedule;
+
+    // Check if we should show the "Jump to Today" button
+    final now = DateTime.now();
+    final isSameMonth =
+        focusedMonth.year == now.year && focusedMonth.month == now.month;
+    final isToday =
+        selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
+    final showJumpToToday = !isSameMonth || !isToday;
+
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
@@ -34,6 +50,21 @@ class HomeScreen extends ConsumerWidget {
         title: Text(l10n?.appTitle ?? 'Tithi'),
         backgroundColor: Colors.transparent,
         actions: [
+          // Search button
+          IconButton(
+            icon: Icon(Icons.search_rounded, color: context.colors.onSurface),
+            tooltip: 'Search Festivals', // Localize later
+            onPressed: () {
+              showSearch(
+                context: context,
+                delegate: FestivalSearchDelegate(
+                  ref: ref,
+                  parentContext: context,
+                ),
+              );
+            },
+          ),
+
           // Location refresh button
           IconButton(
             icon: Icon(
@@ -44,19 +75,22 @@ class HomeScreen extends ConsumerWidget {
             onPressed: () => _refreshLocation(context, ref),
           ),
 
-          // Go to Today button
-          IconButton(
-            icon: Icon(Icons.today_rounded, color: context.colors.onSurface),
-            tooltip: l10n?.goToToday ?? 'Go to Today',
-            onPressed: () {
-              final now = DateTime.now();
-              ref.read(focusedMonthProvider.notifier).state = now;
-              ref.read(selectedDateProvider.notifier).state = now;
-            },
-          ),
           const SizedBox(width: 8),
         ],
       ),
+      floatingActionButton: showJumpToToday
+          ? FloatingActionButton(
+              onPressed: () {
+                final now = DateTime.now();
+                ref.read(focusedMonthProvider.notifier).state = now;
+                ref.read(selectedDateProvider.notifier).state = now;
+              },
+              tooltip: l10n?.goToToday ?? 'Go to Today',
+              backgroundColor: context.colors.primary,
+              foregroundColor: context.colors.onPrimary,
+              child: const Icon(Icons.today_rounded),
+            )
+          : null,
       body: Stack(
         children: [
           // Ambient Background Gradient
@@ -243,77 +277,147 @@ class HomeScreen extends ConsumerWidget {
         break;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        borderRadius: 30, // Pill shape
-        ref: ref,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Icon(icon, size: 20, color: context.colors.primary),
-          MoonAnimationWidget(
-            paksha: panchang.paksha,
-            tithi: panchang.tithiNumber,
-            size: 40,
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: context.colors.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => const WeatherSheet(),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        decoration: AppTheme.glassmorphism(
+          context: context,
+          opacity: 0.1,
+          borderRadius: 30, // Pill shape
+          ref: ref,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Icon(icon, size: 20, color: context.colors.primary),
+            MoonAnimationWidget(
+              paksha: panchang.paksha,
+              tithi: panchang.tithiNumber,
+              size: 40,
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: context.colors.onSurface,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
-                  fontSize: 12,
-                  letterSpacing: 0.5,
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: context.colors.onSurface.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            // City name indicator
+            if (cityName != null) ...[
+              const SizedBox(width: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: context.colors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 14,
+                      color: context.colors.primary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      cityName,
+                      style: TextStyle(
+                        color: context.colors.primary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          // City name indicator
-          if (cityName != null) ...[
-            const SizedBox(width: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
+            // Sunrise/Sunset indicator
+            if (panchang.sunrise != null && panchang.sunset != null) ...[
+              const SizedBox(width: 12),
+              Container(
+                height: 32,
+                width: 1,
+                color: context.colors.onSurface.withValues(alpha: 0.2),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 14,
-                    color: context.colors.primary,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.wb_sunny_rounded,
+                        size: 14,
+                        color: Colors.orange.shade300,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat.jm().format(panchang.sunrise!),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(
-                    cityName,
-                    style: TextStyle(
-                      color: context.colors.primary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.nightlight_round,
+                        size: 14,
+                        color: Colors.indigo.shade300,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        DateFormat.jm().format(panchang.sunset!),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.8,
+                          ),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

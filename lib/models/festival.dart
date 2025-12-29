@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'hindu_month_system.dart';
 
 part 'festival.g.dart';
 
@@ -69,10 +70,15 @@ class Festival {
   List<String> get ritualSteps => rituals.steps;
 
   /// Check if this festival matches the given paksha and tithi
+  ///
+  /// [monthSystem] - The calendar system being used (Amanta or Purnimant).
+  /// Festivals are stored in Amanta format, so when Purnimant is selected,
+  /// the currentMasa is converted to Amanta for accurate matching.
   bool matchesTithi(
     String currentPaksha,
     int currentTithi, [
     String currentMasa = '',
+    HinduMonthSystem monthSystem = HinduMonthSystem.amanta,
   ]) {
     // Skip solar festivals (like Makar Sankranti)
     if (conditions == 'Solar') return false;
@@ -86,7 +92,13 @@ class Festival {
     // Check masa match (or wildcard '*')
     bool masaMatch = true;
     if (masa != '*' && currentMasa.isNotEmpty) {
-      masaMatch = masa == currentMasa;
+      // If using Purnimant system, convert the current masa to Amanta for comparison
+      // since festivals are stored in Amanta format
+      String compareMasa = currentMasa;
+      if (monthSystem == HinduMonthSystem.purnimant) {
+        compareMasa = convertPurnimantToAmanta(currentMasa, currentPaksha);
+      }
+      masaMatch = masa == compareMasa;
     }
 
     return pakshaMatch && tithiMatch && masaMatch;

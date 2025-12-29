@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/panchang_data.dart';
 import '../services/panchang_service.dart';
+import '../services/sunrise_calculator.dart';
 import 'festival_provider.dart';
 import 'location_provider.dart';
+import 'calendar_provider.dart';
 
 /// Provider for PanchangService (already exists, re-export)
 final panchangServiceProvider = Provider<PanchangService>((ref) {
@@ -28,6 +30,9 @@ final panchangForDateProvider = FutureProvider.family<PanchangData, DateTime>((
   final service = ref.read(panchangServiceProvider);
   final festivals = ref.read(festivalProvider);
 
+  // Get user's Hindu month system preference (Amanta or Purnimant)
+  final monthSystem = ref.watch(hinduMonthSystemProvider);
+
   // Get user's location coordinates (defaults to Delhi if unavailable)
   final coords = ref.watch(coordinatesProvider);
   double latitude = 28.6139;
@@ -37,13 +42,28 @@ final panchangForDateProvider = FutureProvider.family<PanchangData, DateTime>((
     longitude = coords.value.longitude;
   }
 
+  // Calculate actual sunrise time for this date and location
+  // Hindu day traditionally starts at sunrise, so tithi at sunrise
+  // determines which tithi "owns" that Gregorian date
+  final sunriseTime = SunriseCalculator.calculateSunriseIST(
+    date: date,
+    latitude: latitude,
+    longitude: longitude,
+  );
+
+  final sunsetTime = SunriseCalculator.calculateSunsetIST(
+    date: date,
+    latitude: latitude,
+    longitude: longitude,
+  );
+
   final rawTithi = await service.calculateTithi(
-    date,
+    sunriseTime,
     latitude: latitude,
     longitude: longitude,
   );
   final masa = await service.calculateMasa(
-    date,
+    sunriseTime,
     rawTithi,
     latitude: latitude,
     longitude: longitude,
@@ -56,6 +76,9 @@ final panchangForDateProvider = FutureProvider.family<PanchangData, DateTime>((
     rawTithi: rawTithi,
     masa: masa,
     allFestivals: festivals,
+    monthSystem: monthSystem,
+    sunrise: sunriseTime,
+    sunset: sunsetTime,
   );
 });
 

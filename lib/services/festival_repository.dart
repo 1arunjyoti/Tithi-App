@@ -7,21 +7,38 @@ import '../models/festival.dart';
 /// Repository for handling Festival data persistence with Hive
 class FestivalRepository {
   static const String boxName = 'festivals';
+  static const String settingsBoxName = 'festival_settings';
+
+  /// Increment this version when festivals.json is updated to force re-seeding
+  static const int festivalsVersion = 3;
 
   /// Cached festival list to avoid repeated toList() calls
   List<Festival>? _cachedFestivals;
 
   /// Initialize the repository
   ///
-  /// Opens the Hive box and seeds data from JSON if the box is empty.
+  /// Opens the Hive box and seeds data from JSON if the box is empty
+  /// or if the festivals version has changed.
   Future<void> init() async {
     final box = await Hive.openBox<Festival>(boxName);
+    final settingsBox = await Hive.openBox<int>(settingsBoxName);
 
-    if (box.isEmpty) {
-      // Seed data from JSON
+    final storedVersion = settingsBox.get('version', defaultValue: 0);
+    final needsReseed = box.isEmpty || storedVersion != festivalsVersion;
+
+    if (needsReseed) {
+      debugPrint(
+        'Festival data needs update (stored version: $storedVersion, current: $festivalsVersion)',
+      );
+      // Clear old data and re-seed
+      await box.clear();
       await _seedData(box);
+      // Update stored version
+      await settingsBox.put('version', festivalsVersion);
     } else {
-      debugPrint('Loaded ${box.length} festivals from Hive cache');
+      debugPrint(
+        'Loaded ${box.length} festivals from Hive cache (version $storedVersion)',
+      );
     }
 
     // Cache the list after init

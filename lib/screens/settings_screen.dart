@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import 'privacy_policy_screen.dart';
 import '../providers/accessibility_provider.dart';
 import '../screens/location_picker_screen.dart';
+import '../models/hindu_month_system.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -467,6 +468,143 @@ class SettingsScreen extends ConsumerWidget {
                         );
                       },
                     ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    // Hindu Month System (Amanta/Purnimant)
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final monthSystem = ref.watch(hinduMonthSystemProvider);
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.date_range_rounded,
+                          title: 'Hindu Month System',
+                          ref: ref,
+                          trailing: Text(
+                            monthSystem.label,
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () =>
+                              _showHinduMonthSystemPicker(context, ref),
+                        );
+                      },
+                    ),
+                    Divider(
+                      height: 1,
+                      color: context.colors.onSurface.withValues(alpha: 0.1),
+                    ),
+                    // Hindu Year Era (Vikram/Shaka Samvat)
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final yearEra = ref.watch(hinduYearEraProvider);
+                        return _buildActionTile(
+                          context,
+                          icon: Icons.calendar_month_rounded,
+                          title: 'Hindu Year Era',
+                          ref: ref,
+                          trailing: Text(
+                            yearEra.shortLabel,
+                            style: context.textTheme.bodyMedium?.copyWith(
+                              color: context.colors.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          onTap: () => _showHinduYearEraPicker(context, ref),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                _buildSectionHeader(
+                  context,
+                  l10n?.accessibility ?? 'ACCESSIBILITY',
+                ),
+                _buildSettingsCard(
+                  context,
+                  ref: ref,
+                  children: [
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final accessibility = ref.watch(accessibilityProvider);
+                        final notifier = ref.read(
+                          accessibilityProvider.notifier,
+                        );
+
+                        return Column(
+                          children: [
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.motion_photos_off_outlined,
+                              title: l10n?.reduceMotion ?? 'Reduce Motion',
+                              subtitle:
+                                  l10n?.disableAnimations ??
+                                  'Disable animations & effects',
+                              value: accessibility.reduceMotion,
+                              ref: ref,
+                              onChanged: notifier.toggleReduceMotion,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.vibration_rounded,
+                              title: l10n?.hapticFeedback ?? 'Haptic Feedback',
+                              subtitle:
+                                  l10n?.vibrateOnTouch ??
+                                  'Vibrate on touch interactions',
+                              value: accessibility.hapticFeedback,
+                              ref: ref,
+                              onChanged: notifier.toggleHapticFeedback,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.contrast_rounded,
+                              title: l10n?.highContrast ?? 'High Contrast',
+                              subtitle:
+                                  l10n?.solidBackgrounds ??
+                                  'Solid backgrounds for better readability',
+                              value: accessibility.highContrast,
+                              ref: ref,
+                              onChanged: notifier.toggleHighContrast,
+                            ),
+                            Divider(
+                              height: 1,
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                            ),
+                            _buildSwitchTile(
+                              context,
+                              icon: Icons.text_fields_rounded,
+                              title: l10n?.largeText ?? 'Large Text',
+                              subtitle:
+                                  l10n?.increaseTextSize ??
+                                  'Increase text size globally',
+                              value: accessibility.largeText,
+                              ref: ref,
+                              onChanged: notifier.toggleLargeText,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
 
@@ -566,94 +704,6 @@ class SettingsScreen extends ConsumerWidget {
                             );
                           }
                         }
-                      },
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 32),
-
-                _buildSectionHeader(
-                  context,
-                  l10n?.accessibility ?? 'ACCESSIBILITY',
-                ),
-                _buildSettingsCard(
-                  context,
-                  ref: ref,
-                  children: [
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final accessibility = ref.watch(accessibilityProvider);
-                        final notifier = ref.read(
-                          accessibilityProvider.notifier,
-                        );
-
-                        return Column(
-                          children: [
-                            _buildSwitchTile(
-                              context,
-                              icon: Icons.motion_photos_off_outlined,
-                              title: l10n?.reduceMotion ?? 'Reduce Motion',
-                              subtitle:
-                                  l10n?.disableAnimations ??
-                                  'Disable animations & effects',
-                              value: accessibility.reduceMotion,
-                              ref: ref,
-                              onChanged: notifier.toggleReduceMotion,
-                            ),
-                            Divider(
-                              height: 1,
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.1,
-                              ),
-                            ),
-                            _buildSwitchTile(
-                              context,
-                              icon: Icons.vibration_rounded,
-                              title: l10n?.hapticFeedback ?? 'Haptic Feedback',
-                              subtitle:
-                                  l10n?.vibrateOnTouch ??
-                                  'Vibrate on touch interactions',
-                              value: accessibility.hapticFeedback,
-                              ref: ref,
-                              onChanged: notifier.toggleHapticFeedback,
-                            ),
-                            Divider(
-                              height: 1,
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.1,
-                              ),
-                            ),
-                            _buildSwitchTile(
-                              context,
-                              icon: Icons.contrast_rounded,
-                              title: l10n?.highContrast ?? 'High Contrast',
-                              subtitle:
-                                  l10n?.solidBackgrounds ??
-                                  'Solid backgrounds for better readability',
-                              value: accessibility.highContrast,
-                              ref: ref,
-                              onChanged: notifier.toggleHighContrast,
-                            ),
-                            Divider(
-                              height: 1,
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.1,
-                              ),
-                            ),
-                            _buildSwitchTile(
-                              context,
-                              icon: Icons.text_fields_rounded,
-                              title: l10n?.largeText ?? 'Large Text',
-                              subtitle:
-                                  l10n?.increaseTextSize ??
-                                  'Increase text size globally',
-                              value: accessibility.largeText,
-                              ref: ref,
-                              onChanged: notifier.toggleLargeText,
-                            ),
-                          ],
-                        );
                       },
                     ),
                   ],
@@ -1076,6 +1126,164 @@ class SettingsScreen extends ConsumerWidget {
                     await ref
                         .read(localeProvider.notifier)
                         .setLocale(supported.locale);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showHinduMonthSystemPicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final currentSystem = ref.read(hinduMonthSystemProvider);
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Hindu Month System',
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Choose how months are named during Krishna Paksha',
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colors.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...HinduMonthSystem.values.map((system) {
+                final isSelected = system == currentSystem;
+                return ListTile(
+                  title: Text(
+                    system.label,
+                    style: TextStyle(
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? context.colors.primary
+                          : context.colors.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    system.description,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colors.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          color: context.colors.primary,
+                        )
+                      : null,
+                  onTap: () async {
+                    await ref
+                        .read(hinduMonthSystemProvider.notifier)
+                        .setSystem(system);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showHinduYearEraPicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final currentEra = ref.read(hinduYearEraProvider);
+
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Hindu Year Era',
+                style: context.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'Choose the calendar era for year display',
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colors.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...HinduYearEra.values.map((era) {
+                final isSelected = era == currentEra;
+                return ListTile(
+                  title: Text(
+                    era.label,
+                    style: TextStyle(
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? context.colors.primary
+                          : context.colors.onSurface,
+                    ),
+                  ),
+                  subtitle: Text(
+                    era.description,
+                    style: context.textTheme.bodySmall?.copyWith(
+                      color: context.colors.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          color: context.colors.primary,
+                        )
+                      : null,
+                  onTap: () async {
+                    await ref.read(hinduYearEraProvider.notifier).setEra(era);
                     if (context.mounted) Navigator.pop(context);
                   },
                 );
