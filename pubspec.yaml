@@ -63,7 +63,6 @@ flutter:
     - assets/data/shlokas.json
     - assets/images/
     - assets/icons/
-    - assets/lottie/
     - .env
 
   # fonts:

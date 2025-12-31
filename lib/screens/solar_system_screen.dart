@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +17,43 @@ class SolarSystemScreen extends ConsumerStatefulWidget {
 }
 
 class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
+  bool _showZodiac = true;
+  bool _isAnimating = false;
+  double _animationSpeed = 1.0; // Days per frame
+  Timer? _animationTimer;
+
+  @override
+  void dispose() {
+    _stopAnimation();
+    super.dispose();
+  }
+
+  void _toggleAnimation() {
+    if (_isAnimating) {
+      _stopAnimation();
+    } else {
+      _startAnimation();
+    }
+  }
+
+  void _startAnimation() {
+    setState(() => _isAnimating = true);
+    // ~30 FPS
+    _animationTimer = Timer.periodic(const Duration(milliseconds: 33), (timer) {
+      if (!mounted) {
+        _stopAnimation();
+        return;
+      }
+      _adjustDate(_animationSpeed);
+    });
+  }
+
+  void _stopAnimation() {
+    _animationTimer?.cancel();
+    _animationTimer = null;
+    if (mounted) setState(() => _isAnimating = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final solarSystemAsync = ref.watch(solarSystemDataProvider);
@@ -63,7 +101,13 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   // Solar system visualization
                   Expanded(
                     child: solarSystemAsync.when(
-                      data: (data) => _buildSolarSystem(context, data, isDark),
+                      skipLoadingOnReload: true,
+                      data: (data) => _buildSolarSystem(
+                        context,
+                        data,
+                        isDark,
+                        showZodiac: _showZodiac,
+                      ),
                       loading: () => const Center(
                         child: CircularProgressIndicator.adaptive(),
                       ),
@@ -90,13 +134,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                     ),
                   ),
 
-                  // Planet info panel (if selected)
-                  if (selectedPlanetData != null) ...[
-                    _buildPlanetInfoPanel(context, selectedPlanetData, isDark),
-                    const SizedBox(
-                      height: 50,
-                    ), // Reserve space for zoom controls
-                  ],
+                  // Planet info panel (MOVED TO STACK)
 
                   // Time slider control
                   _buildTimeSlider(context, theme, viewDate),
@@ -105,6 +143,21 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
               // Zoom controls overlay
               _buildZoomControls(context, theme),
+
+              // Planet info panel overlay
+              if (selectedPlanetData != null)
+                Positioned(
+                  top: 100,
+                  right: 16,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 300),
+                    child: _buildPlanetInfoPanel(
+                      context,
+                      selectedPlanetData,
+                      isDark,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -151,6 +204,15 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 8),
+          // Zodiac Toggle
+          _buildModeChip(
+            context,
+            label: '♈',
+            tooltip: 'Toggle Zodiac Ring',
+            isSelected: _showZodiac,
+            onTap: () => setState(() => _showZodiac = !_showZodiac),
           ),
         ],
       ),
@@ -246,7 +308,49 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 2),
+
+          // Animation Controls
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    _isAnimating
+                        ? Icons.pause_circle_filled
+                        : Icons.play_circle_fill,
+                  ),
+                  iconSize: 32,
+                  color: theme.colorScheme.primary,
+                  onPressed: _toggleAnimation,
+                  tooltip: _isAnimating ? 'Pause' : 'Play Animation',
+                ),
+                if (_isAnimating) ...[
+                  const SizedBox(width: 8),
+                  Text('Speed:', style: theme.textTheme.labelSmall),
+                  SizedBox(
+                    width: 100,
+                    child: Slider(
+                      value: _animationSpeed,
+                      min: 0.1,
+                      max: 5.0,
+                      divisions: 10,
+                      label: '${_animationSpeed.toStringAsFixed(1)}x',
+                      onChanged: (val) => setState(() => _animationSpeed = val),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 2),
 
           // Slider
           SliderTheme(
@@ -322,46 +426,23 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     );
   }
 
-  void _adjustDate(int days) {
+  void _adjustDate(double days) {
     final currentDate = ref.read(planetaryViewDateProvider);
+    // Convert days (double) to Duration (microseconds for precision)
+    final micros = (days * 24 * 60 * 60 * 1000 * 1000).round();
     ref.read(planetaryViewDateProvider.notifier).state = currentDate.add(
-      Duration(days: days),
+      Duration(microseconds: micros),
     );
   }
 
   Widget _buildZoomControls(BuildContext context, ThemeData theme) {
     return Positioned(
-      bottom: 160,
+      bottom: 210, // Move up slightly to clear slider area more comfortably
       right: 16,
-      child: Row(
+      child: Column(
+        // Vertical column for better mobile ergonomics
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingActionButton.small(
-            heroTag: 'zoom_out',
-            onPressed: () {
-              final currentZoom =
-                  (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
-              ref.read(zoomLevelProvider.notifier).state = (currentZoom - 0.25)
-                  .clamp(0.5, 3.0);
-            },
-            tooltip: 'Zoom Out',
-            child: const Icon(Icons.remove),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '${(((ref.watch(zoomLevelProvider) as num?)?.toDouble() ?? 1.0) * 100).round()}%',
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
           FloatingActionButton.small(
             heroTag: 'zoom_in',
             onPressed: () {
@@ -373,6 +454,32 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             tooltip: 'Zoom In',
             child: const Icon(Icons.add),
           ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              '${(((ref.watch(zoomLevelProvider) as num?)?.toDouble() ?? 1.0) * 100).round()}%',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.small(
+            heroTag: 'zoom_out',
+            onPressed: () {
+              final currentZoom =
+                  (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
+              ref.read(zoomLevelProvider.notifier).state = (currentZoom - 0.25)
+                  .clamp(0.5, 3.0);
+            },
+            tooltip: 'Zoom Out',
+            child: const Icon(Icons.remove),
+          ),
         ],
       ),
     );
@@ -381,8 +488,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   Widget _buildSolarSystem(
     BuildContext context,
     SolarSystemData data,
-    bool isDark,
-  ) {
+    bool isDark, {
+    required bool showZodiac,
+  }) {
     final selectedPlanet = ref.watch(selectedPlanetProvider);
     // Explicitly handle dynamic/null return from legacy provider
     final double zoomLevel =
@@ -422,6 +530,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               selectedPlanetIndex: selectedIndex,
               isDark: isDark,
               zoomLevel: zoomLevel,
+              showZodiac: showZodiac,
             ),
           ),
         );
@@ -443,11 +552,17 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        ref: ref,
-        borderRadius: 20,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: planetColor.withValues(alpha: 0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
