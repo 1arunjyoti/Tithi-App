@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
+import '../services/share_service.dart';
 import 'ritual_checklist_widget.dart';
 
 /// Bottom sheet showing festival details with glassmorphism
@@ -45,12 +46,27 @@ class EventDetailSheet extends ConsumerWidget {
                   padding: const EdgeInsets.all(24),
                   children: [
                     // Festival name
-                    Text(
-                      festival.name,
-                      style: context.textTheme.headlineLarge?.copyWith(
-                        fontSize: 28,
-                        color: context.colors.primary,
-                      ),
+                    // Festival name and Share button
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            festival.name,
+                            style: context.textTheme.headlineLarge?.copyWith(
+                              fontSize: 28,
+                              color: context.colors.primary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              ShareService().shareFestival(context, festival),
+                          icon: const Icon(Icons.share_outlined),
+                          color: context.colors.primary,
+                          tooltip: 'Share Card',
+                        ),
+                      ],
                     ),
                     if (festival.nameHindi != null) ...[
                       const SizedBox(height: 4),

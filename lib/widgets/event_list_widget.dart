@@ -47,33 +47,29 @@ class EventListWidget extends ConsumerWidget {
     WidgetRef ref,
     PanchangData panchang,
   ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Panchang summary card
-          _buildPanchangCard(context, ref, panchang),
-          const SizedBox(height: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Panchang summary card
+        _buildPanchangCard(context, ref, panchang),
+        const SizedBox(height: 16),
 
-          // Festivals section
-          if (panchang.hasFestivals) ...[
-            Text(
-              AppLocalizations.of(context)?.festivalsAndEvents ??
-                  'Festivals & Events',
-              style: context.textTheme.headlineMedium?.copyWith(fontSize: 18),
-            ),
-            const SizedBox(height: 12),
-            ...panchang.festivals.map(
-              (festival) =>
-                  _buildFestivalCard(context, ref, festival, panchang),
-            ),
-          ] else
-            _buildNoFestivalsCard(context, ref),
+        // Festivals section
+        if (panchang.hasFestivals) ...[
+          Text(
+            AppLocalizations.of(context)?.festivalsAndEvents ??
+                'Festivals & Events',
+            style: context.textTheme.headlineMedium?.copyWith(fontSize: 18),
+          ),
+          const SizedBox(height: 12),
+          ...panchang.festivals.map(
+            (festival) => _buildFestivalCard(context, ref, festival, panchang),
+          ),
+        ] else
+          _buildNoFestivalsCard(context, ref),
 
-          const SizedBox(height: 24),
-        ],
-      ),
+        const SizedBox(height: 24),
+      ],
     );
   }
 

@@ -10,7 +10,7 @@ class FestivalRepository {
   static const String settingsBoxName = 'festival_settings';
 
   /// Increment this version when festivals.json is updated to force re-seeding
-  static const int festivalsVersion = 3;
+  static const int festivalsVersion = 1;
 
   /// Cached festival list to avoid repeated toList() calls
   List<Festival>? _cachedFestivals;

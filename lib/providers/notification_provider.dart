@@ -16,6 +16,9 @@ final notificationInitProvider = FutureProvider<void>((ref) async {
 /// Provider for notification enabled state
 final notificationEnabledProvider = StateProvider<bool>((ref) => false);
 
+/// Provider for Shloka notification enabled state
+final shlokaNotificationEnabledProvider = StateProvider<bool>((ref) => true);
+
 /// Provider for notification time (hour, minute)
 final notificationTimeProvider = StateProvider<({int hour, int minute})>(
   (ref) => (hour: 8, minute: 0),
@@ -28,6 +31,9 @@ final loadNotificationStateProvider = FutureProvider<void>((ref) async {
 
   final enabled = await service.isEnabled();
   ref.read(notificationEnabledProvider.notifier).state = enabled;
+
+  final shlokaEnabled = await service.isShlokaEnabled();
+  ref.read(shlokaNotificationEnabledProvider.notifier).state = shlokaEnabled;
 
   final time = await service.getNotificationTime();
   ref.read(notificationTimeProvider.notifier).state = time;

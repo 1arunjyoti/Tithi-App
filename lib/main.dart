@@ -14,6 +14,7 @@ import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'models/festival.dart';
+import 'models/sankalpa.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -33,6 +34,7 @@ void main() async {
   Hive.registerAdapter(PanchangRulesAdapter());
   Hive.registerAdapter(RitualsAdapter());
   Hive.registerAdapter(MediaAdapter());
+  Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
 
   await Hive.openBox('settings');
 
