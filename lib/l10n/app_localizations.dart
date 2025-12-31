@@ -767,6 +767,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma'**
   String get applicationLegalese;
+
+  /// Title for moon phases screen
+  ///
+  /// In en, this message translates to:
+  /// **'Moon Phases'**
+  String get moonPhases;
+
+  /// Label for next full moon date
+  ///
+  /// In en, this message translates to:
+  /// **'Next Purnima'**
+  String get nextPurnima;
+
+  /// Label for next new moon date
+  ///
+  /// In en, this message translates to:
+  /// **'Next Amavasya'**
+  String get nextAmavasya;
+
+  /// Full moon term
+  ///
+  /// In en, this message translates to:
+  /// **'Purnima'**
+  String get purnima;
+
+  /// New moon term
+  ///
+  /// In en, this message translates to:
+  /// **'Amavasya'**
+  String get amavasya;
+
+  /// Description for Purnima
+  ///
+  /// In en, this message translates to:
+  /// **'Full Moon'**
+  String get fullMoon;
+
+  /// Description for Amavasya
+  ///
+  /// In en, this message translates to:
+  /// **'New Moon'**
+  String get newMoon;
+
+  /// Empty state for upcoming moon phase dates
+  ///
+  /// In en, this message translates to:
+  /// **'No upcoming dates found'**
+  String get noUpcomingDates;
+
+  /// Generic error message for data loading
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading data'**
+  String get errorLoadingData;
+
+  /// Button to retry failed action
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// Section header for astronomy features in drawer
+  ///
+  /// In en, this message translates to:
+  /// **'Astronomy'**
+  String get astronomy;
+
+  /// Title for solar system screen
+  ///
+  /// In en, this message translates to:
+  /// **'Solar System'**
+  String get solarSystem;
+
+  /// Title for planet positions feature
+  ///
+  /// In en, this message translates to:
+  /// **'Planet Positions'**
+  String get planetPositions;
+
+  /// Tooltip for date picker
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get selectDate;
+
+  /// Indicator for retrograde motion
+  ///
+  /// In en, this message translates to:
+  /// **'Retrograde'**
+  String get retrograde;
+
+  /// Label for zodiac sign
+  ///
+  /// In en, this message translates to:
+  /// **'Sign'**
+  String get zodiacSign;
+
+  /// Label for degree position
+  ///
+  /// In en, this message translates to:
+  /// **'Degree'**
+  String get degree;
+
+  /// Label for ecliptic longitude
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get longitude;
+
+  /// Title for eclipses screen
+  ///
+  /// In en, this message translates to:
+  /// **'Eclipses'**
+  String get eclipses;
+
+  /// Section header for solar eclipses
+  ///
+  /// In en, this message translates to:
+  /// **'Solar Eclipses'**
+  String get solarEclipses;
+
+  /// Section header for lunar eclipses
+  ///
+  /// In en, this message translates to:
+  /// **'Lunar Eclipses'**
+  String get lunarEclipses;
+
+  /// Label for maximum eclipse time
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum Eclipse'**
+  String get maxEclipse;
+
+  /// Indicates eclipse is visible locally
+  ///
+  /// In en, this message translates to:
+  /// **'Visible from your location'**
+  String get visibleFromYourLocation;
+
+  /// Indicates eclipse is not visible locally
+  ///
+  /// In en, this message translates to:
+  /// **'Not visible from your location'**
+  String get notVisibleFromYourLocation;
+
+  /// When partial phase starts
+  ///
+  /// In en, this message translates to:
+  /// **'Partial phase begins'**
+  String get partialBegins;
+
+  /// When partial phase ends
+  ///
+  /// In en, this message translates to:
+  /// **'Partial phase ends'**
+  String get partialEnds;
+
+  /// When totality starts
+  ///
+  /// In en, this message translates to:
+  /// **'Totality begins'**
+  String get totalityBegins;
+
+  /// When totality ends
+  ///
+  /// In en, this message translates to:
+  /// **'Totality ends'**
+  String get totalityEnds;
+
+  /// Label for duration
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration;
+
+  /// Label for date
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// Plural form of day
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get days;
+
+  /// Label for today
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
 }
 
 class _AppLocalizationsDelegate

@@ -1,6 +1,5 @@
 {
   "@@locale": "en",
-  
   "appTitle": "Tithi",
   "@appTitle": {
     "description": "The name of the application"
@@ -9,7 +8,6 @@
   "@vedaCalendar": {
     "description": "Subtitle describing the app as a Vedic Calendar"
   },
-  
   "settings": "Settings",
   "@settings": {
     "description": "Settings screen title and menu item"
@@ -38,7 +36,6 @@
   "@about": {
     "description": "Section header for about information"
   },
-  
   "themeAuto": "Auto",
   "@themeAuto": {
     "description": "Auto theme option - follows system/paksha"
@@ -55,7 +52,6 @@
   "@themeKrishna": {
     "description": "Krishna (dark/waning moon) theme option"
   },
-  
   "dailyNotifications": "Daily Notifications",
   "@dailyNotifications": {
     "description": "Setting title for daily notification toggle"
@@ -72,7 +68,6 @@
   "@notificationTime": {
     "description": "Setting to choose notification time"
   },
-  
   "autoLocation": "Auto Location",
   "@autoLocation": {
     "description": "Setting title for automatic GPS location"
@@ -99,7 +94,6 @@
   "@locationUnavailable": {
     "description": "Error state when location cannot be determined"
   },
-  
   "homeLocation": "Home Location",
   "@homeLocation": {
     "description": "Setting title for home location picker"
@@ -140,7 +134,6 @@
       }
     }
   },
-  
   "startOfWeek": "Start of Week",
   "@startOfWeek": {
     "description": "Setting to choose first day of week"
@@ -153,7 +146,6 @@
   "@monday": {
     "description": "Monday day name"
   },
-  
   "primaryView": "Primary View",
   "@primaryView": {
     "description": "Setting to choose primary calendar view type"
@@ -170,7 +162,6 @@
   "@moon": {
     "description": "Moon view option - shows moon phase"
   },
-  
   "primaryCalendar": "Primary Calendar",
   "@primaryCalendar": {
     "description": "Setting to choose primary calendar system"
@@ -187,7 +178,6 @@
   "@selectSecondaryCalendar": {
     "description": "Title for secondary calendar picker dialog"
   },
-  
   "clearLocationCache": "Clear Location Cache",
   "@clearLocationCache": {
     "description": "Action to clear cached location data"
@@ -220,7 +210,6 @@
   "@appResetComplete": {
     "description": "Confirmation after app reset"
   },
-  
   "reduceMotion": "Reduce Motion",
   "@reduceMotion": {
     "description": "Accessibility setting to reduce animations"
@@ -253,7 +242,6 @@
   "@increaseTextSize": {
     "description": "Subtitle for large text setting"
   },
-  
   "language": "Language",
   "@language": {
     "description": "Setting title for language selection"
@@ -266,7 +254,6 @@
   "@systemDefault": {
     "description": "Option to use system language setting"
   },
-  
   "privacyPolicy": "Privacy Policy",
   "@privacyPolicy": {
     "description": "Link to privacy policy screen"
@@ -275,7 +262,6 @@
   "@madeWithLove": {
     "description": "Footer text showing app dedication"
   },
-  
   "shareApp": "Share App",
   "@shareApp": {
     "description": "Menu item to share the app"
@@ -292,7 +278,6 @@
   "@aboutApp": {
     "description": "Menu item for about dialog"
   },
-  
   "calendarView": "Calendar View",
   "@calendarView": {
     "description": "Option to switch to calendar/month view"
@@ -309,7 +294,6 @@
   "@switchToSchedule": {
     "description": "Subtitle when in calendar view"
   },
-  
   "versionText": "Version {version}",
   "@versionText": {
     "description": "App version display text",
@@ -320,7 +304,6 @@
       }
     }
   },
-  
   "events": "EVENTS",
   "@events": {
     "description": "Section header for events list"
@@ -341,7 +324,6 @@
   "@noFestivalsToday": {
     "description": "Subtitle when no festivals today"
   },
-  
   "errorLoadingPanchang": "Error loading panchang: {error}",
   "@errorLoadingPanchang": {
     "description": "Error message when panchang data fails to load",
@@ -352,7 +334,6 @@
       }
     }
   },
-  
   "panchangDetails": "Panchang Details",
   "@panchangDetails": {
     "description": "Section title for panchang information"
@@ -395,12 +376,10 @@
   "@general": {
     "description": "Default category name"
   },
-  
   "ritualsAndPractices": "Rituals & Practices",
   "@ritualsAndPractices": {
     "description": "Section title for ritual checklist"
   },
-  
   "locationAccess": "Location Access",
   "@locationAccess": {
     "description": "Title for location permission dialog"
@@ -421,7 +400,6 @@
   "@locationAccessBenefits": {
     "description": "Benefits of enabling location"
   },
-  
   "locationDisabled": "Location Disabled",
   "@locationDisabled": {
     "description": "Title when location is off"
@@ -438,7 +416,6 @@
   "@enable": {
     "description": "Button to enable feature"
   },
-  
   "pleaseEnableLocationServices": "Please enable location services on your device",
   "@pleaseEnableLocationServices": {
     "description": "Message when device location is off"
@@ -451,7 +428,6 @@
   "@locationEnabledSuccess": {
     "description": "Success message after enabling location"
   },
-  
   "refreshLocation": "Refresh Location",
   "@refreshLocation": {
     "description": "Tooltip for refresh location button"
@@ -464,7 +440,6 @@
   "@initializing": {
     "description": "Loading state during app startup"
   },
-  
   "privacyYourDataStays": "Your Data Stays With You",
   "@privacyYourDataStays": {
     "description": "Privacy policy section title"
@@ -501,9 +476,138 @@
   "@lastUpdated": {
     "description": "Privacy policy last updated date"
   },
-  
   "applicationLegalese": "© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma",
   "@applicationLegalese": {
     "description": "Legal text shown in about dialog"
+  },
+  "moonPhases": "Moon Phases",
+  "@moonPhases": {
+    "description": "Title for moon phases screen"
+  },
+  "nextPurnima": "Next Purnima",
+  "@nextPurnima": {
+    "description": "Label for next full moon date"
+  },
+  "nextAmavasya": "Next Amavasya",
+  "@nextAmavasya": {
+    "description": "Label for next new moon date"
+  },
+  "purnima": "Purnima",
+  "@purnima": {
+    "description": "Full moon term"
+  },
+  "amavasya": "Amavasya",
+  "@amavasya": {
+    "description": "New moon term"
+  },
+  "fullMoon": "Full Moon",
+  "@fullMoon": {
+    "description": "Description for Purnima"
+  },
+  "newMoon": "New Moon",
+  "@newMoon": {
+    "description": "Description for Amavasya"
+  },
+  "noUpcomingDates": "No upcoming dates found",
+  "@noUpcomingDates": {
+    "description": "Empty state for upcoming moon phase dates"
+  },
+  "errorLoadingData": "Error loading data",
+  "@errorLoadingData": {
+    "description": "Generic error message for data loading"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Button to retry failed action"
+  },
+  "astronomy": "Astronomy",
+  "@astronomy": {
+    "description": "Section header for astronomy features in drawer"
+  },
+  
+  "solarSystem": "Solar System",
+  "@solarSystem": {
+    "description": "Title for solar system screen"
+  },
+  "planetPositions": "Planet Positions",
+  "@planetPositions": {
+    "description": "Title for planet positions feature"
+  },
+  "selectDate": "Select Date",
+  "@selectDate": {
+    "description": "Tooltip for date picker"
+  },
+  "retrograde": "Retrograde",
+  "@retrograde": {
+    "description": "Indicator for retrograde motion"
+  },
+  "zodiacSign": "Sign",
+  "@zodiacSign": {
+    "description": "Label for zodiac sign"
+  },
+  "degree": "Degree",
+  "@degree": {
+    "description": "Label for degree position"
+  },
+  "longitude": "Longitude",
+  "@longitude": {
+    "description": "Label for ecliptic longitude"
+  },
+  
+  "eclipses": "Eclipses",
+  "@eclipses": {
+    "description": "Title for eclipses screen"
+  },
+  "solarEclipses": "Solar Eclipses",
+  "@solarEclipses": {
+    "description": "Section header for solar eclipses"
+  },
+  "lunarEclipses": "Lunar Eclipses",
+  "@lunarEclipses": {
+    "description": "Section header for lunar eclipses"
+  },
+  "maxEclipse": "Maximum Eclipse",
+  "@maxEclipse": {
+    "description": "Label for maximum eclipse time"
+  },
+  "visibleFromYourLocation": "Visible from your location",
+  "@visibleFromYourLocation": {
+    "description": "Indicates eclipse is visible locally"
+  },
+  "notVisibleFromYourLocation": "Not visible from your location",
+  "@notVisibleFromYourLocation": {
+    "description": "Indicates eclipse is not visible locally"
+  },
+  "partialBegins": "Partial phase begins",
+  "@partialBegins": {
+    "description": "When partial phase starts"
+  },
+  "partialEnds": "Partial phase ends",
+  "@partialEnds": {
+    "description": "When partial phase ends"
+  },
+  "totalityBegins": "Totality begins",
+  "@totalityBegins": {
+    "description": "When totality starts"
+  },
+  "totalityEnds": "Totality ends",
+  "@totalityEnds": {
+    "description": "When totality ends"
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Label for duration"
+  },
+  "date": "Date",
+  "@date": {
+    "description": "Label for date"
+  },
+  "days": "days",
+  "@days": {
+    "description": "Plural form of day"
+  },
+  "today": "Today",
+  "@today": {
+    "description": "Label for today"
   }
 }

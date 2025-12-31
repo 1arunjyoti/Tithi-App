@@ -364,4 +364,100 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get applicationLegalese =>
       '© 2025 तिथि प्रोजेक्ट\nसनातन धर्म के लिए ❤️ से बनाया गया';
+
+  @override
+  String get moonPhases => 'चंद्र कलाएँ';
+
+  @override
+  String get nextPurnima => 'अगली पूर्णिमा';
+
+  @override
+  String get nextAmavasya => 'अगली अमावस्या';
+
+  @override
+  String get purnima => 'पूर्णिमा';
+
+  @override
+  String get amavasya => 'अमावस्या';
+
+  @override
+  String get fullMoon => 'पूर्ण चंद्रमा';
+
+  @override
+  String get newMoon => 'नया चंद्रमा';
+
+  @override
+  String get noUpcomingDates => 'कोई आगामी तिथियाँ नहीं मिलीं';
+
+  @override
+  String get errorLoadingData => 'डेटा लोड करने में त्रुटि';
+
+  @override
+  String get retry => 'पुनः प्रयास करें';
+
+  @override
+  String get astronomy => 'खगोल विज्ञान';
+
+  @override
+  String get solarSystem => 'सौर मंडल';
+
+  @override
+  String get planetPositions => 'ग्रह स्थिति';
+
+  @override
+  String get selectDate => 'तिथि चुनें';
+
+  @override
+  String get retrograde => 'वक्री';
+
+  @override
+  String get zodiacSign => 'राशि';
+
+  @override
+  String get degree => 'अंश';
+
+  @override
+  String get longitude => 'देशांतर';
+
+  @override
+  String get eclipses => 'ग्रहण';
+
+  @override
+  String get solarEclipses => 'सूर्य ग्रहण';
+
+  @override
+  String get lunarEclipses => 'चंद्र ग्रहण';
+
+  @override
+  String get maxEclipse => 'अधिकतम ग्रहण';
+
+  @override
+  String get visibleFromYourLocation => 'आपके स्थान से दृश्य';
+
+  @override
+  String get notVisibleFromYourLocation => 'आपके स्थान से दृश्य नहीं';
+
+  @override
+  String get partialBegins => 'आंशिक चरण प्रारंभ';
+
+  @override
+  String get partialEnds => 'आंशिक चरण समाप्त';
+
+  @override
+  String get totalityBegins => 'पूर्णता प्रारंभ';
+
+  @override
+  String get totalityEnds => 'पूर्णता समाप्त';
+
+  @override
+  String get duration => 'अवधि';
+
+  @override
+  String get date => 'तिथि';
+
+  @override
+  String get days => 'दिन';
+
+  @override
+  String get today => 'आज';
 }

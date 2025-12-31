@@ -364,4 +364,100 @@ class AppLocalizationsSa extends AppLocalizations {
   @override
   String get applicationLegalese =>
       '© २०२५ तिथिः प्रकल्पः\nसनातनधर्माय ❤️ निर्मितम्';
+
+  @override
+  String get moonPhases => 'Moon Phases';
+
+  @override
+  String get nextPurnima => 'Next Purnima';
+
+  @override
+  String get nextAmavasya => 'Next Amavasya';
+
+  @override
+  String get purnima => 'Purnima';
+
+  @override
+  String get amavasya => 'Amavasya';
+
+  @override
+  String get fullMoon => 'Full Moon';
+
+  @override
+  String get newMoon => 'New Moon';
+
+  @override
+  String get noUpcomingDates => 'No upcoming dates found';
+
+  @override
+  String get errorLoadingData => 'Error loading data';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get astronomy => 'Astronomy';
+
+  @override
+  String get solarSystem => 'Solar System';
+
+  @override
+  String get planetPositions => 'Planet Positions';
+
+  @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get retrograde => 'Retrograde';
+
+  @override
+  String get zodiacSign => 'Sign';
+
+  @override
+  String get degree => 'Degree';
+
+  @override
+  String get longitude => 'Longitude';
+
+  @override
+  String get eclipses => 'Eclipses';
+
+  @override
+  String get solarEclipses => 'Solar Eclipses';
+
+  @override
+  String get lunarEclipses => 'Lunar Eclipses';
+
+  @override
+  String get maxEclipse => 'Maximum Eclipse';
+
+  @override
+  String get visibleFromYourLocation => 'Visible from your location';
+
+  @override
+  String get notVisibleFromYourLocation => 'Not visible from your location';
+
+  @override
+  String get partialBegins => 'Partial phase begins';
+
+  @override
+  String get partialEnds => 'Partial phase ends';
+
+  @override
+  String get totalityBegins => 'Totality begins';
+
+  @override
+  String get totalityEnds => 'Totality ends';
+
+  @override
+  String get duration => 'Duration';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get days => 'days';
+
+  @override
+  String get today => 'Today';
 }

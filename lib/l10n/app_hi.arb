@@ -136,5 +136,40 @@
   "privacyOpenSourceDesc": "तिथि एक ओपन-सोर्स प्रोजेक्ट है। हमारा कोड ऑडिट के लिए सार्वजनिक रूप से उपलब्ध है, यह सुनिश्चित करते हुए कि हमारी गोपनीयता प्रतिबद्धताएँ सत्यापित पारदर्शिता द्वारा समर्थित हैं।",
   "lastUpdated": "अंतिम अपडेट: दिसंबर 2025",
   
-  "applicationLegalese": "© 2025 तिथि प्रोजेक्ट\nसनातन धर्म के लिए ❤️ से बनाया गया"
+  "applicationLegalese": "© 2025 तिथि प्रोजेक्ट\nसनातन धर्म के लिए ❤️ से बनाया गया",
+  
+  "moonPhases": "चंद्र कलाएँ",
+  "nextPurnima": "अगली पूर्णिमा",
+  "nextAmavasya": "अगली अमावस्या",
+  "purnima": "पूर्णिमा",
+  "amavasya": "अमावस्या",
+  "fullMoon": "पूर्ण चंद्रमा",
+  "newMoon": "नया चंद्रमा",
+  "noUpcomingDates": "कोई आगामी तिथियाँ नहीं मिलीं",
+  "errorLoadingData": "डेटा लोड करने में त्रुटि",
+  "retry": "पुनः प्रयास करें",
+  "astronomy": "खगोल विज्ञान",
+  
+  "solarSystem": "सौर मंडल",
+  "planetPositions": "ग्रह स्थिति",
+  "selectDate": "तिथि चुनें",
+  "retrograde": "वक्री",
+  "zodiacSign": "राशि",
+  "degree": "अंश",
+  "longitude": "देशांतर",
+  
+  "eclipses": "ग्रहण",
+  "solarEclipses": "सूर्य ग्रहण",
+  "lunarEclipses": "चंद्र ग्रहण",
+  "maxEclipse": "अधिकतम ग्रहण",
+  "visibleFromYourLocation": "आपके स्थान से दृश्य",
+  "notVisibleFromYourLocation": "आपके स्थान से दृश्य नहीं",
+  "partialBegins": "आंशिक चरण प्रारंभ",
+  "partialEnds": "आंशिक चरण समाप्त",
+  "totalityBegins": "पूर्णता प्रारंभ",
+  "totalityEnds": "पूर्णता समाप्त",
+  "duration": "अवधि",
+  "date": "तिथि",
+  "days": "दिन",
+  "today": "आज"
 }

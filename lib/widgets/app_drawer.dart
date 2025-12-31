@@ -7,6 +7,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../screens/settings_screen.dart';
 import '../screens/temple_map_screen.dart';
+import '../screens/moon_phases_screen.dart';
+import '../screens/solar_system_screen.dart';
+import '../screens/eclipse_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../screens/sankalpa/sankalpa_list_screen.dart';
@@ -95,6 +98,57 @@ class AppDrawer extends StatelessWidget {
 
                         _buildDrawerItem(
                           context,
+                          icon: Icons.nightlight_round,
+                          title:
+                              AppLocalizations.of(context)?.moonPhases ??
+                              'Moon Phases',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const MoonPhasesScreen(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        _buildDrawerItem(
+                          context,
+                          icon: Icons.public,
+                          title:
+                              AppLocalizations.of(context)?.solarSystem ??
+                              'Solar System',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SolarSystemScreen(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        _buildDrawerItem(
+                          context,
+                          icon: Icons.brightness_3_rounded,
+                          title:
+                              AppLocalizations.of(context)?.eclipses ??
+                              'Eclipses',
+                          onTap: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EclipseScreen(),
+                              ),
+                            );
+                          },
+                        ),
+
+                        _buildDrawerItem(
+                          context,
                           icon: Icons.settings_rounded,
                           title:
                               AppLocalizations.of(context)?.settings ??
@@ -109,6 +163,14 @@ class AppDrawer extends StatelessWidget {
                             );
                           },
                         ),
+
+                        const SizedBox(height: 12),
+                        Divider(
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.1,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
 
                         _buildDrawerItem(
                           context,
@@ -147,13 +209,7 @@ class AppDrawer extends StatelessWidget {
                             }
                           },
                         ),
-                        const SizedBox(height: 12),
-                        Divider(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.1,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
+
                         Consumer(
                           builder: (context, ref, child) {
                             return _buildDrawerItem(
