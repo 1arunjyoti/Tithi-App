@@ -99,9 +99,7 @@ class HomeScreen extends StatelessWidget {
     );
 
     ref.invalidate(currentLocationProvider);
-
-    await Future.delayed(const Duration(milliseconds: 500));
-    ref.invalidate(todayPanchangProvider);
+    // todayPanchangProvider depends on currentLocationProvider, so it will update automatically
   }
 }
 
@@ -362,58 +360,93 @@ class _PakshaIndicator extends ConsumerWidget {
           borderRadius: 24,
           ref: ref,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment:
-              CrossAxisAlignment.center, // Align vertically center
+        child: Column(
           children: [
-            MoonAnimationWidget(
-              paksha: panchang.paksha,
-              tithi: panchang.tithiNumber,
-              size: 40,
-            ),
-            const SizedBox(width: 8),
-            // Expanded allows text to take available space and wrap
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: context.colors.onSurface,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+            // Top Row: Moon, Title, and Sun/Moon Time
+            Row(
+              children: [
+                MoonAnimationWidget(
+                  paksha: panchang.paksha,
+                  tithi: panchang.tithiNumber,
+                  size: 40,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: context.colors.onSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
+                          fontSize: 12,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: context.colors.onSurface.withValues(alpha: 0.6),
-                      fontSize: 12,
-                      letterSpacing: 0.5,
-                    ),
+                ),
+
+                // Sun Time in Top Row if available
+                if (panchang.sunrise != null && panchang.sunset != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 32,
+                    width: 1,
+                    color: context.colors.onSurface.withValues(alpha: 0.1),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      _buildSunTime(
+                        context,
+                        Icons.wb_sunny_rounded,
+                        panchang.sunrise!,
+                        Colors.orange.shade300,
+                      ),
+                      const SizedBox(height: 4),
+                      _buildSunTime(
+                        context,
+                        Icons.nightlight_round,
+                        panchang.sunset!,
+                        Colors.indigo.shade300,
+                      ),
+                    ],
                   ),
                 ],
-              ),
+              ],
             ),
-            // City name indicator
+
+            // Bottom Row: Location Info (if available)
             if (cityName != null) ...[
-              const SizedBox(width: 16),
+              const SizedBox(height: 12),
               Container(
+                width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 4,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: context.colors.primary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
+                  color: context.colors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.location_on,
+                      Icons.location_on_rounded,
                       size: 14,
                       color: context.colors.primary,
                     ),
@@ -426,79 +459,38 @@ class _PakshaIndicator extends ConsumerWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
-                        overflow:
-                            TextOverflow.ellipsis, // Keep city single line
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
               ),
             ],
-            // Sunrise/Sunset indicator -- Only show if enough space or wrap?
-            // User asked for vertical growth, so we can wrap this too if needed,
-            // but usually this is small enough. For now keep it as is,
-            // but maybe push it to a new line if screen is very small?
-            // The user request was about "texts should become 2nd or more lines",
-            // likely referring to the title/subtitle.
-            if (panchang.sunrise != null && panchang.sunset != null) ...[
-              const SizedBox(width: 12),
-              Container(
-                height: 32,
-                width: 1,
-                color: context.colors.onSurface.withValues(alpha: 0.2),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.wb_sunny_rounded,
-                        size: 14,
-                        color: Colors.orange.shade300,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        DateFormat.jm().format(panchang.sunrise!),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.8,
-                          ),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.nightlight_round,
-                        size: 14,
-                        color: Colors.indigo.shade300,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        DateFormat.jm().format(panchang.sunset!),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.8,
-                          ),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSunTime(
+    BuildContext context,
+    IconData icon,
+    DateTime time,
+    Color color,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          DateFormat.jm().format(time),
+          style: TextStyle(
+            fontSize: 11,
+            color: context.colors.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

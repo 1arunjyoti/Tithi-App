@@ -74,7 +74,9 @@ class DailyQuoteWidget extends ConsumerWidget {
                         final text = isExpanded
                             ? '${shloka.text}\n\n${shloka.translation}\n- ${shloka.source}\n\nShared via Tithi App'
                             : '${shloka.text}\n- ${shloka.source}\n\nShared via Tithi App';
-                        Share.share(text);
+                        SharePlus.instance.share(
+                          ShareParams(text: text, subject: 'Daily Wisdom'),
+                        );
                       },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),

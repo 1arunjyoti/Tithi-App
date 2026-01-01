@@ -1,8 +1,6 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
-import '../theme/app_theme.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../screens/settings_screen.dart';
@@ -17,259 +15,71 @@ import '../screens/sankalpa/sankalpa_list_screen.dart';
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
+  static const _borderRadius = BorderRadius.only(
+    topRight: Radius.circular(32),
+    bottomRight: Radius.circular(32),
+  );
+
   @override
   Widget build(BuildContext context) {
-    const borderRadius = BorderRadius.only(
-      topRight: Radius.circular(32),
-      bottomRight: Radius.circular(32),
-    );
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Use solid color with opacity instead of expensive BackdropFilter
+    final backgroundColor = isDark
+        ? const Color(0xF5121212) // Dark theme: near-black with high opacity
+        : const Color(0xF5FAFAFA); // Light theme: off-white with high opacity
 
     return Drawer(
       backgroundColor: Colors.transparent,
       elevation: 0,
       width: 280,
-      child: RepaintBoundary(
-        child: ClipRRect(
-          borderRadius: borderRadius,
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: context.theme.scaffoldBackgroundColor.withValues(
-                  alpha: 0.85,
-                ),
-                borderRadius: borderRadius,
-                border: Border.all(
-                  color: context.colors.onSurface.withValues(alpha: 0.1),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: context.colors.primary.withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  _buildHeader(context),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 24,
-                      ),
-                      children: [
-                        // View Mode Toggle
-                        _buildViewModeToggle(context),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.spa_rounded,
-                          title: 'My Sankalpas',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const SankalpaListScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons
-                              .temple_buddhist, // Best approximation for temple
-                          title: 'Nearby Temples',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const TempleMapScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.nightlight_round,
-                          title:
-                              AppLocalizations.of(context)?.moonPhases ??
-                              'Moon Phases',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const MoonPhasesScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.public,
-                          title:
-                              AppLocalizations.of(context)?.solarSystem ??
-                              'Solar System',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SolarSystemScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.brightness_3_rounded,
-                          title:
-                              AppLocalizations.of(context)?.eclipses ??
-                              'Eclipses',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const EclipseScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.settings_rounded,
-                          title:
-                              AppLocalizations.of(context)?.settings ??
-                              'Settings',
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 12),
-                        Divider(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.1,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.share_rounded,
-                          title:
-                              AppLocalizations.of(context)?.shareApp ??
-                              'Share App',
-                          onTap: () {
-                            Navigator.pop(context);
-                            SharePlus.instance.share(
-                              ShareParams(
-                                text:
-                                    AppLocalizations.of(
-                                      context,
-                                    )?.shareAppMessage ??
-                                    'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
-                              ),
-                            );
-                          },
-                        ),
-                        _buildDrawerItem(
-                          context,
-                          icon: Icons.star_rounded,
-                          title:
-                              AppLocalizations.of(context)?.rateUs ?? 'Rate Us',
-                          onTap: () async {
-                            Navigator.pop(context);
-                            final Uri url = Uri.parse(
-                              '',
-                            ); // TODO: Replace with actual ID
-                            if (await canLaunchUrl(url)) {
-                              await launchUrl(
-                                url,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            }
-                          },
-                        ),
-
-                        Consumer(
-                          builder: (context, ref, child) {
-                            return _buildDrawerItem(
-                              context,
-                              icon: Icons.info_outline_rounded,
-                              title:
-                                  AppLocalizations.of(context)?.aboutApp ??
-                                  'About',
-                              onTap: () async {
-                                Navigator.pop(context);
-                                final version = await ref.read(
-                                  versionStringProvider.future,
-                                );
-
-                                if (!context.mounted) return;
-
-                                final l10n = AppLocalizations.of(context);
-                                showAboutDialog(
-                                  context: context,
-                                  applicationName: l10n?.appTitle ?? 'Tithi',
-                                  applicationVersion: version,
-                                  applicationIcon: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: context.colors.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.wb_sunny_rounded,
-                                      color: Colors.white,
-                                      size: 32,
-                                    ),
-                                  ),
-                                  applicationLegalese:
-                                      l10n?.applicationLegalese ??
-                                      '© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma',
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildFooter(context),
-                ],
-              ),
+      child: ClipRRect(
+        borderRadius: _borderRadius,
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: _borderRadius,
+            border: Border.all(
+              color: colors.onSurface.withValues(alpha: 0.1),
+              width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.15),
+                blurRadius: 16,
+                offset: const Offset(2, 0),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _DrawerHeader(colors: colors),
+              Expanded(child: _DrawerMenuList(colors: colors)),
+              const _DrawerFooter(),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeader(BuildContext context) {
+class _DrawerHeader extends StatelessWidget {
+  const _DrawerHeader({required this.colors});
+
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
       decoration: BoxDecoration(
-        color: context.colors.primary.withValues(alpha: 0.1),
+        color: colors.primary.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
       ),
       child: Row(
@@ -277,18 +87,18 @@ class AppDrawer extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: context.colors.primary,
+              color: colors.primary,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: context.colors.primary.withValues(alpha: 0.4),
+                  color: colors.primary.withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: const Icon(
-              Icons.wb_sunny_rounded, // Solar/Tithi icon
+              Icons.wb_sunny_rounded,
               color: Colors.white,
               size: 28,
             ),
@@ -300,15 +110,15 @@ class AppDrawer extends StatelessWidget {
             children: [
               Text(
                 l10n?.appTitle ?? 'Tithi',
-                style: context.textTheme.headlineSmall?.copyWith(
+                style: textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: context.colors.onSurface,
+                  color: colors.onSurface,
                 ),
               ),
               Text(
                 l10n?.vedaCalendar ?? 'Vedic Calendar',
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colors.onSurface.withValues(alpha: 0.7),
+                style: textTheme.bodySmall?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.7),
                 ),
               ),
             ],
@@ -317,36 +127,139 @@ class AppDrawer extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        // hover/splash colors handle themselves on ListTile, but we can add subtle bg
-      ),
+/// Menu list with all drawer items
+class _DrawerMenuList extends StatelessWidget {
+  const _DrawerMenuList({required this.colors});
+
+  final ColorScheme colors;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      children: [
+        // View Mode Toggle
+        const _ViewModeToggleItem(),
+
+        _DrawerMenuItem(
+          icon: Icons.spa_rounded,
+          title: 'My Sankalpas',
+          onTap: () => _navigateTo(context, const SankalpaListScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.temple_buddhist,
+          title: 'Nearby Temples',
+          onTap: () => _navigateTo(context, const TempleMapScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.nightlight_round,
+          title: l10n?.moonPhases ?? 'Moon Phases',
+          onTap: () => _navigateTo(context, const MoonPhasesScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.public,
+          title: l10n?.solarSystem ?? 'Solar System',
+          onTap: () => _navigateTo(context, const SolarSystemScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.brightness_3_rounded,
+          title: l10n?.eclipses ?? 'Eclipses',
+          onTap: () => _navigateTo(context, const EclipseScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.settings_rounded,
+          title: l10n?.settings ?? 'Settings',
+          onTap: () => _navigateTo(context, const SettingsScreen()),
+        ),
+
+        const SizedBox(height: 12),
+        Divider(color: colors.onSurface.withValues(alpha: 0.1)),
+        const SizedBox(height: 12),
+
+        _DrawerMenuItem(
+          icon: Icons.share_rounded,
+          title: l10n?.shareApp ?? 'Share App',
+          onTap: () {
+            Navigator.pop(context);
+            SharePlus.instance.share(
+              ShareParams(
+                text:
+                    l10n?.shareAppMessage ??
+                    'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
+              ),
+            );
+          },
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.star_rounded,
+          title: l10n?.rateUs ?? 'Rate Us',
+          onTap: () => _launchRating(context),
+        ),
+
+        // About item
+        const _AboutMenuItem(),
+      ],
+    );
+  }
+
+  void _navigateTo(BuildContext context, Widget screen) {
+    Navigator.pop(context);
+    Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
+  }
+
+  Future<void> _launchRating(BuildContext context) async {
+    Navigator.pop(context);
+    final Uri url = Uri.parse(''); // TODO: Replace with actual ID
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+}
+
+/// Single drawer menu item
+class _DrawerMenuItem extends StatelessWidget {
+  const _DrawerMenuItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: context.colors.surface,
+            color: colors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: context.colors.onSurface.withValues(alpha: 0.05),
-            ),
+            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
           ),
-          child: Icon(icon, color: context.colors.primary, size: 20),
+          child: Icon(icon, color: colors.primary, size: 20),
         ),
         title: Text(
           title,
-          style: context.textTheme.titleMedium?.copyWith(
+          style: textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w500,
             fontSize: 15,
           ),
@@ -354,89 +267,171 @@ class AppDrawer extends StatelessWidget {
         trailing: Icon(
           Icons.chevron_right_rounded,
           size: 16,
-          color: context.colors.onSurface.withValues(alpha: 0.4),
+          color: colors.onSurface.withValues(alpha: 0.4),
+        ),
+      ),
+    );
+  }
+}
+
+/// View mode toggle
+class _ViewModeToggleItem extends ConsumerWidget {
+  const _ViewModeToggleItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentMode = ref.watch(homeViewModeProvider);
+    final isSchedule = currentMode == HomeViewMode.schedule;
+    final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () {
+          ref.read(homeViewModeProvider.notifier).toggle();
+          Navigator.pop(context);
+        },
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
+          ),
+          child: Icon(
+            isSchedule
+                ? Icons.calendar_month_rounded
+                : Icons.view_agenda_rounded,
+            color: colors.primary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          isSchedule
+              ? (l10n?.calendarView ?? 'Calendar View')
+              : (l10n?.scheduleView ?? 'Schedule View'),
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        subtitle: Text(
+          isSchedule
+              ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
+              : (l10n?.switchToSchedule ?? 'Switch to event list'),
+          style: textTheme.bodySmall?.copyWith(
+            color: colors.onSurface.withValues(alpha: 0.5),
+            fontSize: 12,
+          ),
+        ),
+        trailing: Icon(
+          Icons.swap_horiz_rounded,
+          size: 20,
+          color: colors.primary.withValues(alpha: 0.7),
+        ),
+      ),
+    );
+  }
+}
+
+/// About menu item - isolated Consumer for async version loading
+class _AboutMenuItem extends ConsumerWidget {
+  const _AboutMenuItem();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        onTap: () => _showAboutDialog(context, ref, l10n),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
+          ),
+          child: Icon(
+            Icons.info_outline_rounded,
+            color: colors.primary,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          l10n?.aboutApp ?? 'About',
+          style: textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        trailing: Icon(
+          Icons.chevron_right_rounded,
+          size: 16,
+          color: colors.onSurface.withValues(alpha: 0.4),
         ),
       ),
     );
   }
 
-  Widget _buildViewModeToggle(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final currentMode = ref.watch(homeViewModeProvider);
-        final isSchedule = currentMode == HomeViewMode.schedule;
-        final l10n = AppLocalizations.of(context);
+  Future<void> _showAboutDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations? l10n,
+  ) async {
+    Navigator.pop(context);
+    final version = await ref.read(versionStringProvider.future);
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
-          child: ListTile(
-            onTap: () {
-              ref.read(homeViewModeProvider.notifier).toggle();
-              Navigator.pop(context);
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            leading: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: context.colors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: context.colors.onSurface.withValues(alpha: 0.05),
-                ),
-              ),
-              child: Icon(
-                isSchedule
-                    ? Icons.calendar_month_rounded
-                    : Icons.view_agenda_rounded,
-                color: context.colors.primary,
-                size: 20,
-              ),
-            ),
-            title: Text(
-              isSchedule
-                  ? (l10n?.calendarView ?? 'Calendar View')
-                  : (l10n?.scheduleView ?? 'Schedule View'),
-              style: context.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
-              ),
-            ),
-            subtitle: Text(
-              isSchedule
-                  ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
-                  : (l10n?.switchToSchedule ?? 'Switch to event list'),
-              style: context.textTheme.bodySmall?.copyWith(
-                color: context.colors.onSurface.withValues(alpha: 0.5),
-                fontSize: 12,
-              ),
-            ),
-            trailing: Icon(
-              Icons.swap_horiz_rounded,
-              size: 20,
-              color: context.colors.primary.withValues(alpha: 0.7),
-            ),
-          ),
-        );
-      },
+    if (!context.mounted) return;
+
+    final colors = Theme.of(context).colorScheme;
+    showAboutDialog(
+      context: context,
+      applicationName: l10n?.appTitle ?? 'Tithi',
+      applicationVersion: version,
+      applicationIcon: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: colors.primary,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(
+          Icons.wb_sunny_rounded,
+          color: Colors.white,
+          size: 32,
+        ),
+      ),
+      applicationLegalese:
+          l10n?.applicationLegalese ??
+          '© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma',
     );
   }
+}
 
-  Widget _buildFooter(BuildContext context) {
+/// Footer with version info
+class _DrawerFooter extends ConsumerWidget {
+  const _DrawerFooter();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final versionAsync = ref.watch(versionStringProvider);
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.all(24),
-      child: Consumer(
-        builder: (context, ref, _) {
-          final versionAsync = ref.watch(versionStringProvider);
-          return Text(
-            'Version ${versionAsync.when(data: (v) => v, loading: () => '...', error: (_, _) => '?')}',
-            style: context.textTheme.labelSmall?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.4),
-            ),
-          );
-        },
+      child: Text(
+        'Version ${versionAsync.when(data: (v) => v, loading: () => '...', error: (e, s) => '?')}',
+        style: textTheme.labelSmall?.copyWith(
+          color: colors.onSurface.withValues(alpha: 0.4),
+        ),
       ),
     );
   }

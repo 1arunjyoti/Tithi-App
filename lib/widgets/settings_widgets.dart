@@ -32,12 +32,19 @@ class SettingsGroupCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Use cached config that only rebuilds on accessibility changes
+    final config = ref.watch(glassmorphismConfigProvider);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isPureDark = theme.scaffoldBackgroundColor == Colors.black;
+
     return Container(
-      decoration: AppTheme.glassmorphism(
-        context: context,
+      decoration: config.getDecoration(
+        isDark: isDark,
+        isPureDark: isPureDark,
+        primaryColor: theme.primaryColor,
         opacity: 0.1,
         borderRadius: 24,
-        ref: ref,
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
@@ -229,6 +236,123 @@ class ThemeOptionButton extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Reusable bottom sheet container for settings pickers
+class SettingsBottomSheet extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final List<Widget> children;
+
+  const SettingsBottomSheet({
+    super.key,
+    required this.title,
+    this.subtitle,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: context.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.onSurface,
+              ),
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  subtitle!,
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colors.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            ...children,
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Helper method to show the bottom sheet
+  static Future<void> show({
+    required BuildContext context,
+    required String title,
+    String? subtitle,
+    required List<Widget> children,
+  }) {
+    return showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SettingsBottomSheet(
+        title: title,
+        subtitle: subtitle,
+        children: children,
+      ),
+    );
+  }
+}
+
+/// Reusable picker item for settings bottom sheets
+class SettingsPickerItem extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const SettingsPickerItem({
+    super.key,
+    required this.title,
+    this.subtitle,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? context.colors.primary : context.colors.onSurface,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle!,
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.colors.onSurface.withValues(alpha: 0.6),
+              ),
+            )
+          : null,
+      trailing: isSelected
+          ? Icon(Icons.check_circle_rounded, color: context.colors.primary)
+          : null,
+      onTap: onTap,
     );
   }
 }

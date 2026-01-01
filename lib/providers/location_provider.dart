@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import '../services/location_service.dart';
 
 /// Provider for LocationService singleton
 final locationServiceProvider = Provider<LocationService>((ref) {
-  return LocationService();
+  return LocationService(); // Uses singleton factory
 });
 
 /// Provider that tracks if location service is initialized
@@ -13,8 +12,12 @@ final locationInitProvider = FutureProvider<void>((ref) async {
   await service.init();
 });
 
-/// Provider for location enabled preference
-final locationEnabledProvider = StateProvider<bool>((ref) => false);
+/// Provider for location enabled preference (reads from service)
+final locationEnabledProvider = FutureProvider<bool>((ref) async {
+  await ref.watch(locationInitProvider.future);
+  final service = ref.read(locationServiceProvider);
+  return service.isLocationEnabled();
+});
 
 /// Provider for first launch check
 final isFirstLaunchProvider = FutureProvider<bool>((ref) async {
