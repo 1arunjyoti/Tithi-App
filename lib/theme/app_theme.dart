@@ -351,3 +351,65 @@ extension ThemeExtension on BuildContext {
   TextTheme get textTheme => Theme.of(this).textTheme;
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
 }
+
+/// Cached glassmorphism decoration data to avoid recreating on every build.
+/// This provider only rebuilds when accessibility settings change.
+class GlassmorphismConfig {
+  final bool isHighContrast;
+
+  const GlassmorphismConfig({required this.isHighContrast});
+
+  /// Get cached decoration for a specific theme context
+  BoxDecoration getDecoration({
+    required bool isDark,
+    required bool isPureDark,
+    required Color primaryColor,
+    double opacity = 0.1,
+    double blur = 20,
+    double borderRadius = 24,
+    Border? border,
+  }) {
+    // High Contrast Mode / Pure Dark - return solid decoration
+    if (isPureDark || isHighContrast) {
+      return BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      );
+    }
+
+    // Standard glassmorphism
+    return BoxDecoration(
+      color: isDark
+          ? Colors.white.withValues(alpha: opacity)
+          : Colors.white.withValues(alpha: 0.6),
+      borderRadius: BorderRadius.circular(borderRadius),
+      border:
+          border ??
+          Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.white.withValues(alpha: 0.4),
+            width: 1.5,
+          ),
+      boxShadow: [
+        BoxShadow(
+          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+          blurRadius: blur,
+          spreadRadius: 0,
+        ),
+      ],
+    );
+  }
+}
+
+/// Provider for glassmorphism configuration - only rebuilds on accessibility changes
+final glassmorphismConfigProvider = Provider<GlassmorphismConfig>((ref) {
+  final accessibility = ref.watch(accessibilityProvider);
+  return GlassmorphismConfig(isHighContrast: accessibility.highContrast);
+});

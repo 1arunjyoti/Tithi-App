@@ -115,95 +115,9 @@ class SettingsScreen extends StatelessWidget {
                 SettingsSectionHeader(l10n?.dataStorage ?? 'DATA & STORAGE'),
                 SettingsGroupCard(
                   children: [
-                    Consumer(
-                      builder: (context, ref, _) {
-                        return SettingsActionTile(
-                          icon: Icons.cleaning_services_rounded,
-                          title:
-                              l10n?.clearLocationCache ??
-                              'Clear Location Cache',
-                          onTap: () async {
-                            final scaffold = ScaffoldMessenger.of(context);
-                            await ref
-                                .read(locationServiceProvider)
-                                .clearCache();
-                            ref.invalidate(currentLocationProvider);
-                            scaffold.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  l10n?.locationCacheCleared ??
-                                      'Location cache cleared',
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                    const _ClearCacheSetting(),
                     const SettingsDivider(),
-                    Consumer(
-                      builder: (context, ref, _) {
-                        return SettingsActionTile(
-                          icon: Icons.restore_rounded,
-                          title: l10n?.resetAppSettings ?? 'Reset App Settings',
-                          trailing: const Text(
-                            'Using default',
-                            style: TextStyle(color: Colors.transparent),
-                          ), // Just spacer
-                          onTap: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (c) => AlertDialog(
-                                title: Text(
-                                  l10n?.resetSettingsTitle ?? 'Reset Settings?',
-                                ),
-                                content: Text(
-                                  l10n?.resetSettingsMessage ??
-                                      'This will reset all your preferences and data to default. This cannot be undone.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(c, false),
-                                    child: Text(l10n?.cancel ?? 'Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(c, true),
-                                    child: Text(
-                                      l10n?.reset ?? 'Reset',
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (confirm == true) {
-                              final box = Hive.box('settings');
-                              await box.clear();
-                              await ref
-                                  .read(locationServiceProvider)
-                                  .setLocationEnabled(false);
-
-                              // Reset providers
-                              ref.invalidate(startOfWeekProvider);
-                              ref.invalidate(primaryEventViewProvider);
-                              ref.invalidate(themeOverrideProvider);
-
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      l10n?.appResetComplete ??
-                                          'App reset complete',
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                        );
-                      },
-                    ),
+                    const _ResetSettingsTile(),
                   ],
                 ),
 
@@ -248,12 +162,19 @@ class SettingsScreen extends StatelessWidget {
         final currentOverride = ref.watch(themeOverrideProvider);
         final autoMode = currentOverride == null;
 
+        // Use cached config
+        final config = ref.watch(glassmorphismConfigProvider);
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final isPureDark = theme.scaffoldBackgroundColor == Colors.black;
+
         return Container(
-          decoration: AppTheme.glassmorphism(
-            context: context,
+          decoration: config.getDecoration(
+            isDark: isDark,
+            isPureDark: isPureDark,
+            primaryColor: theme.primaryColor,
             opacity: 0.1,
             borderRadius: 24,
-            ref: ref,
           ),
           padding: const EdgeInsets.all(16),
           child: Wrap(
@@ -329,7 +250,6 @@ class _NotificationSettings extends ConsumerWidget {
               if (!granted) return;
             }
             await notificationService.setEnabled(val);
-            ref.invalidate(loadNotificationStateProvider);
             ref.invalidate(loadNotificationStateProvider);
           },
         ),
@@ -412,39 +332,42 @@ class _LocationSettings extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final locationAsync = ref.watch(currentLocationProvider);
     final locationService = ref.read(locationServiceProvider);
+    final isEnabledAsync = ref.watch(locationEnabledProvider);
 
-    return FutureBuilder<bool>(
-      future: locationService.isLocationEnabled(),
-      builder: (context, snapshot) {
-        final isEnabled = snapshot.data ?? false;
-        return SettingsSwitchTile(
-          icon: Icons.location_on_rounded,
-          title: l10n?.autoLocation ?? 'Auto Location',
-          subtitle: locationAsync.when(
-            data: (loc) {
-              final cityName = loc?.cityName;
-              if (cityName != null) {
-                return l10n?.usingLocation(cityName) ?? 'Using: $cityName';
-              }
-              return l10n?.useGpsForTithi ??
-                  'Use GPS for precise Tithi calculation';
-            },
-            loading: () => l10n?.fetchingLocation ?? 'Fetching location...',
-            error: (_, _) =>
-                l10n?.locationUnavailable ?? 'Location unavailable',
-          ),
-          value: isEnabled,
-          onChanged: (val) async {
-            await locationService.setLocationEnabled(val);
-            if (val) {
-              final permission = await Geolocator.checkPermission();
-              if (permission == LocationPermission.denied) {
-                await Geolocator.requestPermission();
-              }
-            }
-            ref.invalidate(currentLocationProvider);
-          },
-        );
+    // Get the enabled state, defaulting to false while loading/error
+    final isEnabled = isEnabledAsync.when(
+      data: (val) => val,
+      loading: () => false,
+      error: (e, s) => false,
+    );
+
+    return SettingsSwitchTile(
+      icon: Icons.location_on_rounded,
+      title: l10n?.autoLocation ?? 'Auto Location',
+      subtitle: locationAsync.when(
+        data: (loc) {
+          final cityName = loc?.cityName;
+          if (cityName != null) {
+            return l10n?.usingLocation(cityName) ?? 'Using: $cityName';
+          }
+          return l10n?.useGpsForTithi ??
+              'Use GPS for precise Tithi calculation';
+        },
+        loading: () => l10n?.fetchingLocation ?? 'Fetching location...',
+        error: (e, s) => l10n?.locationUnavailable ?? 'Location unavailable',
+      ),
+      value: isEnabled,
+      onChanged: (val) async {
+        await locationService.setLocationEnabled(val);
+        if (val) {
+          final permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.denied) {
+            await Geolocator.requestPermission();
+          }
+        }
+        // Invalidate both providers to refresh state
+        ref.invalidate(locationEnabledProvider);
+        ref.invalidate(currentLocationProvider);
       },
     );
   }
@@ -513,67 +436,36 @@ class _LanguageSetting extends ConsumerWidget {
     final currentLocale = ref.read(localeProvider);
     final l10n = AppLocalizations.of(context);
 
-    await showModalBottomSheet(
+    await SettingsBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                l10n?.selectLanguage ?? 'Select Language',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: context.colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                title: Text(l10n?.systemDefault ?? 'System Default'),
-                trailing: currentLocale == null
-                    ? Icon(
-                        Icons.check_circle_rounded,
-                        color: context.colors.primary,
-                      )
-                    : null,
-                onTap: () async {
-                  await ref.read(localeProvider.notifier).clearLocale();
-                  if (context.mounted) Navigator.pop(context);
-                },
-              ),
-              const Divider(),
-              ...supportedLocales.map((supported) {
-                final isSelected =
-                    supported.locale.languageCode ==
-                    currentLocale?.languageCode;
-                return ListTile(
-                  title: Text(supported.nativeName),
-                  subtitle: Text(supported.name),
-                  trailing: isSelected
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          color: context.colors.primary,
-                        )
-                      : null,
-                  onTap: () async {
-                    await ref
-                        .read(localeProvider.notifier)
-                        .setLocale(supported.locale);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+      title: l10n?.selectLanguage ?? 'Select Language',
+      children: [
+        // System Default option
+        SettingsPickerItem(
+          title: l10n?.systemDefault ?? 'System Default',
+          isSelected: currentLocale == null,
+          onTap: () async {
+            await ref.read(localeProvider.notifier).clearLocale();
+            if (context.mounted) Navigator.pop(context);
+          },
+        ),
+        const Divider(),
+        // Supported locales
+        ...supportedLocales.map((supported) {
+          return SettingsPickerItem(
+            title: supported.nativeName,
+            subtitle: supported.name,
+            isSelected:
+                supported.locale.languageCode == currentLocale?.languageCode,
+            onTap: () async {
+              await ref
+                  .read(localeProvider.notifier)
+                  .setLocale(supported.locale);
+              if (context.mounted) Navigator.pop(context);
+            },
+          );
+        }),
+      ],
     );
   }
 }
@@ -709,77 +601,21 @@ class _HinduMonthSystemSetting extends ConsumerWidget {
   ) async {
     final currentSystem = ref.read(hinduMonthSystemProvider);
 
-    await showModalBottomSheet(
+    await SettingsBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Hindu Month System',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: context.colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'Choose how months are named during Krishna Paksha',
-                  textAlign: TextAlign.center,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colors.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...HinduMonthSystem.values.map((system) {
-                final isSelected = system == currentSystem;
-                return ListTile(
-                  title: Text(
-                    system.label,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? context.colors.primary
-                          : context.colors.onSurface,
-                    ),
-                  ),
-                  subtitle: Text(
-                    system.description,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colors.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          color: context.colors.primary,
-                        )
-                      : null,
-                  onTap: () async {
-                    await ref
-                        .read(hinduMonthSystemProvider.notifier)
-                        .setSystem(system);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-          ),
+      title: 'Hindu Month System',
+      subtitle: 'Choose how months are named during Krishna Paksha',
+      children: HinduMonthSystem.values.map((system) {
+        return SettingsPickerItem(
+          title: system.label,
+          subtitle: system.description,
+          isSelected: system == currentSystem,
+          onTap: () async {
+            await ref.read(hinduMonthSystemProvider.notifier).setSystem(system);
+            if (context.mounted) Navigator.pop(context);
+          },
         );
-      },
+      }).toList(),
     );
   }
 }
@@ -810,75 +646,21 @@ class _HinduYearEraSetting extends ConsumerWidget {
   ) async {
     final currentEra = ref.read(hinduYearEraProvider);
 
-    await showModalBottomSheet(
+    await SettingsBottomSheet.show(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: BoxDecoration(
-            color: context.colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Hindu Year Era',
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: context.colors.onSurface,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'Choose the calendar era for year display',
-                  textAlign: TextAlign.center,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colors.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...HinduYearEra.values.map((era) {
-                final isSelected = era == currentEra;
-                return ListTile(
-                  title: Text(
-                    era.label,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      color: isSelected
-                          ? context.colors.primary
-                          : context.colors.onSurface,
-                    ),
-                  ),
-                  subtitle: Text(
-                    era.description,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colors.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  trailing: isSelected
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          color: context.colors.primary,
-                        )
-                      : null,
-                  onTap: () async {
-                    await ref.read(hinduYearEraProvider.notifier).setEra(era);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                );
-              }),
-              const SizedBox(height: 16),
-            ],
-          ),
+      title: 'Hindu Year Era',
+      subtitle: 'Choose the calendar era for year display',
+      children: HinduYearEra.values.map((era) {
+        return SettingsPickerItem(
+          title: era.label,
+          subtitle: era.description,
+          isSelected: era == currentEra,
+          onTap: () async {
+            await ref.read(hinduYearEraProvider.notifier).setEra(era);
+            if (context.mounted) Navigator.pop(context);
+          },
         );
-      },
+      }).toList(),
     );
   }
 }
@@ -941,67 +723,108 @@ Future<void> _showCalendarSystemPicker(
       ? ref.read(primaryCalendarSystemProvider)
       : ref.read(secondaryCalendarSystemProvider);
 
-  await showModalBottomSheet(
+  await SettingsBottomSheet.show(
     context: context,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return Container(
-        decoration: BoxDecoration(
-          color: context.colors.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isPrimary
-                  ? 'Select Primary Calendar'
-                  : 'Select Secondary Calendar',
-              style: context.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: context.colors.onSurface,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...AppCalendarSystem.values.map((system) {
-              final isSelected = system == currentSystem;
-              return ListTile(
-                title: Text(
-                  system.label,
-                  style: TextStyle(
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                    color: isSelected
-                        ? context.colors.primary
-                        : context.colors.onSurface,
-                  ),
-                ),
-                trailing: isSelected
-                    ? Icon(
-                        Icons.check_circle_rounded,
-                        color: context.colors.primary,
-                      )
-                    : null,
-                onTap: () async {
-                  if (isPrimary) {
-                    await ref
-                        .read(primaryCalendarSystemProvider.notifier)
-                        .setSystem(system);
-                  } else {
-                    await ref
-                        .read(secondaryCalendarSystemProvider.notifier)
-                        .setSystem(system);
-                  }
-                  if (context.mounted) Navigator.pop(context);
-                },
-              );
-            }),
-            const SizedBox(height: 16),
-          ],
-        ),
+    title: isPrimary ? 'Select Primary Calendar' : 'Select Secondary Calendar',
+    children: AppCalendarSystem.values.map((system) {
+      return SettingsPickerItem(
+        title: system.label,
+        isSelected: system == currentSystem,
+        onTap: () async {
+          if (isPrimary) {
+            await ref
+                .read(primaryCalendarSystemProvider.notifier)
+                .setSystem(system);
+          } else {
+            await ref
+                .read(secondaryCalendarSystemProvider.notifier)
+                .setSystem(system);
+          }
+          if (context.mounted) Navigator.pop(context);
+        },
       );
-    },
+    }).toList(),
   );
+}
+
+class _ClearCacheSetting extends ConsumerWidget {
+  const _ClearCacheSetting();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return SettingsActionTile(
+      icon: Icons.cleaning_services_rounded,
+      title: l10n?.clearLocationCache ?? 'Clear Location Cache',
+      onTap: () async {
+        final scaffold = ScaffoldMessenger.of(context);
+        await ref.read(locationServiceProvider).clearCache();
+        ref.invalidate(currentLocationProvider);
+        scaffold.showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n?.locationCacheCleared ?? 'Location cache cleared',
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ResetSettingsTile extends ConsumerWidget {
+  const _ResetSettingsTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    return SettingsActionTile(
+      icon: Icons.restore_rounded,
+      title: l10n?.resetAppSettings ?? 'Reset App Settings',
+      onTap: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: Text(l10n?.resetSettingsTitle ?? 'Reset Settings?'),
+            content: Text(
+              l10n?.resetSettingsMessage ??
+                  'This will reset all your preferences and data to default. This cannot be undone.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(c, false),
+                child: Text(l10n?.cancel ?? 'Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(c, true),
+                child: Text(
+                  l10n?.reset ?? 'Reset',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (confirm == true) {
+          final box = Hive.box('settings');
+          await box.clear();
+          await ref.read(locationServiceProvider).setLocationEnabled(false);
+
+          // Reset providers
+          ref.invalidate(startOfWeekProvider);
+          ref.invalidate(primaryEventViewProvider);
+          ref.invalidate(themeOverrideProvider);
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(l10n?.appResetComplete ?? 'App reset complete'),
+              ),
+            );
+          }
+        }
+      },
+    );
+  }
 }

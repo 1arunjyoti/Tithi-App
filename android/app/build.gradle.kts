@@ -45,6 +45,16 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    applicationVariants.all {
+        val variant = this
+        variant.outputs
+            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .forEach { output ->
+                val outputName = "tithi-${variant.versionName}-${variant.buildType.name}.apk"
+                output.outputFileName = outputName
+            }
+    }
 }
 
 flutter {
@@ -53,4 +63,5 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    implementation("com.google.android.play:core:1.10.3")
 }

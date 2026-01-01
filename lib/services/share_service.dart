@@ -30,7 +30,7 @@ class ShareService {
       // 2. Capture the widget
       // We pass the context to ensure themes/media queries work if needed,
       // though our specific widget is self-contained.
-      final Uint8List? imageBytes = await _screenshotController
+      final Uint8List imageBytes = await _screenshotController
           .captureFromWidget(
             widgetToCapture,
             delay: const Duration(
@@ -39,10 +39,6 @@ class ShareService {
             context: context,
             pixelRatio: 2.0, // High resolution for better quality
           );
-
-      if (imageBytes == null) {
-        throw Exception("Failed to capture image");
-      }
 
       // 3. Save to temporary directory
       final directory = await getTemporaryDirectory();
@@ -56,10 +52,12 @@ class ShareService {
 
       // Determine device type (iPad needs a sharePositionOrigin)
       // For now, we just share plainly. share_plus handles platform logic well.
-      await Share.shareXFiles(
-        [xFile],
-        text: 'Celebrating ${festival.name} with Tithi App!',
-        subject: festival.name,
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: festival.name,
+          text: 'Celebrating ${festival.name} with Tithi App!',
+          files: [xFile],
+        ),
       );
     } catch (e) {
       debugPrint("Error sharing festival: $e");
