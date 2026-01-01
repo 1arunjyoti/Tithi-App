@@ -1,14 +1,79 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:workmanager/workmanager.dart';
 import 'shloka_service.dart';
 import '../models/sankalpa.dart';
+
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    try {
+      if (kDebugMode) {
+        print('WorkManager executing task: $task');
+      }
+
+      // Initialize dependencies in background isolate
+      await Hive.initFlutter();
+
+      // Initialize timezone data
+      tz_data.initializeTimeZones();
+
+      // Initialize NotificationService
+      // This will check settings and reschedule notifications if enabled
+      final service = NotificationService();
+      await service.init();
+
+      return Future.value(true);
+    } catch (e) {
+      if (kDebugMode) {
+        print('WorkManager task failed: $e');
+      }
+      return Future.value(false);
+    }
+  });
+}
 
 /// Notification service for scheduling daily tithi notifications
 /// FOSS-compatible: Uses native Android NotificationCompat, no Google Play Services
 class NotificationService {
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
+  NotificationService._internal();
+
+  static const String _taskName = 'periodic_notification_check';
+
+  /// Initialize WorkManager
+  Future<void> initWorkManager() async {
+    // Only initialize on Android/iOS (skip web/desktop if targeted)
+    if (kIsWeb) return;
+
+    // We only need workmanager on Android/iOS
+    // desktop doesn't support workmanager nicely yet or needs different setup
+    // But since this app seems mobile focused:
+
+    try {
+      await Workmanager().initialize(callbackDispatcher);
+
+      await Workmanager().registerPeriodicTask(
+        "periodic_check_id",
+        _taskName,
+        frequency: const Duration(hours: 6),
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
+      );
+
+      if (kDebugMode) {
+        print('WorkManager initialized and periodic task scheduled');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to init WorkManager: $e');
+      }
+    }
+  }
+
   static const String _boxName = 'notification_settings';
   static const String _keyEnabled = 'notifications_enabled';
   static const String _keyHour = 'notification_hour';
@@ -23,14 +88,20 @@ class NotificationService {
   Box? _box;
   bool _isInitialized = false;
 
+  // Base ID for sankalpa notifications (unique range to avoid collision)
+  static const int _sankalpaNotificationIdBase = 10000;
+
   /// Initialize the notification service
   Future<void> init() async {
     if (_isInitialized) return;
 
     try {
-      // Initialize timezone
+      // Initialize timezone data
       tz_data.initializeTimeZones();
-      tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+
+      // Get device timezone using native Dart
+      final deviceTimeZone = _getDeviceTimezone();
+      tz.setLocalLocation(tz.getLocation(deviceTimeZone));
 
       // Initialize Hive box
       _box = await Hive.openBox(_boxName);
@@ -57,18 +128,28 @@ class NotificationService {
 
       _isInitialized = true;
 
+      // Check enabled state and reschedule if needed
+      final notificationsEnabled = await isEnabled();
+      final shlokasEnabled = await isShlokaEnabled();
+
       if (kDebugMode) {
-        print('NotificationService initialized');
+        if (notificationsEnabled) {
+          print(
+            'NotificationService ready - notifications ON${shlokasEnabled ? ', shloka ON' : ''}',
+          );
+        } else {
+          print(
+            'NotificationService ready - notifications OFF (nothing scheduled)',
+          );
+        }
       }
 
-      // Reschedule if enabled
-      if (await isEnabled()) {
+      // Only schedule if enabled
+      if (notificationsEnabled) {
         await scheduleDailyNotification();
-      }
-
-      // Reschedule shlokas if enabled
-      if (await isShlokaEnabled()) {
-        await _scheduleUpcomingShlokas();
+        if (shlokasEnabled) {
+          await _scheduleUpcomingShlokas();
+        }
       }
     } catch (e) {
       if (kDebugMode) {
@@ -122,14 +203,9 @@ class NotificationService {
     if (await isEnabled()) {
       await scheduleDailyNotification();
     }
-    // Reschedule with new time
-    if (await isEnabled()) {
-      await scheduleDailyNotification();
-    }
 
-    // Reschedule shlokas with new time if they follow the same schedule (optional,
-    // or we could have a separate time setting for shlokas. For now assuming same time)
-    if (await isShlokaEnabled()) {
+    // Reschedule shlokas with new time (only if both main and shloka are enabled)
+    if (await isEnabled() && await isShlokaEnabled()) {
       await _scheduleUpcomingShlokas();
     }
   }
@@ -137,7 +213,7 @@ class NotificationService {
   /// Check if Shloka notifications are enabled
   Future<bool> isShlokaEnabled() async {
     _ensureInitialized();
-    return _box?.get(_keyShlokaEnabled, defaultValue: true) ?? true;
+    return _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
   }
 
   /// Enable or disable Shloka notifications
@@ -145,9 +221,10 @@ class NotificationService {
     _ensureInitialized();
     await _box?.put(_keyShlokaEnabled, enabled);
 
-    if (enabled) {
+    if (enabled && await isEnabled()) {
+      // Only schedule if main notifications are also enabled
       await _scheduleUpcomingShlokas();
-    } else {
+    } else if (!enabled) {
       await cancelShlokaNotifications();
     }
   }
@@ -163,18 +240,17 @@ class NotificationService {
   /// Schedule upcoming Shloka notifications for the next 7 days
   Future<void> _scheduleUpcomingShlokas() async {
     _ensureInitialized();
-    if (!await isShlokaEnabled()) return;
+    // Only schedule if both main notifications AND shloka are enabled
+    if (!await isEnabled() || !await isShlokaEnabled()) return;
 
     await cancelShlokaNotifications();
 
-    // Initialize ShlokaService if needed
+    // ShlokaService is a singleton, no need to cache it
     final shlokaService = ShlokaService();
     await shlokaService.init();
 
     final time = await getNotificationTime();
     final now = tz.TZDateTime.now(tz.local);
-    // Schedule 15 minutes after the main notification for variety, or same time?
-    // Let's do same time but different ID
 
     final shlokas = shlokaService.getShlokasForNextNDays(7);
 
@@ -207,7 +283,6 @@ class NotificationService {
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
         icon: '@mipmap/ic_launcher',
-        styleInformation: BigTextStyleInformation(''),
       );
 
       const iosDetails = DarwinNotificationDetails(
@@ -283,7 +358,6 @@ class NotificationService {
       importance: Importance.high,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
-      styleInformation: BigTextStyleInformation(''),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -359,8 +433,10 @@ class NotificationService {
     _ensureInitialized();
     if (sankalpa.isCompleted) return;
 
-    // Use hashCode for notification ID (simple, low collision risk for this scale)
-    final notificationId = sankalpa.id.hashCode;
+    // Generate stable notification ID from sankalpa ID
+    // Use a deterministic hash within the sankalpa ID range to avoid collisions
+    final notificationId =
+        _sankalpaNotificationIdBase + (sankalpa.id.hashCode.abs() % 10000);
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
@@ -433,7 +509,19 @@ class NotificationService {
 
   /// Cancel a sankalpa reminder
   Future<void> cancelSankalpaReminder(String id) async {
-    await _notifications.cancel(id.hashCode);
+    final notificationId =
+        _sankalpaNotificationIdBase + (id.hashCode.abs() % 10000);
+    await _notifications.cancel(notificationId);
+    if (kDebugMode) {
+      print('Cancelled sankalpa notification: $id (ID: $notificationId)');
+    }
+  }
+
+  /// Cancel all sankalpa reminders (cleanup)
+  Future<void> cancelAllSankalpaReminders(List<String> sankalpaIds) async {
+    for (final id in sankalpaIds) {
+      await cancelSankalpaReminder(id);
+    }
   }
 
   void _ensureInitialized() {
@@ -442,5 +530,73 @@ class NotificationService {
         'NotificationService not initialized. Call init() first.',
       );
     }
+  }
+
+  /// Dispose of resources (call when app closes)
+  Future<void> dispose() async {
+    if (_box != null && _box!.isOpen) {
+      await _box!.close();
+    }
+    _isInitialized = false;
+  }
+
+  /// Get device timezone name from offset
+  /// Uses common timezone mappings based on UTC offset
+  String _getDeviceTimezone() {
+    final now = DateTime.now();
+    final offset = now.timeZoneOffset;
+    final offsetHours = offset.inHours;
+    final offsetMinutes = offset.inMinutes % 60;
+
+    // Map common offsets to timezone names
+    // This covers the majority of users
+    final offsetToTimezone = {
+      // Asia
+      (5, 30): 'Asia/Kolkata', // IST (India)
+      (5, 45): 'Asia/Kathmandu', // Nepal
+      (6, 0): 'Asia/Dhaka', // Bangladesh
+      (6, 30): 'Asia/Yangon', // Myanmar
+      (7, 0): 'Asia/Bangkok', // Thailand, Vietnam
+      (8, 0): 'Asia/Singapore', // Singapore, Malaysia, Philippines
+      (9, 0): 'Asia/Tokyo', // Japan, Korea
+      (9, 30): 'Australia/Darwin', // Australia NT
+      (10, 0): 'Australia/Sydney', // Australia Eastern
+      (10, 30): 'Australia/Adelaide', // Australia SA
+      // Middle East
+      (3, 0): 'Asia/Riyadh', // Saudi Arabia
+      (3, 30): 'Asia/Tehran', // Iran
+      (4, 0): 'Asia/Dubai', // UAE
+      (4, 30): 'Asia/Kabul', // Afghanistan
+      // Europe
+      (0, 0): 'Europe/London', // UK, Portugal
+      (1, 0): 'Europe/Paris', // Central Europe
+      (2, 0): 'Europe/Athens', // Eastern Europe
+      // Americas
+      (-5, 0): 'America/New_York', // US Eastern
+      (-6, 0): 'America/Chicago', // US Central
+      (-7, 0): 'America/Denver', // US Mountain
+      (-8, 0): 'America/Los_Angeles', // US Pacific
+      (-3, 0): 'America/Sao_Paulo', // Brazil
+    };
+
+    final key = (offsetHours, offsetMinutes.abs());
+    final timezone = offsetToTimezone[key];
+
+    if (timezone != null) {
+      if (kDebugMode) {
+        print(
+          'Detected timezone: $timezone (UTC${offsetHours >= 0 ? '+' : ''}$offsetHours:${offsetMinutes.abs().toString().padLeft(2, '0')})',
+        );
+      }
+      return timezone;
+    }
+
+    // Default to Asia/Kolkata for this app's primary audience
+    if (kDebugMode) {
+      print(
+        'Unknown timezone offset UTC${offsetHours >= 0 ? '+' : ''}$offsetHours:${offsetMinutes.abs().toString().padLeft(2, '0')}, defaulting to Asia/Kolkata',
+      );
+    }
+    return 'Asia/Kolkata';
   }
 }

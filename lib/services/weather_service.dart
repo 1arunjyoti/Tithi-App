@@ -7,7 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class WeatherService {
   // Read from .env
   String get apiKey => dotenv.env['WEATHER_API_KEY'] ?? '';
-  static const String baseUrl = 'http://api.weatherapi.com/v1';
+  static const String baseUrl = 'https://api.weatherapi.com/v1';
 
   Future<WeatherData?> fetchCurrentWeather(double lat, double lng) async {
     if (apiKey.isEmpty || apiKey == 'YOUR_API_KEY_HERE') {

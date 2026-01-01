@@ -49,3 +49,7 @@ app.*.map.json
 .env.local
 .env.production
 .env.test
+
+# Native build artifacts
+**/.cxx/
+**/.gradle/

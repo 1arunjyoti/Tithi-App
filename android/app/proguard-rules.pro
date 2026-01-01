@@ -37,3 +37,7 @@
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+
+# Google Play Services / Play Core (Fixes missing class error in release build)
+-dontwarn com.google.android.play.core.tasks.**
+-keep class com.google.android.play.core.tasks.** { *; }

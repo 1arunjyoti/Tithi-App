@@ -34,6 +34,10 @@ class LocationData {
 /// Uses native Android LocationManager (not Google Play Services)
 /// Uses OpenStreetMap Nominatim for reverse geocoding
 class LocationService {
+  static final LocationService _instance = LocationService._internal();
+  factory LocationService() => _instance;
+  LocationService._internal();
+
   static const String _boxName = 'location_settings';
   static const String _keyFirstLaunch = 'first_launch';
   static const String _keyLocationEnabled = 'location_enabled';
@@ -47,6 +51,12 @@ class LocationService {
 
   Box? _box;
   bool _isInitialized = false;
+
+  // In-memory cache for request deduplication and short-term caching
+  Future<LocationData?>? _pendingLocationRequest;
+  LocationData? _memoryCachedLocation;
+  DateTime? _lastFetchTime;
+  static const Duration _cacheDuration = Duration(seconds: 10);
 
   /// Initialize the location service
   Future<void> init() async {
@@ -117,6 +127,44 @@ class LocationService {
   Future<LocationData?> getCurrentLocation() async {
     _ensureInitialized();
 
+    // Check short-term memory cache (deduplication)
+    if (_memoryCachedLocation != null &&
+        _lastFetchTime != null &&
+        DateTime.now().difference(_lastFetchTime!) < _cacheDuration) {
+      if (kDebugMode) {
+        print(
+          'Returning memory cached location (valid for ${_cacheDuration.inSeconds}s)',
+        );
+      }
+      return _memoryCachedLocation;
+    }
+
+    // Check if a request is already in progress
+    if (_pendingLocationRequest != null) {
+      if (kDebugMode) {
+        print('Joining pending location request');
+      }
+      return _pendingLocationRequest;
+    }
+
+    // Create new request
+    _pendingLocationRequest = _fetchLocation();
+
+    try {
+      final result = await _pendingLocationRequest;
+      // Update memory cache
+      if (result != null) {
+        _memoryCachedLocation = result;
+        _lastFetchTime = DateTime.now();
+      }
+      return result;
+    } finally {
+      // Clear pending request flag
+      _pendingLocationRequest = null;
+    }
+  }
+
+  Future<LocationData?> _fetchLocation() async {
     try {
       // Check if location services are enabled
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -150,12 +198,13 @@ class LocationService {
       Position? position = await Geolocator.getLastKnownPosition();
 
       // If no last known position, get current position using native LocationManager (FOSS)
+      // Reduced timeout to 10s for better responsiveness
       position ??= await Geolocator.getCurrentPosition(
         locationSettings: AndroidSettings(
           accuracy: LocationAccuracy.medium,
           forceLocationManager:
               true, // FOSS: Use native LocationManager, not Google
-          timeLimit: const Duration(seconds: 30),
+          timeLimit: const Duration(seconds: 10),
         ),
       );
 
@@ -177,6 +226,14 @@ class LocationService {
       }
       return _getCachedLocation();
     }
+  }
+
+  /// Dispose services
+  Future<void> dispose() async {
+    if (_box != null && _box!.isOpen) {
+      await _box!.close();
+    }
+    _isInitialized = false;
   }
 
   /// Reverse geocode coordinates to city name using OpenStreetMap Nominatim

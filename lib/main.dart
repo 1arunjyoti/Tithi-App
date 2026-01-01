@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
@@ -15,10 +17,20 @@ import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'models/festival.dart';
 import 'models/sankalpa.dart';
+import 'services/notification_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Optimized Display Mode (90Hz/120Hz)
+  if (Platform.isAndroid) {
+    try {
+      await FlutterDisplayMode.setHighRefreshRate();
+    } catch (e) {
+      debugPrint('Error setting high refresh rate: $e');
+    }
+  }
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
@@ -43,6 +55,9 @@ void main() async {
 
   // Initialize Nominatim Geocoding with cache
   await NominatimGeocoding.init(reqCacheNum: 50);
+
+  // Initialize WorkManager for background notifications
+  await NotificationService().initWorkManager();
 
   runApp(const ProviderScope(child: TithiApp()));
 }
