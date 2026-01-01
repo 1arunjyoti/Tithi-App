@@ -1,237 +1,3079 @@
 [
   {
-    "id": "diwali",
-    "name": "Diwali",
-    "nameHindi": "दीवाली",
-    "description": "Festival of Lights - Victory of light over darkness",
-    "masa": "Kartika",
-    "paksha": "Krishna",
-    "tithi": 15,
-    "conditions": "Amavasya",
+    "id": "chaitra_navratri_day_1",
+    "name": "Chaitra Navratri / Vasantha Navaratri Day 1: Shailaputri Puja",
     "category": "major",
-    "rituals": ["Lakshmi Puja", "Diya lighting", "Rangoli", "Fireworks"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Chaitra Navratri / Vasantha Navaratri Day 1: Shailaputri Puja",
+      "nameHindi": "चैत्र नवरात्रि - शैलपुत्री पूजा",
+      "nameBengali": "বাসন্তী পুজা প্রথম দিন - শৈলপুত্রী পূজা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Shailaputri - Daughter of the Mountains",
+      "addtional_description": "Nine nights of Goddess Durga worship (Spring). The first day of Navratri involves Ghatasthapana (Kalash Sthapana). Shailaputri represents strength and stability."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 1,
+      "conditions": "Pratipada"
+    },
+    "rituals": {
+      "steps": [
+        "Ghatasthapana (Kalash installation)",
+        "Sankalp (Vow for 9-day fast)",
+        "Offering pure Ghee for health",
+        "Worship with white flowers"
+      ],
+      "mantra": "Om Devi Shailputryai Namah",
+      "fasting": "Fruit-based or one sattvic meal"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "holi",
-    "name": "Holi",
-    "nameHindi": "होली",
-    "description": "Festival of Colors - Celebration of spring and love",
-    "masa": "Phalguna",
-    "paksha": "Shukla",
-    "tithi": 15,
-    "conditions": "Purnima",
+    "id": "chaitra_navratri_day_2",
+    "name": "Chaitra Navratri Day 2: Brahmacharini Puja",
     "category": "major",
-    "rituals": ["Holika Dahan", "Playing with colors", "Bhang preparation", "Gujiya sweets"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Chaitra Navratri Day 2: Brahmacharini Puja",
+      "nameHindi": "चैत्र नवरात्रि - ब्रह्मचारिणी पूजा",
+      "nameBengali": "বাসন্তী পুজা দ্বিতীয় দিন - ব্রহ্মচারিণী পূজা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Brahmacharini - Symbol of penance and knowledge",
+      "additional_description": "She represents the ascetic form of Goddess Parvati and blesses devotees with wisdom and peace."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 2,
+      "conditions": "Dwitiya"
+    },
+    "rituals": {
+      "steps": [
+        "Offer sugar and jasmine flowers",
+        "Worship for discipline and penance",
+        "Chant mantras for mental clarity"
+      ],
+      "mantra": "Om Devi Brahmacharinyai Namah",
+      "fasting": "Partial or full fast"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "maha_shivaratri",
-    "name": "Maha Shivaratri",
-    "nameHindi": "महाशिवरात्रि",
-    "description": "Great Night of Shiva - Night of fasting and worship",
-    "masa": "Phalguna",
-    "paksha": "Krishna",
-    "tithi": 14,
-    "conditions": "Chaturdashi",
+    "id": "chaitra_navratri_day_3",
+    "name": "Chaitra Navratri Day 3: Chandraghanta Puja",
     "category": "major",
-    "rituals": ["Night vigil", "Shiva Puja", "Fasting", "Bilva leaves offering", "Rudrabhishek"]
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - चंद्रघंटा पूजा",
+      "nameBengali": "বাসন্তী পুজা তৃতীয় দিন - চন্দ্রঘণ্টা পূজা"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Chandraghanta - Destroyer of evil and negativity",
+      "additional_description": "She has a half-moon on her forehead and represents bravery and courage."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Offer milk and milk-based sweets",
+        "Worship for courage and peace",
+        "Offer red flowers"
+      ],
+      "mantra": "Om Devi Chandraghantayai Namah",
+      "fasting": "Sattvic diet"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "chaitra_navratri_start",
-    "name": "Chaitra Navratri Begins",
-    "nameHindi": "चैत्र नवरात्रि",
-    "description": "Nine nights of Goddess Durga worship (Spring)",
-    "masa": "Chaitra",
-    "paksha": "Shukla",
-    "tithi": 1,
-    "conditions": "Pratipada",
+    "id": "chaitra_navratri_day_4",
+    "name": "Chaitra Navratri Day 4: Kushmanda Puja",
     "category": "major",
-    "rituals": ["Kalash Sthapana", "Durga Puja", "Fasting", "Garba"]
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - कुष्माण्डा पूजा",
+      "nameBengali": "বাসন্তী পুজা চতুর্থ দিন - কুষ্মাণ্ডা পূজা"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Kushmanda - The creator of the universe",
+      "additional_description": "She is credited with creating the world with her divine smile and represents abundance and health."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 4,
+      "conditions": "Chaturthi"
+    },
+    "rituals": {
+      "steps": [
+        "Offer Malpua (sweet pancakes)",
+        "Worship for prosperity and well-being",
+        "Light a Diya for energy"
+      ],
+      "mantra": "Om Devi Kushmandayai Namah",
+      "fasting": "Standard Navratri fast"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "chaitra_navratri_day_5",
+    "name": "Chaitra Navratri Day 5: Skandamata Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - स्कंदमाता पूजा",
+      "nameBengali": "বাসন্তী পুজা পঞ্চম দিন - স্কন্দমাতা পূজা"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Skandamata - Mother of Lord Kartikeya",
+      "additional_description": "She symbolizes motherly love, protection, and the fulfillment of desires."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 5,
+      "conditions": "Panchami"
+    },
+    "rituals": {
+      "steps": [
+        "Offer bananas for prosperity",
+        "Meditate for spiritual wisdom",
+        "Pray for children's well-being"
+      ],
+      "mantra": "Om Devi Skandamatayai Namah",
+      "fasting": "Partial fast"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "chaitra_navratri_day_6",
+    "name": "Chaitra Navratri Day 6: Katyayani Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - कात्यायनी पूजा",
+      "nameBengali": "বাসন্তী পুজা ষষ্ঠ দিন - কাত্যায়নী পূজা"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Katyayani - Warrior form of Durga",
+      "additional_description": "Goddess Katyayani is the fiercest warrior form who destroyed the demon Mahishasura."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 6,
+      "conditions": "Shashthi"
+    },
+    "rituals": {
+      "steps": [
+        "Offer Honey for positivity",
+        "Worship for a successful marriage or career",
+        "Pray to remove obstacles"
+      ],
+      "mantra": "Om Devi Katyayanyai Namah",
+      "fasting": "Standard Navratri rules"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "chaitra_navratri_day_7",
+    "name": "Chaitra Navratri Day 7: Kalaratri Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - कालरात्रि पूजा",
+      "nameBengali": "বাসন্তী পুজা সপ্তম দিন - কালরাত্রি পূজা"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Kalaratri - Remover of darkness and fear",
+      "additional_description": "She is the fiercest form of the Goddess, appearing with a dark complexion and disheveled hair to destroy ignorance."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 7,
+      "conditions": "Saptami"
+    },
+    "rituals": {
+      "steps": [
+        "Offer Jaggery (Gur) to remove fear",
+        "Night vigil (Jagran) is auspicious",
+        "Worship for protection against negative energies"
+      ],
+      "mantra": "Om Devi Kalaratryai Namah",
+      "fasting": "Fruit-based fast"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "chaitra_navratri_day_8",
+    "name": "Chaitra Navratri Day 8: Mahagauri Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - महागौरी पूजा",
+      "nameBengali": "বাসন্তী পুজা অষ্টম দিন - মহাগৌরী পূজা"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Mahagauri - Embodiment of purity and peace",
+      "additional_description": "Representing extreme beauty and purity, she is worshipped to purify the mind and soul. This day is often celebrated as Maha Ashtami."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 8,
+      "conditions": "Ashtami"
+    },
+    "rituals": {
+      "steps": [
+        "Perform Kanya Pujan (Feeding 9 girls)",
+        "Offer Coconut for spiritual awakening",
+        "Light lamps for peace"
+      ],
+      "mantra": "Om Devi Mahagauryai Namah",
+      "fasting": "Mandatory for devotees of Ashtami"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "chaitra_navratri_day_9",
+    "name": "Chaitra Navratri Day 9: Siddhidatri Puja & Ram Navami",
+    "category": "major",
+    "nameRegional": {
+      "nameHindi": "चैत्र नवरात्रि - सिद्धिदात्री पूजा और राम नवमी",
+      "nameBengali": "বাসন্তী পুজা নবম দিন - সিদ্ধিদাত্রী পূজা ও রাম নবমী"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Maa Siddhidatri and Celebration of Lord Rama's Birth",
+      "additional_description": "The final day grants 'Siddhis' (spiritual powers). It also marks Ram Navami, celebrating the birth anniversary of Lord Rama."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 9,
+      "conditions": "Navami"
+    },
+    "rituals": {
+      "steps": [
+        "Ram Janmotsav prayers at noon",
+        "Havan (Sacred fire ritual)",
+        "Offer Sesame seeds for longevity",
+        "Visarjan (Kalash immersion) following puja"
+      ],
+      "mantra": "Om Devi Siddhidatryai Namah",
+      "fasting": "Break fast after Ram Janmotsav or completion of Havan"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
     "id": "ram_navami",
     "name": "Ram Navami",
-    "nameHindi": "राम नवमी",
-    "description": "Birth of Lord Rama",
-    "masa": "Chaitra",
-    "paksha": "Shukla",
-    "tithi": 9,
-    "conditions": "Navami",
     "category": "major",
-    "rituals": ["Ram Puja", "Bhajan", "Fasting", "Temple visit"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Ram Navami",
+      "nameHindi": "राम नवमी",
+      "nameBengali": "রাম নবমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth of Lord Rama",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 9,
+      "conditions": "Navami"
+    },
+    "rituals": {
+      "steps": [
+        "Ram Puja",
+        "Bhajan",
+        "Fasting",
+        "Temple visit"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "sharad_navratri_start",
-    "name": "Sharad Navratri Begins",
-    "nameHindi": "शरद नवरात्रि",
-    "description": "Nine nights of Goddess Durga worship (Autumn)",
-    "masa": "Ashwin",
-    "paksha": "Shukla",
-    "tithi": 1,
-    "conditions": "Pratipada",
+    "id": "hanuman_jayanti",
+    "name": "Hanuman Jayanti",
     "category": "major",
-    "rituals": ["Kalash Sthapana", "Durga Puja", "Fasting", "Garba", "Dandiya"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Hanuman Jayanti",
+      "nameHindi": "हनुमान जयंती",
+      "nameBengali": "হানুমান জয়ন্তী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth anniversary of Lord Hanuman",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Hanuman Puja",
+        "Sunderkand Path",
+        "Prasad distribution",
+        "Temple visit"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+
+  {
+    "id": "akshaya_tritiya",
+    "name": "Akshaya Tritiya",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Akshaya Tritiya",
+      "nameHindi": "अक्षय तृतीया",
+      "nameBengali": "অক্ষয় তৃতীযা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Most auspicious day for new beginnings and buying gold",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Gold purchase",
+        "Charity",
+        "New ventures",
+        "Vishnu-Lakshmi Puja"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "dussehra",
-    "name": "Dussehra / Vijayadashami",
-    "nameHindi": "दशहरा",
-    "description": "Victory of Good over Evil - Rama's victory over Ravana",
-    "masa": "Ashwin",
-    "paksha": "Shukla",
-    "tithi": 10,
-    "conditions": "Dashami",
+    "id": "buddha_purnima",
+    "name": "Buddha Purnima",
     "category": "major",
-    "rituals": ["Ravana Dahan", "Weapon worship", "Shami Puja", "Victory celebration"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Buddha Purnima",
+      "nameHindi": "बुद्ध पूर्णिमा",
+      "nameBengali": "বুদ্ধ পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth, enlightenment and death anniversary of Gautama Buddha",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Meditation",
+        "Temple visit",
+        "Charity",
+        "Vegetarian meal"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "janmashtami",
-    "name": "Krishna Janmashtami",
-    "nameHindi": "कृष्ण जन्माष्टमी",
-    "description": "Birth of Lord Krishna",
-    "masa": "Bhadrapada",
-    "paksha": "Krishna",
-    "tithi": 8,
-    "conditions": "Ashtami",
+    "id": "narasimha_jayanti",
+    "name": "Narasimha Jayanti",
     "category": "major",
-    "rituals": ["Midnight puja", "Fasting", "Dahi Handi", "Bhajan", "Jhankis"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Narasimha Jayanti",
+      "nameHindi": "नरसिंह जयंती",
+      "nameBengali": "নরসিংহ জয়ন্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Appearance day of Lord Narasimha",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 14,
+      "conditions": "Chaturdashi"
+    },
+    "rituals": {
+      "steps": [
+        "Narasimha Puja",
+        "Fasting",
+        "Reading Narasimha Kavacham",
+        "Temple visit"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "ganesh_chaturthi",
-    "name": "Ganesh Chaturthi",
-    "nameHindi": "गणेश चतुर्थी",
-    "description": "Birth of Lord Ganesha",
-    "masa": "Bhadrapada",
-    "paksha": "Shukla",
-    "tithi": 4,
-    "conditions": "Chaturthi",
+    "id": "parashurama_jayanti",
+    "name": "Parashurama Jayanti",
     "category": "major",
-    "rituals": ["Ganesh Sthapana", "Modak offering", "Aarti", "Visarjan after 10 days"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Parashurama Jayanti",
+      "nameHindi": "परशुराम जयंती",
+      "nameBengali": "পরশুরাম জয়ন্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth anniversary of Lord Parashurama",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Parashurama Puja",
+        "Brahmin feeding",
+        "Temple visit",
+        "Charity"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "karva_chauth",
-    "name": "Karva Chauth",
-    "nameHindi": "करवा चौथ",
-    "description": "Married women's fast for husband's longevity",
-    "masa": "Kartika",
-    "paksha": "Krishna",
-    "tithi": 4,
-    "conditions": "Chaturthi",
+    "id": "varuthini_ekadashi",
+    "name": "Varuthini Ekadashi",
     "category": "vrat",
-    "rituals": ["Nirjala fasting", "Moon sighting", "Puja", "Breaking fast with water"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Varuthini Ekadashi",
+      "nameHindi": "वरुथिनी एकादशी",
+      "nameBengali": "বরুথিনী একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Ekadashi that protects from calamities",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Fasting",
+        "Charity",
+        "Tulsi worship"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
-    "id": "ekadashi_shukla",
-    "name": "Ekadashi (Shukla)",
-    "nameHindi": "एकादशी",
-    "description": "Auspicious fasting day dedicated to Lord Vishnu",
-    "masa": "*",
-    "paksha": "Shukla",
-    "tithi": 11,
-    "conditions": "Ekadashi",
-    "category": "vrat",
-    "recurring": true,
-    "rituals": ["Fasting", "Vishnu Puja", "Tulsi worship", "Reading Vishnu Sahasranama"]
-  },
-  {
-    "id": "ekadashi_krishna",
-    "name": "Ekadashi (Krishna)",
-    "nameHindi": "एकादशी",
-    "description": "Auspicious fasting day dedicated to Lord Vishnu",
-    "masa": "*",
-    "paksha": "Krishna",
-    "tithi": 11,
-    "conditions": "Ekadashi",
-    "category": "vrat",
-    "recurring": true,
-    "rituals": ["Fasting", "Vishnu Puja", "Tulsi worship", "Reading Vishnu Sahasranama"]
-  },
-  {
-    "id": "purnima",
-    "name": "Purnima (Full Moon)",
-    "nameHindi": "पूर्णिमा",
-    "description": "Full Moon day - Auspicious for charity and worship",
-    "masa": "*",
-    "paksha": "Shukla",
-    "tithi": 15,
-    "conditions": "Purnima",
-    "category": "recurring",
-    "recurring": true,
-    "rituals": ["Satyanarayan Puja", "Charity", "Holy bath", "Moon gazing"]
-  },
-  {
-    "id": "amavasya",
-    "name": "Amavasya (New Moon)",
-    "nameHindi": "अमावस्या",
-    "description": "New Moon day - Day for ancestors (Pitru Tarpan)",
-    "masa": "*",
-    "paksha": "Krishna",
-    "tithi": 15,
-    "conditions": "Amavasya",
-    "category": "recurring",
-    "recurring": true,
-    "rituals": ["Pitru Tarpan", "Charity", "Shani Puja", "Avoid new beginnings"]
-  },
-  {
-    "id": "pradosh_vrat",
-    "name": "Pradosh Vrat",
-    "nameHindi": "प्रदोष व्रत",
-    "description": "Bi-monthly fast for Lord Shiva on Trayodashi",
-    "masa": "*",
-    "paksha": "*",
-    "tithi": 13,
-    "conditions": "Trayodashi",
-    "category": "vrat",
-    "recurring": true,
-    "rituals": ["Evening Shiva Puja", "Fasting", "Milk Abhishek"]
-  },
-  {
-    "id": "sankashti_chaturthi",
-    "name": "Sankashti Chaturthi",
-    "nameHindi": "संकष्टी चतुर्थी",
-    "description": "Monthly fast for Lord Ganesha",
-    "masa": "*",
-    "paksha": "Krishna",
-    "tithi": 4,
-    "conditions": "Chaturthi",
-    "category": "vrat",
-    "recurring": true,
-    "rituals": ["Ganesha Puja", "Fasting until moonrise", "Moon sighting"]
-  },
-  {
-    "id": "makar_sankranti",
-    "name": "Makar Sankranti",
-    "nameHindi": "मकर संक्रांति",
-    "description": "Sun enters Capricorn - Harvest festival",
-    "masa": "Pausha",
-    "paksha": "*",
-    "tithi": 0,
-    "conditions": "Solar",
+    "id": "sita_navami",
+    "name": "Sita Navami",
     "category": "major",
-    "solarDate": "01-14",
-    "rituals": ["Til-Gur sweets", "Kite flying", "Holy bath", "Charity"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Sita Navami",
+      "nameHindi": "सीता नवमी",
+      "nameBengali": "সীতা নবমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Appearance day of Goddess Sita",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 9,
+      "conditions": "Navami"
+    },
+    "rituals": {
+      "steps": [
+        "Sita Puja",
+        "Ram-Sita worship",
+        "Fasting",
+        "Reading Ramayana"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+
+  {
+    "id": "vat_savitri",
+    "name": "Vat Savitri Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Vat Savitri Vrat",
+      "nameHindi": "वट सावित्री व्रत",
+      "nameBengali": "ভট সাবিত্রী ব্রত",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Married women's fast for husband's longevity around Banyan tree",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Jyeshtha",
+      "paksha": "Krishna",
+      "tithi": 15,
+      "conditions": "Amavasya"
+    },
+    "rituals": {
+      "steps": [
+        "Vat Vriksha Puja",
+        "Tying thread around Banyan tree",
+        "Fasting",
+        "Savitri Katha"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "ganga_dussehra",
+    "name": "Ganga Dussehra",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Ganga Dussehra",
+      "nameHindi": "गंगा दशहरा",
+      "nameBengali": "গঙ্গা দশহরা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Descent of River Ganga to Earth",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Jyeshtha",
+      "paksha": "Shukla",
+      "tithi": 10,
+      "conditions": "Dashami"
+    },
+    "rituals": {
+      "steps": [
+        "Holy bath in Ganga",
+        "Ganga Aarti",
+        "Charity",
+        "Diya floating"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "nirjala_ekadashi",
+    "name": "Nirjala Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Nirjala Ekadashi",
+      "nameHindi": "निर्जला एकादशी",
+      "nameBengali": "নিরজলা একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Strictest Ekadashi fast without water",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Jyeshtha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Nirjala fasting",
+        "Vishnu Puja",
+        "Charity of water pots",
+        "Night vigil"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
     "id": "guru_purnima",
     "name": "Guru Purnima",
-    "nameHindi": "गुरु पूर्णिमा",
-    "description": "Day to honor teachers and gurus",
-    "masa": "Ashadha",
-    "paksha": "Shukla",
-    "tithi": 15,
-    "conditions": "Purnima",
     "category": "major",
-    "rituals": ["Guru Puja", "Offering to teachers", "Vyasa Puja"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Guru Purnima",
+      "nameHindi": "गुरु पूर्णिमा",
+      "nameBengali": "গুরু পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Day to honor teachers and gurus",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Ashadha",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Guru Puja",
+        "Offering to teachers",
+        "Vyasa Puja"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "jagannath_rath_yatra",
+    "name": "Jagannath Rath Yatra",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Jagannath Rath Yatra",
+      "nameHindi": "जगन्नाथ रथ यात्रा",
+      "nameBengali": "জগন্নাথ রথ যাত্রা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Grand chariot procession of Lord Jagannath in Puri",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Ashadha",
+      "paksha": "Shukla",
+      "tithi": 2,
+      "conditions": "Dwitiya"
+    },
+    "rituals": {
+      "steps": [
+        "Chariot pulling",
+        "Mahaprasad",
+        "Temple darshan",
+        "Kirtan"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "devshayani_ekadashi",
+    "name": "Devshayani Ekadashi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Devshayani Ekadashi",
+      "nameHindi": "देवशयनी एकादशी",
+      "nameBengali": "দেবশয়নী একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Lord Vishnu goes to sleep - Beginning of Chaturmas",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Ashadha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Fasting",
+        "Beginning of Chaturmas vrat"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   },
   {
     "id": "raksha_bandhan",
     "name": "Raksha Bandhan",
-    "nameHindi": "रक्षा बंधन",
-    "description": "Festival of brother-sister bond",
-    "masa": "Shravana",
-    "paksha": "Shukla",
-    "tithi": 15,
-    "conditions": "Purnima",
     "category": "major",
-    "rituals": ["Rakhi tying", "Gift exchange", "Sweets"]
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Raksha Bandhan",
+      "nameHindi": "रक्षा बंधन",
+      "nameBengali": "রাখী বন্ধন",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival of brother-sister bond",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Rakhi tying",
+        "Gift exchange",
+        "Sweets"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "nag_panchami",
+    "name": "Nag Panchami",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Nag Panchami",
+      "nameHindi": "नाग पंचमी",
+      "nameBengali": "নাগ পঞ্চমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of serpent deities",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Shukla",
+      "tithi": 5,
+      "conditions": "Panchami"
+    },
+    "rituals": {
+      "steps": [
+        "Nag Puja",
+        "Milk offering to snakes",
+        "Drawing snake images",
+        "Temple visit"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "hariyali_teej",
+    "name": "Hariyali Teej",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Hariyali Teej",
+      "nameHindi": "हरियाली तीज",
+      "nameBengali": "হরিযালি তীজ",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival celebrating monsoon and marital bliss",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Swing rides",
+        "Mehndi",
+        "Parvati Puja",
+        "Green attire",
+        "Ghewar sweets"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "janmashtami",
+    "name": "Krishna Janmashtami",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Krishna Janmashtami",
+      "nameHindi": "कृष्ण जन्माष्टमी",
+      "nameBengali": "কৃষ্ণ জন্মাষ্টমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth of Lord Krishna",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Krishna",
+      "tithi": 8,
+      "conditions": "Ashtami"
+    },
+    "rituals": {
+      "steps": [
+        "Midnight puja",
+        "Fasting",
+        "Dahi Handi",
+        "Bhajan",
+        "Jhankis"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "kamika_ekadashi",
+    "name": "Kamika Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Kamika Ekadashi",
+      "nameHindi": "कामिका एकादशी",
+      "nameBengali": "কামিকা একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Ekadashi that fulfills desires",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Fasting",
+        "Tulsi leaves offering",
+        "Night vigil"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "pavitra_ekadashi",
+    "name": "Pavitra Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Pavitra Ekadashi",
+      "nameHindi": "पवित्रा एकादशी",
+      "nameBengali": "পবিত্রা একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Ekadashi that purifies past sins",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Sacred thread offering",
+        "Fasting",
+        "Holy bath"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "ganesh_chaturthi",
+    "name": "Ganesh Chaturthi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Ganesh Chaturthi",
+      "nameHindi": "गणेश चतुर्थी",
+      "nameBengali": "গণেশ চতুর্থী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth of Lord Ganesha",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 4,
+      "conditions": "Chaturthi"
+    },
+    "rituals": {
+      "steps": [
+        "Ganesh Sthapana",
+        "Modak offering",
+        "Aarti",
+        "Visarjan after 10 days"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "kajari_teej",
+    "name": "Kajari Teej",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Kajari Teej",
+      "nameHindi": "कजरी तीज",
+      "nameBengali": "কজরী তীজ",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Third day of Krishna Paksha dedicated to Goddess Parvati",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Krishna",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Neem tree worship",
+        "Fasting",
+        "Folk songs",
+        "Parvati Puja"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "hartalika_teej",
+    "name": "Hartalika Teej",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Hartalika Teej",
+      "nameHindi": "हरतालिका तीज",
+      "nameBengali": "হরতালিকা তীজ",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Strict fast for unmarried girls seeking good husbands",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Shiva-Parvati Puja",
+        "Nirjala fasting",
+        "Making clay idols",
+        "Night vigil"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "onam",
+    "name": "Onam (Thiruvonam)",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Onam (Thiruvonam)",
+      "nameHindi": "ओणम",
+      "nameBengali": "অনাম",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Kerala harvest festival celebrating King Mahabali's return",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 12,
+      "conditions": "Dwadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Pookalam flower rangoli",
+        "Onasadya feast",
+        "Vallam Kali boat race",
+        "Kathakali"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "anant_chaturdashi",
+    "name": "Anant Chaturdashi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Anant Chaturdashi",
+      "nameHindi": "अनंत चतुर्दशी",
+      "nameBengali": "অনন্ত চতুর্দশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Worship of Lord Vishnu's infinite form - Ganesh Visarjan",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 14,
+      "conditions": "Chaturdashi"
+    },
+    "rituals": {
+      "steps": [
+        "Anant thread tying",
+        "Vishnu Puja",
+        "Ganesh Visarjan",
+        "14-knot thread worship"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "pitru_paksha_start",
+    "name": "Pitru Paksha Begins",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Pitru Paksha Begins",
+      "nameHindi": "पितृ पक्ष",
+      "nameBengali": "পিতৃ পক্ষ",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "16-day period to honor ancestors",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Krishna",
+      "tithi": 1,
+      "conditions": "Pratipada"
+    },
+    "rituals": {
+      "steps": [
+        "Shraddha",
+        "Tarpan",
+        "Pind Daan",
+        "Feeding Brahmins"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "mahalaya_amavasya",
+    "name": "Mahalaya Amavasya",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Mahalaya Amavasya",
+      "nameHindi": "महालया अमावस्या",
+      "nameBengali": "মহালয়া অমাবস্যা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Most important day for ancestor worship - End of Pitru Paksha",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Krishna",
+      "tithi": 15,
+      "conditions": "Amavasya"
+    },
+    "rituals": {
+      "steps": [
+        "Shraddha at Gaya",
+        "Tarpan",
+        "Pind Daan",
+        "Mahalaya recitation"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "sharad_navratri_start",
+    "name": "Sharad Navratri Begins",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Sharad Navratri Begins",
+      "nameHindi": "शरद नवरात्रि",
+      "nameBengali": "শরদ নবরাত্রি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Nine nights of Goddess Durga worship (Autumn)",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Shukla",
+      "tithi": 1,
+      "conditions": "Pratipada"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Sthapana",
+        "Durga Puja",
+        "Fasting",
+        "Garba",
+        "Dandiya"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "dussehra",
+    "name": "Dussehra / Vijayadashami",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Dussehra / Vijayadashami",
+      "nameHindi": "दशहरा",
+      "nameBengali": "",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Victory of Good over Evil - Rama's victory over Ravana",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Shukla",
+      "tithi": 10,
+      "conditions": "Dashami"
+    },
+    "rituals": {
+      "steps": [
+        "Ravana Dahan",
+        "Weapon worship",
+        "Shami Puja",
+        "Victory celebration"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "sharad_purnima",
+    "name": "Sharad Purnima",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Sharad Purnima",
+      "nameHindi": "शरद पूर्णिमा",
+      "nameBengali": "শরদ পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Brightest full moon - Krishna's Raas Leela night",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Moon gazing",
+        "Kheer under moonlight",
+        "Lakshmi Puja",
+        "Night celebration"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "karva_chauth",
+    "name": "Karva Chauth",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Karva Chauth",
+      "nameHindi": "करवा चौथ",
+      "nameBengali": "করবা চৌথ",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Married women's fast for husband's longevity",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Krishna",
+      "tithi": 4,
+      "conditions": "Chaturthi"
+    },
+    "rituals": {
+      "steps": [
+        "Nirjala fasting",
+        "Moon sighting",
+        "Puja",
+        "Breaking fast with water"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "dhanteras",
+    "name": "Dhanteras / Dhantrayodashi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "धनतेरस",
+      "nameEnglish": "Dhanteras / Dhantrayodashi",
+      "nameHindi": "धनतेरस",
+      "nameBengali": "ধনতেরস",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival of wealth - Worship of Lord Dhanvantari",
+      "addtional_description": "Dhanteras is the first day of five days long Diwali festivities. On the day of Dhantrayodashi, Goddess Lakshmi came out of the ocean during the churning of the Milky Sea. Hence, Goddess Lakshmi, along with Lord Kubera who is the God of wealth, is worshipped on the auspicious day of Trayodashi."
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Krishna",
+      "tithi": 13,
+      "conditions": "Trayodashi"
+    },
+    "rituals": {
+      "steps": [
+        "Buying gold/silver/utensils",
+        "Dhanvantari Puja",
+        "Lakshmi Puja",
+        "Diya lighting"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "narak_chaturdashi",
+    "name": "Narak Chaturdashi / Choti Diwali",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Narak Chaturdashi / Choti Diwali",
+      "nameHindi": "नरक चतुर्दशी",
+      "nameBengali": "নরক চতুর্দশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Krishna's victory over demon Narakasura",
+      "addtional_description": "Narak Chaturdashi is the second day of five days long Diwali festivities. On the day of Narak Chaturdashi, Lord Krishna defeated demon Narakasura who was terrorizing the people of Kurukshetra. This festival celebrates the victory of good over evil."
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Krishna",
+      "tithi": 14,
+      "conditions": "Chaturdashi"
+    },
+    "rituals": {
+      "steps": [
+        "Early morning oil bath",
+        "Yama Puja",
+        "Diya lighting",
+        "Fireworks"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "diwali",
+    "name": "Diwali",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Diwali",
+      "nameHindi": "दीवाली",
+      "nameBengali": "দীপাবলি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival of Lights - Victory of light over darkness",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Krishna",
+      "tithi": 15,
+      "conditions": "Amavasya"
+    },
+    "rituals": {
+      "steps": [
+        "Lakshmi Puja",
+        "Diya lighting",
+        "Rangoli",
+        "Fireworks"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "govardhan_puja",
+    "name": "Govardhan Puja / Annakut",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Govardhan Puja / Annakut",
+      "nameHindi": "गोवर्धन पूजा",
+      "nameBengali": "গোবর্ধন পূজা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Celebration of Krishna lifting Govardhan Hill",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 1,
+      "conditions": "Pratipada"
+    },
+    "rituals": {
+      "steps": [
+        "Govardhan hill made of cow dung",
+        "Annakut food offering",
+        "Gau Puja",
+        "Krishna Puja"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "bhai_dooj",
+    "name": "Bhai Dooj",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Bhai Dooj",
+      "nameHindi": "भाई दूज",
+      "nameBengali": "ভাই ফোটা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Sisters pray for brothers' long life",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 2,
+      "conditions": "Dwitiya"
+    },
+    "rituals": {
+      "steps": [
+        "Tilak ceremony",
+        "Gift exchange",
+        "Feast for brothers",
+        "Yama-Yamuna story"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "ahoi_ashtami",
+    "name": "Ahoi Ashtami",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Ahoi Ashtami",
+      "nameHindi": "अहोई अष्टमी",
+      "nameBengali": "অহোই অষ্টমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Mothers' fast for the well-being of children",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Krishna",
+      "tithi": 8,
+      "conditions": "Ashtami"
+    },
+    "rituals": {
+      "steps": [
+        "Ahoi Mata Puja",
+        "Fasting until star sighting",
+        "Drawing Ahoi image",
+        "Storytelling"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "chhath_puja",
+    "name": "Chhath Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Chhath Puja",
+      "nameHindi": "छठ पूजा",
+      "nameBengali": "ছঠ পূজা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Ancient Hindu festival dedicated to Sun God",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 6,
+      "conditions": "Shashthi"
+    },
+    "rituals": {
+      "steps": [
+        "Holy bath",
+        "36-hour fast",
+        "Arghya to Sun",
+        "Standing in water",
+        "Thekua prasad"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "devutthani_ekadashi",
+    "name": "Devutthani Ekadashi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Devutthani Ekadashi",
+      "nameHindi": "देवउठनी एकादशी",
+      "nameBengali": "দেবুথনী একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Lord Vishnu awakens - End of Chaturmas",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Tulsi Vivah",
+        "Wedding season begins",
+        "Fasting"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "tulsi_vivah",
+    "name": "Tulsi Vivah",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Tulsi Vivah",
+      "nameHindi": "तुलसी विवाह",
+      "nameBengali": "তুলসী বিবাহ",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Ceremonial marriage of Tulsi plant to Lord Vishnu",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 12,
+      "conditions": "Dwadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Decorating Tulsi",
+        "Marriage ceremony",
+        "Aarti",
+        "Prasad distribution"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "kartik_purnima",
+    "name": "Kartik Purnima",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Kartik Purnima",
+      "nameHindi": "कार्तिक पूर्णिमा",
+      "nameBengali": "কার্তিক পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Dev Diwali - Diwali of the Gods",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Ganga Snan",
+        "Deep Daan",
+        "Vishnu Puja",
+        "Ghat lighting"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "gita_jayanti",
+    "name": "Gita Jayanti",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Gita Jayanti",
+      "nameHindi": "गीता जयंती",
+      "nameBengali": "গীতা জয়ন্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Anniversary of Bhagavad Gita revelation by Lord Krishna",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Margashirsha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Gita Path",
+        "Krishna Puja",
+        "Discourse",
+        "Fasting"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "dattatreya_jayanti",
+    "name": "Dattatreya Jayanti",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Dattatreya Jayanti",
+      "nameHindi": "दत्तात्रेय जयंती",
+      "nameBengali": "দত্তাত্রেয জয়ন্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Birth anniversary of Lord Dattatreya",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Margashirsha",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Dattatreya Puja",
+        "Temple visit",
+        "Guru worship",
+        "Charity"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "makar_sankranti",
+    "name": "Makar Sankranti",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Makar Sankranti",
+      "nameHindi": "मकर संक्रांति",
+      "nameBengali": "মকর সংক্রান্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Sun enters Capricorn - Harvest festival",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Pausha",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Solar",
+      "solarDate": "01-14"
+    },
+    "rituals": {
+      "steps": [
+        "Til-Gur sweets",
+        "Kite flying",
+        "Holy bath",
+        "Charity"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "pausha_putrada_ekadashi",
+    "name": "Pausha Putrada Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Pausha Putrada Ekadashi",
+      "nameHindi": "पौष पुत्रदा एकादशी",
+      "nameBengali": "পৌষ পুত্রদা একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Ekadashi for blessing of sons",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Pausha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Fasting",
+        "Charity",
+        "Night vigil"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "lohri",
+    "name": "Lohri",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Lohri",
+      "nameHindi": "लोहड़ी",
+      "nameBengali": "লোহডি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Punjabi harvest festival marking winter solstice end",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Pausha",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Solar",
+      "solarDate": "01-13"
+    },
+    "rituals": {
+      "steps": [
+        "Bonfire",
+        "Til-Gur-Peanuts",
+        "Folk dance",
+        "Gidda and Bhangra"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "basant_panchami",
+    "name": "Basant Panchami",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Basant Panchami",
+      "nameHindi": "बसंत पंचमी",
+      "nameBengali": "বসন্ত পঞ্চমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival of Spring - Worship of Goddess Saraswati",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Magha",
+      "paksha": "Shukla",
+      "tithi": 5,
+      "conditions": "Panchami"
+    },
+    "rituals": {
+      "steps": [
+        "Saraswati Puja",
+        "Yellow clothes",
+        "Flying kites",
+        "Starting education"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "magh_purnima",
+    "name": "Magh Purnima",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Magh Purnima",
+      "nameHindi": "माघ पूर्णिमा",
+      "nameBengali": "মাঘ পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Most auspicious full moon for holy bath",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Magha",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Sangam Snan",
+        "Charity",
+        "Kumbh Mela bathing",
+        "Fasting"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "maha_shivaratri",
+    "name": "Maha Shivaratri",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Maha Shivaratri",
+      "nameHindi": "महाशिवरात्रि",
+      "nameBengali": "মহাশিবরাত্রি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Great Night of Shiva - Night of fasting and worship",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Magha",
+      "paksha": "Krishna",
+      "tithi": 14,
+      "conditions": "Chaturdashi"
+    },
+    "rituals": {
+      "steps": [
+        "Night vigil",
+        "Shiva Puja",
+        "Fasting",
+        "Bilva leaves offering",
+        "Rudrabhishek"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "holika_dahan",
+    "name": "Holika Dahan",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Holika Dahan",
+      "nameHindi": "होलिका दहन",
+      "nameBengali": "হলিকা দহন",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival of Colors - Celebration of spring and love",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Phalguna",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Holika Dahan",
+        "Bhang preparation",
+        "Gujiya sweets"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "holi",
+    "name": "Holi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Holi",
+      "nameHindi": "होली",
+      "nameBengali": "হলি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Festival of Colors - Celebration of spring and love",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "Phalguna",
+      "paksha": "Krishna",
+      "tithi": 1,
+      "conditions": "Pratipada"
+    },
+    "rituals": {
+      "steps": [
+        "Playing with colors"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "sheetala_ashtami",
+    "name": "Sheetala Ashtami / Basoda",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Sheetala Ashtami / Basoda",
+      "nameHindi": "शीतला अष्टमी",
+      "nameBengali": "শীতলা অষ্টমী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Sheetala Ashtami / Basoda Puja is dedicated to Goddess Sheetala and celebrated on Krishna Paksha Ashtami after Holi",
+      "addtional_description": "Sheetala Ashtami symbolizes the importance of cleanliness, discipline, and the sacred bond between devotion and health. The day inspires devotees to embrace a lifestyle that harmonizes spirituality with hygiene, ensuring protection from ailments and negative influences."
+    },
+    "panchang_rules": {
+      "masa": "Phalguna",
+      "paksha": "Krishna",
+      "tithi": 8,
+      "conditions": "Ashtami"
+    },
+    "rituals": {
+      "steps": [
+        "Sheetala Puja"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  
+
+  {
+    "id": "ekadashi_shukla",
+    "name": "Ekadashi (Shukla)",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Ekadashi (Shukla)",
+      "nameHindi": "एकादशी",
+      "nameBengali": "একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Auspicious fasting day dedicated to Lord Vishnu",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Fasting",
+        "Vishnu Puja",
+        "Tulsi worship",
+        "Reading Vishnu Sahasranama"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "ekadashi_krishna",
+    "name": "Ekadashi (Krishna)",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Ekadashi (Krishna)",
+      "nameHindi": "एकादशी",
+      "nameBengali": "একাদশী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Auspicious fasting day dedicated to Lord Vishnu",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Fasting",
+        "Vishnu Puja",
+        "Tulsi worship",
+        "Reading Vishnu Sahasranama"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "purnima",
+    "name": "Purnima (Full Moon)",
+    "category": "recurring",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Purnima (Full Moon)",
+      "nameHindi": "पूर्णिमा",
+      "nameBengali": "পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Full Moon day - Auspicious for charity and worship",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Satyanarayan Puja",
+        "Charity",
+        "Holy bath",
+        "Moon gazing"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "amavasya",
+    "name": "Amavasya (New Moon)",
+    "category": "recurring",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Amavasya (New Moon)",
+      "nameHindi": "अमावस्या",
+      "nameBengali": "অমাবস্যা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "New Moon day - Day for ancestors (Pitru Tarpan)",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Krishna",
+      "tithi": 15,
+      "conditions": "Amavasya",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Pitru Tarpan",
+        "Charity",
+        "Shani Puja",
+        "Avoid new beginnings"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "pradosh_vrat",
+    "name": "Pradosh Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Pradosh Vrat",
+      "nameHindi": "प्रदोष व्रत",
+      "nameBengali": "প্রদোষ ব্রত",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Bi-monthly fast for Lord Shiva on Trayodashi",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "*",
+      "tithi": 13,
+      "conditions": "Trayodashi",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Evening Shiva Puja",
+        "Fasting",
+        "Milk Abhishek"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "sankashti_chaturthi",
+    "name": "Sankashti Chaturthi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Sankashti Chaturthi",
+      "nameHindi": "संकष्टी चतुर्थी",
+      "nameBengali": "সঙ্কষ্টি চতুর্থী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Monthly fast for Lord Ganesha",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Krishna",
+      "tithi": 4,
+      "conditions": "Chaturthi",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Ganesha Puja",
+        "Fasting until moonrise",
+        "Moon sighting"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  
+  
+  {
+    "id": "vinayak_chaturthi_shukla",
+    "name": "Vinayak Chaturthi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Vinayak Chaturthi",
+      "nameHindi": "विनायक चतुर्थी",
+      "nameBengali": "ভিনাযক চতুর্থী",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Monthly worship of Lord Ganesha on Shukla Chaturthi",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Shukla",
+      "tithi": 4,
+      "conditions": "Chaturthi",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Ganesha Puja",
+        "Modak offering",
+        "Durva grass offering"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "masik_shivaratri",
+    "name": "Masik Shivaratri",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Masik Shivaratri",
+      "nameHindi": "मासिक शिवरात्रि",
+      "nameBengali": "মাসিক শীর্বরাত্রি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Monthly night of Lord Shiva worship",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "Krishna",
+      "tithi": 14,
+      "conditions": "Chaturdashi",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Shiva Puja",
+        "Fasting",
+        "Night vigil",
+        "Bilva offering"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "somvar_vrat",
+    "name": "Somvar Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Somvar Vrat",
+      "nameHindi": "सोमवार व्रत",
+      "nameBengali": "সোমবার বৃত্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Monday fast dedicated to Lord Shiva",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Weekday",
+      "weekday": "Monday",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Shiva Puja",
+        "Single meal fasting",
+        "Milk offering",
+        "Temple visit"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "mangalvar_vrat",
+    "name": "Mangalvar Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Mangalvar Vrat",
+      "nameHindi": "मंगलवार व्रत",
+      "nameBengali": "মঙ্গলবার বৃত্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Tuesday fast dedicated to Lord Hanuman",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Weekday",
+      "weekday": "Tuesday",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Hanuman Puja",
+        "Red clothes",
+        "Sunderkand Path",
+        "Offering sindoor"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "guruvar_vrat",
+    "name": "Guruvar Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Guruvar Vrat",
+      "nameHindi": "गुरुवार व्रत",
+      "nameBengali": "গুরুবার বৃত্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Thursday fast dedicated to Lord Vishnu and Jupiter",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Weekday",
+      "weekday": "Thursday",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu Puja",
+        "Yellow clothes",
+        "Chana dal offering",
+        "Banana offering"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "shukravar_vrat",
+    "name": "Shukravar Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Shukravar Vrat",
+      "nameHindi": "शुक्रवार व्रत",
+      "nameBengali": "শুক্রবার বৃত্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Friday fast dedicated to Goddess Lakshmi and Santoshi Mata",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Weekday",
+      "weekday": "Friday",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Lakshmi Puja",
+        "White clothes",
+        "Kheer offering",
+        "Santoshi Mata Katha"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "shanivar_vrat",
+    "name": "Shanivar Vrat",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "",
+      "nameEnglish": "Shanivar Vrat",
+      "nameHindi": "शनिवार व्रत",
+      "nameBengali": "শনিবার বৃত্তি",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Saturday fast dedicated to Lord Shani",
+      "addtional_description": ""
+    },
+    "panchang_rules": {
+      "masa": "*",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Weekday",
+      "weekday": "Saturday",
+      "recurring": true
+    },
+    "rituals": {
+      "steps": [
+        "Shani Puja",
+        "Black clothes",
+        "Oil offering",
+        "Feeding crows"
+      ],
+      "mantra": "",
+      "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
   }
 ]

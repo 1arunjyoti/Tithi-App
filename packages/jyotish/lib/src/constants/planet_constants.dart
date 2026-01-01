@@ -37,6 +37,8 @@ class SwissEphConstants {
   static const int tropical = 0; // Tropical calculation (default)
   static const int equatorial = 2048; // Equatorial positions
   static const int topocentricFlag = 32 * 1024; // Topocentric positions
+  static const int heliocentric =
+      8; // Heliocentric positions (from Sun's perspective)
 
   // Sidereal modes
   static const int sidmFaganBradley = 0;

@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../models/festival.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -177,5 +178,80 @@ class PanchangService {
       return masas[index];
     }
     return 'Unknown';
+  }
+
+  /// Finds the next occurrence of a festival from a given start date.
+  /// Iterates day by day (optimized check) to find when the festival's tithi/masa matches.
+  /// Returns the DateTime of the occurrence or null if not found within 1 year.
+  Future<DateTime?> findNextFestivalOccurrence(
+    Festival festival, {
+    DateTime? startDate,
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    // If it's a solar festival with fixed date, use that
+    // But our current system mainly uses Tithi.
+    // Let's assume tithi-based.
+
+    var date = startDate ?? DateTime.now();
+    // Start from today or provided date.
+
+    // Limit search to ~380 days (a bit more than a year to be safe)
+    for (int i = 0; i < 380; i++) {
+      // Calculate panchang elements for this date
+      // We can optimize by skipping if masa is far off, but masa calculation depends on tithi...
+      // Let's try to be somewhat efficient.
+
+      // First check if calculateTithi/Masa matches the festival rules.
+      // But we need to account for the fact that a festival might span across two Gregorian days.
+      // Usually, we check the tithi at sunrise.
+
+      // We need to calculate sunrise first?
+      // For searching, maybe using noon is "close enough" initially, or just use 6 AM default?
+      // Ideally we use the SunriseCalculator but we don't have easy access here unless we import it or duplicate logic.
+      // Let's pass 6 AM which is roughly sunrise.
+      final checkDate = DateTime(date.year, date.month, date.day, 6, 0);
+
+      final rawTithi = await calculateTithi(
+        checkDate,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final tithiIndex = rawTithi.floor();
+      String paksha;
+      int tithiNumber;
+      if (tithiIndex <= 15) {
+        paksha = 'Shukla';
+        tithiNumber = tithiIndex;
+      } else {
+        paksha = 'Krishna';
+        tithiNumber = tithiIndex - 15;
+      }
+
+      // Check masa
+      final masa = await calculateMasa(
+        checkDate,
+        rawTithi,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      // Check if it matches
+      // Note: matchesTithi logic is inside Festival class, but we can replicate or use it if we had the object.
+      // We do have the festival object!
+
+      // Festival.matchesTithi expects standard args.
+      // We need to handle Amanta/Purnimant preference but usually search is agnostic or uses default?
+      // Let's assume Amanta for internal calculation as stored in JSON.
+
+      if (festival.matchesTithi(paksha, tithiNumber, masa)) {
+        return date;
+      }
+
+      date = date.add(const Duration(days: 1));
+    }
+
+    return null;
   }
 }

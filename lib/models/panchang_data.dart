@@ -1,4 +1,5 @@
 import 'festival.dart';
+import 'hindu_month_system.dart';
 
 /// Panchang data for a specific date
 class PanchangData {
@@ -9,6 +10,8 @@ class PanchangData {
   final String paksha;
   final String masa;
   final List<Festival> festivals;
+  final DateTime? sunrise;
+  final DateTime? sunset;
 
   const PanchangData({
     required this.date,
@@ -18,6 +21,8 @@ class PanchangData {
     required this.paksha,
     this.masa = '',
     this.festivals = const [],
+    this.sunrise,
+    this.sunset,
   });
 
   /// Check if this is Shukla Paksha (waxing moon)
@@ -38,11 +43,18 @@ class PanchangData {
       festivals.where((f) => f.category == 'vrat').toList();
 
   /// Create from raw tithi calculation
+  ///
+  /// [monthSystem] - The calendar system to use for festival matching.
+  /// Defaults to Amanta. When Purnimant is selected, the masa is converted
+  /// for accurate festival matching since festivals are stored in Amanta format.
   factory PanchangData.fromRawTithi({
     required DateTime date,
     required double rawTithi,
     String masa = '',
     List<Festival> allFestivals = const [],
+    HinduMonthSystem monthSystem = HinduMonthSystem.amanta,
+    DateTime? sunrise,
+    DateTime? sunset,
   }) {
     final tithiIndex = rawTithi.floor();
 
@@ -60,9 +72,9 @@ class PanchangData {
     // Get tithi name
     final tithiName = _getTithiName(tithiNumber);
 
-    // Find matching festivals
+    // Find matching festivals (pass month system for proper conversion)
     final matchingFestivals = allFestivals
-        .where((f) => f.matchesTithi(paksha, tithiNumber, masa))
+        .where((f) => f.matchesTithi(paksha, tithiNumber, masa, monthSystem))
         .toList();
 
     return PanchangData(
@@ -73,6 +85,8 @@ class PanchangData {
       paksha: paksha,
       masa: masa,
       festivals: matchingFestivals,
+      sunrise: sunrise,
+      sunset: sunset,
     );
   }
 

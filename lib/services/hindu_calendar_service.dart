@@ -27,9 +27,8 @@ class HinduCalendarService {
   ];
 
   /// Calculates the Hindu Date details for a given Gregorian date.
-  Future<({int tithi, String paksha, String masa, int year})> calculateDate(
-    DateTime date,
-  ) async {
+  Future<({int tithi, String paksha, String masa, int vsYear, int shakaYear})>
+  calculateDate(DateTime date) async {
     final service = _ref.read(panchangServiceProvider);
 
     // Ensure initialized
@@ -133,7 +132,18 @@ class HinduCalendarService {
       vsYear = date.year + 57;
     }
 
-    return (tithi: displayTithi, paksha: paksha, masa: masa, year: vsYear);
+    // 4. Calculate Shaka Samvat Year
+    // Shaka = Gregorian - 78 (after new year) or - 79 (before)
+    // New Year is same as Vikram: Chaitra Shukla 1
+    final shakaYear = vsYear - 135; // VS - Shaka difference is 135 years
+
+    return (
+      tithi: displayTithi,
+      paksha: paksha,
+      masa: masa,
+      vsYear: vsYear,
+      shakaYear: shakaYear,
+    );
   }
 
   /// returns the Gregorian Date for the Start (Shukla Pratipada) of the given Hindu Month/Year

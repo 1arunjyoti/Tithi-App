@@ -1,0 +1,613 @@
+{
+  "@@locale": "en",
+  "appTitle": "Tithi",
+  "@appTitle": {
+    "description": "The name of the application"
+  },
+  "vedaCalendar": "Vedic Calendar",
+  "@vedaCalendar": {
+    "description": "Subtitle describing the app as a Vedic Calendar"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen title and menu item"
+  },
+  "appearance": "APPEARANCE",
+  "@appearance": {
+    "description": "Section header for appearance/theme settings"
+  },
+  "preferences": "PREFERENCES",
+  "@preferences": {
+    "description": "Section header for user preferences"
+  },
+  "calendar": "CALENDAR",
+  "@calendar": {
+    "description": "Section header for calendar settings"
+  },
+  "dataStorage": "DATA & STORAGE",
+  "@dataStorage": {
+    "description": "Section header for data and storage settings"
+  },
+  "accessibility": "ACCESSIBILITY",
+  "@accessibility": {
+    "description": "Section header for accessibility options"
+  },
+  "about": "ABOUT",
+  "@about": {
+    "description": "Section header for about information"
+  },
+  "themeAuto": "Auto",
+  "@themeAuto": {
+    "description": "Auto theme option - follows system/paksha"
+  },
+  "themeShukla": "Shukla",
+  "@themeShukla": {
+    "description": "Shukla (light/waxing moon) theme option"
+  },
+  "themeDark": "Dark",
+  "@themeDark": {
+    "description": "Pure dark/AMOLED theme option"
+  },
+  "themeKrishna": "Krishna",
+  "@themeKrishna": {
+    "description": "Krishna (dark/waning moon) theme option"
+  },
+  "dailyNotifications": "Daily Notifications",
+  "@dailyNotifications": {
+    "description": "Setting title for daily notification toggle"
+  },
+  "notificationScheduled": "Scheduled daily",
+  "@notificationScheduled": {
+    "description": "Subtitle when notifications are enabled"
+  },
+  "getNotifiedTithiDaily": "Get notified about Tithi daily",
+  "@getNotifiedTithiDaily": {
+    "description": "Subtitle when notifications are disabled"
+  },
+  "notificationTime": "Notification Time",
+  "@notificationTime": {
+    "description": "Setting to choose notification time"
+  },
+  "autoLocation": "Auto Location",
+  "@autoLocation": {
+    "description": "Setting title for automatic GPS location"
+  },
+  "useGpsForTithi": "Use GPS for precise Tithi calculation",
+  "@useGpsForTithi": {
+    "description": "Subtitle explaining auto location purpose"
+  },
+  "usingLocation": "Using: {cityName}",
+  "@usingLocation": {
+    "description": "Shows current location being used",
+    "placeholders": {
+      "cityName": {
+        "type": "String",
+        "example": "New Delhi"
+      }
+    }
+  },
+  "fetchingLocation": "Fetching location...",
+  "@fetchingLocation": {
+    "description": "Loading state while getting location"
+  },
+  "locationUnavailable": "Location unavailable",
+  "@locationUnavailable": {
+    "description": "Error state when location cannot be determined"
+  },
+  "homeLocation": "Home Location",
+  "@homeLocation": {
+    "description": "Setting title for home location picker"
+  },
+  "notSet": "Not set",
+  "@notSet": {
+    "description": "Placeholder when home location is not configured"
+  },
+  "setHomeLocation": "Set Home Location",
+  "@setHomeLocation": {
+    "description": "Screen title for location picker"
+  },
+  "dragMapToPin": "Drag map to position pin at your home",
+  "@dragMapToPin": {
+    "description": "Instruction on location picker screen"
+  },
+  "setThisLocation": "Set This Location",
+  "@setThisLocation": {
+    "description": "Button to confirm selected location"
+  },
+  "homeLocationSetTo": "Home location set to {address}",
+  "@homeLocationSetTo": {
+    "description": "Confirmation message after setting home location",
+    "placeholders": {
+      "address": {
+        "type": "String",
+        "example": "Connaught Place, New Delhi"
+      }
+    }
+  },
+  "errorSettingLocation": "Error setting location: {error}",
+  "@errorSettingLocation": {
+    "description": "Error message when location setting fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
+  "startOfWeek": "Start of Week",
+  "@startOfWeek": {
+    "description": "Setting to choose first day of week"
+  },
+  "sunday": "Sunday",
+  "@sunday": {
+    "description": "Sunday day name"
+  },
+  "monday": "Monday",
+  "@monday": {
+    "description": "Monday day name"
+  },
+  "primaryView": "Primary View",
+  "@primaryView": {
+    "description": "Setting to choose primary calendar view type"
+  },
+  "tithi": "Tithi",
+  "@tithi": {
+    "description": "Tithi view option - shows lunar day"
+  },
+  "festival": "Festival",
+  "@festival": {
+    "description": "Festival view option - shows festivals"
+  },
+  "moon": "Moon",
+  "@moon": {
+    "description": "Moon view option - shows moon phase"
+  },
+  "primaryCalendar": "Primary Calendar",
+  "@primaryCalendar": {
+    "description": "Setting to choose primary calendar system"
+  },
+  "secondaryCalendar": "Secondary Calendar",
+  "@secondaryCalendar": {
+    "description": "Setting to choose secondary calendar system"
+  },
+  "selectPrimaryCalendar": "Select Primary Calendar",
+  "@selectPrimaryCalendar": {
+    "description": "Title for primary calendar picker dialog"
+  },
+  "selectSecondaryCalendar": "Select Secondary Calendar",
+  "@selectSecondaryCalendar": {
+    "description": "Title for secondary calendar picker dialog"
+  },
+  "clearLocationCache": "Clear Location Cache",
+  "@clearLocationCache": {
+    "description": "Action to clear cached location data"
+  },
+  "locationCacheCleared": "Location cache cleared",
+  "@locationCacheCleared": {
+    "description": "Confirmation after clearing location cache"
+  },
+  "resetAppSettings": "Reset App Settings",
+  "@resetAppSettings": {
+    "description": "Action to reset all app settings"
+  },
+  "resetSettingsTitle": "Reset Settings?",
+  "@resetSettingsTitle": {
+    "description": "Confirmation dialog title for reset"
+  },
+  "resetSettingsMessage": "This will reset all your preferences and data to default. This cannot be undone.",
+  "@resetSettingsMessage": {
+    "description": "Confirmation dialog message explaining reset consequences"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  "reset": "Reset",
+  "@reset": {
+    "description": "Reset/confirm button text"
+  },
+  "appResetComplete": "App reset complete",
+  "@appResetComplete": {
+    "description": "Confirmation after app reset"
+  },
+  "reduceMotion": "Reduce Motion",
+  "@reduceMotion": {
+    "description": "Accessibility setting to reduce animations"
+  },
+  "disableAnimations": "Disable animations & effects",
+  "@disableAnimations": {
+    "description": "Subtitle for reduce motion setting"
+  },
+  "hapticFeedback": "Haptic Feedback",
+  "@hapticFeedback": {
+    "description": "Setting to enable/disable vibration feedback"
+  },
+  "vibrateOnTouch": "Vibrate on touch interactions",
+  "@vibrateOnTouch": {
+    "description": "Subtitle for haptic feedback setting"
+  },
+  "highContrast": "High Contrast",
+  "@highContrast": {
+    "description": "Accessibility setting for high contrast mode"
+  },
+  "solidBackgrounds": "Solid backgrounds for better readability",
+  "@solidBackgrounds": {
+    "description": "Subtitle for high contrast setting"
+  },
+  "largeText": "Large Text",
+  "@largeText": {
+    "description": "Accessibility setting for larger text"
+  },
+  "increaseTextSize": "Increase text size globally",
+  "@increaseTextSize": {
+    "description": "Subtitle for large text setting"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Setting title for language selection"
+  },
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Title for language picker dialog"
+  },
+  "systemDefault": "System Default",
+  "@systemDefault": {
+    "description": "Option to use system language setting"
+  },
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Link to privacy policy screen"
+  },
+  "madeWithLove": "Made with ❤️ for Sanatan Dharma",
+  "@madeWithLove": {
+    "description": "Footer text showing app dedication"
+  },
+  "shareApp": "Share App",
+  "@shareApp": {
+    "description": "Menu item to share the app"
+  },
+  "shareAppMessage": "Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi",
+  "@shareAppMessage": {
+    "description": "Text shared when user shares the app"
+  },
+  "rateUs": "Rate Us",
+  "@rateUs": {
+    "description": "Menu item to rate the app"
+  },
+  "aboutApp": "About",
+  "@aboutApp": {
+    "description": "Menu item for about dialog"
+  },
+  "calendarView": "Calendar View",
+  "@calendarView": {
+    "description": "Option to switch to calendar/month view"
+  },
+  "scheduleView": "Schedule View",
+  "@scheduleView": {
+    "description": "Option to switch to schedule/list view"
+  },
+  "switchToCalendar": "Switch to month calendar",
+  "@switchToCalendar": {
+    "description": "Subtitle when in schedule view"
+  },
+  "switchToSchedule": "Switch to event list",
+  "@switchToSchedule": {
+    "description": "Subtitle when in calendar view"
+  },
+  "versionText": "Version {version}",
+  "@versionText": {
+    "description": "App version display text",
+    "placeholders": {
+      "version": {
+        "type": "String",
+        "example": "1.0.0"
+      }
+    }
+  },
+  "events": "EVENTS",
+  "@events": {
+    "description": "Section header for events list"
+  },
+  "festivalsAndEvents": "Festivals & Events",
+  "@festivalsAndEvents": {
+    "description": "Title for festivals section"
+  },
+  "noFestivalsOnThisDay": "No festivals on this day",
+  "@noFestivalsOnThisDay": {
+    "description": "Empty state when no festivals"
+  },
+  "todaysFestival": "Today's Festival",
+  "@todaysFestival": {
+    "description": "Label for today's main festival"
+  },
+  "noFestivalsToday": "Tithi • No Festivals Today",
+  "@noFestivalsToday": {
+    "description": "Subtitle when no festivals today"
+  },
+  "errorLoadingPanchang": "Error loading panchang: {error}",
+  "@errorLoadingPanchang": {
+    "description": "Error message when panchang data fails to load",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "panchangDetails": "Panchang Details",
+  "@panchangDetails": {
+    "description": "Section title for panchang information"
+  },
+  "paksha": "Paksha",
+  "@paksha": {
+    "description": "Label for lunar fortnight"
+  },
+  "pakshaWithName": "{paksha} Paksha",
+  "@pakshaWithName": {
+    "description": "Paksha display with name",
+    "placeholders": {
+      "paksha": {
+        "type": "String",
+        "example": "Shukla"
+      }
+    }
+  },
+  "waxing": "Waxing",
+  "@waxing": {
+    "description": "Waxing moon phase (Shukla paksha)"
+  },
+  "waning": "Waning",
+  "@waning": {
+    "description": "Waning moon phase (Krishna paksha)"
+  },
+  "waxingMoonPhase": "Waxing Moon Phase",
+  "@waxingMoonPhase": {
+    "description": "Description for Shukla paksha"
+  },
+  "waningMoonPhase": "Waning Moon Phase",
+  "@waningMoonPhase": {
+    "description": "Description for Krishna paksha"
+  },
+  "category": "Category",
+  "@category": {
+    "description": "Label for festival category"
+  },
+  "general": "General",
+  "@general": {
+    "description": "Default category name"
+  },
+  "ritualsAndPractices": "Rituals & Practices",
+  "@ritualsAndPractices": {
+    "description": "Section title for ritual checklist"
+  },
+  "locationAccess": "Location Access",
+  "@locationAccess": {
+    "description": "Title for location permission dialog"
+  },
+  "enableLocation": "Enable Location",
+  "@enableLocation": {
+    "description": "Button to enable location access"
+  },
+  "skip": "Skip",
+  "@skip": {
+    "description": "Button to skip/dismiss"
+  },
+  "locationAccessDescription": "Tithi uses your location to calculate accurate Panchang data for your city.",
+  "@locationAccessDescription": {
+    "description": "Explanation of why location is needed"
+  },
+  "locationAccessBenefits": "• More accurate tithi calculations\n• Location-specific moonrise/sunset times\n• Your location data stays on your device",
+  "@locationAccessBenefits": {
+    "description": "Benefits of enabling location"
+  },
+  "locationDisabled": "Location Disabled",
+  "@locationDisabled": {
+    "description": "Title when location is off"
+  },
+  "locationDisabledMessage": "Location is disabled. Enable it for more accurate Panchang calculations based on your city.",
+  "@locationDisabledMessage": {
+    "description": "Message explaining location is disabled"
+  },
+  "notNow": "Not Now",
+  "@notNow": {
+    "description": "Button to dismiss temporarily"
+  },
+  "enable": "Enable",
+  "@enable": {
+    "description": "Button to enable feature"
+  },
+  "pleaseEnableLocationServices": "Please enable location services on your device",
+  "@pleaseEnableLocationServices": {
+    "description": "Message when device location is off"
+  },
+  "locationPermissionDenied": "Location permission denied. Using default location.",
+  "@locationPermissionDenied": {
+    "description": "Message when user denies location permission"
+  },
+  "locationEnabledSuccess": "Location enabled successfully!",
+  "@locationEnabledSuccess": {
+    "description": "Success message after enabling location"
+  },
+  "refreshLocation": "Refresh Location",
+  "@refreshLocation": {
+    "description": "Tooltip for refresh location button"
+  },
+  "goToToday": "Go to Today",
+  "@goToToday": {
+    "description": "Tooltip for go to today button"
+  },
+  "initializing": "Initializing...",
+  "@initializing": {
+    "description": "Loading state during app startup"
+  },
+  "privacyYourDataStays": "Your Data Stays With You",
+  "@privacyYourDataStays": {
+    "description": "Privacy policy section title"
+  },
+  "privacyYourDataDesc": "Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, and event processing happen directly on your device. We do not collect, store, or transmit your personal data to any external servers.",
+  "@privacyYourDataDesc": {
+    "description": "Privacy policy - data stays local explanation"
+  },
+  "privacyLocationUsage": "Location Usage",
+  "@privacyLocationUsage": {
+    "description": "Privacy policy section title"
+  },
+  "privacyLocationDesc": "We request access to your location solely to calculate accurate Tithi, Nakshatra, and sunrise/sunset timings, which depend on your specific geographic coordinates. Your location data is processed locally by the app and is never shared with third parties or stored on our servers.",
+  "@privacyLocationDesc": {
+    "description": "Privacy policy - location usage explanation"
+  },
+  "privacyOffline": "Offline Functionality",
+  "@privacyOffline": {
+    "description": "Privacy policy section title"
+  },
+  "privacyOfflineDesc": "The app works completely offline after the initial download. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.",
+  "@privacyOfflineDesc": {
+    "description": "Privacy policy - offline functionality explanation"
+  },
+  "privacyOpenSource": "Open Source Transparency",
+  "@privacyOpenSource": {
+    "description": "Privacy policy section title"
+  },
+  "privacyOpenSourceDesc": "Tithi is an open-source project. Our code is publicly available for audit, ensuring that our privacy promises are backed by verifiable transparency. What you see is exactly what you get.",
+  "@privacyOpenSourceDesc": {
+    "description": "Privacy policy - open source explanation"
+  },
+  "lastUpdated": "Last Updated: December 2025",
+  "@lastUpdated": {
+    "description": "Privacy policy last updated date"
+  },
+  "applicationLegalese": "© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma",
+  "@applicationLegalese": {
+    "description": "Legal text shown in about dialog"
+  },
+  "moonPhases": "Moon Phases",
+  "@moonPhases": {
+    "description": "Title for moon phases screen"
+  },
+  "nextPurnima": "Next Purnima",
+  "@nextPurnima": {
+    "description": "Label for next full moon date"
+  },
+  "nextAmavasya": "Next Amavasya",
+  "@nextAmavasya": {
+    "description": "Label for next new moon date"
+  },
+  "purnima": "Purnima",
+  "@purnima": {
+    "description": "Full moon term"
+  },
+  "amavasya": "Amavasya",
+  "@amavasya": {
+    "description": "New moon term"
+  },
+  "fullMoon": "Full Moon",
+  "@fullMoon": {
+    "description": "Description for Purnima"
+  },
+  "newMoon": "New Moon",
+  "@newMoon": {
+    "description": "Description for Amavasya"
+  },
+  "noUpcomingDates": "No upcoming dates found",
+  "@noUpcomingDates": {
+    "description": "Empty state for upcoming moon phase dates"
+  },
+  "errorLoadingData": "Error loading data",
+  "@errorLoadingData": {
+    "description": "Generic error message for data loading"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Button to retry failed action"
+  },
+  "astronomy": "Astronomy",
+  "@astronomy": {
+    "description": "Section header for astronomy features in drawer"
+  },
+  
+  "solarSystem": "Solar System",
+  "@solarSystem": {
+    "description": "Title for solar system screen"
+  },
+  "planetPositions": "Planet Positions",
+  "@planetPositions": {
+    "description": "Title for planet positions feature"
+  },
+  "selectDate": "Select Date",
+  "@selectDate": {
+    "description": "Tooltip for date picker"
+  },
+  "retrograde": "Retrograde",
+  "@retrograde": {
+    "description": "Indicator for retrograde motion"
+  },
+  "zodiacSign": "Sign",
+  "@zodiacSign": {
+    "description": "Label for zodiac sign"
+  },
+  "degree": "Degree",
+  "@degree": {
+    "description": "Label for degree position"
+  },
+  "longitude": "Longitude",
+  "@longitude": {
+    "description": "Label for ecliptic longitude"
+  },
+  
+  "eclipses": "Eclipses",
+  "@eclipses": {
+    "description": "Title for eclipses screen"
+  },
+  "solarEclipses": "Solar Eclipses",
+  "@solarEclipses": {
+    "description": "Section header for solar eclipses"
+  },
+  "lunarEclipses": "Lunar Eclipses",
+  "@lunarEclipses": {
+    "description": "Section header for lunar eclipses"
+  },
+  "maxEclipse": "Maximum Eclipse",
+  "@maxEclipse": {
+    "description": "Label for maximum eclipse time"
+  },
+  "visibleFromYourLocation": "Visible from your location",
+  "@visibleFromYourLocation": {
+    "description": "Indicates eclipse is visible locally"
+  },
+  "notVisibleFromYourLocation": "Not visible from your location",
+  "@notVisibleFromYourLocation": {
+    "description": "Indicates eclipse is not visible locally"
+  },
+  "partialBegins": "Partial phase begins",
+  "@partialBegins": {
+    "description": "When partial phase starts"
+  },
+  "partialEnds": "Partial phase ends",
+  "@partialEnds": {
+    "description": "When partial phase ends"
+  },
+  "totalityBegins": "Totality begins",
+  "@totalityBegins": {
+    "description": "When totality starts"
+  },
+  "totalityEnds": "Totality ends",
+  "@totalityEnds": {
+    "description": "When totality ends"
+  },
+  "duration": "Duration",
+  "@duration": {
+    "description": "Label for duration"
+  },
+  "date": "Date",
+  "@date": {
+    "description": "Label for date"
+  },
+  "days": "days",
+  "@days": {
+    "description": "Plural form of day"
+  },
+  "today": "Today",
+  "@today": {
+    "description": "Label for today"
+  }
+}

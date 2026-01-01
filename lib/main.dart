@@ -1,20 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
+import 'l10n/fallback_localization_delegates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:nominatim_geocoding/nominatim_geocoding.dart';
+import 'package:nominatim_geocoding/nominatim_geocoding.dart' hide Locale;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
+import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'models/festival.dart';
+import 'models/sankalpa.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // Initialize Hive for offline storage
   await Hive.initFlutter();
+
+  // Register Adapters
+  Hive.registerAdapter(FestivalAdapter());
+  Hive.registerAdapter(NameRegionalAdapter());
+  Hive.registerAdapter(VisualsAdapter());
+  Hive.registerAdapter(PurposeAdapter());
+  Hive.registerAdapter(PanchangRulesAdapter());
+  Hive.registerAdapter(RitualsAdapter());
+  Hive.registerAdapter(MediaAdapter());
+  Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
+
   await Hive.openBox('settings');
 
   // Initialize timezone for notifications
@@ -35,10 +56,54 @@ class TithiApp extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     final darkTheme = ref.watch(darkThemeProvider);
     final accessibility = ref.watch(accessibilityProvider);
+    final locale = ref.watch(localeProvider);
 
     return MaterialApp(
       title: 'Tithi',
       debugShowCheckedModeBanner: false,
+      // Localization configuration - using fallback delegates for Sanskrit support
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        FallbackMaterialLocalizationsDelegate(), // Falls back to English for Sanskrit
+        GlobalWidgetsLocalizations.delegate,
+        FallbackCupertinoLocalizationsDelegate(), // Falls back to English for Sanskrit
+      ],
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('hi'), // Hindi
+        Locale('bn'), // Bengali
+        Locale('sa'), // Sanskrit
+      ],
+      // Handle locale resolution for unsupported Material locales like Sanskrit
+      localeResolutionCallback: (locale, supportedLocales) {
+        // If locale is null or not in our list, use first supported
+        if (locale == null) {
+          return supportedLocales.first;
+        }
+        // Check if Material widgets support this locale
+        // Sanskrit is not supported by MaterialLocalizations, so we need special handling
+        for (final supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale.languageCode) {
+            return supportedLocale;
+          }
+        }
+        return supportedLocales.first;
+      },
+      // For Material widgets (dialogs, pickers), use English fallback for Sanskrit
+      localeListResolutionCallback: (locales, supportedLocales) {
+        if (locales == null || locales.isEmpty) {
+          return supportedLocales.first;
+        }
+        for (final locale in locales) {
+          for (final supportedLocale in supportedLocales) {
+            if (supportedLocale.languageCode == locale.languageCode) {
+              return supportedLocale;
+            }
+          }
+        }
+        return supportedLocales.first;
+      },
+      locale: locale, // User-selected locale (null = system default)
       themeMode: themeMode,
       theme: AppTheme.shuklaTheme,
       darkTheme: darkTheme,
@@ -106,43 +171,46 @@ class _LocationPermissionWrapperState
   }
 
   Future<void> _showFirstLaunchDialog() async {
+    final l10n = AppLocalizations.of(context);
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.location_on, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Location Access'),
+            const Icon(Icons.location_on, color: Colors.amber),
+            const SizedBox(width: 8),
+            Text(l10n?.locationAccess ?? 'Location Access'),
           ],
         ),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tithi uses your location to calculate accurate Panchang data for your city.',
-              style: TextStyle(fontSize: 16),
+              l10n?.locationAccessDescription ??
+                  'Tithi uses your location to calculate accurate Panchang data for your city.',
+              style: const TextStyle(fontSize: 16),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
-              '• More accurate tithi calculations\n'
-              '• Location-specific moonrise/sunset times\n'
-              '• Your location data stays on your device',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
+              l10n?.locationAccessBenefits ??
+                  '• More accurate tithi calculations\n'
+                      '• Location-specific moonrise/sunset times\n'
+                      '• Your location data stays on your device',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Skip'),
+            child: Text(l10n?.skip ?? 'Skip'),
           ),
           FilledButton.icon(
             onPressed: () => Navigator.of(context).pop(true),
             icon: const Icon(Icons.check),
-            label: const Text('Enable Location'),
+            label: Text(l10n?.enableLocation ?? 'Enable Location'),
           ),
         ],
       ),
@@ -157,27 +225,29 @@ class _LocationPermissionWrapperState
   }
 
   Future<void> _showEnableLocationDialog() async {
+    final l10n = AppLocalizations.of(context);
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.location_off, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('Location Disabled'),
+            const Icon(Icons.location_off, color: Colors.orange),
+            const SizedBox(width: 8),
+            Text(l10n?.locationDisabled ?? 'Location Disabled'),
           ],
         ),
-        content: const Text(
-          'Location is disabled. Enable it for more accurate Panchang calculations based on your city.',
+        content: Text(
+          l10n?.locationDisabledMessage ??
+              'Location is disabled. Enable it for more accurate Panchang calculations based on your city.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Not Now'),
+            child: Text(l10n?.notNow ?? 'Not Now'),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Enable'),
+            child: Text(l10n?.enable ?? 'Enable'),
           ),
         ],
       ),
@@ -190,14 +260,18 @@ class _LocationPermissionWrapperState
 
   Future<void> _requestLocationPermission() async {
     final locationService = ref.read(locationServiceProvider);
+    final l10n = AppLocalizations.of(context);
 
     // Check if location services are enabled
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enable location services on your device'),
+          SnackBar(
+            content: Text(
+              l10n?.pleaseEnableLocationServices ??
+                  'Please enable location services on your device',
+            ),
           ),
         );
       }
@@ -216,9 +290,10 @@ class _LocationPermissionWrapperState
       await locationService.setLocationEnabled(false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Location permission denied. Using default location.',
+              l10n?.locationPermissionDenied ??
+                  'Location permission denied. Using default location.',
             ),
           ),
         );
@@ -229,8 +304,10 @@ class _LocationPermissionWrapperState
       ref.invalidate(currentLocationProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location enabled successfully!'),
+          SnackBar(
+            content: Text(
+              l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
+            ),
             backgroundColor: Colors.green,
           ),
         );
