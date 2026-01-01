@@ -1,0 +1,140 @@
+{
+  "@@locale": "bn",
+  
+  "appTitle": "তিথি",
+  "vedaCalendar": "বৈদিক পঞ্জিকা",
+  
+  "settings": "সেটিংস",
+  "appearance": "প্রদর্শন",
+  "preferences": "পছন্দসমূহ",
+  "calendar": "পঞ্জিকা",
+  "dataStorage": "ডেটা এবং সঞ্চয়",
+  "accessibility": "অ্যাক্সেসিবিলিটি",
+  "about": "সম্পর্কে",
+  
+  "themeAuto": "স্বয়ংক্রিয়",
+  "themeShukla": "শুক্ল",
+  "themeDark": "অন্ধকার",
+  "themeKrishna": "কৃষ্ণ",
+  
+  "dailyNotifications": "দৈনিক বিজ্ঞপ্তি",
+  "notificationScheduled": "দৈনিক নির্ধারিত",
+  "getNotifiedTithiDaily": "প্রতিদিন তিথি সম্পর্কে বিজ্ঞপ্তি পান",
+  "notificationTime": "বিজ্ঞপ্তির সময়",
+  
+  "autoLocation": "স্বয়ংক্রিয় অবস্থান",
+  "useGpsForTithi": "সঠিক তিথি গণনার জন্য GPS ব্যবহার করুন",
+  "usingLocation": "ব্যবহার করছে: {cityName}",
+  "fetchingLocation": "অবস্থান আনা হচ্ছে...",
+  "locationUnavailable": "অবস্থান অনুপলব্ধ",
+  
+  "homeLocation": "বাড়ির অবস্থান",
+  "notSet": "সেট করা হয়নি",
+  "setHomeLocation": "বাড়ির অবস্থান সেট করুন",
+  "dragMapToPin": "আপনার বাড়িতে পিন রাখতে মানচিত্র টানুন",
+  "setThisLocation": "এই অবস্থান সেট করুন",
+  "homeLocationSetTo": "বাড়ির অবস্থান {address} এ সেট করা হয়েছে",
+  "errorSettingLocation": "অবস্থান সেট করতে ত্রুটি: {error}",
+  
+  "startOfWeek": "সপ্তাহের শুরু",
+  "sunday": "রবিবার",
+  "monday": "সোমবার",
+  
+  "primaryView": "প্রাথমিক দৃশ্য",
+  "tithi": "তিথি",
+  "festival": "উৎসব",
+  "moon": "চাঁদ",
+  
+  "primaryCalendar": "প্রাথমিক পঞ্জিকা",
+  "secondaryCalendar": "মাধ্যমিক পঞ্জিকা",
+  "selectPrimaryCalendar": "প্রাথমিক পঞ্জিকা নির্বাচন করুন",
+  "selectSecondaryCalendar": "মাধ্যমিক পঞ্জিকা নির্বাচন করুন",
+  
+  "clearLocationCache": "অবস্থান ক্যাশ সাফ করুন",
+  "locationCacheCleared": "অবস্থান ক্যাশ সাফ করা হয়েছে",
+  "resetAppSettings": "অ্যাপ সেটিংস রিসেট করুন",
+  "resetSettingsTitle": "সেটিংস রিসেট করবেন?",
+  "resetSettingsMessage": "এটি আপনার সমস্ত পছন্দ এবং ডেটা ডিফল্টে রিসেট করবে। এটি পূর্বাবস্থায় ফেরানো যাবে না।",
+  "cancel": "বাতিল",
+  "reset": "রিসেট",
+  "appResetComplete": "অ্যাপ রিসেট সম্পূর্ণ",
+  
+  "reduceMotion": "গতি কমান",
+  "disableAnimations": "অ্যানিমেশন এবং ইফেক্ট বন্ধ করুন",
+  "hapticFeedback": "হ্যাপটিক ফিডব্যাক",
+  "vibrateOnTouch": "স্পর্শে কম্পন",
+  "highContrast": "উচ্চ কনট্রাস্ট",
+  "solidBackgrounds": "ভালো পাঠযোগ্যতার জন্য কঠিন পটভূমি",
+  "largeText": "বড় টেক্সট",
+  "increaseTextSize": "বিশ্বব্যাপী টেক্সটের আকার বাড়ান",
+  
+  "language": "ভাষা",
+  "selectLanguage": "ভাষা নির্বাচন করুন",
+  "systemDefault": "সিস্টেম ডিফল্ট",
+  
+  "privacyPolicy": "গোপনীয়তা নীতি",
+  "madeWithLove": "সনাতন ধর্মের জন্য ❤️ দিয়ে তৈরি",
+  
+  "shareApp": "অ্যাপ শেয়ার করুন",
+  "shareAppMessage": "তিথি দেখুন - বৈদিক পঞ্জিকা অ্যাপ! এখনই ডাউনলোড করুন: https://example.com/tithi",
+  "rateUs": "রেট দিন",
+  "aboutApp": "সম্পর্কে",
+  
+  "calendarView": "পঞ্জিকা দৃশ্য",
+  "scheduleView": "সূচি দৃশ্য",
+  "switchToCalendar": "মাসিক পঞ্জিকায় যান",
+  "switchToSchedule": "ইভেন্ট তালিকায় যান",
+  
+  "versionText": "সংস্করণ {version}",
+  
+  "events": "ইভেন্টস",
+  "festivalsAndEvents": "উৎসব এবং ইভেন্ট",
+  "noFestivalsOnThisDay": "আজ কোন উৎসব নেই",
+  "todaysFestival": "আজকের উৎসব",
+  "noFestivalsToday": "তিথি • আজ কোন উৎসব নেই",
+  
+  "errorLoadingPanchang": "পঞ্জিকা লোড করতে ত্রুটি: {error}",
+  
+  "panchangDetails": "পঞ্জিকা বিবরণ",
+  "paksha": "পক্ষ",
+  "pakshaWithName": "{paksha} পক্ষ",
+  "waxing": "শুক্ল",
+  "waning": "কৃষ্ণ",
+  "waxingMoonPhase": "শুক্ল পক্ষ - বর্ধমান চাঁদ",
+  "waningMoonPhase": "কৃষ্ণ পক্ষ - ক্ষীয়মাণ চাঁদ",
+  "category": "বিভাগ",
+  "general": "সাধারণ",
+  
+  "ritualsAndPractices": "আচার এবং সাধনা",
+  
+  "locationAccess": "অবস্থান অ্যাক্সেস",
+  "enableLocation": "অবস্থান সক্ষম করুন",
+  "skip": "এড়িয়ে যান",
+  "locationAccessDescription": "তিথি আপনার শহরের জন্য সঠিক পঞ্জিকা ডেটা গণনা করতে আপনার অবস্থান ব্যবহার করে।",
+  "locationAccessBenefits": "• আরও সঠিক তিথি গণনা\n• অবস্থান-নির্দিষ্ট চন্দ্রোদয়/সূর্যাস্তের সময়\n• আপনার অবস্থান ডেটা আপনার ডিভাইসে থাকে",
+  
+  "locationDisabled": "অবস্থান অক্ষম",
+  "locationDisabledMessage": "অবস্থান অক্ষম আছে। আপনার শহরের উপর ভিত্তি করে আরও সঠিক পঞ্জিকা গণনার জন্য এটি সক্ষম করুন।",
+  "notNow": "এখন নয়",
+  "enable": "সক্ষম করুন",
+  
+  "pleaseEnableLocationServices": "অনুগ্রহ করে আপনার ডিভাইসে অবস্থান পরিষেবা সক্ষম করুন",
+  "locationPermissionDenied": "অবস্থান অনুমতি অস্বীকার করা হয়েছে। ডিফল্ট অবস্থান ব্যবহার করা হচ্ছে।",
+  "locationEnabledSuccess": "অবস্থান সফলভাবে সক্ষম হয়েছে!",
+  
+  "refreshLocation": "অবস্থান রিফ্রেশ করুন",
+  "goToToday": "আজকে যান",
+  "initializing": "শুরু হচ্ছে...",
+  
+  "privacyYourDataStays": "আপনার ডেটা আপনার কাছে থাকে",
+  "privacyYourDataDesc": "তিথি গোপনীয়তা-প্রথম, অফলাইন-প্রথম আর্কিটেকচার দিয়ে ডিজাইন করা হয়েছে। সমস্ত জ্যোতির্বিদ্যা গণনা, পঞ্জিকা তৈরি এবং ইভেন্ট প্রক্রিয়াকরণ সরাসরি আপনার ডিভাইসে হয়। আমরা কোনো বাহ্যিক সার্ভারে আপনার ব্যক্তিগত ডেটা সংগ্রহ, সঞ্চয় বা প্রেরণ করি না।",
+  "privacyLocationUsage": "অবস্থান ব্যবহার",
+  "privacyLocationDesc": "আমরা শুধুমাত্র সঠিক তিথি, নক্ষত্র এবং সূর্যোদয়/সূর্যাস্তের সময় গণনা করতে আপনার অবস্থানে অ্যাক্সেসের অনুরোধ করি, যা আপনার নির্দিষ্ট ভৌগলিক স্থানাঙ্কের উপর নির্ভর করে।",
+  "privacyOffline": "অফলাইন কার্যকারিতা",
+  "privacyOfflineDesc": "প্রাথমিক ডাউনলোডের পরে অ্যাপটি সম্পূর্ণ অফলাইনে কাজ করে। এতে উচ্চ-নির্ভুলতা গ্রহ গণনার জন্য প্রয়োজনীয় সুইস এফেমেরিস ডেটা এম্বেড করা আছে।",
+  "privacyOpenSource": "ওপেন সোর্স স্বচ্ছতা",
+  "privacyOpenSourceDesc": "তিথি একটি ওপেন-সোর্স প্রকল্প। আমাদের কোড নিরীক্ষার জন্য সর্বজনীনভাবে উপলব্ধ, যা নিশ্চিত করে যে আমাদের গোপনীয়তা প্রতিশ্রুতি যাচাইযোগ্য স্বচ্ছতা দ্বারা সমর্থিত।",
+  "lastUpdated": "শেষ আপডেট: ডিসেম্বর 2025",
+  
+  "applicationLegalese": "© 2025 তিথি প্রকল্প\nসনাতন ধর্মের জন্য ❤️ দিয়ে তৈরি"
+}

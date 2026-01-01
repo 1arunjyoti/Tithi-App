@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../providers/location_provider.dart';
 
@@ -34,46 +35,49 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
 
   Future<void> _onSelectLocation() async {
     setState(() => _isLoading = true);
+    final l10n = AppLocalizations.of(context);
 
     try {
       final service = ref.read(locationServiceProvider);
-      // Reverse geocode to get address
-      // We can use Nominatim directly or via service helper
       final cityName = await service.getCityName(
         _center.latitude,
         _center.longitude,
       );
 
-      // Also get full address details if possible, or just use city name for now
-      // Let's use Nominatim explicitly here to show a better label if we want,
-      // but service.getCityName filters nicely for "City".
-      // Let's stick to the service's logic to keep it consistent.
       final addressLabel =
           cityName ??
           '${_center.latitude.toStringAsFixed(4)}, ${_center.longitude.toStringAsFixed(4)}';
 
-      // Save as Home Location
       await service.setHomeLocation(
         _center.latitude,
         _center.longitude,
         addressLabel,
       );
 
-      // Invalidate providers to refresh UI
       ref.invalidate(currentLocationProvider);
       ref.invalidate(homeLocationProvider);
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Home location set to $addressLabel')),
+          SnackBar(
+            content: Text(
+              l10n?.homeLocationSetTo(addressLabel) ??
+                  'Home location set to $addressLabel',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error setting location: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n?.errorSettingLocation(e.toString()) ??
+                  'Error setting location: $e',
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -84,12 +88,13 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text(
-          'Set Home Location',
-          style: TextStyle(color: Colors.black),
+        title: Text(
+          l10n?.setHomeLocation ?? 'Set Home Location',
+          style: const TextStyle(color: Colors.black),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -179,7 +184,8 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'Drag map to position pin at your home',
+                    l10n?.dragMapToPin ??
+                        'Drag map to position pin at your home',
                     textAlign: TextAlign.center,
                     style: context.textTheme.bodyMedium?.copyWith(
                       color: context.colors.onSurface,
@@ -207,9 +213,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text(
-                              'Set This Location',
-                              style: TextStyle(
+                          : Text(
+                              l10n?.setThisLocation ?? 'Set This Location',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),

@@ -7,6 +7,7 @@ import '../providers/panchang_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
+import '../models/hindu_month_system.dart';
 import '../theme/app_theme.dart';
 
 /// Calendar widget using TableCalendar with Tithi markers
@@ -61,7 +62,7 @@ class CalendarWidget extends ConsumerWidget {
                 final hIndex = service.hinduMonths.indexOf(hDate.masa);
                 // Prev
                 var newIndex = hIndex - 1;
-                var newYear = hDate.year;
+                var newYear = hDate.vsYear;
                 if (newIndex < 0) {
                   newIndex = 11;
                   newYear--;
@@ -102,7 +103,7 @@ class CalendarWidget extends ConsumerWidget {
                 final hIndex = service.hinduMonths.indexOf(hDate.masa);
                 // Next
                 var newIndex = hIndex + 1;
-                var newYear = hDate.year;
+                var newYear = hDate.vsYear;
                 if (newIndex > 11) {
                   newIndex = 0;
                   newYear++;
@@ -326,7 +327,7 @@ class CalendarWidget extends ConsumerWidget {
       final service = ref.read(hinduCalendarServiceProvider);
       final hDate = await service.calculateDate(focused);
       final monthIndex = service.hinduMonths.indexOf(hDate.masa);
-      final year = hDate.year;
+      final year = hDate.vsYear;
       startDate = await service.getMonthStart(year, monthIndex);
 
       var nextIndex = monthIndex + 1;
@@ -497,7 +498,12 @@ class _CalendarHeader extends ConsumerWidget {
           final service = ref.read(hinduCalendarServiceProvider);
           await ref.read(panchangInitProvider.future);
           final hDate = await service.calculateDate(date);
-          return '${hDate.masa} ${hDate.year}';
+          // Use year era preference for display
+          final yearEra = ref.read(cp.hinduYearEraProvider);
+          final displayYear = yearEra == HinduYearEra.vikramSamvat
+              ? hDate.vsYear
+              : hDate.shakaYear;
+          return '${hDate.masa} $displayYear';
         } catch (_) {
           return _formatGregorian(date);
         }

@@ -7,6 +7,8 @@
 /// - Vedic astrology chart generation
 library jyotish;
 
+// Bindings (for eclipse calculations)
+export 'src/bindings/swisseph_bindings.dart';
 // Constants
 export 'src/constants/planet_constants.dart';
 // Exceptions

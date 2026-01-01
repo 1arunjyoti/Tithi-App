@@ -12,12 +12,16 @@ class CalculationFlags {
   /// [siderealMode] - Ayanamsa for sidereal calculations (default: Lahiri)
   /// [useTopocentric] - Use topocentric positions (default: false)
   /// [useEquatorial] - Use equatorial coordinates (default: false)
+  /// [useHeliocentric] - Use heliocentric (Sun-centered) positions (default: false)
+  /// [useTropical] - Use tropical zodiac, skip sidereal conversion (default: false)
   const CalculationFlags({
     this.useSwissEphemeris = true,
     this.calculateSpeed = true,
     this.siderealMode = SiderealMode.lahiri,
     this.useTopocentric = false,
     this.useEquatorial = false,
+    this.useHeliocentric = false,
+    this.useTropical = false,
   });
 
   /// Creates default calculation flags (Lahiri sidereal, geocentric, with speed).
@@ -38,6 +42,14 @@ class CalculationFlags {
         useTopocentric: true,
       );
 
+  /// Creates flags for astronomical (tropical, heliocentric) calculations.
+  /// This is used for accurate solar system visualization matching NASA.
+  factory CalculationFlags.astronomical({bool heliocentric = true}) =>
+      CalculationFlags(
+        useTropical: true,
+        useHeliocentric: heliocentric,
+      );
+
   /// Use Swiss Ephemeris (high precision)
   final bool useSwissEphemeris;
 
@@ -53,6 +65,14 @@ class CalculationFlags {
 
   /// Use equatorial coordinates instead of ecliptic
   final bool useEquatorial;
+
+  /// Use heliocentric (Sun-centered) positions
+  /// instead of geocentric (Earth-centered)
+  final bool useHeliocentric;
+
+  /// Use tropical zodiac (skip sidereal/ayanamsa conversion)
+  /// For astronomical display rather than Vedic astrology
+  final bool useTropical;
 
   /// Converts flags to Swiss Ephemeris integer flag value.
   /// Note: We always calculate tropical and subtract ayanamsa manually
@@ -76,6 +96,10 @@ class CalculationFlags {
       flag |= SwissEphConstants.equatorial;
     }
 
+    if (useHeliocentric) {
+      flag |= SwissEphConstants.heliocentric;
+    }
+
     return flag;
   }
 
@@ -89,7 +113,9 @@ class CalculationFlags {
         'speed: $calculateSpeed, '
         'ayanamsa: ${siderealMode.name}, '
         'topocentric: $useTopocentric, '
-        'equatorial: $useEquatorial)';
+        'equatorial: $useEquatorial, '
+        'heliocentric: $useHeliocentric, '
+        'tropical: $useTropical)';
   }
 
   /// Creates a copy with optional parameter overrides.
@@ -99,6 +125,8 @@ class CalculationFlags {
     SiderealMode? siderealMode,
     bool? useTopocentric,
     bool? useEquatorial,
+    bool? useHeliocentric,
+    bool? useTropical,
   }) {
     return CalculationFlags(
       useSwissEphemeris: useSwissEphemeris ?? this.useSwissEphemeris,
@@ -106,6 +134,8 @@ class CalculationFlags {
       siderealMode: siderealMode ?? this.siderealMode,
       useTopocentric: useTopocentric ?? this.useTopocentric,
       useEquatorial: useEquatorial ?? this.useEquatorial,
+      useHeliocentric: useHeliocentric ?? this.useHeliocentric,
+      useTropical: useTropical ?? this.useTropical,
     );
   }
 }

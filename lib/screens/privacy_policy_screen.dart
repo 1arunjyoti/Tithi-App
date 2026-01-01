@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 class PrivacyPolicyScreen extends ConsumerWidget {
@@ -7,10 +8,11 @@ class PrivacyPolicyScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: Text(l10n?.privacyPolicy ?? 'Privacy Policy'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -53,8 +55,10 @@ class PrivacyPolicyScreen extends ConsumerWidget {
               children: [
                 _buildPolicyCard(
                   context,
-                  title: 'Your Data Stays With You',
+                  title:
+                      l10n?.privacyYourDataStays ?? 'Your Data Stays With You',
                   content:
+                      l10n?.privacyYourDataDesc ??
                       'Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, and event processing happen directly on your device. We do not collect, store, or transmit your personal data to any external servers.',
                   icon: Icons.offline_bolt_rounded,
                   ref: ref,
@@ -62,8 +66,9 @@ class PrivacyPolicyScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _buildPolicyCard(
                   context,
-                  title: 'Location Usage',
+                  title: l10n?.privacyLocationUsage ?? 'Location Usage',
                   content:
+                      l10n?.privacyLocationDesc ??
                       'We request access to your location solely to calculate accurate Tithi, Nakshatra, and sunrise/sunset timings, which depend on your specific geographic coordinates. Your location data is processed locally by the app and is never shared with third parties or stored on our servers.',
                   icon: Icons.location_on_rounded,
                   ref: ref,
@@ -71,8 +76,9 @@ class PrivacyPolicyScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _buildPolicyCard(
                   context,
-                  title: 'Offline Functionality',
+                  title: l10n?.privacyOffline ?? 'Offline Functionality',
                   content:
+                      l10n?.privacyOfflineDesc ??
                       'The app works completely offline after the initial download. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.',
                   icon: Icons.signal_wifi_off_rounded,
                   ref: ref,
@@ -80,8 +86,9 @@ class PrivacyPolicyScreen extends ConsumerWidget {
                 const SizedBox(height: 16),
                 _buildPolicyCard(
                   context,
-                  title: 'Open Source Transparency',
+                  title: l10n?.privacyOpenSource ?? 'Open Source Transparency',
                   content:
+                      l10n?.privacyOpenSourceDesc ??
                       'Tithi is an open-source project. Our code is publicly available for audit, ensuring that our privacy promises are backed by verifiable transparency. What you see is exactly what you get.',
                   icon: Icons.code_rounded,
                   ref: ref,
@@ -89,7 +96,7 @@ class PrivacyPolicyScreen extends ConsumerWidget {
                 const SizedBox(height: 48),
                 Center(
                   child: Text(
-                    'Last Updated: December 2025',
+                    l10n?.lastUpdated ?? 'Last Updated: December 2025',
                     style: context.textTheme.labelSmall?.copyWith(
                       color: context.colors.onSurface.withValues(alpha: 0.5),
                     ),

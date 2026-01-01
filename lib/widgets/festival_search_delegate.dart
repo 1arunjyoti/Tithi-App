@@ -1,0 +1,241 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/festival.dart';
+import '../providers/festival_provider.dart';
+import '../providers/calendar_provider.dart';
+import '../providers/panchang_provider.dart';
+
+import 'event_detail_sheet.dart';
+
+class FestivalSearchDelegate extends SearchDelegate {
+  final WidgetRef ref;
+  final BuildContext parentContext;
+
+  FestivalSearchDelegate({required this.ref, required this.parentContext});
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    final theme = Theme.of(context);
+    return theme.copyWith(
+      appBarTheme: theme.appBarTheme.copyWith(
+        backgroundColor: theme.colorScheme.surface,
+        elevation: 0,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: InputBorder.none,
+        hintStyle: TextStyle(fontSize: 18),
+      ),
+    );
+  }
+
+  @override
+  List<Widget>? buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            query = '';
+          },
+        ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return _buildList(context);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return _buildList(context);
+  }
+
+  Widget _buildList(BuildContext context) {
+    final allFestivals = ref.read(festivalProvider);
+    final results = query.isEmpty
+        ? <Festival>[] // Start empty or show recent?
+        : allFestivals.where((f) {
+            final q = query.toLowerCase();
+            return f.name.toLowerCase().contains(q) ||
+                (f.nameHindi?.toLowerCase().contains(q) ?? false) ||
+                f.category.toLowerCase().contains(q);
+          }).toList();
+
+    if (query.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_rounded,
+              size: 64,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Search for festivals, vrats, and events',
+              style: TextStyle(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (results.isEmpty) {
+      return Center(
+        child: Text(
+          'No festivals found',
+          style: TextStyle(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: results.length,
+      itemBuilder: (context, index) {
+        final festival = results[index];
+        return _buildFestivalTile(context, festival);
+      },
+    );
+  }
+
+  Widget _buildFestivalTile(BuildContext context, Festival festival) {
+    final isMajor = festival.category == 'major';
+
+    // We can reuse the glassmorphism style or keep it simpler for search results
+    // Let's use a Card-like look that fits the theme
+
+    return GestureDetector(
+      onTap: () {
+        // Show details
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => EventDetailSheet(
+            festival: festival,
+            panchang: null, // No specific date context
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isMajor
+                    ? Colors.orange.withValues(alpha: 0.2)
+                    : Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isMajor ? Icons.celebration : Icons.event,
+                color: isMajor ? Colors.orange : Theme.of(context).primaryColor,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    festival.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  if (festival.nameHindi != null)
+                    Text(
+                      festival.nameHindi!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 20),
+
+            // Go to Date Button
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.calendar_month_outlined),
+              tooltip: 'Go to next occurrence',
+              onPressed: () async {
+                // Show loading or feedback
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Finding next occurrence...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+
+                // Find next date
+                final panchangService = ref.read(panchangServiceProvider);
+                final nextDate = await panchangService
+                    .findNextFestivalOccurrence(festival);
+
+                if (nextDate != null && context.mounted) {
+                  // Navigate
+                  ref.read(focusedMonthProvider.notifier).state = nextDate;
+                  ref.read(selectedDateProvider.notifier).state = nextDate;
+
+                  // Close search
+                  close(context, null);
+                } else if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Could not find upcoming occurrence within a year.',
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

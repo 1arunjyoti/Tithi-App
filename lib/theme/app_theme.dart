@@ -312,6 +312,36 @@ class AppTheme {
       ],
     );
   }
+
+  /// Standard background decoration with gradient
+  static BoxDecoration backgroundDecoration(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPureDark =
+        Theme.of(context).scaffoldBackgroundColor == Colors.black;
+
+    // We can't easily access accessibility provider here without ref, so basic gradient
+    if (isPureDark) {
+      return const BoxDecoration(color: Colors.black);
+    }
+
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isDark
+            ? [
+                const Color(0xFF10002B),
+                const Color(0xFF240046),
+                const Color(0xFF10002B),
+              ]
+            : [
+                const Color(0xFFFFFDF7),
+                const Color(0xFFFFECB3).withValues(alpha: 0.3),
+                const Color(0xFFFFFDF7),
+              ],
+      ),
+    );
+  }
 }
 
 /// Extension for quick theme access

@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
+import '../services/share_service.dart';
+import 'ritual_checklist_widget.dart';
 
 /// Bottom sheet showing festival details with glassmorphism
 class EventDetailSheet extends ConsumerWidget {
   final Festival festival;
-  final PanchangData panchang;
+  final PanchangData? panchang;
 
-  const EventDetailSheet({
-    super.key,
-    required this.festival,
-    required this.panchang,
-  });
+  const EventDetailSheet({super.key, required this.festival, this.panchang});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,12 +46,27 @@ class EventDetailSheet extends ConsumerWidget {
                   padding: const EdgeInsets.all(24),
                   children: [
                     // Festival name
-                    Text(
-                      festival.name,
-                      style: context.textTheme.headlineLarge?.copyWith(
-                        fontSize: 28,
-                        color: context.colors.primary,
-                      ),
+                    // Festival name and Share button
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            festival.name,
+                            style: context.textTheme.headlineLarge?.copyWith(
+                              fontSize: 28,
+                              color: context.colors.primary,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              ShareService().shareFestival(context, festival),
+                          icon: const Icon(Icons.share_outlined),
+                          color: context.colors.primary,
+                          tooltip: 'Share Card',
+                        ),
+                      ],
                     ),
                     if (festival.nameHindi != null) ...[
                       const SizedBox(height: 4),
@@ -88,38 +102,56 @@ class EventDetailSheet extends ConsumerWidget {
 
                     // Panchang info
                     Text(
-                      'Panchang Details',
+                      AppLocalizations.of(context)?.panchangDetails ??
+                          'Panchang Details',
                       style: context.textTheme.headlineMedium?.copyWith(
                         fontSize: 18,
                       ),
                     ),
                     const SizedBox(height: 12),
-                    _buildInfoRow(
-                      context,
-                      Icons.brightness_3,
-                      'Paksha',
-                      '${panchang.paksha} (${panchang.isShukla ? "Waxing" : "Waning"})',
-                    ),
-                    _buildInfoRow(
-                      context,
-                      Icons.calendar_today,
-                      'Tithi',
-                      '${panchang.tithiName} (T${panchang.tithiNumber})',
-                    ),
+                    if (panchang != null) ...[
+                      _buildInfoRow(
+                        context,
+                        Icons.brightness_3,
+                        AppLocalizations.of(context)?.paksha ?? 'Paksha',
+                        '${panchang!.paksha} (${panchang!.isShukla ? (AppLocalizations.of(context)?.waxing ?? "Waxing") : (AppLocalizations.of(context)?.waning ?? "Waning")})',
+                      ),
+                      _buildInfoRow(
+                        context,
+                        Icons.calendar_today,
+                        AppLocalizations.of(context)?.tithi ?? 'Tithi',
+                        '${panchang!.tithiName} (T${panchang!.tithiNumber})',
+                      ),
+                    ] else ...[
+                      // Generic info from festival object
+                      _buildInfoRow(
+                        context,
+                        Icons.brightness_3,
+                        AppLocalizations.of(context)?.paksha ?? 'Paksha',
+                        festival.paksha,
+                      ),
+                      _buildInfoRow(
+                        context,
+                        Icons.calendar_today,
+                        AppLocalizations.of(context)?.tithi ?? 'Tithi',
+                        'Tithi ${festival.tithi}',
+                      ),
+                    ],
                     _buildInfoRow(
                       context,
                       Icons.category,
-                      'Category',
+                      AppLocalizations.of(context)?.category ?? 'Category',
                       festival.category.isEmpty
-                          ? 'General'
+                          ? (AppLocalizations.of(context)?.general ?? 'General')
                           : festival.category.toUpperCase(),
                     ),
 
                     // Rituals
-                    if (festival.rituals.isNotEmpty) ...[
+                    if (festival.rituals.steps.isNotEmpty) ...[
                       const SizedBox(height: 24),
                       Text(
-                        'Rituals & Practices',
+                        AppLocalizations.of(context)?.ritualsAndPractices ??
+                            'Rituals & Practices',
                         style: context.textTheme.headlineMedium?.copyWith(
                           fontSize: 18,
                         ),
@@ -133,26 +165,27 @@ class EventDetailSheet extends ConsumerWidget {
                           ref: ref,
                         ),
                         child: Column(
-                          children: festival.rituals.map((ritual) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    color: context.colors.primary,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      ritual,
-                                      style: context.textTheme.bodyLarge,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          children: festival.rituals.steps.asMap().entries.map((
+                            entry,
+                          ) {
+                            final index = entry.key;
+                            final ritual = entry.value;
+
+                            // Create a stable ID for this ritual instance
+                            // Format: YYYY-MM-DD_FestivalID_Index
+                            // Format: YYYY-MM-DD_FestivalID_Index
+                            // If panchang is null (search view), use a generic date prefix so it doesn't crash,
+                            // or maybe just disable interactivity? For now let's use a dummy date.
+                            final dateStr =
+                                panchang?.date.toIso8601String().split(
+                                  'T',
+                                )[0] ??
+                                'generic';
+                            final ritualId = '${dateStr}_${festival.id}_$index';
+
+                            return RitualChecklistWidget(
+                              ritualId: ritualId,
+                              label: ritual,
                             );
                           }).toList(),
                         ),

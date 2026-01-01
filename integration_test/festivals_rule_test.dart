@@ -24,11 +24,12 @@ class Festival {
   });
 
   factory Festival.fromJson(Map<String, dynamic> json) {
+    final rules = json['panchang_rules'] is Map ? json['panchang_rules'] : {};
     return Festival(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
-      paksha: json['paksha'] ?? '',
-      tithi: json['tithi'] ?? 0,
+      paksha: rules['paksha'] ?? json['paksha'] ?? '',
+      tithi: rules['tithi'] ?? json['tithi'] ?? 0,
     );
   }
 }

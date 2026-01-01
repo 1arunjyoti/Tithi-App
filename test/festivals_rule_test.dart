@@ -33,14 +33,34 @@ class Festival {
   });
 
   factory Festival.fromJson(Map<String, dynamic> json) {
+    // Helper to safely get nested values
+    dynamic getNested(Map<String, dynamic> data, List<String> path) {
+      dynamic current = data;
+      for (var key in path) {
+        if (current is Map && current.containsKey(key)) {
+          current = current[key];
+        } else {
+          return null;
+        }
+      }
+      return current;
+    }
+
     return Festival(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      masa: json['masa'] ?? '',
-      paksha: json['paksha'] ?? '',
-      tithi: json['tithi'] ?? 0,
-      conditions: json['conditions'] ?? '',
+      description:
+          getNested(json, ['purpose', 'description']) ??
+          json['description'] ??
+          '',
+      masa: getNested(json, ['panchang_rules', 'masa']) ?? json['masa'] ?? '',
+      paksha:
+          getNested(json, ['panchang_rules', 'paksha']) ?? json['paksha'] ?? '',
+      tithi: getNested(json, ['panchang_rules', 'tithi']) ?? json['tithi'] ?? 0,
+      conditions:
+          getNested(json, ['panchang_rules', 'conditions']) ??
+          json['conditions'] ??
+          '',
     );
   }
 }

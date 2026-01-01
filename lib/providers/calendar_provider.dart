@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:hive/hive.dart';
+import '../models/hindu_month_system.dart';
 
 /// Provider for currently selected date in calendar
 final selectedDateProvider = StateProvider<DateTime>((ref) {
@@ -148,4 +149,66 @@ class SecondaryCalendarSystemNotifier extends Notifier<AppCalendarSystem> {
 final secondaryCalendarSystemProvider =
     NotifierProvider<SecondaryCalendarSystemNotifier, AppCalendarSystem>(
       () => SecondaryCalendarSystemNotifier(),
+    );
+
+// --- Hindu Month System (Amanta/Purnimant) ---
+
+/// Notifier for Hindu Month System preference (Amanta vs Purnimant)
+class HinduMonthSystemNotifier extends Notifier<HinduMonthSystem> {
+  static const _boxName = 'settings';
+  static const _key = 'hindu_month_system';
+
+  @override
+  HinduMonthSystem build() {
+    final box = Hive.box(_boxName);
+    final index =
+        box.get(_key, defaultValue: HinduMonthSystem.amanta.index) as int;
+    // Ensure index is valid
+    if (index >= 0 && index < HinduMonthSystem.values.length) {
+      return HinduMonthSystem.values[index];
+    }
+    return HinduMonthSystem.amanta; // Default to Amanta
+  }
+
+  Future<void> setSystem(HinduMonthSystem system) async {
+    final box = Hive.box(_boxName);
+    await box.put(_key, system.index);
+    state = system;
+  }
+}
+
+final hinduMonthSystemProvider =
+    NotifierProvider<HinduMonthSystemNotifier, HinduMonthSystem>(
+      () => HinduMonthSystemNotifier(),
+    );
+
+// --- Hindu Year Era (Vikram/Shaka Samvat) ---
+
+/// Notifier for Hindu Year Era preference (Vikram Samvat vs Shaka Samvat)
+class HinduYearEraNotifier extends Notifier<HinduYearEra> {
+  static const _boxName = 'settings';
+  static const _key = 'hindu_year_era';
+
+  @override
+  HinduYearEra build() {
+    final box = Hive.box(_boxName);
+    final index =
+        box.get(_key, defaultValue: HinduYearEra.vikramSamvat.index) as int;
+    // Ensure index is valid
+    if (index >= 0 && index < HinduYearEra.values.length) {
+      return HinduYearEra.values[index];
+    }
+    return HinduYearEra.vikramSamvat; // Default to Vikram Samvat
+  }
+
+  Future<void> setEra(HinduYearEra era) async {
+    final box = Hive.box(_boxName);
+    await box.put(_key, era.index);
+    state = era;
+  }
+}
+
+final hinduYearEraProvider =
+    NotifierProvider<HinduYearEraNotifier, HinduYearEra>(
+      () => HinduYearEraNotifier(),
     );

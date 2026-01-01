@@ -87,15 +87,18 @@ class EphemerisService {
       final julianDay = _dateTimeToJulianDay(dateTime);
 
       // Set sidereal mode and get ayanamsa for this date
-      // We always use sidereal calculations for Vedic astrology
-      _bindings!.setSiderealMode(
-        flags.siderealModeConstant,
-        0.0,
-        0.0,
-      );
-      final ayanamsa = _bindings!.getAyanamsaUT(julianDay);
+      // Only needed if we're doing sidereal calculations (not tropical)
+      double ayanamsa = 0.0;
+      if (!flags.useTropical) {
+        _bindings!.setSiderealMode(
+          flags.siderealModeConstant,
+          0.0,
+          0.0,
+        );
+        ayanamsa = _bindings!.getAyanamsaUT(julianDay);
+      }
 
-      // Calculate position (tropical, then we subtract ayanamsa)
+      // Calculate position (tropical, then we subtract ayanamsa if sidereal)
       final errorBuffer = malloc<ffi.Char>(256);
       try {
         final results = _bindings!.calculateUT(
@@ -112,8 +115,10 @@ class EphemerisService {
           );
         }
 
-        // Convert tropical to sidereal by subtracting ayanamsa
-        results[0] = (results[0] - ayanamsa + 360) % 360;
+        // Convert tropical to sidereal by subtracting ayanamsa (only if not tropical mode)
+        if (!flags.useTropical) {
+          results[0] = (results[0] - ayanamsa + 360) % 360;
+        }
 
         return PlanetPosition.fromSwissEph(
           planet: planet,
