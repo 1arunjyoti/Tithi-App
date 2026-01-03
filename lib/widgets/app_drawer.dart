@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
@@ -6,16 +7,22 @@ import 'package:url_launcher/url_launcher.dart';
 import '../screens/settings_screen.dart';
 import '../screens/temple_map_screen.dart';
 import '../screens/moon_phases_screen.dart';
-import '../screens/solar_system_screen.dart';
-import '../screens/eclipse_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../screens/sankalpa/sankalpa_list_screen.dart';
 
-class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+// Conditional imports for FFI-dependent screens (only available on native platforms)
+// On web, we import a stub file that provides placeholder widgets
+import 'native_screens/native_screens.dart'
+    if (dart.library.html) 'native_screens/native_screens_stub.dart';
 
-  static const _borderRadius = BorderRadius.only(
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key, this.isSidebar = false});
+
+  /// When true, renders as a persistent sidebar without Drawer wrapper
+  final bool isSidebar;
+
+  static const _drawerBorderRadius = BorderRadius.only(
     topRight: Radius.circular(32),
     bottomRight: Radius.circular(32),
   );
@@ -31,37 +38,45 @@ class AppDrawer extends StatelessWidget {
         ? const Color(0xF5121212) // Dark theme: near-black with high opacity
         : const Color(0xF5FAFAFA); // Light theme: off-white with high opacity
 
+    final content = Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: isSidebar ? null : _drawerBorderRadius,
+        border: Border(
+          right: BorderSide(
+            color: colors.onSurface.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        boxShadow: isSidebar
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 16,
+                  offset: const Offset(2, 0),
+                ),
+              ],
+      ),
+      child: Column(
+        children: [
+          _DrawerHeader(colors: colors),
+          Expanded(child: _DrawerMenuList(colors: colors)),
+          const _DrawerFooter(),
+        ],
+      ),
+    );
+
+    // When used as sidebar, don't wrap with Drawer
+    if (isSidebar) {
+      return content;
+    }
+
     return Drawer(
       backgroundColor: Colors.transparent,
       elevation: 0,
       width: 280,
-      child: ClipRRect(
-        borderRadius: _borderRadius,
-        child: Container(
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: _borderRadius,
-            border: Border.all(
-              color: colors.onSurface.withValues(alpha: 0.1),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 16,
-                offset: const Offset(2, 0),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _DrawerHeader(colors: colors),
-              Expanded(child: _DrawerMenuList(colors: colors)),
-              const _DrawerFooter(),
-            ],
-          ),
-        ),
-      ),
+      child: ClipRRect(borderRadius: _drawerBorderRadius, child: content),
     );
   }
 }
@@ -163,17 +178,20 @@ class _DrawerMenuList extends StatelessWidget {
           onTap: () => _navigateTo(context, const MoonPhasesScreen()),
         ),
 
-        _DrawerMenuItem(
-          icon: Icons.public,
-          title: l10n?.solarSystem ?? 'Solar System',
-          onTap: () => _navigateTo(context, const SolarSystemScreen()),
-        ),
+        // FFI-dependent features - hide on web
+        if (!kIsWeb) ...[
+          _DrawerMenuItem(
+            icon: Icons.public,
+            title: l10n?.solarSystem ?? 'Solar System',
+            onTap: () => _navigateTo(context, const SolarSystemScreen()),
+          ),
 
-        _DrawerMenuItem(
-          icon: Icons.brightness_3_rounded,
-          title: l10n?.eclipses ?? 'Eclipses',
-          onTap: () => _navigateTo(context, const EclipseScreen()),
-        ),
+          _DrawerMenuItem(
+            icon: Icons.brightness_3_rounded,
+            title: l10n?.eclipses ?? 'Eclipses',
+            onTap: () => _navigateTo(context, const EclipseScreen()),
+          ),
+        ],
 
         _DrawerMenuItem(
           icon: Icons.settings_rounded,
@@ -189,7 +207,10 @@ class _DrawerMenuList extends StatelessWidget {
           icon: Icons.share_rounded,
           title: l10n?.shareApp ?? 'Share App',
           onTap: () {
-            Navigator.pop(context);
+            // Only pop if we're in a drawer
+            if (Scaffold.maybeOf(context)?.hasDrawer == true) {
+              Navigator.pop(context);
+            }
             SharePlus.instance.share(
               ShareParams(
                 text:
@@ -213,12 +234,18 @@ class _DrawerMenuList extends StatelessWidget {
   }
 
   void _navigateTo(BuildContext context, Widget screen) {
-    Navigator.pop(context);
+    // Only pop if we're in a drawer (has a route to pop)
+    if (Scaffold.maybeOf(context)?.hasDrawer == true) {
+      Navigator.pop(context);
+    }
     Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
   }
 
   Future<void> _launchRating(BuildContext context) async {
-    Navigator.pop(context);
+    // Only pop if we're in a drawer
+    if (Scaffold.maybeOf(context)?.hasDrawer == true) {
+      Navigator.pop(context);
+    }
     final Uri url = Uri.parse(''); // TODO: Replace with actual ID
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -291,7 +318,10 @@ class _ViewModeToggleItem extends ConsumerWidget {
       child: ListTile(
         onTap: () {
           ref.read(homeViewModeProvider.notifier).toggle();
-          Navigator.pop(context);
+          // Only pop if we're in a drawer
+          if (Scaffold.maybeOf(context)?.hasDrawer == true) {
+            Navigator.pop(context);
+          }
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Container(
@@ -386,7 +416,10 @@ class _AboutMenuItem extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations? l10n,
   ) async {
-    Navigator.pop(context);
+    // Only pop if we're in a drawer
+    if (Scaffold.maybeOf(context)?.hasDrawer == true) {
+      Navigator.pop(context);
+    }
     final version = await ref.read(versionStringProvider.future);
 
     if (!context.mounted) return;

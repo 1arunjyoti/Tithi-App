@@ -3,6 +3,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
+// For web platform detection
+const bool _kIsWeb = kIsWeb;
+
 /// Location data model
 class LocationData {
   final double latitude;
@@ -194,18 +197,25 @@ class LocationService {
         return _getCachedLocation();
       }
 
-      // Try to get last known position first (faster)
-      Position? position = await Geolocator.getLastKnownPosition();
+      // Try to get last known position first (faster) - not supported on web
+      Position? position;
+      if (!_kIsWeb) {
+        position = await Geolocator.getLastKnownPosition();
+      }
 
-      // If no last known position, get current position using native LocationManager (FOSS)
-      // Reduced timeout to 10s for better responsiveness
+      // If no last known position, get current position
+      // Web uses standard LocationSettings, mobile uses AndroidSettings for FOSS
       position ??= await Geolocator.getCurrentPosition(
-        locationSettings: AndroidSettings(
-          accuracy: LocationAccuracy.medium,
-          forceLocationManager:
-              true, // FOSS: Use native LocationManager, not Google
-          timeLimit: const Duration(seconds: 10),
-        ),
+        locationSettings: _kIsWeb
+            ? const LocationSettings(
+                accuracy: LocationAccuracy.medium,
+                timeLimit: Duration(seconds: 15),
+              )
+            : AndroidSettings(
+                accuracy: LocationAccuracy.medium,
+                forceLocationManager: true, // FOSS: Use native LocationManager
+                timeLimit: const Duration(seconds: 10),
+              ),
       );
 
       // Get city name via reverse geocoding

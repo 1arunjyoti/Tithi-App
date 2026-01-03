@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -65,90 +66,104 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
-                _buildThemeSection(context),
-
-                const SizedBox(height: 32),
-
-                SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
-                SettingsGroupCard(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
                   children: [
-                    const _NotificationSettings(),
-                    const SettingsDivider(),
-                    const _LocationSettings(),
-                    const SettingsDivider(),
-                    const _HomeLocationSetting(),
-                    const SettingsDivider(),
-                    const _LanguageSetting(),
-                  ],
-                ),
+                    SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
+                    _buildThemeSection(context),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.calendar ?? 'CALENDAR'),
-                SettingsGroupCard(
-                  children: [
-                    const _StartOfWeekSetting(),
-                    const SettingsDivider(),
-                    const _PrimaryViewSetting(),
-                    const SettingsDivider(),
-                    const _PrimaryCalendarSetting(),
-                    const SettingsDivider(),
-                    const _SecondaryCalendarSetting(),
-                    const SettingsDivider(),
-                    const _HinduMonthSystemSetting(),
-                    const SettingsDivider(),
-                    const _HinduYearEraSetting(),
-                  ],
-                ),
+                    SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
+                    SettingsGroupCard(
+                      children: [
+                        // Hide notifications on web - not supported
+                        if (!kIsWeb) ...[
+                          const _NotificationSettings(),
+                          const SettingsDivider(),
+                        ],
+                        const _LocationSettings(),
+                        const SettingsDivider(),
+                        const _HomeLocationSetting(),
+                        const SettingsDivider(),
+                        const _LanguageSetting(),
+                      ],
+                    ),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.accessibility ?? 'ACCESSIBILITY'),
-                const _AccessibilitySettings(),
+                    SettingsSectionHeader(l10n?.calendar ?? 'CALENDAR'),
+                    SettingsGroupCard(
+                      children: [
+                        const _StartOfWeekSetting(),
+                        const SettingsDivider(),
+                        const _PrimaryViewSetting(),
+                        const SettingsDivider(),
+                        const _PrimaryCalendarSetting(),
+                        const SettingsDivider(),
+                        const _SecondaryCalendarSetting(),
+                        const SettingsDivider(),
+                        const _HinduMonthSystemSetting(),
+                        const SettingsDivider(),
+                        const _HinduYearEraSetting(),
+                      ],
+                    ),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.dataStorage ?? 'DATA & STORAGE'),
-                SettingsGroupCard(
-                  children: [
-                    const _ClearCacheSetting(),
-                    const SettingsDivider(),
-                    const _ResetSettingsTile(),
-                  ],
-                ),
+                    SettingsSectionHeader(
+                      l10n?.accessibility ?? 'ACCESSIBILITY',
+                    ),
+                    const _AccessibilitySettings(),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
-                SettingsGroupCard(
-                  children: [
-                    SettingsActionTile(
-                      icon: Icons.privacy_tip_rounded,
-                      title: l10n?.privacyPolicy ?? 'Privacy Policy',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PrivacyPolicyScreen(),
+                    SettingsSectionHeader(
+                      l10n?.dataStorage ?? 'DATA & STORAGE',
+                    ),
+                    SettingsGroupCard(
+                      children: [
+                        const _ClearCacheSetting(),
+                        const SettingsDivider(),
+                        const _ResetSettingsTile(),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
+                    SettingsGroupCard(
+                      children: [
+                        SettingsActionTile(
+                          icon: Icons.privacy_tip_rounded,
+                          title: l10n?.privacyPolicy ?? 'Privacy Policy',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PrivacyPolicyScreen(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+                    Center(
+                      child: Text(
+                        l10n?.madeWithLove ?? 'Made with ❤️ for Sanatan Dharma',
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 32),
-                Center(
-                  child: Text(
-                    l10n?.madeWithLove ?? 'Made with ❤️ for Sanatan Dharma',
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: context.colors.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],

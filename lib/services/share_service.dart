@@ -1,11 +1,13 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/festival.dart';
 import '../widgets/festival_share_card.dart';
+
+// Conditional import for file operations
+import 'share_file/share_file.dart';
 
 class ShareService {
   // Singleton instance
@@ -19,8 +21,22 @@ class ShareService {
   ///
   /// This method builds the widget in the background (off-screen), captures it,
   /// saves it to a temporary file, and triggers the native share sheet.
+  /// On web, falls back to text-only sharing.
   Future<void> shareFestival(BuildContext context, Festival festival) async {
     try {
+      // On web, use text-only sharing
+      if (kIsWeb) {
+        await SharePlus.instance.share(
+          ShareParams(
+            subject: festival.name,
+            text:
+                'Celebrating ${festival.name} with Tithi App!\n\n'
+                'Check out this festival on Tithi - your Hindu Panchang Calendar.',
+          ),
+        );
+        return;
+      }
+
       // 1. Create the widget to capture
       final widgetToCapture = Material(
         type: MaterialType.transparency,
@@ -28,30 +44,22 @@ class ShareService {
       );
 
       // 2. Capture the widget
-      // We pass the context to ensure themes/media queries work if needed,
-      // though our specific widget is self-contained.
       final Uint8List imageBytes = await _screenshotController
           .captureFromWidget(
             widgetToCapture,
-            delay: const Duration(
-              milliseconds: 100,
-            ), // Slight delay to ensure rendering
+            delay: const Duration(milliseconds: 100),
             context: context,
-            pixelRatio: 2.0, // High resolution for better quality
+            pixelRatio: 2.0,
           );
 
-      // 3. Save to temporary directory
-      final directory = await getTemporaryDirectory();
-      final imagePath =
-          '${directory.path}/festival_share_${DateTime.now().millisecondsSinceEpoch}.png';
-      final imageFile = File(imagePath);
-      await imageFile.writeAsBytes(imageBytes);
+      // 3. Save to temporary file and share (mobile only)
+      final imagePath = await saveImageToTemp(imageBytes, festival.name);
+      if (imagePath == null) {
+        throw Exception('Failed to save image');
+      }
 
       // 4. Share the file
       final xFile = XFile(imagePath);
-
-      // Determine device type (iPad needs a sharePositionOrigin)
-      // For now, we just share plainly. share_plus handles platform logic well.
       await SharePlus.instance.share(
         ShareParams(
           subject: festival.name,
@@ -61,7 +69,6 @@ class ShareService {
       );
     } catch (e) {
       debugPrint("Error sharing festival: $e");
-      // Optionally show a snackbar or alert to the user
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
