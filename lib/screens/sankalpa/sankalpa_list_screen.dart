@@ -39,11 +39,16 @@ class SankalpaListScreen extends ConsumerWidget {
         ),
         body: Container(
           decoration: AppTheme.backgroundDecoration(context),
-          child: TabBarView(
-            children: [
-              _SankalpaList(sankalpas: activeSankalpas),
-              _SankalpaList(sankalpas: completedSankalpas, isHistory: true),
-            ],
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: TabBarView(
+                children: [
+                  _SankalpaList(sankalpas: activeSankalpas),
+                  _SankalpaList(sankalpas: completedSankalpas, isHistory: true),
+                ],
+              ),
+            ),
           ),
         ),
       ),

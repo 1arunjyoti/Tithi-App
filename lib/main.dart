@@ -1,5 +1,8 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
+import 'widgets/error_display_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
@@ -22,42 +25,71 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() {
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Optimized Display Mode (90Hz/120Hz) - Skip on web
-  if (!kIsWeb) {
-    await initPlatformFeatures();
-  }
+      // Set custom error widget to replace the red error screen
+      ErrorWidget.builder = (FlutterErrorDetails details) {
+        // In debug mode, show more details for development
+        if (kReleaseMode) {
+          return const ErrorDisplayWidget(
+            message: 'An unexpected error occurred. Please restart the app.',
+          );
+        }
+        // In debug mode, show the error message for easier debugging
+        return ErrorDisplayWidget(message: details.exceptionAsString());
+      };
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+      // Capture Flutter framework errors
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        // Log error for debugging
+        debugPrint('Flutter error caught: ${details.exception}');
+        debugPrint('Stack trace: ${details.stack}');
+      };
 
-  // Initialize Hive for offline storage
-  await Hive.initFlutter();
+      // Optimized Display Mode (90Hz/120Hz) - Skip on web
+      if (!kIsWeb) {
+        await initPlatformFeatures();
+      }
 
-  // Register Adapters
-  Hive.registerAdapter(FestivalAdapter());
-  Hive.registerAdapter(NameRegionalAdapter());
-  Hive.registerAdapter(VisualsAdapter());
-  Hive.registerAdapter(PurposeAdapter());
-  Hive.registerAdapter(PanchangRulesAdapter());
-  Hive.registerAdapter(RitualsAdapter());
-  Hive.registerAdapter(MediaAdapter());
-  Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
+      // Load environment variables
+      await dotenv.load(fileName: ".env");
 
-  await Hive.openBox('settings');
+      // Initialize Hive for offline storage
+      await Hive.initFlutter();
 
-  // Initialize timezone for notifications
-  tz_data.initializeTimeZones();
+      // Register Adapters
+      Hive.registerAdapter(FestivalAdapter());
+      Hive.registerAdapter(NameRegionalAdapter());
+      Hive.registerAdapter(VisualsAdapter());
+      Hive.registerAdapter(PurposeAdapter());
+      Hive.registerAdapter(PanchangRulesAdapter());
+      Hive.registerAdapter(RitualsAdapter());
+      Hive.registerAdapter(MediaAdapter());
+      Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
 
-  // Initialize Nominatim Geocoding with cache
-  await NominatimGeocoding.init(reqCacheNum: 50);
+      await Hive.openBox('settings');
 
-  // Initialize WorkManager for background notifications
-  await NotificationService().initWorkManager();
+      // Initialize timezone for notifications
+      tz_data.initializeTimeZones();
 
-  runApp(const ProviderScope(child: TithiApp()));
+      // Initialize Nominatim Geocoding with cache
+      await NominatimGeocoding.init(reqCacheNum: 50);
+
+      // Initialize WorkManager for background notifications
+      await NotificationService().initWorkManager();
+
+      runApp(const ProviderScope(child: TithiApp()));
+    },
+    (error, stackTrace) {
+      // Handle uncaught async Dart errors
+      debugPrint('Uncaught async error: $error');
+      debugPrint('Stack trace: $stackTrace');
+    },
+  );
 }
 
 /// Main app widget with dynamic theming
@@ -167,12 +199,6 @@ class _LocationPermissionWrapperState
         await _showFirstLaunchDialog();
         await locationService.markFirstLaunchComplete();
       }
-    } else {
-      // Subsequent launch: Check if location is disabled
-      final isLocationEnabled = await locationService.isLocationEnabled();
-      if (!isLocationEnabled && mounted) {
-        await _showEnableLocationDialog();
-      }
     }
 
     if (mounted) {
@@ -234,40 +260,6 @@ class _LocationPermissionWrapperState
     } else {
       final locationService = ref.read(locationServiceProvider);
       await locationService.setLocationEnabled(false);
-    }
-  }
-
-  Future<void> _showEnableLocationDialog() async {
-    final l10n = AppLocalizations.of(context);
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.location_off, color: Colors.orange),
-            const SizedBox(width: 8),
-            Text(l10n?.locationDisabled ?? 'Location Disabled'),
-          ],
-        ),
-        content: Text(
-          l10n?.locationDisabledMessage ??
-              'Location is disabled. Enable it for more accurate Panchang calculations based on your city.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n?.notNow ?? 'Not Now'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n?.enable ?? 'Enable'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      await _requestLocationPermission();
     }
   }
 

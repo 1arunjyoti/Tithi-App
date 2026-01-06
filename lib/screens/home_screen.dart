@@ -61,6 +61,7 @@ class HomeScreen extends StatelessWidget {
           ),
 
           // Location refresh button
+          /*
           Consumer(
             builder: (context, ref, _) {
               return IconButton(
@@ -73,7 +74,7 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-
+          */
           const SizedBox(width: 8),
         ],
       ),
@@ -101,6 +102,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  /*
   Future<void> _refreshLocation(BuildContext context, WidgetRef ref) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -125,6 +127,7 @@ class HomeScreen extends StatelessWidget {
     ref.invalidate(currentLocationProvider);
     // todayPanchangProvider depends on currentLocationProvider, so it will update automatically
   }
+  */
 }
 
 class _JumpToTodayFab extends ConsumerWidget {
@@ -456,7 +459,7 @@ class _PakshaIndicator extends ConsumerWidget {
             if (cityName != null) ...[
               const SizedBox(height: 12),
               Container(
-                width: double.infinity,
+                //width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 6,

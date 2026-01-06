@@ -98,8 +98,9 @@ class BengaliCalendarService {
   Future<DateTime> getMonthStart(int bengaliYear, int monthIndex) async {
     // Approximate Gregorian Start
     int gYear = bengaliYear + 593;
-    if (monthIndex >= 9)
+    if (monthIndex >= 9) {
       gYear++; // Magh, Falgun, Chaitra are in next Gregorian year
+    }
 
     final monthStarts = _getMonthStartDates(gYear);
 

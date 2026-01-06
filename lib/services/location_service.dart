@@ -214,7 +214,7 @@ class LocationService {
             : AndroidSettings(
                 accuracy: LocationAccuracy.medium,
                 forceLocationManager: true, // FOSS: Use native LocationManager
-                timeLimit: const Duration(seconds: 10),
+                timeLimit: const Duration(seconds: 30),
               ),
       );
 

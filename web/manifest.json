@@ -3,12 +3,16 @@
     "short_name": "Tithi",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#FFFDF7",
-    "theme_color": "#FF9800",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
     "description": "Your spiritual companion for Hindu calendar, festivals, tithi, nakshatra, and auspicious timings.",
     "orientation": "any",
     "prefer_related_applications": false,
-    "categories": ["lifestyle", "utilities", "education"],
+    "categories": [
+        "lifestyle",
+        "utilities",
+        "education"
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",

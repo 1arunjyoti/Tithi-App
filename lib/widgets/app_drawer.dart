@@ -10,6 +10,7 @@ import '../screens/moon_phases_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../screens/sankalpa/sankalpa_list_screen.dart';
+import 'responsive_layout.dart';
 
 // Conditional imports for FFI-dependent screens (only available on native platforms)
 // On web, we import a stub file that provides placeholder widgets
@@ -234,17 +235,23 @@ class _DrawerMenuList extends StatelessWidget {
   }
 
   void _navigateTo(BuildContext context, Widget screen) {
-    // Only pop if we're in a drawer (has a route to pop)
-    if (Scaffold.maybeOf(context)?.hasDrawer == true) {
-      Navigator.pop(context);
+    final navigator = Navigator.of(context);
+    final isWideScreen = ResponsiveLayout.isTabletOrLarger(context);
+
+    // Only pop if we are in a drawer (mobile/narrow screen)
+    if (!isWideScreen) {
+      navigator.pop();
     }
-    Navigator.push(context, MaterialPageRoute(builder: (context) => screen));
+    navigator.push(MaterialPageRoute(builder: (context) => screen));
   }
 
   Future<void> _launchRating(BuildContext context) async {
-    // Only pop if we're in a drawer
-    if (Scaffold.maybeOf(context)?.hasDrawer == true) {
-      Navigator.pop(context);
+    final navigator = Navigator.of(context);
+    final isWideScreen = ResponsiveLayout.isTabletOrLarger(context);
+
+    // Only pop if we are in a drawer
+    if (!isWideScreen) {
+      navigator.pop();
     }
     final Uri url = Uri.parse(''); // TODO: Replace with actual ID
     if (await canLaunchUrl(url)) {
@@ -318,9 +325,9 @@ class _ViewModeToggleItem extends ConsumerWidget {
       child: ListTile(
         onTap: () {
           ref.read(homeViewModeProvider.notifier).toggle();
-          // Only pop if we're in a drawer
-          if (Scaffold.maybeOf(context)?.hasDrawer == true) {
-            Navigator.pop(context);
+          final navigator = Navigator.of(context);
+          if (!ResponsiveLayout.isTabletOrLarger(context)) {
+            navigator.pop();
           }
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -416,17 +423,19 @@ class _AboutMenuItem extends ConsumerWidget {
     WidgetRef ref,
     AppLocalizations? l10n,
   ) async {
-    // Only pop if we're in a drawer
-    if (Scaffold.maybeOf(context)?.hasDrawer == true) {
-      Navigator.pop(context);
+    final navigator = Navigator.of(context);
+    // Use ResponsiveLayout to check if we are in a drawer
+    if (!ResponsiveLayout.isTabletOrLarger(context)) {
+      navigator.pop();
     }
+
     final version = await ref.read(versionStringProvider.future);
 
-    if (!context.mounted) return;
+    if (!navigator.mounted) return;
 
-    final colors = Theme.of(context).colorScheme;
+    final colors = Theme.of(navigator.context).colorScheme;
     showAboutDialog(
-      context: context,
+      context: navigator.context,
       applicationName: l10n?.appTitle ?? 'Tithi',
       applicationVersion: version,
       applicationIcon: Container(
