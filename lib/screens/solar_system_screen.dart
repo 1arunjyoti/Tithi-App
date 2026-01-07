@@ -24,7 +24,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
   @override
   void dispose() {
-    _stopAnimation();
+    _animationTimer?.cancel();
+    _animationTimer = null;
     super.dispose();
   }
 
@@ -41,7 +42,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     // ~30 FPS
     _animationTimer = Timer.periodic(const Duration(milliseconds: 33), (timer) {
       if (!mounted) {
-        _stopAnimation();
+        timer.cancel();
         return;
       }
       _adjustDate(_animationSpeed);

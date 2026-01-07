@@ -17,6 +17,7 @@ import '../widgets/moon_animation_widget.dart';
 import '../widgets/daily_quote_widget.dart';
 import '../widgets/festival_search_delegate.dart';
 import '../widgets/weather_sheet.dart';
+import '../widgets/responsive_layout.dart';
 
 /// Main home screen with calendar and event list
 class HomeScreen extends StatelessWidget {
@@ -25,11 +26,15 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isWideScreen = ResponsiveLayout.isTabletOrLarger(context);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      drawer: const AppDrawer(),
+      // Only show drawer on mobile, desktop uses persistent sidebar
+      drawer: isWideScreen ? null : const AppDrawer(),
       appBar: AppBar(
+        // Hide hamburger menu on wide screens
+        automaticallyImplyLeading: !isWideScreen,
         title: Text(l10n?.appTitle ?? 'Tithi'),
         backgroundColor: Colors.transparent,
         actions: [
@@ -56,6 +61,7 @@ class HomeScreen extends StatelessWidget {
           ),
 
           // Location refresh button
+          /*
           Consumer(
             builder: (context, ref, _) {
               return IconButton(
@@ -68,15 +74,35 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-
+          */
           const SizedBox(width: 8),
         ],
       ),
       floatingActionButton: const _JumpToTodayFab(),
-      body: const _HomeBody(),
+      // Use distinct layouts for mobile and desktop to prevent any regression on mobile
+      body: isWideScreen
+          ? Row(
+              children: [
+                // Persistent sidebar on wide screens
+                const SizedBox(width: 280, child: AppDrawer(isSidebar: true)),
+                // Main content with constrained width
+                Expanded(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 800),
+                      // Force full height to ensure background gradient fills screen
+                      // and Column/Expanded widgets work correctly
+                      child: const SizedBox.expand(child: _HomeBody()),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : const _HomeBody(), // Mobile layout remains exactly as before
     );
   }
 
+  /*
   Future<void> _refreshLocation(BuildContext context, WidgetRef ref) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -101,6 +127,7 @@ class HomeScreen extends StatelessWidget {
     ref.invalidate(currentLocationProvider);
     // todayPanchangProvider depends on currentLocationProvider, so it will update automatically
   }
+  */
 }
 
 class _JumpToTodayFab extends ConsumerWidget {
@@ -432,7 +459,7 @@ class _PakshaIndicator extends ConsumerWidget {
             if (cityName != null) ...[
               const SizedBox(height: 12),
               Container(
-                width: double.infinity,
+                //width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
                   vertical: 6,

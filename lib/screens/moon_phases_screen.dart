@@ -67,27 +67,32 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
       body: Container(
         decoration: AppTheme.backgroundDecoration(context),
         child: SafeArea(
-          child: moonPhaseAsync.when(
-            data: (data) => _buildContent(context, data, l10n, isDark),
-            loading: () =>
-                const Center(child: CircularProgressIndicator.adaptive()),
-            error: (e, _) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: theme.colorScheme.error,
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: moonPhaseAsync.when(
+                data: (data) => _buildContent(context, data, l10n, isDark),
+                loading: () =>
+                    const Center(child: CircularProgressIndicator.adaptive()),
+                error: (e, _) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(l10n.errorLoadingData),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => ref.refresh(moonPhaseDataProvider),
+                        child: Text(l10n.retry),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(l10n.errorLoadingData),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => ref.refresh(moonPhaseDataProvider),
-                    child: Text(l10n.retry),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

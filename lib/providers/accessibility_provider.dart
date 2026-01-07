@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -9,7 +10,7 @@ class AccessibilityState {
 
   const AccessibilityState({
     this.reduceMotion = false,
-    this.hapticFeedback = true,
+    this.hapticFeedback = !kIsWeb,
     this.highContrast = false,
     this.largeText = false,
   });
@@ -45,7 +46,7 @@ class AccessibilityNotifier extends Notifier<AccessibilityState> {
 
     return AccessibilityState(
       reduceMotion: map['reduceMotion'] as bool? ?? false,
-      hapticFeedback: map['hapticFeedback'] as bool? ?? true,
+      hapticFeedback: map['hapticFeedback'] as bool? ?? !kIsWeb,
       highContrast: map['highContrast'] as bool? ?? false,
       largeText: map['largeText'] as bool? ?? false,
     );

@@ -3,13 +3,101 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../models/panchang_data.dart';
+import '../models/hindu_month_system.dart';
 import '../providers/panchang_provider.dart';
 import '../providers/accessibility_provider.dart';
+import '../providers/calendar_provider.dart' as cp;
+import '../services/bengali_calendar_service.dart';
+import '../services/hindu_calendar_service.dart';
 import '../theme/app_theme.dart';
 import 'event_detail_sheet.dart';
 
+/// Data class for Hindu date with proper settings applied
+class HinduDateData {
+  final int day; // tithi number
+  final String month; // masa name (with month system applied)
+  final String paksha;
+  final int year; // year in selected era
+  final String eraLabel; // "VS" or "Shaka"
+
+  HinduDateData({
+    required this.day,
+    required this.month,
+    required this.paksha,
+    required this.year,
+    required this.eraLabel,
+  });
+}
+
+/// Provider for Hindu date with settings applied
+final hinduDateForScheduleProvider =
+    FutureProvider.family<HinduDateData?, DateTime>((ref, date) async {
+      final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
+      final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
+
+      // Only calculate if Hindu is primary or secondary
+      if (primarySystem != cp.AppCalendarSystem.hindu &&
+          secondarySystem != cp.AppCalendarSystem.hindu) {
+        return null;
+      }
+
+      try {
+        final service = ref.read(hinduCalendarServiceProvider);
+        final monthSystem = ref.watch(cp.hinduMonthSystemProvider);
+        final yearEra = ref.watch(cp.hinduYearEraProvider);
+
+        final hDate = await service.calculateDate(date);
+
+        // Apply month system conversion if needed
+        String masa = hDate.masa;
+        if (monthSystem == HinduMonthSystem.purnimant) {
+          masa = convertAmantaToPurnimant(hDate.masa, hDate.paksha);
+        }
+
+        // Get year based on era selection
+        final year = yearEra == HinduYearEra.vikramSamvat
+            ? hDate.vsYear
+            : hDate.shakaYear;
+        final eraLabel = yearEra.shortLabel;
+
+        return HinduDateData(
+          day: hDate.tithi,
+          month: masa,
+          paksha: hDate.paksha,
+          year: year,
+          eraLabel: eraLabel,
+        );
+      } catch (_) {
+        return null;
+      }
+    });
+
+/// Provider for Bengali date for a specific date
+final bengaliDateForScheduleProvider =
+    FutureProvider.family<({int day, String month, int year})?, DateTime>((
+      ref,
+      date,
+    ) async {
+      final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
+      final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
+
+      // Only calculate if Bengali is primary or secondary
+      if (primarySystem != cp.AppCalendarSystem.bengali &&
+          secondarySystem != cp.AppCalendarSystem.bengali) {
+        return null;
+      }
+
+      try {
+        final service = ref.read(bengaliCalendarServiceProvider);
+        return await service.calculateDate(date);
+      } catch (_) {
+        return null;
+      }
+    });
+
 /// Schedule View Widget - displays events in a vertical scrollable list
-/// similar to Google Calendar's Schedule view
+/// similar to Google Calendar's Schedule view.
+/// Uses a CustomScrollView with center key for stable scroll anchoring.
 class ScheduleViewWidget extends ConsumerStatefulWidget {
   const ScheduleViewWidget({super.key});
 
@@ -19,11 +107,13 @@ class ScheduleViewWidget extends ConsumerStatefulWidget {
 
 class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
   final ScrollController _scrollController = ScrollController();
-  late List<DateTime> _dates;
 
-  // Initial range
-  final int _initialDaysBefore = 30;
-  final int _initialDaysAfter = 90;
+  // Key for the center sliver (today)
+  final GlobalKey _centerKey = GlobalKey();
+
+  // How many days to show in each direction
+  int _daysBefore = 30;
+  int _daysAfter = 90;
 
   // How many days to load when reaching edges
   final int _loadMoreDays = 60;
@@ -31,12 +121,11 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
   // Threshold to trigger loading more (in pixels from edge)
   final double _loadThreshold = 500;
 
-  // Track the earliest and latest date in our list
-  late DateTime _earliestDate;
-  late DateTime _latestDate;
+  // Track "today" for reference (anchor date)
+  late DateTime _anchorDate;
 
-  // Track "today" for FAB scroll
-  late DateTime _today;
+  // Track current visible month for sticky header
+  late DateTime _currentVisibleMonth;
 
   // Loading states
   bool _isLoadingPast = false;
@@ -45,115 +134,9 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
   @override
   void initState() {
     super.initState();
-    _initializeDates();
+    _anchorDate = DateTime.now();
+    _currentVisibleMonth = _anchorDate;
     _scrollController.addListener(_onScroll);
-
-    // Scroll to today after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToToday(animated: false);
-    });
-  }
-
-  void _initializeDates() {
-    _today = DateTime.now();
-    _earliestDate = DateTime(
-      _today.year,
-      _today.month,
-      _today.day - _initialDaysBefore,
-    );
-    _latestDate = DateTime(
-      _today.year,
-      _today.month,
-      _today.day + _initialDaysAfter,
-    );
-
-    _rebuildDateList();
-  }
-
-  void _rebuildDateList() {
-    final dayCount = _latestDate.difference(_earliestDate).inDays + 1;
-    _dates = List.generate(
-      dayCount,
-      (index) => DateTime(
-        _earliestDate.year,
-        _earliestDate.month,
-        _earliestDate.day + index,
-      ),
-    );
-  }
-
-  void _onScroll() {
-    final position = _scrollController.position;
-
-    // Load more past dates when near the top
-    if (position.pixels < _loadThreshold && !_isLoadingPast) {
-      _loadMorePastDates();
-    }
-
-    // Load more future dates when near the bottom
-    if (position.maxScrollExtent - position.pixels < _loadThreshold &&
-        !_isLoadingFuture) {
-      _loadMoreFutureDates();
-    }
-  }
-
-  void _loadMorePastDates() {
-    setState(() {
-      _isLoadingPast = true;
-    });
-
-    // Calculate new earliest date
-    final newEarliestDate = DateTime(
-      _earliestDate.year,
-      _earliestDate.month,
-      _earliestDate.day - _loadMoreDays,
-    );
-
-    // Remember current scroll position relative to today
-    final todayIndex = _getTodayIndex();
-    final currentOffset = _scrollController.offset;
-    final approximateItemHeight = todayIndex > 0
-        ? currentOffset / todayIndex
-        : 100.0;
-
-    _earliestDate = newEarliestDate;
-    _rebuildDateList();
-
-    setState(() {
-      _isLoadingPast = false;
-    });
-
-    // Adjust scroll position to maintain visual position
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final newOffset = currentOffset + (_loadMoreDays * approximateItemHeight);
-      _scrollController.jumpTo(
-        newOffset.clamp(0, _scrollController.position.maxScrollExtent),
-      );
-    });
-  }
-
-  void _loadMoreFutureDates() {
-    setState(() {
-      _isLoadingFuture = true;
-    });
-
-    // Calculate new latest date
-    final newLatestDate = DateTime(
-      _latestDate.year,
-      _latestDate.month,
-      _latestDate.day + _loadMoreDays,
-    );
-
-    _latestDate = newLatestDate;
-    _rebuildDateList();
-
-    setState(() {
-      _isLoadingFuture = false;
-    });
-  }
-
-  int _getTodayIndex() {
-    return _dates.indexWhere((date) => _isToday(date));
   }
 
   @override
@@ -163,40 +146,202 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
     super.dispose();
   }
 
+  void _onScroll() {
+    final position = _scrollController.position;
+
+    // Load more past dates when near the top
+    if (position.pixels < position.minScrollExtent + _loadThreshold &&
+        !_isLoadingPast) {
+      _loadMorePastDates();
+    }
+
+    // Load more future dates when near the bottom
+    if (position.maxScrollExtent - position.pixels < _loadThreshold &&
+        !_isLoadingFuture) {
+      _loadMoreFutureDates();
+    }
+
+    // Update visible month based on scroll position - relative to anchor date
+    const estimatedItemHeight = 80.0;
+    final daysOffset = (position.pixels / estimatedItemHeight).round();
+    final visibleDate = _anchorDate.add(Duration(days: daysOffset));
+
+    // Only update if month/year changed
+    if (visibleDate.month != _currentVisibleMonth.month ||
+        visibleDate.year != _currentVisibleMonth.year) {
+      setState(() {
+        _currentVisibleMonth = visibleDate;
+      });
+
+      // Update focused month provider (for sync with calendar view)
+      Future.microtask(() {
+        if (mounted) {
+          ref.read(cp.focusedMonthProvider.notifier).state = visibleDate;
+        }
+      });
+    }
+  }
+
+  void _loadMorePastDates() {
+    setState(() {
+      _isLoadingPast = true;
+      _daysBefore += _loadMoreDays;
+    });
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() => _isLoadingPast = false);
+      }
+    });
+  }
+
+  void _loadMoreFutureDates() {
+    setState(() {
+      _isLoadingFuture = true;
+      _daysAfter += _loadMoreDays;
+    });
+
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() => _isLoadingFuture = false);
+      }
+    });
+  }
+
   void _scrollToToday({bool animated = true}) {
-    final todayIndex = _getTodayIndex();
-    if (todayIndex < 0) return;
+    final now = DateTime.now();
+    // Use jump logic if we need to re-anchor
+    final difference = now.difference(_anchorDate).inDays;
 
-    // Estimate item height (each item is roughly 80-120 pixels)
-    final estimatedItemHeight = 100.0;
-    final targetOffset = todayIndex * estimatedItemHeight;
+    if (difference.abs() > 180) {
+      _jumpToDate(now);
+      return;
+    }
 
-    if (animated && _scrollController.hasClients) {
-      _scrollController.animateTo(
-        targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    } else if (_scrollController.hasClients) {
-      _scrollController.jumpTo(
-        targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
-      );
+    if (difference == 0 && _scrollController.hasClients) {
+      if (animated) {
+        _scrollController.animateTo(
+          0,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      } else {
+        _scrollController.jumpTo(0);
+      }
+    } else {
+      _jumpToDate(now);
+    }
+  }
+
+  void _jumpToDate(DateTime date) {
+    setState(() {
+      _anchorDate = date;
+      _currentVisibleMonth = date;
+      _daysBefore = 30; // Reset range
+      _daysAfter = 90;
+    });
+
+    // Scroll to center
+    if (_scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _currentVisibleMonth,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: context.colors.primary.computeLuminance() > 0.5
+                ? ColorScheme.light(primary: context.colors.primary)
+                : ColorScheme.dark(primary: context.colors.primary),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      // Update selected date provider which triggers the listener
+      ref.read(cp.selectedDateProvider.notifier).state = picked;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Listen to selected date changes to trigger jumps
+    ref.listen(cp.selectedDateProvider, (previous, next) {
+      // Avoid jumping if the change is just within currently visible range
+      // But for "Search" results, we always want to jump
+      if (next.year != _anchorDate.year ||
+          next.month != _anchorDate.month ||
+          next.day != _anchorDate.day) {
+        _jumpToDate(next);
+      }
+    });
+
     return Stack(
       children: [
-        ListView.builder(
+        CustomScrollView(
           controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          itemCount: _dates.length,
-          itemBuilder: (context, index) {
-            final date = _dates[index];
-            return _ScheduleDateItem(date: date, isToday: _isToday(date));
-          },
+          center: _centerKey,
+          slivers: [
+            // Past dates (builds upward/reverse from today)
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                // index 0 = yesterday, index 1 = 2 days ago, etc.
+                final daysAgo = index + 1;
+                if (daysAgo > _daysBefore) return null;
+
+                final date = DateTime(
+                  _anchorDate.year,
+                  _anchorDate.month,
+                  _anchorDate.day - daysAgo,
+                );
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _ScheduleDateItem(date: date, isToday: false),
+                );
+              }, childCount: _daysBefore),
+            ),
+
+            // Today (center anchor)
+            SliverToBoxAdapter(
+              key: _centerKey,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: _ScheduleDateItem(date: _anchorDate, isToday: true),
+              ),
+            ),
+
+            // Future dates (builds downward from today)
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
+                // index 0 = tomorrow, index 1 = 2 days from now, etc.
+                final daysAhead = index + 1;
+                if (daysAhead > _daysAfter) return null;
+
+                final date = DateTime(
+                  _anchorDate.year,
+                  _anchorDate.month,
+                  _anchorDate.day + daysAhead,
+                );
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: _ScheduleDateItem(date: date, isToday: false),
+                );
+              }, childCount: _daysAfter),
+            ),
+          ],
         ),
+
         // Floating Action Button to scroll to today
         Positioned(
           bottom: 16,
@@ -208,14 +353,56 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
             child: const Icon(Icons.today_rounded),
           ),
         ),
+
+        // Sticky month/year header
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: _buildStickyMonthHeader(context),
+        ),
       ],
     );
   }
 
-  bool _isToday(DateTime date) {
-    return date.year == _today.year &&
-        date.month == _today.month &&
-        date.day == _today.day;
+  Widget _buildStickyMonthHeader(BuildContext context) {
+    final monthFormat = DateFormat('MMMM yyyy');
+
+    return GestureDetector(
+      onTap: _pickDate,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Theme.of(context).scaffoldBackgroundColor,
+              Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
+              Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.0),
+            ],
+            stops: const [0.0, 0.6, 1.0],
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              monthFormat.format(_currentVisibleMonth),
+              style: context.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: context.colors.onSurface.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.arrow_drop_down,
+              color: context.colors.onSurface.withValues(alpha: 0.8),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -248,6 +435,13 @@ class _ScheduleDateItem extends ConsumerWidget {
 
     final hasEvents = panchang.hasFestivals;
 
+    // Fetch calendar dates if needed
+    final bengaliDateAsync = ref.watch(bengaliDateForScheduleProvider(date));
+    final bengaliDate = bengaliDateAsync.whenOrNull(data: (d) => d);
+
+    final hinduDateAsync = ref.watch(hinduDateForScheduleProvider(date));
+    final hinduDate = hinduDateAsync.whenOrNull(data: (d) => d);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: isToday
@@ -266,9 +460,13 @@ class _ScheduleDateItem extends ConsumerWidget {
             // Date Column (Left side)
             _buildDateColumn(
               context,
+              ref,
               monthFormat.format(date).toUpperCase(),
               dayFormat.format(date),
               weekdayFormat.format(date),
+              panchang,
+              bengaliDate,
+              hinduDate,
             ),
 
             // Vertical divider
@@ -295,18 +493,96 @@ class _ScheduleDateItem extends ConsumerWidget {
 
   Widget _buildDateColumn(
     BuildContext context,
-    String month,
-    String day,
+    WidgetRef ref,
+    String gregorianMonth,
+    String gregorianDay,
     String weekday,
+    PanchangData panchang,
+    ({int day, String month, int year})? bengaliDate,
+    HinduDateData? hinduDate,
   ) {
+    final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
+    final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
+
+    // Determine what to show based on primary calendar system
+    String primaryMonth;
+    String primaryDay;
+    String? secondaryText;
+
+    if (primarySystem == cp.AppCalendarSystem.bengali) {
+      // Bengali as primary: show Bengali month and day
+      if (bengaliDate != null) {
+        primaryMonth = bengaliDate.month
+            .substring(0, bengaliDate.month.length.clamp(0, 4))
+            .toUpperCase();
+        primaryDay = '${bengaliDate.day}';
+      } else {
+        // Fallback to Gregorian if Bengali calculation not ready
+        primaryMonth = gregorianMonth;
+        primaryDay = gregorianDay;
+      }
+
+      // Show secondary based on selection
+      if (secondarySystem == cp.AppCalendarSystem.gregorian) {
+        secondaryText = '$gregorianMonth $gregorianDay';
+      } else if (secondarySystem == cp.AppCalendarSystem.hindu &&
+          hinduDate != null) {
+        secondaryText = '${hinduDate.paksha[0]}${hinduDate.day}';
+      }
+    } else if (primarySystem == cp.AppCalendarSystem.hindu) {
+      // Hindu as primary: show masa and tithi with proper settings
+      if (hinduDate != null) {
+        primaryMonth = hinduDate.month
+            .substring(0, hinduDate.month.length.clamp(0, 4))
+            .toUpperCase();
+        primaryDay = '${hinduDate.day}';
+      } else {
+        // Fallback to panchang data
+        primaryMonth = panchang.masa.isNotEmpty
+            ? panchang.masa
+                  .substring(0, panchang.masa.length.clamp(0, 4))
+                  .toUpperCase()
+            : gregorianMonth;
+        primaryDay = '${panchang.tithiNumber}';
+      }
+
+      // Show secondary based on selection
+      if (secondarySystem == cp.AppCalendarSystem.gregorian) {
+        secondaryText = '$gregorianMonth $gregorianDay';
+      } else if (secondarySystem == cp.AppCalendarSystem.bengali &&
+          bengaliDate != null) {
+        secondaryText =
+            '${bengaliDate.month.substring(0, 3)} ${bengaliDate.day}';
+      }
+    } else {
+      // Gregorian as primary
+      primaryMonth = gregorianMonth;
+      primaryDay = gregorianDay;
+
+      // Show secondary based on selection
+      if (secondarySystem == cp.AppCalendarSystem.hindu && hinduDate != null) {
+        // Show paksha initial + tithi number with month abbr
+        final pakshaInitial = hinduDate.paksha == 'Shukla' ? 'श' : 'क';
+        secondaryText =
+            '${hinduDate.month.substring(0, 3)} $pakshaInitial${hinduDate.day}';
+      } else if (secondarySystem == cp.AppCalendarSystem.bengali &&
+          bengaliDate != null) {
+        // Show Bengali date as secondary
+        secondaryText =
+            '${bengaliDate.month.substring(0, 3)} ${bengaliDate.day}';
+      }
+    }
+
+    final hasSecondary = secondaryText != null;
+
     return Container(
-      width: 60,
+      width: hasSecondary ? 75 : 60,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            month,
+            primaryMonth,
             style: context.textTheme.labelSmall?.copyWith(
               color: isToday
                   ? context.colors.primary
@@ -317,7 +593,7 @@ class _ScheduleDateItem extends ConsumerWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            day,
+            primaryDay,
             style: context.textTheme.headlineMedium?.copyWith(
               color: isToday
                   ? context.colors.primary
@@ -335,6 +611,26 @@ class _ScheduleDateItem extends ConsumerWidget {
                   : context.colors.onSurface.withValues(alpha: 0.5),
             ),
           ),
+          // Secondary calendar info
+          if (hasSecondary) ...[
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              decoration: BoxDecoration(
+                color: context.colors.secondary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                secondaryText,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: context.colors.secondary,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -350,6 +646,8 @@ class _ScheduleDateItem extends ConsumerWidget {
       children: [
         // Panchang summary row
         _buildPanchangSummaryRow(context, panchang),
+        // Sunrise/Sunset times
+        _buildSunTimesRow(context, panchang),
         const SizedBox(height: 8),
         // Festival cards
         ...panchang.festivals.map(
@@ -364,7 +662,13 @@ class _ScheduleDateItem extends ConsumerWidget {
     WidgetRef ref,
     PanchangData panchang,
   ) {
-    return _buildPanchangSummaryRow(context, panchang);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPanchangSummaryRow(context, panchang),
+        _buildSunTimesRow(context, panchang),
+      ],
+    );
   }
 
   Widget _buildPanchangSummaryRow(BuildContext context, PanchangData panchang) {
@@ -393,7 +697,7 @@ class _ScheduleDateItem extends ConsumerWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'T${panchang.tithiNumber}',
+            '${panchang.tithiNumber}',
             style: context.textTheme.labelSmall?.copyWith(
               color: context.colors.primary,
               fontWeight: FontWeight.bold,
@@ -401,6 +705,45 @@ class _ScheduleDateItem extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Builds sunrise/sunset time row
+  Widget _buildSunTimesRow(BuildContext context, PanchangData panchang) {
+    final timeFormat = DateFormat('h:mm a');
+
+    if (panchang.sunrise == null && panchang.sunset == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        children: [
+          if (panchang.sunrise != null) ...[
+            Text('🌅', style: context.textTheme.labelSmall),
+            const SizedBox(width: 4),
+            Text(
+              timeFormat.format(panchang.sunrise!),
+              style: context.textTheme.labelSmall?.copyWith(
+                color: context.colors.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+          if (panchang.sunrise != null && panchang.sunset != null)
+            const SizedBox(width: 12),
+          if (panchang.sunset != null) ...[
+            Text('🌇', style: context.textTheme.labelSmall),
+            const SizedBox(width: 4),
+            Text(
+              timeFormat.format(panchang.sunset!),
+              style: context.textTheme.labelSmall?.copyWith(
+                color: context.colors.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
