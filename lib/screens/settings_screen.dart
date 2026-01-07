@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -65,90 +66,104 @@ class SettingsScreen extends StatelessWidget {
           ),
 
           SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
-                _buildThemeSection(context),
-
-                const SizedBox(height: 32),
-
-                SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
-                SettingsGroupCard(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
                   children: [
-                    const _NotificationSettings(),
-                    const SettingsDivider(),
-                    const _LocationSettings(),
-                    const SettingsDivider(),
-                    const _HomeLocationSetting(),
-                    const SettingsDivider(),
-                    const _LanguageSetting(),
-                  ],
-                ),
+                    SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
+                    _buildThemeSection(context),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.calendar ?? 'CALENDAR'),
-                SettingsGroupCard(
-                  children: [
-                    const _StartOfWeekSetting(),
-                    const SettingsDivider(),
-                    const _PrimaryViewSetting(),
-                    const SettingsDivider(),
-                    const _PrimaryCalendarSetting(),
-                    const SettingsDivider(),
-                    const _SecondaryCalendarSetting(),
-                    const SettingsDivider(),
-                    const _HinduMonthSystemSetting(),
-                    const SettingsDivider(),
-                    const _HinduYearEraSetting(),
-                  ],
-                ),
+                    SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
+                    SettingsGroupCard(
+                      children: [
+                        // Hide notifications on web - not supported
+                        if (!kIsWeb) ...[
+                          const _NotificationSettings(),
+                          const SettingsDivider(),
+                        ],
+                        const _LocationSettings(),
+                        const SettingsDivider(),
+                        const _HomeLocationSetting(),
+                        const SettingsDivider(),
+                        const _LanguageSetting(),
+                      ],
+                    ),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.accessibility ?? 'ACCESSIBILITY'),
-                const _AccessibilitySettings(),
+                    SettingsSectionHeader(l10n?.calendar ?? 'CALENDAR'),
+                    SettingsGroupCard(
+                      children: [
+                        const _StartOfWeekSetting(),
+                        const SettingsDivider(),
+                        const _PrimaryViewSetting(),
+                        const SettingsDivider(),
+                        const _PrimaryCalendarSetting(),
+                        const SettingsDivider(),
+                        const _SecondaryCalendarSetting(),
+                        const SettingsDivider(),
+                        const _HinduMonthSystemSetting(),
+                        const SettingsDivider(),
+                        const _HinduYearEraSetting(),
+                      ],
+                    ),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.dataStorage ?? 'DATA & STORAGE'),
-                SettingsGroupCard(
-                  children: [
-                    const _ClearCacheSetting(),
-                    const SettingsDivider(),
-                    const _ResetSettingsTile(),
-                  ],
-                ),
+                    SettingsSectionHeader(
+                      l10n?.accessibility ?? 'ACCESSIBILITY',
+                    ),
+                    const _AccessibilitySettings(),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
-                SettingsGroupCard(
-                  children: [
-                    SettingsActionTile(
-                      icon: Icons.privacy_tip_rounded,
-                      title: l10n?.privacyPolicy ?? 'Privacy Policy',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PrivacyPolicyScreen(),
+                    SettingsSectionHeader(
+                      l10n?.dataStorage ?? 'DATA & STORAGE',
+                    ),
+                    SettingsGroupCard(
+                      children: [
+                        const _ClearCacheSetting(),
+                        const SettingsDivider(),
+                        const _ResetSettingsTile(),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
+                    SettingsGroupCard(
+                      children: [
+                        SettingsActionTile(
+                          icon: Icons.privacy_tip_rounded,
+                          title: l10n?.privacyPolicy ?? 'Privacy Policy',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PrivacyPolicyScreen(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+                    Center(
+                      child: Text(
+                        l10n?.madeWithLove ?? 'Made with ❤️ for Sanatan Dharma',
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 32),
-                Center(
-                  child: Text(
-                    l10n?.madeWithLove ?? 'Made with ❤️ for Sanatan Dharma',
-                    style: context.textTheme.labelSmall?.copyWith(
-                      color: context.colors.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -358,13 +373,61 @@ class _LocationSettings extends ConsumerWidget {
       ),
       value: isEnabled,
       onChanged: (val) async {
-        await locationService.setLocationEnabled(val);
         if (val) {
-          final permission = await Geolocator.checkPermission();
+          // User wants to enable location
+          var permission = await Geolocator.checkPermission();
+
+          if (permission == LocationPermission.deniedForever) {
+            // Permission permanently denied, guide user to app settings
+            if (context.mounted) {
+              final shouldOpenSettings = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Permission Required'),
+                  content: const Text(
+                    'Location permission was permanently denied. Please enable it in your device settings.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: Text(l10n?.cancel ?? 'Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Open Settings'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldOpenSettings == true) {
+                await Geolocator.openAppSettings();
+              }
+              return; // Don't enable until user grants permission manually
+            }
+          }
+
           if (permission == LocationPermission.denied) {
-            await Geolocator.requestPermission();
+            permission = await Geolocator.requestPermission();
+            if (permission == LocationPermission.denied ||
+                permission == LocationPermission.deniedForever) {
+              // Permission still denied, don't enable
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      l10n?.locationPermissionDenied ??
+                          'Location permission denied.',
+                    ),
+                  ),
+                );
+              }
+              return;
+            }
           }
         }
+
+        await locationService.setLocationEnabled(val);
         // Invalidate both providers to refresh state
         ref.invalidate(locationEnabledProvider);
         ref.invalidate(currentLocationProvider);
@@ -684,14 +747,16 @@ class _AccessibilitySettings extends ConsumerWidget {
           onChanged: notifier.toggleReduceMotion,
         ),
         const SettingsDivider(),
-        SettingsSwitchTile(
-          icon: Icons.vibration_rounded,
-          title: l10n?.hapticFeedback ?? 'Haptic Feedback',
-          subtitle: l10n?.vibrateOnTouch ?? 'Vibrate on touch interactions',
-          value: accessibility.hapticFeedback,
-          onChanged: notifier.toggleHapticFeedback,
-        ),
-        const SettingsDivider(),
+        if (!kIsWeb) ...[
+          SettingsSwitchTile(
+            icon: Icons.vibration_rounded,
+            title: l10n?.hapticFeedback ?? 'Haptic Feedback',
+            subtitle: l10n?.vibrateOnTouch ?? 'Vibrate on touch interactions',
+            value: accessibility.hapticFeedback,
+            onChanged: notifier.toggleHapticFeedback,
+          ),
+          const SettingsDivider(),
+        ],
         SettingsSwitchTile(
           icon: Icons.contrast_rounded,
           title: l10n?.highContrast ?? 'High Contrast',
