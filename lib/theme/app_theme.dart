@@ -29,8 +29,6 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
-        surface: surfaceColor,
-        onPrimary: Colors.white,
         onSecondary: Colors.brown.shade900,
         onSurface: const Color(0xFF2D3436),
       ),
@@ -57,9 +55,9 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 4,
       ),
-      bottomSheetTheme: BottomSheetThemeData(
+      bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surfaceColor,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
       ),
@@ -102,14 +100,13 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
         surface: surfaceColor,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: Colors.white,
       ),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
@@ -134,9 +131,9 @@ class AppTheme {
         foregroundColor: Colors.black, // High contrast on Neon Cyan
         elevation: 8,
       ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: const Color(0xFF240046),
-        shape: const RoundedRectangleBorder(
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Color(0xFF240046),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
       ),
@@ -283,7 +280,6 @@ class AppTheme {
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1,
         ),
       );
     }
@@ -307,7 +303,6 @@ class AppTheme {
             context,
           ).primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
           blurRadius: blur,
-          spreadRadius: 0,
         ),
       ],
     );
@@ -378,7 +373,6 @@ class GlassmorphismConfig {
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1,
         ),
       );
     }
@@ -401,7 +395,6 @@ class GlassmorphismConfig {
         BoxShadow(
           color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
           blurRadius: blur,
-          spreadRadius: 0,
         ),
       ],
     );

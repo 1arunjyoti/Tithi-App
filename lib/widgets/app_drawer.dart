@@ -44,10 +44,7 @@ class AppDrawer extends StatelessWidget {
         color: backgroundColor,
         borderRadius: isSidebar ? null : _drawerBorderRadius,
         border: Border(
-          right: BorderSide(
-            color: colors.onSurface.withValues(alpha: 0.1),
-            width: 1,
-          ),
+          right: BorderSide(color: colors.onSurface.withValues(alpha: 0.1)),
         ),
         boxShadow: isSidebar
             ? null
@@ -253,7 +250,9 @@ class _DrawerMenuList extends StatelessWidget {
     if (!isWideScreen) {
       navigator.pop();
     }
-    final Uri url = Uri.parse(''); // TODO: Replace with actual ID
+    final Uri url = Uri.parse(
+      'https://play.google.com/store/apps/details?id=app.tithi.pro',
+    );
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }

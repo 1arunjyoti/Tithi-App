@@ -33,12 +33,7 @@ class DailyQuoteWidget extends ConsumerWidget {
         return Container(
           // Match CalendarWidget margin exactly (horizontal 12)
           margin: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: AppTheme.glassmorphism(
-            context: context,
-            opacity: 0.1,
-            borderRadius: 24,
-            ref: ref,
-          ),
+          decoration: AppTheme.glassmorphism(context: context, ref: ref),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

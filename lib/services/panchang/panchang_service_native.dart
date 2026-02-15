@@ -18,6 +18,9 @@ class PanchangService {
   bool _isInitialized = false;
   String? _ephePath;
 
+  /// Cache for tithi calculations (key: date_lat_lon)
+  final Map<String, double> _tithiCache = {};
+
   bool get isInitialized => _isInitialized;
 
   bool get hasFullSupport => _isInitialized;
@@ -54,6 +57,15 @@ class PanchangService {
       throw Exception("PanchangService not initialized.");
     }
 
+    // Generate cache key
+    final cacheKey =
+        '${date.millisecondsSinceEpoch}_${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+
+    // Check cache first
+    if (_tithiCache.containsKey(cacheKey)) {
+      return _tithiCache[cacheKey]!;
+    }
+
     final location = GeographicLocation(
       latitude: latitude,
       longitude: longitude,
@@ -78,6 +90,10 @@ class PanchangService {
     // Tithi = diff / 12
     // We add 1 because Tithi starts from 1, not 0.
     final tithi = (diff / 12) + 1;
+
+    // Store in cache
+    _tithiCache[cacheKey] = tithi;
+
     return tithi;
   }
 
@@ -156,7 +172,7 @@ class PanchangService {
 
     // Limit search to ~380 days
     for (int i = 0; i < 380; i++) {
-      final checkDate = DateTime(date.year, date.month, date.day, 6, 0);
+      final checkDate = DateTime(date.year, date.month, date.day, 6);
 
       final rawTithi = await calculateTithi(
         checkDate,

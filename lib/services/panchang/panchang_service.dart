@@ -132,7 +132,7 @@ class PanchangService {
 
     // Limit search to ~380 days
     for (int i = 0; i < 380; i++) {
-      final checkDate = DateTime(date.year, date.month, date.day, 6, 0);
+      final checkDate = DateTime(date.year, date.month, date.day, 6);
 
       final rawTithi = await calculateTithi(
         checkDate,

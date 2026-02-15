@@ -26,7 +26,6 @@ class WeatherSheet extends ConsumerWidget {
             color: Theme.of(
               context,
             ).colorScheme.outlineVariant.withValues(alpha: 0.2),
-            width: 1,
           ),
         ),
       ),

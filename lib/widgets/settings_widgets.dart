@@ -43,8 +43,6 @@ class SettingsGroupCard extends ConsumerWidget {
         isDark: isDark,
         isPureDark: isPureDark,
         primaryColor: theme.primaryColor,
-        opacity: 0.1,
-        borderRadius: 24,
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
@@ -109,7 +107,8 @@ class SettingsSwitchTile extends ConsumerWidget {
   final String title;
   final String subtitle;
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final Future<void> Function(bool)? onChanged;
+  final bool isLoading;
 
   const SettingsSwitchTile({
     super.key,
@@ -118,6 +117,7 @@ class SettingsSwitchTile extends ConsumerWidget {
     required this.subtitle,
     required this.value,
     required this.onChanged,
+    this.isLoading = false,
   });
 
   @override
@@ -156,14 +156,29 @@ class SettingsSwitchTile extends ConsumerWidget {
           ),
           Switch(
             value: value,
-            onChanged: (val) {
-              if (ref.read(accessibilityProvider).hapticFeedback) {
-                HapticFeedback.lightImpact();
-              }
-              onChanged(val);
-            },
+            onChanged: isLoading
+                ? null
+                : (val) {
+                    if (ref.read(accessibilityProvider).hapticFeedback) {
+                      HapticFeedback.lightImpact();
+                    }
+                    onChanged?.call(val);
+                  },
             activeThumbColor: context.colors.primary,
           ),
+          if (isLoading) ...[
+            const SizedBox(width: 8),
+            SizedBox(
+              height: 16,
+              width: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  context.colors.primary,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

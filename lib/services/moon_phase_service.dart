@@ -126,7 +126,7 @@ class MoonPhaseService {
     for (int i = 0; i < 35; i++) {
       final checkDate = searchDate.add(Duration(days: i));
       final tithi = await _panchangService.calculateTithi(
-        DateTime(checkDate.year, checkDate.month, checkDate.day, 6, 0),
+        DateTime(checkDate.year, checkDate.month, checkDate.day, 6),
         latitude: latitude,
         longitude: longitude,
       );

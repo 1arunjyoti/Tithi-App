@@ -129,7 +129,7 @@ class EclipseScreen extends ConsumerWidget {
         context: context,
         ref: ref,
         borderRadius: 16,
-        border: Border.all(color: typeColor.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: typeColor.withValues(alpha: 0.3)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -236,7 +236,11 @@ class EclipseScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.visibility, size: 16, color: Colors.green),
+                      const Icon(
+                        Icons.visibility,
+                        size: 16,
+                        color: Colors.green,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         l10n.visibleFromYourLocation,

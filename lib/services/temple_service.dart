@@ -54,7 +54,7 @@ class TempleService {
             print('Found ${elements.length} temples from $baseUrl');
           }
 
-          final Distance distanceCalculator = const Distance();
+          const Distance distanceCalculator = Distance();
 
           return elements.map((e) {
             final temple = Temple.fromJson(e as Map<String, dynamic>);

@@ -207,11 +207,11 @@ class SolarSystemPainter extends CustomPainter {
 
     // Draw sun core
     final sunPaint = Paint()
-      ..shader = RadialGradient(
+      ..shader = const RadialGradient(
         colors: [
-          const Color(0xFFFFFFE0),
-          const Color(0xFFFFD700),
-          const Color(0xFFFF8C00),
+          Color(0xFFFFFFE0),
+          Color(0xFFFFD700),
+          Color(0xFFFF8C00),
         ],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
@@ -234,11 +234,11 @@ class SolarSystemPainter extends CustomPainter {
 
     // Draw earth core (blue ocean with green land hints)
     final earthPaint = Paint()
-      ..shader = RadialGradient(
+      ..shader = const RadialGradient(
         colors: [
-          const Color(0xFF87CEEB), // Light sky blue
-          const Color(0xFF4A90D9), // Medium blue
-          const Color(0xFF2E5090), // Deep blue
+          Color(0xFF87CEEB), // Light sky blue
+          Color(0xFF4A90D9), // Medium blue
+          Color(0xFF2E5090), // Deep blue
         ],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
@@ -247,11 +247,11 @@ class SolarSystemPainter extends CustomPainter {
     // Draw "You are here" text marker or just symbol
     // Let's stick to the subtle text or maybe just the icon
     final textPainter = TextPainter(
-      text: TextSpan(
+      text: const TextSpan(
         text: '🌍',
         style: TextStyle(
           fontSize: 16,
-          shadows: [Shadow(blurRadius: 10, color: Colors.black)],
+          shadows: [Shadow(blurRadius: 10)],
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -391,7 +391,7 @@ class SolarSystemPainter extends CustomPainter {
     double radius,
     bool isSelected,
   ) {
-    final textColor = Colors.white; // Always white on space background
+    const textColor = Colors.white; // Always white on space background
 
     final textPainter = TextPainter(
       text: TextSpan(
@@ -400,7 +400,7 @@ class SolarSystemPainter extends CustomPainter {
           color: textColor.withValues(alpha: isSelected ? 1.0 : 0.7),
           fontSize: isSelected ? 12 : 10,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          shadows: const [Shadow(blurRadius: 2, color: Colors.black)],
+          shadows: const [Shadow(blurRadius: 2)],
         ),
       ),
       textDirection: TextDirection.ltr,
@@ -450,7 +450,7 @@ class PlanetHitTester {
       final planetPos = Offset(x, y);
 
       final distance = (position - planetPos).distance;
-      final hitRadius = 20.0; // Touch target radius
+      const hitRadius = 20.0; // Touch target radius
 
       if (distance <= hitRadius) {
         return i;

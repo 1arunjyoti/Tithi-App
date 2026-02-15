@@ -110,11 +110,7 @@ class NotificationService {
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
-      const iosSettings = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
+      const iosSettings = DarwinInitializationSettings();
 
       const initSettings = InitializationSettings(
         android: androidSettings,
@@ -280,8 +276,6 @@ class NotificationService {
         'tithi_shloka',
         'Daily Shloka',
         channelDescription: 'Spiritual verses and quotes',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
         icon: '@mipmap/ic_launcher',
       );
 

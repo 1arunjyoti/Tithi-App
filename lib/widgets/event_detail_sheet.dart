@@ -87,7 +87,6 @@ class EventDetailSheet extends ConsumerWidget {
                       padding: const EdgeInsets.all(16),
                       decoration: AppTheme.glassmorphism(
                         context: context,
-                        opacity: 0.1,
                         ref: ref,
                       ),
                       child: Text(
@@ -161,7 +160,6 @@ class EventDetailSheet extends ConsumerWidget {
                         padding: const EdgeInsets.all(16),
                         decoration: AppTheme.glassmorphism(
                           context: context,
-                          opacity: 0.1,
                           ref: ref,
                         ),
                         child: Column(

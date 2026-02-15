@@ -18,8 +18,8 @@ class TempleMapScreen extends ConsumerStatefulWidget {
 
 class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   final MapController _mapController = MapController();
-  // LocationService is now accessed via ref
-  final TempleService _templeService = TempleService();
+  // Static to avoid re-instantiation on widget recreation
+  static final TempleService _templeService = TempleService();
 
   List<Temple> _temples = [];
   bool _isLoading = false;
@@ -47,7 +47,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
             _center = _userLocation!;
             _zoom = 14.0;
           });
-          _fetchTemples();
+          await _fetchTemples();
         }
       }
     } finally {
@@ -67,7 +67,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
       final temples = await _templeService.fetchNearbyTemples(
         center.latitude,
         center.longitude,
-        radius: 5000, // 5km radius
       );
 
       if (mounted) {
@@ -113,9 +112,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               initialCenter: _center,
               initialZoom: _zoom,
               onMapReady: _onMapReady,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all,
-              ),
             ),
             children: [
               TileLayer(

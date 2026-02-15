@@ -11,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:nominatim_geocoding/nominatim_geocoding.dart' hide Locale;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:jyotish/jyotish.dart';
 import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
@@ -56,7 +57,7 @@ void main() {
       }
 
       // Load environment variables
-      await dotenv.load(fileName: ".env");
+      await dotenv.load();
 
       // Initialize Hive for offline storage
       await Hive.initFlutter();
@@ -93,11 +94,55 @@ void main() {
 }
 
 /// Main app widget with dynamic theming
-class TithiApp extends ConsumerWidget {
+class TithiApp extends ConsumerStatefulWidget {
   const TithiApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TithiApp> createState() => _TithiAppState();
+}
+
+class _TithiAppState extends ConsumerState<TithiApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Clean up Jyotish resources when app is disposed
+    try {
+      final jyotish = Jyotish();
+      if (jyotish.isInitialized) {
+        jyotish.dispose();
+      }
+    } catch (e) {
+      debugPrint('Error disposing Jyotish: $e');
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Optionally handle app lifecycle events
+    if (state == AppLifecycleState.detached) {
+      // App is about to be terminated
+      try {
+        final jyotish = Jyotish();
+        if (jyotish.isInitialized) {
+          jyotish.dispose();
+        }
+      } catch (e) {
+        debugPrint('Error disposing Jyotish on app detached: $e');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final darkTheme = ref.watch(darkThemeProvider);
     final accessibility = ref.watch(accessibilityProvider);

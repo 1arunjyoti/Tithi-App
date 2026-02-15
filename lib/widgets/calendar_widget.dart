@@ -8,6 +8,7 @@ import '../providers/accessibility_provider.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
 import '../models/hindu_month_system.dart';
+import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
 
 /// Calendar widget using TableCalendar with Tithi markers
@@ -21,13 +22,19 @@ class CalendarWidget extends ConsumerWidget {
     final startOfWeek = ref.watch(cp.startOfWeekProvider);
     final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
 
+    // Pre-load entire month's panchang data to eliminate N+1 query pattern
+    final monthlyPanchangAsync = ref.watch(
+      monthlyPanchangProvider(focusedMonth),
+    );
+    final monthlyPanchang = monthlyPanchangAsync.when(
+      data: (data) => data,
+      loading: () => <DateTime, PanchangData>{},
+      error: (_, _) => <DateTime, PanchangData>{},
+    );
+
     return Container(
       margin: const EdgeInsets.all(12),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: GestureDetector(
         onHorizontalDragEnd: (details) {
           // Swipe left = next month, swipe right = previous month
@@ -61,10 +68,11 @@ class CalendarWidget extends ConsumerWidget {
                 focusedMonth,
                 startOfWeek,
                 primarySystem,
+                monthlyPanchang,
               )
             else
               TableCalendar(
-                firstDay: DateTime(1976, 1, 1),
+                firstDay: DateTime(1976),
                 lastDay: DateTime(2076, 12, 31),
                 focusedDay: focusedMonth,
                 startingDayOfWeek: startOfWeek == cp.StartingDayOfWeek.sunday
@@ -81,7 +89,6 @@ class CalendarWidget extends ConsumerWidget {
                 onPageChanged: (focusedDay) {
                   ref.read(cp.focusedMonthProvider.notifier).state = focusedDay;
                 },
-                calendarFormat: CalendarFormat.month,
                 headerVisible: false, // Hide default header
                 calendarBuilders: CalendarBuilders(
                   defaultBuilder: (context, date, _) {
@@ -106,7 +113,11 @@ class CalendarWidget extends ConsumerWidget {
                     );
                   },
                   markerBuilder: (context, date, events) {
-                    return _buildFestivalMarker(context, ref, date);
+                    return _buildFestivalMarkerFromCache(
+                      context,
+                      date,
+                      monthlyPanchang,
+                    );
                   },
                 ),
                 calendarStyle: CalendarStyle(
@@ -138,6 +149,7 @@ class CalendarWidget extends ConsumerWidget {
     DateTime focusedMonth,
     cp.StartingDayOfWeek startOfWeek,
     cp.AppCalendarSystem system,
+    Map<DateTime, PanchangData> monthlyPanchang,
   ) {
     return FutureBuilder<List<DateTime?>>(
       future: _getAdaptiveMonthDays(ref, focusedMonth, system),
@@ -191,6 +203,15 @@ class CalendarWidget extends ConsumerWidget {
                 );
                 final isToday = isSameDay(date, DateTime.now());
 
+                // Use pre-loaded panchang data from cache
+                final normalizedDate = DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                );
+                final panchang = monthlyPanchang[normalizedDate];
+                final hasFestivals = panchang?.hasFestivals ?? false;
+
                 return GestureDetector(
                   onTap: () {
                     if (ref.read(accessibilityProvider).hapticFeedback) {
@@ -205,13 +226,12 @@ class CalendarWidget extends ConsumerWidget {
                         isSelected: isSelected,
                         isToday: isToday,
                       ),
-                      if (ref
-                          .watch(panchangForDateProvider(date))
-                          .maybeWhen(
-                            data: (p) => p.hasFestivals,
-                            orElse: () => false,
-                          ))
-                        _buildFestivalMarker(context, ref, date) ??
+                      if (hasFestivals)
+                        _buildFestivalMarkerFromCache(
+                              context,
+                              date,
+                              monthlyPanchang,
+                            ) ??
                             const SizedBox(),
                     ],
                   ),
@@ -307,7 +327,7 @@ class CalendarWidget extends ConsumerWidget {
     DateTime focusedMonth,
   ) async {
     if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
     }
 
     final primarySystem = ref.read(cp.primaryCalendarSystemProvider);
@@ -330,7 +350,7 @@ class CalendarWidget extends ConsumerWidget {
     final selectedDate = await showDatePicker(
       context: context,
       initialDate: focusedMonth,
-      firstDate: DateTime(1976, 1, 1),
+      firstDate: DateTime(1976),
       lastDate: DateTime(2076, 12, 31),
       initialDatePickerMode: DatePickerMode.year,
       builder: (context, child) {
@@ -351,7 +371,6 @@ class CalendarWidget extends ConsumerWidget {
       ref.read(cp.focusedMonthProvider.notifier).state = DateTime(
         selectedDate.year,
         focusedMonth.month,
-        1,
       );
     }
   }
@@ -443,8 +462,8 @@ class CalendarWidget extends ConsumerWidget {
 
     // Calculate Bengali years for 1976 and 2076 (matching Gregorian range)
     // Bengali Era = Gregorian - 594 (approximately, Bengali new year in mid-April)
-    final minYear = 1976 - 594; // 1382 BE
-    final maxYear = 2076 - 594; // 1482 BE
+    const minYear = 1976 - 594; // 1382 BE
+    const maxYear = 2076 - 594; // 1482 BE
 
     if (!context.mounted) return;
 
@@ -580,7 +599,6 @@ class CalendarWidget extends ConsumerWidget {
                                     : Border.all(
                                         color: context.colors.outline
                                             .withValues(alpha: 0.3),
-                                        width: 1,
                                       ),
                               ),
                               child: Text(
@@ -716,7 +734,6 @@ class CalendarWidget extends ConsumerWidget {
                                     : Border.all(
                                         color: context.colors.outline
                                             .withValues(alpha: 0.3),
-                                        width: 1,
                                       ),
                               ),
                               child: Text(
@@ -852,7 +869,6 @@ class CalendarWidget extends ConsumerWidget {
                                     : Border.all(
                                         color: context.colors.outline
                                             .withValues(alpha: 0.3),
-                                        width: 1,
                                       ),
                               ),
                               child: Text(
@@ -906,7 +922,7 @@ class CalendarWidget extends ConsumerWidget {
     cp.AppCalendarSystem primarySystem,
   ) async {
     if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
     }
 
     if (primarySystem == cp.AppCalendarSystem.bengali) {
@@ -952,7 +968,7 @@ class CalendarWidget extends ConsumerWidget {
     cp.AppCalendarSystem primarySystem,
   ) async {
     if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
     }
 
     if (primarySystem == cp.AppCalendarSystem.bengali) {
@@ -990,38 +1006,34 @@ class CalendarWidget extends ConsumerWidget {
     }
   }
 
-  Widget? _buildFestivalMarker(
+  /// Optimized festival marker using pre-loaded monthly panchang cache
+  Widget? _buildFestivalMarkerFromCache(
     BuildContext context,
-    WidgetRef ref,
     DateTime date,
+    Map<DateTime, PanchangData> monthlyPanchang,
   ) {
-    final panchangAsync = ref.watch(panchangForDateProvider(date));
+    final normalizedDate = DateTime(date.year, date.month, date.day);
+    final panchang = monthlyPanchang[normalizedDate];
 
-    return panchangAsync.when(
-      data: (panchang) {
-        if (!panchang.hasFestivals) return null;
+    if (panchang == null || !panchang.hasFestivals) return null;
 
-        // Show dot marker for festivals
-        return Positioned(
-          bottom: 1,
-          left: 0,
-          right: 0,
-          child: Center(
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: panchang.majorFestivals.isNotEmpty
-                    ? context.colors.primary
-                    : context.colors.secondary,
-                shape: BoxShape.circle,
-              ),
-            ),
+    // Show dot marker for festivals
+    return Positioned(
+      bottom: 1,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: panchang.majorFestivals.isNotEmpty
+                ? context.colors.primary
+                : context.colors.secondary,
+            shape: BoxShape.circle,
           ),
-        );
-      },
-      loading: () => null,
-      error: (_, _) => null,
+        ),
+      ),
     );
   }
 }
@@ -1073,15 +1085,11 @@ class _CalendarHeader extends ConsumerWidget {
                 ),
                 initialData: _HeaderData(
                   primaryText: _formatGregorian(focusedMonth),
-                  secondaryText: null,
                 ),
                 builder: (context, snapshot) {
                   final data =
                       snapshot.data ??
-                      _HeaderData(
-                        primaryText: _formatGregorian(focusedMonth),
-                        secondaryText: null,
-                      );
+                      _HeaderData(primaryText: _formatGregorian(focusedMonth));
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1181,7 +1189,7 @@ class _CalendarHeader extends ConsumerWidget {
 
     try {
       // Get start and end of Gregorian month
-      final startOfMonth = DateTime(date.year, date.month, 1);
+      final startOfMonth = DateTime(date.year, date.month);
       final endOfMonth = DateTime(date.year, date.month + 1, 0); // Last day
 
       String startMonth;

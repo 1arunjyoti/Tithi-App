@@ -381,12 +381,7 @@ class _PakshaIndicator extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-        decoration: AppTheme.glassmorphism(
-          context: context,
-          opacity: 0.1,
-          borderRadius: 24,
-          ref: ref,
-        ),
+        decoration: AppTheme.glassmorphism(context: context, ref: ref),
         child: Column(
           children: [
             // Top Row: Moon, Title, and Sun/Moon Time

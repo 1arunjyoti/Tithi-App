@@ -128,12 +128,7 @@ class PrivacyPolicyScreen extends ConsumerWidget {
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        borderRadius: 24,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

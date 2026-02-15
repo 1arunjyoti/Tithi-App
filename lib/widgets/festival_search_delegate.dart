@@ -134,10 +134,7 @@ class FestivalSearchDelegate extends SearchDelegate {
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => EventDetailSheet(
-            festival: festival,
-            panchang: null, // No specific date context
-          ),
+          builder: (context) => EventDetailSheet(festival: festival),
         );
       },
       child: Container(

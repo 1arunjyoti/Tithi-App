@@ -41,6 +41,10 @@ android {
                 "proguard-rules.pro"
             )
             // TODO: Add your own signing config for the release build.
+            // To create release signing:
+            // 1. Generate keystore: keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000
+            // 2. Create android/key.properties with: storePassword, keyPassword, keyAlias, storeFile path
+            // 3. Update this config to load from key.properties
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
@@ -63,5 +67,7 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    implementation("com.google.android.play:core:1.10.3")
+    // Migrated from deprecated play:core to play:app-update
+    implementation("com.google.android.play:app-update:2.1.0")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
 }

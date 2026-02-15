@@ -206,7 +206,7 @@ class PlanetaryViewService {
     // Use astronomical flags (tropical, heliocentric) for heliocentric view
     // to match NASA's Eyes on the Solar System
     final flags = viewMode == SolarSystemViewMode.heliocentric
-        ? CalculationFlags.astronomical(heliocentric: true)
+        ? CalculationFlags.astronomical()
         : CalculationFlags.astronomical(heliocentric: false);
 
     final positions = await Jyotish().getMultiplePlanetPositions(
@@ -248,7 +248,7 @@ class PlanetaryViewService {
         final earthY = math.sin(earthAngle) * earthOrbitRadius;
 
         // Moon orbits around Earth at a small offset
-        final moonOffset = 0.04; // Small offset for visibility
+        const moonOffset = 0.04; // Small offset for visibility
         angleRad = position.longitude * math.pi / 180;
         visualX = earthX + math.cos(angleRad) * moonOffset;
         visualY = earthY + math.sin(angleRad) * moonOffset;

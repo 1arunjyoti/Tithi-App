@@ -64,11 +64,11 @@ class SunriseCalculator {
     // Check if sun never rises or sets at this location on this date
     if (cosHRise > 1) {
       // Sun never rises (polar night) - return early morning
-      return DateTime(date.year, date.month, date.day, 6, 0);
+      return DateTime(date.year, date.month, date.day, 6);
     }
     if (cosHRise < -1) {
       // Sun never sets (midnight sun) - return early morning
-      return DateTime(date.year, date.month, date.day, 6, 0);
+      return DateTime(date.year, date.month, date.day, 6);
     }
 
     // Hour angle for sunrise
@@ -164,16 +164,10 @@ class SunriseCalculator {
         (cos(zenithRad) - (sinDec * sin(latRad))) / (cosDec * cos(latRad));
 
     if (cosHSet > 1) {
-      return DateTime(
-        date.year,
-        date.month,
-        date.day,
-        18,
-        0,
-      ); // Sun never rises
+      return DateTime(date.year, date.month, date.day, 18); // Sun never rises
     }
     if (cosHSet < -1) {
-      return DateTime(date.year, date.month, date.day, 18, 0); // Sun never sets
+      return DateTime(date.year, date.month, date.day, 18); // Sun never sets
     }
 
     // Hour angle for sunset
@@ -276,14 +270,14 @@ class SunriseCalculator {
 
     // Hour angle at sunrise (degrees)
     const zenith = 90.833;
-    final zenithRad = zenith * pi / 180;
+    const zenithRad = zenith * pi / 180;
     final haArg =
         cos(zenithRad) / (cos(latRad) * cos(sunDecRad)) -
         tan(latRad) * tan(sunDecRad);
 
     if (haArg > 1 || haArg < -1) {
       // Polar day/night - return 6 AM
-      return DateTime(date.year, date.month, date.day, 6, 0);
+      return DateTime(date.year, date.month, date.day, 6);
     }
 
     final haSunrise = acos(haArg) * 180 / pi;
@@ -365,19 +359,13 @@ class SunriseCalculator {
 
     // Hour angle
     const zenith = 90.833;
-    final zenithRad = zenith * pi / 180;
+    const zenithRad = zenith * pi / 180;
     final haArg =
         cos(zenithRad) / (cos(latRad) * cos(sunDecRad)) -
         tan(latRad) * tan(sunDecRad);
 
     if (haArg > 1 || haArg < -1) {
-      return DateTime(
-        date.year,
-        date.month,
-        date.day,
-        18,
-        0,
-      ); // Polar day/night
+      return DateTime(date.year, date.month, date.day, 18); // Polar day/night
     }
 
     final haSunset = acos(haArg) * 180 / pi;

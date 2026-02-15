@@ -242,7 +242,7 @@ void main() async {
   for (
     var date = searchStart;
     date.isBefore(searchEnd);
-    date = date.add(Duration(days: 1))
+    date = date.add(const Duration(days: 1))
   ) {
     final tithi = simulateTithiForDate(date);
     final details = getTithiDetails(tithi);

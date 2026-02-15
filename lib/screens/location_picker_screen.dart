@@ -116,7 +116,6 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _center,
-              initialZoom: 13.0,
               onPositionChanged: (pos, hasGesture) {
                 _center = pos.center;
               },
@@ -129,10 +128,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               // Simple Credits overlay
               const RichAttributionWidget(
                 attributions: [
-                  TextSourceAttribution(
-                    'OpenStreetMap contributors',
-                    onTap: null, // tap action
-                  ),
+                  TextSourceAttribution('OpenStreetMap contributors'),
                 ],
               ),
             ],
@@ -146,7 +142,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           // Zoom Controls
           Positioned(
             right: 16,
-            top: 120,
+            bottom: 180,
             child: Column(
               children: [
                 _buildZoomButton(
@@ -178,7 +174,6 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               decoration: AppTheme.glassmorphism(
                 context: context,
                 opacity: 0.8,
-                borderRadius: 24,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

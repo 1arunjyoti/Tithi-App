@@ -244,7 +244,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
 
   Future<void> _showDateRangePicker() async {
     if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
     }
 
     final selectedDate = ref.read(selectedDateProvider);
@@ -255,7 +255,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
 
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(1976, 1, 1),
+      firstDate: DateTime(1976),
       lastDate: DateTime(2076, 12, 31),
       initialDateRange: initialRange,
       helpText: 'Select date range (Gregorian dates)',
@@ -308,11 +308,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -523,11 +519,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         children: [
           Icon(
@@ -552,11 +544,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         children: [
           Icon(

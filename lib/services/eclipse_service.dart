@@ -249,7 +249,6 @@ class EclipseService {
       partialEnd: times[2] > 0 ? _bindings.julianDayToDateTime(times[2]) : null,
       totalStart: times[3] > 0 ? _bindings.julianDayToDateTime(times[3]) : null,
       totalEnd: times[4] > 0 ? _bindings.julianDayToDateTime(times[4]) : null,
-      magnitude: null, // Global magnitude not directly available
       centerLatitude: location?['latitude'] as double?,
       centerLongitude: location?['longitude'] as double?,
       visibleAtLocation: visibleLocally,

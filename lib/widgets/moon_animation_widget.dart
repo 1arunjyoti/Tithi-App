@@ -184,7 +184,6 @@ class MoonPhasePainter extends CustomPainter {
     path.arcToPoint(
       Offset(center.dx, center.dy + radius), // Bottom
       radius: Radius.circular(radius),
-      clockwise: true,
     );
 
     // Inner Terminator Arc (Variable)

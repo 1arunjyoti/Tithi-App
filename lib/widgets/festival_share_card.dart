@@ -16,13 +16,13 @@ class FestivalShareCard extends StatelessWidget {
     return Container(
       width: 400, // Logical width for capture
       height: 600, // Logical height for capture
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF1E1E2C), // Deep dark background
-            const Color(0xFF2D2D44),
+            Color(0xFF1E1E2C), // Deep dark background
+            Color(0xFF2D2D44),
           ],
         ),
       ),
@@ -59,10 +59,9 @@ class FestivalShareCard extends StatelessWidget {
             padding: const EdgeInsets.all(32.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Icon / Header
-                Icon(
+                const Icon(
                   Icons.auto_awesome, // Placeholder for festival icon
                   size: 64,
                   color: Colors.amber,

@@ -348,7 +348,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
           right: 16,
           child: FloatingActionButton.small(
             heroTag: 'schedule_today_fab',
-            onPressed: () => _scrollToToday(animated: true),
+            onPressed: () => _scrollToToday(),
             tooltip: 'Go to Today',
             child: const Icon(Icons.today_rounded),
           ),

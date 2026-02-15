@@ -92,3 +92,92 @@ final todayPanchangProvider = FutureProvider<PanchangData>((ref) async {
 final currentPakshaProvider = Provider<AsyncValue<String>>((ref) {
   return ref.watch(todayPanchangProvider).whenData((data) => data.paksha);
 });
+
+/// Batch provider for monthly panchang data
+/// Pre-loads entire month to eliminate N+1 query pattern in calendar
+final monthlyPanchangProvider =
+    FutureProvider.family<Map<DateTime, PanchangData>, DateTime>((
+      ref,
+      focusedMonth,
+    ) async {
+      // Ensure service is initialized
+      await ref.watch(panchangInitProvider.future);
+      await ref.watch(festivalInitProvider.future);
+
+      final service = ref.read(panchangServiceProvider);
+      final festivals = ref.read(festivalProvider);
+      final monthSystem = ref.watch(hinduMonthSystemProvider);
+
+      final coords = ref.watch(coordinatesProvider);
+      double latitude = 28.6139;
+      double longitude = 77.2090;
+      if (coords is AsyncData<({double latitude, double longitude})>) {
+        latitude = coords.value.latitude;
+        longitude = coords.value.longitude;
+      }
+
+      // Generate dates for the entire month view (including previous/next month overflow)
+      final firstDayOfMonth = DateTime(focusedMonth.year, focusedMonth.month);
+      final lastDayOfMonth = DateTime(
+        focusedMonth.year,
+        focusedMonth.month + 1,
+        0,
+      );
+
+      // Include days from previous month to fill first week
+      final startDate = firstDayOfMonth.subtract(
+        Duration(days: firstDayOfMonth.weekday % 7),
+      );
+      // Include days from next month to fill last week
+      final endDate = lastDayOfMonth.add(
+        Duration(days: 7 - (lastDayOfMonth.weekday % 7)),
+      );
+
+      final Map<DateTime, PanchangData> monthData = {};
+
+      // Pre-calculate all dates in the visible calendar grid
+      for (
+        var date = startDate;
+        date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
+        date = date.add(const Duration(days: 1))
+      ) {
+        final normalizedDate = DateTime(date.year, date.month, date.day);
+
+        final sunriseTime = SunriseCalculator.calculateSunriseIST(
+          date: normalizedDate,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        final sunsetTime = SunriseCalculator.calculateSunsetIST(
+          date: normalizedDate,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        final rawTithi = await service.calculateTithi(
+          sunriseTime,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        final masa = await service.calculateMasa(
+          sunriseTime,
+          rawTithi,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        monthData[normalizedDate] = PanchangData.fromRawTithi(
+          date: normalizedDate,
+          rawTithi: rawTithi,
+          masa: masa,
+          allFestivals: festivals,
+          monthSystem: monthSystem,
+          sunrise: sunriseTime,
+          sunset: sunsetTime,
+        );
+      }
+
+      return monthData;
+    });

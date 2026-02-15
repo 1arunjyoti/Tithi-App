@@ -18,22 +18,17 @@ class MoonPhasesScreen extends ConsumerStatefulWidget {
 
 class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
     with SingleTickerProviderStateMixin {
-  Timer? _timer;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    // Update countdown every second for precise display
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
-    });
+    // Timer moved to _CountdownCard to avoid rebuilding entire screen every second
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _tabController.dispose();
     super.dispose();
   }
@@ -110,15 +105,17 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
     return Column(
       children: [
         const SizedBox(height: 16),
-        // Large moon visualization
-        SizedBox(
-          height: 180,
-          width: 180,
-          child: MoonAnimationWidget(
-            paksha: data.isShukla ? 'Shukla' : 'Krishna',
-            tithi: data.currentTithi.floor() <= 15
-                ? data.currentTithi.floor()
-                : data.currentTithi.floor() - 15,
+        // Large moon visualization - wrapped in RepaintBoundary for performance
+        RepaintBoundary(
+          child: SizedBox(
+            height: 180,
+            width: 180,
+            child: MoonAnimationWidget(
+              paksha: data.isShukla ? 'Shukla' : 'Krishna',
+              tithi: data.currentTithi.floor() <= 15
+                  ? data.currentTithi.floor()
+                  : data.currentTithi.floor() - 15,
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -132,7 +129,6 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                   title: l10n.purnima,
                   subtitle: l10n.fullMoon,
                   targetDate: data.nextPurnima,
-                  countdown: data.purnimaCountdown,
                   icon: Icons.circle,
                   color: isDark ? Colors.amber : Colors.orange.shade600,
                   isDark: isDark,
@@ -144,7 +140,6 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                   title: l10n.amavasya,
                   subtitle: l10n.newMoon,
                   targetDate: data.nextAmavasya,
-                  countdown: data.amavasyaCountdown,
                   icon: Icons.circle_outlined,
                   color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
                   isDark: isDark,
@@ -177,12 +172,13 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
   }
 }
 
-class _CountdownCard extends StatelessWidget {
+/// Countdown card with its own Timer for performance optimization.
+/// Only rebuilds itself, not the entire screen.
+class _CountdownCard extends StatefulWidget {
   const _CountdownCard({
     required this.title,
     required this.subtitle,
     required this.targetDate,
-    required this.countdown,
     required this.icon,
     required this.color,
     required this.isDark,
@@ -191,10 +187,48 @@ class _CountdownCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final DateTime targetDate;
-  final Duration countdown;
   final IconData icon;
   final Color color;
   final bool isDark;
+
+  @override
+  State<_CountdownCard> createState() => _CountdownCardState();
+}
+
+class _CountdownCardState extends State<_CountdownCard> {
+  Timer? _timer;
+  late Duration _countdown;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCountdown();
+    // Update countdown every second - only rebuilds this card, not the whole screen
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        _updateCountdown();
+        setState(() {});
+      }
+    });
+  }
+
+  void _updateCountdown() {
+    _countdown = widget.targetDate.difference(DateTime.now());
+  }
+
+  @override
+  void didUpdateWidget(_CountdownCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.targetDate != widget.targetDate) {
+      _updateCountdown();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -207,7 +241,7 @@ class _CountdownCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isDark
+          colors: widget.isDark
               ? [
                   Colors.white.withValues(alpha: 0.1),
                   Colors.white.withValues(alpha: 0.05),
@@ -218,7 +252,7 @@ class _CountdownCard extends StatelessWidget {
                 ],
         ),
         border: Border.all(
-          color: isDark
+          color: widget.isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.amber.shade200,
         ),
@@ -228,10 +262,10 @@ class _CountdownCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: color, size: 20),
+              Icon(widget.icon, color: widget.color, size: 20),
               const SizedBox(width: 8),
               Text(
-                title,
+                widget.title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -240,7 +274,7 @@ class _CountdownCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            subtitle,
+            widget.subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
             ),
@@ -250,7 +284,7 @@ class _CountdownCard extends StatelessWidget {
           _buildCountdownDisplay(context),
           const SizedBox(height: 8),
           Text(
-            DateFormat.yMMMd().format(targetDate),
+            DateFormat.yMMMd().format(widget.targetDate),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
             ),
@@ -263,19 +297,19 @@ class _CountdownCard extends StatelessWidget {
   Widget _buildCountdownDisplay(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (countdown.isNegative) {
+    if (_countdown.isNegative) {
       return Text(
         'Now!',
         style: theme.textTheme.headlineMedium?.copyWith(
           fontWeight: FontWeight.bold,
-          color: color,
+          color: widget.color,
         ),
       );
     }
 
-    final days = countdown.inDays;
-    final hours = countdown.inHours % 24;
-    final minutes = countdown.inMinutes % 60;
+    final days = _countdown.inDays;
+    final hours = _countdown.inHours % 24;
+    final minutes = _countdown.inMinutes % 60;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

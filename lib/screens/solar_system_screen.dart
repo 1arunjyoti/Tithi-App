@@ -368,7 +368,6 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             ),
             child: Slider(
               value: sliderValue,
-              min: 0,
               max: 730,
               onChanged: (value) {
                 final newDate = minDate.add(Duration(days: value.round()));
@@ -524,14 +523,17 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               ref.read(selectedPlanetProvider.notifier).state = null;
             }
           },
-          child: CustomPaint(
-            size: size,
-            painter: SolarSystemPainter(
-              solarSystemData: data,
-              selectedPlanetIndex: selectedIndex,
-              isDark: isDark,
-              zoomLevel: zoomLevel,
-              showZodiac: showZodiac,
+          // RepaintBoundary isolates the expensive CustomPaint from other UI
+          child: RepaintBoundary(
+            child: CustomPaint(
+              size: size,
+              painter: SolarSystemPainter(
+                solarSystemData: data,
+                selectedPlanetIndex: selectedIndex,
+                isDark: isDark,
+                zoomLevel: zoomLevel,
+                showZodiac: showZodiac,
+              ),
             ),
           ),
         );
