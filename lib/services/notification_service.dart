@@ -6,6 +6,11 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:workmanager/workmanager.dart';
 import 'shloka_service.dart';
 import '../models/sankalpa.dart';
+import '../models/hindu_month_system.dart';
+import '../models/panchang_data.dart';
+import 'panchang_service.dart';
+import 'storage_service.dart';
+import 'sunrise_calculator.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -39,9 +44,7 @@ void callbackDispatcher() {
 /// Notification service for scheduling daily tithi notifications
 /// FOSS-compatible: Uses native Android NotificationCompat, no Google Play Services
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal();
+  NotificationService();
 
   static const String _taskName = 'periodic_notification_check';
 
@@ -74,11 +77,13 @@ class NotificationService {
     }
   }
 
-  static const String _boxName = 'notification_settings';
   static const String _keyEnabled = 'notifications_enabled';
   static const String _keyHour = 'notification_hour';
   static const String _keyMinute = 'notification_minute';
   static const String _keyShlokaEnabled = 'shloka_enabled';
+  static const String _keyDailyTitle = 'daily_title';
+  static const String _keyDailyBody = 'daily_body';
+  static const String _keyDailyContentDate = 'daily_content_date';
   static const int _dailyNotificationId = 1;
   static const int _shlokaNotificationIdBase = 1000;
 
@@ -104,7 +109,7 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(deviceTimeZone));
 
       // Initialize Hive box
-      _box = await Hive.openBox(_boxName);
+      _box = await StorageService().openNotificationSettingsBox();
 
       // Initialize notifications
       const androidSettings = AndroidInitializationSettings(
@@ -123,6 +128,10 @@ class NotificationService {
       );
 
       _isInitialized = true;
+
+      // Precompute/cache daily notification content so background scheduling
+      // can function even without full app/provider context.
+      await _refreshDailyNotificationContent();
 
       // Check enabled state and reschedule if needed
       final notificationsEnabled = await isEnabled();
@@ -365,10 +374,14 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    final content = await _getDailyNotificationContent();
+    final resolvedTitle = title ?? content.title;
+    final resolvedBody = body ?? content.body;
+
     await _notifications.zonedSchedule(
       _dailyNotificationId,
-      title ?? '🙏 Tithi Today',
-      body ?? 'Open to see today\'s panchang details',
+      resolvedTitle,
+      resolvedBody,
       scheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -378,6 +391,109 @@ class NotificationService {
     if (kDebugMode) {
       print('Scheduled daily notification for ${time.hour}:${time.minute}');
     }
+  }
+
+  Future<void> _refreshDailyNotificationContent() async {
+    final generated = await _buildDailyNotificationContent();
+    await _box?.put(_keyDailyTitle, generated.title);
+    await _box?.put(_keyDailyBody, generated.body);
+    await _box?.put(_keyDailyContentDate, _dateKey(DateTime.now()));
+  }
+
+  Future<({String title, String body})> _getDailyNotificationContent() async {
+    final todayKey = _dateKey(DateTime.now());
+    final cachedDate = _box?.get(_keyDailyContentDate) as String?;
+    final cachedTitle = _box?.get(_keyDailyTitle) as String?;
+    final cachedBody = _box?.get(_keyDailyBody) as String?;
+
+    if (cachedDate == todayKey && cachedTitle != null && cachedBody != null) {
+      return (title: cachedTitle, body: cachedBody);
+    }
+
+    await _refreshDailyNotificationContent();
+    return (
+      title: (_box?.get(_keyDailyTitle) as String?) ?? '🙏 Tithi Today',
+      body:
+          (_box?.get(_keyDailyBody) as String?) ??
+          'Open to see today\'s panchang details',
+    );
+  }
+
+  Future<({String title, String body})> _buildDailyNotificationContent() async {
+    try {
+      final storageService = StorageService();
+      final locationBox = await storageService.openLocationSettingsBox();
+      final latitude =
+          (locationBox.get('cached_lat', defaultValue: 28.6139) as num)
+              .toDouble();
+      final longitude =
+          (locationBox.get('cached_lng', defaultValue: 77.2090) as num)
+              .toDouble();
+
+      final settingsBox = await storageService.openSettingsBox();
+      final monthSystemIndex =
+          (settingsBox.get(
+                'hindu_month_system',
+                defaultValue: HinduMonthSystem.amanta.index,
+              )
+              as int);
+      final monthSystem =
+          (monthSystemIndex >= 0 &&
+              monthSystemIndex < HinduMonthSystem.values.length)
+          ? HinduMonthSystem.values[monthSystemIndex]
+          : HinduMonthSystem.amanta;
+
+      final service = PanchangService();
+      await service.init();
+
+      final today = DateTime.now();
+      final date = DateTime(today.year, today.month, today.day);
+
+      final sunriseTime = SunriseCalculator.calculateSunriseIST(
+        date: date,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final rawTithi = await service.calculateTithi(
+        sunriseTime,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final masa = await service.calculateMasa(
+        sunriseTime,
+        rawTithi,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final panchang = PanchangData.fromRawTithi(
+        date: date,
+        rawTithi: rawTithi,
+        masa: masa,
+        monthSystem: monthSystem,
+        sunrise: sunriseTime,
+        sunset: SunriseCalculator.calculateSunsetIST(
+          date: date,
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+
+      return (
+        title: '🙏 ${panchang.tithiName}',
+        body: '${panchang.paksha} • ${panchang.tithiNumber} (${panchang.masa})',
+      );
+    } catch (_) {
+      return (
+        title: '🙏 Tithi Today',
+        body: 'Open to see today\'s panchang details',
+      );
+    }
+  }
+
+  String _dateKey(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
   /// Show immediate notification (for testing)

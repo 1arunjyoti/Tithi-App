@@ -1,24 +1,61 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
-import 'package:hive/hive.dart';
 import '../models/hindu_month_system.dart';
+import '../services/storage_service.dart';
 
 /// Provider for currently selected date in calendar
-final selectedDateProvider = StateProvider<DateTime>((ref) {
-  return DateTime.now();
-});
+class SelectedDateNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() {
+    return DateTime.now();
+  }
+
+  void setDate(DateTime date) {
+    state = date;
+  }
+
+  void jumpToToday() {
+    state = DateTime.now();
+  }
+}
+
+final selectedDateProvider = NotifierProvider<SelectedDateNotifier, DateTime>(
+  SelectedDateNotifier.new,
+);
 
 /// Provider for the focused month in calendar view
-final focusedMonthProvider = StateProvider<DateTime>((ref) {
-  return DateTime.now();
-});
+class FocusedMonthNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() {
+    return DateTime.now();
+  }
+
+  void setFocusedMonth(DateTime month) {
+    state = month;
+  }
+}
+
+final focusedMonthProvider = NotifierProvider<FocusedMonthNotifier, DateTime>(
+  FocusedMonthNotifier.new,
+);
 
 /// Provider for calendar format (month/week/2 weeks)
 enum CalendarViewFormat { month, twoWeeks, week }
 
-final calendarFormatProvider = StateProvider<CalendarViewFormat>((ref) {
-  return CalendarViewFormat.month;
-});
+class CalendarFormatNotifier extends Notifier<CalendarViewFormat> {
+  @override
+  CalendarViewFormat build() {
+    return CalendarViewFormat.month;
+  }
+
+  void setFormat(CalendarViewFormat format) {
+    state = format;
+  }
+}
+
+final calendarFormatProvider =
+    NotifierProvider<CalendarFormatNotifier, CalendarViewFormat>(
+      CalendarFormatNotifier.new,
+    );
 
 // --- Preference Enums ---
 
@@ -26,55 +63,200 @@ enum StartingDayOfWeek { sunday, monday }
 
 enum PrimaryEventView { tithi, festival, moonPhase }
 
-// --- Persistence Notifiers ---
+class CalendarPreferences {
+  final StartingDayOfWeek startOfWeek;
+  final PrimaryEventView primaryEventView;
+  final AppCalendarSystem primaryCalendarSystem;
+  final AppCalendarSystem secondaryCalendarSystem;
+  final HinduMonthSystem hinduMonthSystem;
+  final HinduYearEra hinduYearEra;
+  final TithiDisplayMode tithiDisplayMode;
 
-/// Notifier for Start of Week preference
-class StartOfWeekNotifier extends Notifier<StartingDayOfWeek> {
-  static const _boxName = 'settings';
-  static const _key = 'start_of_week';
+  const CalendarPreferences({
+    required this.startOfWeek,
+    required this.primaryEventView,
+    required this.primaryCalendarSystem,
+    required this.secondaryCalendarSystem,
+    required this.hinduMonthSystem,
+    required this.hinduYearEra,
+    required this.tithiDisplayMode,
+  });
+
+  CalendarPreferences copyWith({
+    StartingDayOfWeek? startOfWeek,
+    PrimaryEventView? primaryEventView,
+    AppCalendarSystem? primaryCalendarSystem,
+    AppCalendarSystem? secondaryCalendarSystem,
+    HinduMonthSystem? hinduMonthSystem,
+    HinduYearEra? hinduYearEra,
+    TithiDisplayMode? tithiDisplayMode,
+  }) {
+    return CalendarPreferences(
+      startOfWeek: startOfWeek ?? this.startOfWeek,
+      primaryEventView: primaryEventView ?? this.primaryEventView,
+      primaryCalendarSystem:
+          primaryCalendarSystem ?? this.primaryCalendarSystem,
+      secondaryCalendarSystem:
+          secondaryCalendarSystem ?? this.secondaryCalendarSystem,
+      hinduMonthSystem: hinduMonthSystem ?? this.hinduMonthSystem,
+      hinduYearEra: hinduYearEra ?? this.hinduYearEra,
+      tithiDisplayMode: tithiDisplayMode ?? this.tithiDisplayMode,
+    );
+  }
+}
+
+class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
+  static const _startOfWeekKey = 'start_of_week';
+  static const _primaryEventViewKey = 'primary_event_view';
+  static const _primaryCalendarSystemKey = 'primary_calendar_system';
+  static const _secondaryCalendarSystemKey = 'secondary_calendar_system';
+  static const _hinduMonthSystemKey = 'hindu_month_system';
+  static const _hinduYearEraKey = 'hindu_year_era';
+  static const _tithiDisplayModeKey = 'tithi_display_mode';
 
   @override
-  StartingDayOfWeek build() {
-    final box = Hive.box(_boxName);
-    final index = box.get(_key, defaultValue: 0) as int;
-    return StartingDayOfWeek.values[index];
+  CalendarPreferences build() {
+    final box = StorageService().getSettingsBox();
+
+    StartingDayOfWeek parseStartOfWeek() {
+      final index = box.get(_startOfWeekKey, defaultValue: 0) as int;
+      if (index >= 0 && index < StartingDayOfWeek.values.length) {
+        return StartingDayOfWeek.values[index];
+      }
+      return StartingDayOfWeek.sunday;
+    }
+
+    PrimaryEventView parsePrimaryEventView() {
+      final index = box.get(_primaryEventViewKey, defaultValue: 0) as int;
+      if (index >= 0 && index < PrimaryEventView.values.length) {
+        return PrimaryEventView.values[index];
+      }
+      return PrimaryEventView.tithi;
+    }
+
+    AppCalendarSystem parsePrimaryCalendarSystem() {
+      final index =
+          box.get(
+                _primaryCalendarSystemKey,
+                defaultValue: AppCalendarSystem.gregorian.index,
+              )
+              as int;
+      if (index >= 0 && index < AppCalendarSystem.values.length) {
+        return AppCalendarSystem.values[index];
+      }
+      return AppCalendarSystem.gregorian;
+    }
+
+    AppCalendarSystem parseSecondaryCalendarSystem() {
+      final index =
+          box.get(
+                _secondaryCalendarSystemKey,
+                defaultValue: AppCalendarSystem.none.index,
+              )
+              as int;
+      if (index >= 0 && index < AppCalendarSystem.values.length) {
+        return AppCalendarSystem.values[index];
+      }
+      return AppCalendarSystem.none;
+    }
+
+    HinduMonthSystem parseHinduMonthSystem() {
+      final index =
+          box.get(
+                _hinduMonthSystemKey,
+                defaultValue: HinduMonthSystem.amanta.index,
+              )
+              as int;
+      if (index >= 0 && index < HinduMonthSystem.values.length) {
+        return HinduMonthSystem.values[index];
+      }
+      return HinduMonthSystem.amanta;
+    }
+
+    HinduYearEra parseHinduYearEra() {
+      final index =
+          box.get(
+                _hinduYearEraKey,
+                defaultValue: HinduYearEra.vikramSamvat.index,
+              )
+              as int;
+      if (index >= 0 && index < HinduYearEra.values.length) {
+        return HinduYearEra.values[index];
+      }
+      return HinduYearEra.vikramSamvat;
+    }
+
+    TithiDisplayMode parseTithiDisplayMode() {
+      final index = box.get(_tithiDisplayModeKey, defaultValue: 0) as int;
+      if (index >= 0 && index < TithiDisplayMode.values.length) {
+        return TithiDisplayMode.values[index];
+      }
+      return TithiDisplayMode.pakshaBased;
+    }
+
+    return CalendarPreferences(
+      startOfWeek: parseStartOfWeek(),
+      primaryEventView: parsePrimaryEventView(),
+      primaryCalendarSystem: parsePrimaryCalendarSystem(),
+      secondaryCalendarSystem: parseSecondaryCalendarSystem(),
+      hinduMonthSystem: parseHinduMonthSystem(),
+      hinduYearEra: parseHinduYearEra(),
+      tithiDisplayMode: parseTithiDisplayMode(),
+    );
   }
 
   Future<void> setStartOfWeek(StartingDayOfWeek day) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, day.index);
-    state = day;
-  }
-}
-
-final startOfWeekProvider =
-    NotifierProvider<StartOfWeekNotifier, StartingDayOfWeek>(
-      () => StartOfWeekNotifier(),
-    );
-
-/// Notifier for Primary Home Screen View preference
-class PrimaryEventViewNotifier extends Notifier<PrimaryEventView> {
-  static const _boxName = 'settings';
-  static const _key = 'primary_event_view';
-
-  @override
-  PrimaryEventView build() {
-    final box = Hive.box(_boxName);
-    final index = box.get(_key, defaultValue: 0) as int;
-    return PrimaryEventView.values[index];
+    await StorageService().getSettingsBox().put(_startOfWeekKey, day.index);
+    state = state.copyWith(startOfWeek: day);
   }
 
   Future<void> setPrimaryView(PrimaryEventView view) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, view.index);
-    state = view;
+    await StorageService().getSettingsBox().put(_primaryEventViewKey, view.index);
+    state = state.copyWith(primaryEventView: view);
+  }
+
+  Future<void> setPrimaryCalendarSystem(AppCalendarSystem system) async {
+    await StorageService()
+        .getSettingsBox()
+        .put(_primaryCalendarSystemKey, system.index);
+    state = state.copyWith(primaryCalendarSystem: system);
+  }
+
+  Future<void> setSecondaryCalendarSystem(AppCalendarSystem system) async {
+    await StorageService()
+        .getSettingsBox()
+        .put(_secondaryCalendarSystemKey, system.index);
+    state = state.copyWith(secondaryCalendarSystem: system);
+  }
+
+  Future<void> setHinduMonthSystem(HinduMonthSystem system) async {
+    await StorageService().getSettingsBox().put(_hinduMonthSystemKey, system.index);
+    state = state.copyWith(hinduMonthSystem: system);
+  }
+
+  Future<void> setHinduYearEra(HinduYearEra era) async {
+    await StorageService().getSettingsBox().put(_hinduYearEraKey, era.index);
+    state = state.copyWith(hinduYearEra: era);
+  }
+
+  Future<void> setTithiDisplayMode(TithiDisplayMode mode) async {
+    await StorageService().getSettingsBox().put(_tithiDisplayModeKey, mode.index);
+    state = state.copyWith(tithiDisplayMode: mode);
   }
 }
 
-final primaryEventViewProvider =
-    NotifierProvider<PrimaryEventViewNotifier, PrimaryEventView>(
-      () => PrimaryEventViewNotifier(),
+final calendarPreferencesProvider =
+    NotifierProvider<CalendarPreferencesNotifier, CalendarPreferences>(
+      CalendarPreferencesNotifier.new,
     );
+
+final startOfWeekProvider = Provider<StartingDayOfWeek>((ref) {
+  return ref.watch(calendarPreferencesProvider).startOfWeek;
+});
+
+final primaryEventViewProvider = Provider<PrimaryEventView>((ref) {
+  return ref.watch(calendarPreferencesProvider).primaryEventView;
+});
 
 enum AppCalendarSystem { none, gregorian, hindu, bengali }
 
@@ -93,152 +275,30 @@ extension AppCalendarSystemExt on AppCalendarSystem {
   }
 }
 
-/// Notifier for Primary Calendar System preference
-class PrimaryCalendarSystemNotifier extends Notifier<AppCalendarSystem> {
-  static const _boxName = 'settings';
-  static const _key = 'primary_calendar_system';
+final primaryCalendarSystemProvider = Provider<AppCalendarSystem>((ref) {
+  return ref.watch(calendarPreferencesProvider).primaryCalendarSystem;
+});
 
-  @override
-  AppCalendarSystem build() {
-    final box = Hive.box(_boxName);
-    final index =
-        box.get(_key, defaultValue: AppCalendarSystem.gregorian.index) as int;
-    // Ensure index is valid
-    if (index >= 0 && index < AppCalendarSystem.values.length) {
-      return AppCalendarSystem.values[index];
-    }
-    return AppCalendarSystem.gregorian;
-  }
-
-  Future<void> setSystem(AppCalendarSystem system) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, system.index);
-    state = system;
-  }
-}
-
-final primaryCalendarSystemProvider =
-    NotifierProvider<PrimaryCalendarSystemNotifier, AppCalendarSystem>(
-      () => PrimaryCalendarSystemNotifier(),
-    );
-
-/// Notifier for Secondary Calendar System preference
-class SecondaryCalendarSystemNotifier extends Notifier<AppCalendarSystem> {
-  static const _boxName = 'settings';
-  static const _key = 'secondary_calendar_system';
-
-  @override
-  AppCalendarSystem build() {
-    final box = Hive.box(_boxName);
-    final index =
-        box.get(_key, defaultValue: AppCalendarSystem.none.index) as int;
-    // Ensure index is valid
-    if (index >= 0 && index < AppCalendarSystem.values.length) {
-      return AppCalendarSystem.values[index];
-    }
-    return AppCalendarSystem.none;
-  }
-
-  Future<void> setSystem(AppCalendarSystem system) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, system.index);
-    state = system;
-  }
-}
-
-final secondaryCalendarSystemProvider =
-    NotifierProvider<SecondaryCalendarSystemNotifier, AppCalendarSystem>(
-      () => SecondaryCalendarSystemNotifier(),
-    );
+final secondaryCalendarSystemProvider = Provider<AppCalendarSystem>((ref) {
+  return ref.watch(calendarPreferencesProvider).secondaryCalendarSystem;
+});
 
 // --- Hindu Month System (Amanta/Purnimant) ---
 
-/// Notifier for Hindu Month System preference (Amanta vs Purnimant)
-class HinduMonthSystemNotifier extends Notifier<HinduMonthSystem> {
-  static const _boxName = 'settings';
-  static const _key = 'hindu_month_system';
-
-  @override
-  HinduMonthSystem build() {
-    final box = Hive.box(_boxName);
-    final index =
-        box.get(_key, defaultValue: HinduMonthSystem.amanta.index) as int;
-    // Ensure index is valid
-    if (index >= 0 && index < HinduMonthSystem.values.length) {
-      return HinduMonthSystem.values[index];
-    }
-    return HinduMonthSystem.amanta; // Default to Amanta
-  }
-
-  Future<void> setSystem(HinduMonthSystem system) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, system.index);
-    state = system;
-  }
-}
-
-final hinduMonthSystemProvider =
-    NotifierProvider<HinduMonthSystemNotifier, HinduMonthSystem>(
-      () => HinduMonthSystemNotifier(),
-    );
+final hinduMonthSystemProvider = Provider<HinduMonthSystem>((ref) {
+  return ref.watch(calendarPreferencesProvider).hinduMonthSystem;
+});
 
 // --- Hindu Year Era (Vikram/Shaka Samvat) ---
 
-/// Notifier for Hindu Year Era preference (Vikram Samvat vs Shaka Samvat)
-class HinduYearEraNotifier extends Notifier<HinduYearEra> {
-  static const _boxName = 'settings';
-  static const _key = 'hindu_year_era';
-
-  @override
-  HinduYearEra build() {
-    final box = Hive.box(_boxName);
-    final index =
-        box.get(_key, defaultValue: HinduYearEra.vikramSamvat.index) as int;
-    // Ensure index is valid
-    if (index >= 0 && index < HinduYearEra.values.length) {
-      return HinduYearEra.values[index];
-    }
-    return HinduYearEra.vikramSamvat; // Default to Vikram Samvat
-  }
-
-  Future<void> setEra(HinduYearEra era) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, era.index);
-    state = era;
-  }
-}
-
-final hinduYearEraProvider =
-    NotifierProvider<HinduYearEraNotifier, HinduYearEra>(
-      () => HinduYearEraNotifier(),
-    );
+final hinduYearEraProvider = Provider<HinduYearEra>((ref) {
+  return ref.watch(calendarPreferencesProvider).hinduYearEra;
+});
 
 // --- Tithi Display Mode (Paksha-based vs Continuous) ---
 
 enum TithiDisplayMode { pakshaBased, continuous30 }
 
-class TithiDisplayModeNotifier extends Notifier<TithiDisplayMode> {
-  static const _boxName = 'settings';
-  static const _key = 'tithi_display_mode';
-
-  @override
-  TithiDisplayMode build() {
-    final box = Hive.box(_boxName);
-    final index = box.get(_key, defaultValue: 0) as int;
-    if (index >= 0 && index < TithiDisplayMode.values.length) {
-      return TithiDisplayMode.values[index];
-    }
-    return TithiDisplayMode.pakshaBased;
-  }
-
-  Future<void> setMode(TithiDisplayMode mode) async {
-    final box = Hive.box(_boxName);
-    await box.put(_key, mode.index);
-    state = mode;
-  }
-}
-
-final tithiDisplayModeProvider =
-    NotifierProvider<TithiDisplayModeNotifier, TithiDisplayMode>(
-      () => TithiDisplayModeNotifier(),
-    );
+final tithiDisplayModeProvider = Provider<TithiDisplayMode>((ref) {
+  return ref.watch(calendarPreferencesProvider).tithiDisplayMode;
+});

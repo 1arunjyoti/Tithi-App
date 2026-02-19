@@ -24,12 +24,16 @@ class TempleService {
     double lat,
     double lon, {
     double radius = 5000,
+    int page = 0,
+    int pageSize = 80,
   }) async {
+    final requestLimit = ((page + 1) * pageSize).clamp(pageSize, 300);
+
     // Overpass QL query:
     // [out:json][timeout:25];node(around:radius,lat,lon)["amenity"="place_of_worship"]["religion"="hindu"];out;
     // Added [timeout:25] (seconds) to the query itself
     final query =
-        '[out:json][timeout:25];node(around:$radius,$lat,$lon)["amenity"="place_of_worship"]["religion"="hindu"];out;';
+        '[out:json][timeout:25];node(around:$radius,$lat,$lon)["amenity"="place_of_worship"]["religion"="hindu"];out $requestLimit;';
 
     final encodedQuery = Uri.encodeComponent(query);
 
@@ -56,24 +60,38 @@ class TempleService {
 
           const Distance distanceCalculator = Distance();
 
-          return elements.map((e) {
-            final temple = Temple.fromJson(e as Map<String, dynamic>);
+          final temples =
+              elements.map((e) {
+                final temple = Temple.fromJson(e as Map<String, dynamic>);
 
-            // Calculate distance
-            final dist = distanceCalculator.as(
-              LengthUnit.Meter,
-              LatLng(lat, lon),
-              LatLng(temple.latitude, temple.longitude),
-            );
+                // Calculate distance
+                final dist = distanceCalculator.as(
+                  LengthUnit.Meter,
+                  LatLng(lat, lon),
+                  LatLng(temple.latitude, temple.longitude),
+                );
 
-            return Temple(
-              id: temple.id,
-              name: temple.name,
-              latitude: temple.latitude,
-              longitude: temple.longitude,
-              distance: dist.toDouble(),
-            );
-          }).toList();
+                return Temple(
+                  id: temple.id,
+                  name: temple.name,
+                  latitude: temple.latitude,
+                  longitude: temple.longitude,
+                  distance: dist.toDouble(),
+                );
+              }).toList()..sort(
+                (a, b) => (a.distance ?? double.infinity).compareTo(
+                  b.distance ?? double.infinity,
+                ),
+              );
+
+          final start = page * pageSize;
+          if (start >= temples.length) {
+            return [];
+          }
+          final end = (start + pageSize) > temples.length
+              ? temples.length
+              : (start + pageSize);
+          return temples.sublist(start, end);
         } else if (response.statusCode == 429) {
           // Too many requests, try next server immediately
           if (kDebugMode) {

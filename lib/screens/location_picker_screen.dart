@@ -92,10 +92,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          l10n?.setHomeLocation ?? 'Set Home Location',
-          style: const TextStyle(color: Colors.black),
-        ),
+        title: Text(l10n?.setHomeLocation ?? 'Set Home Location'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -135,8 +132,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           ),
 
           // Center Pin
-          const Center(
-            child: Icon(Icons.location_on, color: Colors.red, size: 48),
+          Center(
+            child: Semantics(
+              label: l10n?.mapPinLocation ?? 'Map pin location',
+              child: const Icon(Icons.location_on, color: Colors.red, size: 48),
+            ),
           ),
 
           // Zoom Controls

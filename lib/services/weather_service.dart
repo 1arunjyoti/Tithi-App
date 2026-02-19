@@ -1,12 +1,43 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/weather_data.dart';
 
+enum WeatherErrorType { timeout, network, server, parsing, unknown }
+
+class WeatherError {
+  final WeatherErrorType type;
+  final String message;
+  final int? statusCode;
+
+  const WeatherError({
+    required this.type,
+    required this.message,
+    this.statusCode,
+  });
+}
+
+sealed class WeatherResult {
+  const WeatherResult();
+}
+
+class WeatherSuccess extends WeatherResult {
+  final WeatherData data;
+
+  const WeatherSuccess(this.data);
+}
+
+class WeatherFailure extends WeatherResult {
+  final WeatherError error;
+
+  const WeatherFailure(this.error);
+}
+
 class WeatherService {
   static const String baseUrl = 'https://api.open-meteo.com/v1';
 
-  Future<WeatherData?> fetchCurrentWeather(double lat, double lng) async {
+  Future<WeatherResult> fetchCurrentWeather(double lat, double lng) async {
     try {
       final url = Uri.parse(
         '$baseUrl/forecast?latitude=$lat&longitude=$lng'
@@ -15,26 +46,50 @@ class WeatherService {
         '&timezone=auto&forecast_days=3',
       );
 
-      final response = await http
-          .get(url)
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw Exception('Weather API request timed out');
-            },
-          );
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        return WeatherData.fromOpenMeteo(data);
+        try {
+          final data = json.decode(response.body);
+          return WeatherSuccess(WeatherData.fromOpenMeteo(data));
+        } catch (e) {
+          return WeatherFailure(
+            WeatherError(
+              type: WeatherErrorType.parsing,
+              message: 'Weather response parsing failed: $e',
+            ),
+          );
+        }
       } else {
-        throw Exception('Weather API returned status ${response.statusCode}');
+        return WeatherFailure(
+          WeatherError(
+            type: WeatherErrorType.server,
+            message: 'Weather API returned status ${response.statusCode}',
+            statusCode: response.statusCode,
+          ),
+        );
       }
+    } on TimeoutException {
+      return const WeatherFailure(
+        WeatherError(
+          type: WeatherErrorType.timeout,
+          message: 'Weather API request timed out',
+        ),
+      );
+    } on http.ClientException catch (e) {
+      return WeatherFailure(
+        WeatherError(
+          type: WeatherErrorType.network,
+          message: 'Weather network error: $e',
+        ),
+      );
     } catch (e) {
       if (kDebugMode) {
         print('Weather service error: $e');
       }
-      return null;
+      return WeatherFailure(
+        WeatherError(type: WeatherErrorType.unknown, message: '$e'),
+      );
     }
   }
 }

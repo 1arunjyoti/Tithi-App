@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
+import 'storage_service.dart';
+
 // For web platform detection
 const bool _kIsWeb = kIsWeb;
 
@@ -37,16 +39,15 @@ class LocationData {
 /// Uses native Android LocationManager (not Google Play Services)
 /// Uses OpenStreetMap Nominatim for reverse geocoding
 class LocationService {
-  static final LocationService _instance = LocationService._internal();
-  factory LocationService() => _instance;
-  LocationService._internal();
+  LocationService();
 
-  static const String _boxName = 'location_settings';
   static const String _keyFirstLaunch = 'first_launch';
   static const String _keyLocationEnabled = 'location_enabled';
   static const String _keyCachedCity = 'cached_city';
   static const String _keyCachedLat = 'cached_lat';
   static const String _keyCachedLng = 'cached_lng';
+  static const String _keyCachedAtMs = 'cached_at_ms';
+  static const String _keyLastBackgroundAtMs = 'last_background_at_ms';
   // Home location keys
   static const String _keyHomeLat = 'home_lat';
   static const String _keyHomeLng = 'home_lng';
@@ -60,6 +61,7 @@ class LocationService {
   LocationData? _memoryCachedLocation;
   DateTime? _lastFetchTime;
   static const Duration _cacheDuration = Duration(seconds: 10);
+  static const Duration _backgroundRefreshThreshold = Duration(minutes: 15);
 
   /// Initialize the location service
   Future<void> init() async {
@@ -67,7 +69,7 @@ class LocationService {
 
     try {
       // Initialize Hive box for settings persistence
-      _box = await Hive.openBox(_boxName);
+      _box = await StorageService().openLocationSettingsBox();
 
       // Initialize Nominatim geocoding with cache
       await NominatimGeocoding.init(reqCacheNum: 50);
@@ -148,6 +150,21 @@ class LocationService {
         print('Joining pending location request');
       }
       return _pendingLocationRequest;
+    }
+
+    // Warm-cache strategy:
+    // If we have persisted location and app has not been backgrounded for
+    // longer than threshold, use cached location immediately.
+    final cachedLocation = await _getCachedLocation();
+    if (cachedLocation != null && !await _shouldRefreshAfterBackground()) {
+      if (kDebugMode) {
+        print(
+          'Returning persisted warm cache (background <= ${_backgroundRefreshThreshold.inMinutes}m)',
+        );
+      }
+      _memoryCachedLocation = cachedLocation;
+      _lastFetchTime = DateTime.now();
+      return cachedLocation;
     }
 
     // Create new request
@@ -286,13 +303,16 @@ class LocationService {
     final lat = _box?.get(_keyCachedLat) as double?;
     final lng = _box?.get(_keyCachedLng) as double?;
     final city = _box?.get(_keyCachedCity) as String?;
+    final cachedAtMs = _box?.get(_keyCachedAtMs) as int?;
 
     if (lat != null && lng != null) {
       return LocationData(
         latitude: lat,
         longitude: lng,
         cityName: city,
-        timestamp: DateTime.now(),
+        timestamp: cachedAtMs != null
+            ? DateTime.fromMillisecondsSinceEpoch(cachedAtMs)
+            : DateTime.now(),
       );
     }
 
@@ -307,9 +327,12 @@ class LocationService {
   ) async {
     await _box?.put(_keyCachedLat, latitude);
     await _box?.put(_keyCachedLng, longitude);
+    await _box?.put(_keyCachedAtMs, DateTime.now().millisecondsSinceEpoch);
     if (cityName != null) {
       await _box?.put(_keyCachedCity, cityName);
     }
+    // Fresh GPS fetch satisfied any pending background-based refresh.
+    await _box?.delete(_keyLastBackgroundAtMs);
   }
 
   /// Clear cached location data
@@ -318,9 +341,27 @@ class LocationService {
     await _box?.delete(_keyCachedLat);
     await _box?.delete(_keyCachedLng);
     await _box?.delete(_keyCachedCity);
+    await _box?.delete(_keyCachedAtMs);
     if (kDebugMode) {
       print('Location cache cleared');
     }
+  }
+
+  /// Records when app transitions to background.
+  Future<void> markAppBackgrounded() async {
+    if (!_isInitialized) return;
+    await _box?.put(_keyLastBackgroundAtMs, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  Future<bool> _shouldRefreshAfterBackground() async {
+    final backgroundAtMs = _box?.get(_keyLastBackgroundAtMs) as int?;
+    if (backgroundAtMs == null) {
+      return false;
+    }
+
+    final backgroundAt = DateTime.fromMillisecondsSinceEpoch(backgroundAtMs);
+    final elapsed = DateTime.now().difference(backgroundAt);
+    return elapsed > _backgroundRefreshThreshold;
   }
 
   /// SET home location manually

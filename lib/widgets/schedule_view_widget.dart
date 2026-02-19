@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../l10n/app_localizations.dart';
 import '../models/panchang_data.dart';
 import '../models/hindu_month_system.dart';
 import '../providers/panchang_provider.dart';
@@ -29,9 +30,24 @@ class HinduDateData {
   });
 }
 
+class ScheduleDateData {
+  final PanchangData panchang;
+  final ({int day, String month, int year})? bengaliDate;
+  final HinduDateData? hinduDate;
+
+  const ScheduleDateData({
+    required this.panchang,
+    required this.bengaliDate,
+    required this.hinduDate,
+  });
+}
+
 /// Provider for Hindu date with settings applied
 final hinduDateForScheduleProvider =
-    FutureProvider.family<HinduDateData?, DateTime>((ref, date) async {
+    FutureProvider.autoDispose.family<HinduDateData?, DateTime>((
+      ref,
+      date,
+    ) async {
       final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
       final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
 
@@ -80,10 +96,10 @@ final hinduDateForScheduleProvider =
 
 /// Provider for Bengali date for a specific date
 final bengaliDateForScheduleProvider =
-    FutureProvider.family<({int day, String month, int year})?, DateTime>((
-      ref,
-      date,
-    ) async {
+    FutureProvider.autoDispose.family<
+      ({int day, String month, int year})?,
+      DateTime
+    >((ref, date) async {
       final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
       final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
 
@@ -99,6 +115,25 @@ final bengaliDateForScheduleProvider =
       } catch (_) {
         return null;
       }
+    });
+
+final scheduleDateDataProvider =
+    FutureProvider.autoDispose.family<ScheduleDateData, DateTime>((
+      ref,
+      date,
+    ) async {
+      final panchang = await ref.watch(panchangForDateProvider(date).future);
+
+      final results = await Future.wait<Object?>([
+        ref.watch(bengaliDateForScheduleProvider(date).future),
+        ref.watch(hinduDateForScheduleProvider(date).future),
+      ]);
+
+      return ScheduleDateData(
+        panchang: panchang,
+        bengaliDate: results[0] as ({int day, String month, int year})?,
+        hinduDate: results[1] as HinduDateData?,
+      );
     });
 
 /// Schedule View Widget - displays events in a vertical scrollable list
@@ -182,7 +217,9 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
       // Update focused month provider (for sync with calendar view)
       Future.microtask(() {
         if (mounted) {
-          ref.read(cp.focusedMonthProvider.notifier).state = visibleDate;
+            ref
+              .read(cp.focusedMonthProvider.notifier)
+              .setFocusedMonth(visibleDate);
         }
       });
     }
@@ -273,7 +310,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
 
     if (picked != null) {
       // Update selected date provider which triggers the listener
-      ref.read(cp.selectedDateProvider.notifier).state = picked;
+      ref.read(cp.selectedDateProvider.notifier).setDate(picked);
     }
   }
 
@@ -421,10 +458,10 @@ class _ScheduleDateItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final panchangAsync = ref.watch(panchangForDateProvider(date));
+    final dateDataAsync = ref.watch(scheduleDateDataProvider(date));
 
-    return panchangAsync.when(
-      data: (panchang) => _buildDateRow(context, ref, panchang),
+    return dateDataAsync.when(
+      data: (dateData) => _buildDateRow(context, ref, dateData),
       loading: () => _buildLoadingRow(context),
       error: (error, _) => _buildErrorRow(context, error),
     );
@@ -433,20 +470,16 @@ class _ScheduleDateItem extends ConsumerWidget {
   Widget _buildDateRow(
     BuildContext context,
     WidgetRef ref,
-    PanchangData panchang,
+    ScheduleDateData dateData,
   ) {
+    final panchang = dateData.panchang;
     final monthFormat = DateFormat('MMM');
     final dayFormat = DateFormat('d');
     final weekdayFormat = DateFormat('EEE');
 
     final hasEvents = panchang.hasFestivals;
-
-    // Fetch calendar dates if needed
-    final bengaliDateAsync = ref.watch(bengaliDateForScheduleProvider(date));
-    final bengaliDate = bengaliDateAsync.whenOrNull(data: (d) => d);
-
-    final hinduDateAsync = ref.watch(hinduDateForScheduleProvider(date));
-    final hinduDate = hinduDateAsync.whenOrNull(data: (d) => d);
+    final bengaliDate = dateData.bengaliDate;
+    final hinduDate = dateData.hinduDate;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -716,6 +749,7 @@ class _ScheduleDateItem extends ConsumerWidget {
 
   /// Builds sunrise/sunset time row
   Widget _buildSunTimesRow(BuildContext context, PanchangData panchang) {
+    final l10n = AppLocalizations.of(context)!;
     final timeFormat = DateFormat('h:mm a');
 
     if (panchang.sunrise == null && panchang.sunset == null) {
@@ -727,10 +761,17 @@ class _ScheduleDateItem extends ConsumerWidget {
       child: Row(
         children: [
           if (panchang.sunrise != null) ...[
-            Text('🌅', style: context.textTheme.labelSmall),
+            Semantics(
+              label: l10n.sunrise,
+              child: Icon(
+                Icons.wb_sunny_outlined,
+                size: 14,
+                color: context.colors.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
             const SizedBox(width: 4),
             Text(
-              timeFormat.format(panchang.sunrise!),
+              '${l10n.sunrise}: ${timeFormat.format(panchang.sunrise!)}',
               style: context.textTheme.labelSmall?.copyWith(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),
@@ -739,10 +780,17 @@ class _ScheduleDateItem extends ConsumerWidget {
           if (panchang.sunrise != null && panchang.sunset != null)
             const SizedBox(width: 12),
           if (panchang.sunset != null) ...[
-            Text('🌇', style: context.textTheme.labelSmall),
+            Semantics(
+              label: l10n.sunset,
+              child: Icon(
+                Icons.nightlight_round,
+                size: 14,
+                color: context.colors.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
             const SizedBox(width: 4),
             Text(
-              timeFormat.format(panchang.sunset!),
+              '${l10n.sunset}: ${timeFormat.format(panchang.sunset!)}',
               style: context.textTheme.labelSmall?.copyWith(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),

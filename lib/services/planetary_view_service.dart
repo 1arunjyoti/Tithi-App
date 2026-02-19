@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:jyotish/jyotish.dart';
 
 /// View mode for solar system visualization
@@ -18,9 +17,19 @@ final planetaryViewServiceProvider = Provider<PlanetaryViewService>((ref) {
 });
 
 /// Provider for current view mode
-final solarSystemViewModeProvider = StateProvider<SolarSystemViewMode>((ref) {
-  return SolarSystemViewMode.heliocentric;
-});
+class SolarSystemViewModeNotifier extends Notifier<SolarSystemViewMode> {
+  @override
+  SolarSystemViewMode build() => SolarSystemViewMode.heliocentric;
+
+  void setViewMode(SolarSystemViewMode viewMode) {
+    state = viewMode;
+  }
+}
+
+final solarSystemViewModeProvider =
+    NotifierProvider<SolarSystemViewModeNotifier, SolarSystemViewMode>(
+      SolarSystemViewModeNotifier.new,
+    );
 
 /// Data class representing a planet's visual position
 class PlanetVisualData {

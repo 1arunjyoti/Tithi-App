@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../screens/settings_screen.dart';
 import '../screens/temple_map_screen.dart';
 import '../screens/moon_phases_screen.dart';
@@ -208,16 +207,11 @@ class _DrawerMenuList extends StatelessWidget {
               ShareParams(
                 text:
                     l10n?.shareAppMessage ??
-                    'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
+                    'Check out Tithi - The Vedic Calendar App! Download now: https://tithi.app',
+                //TODO: Add website hosted link
               ),
             );
           },
-        ),
-
-        _DrawerMenuItem(
-          icon: Icons.star_rounded,
-          title: l10n?.rateUs ?? 'Rate Us',
-          onTap: () => _launchRating(context),
         ),
 
         // About item
@@ -235,22 +229,6 @@ class _DrawerMenuList extends StatelessWidget {
       navigator.pop();
     }
     navigator.push(MaterialPageRoute(builder: (context) => screen));
-  }
-
-  Future<void> _launchRating(BuildContext context) async {
-    final navigator = Navigator.of(context);
-    final isWideScreen = ResponsiveLayout.isTabletOrLarger(context);
-
-    // Only pop if we are in a drawer
-    if (!isWideScreen) {
-      navigator.pop();
-    }
-    final Uri url = Uri.parse(
-      'https://play.google.com/store/apps/details?id=app.tithi.pro',
-    );
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
   }
 }
 

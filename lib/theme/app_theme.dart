@@ -281,11 +281,8 @@ class AppTheme {
     final isPureDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;
 
-    // Check accessibility overrides
-    bool isHighContrast = false;
-    if (ref != null) {
-      isHighContrast = ref.watch(accessibilityProvider).highContrast;
-    }
+    final isHighContrast =
+        ref?.read(glassmorphismConfigProvider).isHighContrast ?? false;
 
     // High Contrast Mode / Pure Dark
     if (isPureDark || isHighContrast) {

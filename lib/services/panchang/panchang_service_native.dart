@@ -1,14 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
 import '../../models/festival.dart';
 import '../panchang_init/panchang_init.dart';
-
-// Provider for PanchangService
-final panchangServiceProvider = Provider<PanchangService>((ref) {
-  return PanchangService();
-});
 
 /// Native (mobile/desktop) implementation of PanchangService
 /// Uses FFI-based Swiss Ephemeris for accurate calculations
@@ -168,7 +162,12 @@ class PanchangService {
     double latitude = 28.6139,
     double longitude = 77.2090,
   }) async {
-    var date = startDate ?? DateTime.now();
+    final baseDate = startDate ?? DateTime.now();
+    var date = _estimateFestivalSearchStart(baseDate, festival);
+
+    if (date.isBefore(baseDate)) {
+      date = baseDate;
+    }
 
     // Limit search to ~380 days
     for (int i = 0; i < 380; i++) {
@@ -205,6 +204,74 @@ class PanchangService {
       date = date.add(const Duration(days: 1));
     }
 
+    // Fallback: full brute-force from base date if heuristic window missed
+    date = baseDate;
+    for (int i = 0; i < 380; i++) {
+      final checkDate = DateTime(date.year, date.month, date.day, 6);
+
+      final rawTithi = await calculateTithi(
+        checkDate,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final tithiIndex = rawTithi.floor();
+      String paksha;
+      int tithiNumber;
+      if (tithiIndex <= 15) {
+        paksha = 'Shukla';
+        tithiNumber = tithiIndex;
+      } else {
+        paksha = 'Krishna';
+        tithiNumber = tithiIndex - 15;
+      }
+
+      final masa = await calculateMasa(
+        checkDate,
+        rawTithi,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      if (festival.matchesTithi(paksha, tithiNumber, masa)) {
+        return date;
+      }
+
+      date = date.add(const Duration(days: 1));
+    }
+
     return null;
+  }
+
+  DateTime _estimateFestivalSearchStart(DateTime from, Festival festival) {
+    final masa = festival.panchangRules.masa;
+    if (masa.isEmpty || masa == '*') {
+      return from;
+    }
+
+    const approxMonth = {
+      'Chaitra': 3,
+      'Vaishakha': 4,
+      'Jyeshtha': 5,
+      'Ashadha': 6,
+      'Shravana': 7,
+      'Bhadrapada': 8,
+      'Ashwin': 9,
+      'Kartika': 10,
+      'Margashirsha': 11,
+      'Pausha': 12,
+      'Magha': 1,
+      'Phalguna': 2,
+    };
+
+    final targetMonth = approxMonth[masa];
+    if (targetMonth == null) return from;
+
+    var year = from.year;
+    if (targetMonth < from.month - 1) {
+      year += 1;
+    }
+
+    return DateTime(year, targetMonth);
   }
 }

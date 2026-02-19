@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import '../models/eclipse.dart';
 import '../services/eclipse_service.dart';
 import 'location_provider.dart';
@@ -22,15 +21,22 @@ final upcomingEclipsesProvider = FutureProvider<List<Eclipse>>((ref) async {
 });
 
 /// Provider for selected eclipse (for detail view)
-final selectedEclipseProvider = StateProvider<Eclipse?>((ref) {
-  return null;
-});
+class SelectedEclipseNotifier extends Notifier<Eclipse?> {
+  @override
+  Eclipse? build() => null;
+
+  void setSelected(Eclipse? eclipse) {
+    state = eclipse;
+  }
+}
+
+final selectedEclipseProvider = NotifierProvider<SelectedEclipseNotifier, Eclipse?>(
+  SelectedEclipseNotifier.new,
+);
 
 /// Provider for eclipse with local visibility details
-final eclipseWithVisibilityProvider = FutureProvider.family<Eclipse, Eclipse>((
-  ref,
-  eclipse,
-) async {
+final eclipseWithVisibilityProvider =
+    FutureProvider.autoDispose.family<Eclipse, Eclipse>((ref, eclipse) async {
   final eclipseService = ref.watch(eclipseServiceProvider);
   final locationData = ref.watch(currentLocationProvider);
 
@@ -43,4 +49,4 @@ final eclipseWithVisibilityProvider = FutureProvider.family<Eclipse, Eclipse>((
     loading: () => eclipse,
     error: (_, _) => eclipse,
   );
-});
+    });

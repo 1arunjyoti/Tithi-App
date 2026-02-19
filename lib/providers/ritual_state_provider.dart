@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import '../services/storage_service.dart';
 
 /// Provider to manage the completion state of rituals
 final ritualStateProvider =
@@ -8,7 +9,6 @@ final ritualStateProvider =
     );
 
 class RitualStateNotifier extends Notifier<Map<String, bool>> {
-  static const String _boxName = 'ritual_completion';
   Box? _box;
 
   @override
@@ -22,7 +22,7 @@ class RitualStateNotifier extends Notifier<Map<String, bool>> {
   /// Initialize the Hive box and load saved states
   Future<void> _init() async {
     if (_box != null) return;
-    _box = await Hive.openBox(_boxName);
+    _box = await StorageService().openRitualCompletionBox();
     _loadState();
   }
 

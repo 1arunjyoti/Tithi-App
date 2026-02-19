@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../models/eclipse.dart';
 import '../providers/eclipse_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/responsive_layout.dart';
 
 /// Screen displaying upcoming eclipses
 class EclipseScreen extends ConsumerWidget {
@@ -23,30 +24,32 @@ class EclipseScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: SafeArea(
-          child: eclipsesAsync.when(
-            data: (eclipses) => _buildEclipseList(context, ref, eclipses),
-            loading: () =>
-                const Center(child: CircularProgressIndicator.adaptive()),
-            error: (e, _) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.errorLoadingData),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => ref.refresh(upcomingEclipsesProvider),
-                    child: Text(l10n.retry),
-                  ),
-                ],
+      body: RepaintBoundary(
+        child: Container(
+          decoration: AppTheme.backgroundDecoration(context),
+          child: SafeArea(
+            child: eclipsesAsync.when(
+              data: (eclipses) => _buildEclipseList(context, ref, eclipses),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator.adaptive()),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(l10n.errorLoadingData),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(upcomingEclipsesProvider),
+                      child: Text(l10n.retry),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -70,24 +73,24 @@ class EclipseScreen extends ConsumerWidget {
     final solarEclipses = eclipses.where((e) => e.type.isSolar).toList();
     final lunarEclipses = eclipses.where((e) => e.type.isLunar).toList();
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Solar Eclipses Section
-        if (solarEclipses.isNotEmpty) ...[
-          _buildSectionHeader(context, l10n.solarEclipses, '☀️'),
-          const SizedBox(height: 12),
-          ...solarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
-          const SizedBox(height: 24),
+    return CenteredContent(
+      maxWidth: 900,
+      child: ListView(
+        padding: ResponsiveLayout.responsivePadding(context),
+        children: [
+          if (solarEclipses.isNotEmpty) ...[
+            _buildSectionHeader(context, l10n.solarEclipses, '☀️'),
+            const SizedBox(height: 12),
+            ...solarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
+            const SizedBox(height: 24),
+          ],
+          if (lunarEclipses.isNotEmpty) ...[
+            _buildSectionHeader(context, l10n.lunarEclipses, '🌙'),
+            const SizedBox(height: 12),
+            ...lunarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
+          ],
         ],
-
-        // Lunar Eclipses Section
-        if (lunarEclipses.isNotEmpty) ...[
-          _buildSectionHeader(context, l10n.lunarEclipses, '🌙'),
-          const SizedBox(height: 12),
-          ...lunarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
-        ],
-      ],
+      ),
     );
   }
 

@@ -3,14 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/festival.dart';
+import 'storage_service.dart';
 
 /// Repository for handling Festival data persistence with Hive
 class FestivalRepository {
   static const String boxName = 'festivals';
   static const String settingsBoxName = 'festival_settings';
-
-  /// Increment this version when festivals.json is updated to force re-seeding
-  static const int festivalsVersion = 1;
 
   /// Cached festival list to avoid repeated toList() calls
   List<Festival>? _cachedFestivals;
@@ -20,8 +18,12 @@ class FestivalRepository {
   /// Opens the Hive box and seeds data from JSON if the box is empty
   /// or if the festivals version has changed.
   Future<void> init() async {
-    final box = await Hive.openBox<Festival>(boxName);
-    final settingsBox = await Hive.openBox<int>(settingsBoxName);
+    final storageService = StorageService();
+    final box = await storageService.openFestivalsBox();
+    final settingsBox = await storageService.openFestivalSettingsBox();
+
+    final jsonString = await rootBundle.loadString('assets/festivals.json');
+    final festivalsVersion = _versionFromJsonContent(jsonString);
 
     final storedVersion = settingsBox.get('version', defaultValue: 0);
     final needsReseed = box.isEmpty || storedVersion != festivalsVersion;
@@ -32,7 +34,7 @@ class FestivalRepository {
       );
       // Clear old data and re-seed
       await box.clear();
-      await _seedData(box);
+      await _seedData(box, jsonString);
       // Update stored version
       await settingsBox.put('version', festivalsVersion);
     } else {
@@ -50,17 +52,15 @@ class FestivalRepository {
     if (_cachedFestivals != null) {
       return _cachedFestivals!;
     }
-    // Fallback if cache is null (shouldn't happen after init)
-    final box = Hive.box<Festival>(boxName);
+    final box = StorageService().getFestivalsBox();
     _cachedFestivals = box.values.toList();
     return _cachedFestivals!;
   }
 
   /// Seed data from the asset JSON file
-  Future<void> _seedData(Box<Festival> box) async {
+  Future<void> _seedData(Box<Festival> box, String jsonString) async {
     debugPrint('Seeding festivals from JSON to Hive...');
     try {
-      final jsonString = await rootBundle.loadString('assets/festivals.json');
       final List<dynamic> jsonList = json.decode(jsonString);
       final festivals = jsonList.map((j) => Festival.fromJson(j)).toList();
 
@@ -75,5 +75,13 @@ class FestivalRepository {
       debugPrint('Error seeding festival data: $e');
       rethrow;
     }
+  }
+
+  int _versionFromJsonContent(String jsonContent) {
+    var hash = 0;
+    for (final rune in jsonContent.runes) {
+      hash = ((hash * 31) + rune) & 0x7fffffff;
+    }
+    return hash;
   }
 }

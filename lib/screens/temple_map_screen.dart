@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/temple.dart';
 import '../services/temple_service.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart'; // Added
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added
 import '../providers/location_provider.dart'; // Added
+import '../widgets/responsive_layout.dart';
 
 class TempleMapScreen extends ConsumerStatefulWidget {
   const TempleMapScreen({super.key});
@@ -24,10 +28,20 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   List<Temple> _temples = [];
   bool _isLoading = false;
   LatLng? _userLocation;
+  int _currentPage = 0;
+  bool _hasMoreTemples = true;
+  static const int _pageSize = 80;
+  Timer? _mapMoveDebounce;
 
   // Default center (India)
   LatLng _center = const LatLng(20.5937, 78.9629);
   double _zoom = 5.0;
+
+  @override
+  void dispose() {
+    _mapMoveDebounce?.cancel();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -47,7 +61,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
             _center = _userLocation!;
             _zoom = 14.0;
           });
-          await _fetchTemples();
+          await _fetchTemples(force: true);
         }
       }
     } finally {
@@ -57,28 +71,74 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
     }
   }
 
-  Future<void> _fetchTemples() async {
-    if (_isLoading) return;
+  Future<void> _fetchTemples({bool reset = true, bool force = false}) async {
+    if (_isLoading && !force) return;
+
+    if (reset) {
+      _currentPage = 0;
+      _hasMoreTemples = true;
+    } else if (!_hasMoreTemples) {
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
       // Use current map center to fetch
       final center = _mapController.camera.center;
+      final zoom = _mapController.camera.zoom;
+      final radius = _radiusFromZoom(zoom);
       final temples = await _templeService.fetchNearbyTemples(
         center.latitude,
         center.longitude,
+        radius: radius,
+        page: _currentPage,
       );
 
       if (mounted) {
         setState(() {
-          _temples = temples;
+          if (reset) {
+            _temples = temples;
+          } else {
+            final existingIds = _temples.map((t) => t.id).toSet();
+            _temples.addAll(
+              temples.where((temple) => !existingIds.contains(temple.id)),
+            );
+          }
+          _hasMoreTemples = temples.length == _pageSize;
+          if (temples.isNotEmpty) {
+            _currentPage++;
+          }
         });
+      }
+    } catch (_) {
+      if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.templeSearchFailed)));
       }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  double _radiusFromZoom(double zoom) {
+    if (zoom >= 15) return 2500;
+    if (zoom >= 13) return 5000;
+    if (zoom >= 11) return 9000;
+    return 15000;
+  }
+
+  void _onMapPositionChanged(MapCamera camera, bool hasGesture) {
+    if (!hasGesture) return;
+    _mapMoveDebounce?.cancel();
+    _mapMoveDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _fetchTemples();
+      }
+    });
   }
 
   void _onMapReady() {
@@ -89,9 +149,16 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final rightOffset = ResponsiveLayout.value(
+      context,
+      mobile: 16.0,
+      tablet: 24.0,
+      desktop: 32.0,
+    );
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nearby Temples'),
+        title: Text(l10n.nearbyTemples),
         actions: [
           if (_isLoading)
             const Padding(
@@ -112,6 +179,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               initialCenter: _center,
               initialZoom: _zoom,
               onMapReady: _onMapReady,
+              onPositionChanged: _onMapPositionChanged,
             ),
             children: [
               TileLayer(
@@ -136,12 +204,16 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                       point: LatLng(temple.latitude, temple.longitude),
                       width: 40,
                       height: 40,
-                      child: GestureDetector(
-                        onTap: () => _showTempleDetails(temple),
-                        child: const Icon(
-                          Icons.place,
-                          color: Colors.orange,
-                          size: 40,
+                      child: Semantics(
+                        button: true,
+                        label: '${l10n.templeMarker}: ${temple.name}',
+                        child: GestureDetector(
+                          onTap: () => _showTempleDetails(temple),
+                          child: Icon(
+                            Icons.place,
+                            color: context.colors.primary,
+                            size: 40,
+                          ),
                         ),
                       ),
                     ),
@@ -157,12 +229,20 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
             left: 0,
             right: 0,
             child: Center(
-              child: FloatingActionButton.extended(
-                onPressed: _fetchTemples,
-                icon: const Icon(Icons.search),
-                label: const Text('Search Here'),
-                backgroundColor: context.colors.primaryContainer,
-                foregroundColor: context.colors.onPrimaryContainer,
+              child: Semantics(
+                button: true,
+                label: l10n.searchHere,
+                child: FloatingActionButton.extended(
+                  onPressed: () => _fetchTemples(reset: _temples.isEmpty),
+                  icon: const Icon(Icons.search),
+                  label: Text(
+                    _temples.isNotEmpty && _hasMoreTemples
+                        ? l10n.loadMore
+                        : l10n.searchHere,
+                  ),
+                  backgroundColor: context.colors.primaryContainer,
+                  foregroundColor: context.colors.onPrimaryContainer,
+                ),
               ),
             ),
           ),
@@ -170,53 +250,65 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
           // Re-center button
           Positioned(
             bottom: 100,
-            right: 16,
-            child: FloatingActionButton(
-              heroTag: 'recenter',
-              mini: true,
-              onPressed: () {
-                if (_userLocation != null) {
-                  _mapController.move(_userLocation!, 15.0);
-                  _fetchTemples();
-                } else {
-                  _initLocation();
-                }
-              },
-              child: const Icon(Icons.my_location),
+            right: rightOffset,
+            child: Semantics(
+              button: true,
+              label: l10n.recenterMap,
+              child: FloatingActionButton(
+                heroTag: 'recenter',
+                mini: true,
+                onPressed: () {
+                  if (_userLocation != null) {
+                    _mapController.move(_userLocation!, 15.0);
+                    _fetchTemples();
+                  } else {
+                    _initLocation();
+                  }
+                },
+                child: const Icon(Icons.my_location),
+              ),
             ),
           ),
 
           // Zoom Controls
           Positioned(
             bottom: 170, // Above recenter button
-            right: 16,
+            right: rightOffset,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                FloatingActionButton(
-                  heroTag: 'zoom_in',
-                  mini: true,
-                  onPressed: () {
-                    final currentZoom = _mapController.camera.zoom;
-                    _mapController.move(
-                      _mapController.camera.center,
-                      currentZoom + 1,
-                    );
-                  },
-                  child: const Icon(Icons.add),
+                Semantics(
+                  button: true,
+                  label: l10n.zoomIn,
+                  child: FloatingActionButton(
+                    heroTag: 'zoom_in',
+                    mini: true,
+                    onPressed: () {
+                      final currentZoom = _mapController.camera.zoom;
+                      _mapController.move(
+                        _mapController.camera.center,
+                        currentZoom + 1,
+                      );
+                    },
+                    child: const Icon(Icons.add),
+                  ),
                 ),
                 const SizedBox(height: 8),
-                FloatingActionButton(
-                  heroTag: 'zoom_out',
-                  mini: true,
-                  onPressed: () {
-                    final currentZoom = _mapController.camera.zoom;
-                    _mapController.move(
-                      _mapController.camera.center,
-                      currentZoom - 1,
-                    );
-                  },
-                  child: const Icon(Icons.remove),
+                Semantics(
+                  button: true,
+                  label: l10n.zoomOut,
+                  child: FloatingActionButton(
+                    heroTag: 'zoom_out',
+                    mini: true,
+                    onPressed: () {
+                      final currentZoom = _mapController.camera.zoom;
+                      _mapController.move(
+                        _mapController.camera.center,
+                        currentZoom - 1,
+                      );
+                    },
+                    child: const Icon(Icons.remove),
+                  ),
                 ),
               ],
             ),
@@ -227,6 +319,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   }
 
   void _showTempleDetails(Temple temple) {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -244,7 +337,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               temple.name,
               style: context.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.orange,
+                color: context.colors.primary,
               ),
             ),
             const SizedBox(height: 8),
@@ -254,8 +347,10 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                 const SizedBox(width: 4),
                 Text(
                   temple.distance != null
-                      ? '${(temple.distance! / 1000).toStringAsFixed(1)} km away'
-                      : 'Nearby',
+                      ? l10n.kmAway(
+                          (temple.distance! / 1000).toStringAsFixed(1),
+                        )
+                      : l10n.nearby,
                   style: context.textTheme.bodyMedium,
                 ),
               ],
@@ -269,7 +364,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                   Navigator.pop(context);
                 },
                 icon: const Icon(Icons.directions),
-                label: const Text('Get Directions'),
+                label: Text(l10n.getDirections),
               ),
             ),
           ],
@@ -279,6 +374,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   }
 
   Future<void> _launchMaps(Temple temple) async {
+    final l10n = AppLocalizations.of(context)!;
     // Open Google Maps coordinates
     final googleMapsUrl = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${temple.latitude},${temple.longitude}',
@@ -298,14 +394,14 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Could not open maps')));
+          ).showSnackBar(SnackBar(content: Text(l10n.couldNotOpenMaps)));
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error launching maps: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorLaunchingMaps(e.toString()))),
+        );
       }
     }
   }
@@ -316,34 +412,38 @@ class _UserLocationMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: Colors.blue.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      label: l10n.yourLocation,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.colors.primary.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
           ),
-        ),
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 5,
-                offset: const Offset(0, 2),
-              ),
-            ],
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: context.colors.primary,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.colors.surface, width: 3),
+              boxShadow: [
+                BoxShadow(
+                  color: context.colors.shadow.withValues(alpha: 0.2),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

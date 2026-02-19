@@ -460,4 +460,262 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get today => 'Today';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String daysFromNow(int days) {
+    return '$days days';
+  }
+
+  @override
+  String get now => 'Now!';
+
+  @override
+  String get currentMoonPhase => 'Current moon phase visualization';
+
+  @override
+  String get mapPinLocation => 'Map pin location';
+
+  @override
+  String get nearbyTemples => 'Nearby Temples';
+
+  @override
+  String get searchHere => 'Search Here';
+
+  @override
+  String get loadMore => 'Load More';
+
+  @override
+  String get templeMarker => 'Temple marker';
+
+  @override
+  String kmAway(String distance) {
+    return '$distance km away';
+  }
+
+  @override
+  String get nearby => 'Nearby';
+
+  @override
+  String get getDirections => 'Get Directions';
+
+  @override
+  String get couldNotOpenMaps => 'Could not open maps';
+
+  @override
+  String errorLaunchingMaps(String error) {
+    return 'Error launching maps: $error';
+  }
+
+  @override
+  String get templeSearchFailed =>
+      'Unable to fetch nearby temples. Please try again.';
+
+  @override
+  String get yourLocation => 'Your location';
+
+  @override
+  String get newIntention => 'New Intention';
+
+  @override
+  String get whatIsYourSankalpa => 'What is your Sankalpa?';
+
+  @override
+  String get intentionTitle => 'Intention Title';
+
+  @override
+  String get intentionTitleHint => 'e.g., Chant Gayatri Mantra 108 times';
+
+  @override
+  String get pleaseEnterTitle => 'Please enter a title';
+
+  @override
+  String get descriptionOptional => 'Description (Optional)';
+
+  @override
+  String get descriptionHint => 'Add specific details or mantra text...';
+
+  @override
+  String get durationDays => 'Duration (Days)';
+
+  @override
+  String daysCount(int count) {
+    return '$count Days';
+  }
+
+  @override
+  String get custom => 'Custom';
+
+  @override
+  String get customDays => 'Custom Days';
+
+  @override
+  String get dailyReminderTime => 'Daily Reminder Time';
+
+  @override
+  String get createSankalpa => 'Create Sankalpa';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get sankalpaCreatedSuccessfully => 'Sankalpa created successfully!';
+
+  @override
+  String failedToSaveSankalpa(String error) {
+    return 'Failed to save Sankalpa: $error';
+  }
+
+  @override
+  String get mySankalpas => 'My Sankalpas';
+
+  @override
+  String get active => 'Active';
+
+  @override
+  String get completed => 'Completed';
+
+  @override
+  String get noCompletedIntentionsYet => 'No completed intentions yet';
+
+  @override
+  String get startNewSpiritualJourney => 'Start a new spiritual journey';
+
+  @override
+  String get deleteSankalpa => 'Delete Sankalpa?';
+
+  @override
+  String get deleteSankalpaMessage => 'This action cannot be undone.';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get markCompleteIncomplete => 'Mark Complete/Incomplete';
+
+  @override
+  String dayOf(int current, int total) {
+    return 'Day $current of $total';
+  }
+
+  @override
+  String get doneForToday => 'Done for today';
+
+  @override
+  String get markTodayAsDone => 'Mark today as done';
+
+  @override
+  String reminderAt(String time) {
+    return 'Reminder: $time';
+  }
+
+  @override
+  String completedOn(String date) {
+    return 'Completed on $date';
+  }
+
+  @override
+  String get weatherDetails => 'Weather Details';
+
+  @override
+  String get weatherDataUnavailable => 'Weather data unavailable';
+
+  @override
+  String errorMessage(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get weatherDataByOpenMeteo => 'Weather data by Open-Meteo';
+
+  @override
+  String weatherCondition(String condition) {
+    return 'Weather condition: $condition';
+  }
+
+  @override
+  String get sunrise => 'Sunrise';
+
+  @override
+  String get sunset => 'Sunset';
+
+  @override
+  String get humidity => 'Humidity';
+
+  @override
+  String get wind => 'Wind';
+
+  @override
+  String get realFeel => 'Real Feel';
+
+  @override
+  String get uvIndex => 'UV Index';
+
+  @override
+  String get forecast => 'Forecast';
+
+  @override
+  String daylightDuration(int hours, int minutes) {
+    return 'Daylight: ${hours}h ${minutes}m';
+  }
+
+  @override
+  String get searchFestivals => 'Search Festivals';
+
+  @override
+  String get permissionRequired => 'Permission Required';
+
+  @override
+  String get locationPermissionPermanentlyDenied =>
+      'Location permission was permanently denied. Please enable it in your device settings.';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get selectMonth => 'Select month';
+
+  @override
+  String get recenterMap => 'Recenter map';
+
+  @override
+  String get zoomIn => 'Zoom in';
+
+  @override
+  String get zoomOut => 'Zoom out';
+
+  @override
+  String get back30Days => 'Back 30 days';
+
+  @override
+  String get back1Day => 'Back 1 day';
+
+  @override
+  String get forward1Day => 'Forward 1 day';
+
+  @override
+  String get forward30Days => 'Forward 30 days';
+
+  @override
+  String get playAnimation => 'Play animation';
+
+  @override
+  String get pauseAnimation => 'Pause animation';
+
+  @override
+  String get speedLabel => 'Speed';
+
+  @override
+  String get heliocentric => 'Heliocentric';
+
+  @override
+  String get geocentric => 'Geocentric';
+
+  @override
+  String get distance => 'Distance';
+
+  @override
+  String get orbit => 'Orbit';
 }

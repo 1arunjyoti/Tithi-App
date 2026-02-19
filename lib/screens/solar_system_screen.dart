@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/planetary_view_provider.dart';
 import '../services/planetary_view_service.dart';
 import '../widgets/solar_system_painter.dart';
+import '../widgets/responsive_layout.dart';
 import '../theme/app_theme.dart';
 
 /// Full-screen solar system visualization with interactive planets
@@ -82,8 +83,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             icon: const Icon(Icons.today),
             tooltip: l10n.goToToday,
             onPressed: () {
-              ref.read(planetaryViewDateProvider.notifier).state =
-                  DateTime.now();
+              ref
+                  .read(planetaryViewDateProvider.notifier)
+                  .setDate(DateTime.now());
             },
           ),
         ],
@@ -97,7 +99,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               Column(
                 children: [
                   // Top controls row
-                  _buildTopControls(context, theme, viewDate),
+                  _buildTopControls(context, theme, viewDate, l10n),
 
                   // Solar system visualization
                   Expanded(
@@ -138,7 +140,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   // Planet info panel (MOVED TO STACK)
 
                   // Time slider control
-                  _buildTimeSlider(context, theme, viewDate),
+                  _buildTimeSlider(context, theme, viewDate, l10n),
                 ],
               ),
 
@@ -149,7 +151,12 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               if (selectedPlanetData != null)
                 Positioned(
                   top: 100,
-                  right: 16,
+                  right: ResponsiveLayout.value(
+                    context,
+                    mobile: 16.0,
+                    tablet: 24.0,
+                    desktop: 32.0,
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 300),
                     child: _buildPlanetInfoPanel(
@@ -170,9 +177,18 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     BuildContext context,
     ThemeData theme,
     DateTime viewDate,
+    AppLocalizations l10n,
   ) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveLayout.value(
+          context,
+          mobile: 16.0,
+          tablet: 24.0,
+          desktop: 32.0,
+        ),
+        vertical: 8,
+      ),
       child: Row(
         children: [
           // View mode toggle
@@ -211,7 +227,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           _buildModeChip(
             context,
             label: '♈',
-            tooltip: 'Toggle Zodiac Ring',
+            tooltip: l10n.zodiacSign,
             isSelected: _showZodiac,
             onTap: () => setState(() => _showZodiac = !_showZodiac),
           ),
@@ -224,6 +240,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     BuildContext context,
     ThemeData theme,
     DateTime viewDate,
+    AppLocalizations l10n,
   ) {
     // Time slider spans from -1 year to +1 year
     final now = DateTime.now();
@@ -235,7 +252,22 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     final sliderValue = daysDiff.clamp(0.0, 730.0);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: EdgeInsets.fromLTRB(
+        ResponsiveLayout.value(
+          context,
+          mobile: 16.0,
+          tablet: 24.0,
+          desktop: 32.0,
+        ),
+        8,
+        ResponsiveLayout.value(
+          context,
+          mobile: 16.0,
+          tablet: 24.0,
+          desktop: 32.0,
+        ),
+        16,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.8),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -269,23 +301,26 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               _buildTimeButton(
                 context,
                 icon: Icons.fast_rewind_rounded,
+                tooltip: l10n.back30Days,
                 onPressed: () => _adjustDate(-30),
               ),
               // Backward (1 day)
               _buildTimeButton(
                 context,
                 icon: Icons.skip_previous_rounded,
+                tooltip: l10n.back1Day,
                 onPressed: () => _adjustDate(-1),
               ),
               const SizedBox(width: 8),
               // Today button
               FilledButton.icon(
                 onPressed: () {
-                  ref.read(planetaryViewDateProvider.notifier).state =
-                      DateTime.now();
+                  ref
+                      .read(planetaryViewDateProvider.notifier)
+                      .setDate(DateTime.now());
                 },
                 icon: const Icon(Icons.today, size: 18),
-                label: const Text('Today'),
+                label: Text(l10n.today),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -298,12 +333,14 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               _buildTimeButton(
                 context,
                 icon: Icons.skip_next_rounded,
+                tooltip: l10n.forward1Day,
                 onPressed: () => _adjustDate(1),
               ),
               // Fast forward (1 month)
               _buildTimeButton(
                 context,
                 icon: Icons.fast_forward_rounded,
+                tooltip: l10n.forward30Days,
                 onPressed: () => _adjustDate(30),
               ),
             ],
@@ -330,11 +367,16 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   iconSize: 32,
                   color: theme.colorScheme.primary,
                   onPressed: _toggleAnimation,
-                  tooltip: _isAnimating ? 'Pause' : 'Play Animation',
+                  tooltip: _isAnimating
+                      ? l10n.pauseAnimation
+                      : l10n.playAnimation,
                 ),
                 if (_isAnimating) ...[
                   const SizedBox(width: 8),
-                  Text('Speed:', style: theme.textTheme.labelSmall),
+                  Text(
+                    '${l10n.speedLabel}:',
+                    style: theme.textTheme.labelSmall,
+                  ),
                   SizedBox(
                     width: 100,
                     child: Slider(
@@ -371,7 +413,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               max: 730,
               onChanged: (value) {
                 final newDate = minDate.add(Duration(days: value.round()));
-                ref.read(planetaryViewDateProvider.notifier).state = newDate;
+                ref.read(planetaryViewDateProvider.notifier).setDate(newDate);
               },
             ),
           ),
@@ -389,7 +431,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   ),
                 ),
                 Text(
-                  'Now',
+                  l10n.today,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -413,10 +455,12 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     BuildContext context, {
     required IconData icon,
     required VoidCallback onPressed,
+    required String tooltip,
   }) {
     final theme = Theme.of(context);
     return IconButton(
       onPressed: onPressed,
+      tooltip: tooltip,
       icon: Icon(icon),
       iconSize: 28,
       color: theme.colorScheme.primary,
@@ -430,15 +474,21 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     final currentDate = ref.read(planetaryViewDateProvider);
     // Convert days (double) to Duration (microseconds for precision)
     final micros = (days * 24 * 60 * 60 * 1000 * 1000).round();
-    ref.read(planetaryViewDateProvider.notifier).state = currentDate.add(
-      Duration(microseconds: micros),
-    );
+    ref
+        .read(planetaryViewDateProvider.notifier)
+        .setDate(currentDate.add(Duration(microseconds: micros)));
   }
 
   Widget _buildZoomControls(BuildContext context, ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Positioned(
       bottom: 210, // Move up slightly to clear slider area more comfortably
-      right: 16,
+      right: ResponsiveLayout.value(
+        context,
+        mobile: 16.0,
+        tablet: 24.0,
+        desktop: 32.0,
+      ),
       child: Column(
         // Vertical column for better mobile ergonomics
         mainAxisSize: MainAxisSize.min,
@@ -448,10 +498,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             onPressed: () {
               final currentZoom =
                   (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
-              ref.read(zoomLevelProvider.notifier).state = (currentZoom + 0.25)
-                  .clamp(0.5, 3.0);
+                ref
+                  .read(zoomLevelProvider.notifier)
+                  .setZoom((currentZoom + 0.25).clamp(0.5, 3.0));
             },
-            tooltip: 'Zoom In',
+            tooltip: l10n.zoomIn,
             child: const Icon(Icons.add),
           ),
           const SizedBox(height: 8),
@@ -474,10 +525,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             onPressed: () {
               final currentZoom =
                   (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
-              ref.read(zoomLevelProvider.notifier).state = (currentZoom - 0.25)
-                  .clamp(0.5, 3.0);
+                ref
+                  .read(zoomLevelProvider.notifier)
+                  .setZoom((currentZoom - 0.25).clamp(0.5, 3.0));
             },
-            tooltip: 'Zoom Out',
+            tooltip: l10n.zoomOut,
             child: const Icon(Icons.remove),
           ),
         ],
@@ -513,26 +565,31 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           zoomLevel: zoomLevel,
         );
 
-        return GestureDetector(
-          onTapDown: (details) {
-            final hitIndex = hitTester.hitTest(details.localPosition);
-            if (hitIndex != null) {
-              ref.read(selectedPlanetProvider.notifier).state =
-                  data.planets[hitIndex].planet;
-            } else {
-              ref.read(selectedPlanetProvider.notifier).state = null;
-            }
-          },
-          // RepaintBoundary isolates the expensive CustomPaint from other UI
-          child: RepaintBoundary(
-            child: CustomPaint(
-              size: size,
-              painter: SolarSystemPainter(
-                solarSystemData: data,
-                selectedPlanetIndex: selectedIndex,
-                isDark: isDark,
-                zoomLevel: zoomLevel,
-                showZodiac: showZodiac,
+        return Semantics(
+          label: AppLocalizations.of(context)!.planetPositions,
+          button: true,
+          child: GestureDetector(
+            onTapDown: (details) {
+              final hitIndex = hitTester.hitTest(details.localPosition);
+              if (hitIndex != null) {
+                ref
+                    .read(selectedPlanetProvider.notifier)
+                    .setPlanet(data.planets[hitIndex].planet);
+              } else {
+                ref.read(selectedPlanetProvider.notifier).setPlanet(null);
+              }
+            },
+            // RepaintBoundary isolates the expensive CustomPaint from other UI
+            child: RepaintBoundary(
+              child: CustomPaint(
+                size: size,
+                painter: SolarSystemPainter(
+                  solarSystemData: data,
+                  selectedPlanetIndex: selectedIndex,
+                  isDark: isDark,
+                  zoomLevel: zoomLevel,
+                  showZodiac: showZodiac,
+                ),
               ),
             ),
           ),
@@ -656,7 +713,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                 _buildInfoItem(
                   context,
                   icon: Icons.straighten_outlined,
-                  label: 'Distance',
+                  label: l10n.distance,
                   value: '${planetData.distanceAU!.toStringAsFixed(2)} AU',
                 ),
                 if (planetData.orbitalPeriodDays != null &&
@@ -664,7 +721,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   _buildInfoItem(
                     context,
                     icon: Icons.timelapse,
-                    label: 'Orbit',
+                    label: l10n.orbit,
                     value: _formatOrbitalPeriod(planetData.orbitalPeriodDays!),
                   ),
               ],
@@ -731,18 +788,20 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           _buildModeChip(
             context,
             label: '☀️',
-            tooltip: 'Heliocentric (Sun-centered)',
+            tooltip: AppLocalizations.of(context)!.heliocentric,
             isSelected: isHeliocentric,
-            onTap: () => ref.read(solarSystemViewModeProvider.notifier).state =
-                SolarSystemViewMode.heliocentric,
+            onTap: () => ref
+              .read(solarSystemViewModeProvider.notifier)
+              .setViewMode(SolarSystemViewMode.heliocentric),
           ),
           _buildModeChip(
             context,
             label: '🌍',
-            tooltip: 'Geocentric (Earth-centered)',
+            tooltip: AppLocalizations.of(context)!.geocentric,
             isSelected: !isHeliocentric,
-            onTap: () => ref.read(solarSystemViewModeProvider.notifier).state =
-                SolarSystemViewMode.geocentric,
+            onTap: () => ref
+              .read(solarSystemViewModeProvider.notifier)
+              .setViewMode(SolarSystemViewMode.geocentric),
           ),
         ],
       ),
@@ -760,17 +819,25 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
     return Tooltip(
       message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                : Colors.transparent,
+      child: Semantics(
+        button: true,
+        label: tooltip,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Text(label, style: const TextStyle(fontSize: 18)),
+            ),
           ),
-          child: Text(label, style: const TextStyle(fontSize: 18)),
         ),
       ),
     );
@@ -787,7 +854,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     );
 
     if (selectedDate != null && mounted) {
-      ref.read(planetaryViewDateProvider.notifier).state = selectedDate;
+      ref.read(planetaryViewDateProvider.notifier).setDate(selectedDate);
     }
   }
 }

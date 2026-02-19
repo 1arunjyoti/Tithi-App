@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icons.search_rounded,
                   color: context.colors.onSurface,
                 ),
-                tooltip: 'Search Festivals',
+                tooltip: l10n?.searchFestivals ?? 'Search Festivals',
                 onPressed: () {
                   showSearch(
                     context: context,
@@ -170,8 +170,8 @@ class _JumpToTodayFab extends ConsumerWidget {
     return FloatingActionButton(
       onPressed: () {
         final now = DateTime.now();
-        ref.read(focusedMonthProvider.notifier).state = now;
-        ref.read(selectedDateProvider.notifier).state = now;
+        ref.read(focusedMonthProvider.notifier).setFocusedMonth(now);
+        ref.read(selectedDateProvider.notifier).setDate(now);
       },
       tooltip: l10n?.goToToday ?? 'Go to Today',
       backgroundColor: context.colors.primary,

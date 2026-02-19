@@ -959,6 +959,474 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Today'**
   String get today;
+
+  /// Label for tomorrow
+  ///
+  /// In en, this message translates to:
+  /// **'Tomorrow'**
+  String get tomorrow;
+
+  /// Number of days until an event
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String daysFromNow(int days);
+
+  /// Label used when countdown has reached the target time
+  ///
+  /// In en, this message translates to:
+  /// **'Now!'**
+  String get now;
+
+  /// Accessibility label for custom moon phase paint widget
+  ///
+  /// In en, this message translates to:
+  /// **'Current moon phase visualization'**
+  String get currentMoonPhase;
+
+  /// Accessibility label for center map pin
+  ///
+  /// In en, this message translates to:
+  /// **'Map pin location'**
+  String get mapPinLocation;
+
+  /// Temple map screen title
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby Temples'**
+  String get nearbyTemples;
+
+  /// Button label to search nearby temples around current map center
+  ///
+  /// In en, this message translates to:
+  /// **'Search Here'**
+  String get searchHere;
+
+  /// Button label to load next page of nearby temples
+  ///
+  /// In en, this message translates to:
+  /// **'Load More'**
+  String get loadMore;
+
+  /// Accessibility prefix for temple map markers
+  ///
+  /// In en, this message translates to:
+  /// **'Temple marker'**
+  String get templeMarker;
+
+  /// Distance text for temple details
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km away'**
+  String kmAway(String distance);
+
+  /// Short text when exact temple distance is unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get nearby;
+
+  /// Button label to open maps for directions
+  ///
+  /// In en, this message translates to:
+  /// **'Get Directions'**
+  String get getDirections;
+
+  /// Error message when map app cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open maps'**
+  String get couldNotOpenMaps;
+
+  /// Error message when launching map app fails
+  ///
+  /// In en, this message translates to:
+  /// **'Error launching maps: {error}'**
+  String errorLaunchingMaps(String error);
+
+  /// Error message when nearby temple fetch fails
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to fetch nearby temples. Please try again.'**
+  String get templeSearchFailed;
+
+  /// Accessibility label for user's location marker
+  ///
+  /// In en, this message translates to:
+  /// **'Your location'**
+  String get yourLocation;
+
+  /// Title and button text for creating a new sankalpa
+  ///
+  /// In en, this message translates to:
+  /// **'New Intention'**
+  String get newIntention;
+
+  /// Prompt text on sankalpa create screen
+  ///
+  /// In en, this message translates to:
+  /// **'What is your Sankalpa?'**
+  String get whatIsYourSankalpa;
+
+  /// Label for sankalpa title input
+  ///
+  /// In en, this message translates to:
+  /// **'Intention Title'**
+  String get intentionTitle;
+
+  /// Hint text for sankalpa title field
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Chant Gayatri Mantra 108 times'**
+  String get intentionTitleHint;
+
+  /// Validation error for empty sankalpa title
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a title'**
+  String get pleaseEnterTitle;
+
+  /// Label for optional sankalpa description
+  ///
+  /// In en, this message translates to:
+  /// **'Description (Optional)'**
+  String get descriptionOptional;
+
+  /// Hint text for optional sankalpa description
+  ///
+  /// In en, this message translates to:
+  /// **'Add specific details or mantra text...'**
+  String get descriptionHint;
+
+  /// Label for sankalpa duration section
+  ///
+  /// In en, this message translates to:
+  /// **'Duration (Days)'**
+  String get durationDays;
+
+  /// Duration choice chip label
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Days'**
+  String daysCount(int count);
+
+  /// Label for custom duration option
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get custom;
+
+  /// Label for custom day value
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Days'**
+  String get customDays;
+
+  /// Section label for sankalpa reminder time
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Reminder Time'**
+  String get dailyReminderTime;
+
+  /// Primary action button to create sankalpa
+  ///
+  /// In en, this message translates to:
+  /// **'Create Sankalpa'**
+  String get createSankalpa;
+
+  /// Generic save action
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// Success message when sankalpa is created
+  ///
+  /// In en, this message translates to:
+  /// **'Sankalpa created successfully!'**
+  String get sankalpaCreatedSuccessfully;
+
+  /// Error message when saving sankalpa fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save Sankalpa: {error}'**
+  String failedToSaveSankalpa(String error);
+
+  /// Sankalpa list screen title
+  ///
+  /// In en, this message translates to:
+  /// **'My Sankalpas'**
+  String get mySankalpas;
+
+  /// Tab label for active items
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get active;
+
+  /// Tab label for completed items
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completed;
+
+  /// Empty state message for completed sankalpas
+  ///
+  /// In en, this message translates to:
+  /// **'No completed intentions yet'**
+  String get noCompletedIntentionsYet;
+
+  /// Empty state message for active sankalpas
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new spiritual journey'**
+  String get startNewSpiritualJourney;
+
+  /// Delete confirmation dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Sankalpa?'**
+  String get deleteSankalpa;
+
+  /// Delete confirmation dialog message
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone.'**
+  String get deleteSankalpaMessage;
+
+  /// Delete action label
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// Popup menu label to toggle sankalpa completion
+  ///
+  /// In en, this message translates to:
+  /// **'Mark Complete/Incomplete'**
+  String get markCompleteIncomplete;
+
+  /// Progress label in sankalpa card
+  ///
+  /// In en, this message translates to:
+  /// **'Day {current} of {total}'**
+  String dayOf(int current, int total);
+
+  /// Tooltip when today's sankalpa progress is already marked
+  ///
+  /// In en, this message translates to:
+  /// **'Done for today'**
+  String get doneForToday;
+
+  /// Tooltip to mark today's sankalpa progress
+  ///
+  /// In en, this message translates to:
+  /// **'Mark today as done'**
+  String get markTodayAsDone;
+
+  /// Reminder time label in sankalpa card
+  ///
+  /// In en, this message translates to:
+  /// **'Reminder: {time}'**
+  String reminderAt(String time);
+
+  /// Completion date label in history tab
+  ///
+  /// In en, this message translates to:
+  /// **'Completed on {date}'**
+  String completedOn(String date);
+
+  /// Weather bottom sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Weather Details'**
+  String get weatherDetails;
+
+  /// Shown when weather service returns no data
+  ///
+  /// In en, this message translates to:
+  /// **'Weather data unavailable'**
+  String get weatherDataUnavailable;
+
+  /// Generic error message with details
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String errorMessage(String error);
+
+  /// Credit text for weather source
+  ///
+  /// In en, this message translates to:
+  /// **'Weather data by Open-Meteo'**
+  String get weatherDataByOpenMeteo;
+
+  /// Accessibility label for weather icon
+  ///
+  /// In en, this message translates to:
+  /// **'Weather condition: {condition}'**
+  String weatherCondition(String condition);
+
+  /// Label for sunrise time
+  ///
+  /// In en, this message translates to:
+  /// **'Sunrise'**
+  String get sunrise;
+
+  /// Label for sunset time
+  ///
+  /// In en, this message translates to:
+  /// **'Sunset'**
+  String get sunset;
+
+  /// Weather metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Humidity'**
+  String get humidity;
+
+  /// Weather metric label
+  ///
+  /// In en, this message translates to:
+  /// **'Wind'**
+  String get wind;
+
+  /// Weather metric label for feels-like temperature
+  ///
+  /// In en, this message translates to:
+  /// **'Real Feel'**
+  String get realFeel;
+
+  /// Weather metric label
+  ///
+  /// In en, this message translates to:
+  /// **'UV Index'**
+  String get uvIndex;
+
+  /// Weather forecast section title
+  ///
+  /// In en, this message translates to:
+  /// **'Forecast'**
+  String get forecast;
+
+  /// Daylight duration text
+  ///
+  /// In en, this message translates to:
+  /// **'Daylight: {hours}h {minutes}m'**
+  String daylightDuration(int hours, int minutes);
+
+  /// Tooltip text for opening festival search
+  ///
+  /// In en, this message translates to:
+  /// **'Search Festivals'**
+  String get searchFestivals;
+
+  /// Title for permission required dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Permission Required'**
+  String get permissionRequired;
+
+  /// Message shown when location permission is denied forever
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission was permanently denied. Please enable it in your device settings.'**
+  String get locationPermissionPermanentlyDenied;
+
+  /// Action label to open app settings
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettings;
+
+  /// Title text for month selection dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Select month'**
+  String get selectMonth;
+
+  /// Accessibility label for recenter map button
+  ///
+  /// In en, this message translates to:
+  /// **'Recenter map'**
+  String get recenterMap;
+
+  /// Accessibility label for zoom in action
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom in'**
+  String get zoomIn;
+
+  /// Accessibility label for zoom out action
+  ///
+  /// In en, this message translates to:
+  /// **'Zoom out'**
+  String get zoomOut;
+
+  /// Tooltip for moving timeline back by thirty days
+  ///
+  /// In en, this message translates to:
+  /// **'Back 30 days'**
+  String get back30Days;
+
+  /// Tooltip for moving timeline back by one day
+  ///
+  /// In en, this message translates to:
+  /// **'Back 1 day'**
+  String get back1Day;
+
+  /// Tooltip for moving timeline forward by one day
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 1 day'**
+  String get forward1Day;
+
+  /// Tooltip for moving timeline forward by thirty days
+  ///
+  /// In en, this message translates to:
+  /// **'Forward 30 days'**
+  String get forward30Days;
+
+  /// Tooltip for starting timeline animation
+  ///
+  /// In en, this message translates to:
+  /// **'Play animation'**
+  String get playAnimation;
+
+  /// Tooltip for pausing timeline animation
+  ///
+  /// In en, this message translates to:
+  /// **'Pause animation'**
+  String get pauseAnimation;
+
+  /// Label for animation speed control
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get speedLabel;
+
+  /// Tooltip for heliocentric mode
+  ///
+  /// In en, this message translates to:
+  /// **'Heliocentric'**
+  String get heliocentric;
+
+  /// Tooltip for geocentric mode
+  ///
+  /// In en, this message translates to:
+  /// **'Geocentric'**
+  String get geocentric;
+
+  /// Label for planet distance value
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get distance;
+
+  /// Label for orbital period value
+  ///
+  /// In en, this message translates to:
+  /// **'Orbit'**
+  String get orbit;
 }
 
 class _AppLocalizationsDelegate

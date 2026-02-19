@@ -107,14 +107,17 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
         const SizedBox(height: 16),
         // Large moon visualization - wrapped in RepaintBoundary for performance
         RepaintBoundary(
-          child: SizedBox(
-            height: 180,
-            width: 180,
-            child: MoonAnimationWidget(
-              paksha: data.isShukla ? 'Shukla' : 'Krishna',
-              tithi: data.currentTithi.floor() <= 15
-                  ? data.currentTithi.floor()
-                  : data.currentTithi.floor() - 15,
+          child: Semantics(
+            label: l10n.currentMoonPhase,
+            child: SizedBox(
+              height: 180,
+              width: 180,
+              child: MoonAnimationWidget(
+                paksha: data.isShukla ? 'Shukla' : 'Krishna',
+                tithi: data.currentTithi.floor() <= 15
+                    ? data.currentTithi.floor()
+                    : data.currentTithi.floor() - 15,
+              ),
             ),
           ),
         ),
@@ -232,6 +235,7 @@ class _CountdownCardState extends State<_CountdownCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Container(
@@ -281,7 +285,7 @@ class _CountdownCardState extends State<_CountdownCard> {
           ),
           const SizedBox(height: 12),
           // Countdown display
-          _buildCountdownDisplay(context),
+          _buildCountdownDisplay(context, l10n),
           const SizedBox(height: 8),
           Text(
             DateFormat.yMMMd().format(widget.targetDate),
@@ -294,12 +298,12 @@ class _CountdownCardState extends State<_CountdownCard> {
     );
   }
 
-  Widget _buildCountdownDisplay(BuildContext context) {
+  Widget _buildCountdownDisplay(BuildContext context, AppLocalizations l10n) {
     final theme = Theme.of(context);
 
     if (_countdown.isNegative) {
       return Text(
-        'Now!',
+        l10n.now,
         style: theme.textTheme.headlineMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: widget.color,
@@ -370,6 +374,7 @@ class _UpcomingDatesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final datesAsync = ref.watch(provider);
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
 
     return datesAsync.when(
       data: (dates) {
@@ -430,10 +435,10 @@ class _UpcomingDatesTab extends ConsumerWidget {
                     ),
                     child: Text(
                       daysUntil == 0
-                          ? 'Today'
+                          ? l10n.today
                           : daysUntil == 1
-                          ? 'Tomorrow'
-                          : '$daysUntil days',
+                          ? l10n.tomorrow
+                          : l10n.daysFromNow(daysUntil),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

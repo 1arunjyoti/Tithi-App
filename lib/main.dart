@@ -10,7 +10,6 @@ import 'l10n/app_localizations.dart';
 import 'l10n/fallback_localization_delegates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:nominatim_geocoding/nominatim_geocoding.dart' hide Locale;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:jyotish/jyotish.dart';
 import 'providers/location_provider.dart';
@@ -23,6 +22,7 @@ import 'screens/home_screen.dart';
 import 'models/festival.dart';
 import 'models/sankalpa.dart';
 import 'services/notification_service.dart';
+import 'services/storage_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Conditional import for platform-specific features
@@ -86,13 +86,11 @@ void main() {
       Hive.registerAdapter(MediaAdapter());
       Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
 
-      await Hive.openBox('settings');
+      final storageService = StorageService();
+      await storageService.init();
 
       // Initialize timezone for notifications
       tz_data.initializeTimeZones();
-
-      // Initialize Nominatim Geocoding with cache
-      await NominatimGeocoding.init(reqCacheNum: 50);
 
       // Initialize WorkManager for background notifications
       await NotificationService().initWorkManager();
@@ -141,6 +139,12 @@ class _TithiAppState extends ConsumerState<TithiApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    final locationService = ref.read(locationServiceProvider);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      unawaited(locationService.markAppBackgrounded());
+    }
+
     // Optionally handle app lifecycle events
     if (state == AppLifecycleState.detached) {
       // App is about to be terminated
@@ -214,18 +218,17 @@ class _TithiAppState extends ConsumerState<TithiApp>
       builder: (context, child) {
         final scale = accessibility.largeText ? 1.3 : 1.0;
         final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-        final overlayStyle =
-            isDarkTheme
-                ? const SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
-                  statusBarIconBrightness: Brightness.light,
-                  statusBarBrightness: Brightness.dark,
-                )
-                : const SystemUiOverlayStyle(
-                  statusBarColor: Colors.transparent,
-                  statusBarIconBrightness: Brightness.dark,
-                  statusBarBrightness: Brightness.light,
-                );
+        final overlayStyle = isDarkTheme
+            ? const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark,
+              )
+            : const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+              );
         return MediaQuery(
           data: MediaQuery.of(
             context,
@@ -267,6 +270,12 @@ class _LocationPermissionWrapperState
     // Wait for location service to initialize
     await ref.read(locationInitProvider.future);
 
+    if (mounted && !_showHomeScreen) {
+      setState(() {
+        _showHomeScreen = true;
+      });
+    }
+
     final locationService = ref.read(locationServiceProvider);
     final isFirstLaunch = await locationService.isFirstLaunch();
 
@@ -277,12 +286,6 @@ class _LocationPermissionWrapperState
         await _showFirstLaunchDialog();
         await locationService.markFirstLaunchComplete();
       }
-    }
-
-    if (mounted) {
-      setState(() {
-        _showHomeScreen = true;
-      });
     }
   }
 

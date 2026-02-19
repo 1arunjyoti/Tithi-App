@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/notification_provider.dart';
+import '../providers/storage_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
@@ -15,7 +15,6 @@ import '../providers/accessibility_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../models/hindu_month_system.dart';
 import '../widgets/settings_widgets.dart';
-import '../models/festival.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -410,9 +409,12 @@ class _LocationSettings extends ConsumerWidget {
                     final shouldOpenSettings = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: const Text('Permission Required'),
-                        content: const Text(
-                          'Location permission was permanently denied. Please enable it in your device settings.',
+                        title: Text(
+                          l10n?.permissionRequired ?? 'Permission Required',
+                        ),
+                        content: Text(
+                          l10n?.locationPermissionPermanentlyDenied ??
+                              'Location permission was permanently denied. Please enable it in your device settings.',
                         ),
                         actions: [
                           TextButton(
@@ -421,7 +423,7 @@ class _LocationSettings extends ConsumerWidget {
                           ),
                           FilledButton(
                             onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Open Settings'),
+                            child: Text(l10n?.openSettings ?? 'Open Settings'),
                           ),
                         ],
                       ),
@@ -582,7 +584,9 @@ class _StartOfWeekSetting extends ConsumerWidget {
         final newValue = startOfWeek == StartingDayOfWeek.sunday
             ? StartingDayOfWeek.monday
             : StartingDayOfWeek.sunday;
-        await ref.read(startOfWeekProvider.notifier).setStartOfWeek(newValue);
+        await ref
+            .read(calendarPreferencesProvider.notifier)
+            .setStartOfWeek(newValue);
       },
     );
   }
@@ -613,7 +617,7 @@ class _PrimaryViewSetting extends ConsumerWidget {
         final nextIndex =
             (primaryView.index + 1) % PrimaryEventView.values.length;
         ref
-            .read(primaryEventViewProvider.notifier)
+            .read(calendarPreferencesProvider.notifier)
             .setPrimaryView(PrimaryEventView.values[nextIndex]);
       },
     );
@@ -700,7 +704,9 @@ class _HinduMonthSystemSetting extends ConsumerWidget {
           subtitle: system.description,
           isSelected: system == currentSystem,
           onTap: () async {
-            await ref.read(hinduMonthSystemProvider.notifier).setSystem(system);
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setHinduMonthSystem(system);
             if (context.mounted) Navigator.pop(context);
           },
         );
@@ -745,7 +751,9 @@ class _HinduYearEraSetting extends ConsumerWidget {
           subtitle: era.description,
           isSelected: era == currentEra,
           onTap: () async {
-            await ref.read(hinduYearEraProvider.notifier).setEra(era);
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setHinduYearEra(era);
             if (context.mounted) Navigator.pop(context);
           },
         );
@@ -764,7 +772,9 @@ class _TithiDisplayModeSetting extends ConsumerWidget {
       icon: Icons.calendar_view_day_rounded,
       title: 'Tithi Display',
       trailing: Text(
-        displayMode == TithiDisplayMode.pakshaBased ? 'Paksha (1-15)' : '30 Days',
+        displayMode == TithiDisplayMode.pakshaBased
+            ? 'Paksha (1-15)'
+            : '30 Days',
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
           fontWeight: FontWeight.bold,
@@ -786,13 +796,17 @@ class _TithiDisplayModeSetting extends ConsumerWidget {
       subtitle: 'Choose how tithis are numbered in the calendar',
       children: TithiDisplayMode.values.map((mode) {
         return SettingsPickerItem(
-          title: mode == TithiDisplayMode.pakshaBased ? 'Paksha Based' : '30 Days',
+          title: mode == TithiDisplayMode.pakshaBased
+              ? 'Paksha Based'
+              : '30 Days',
           subtitle: mode == TithiDisplayMode.pakshaBased
               ? 'Show 1-15 for each paksha separately'
               : 'Show 1-30 continuously',
           isSelected: mode == currentMode,
           onTap: () async {
-            await ref.read(tithiDisplayModeProvider.notifier).setMode(mode);
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setTithiDisplayMode(mode);
             if (context.mounted) Navigator.pop(context);
           },
         );
@@ -871,12 +885,12 @@ Future<void> _showCalendarSystemPicker(
         onTap: () async {
           if (isPrimary) {
             await ref
-                .read(primaryCalendarSystemProvider.notifier)
-                .setSystem(system);
+                .read(calendarPreferencesProvider.notifier)
+                .setPrimaryCalendarSystem(system);
           } else {
             await ref
-                .read(secondaryCalendarSystemProvider.notifier)
-                .setSystem(system);
+                .read(calendarPreferencesProvider.notifier)
+                .setSecondaryCalendarSystem(system);
           }
           if (context.mounted) Navigator.pop(context);
         },
@@ -918,6 +932,7 @@ class _ResetSettingsTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final notificationService = ref.read(notificationServiceProvider);
     final locationService = ref.read(locationServiceProvider);
+    final storageService = ref.read(storageServiceProvider);
     return SettingsActionTile(
       icon: Icons.restore_rounded,
       title: l10n?.resetAppSettings ?? 'Reset App Settings',
@@ -947,39 +962,7 @@ class _ResetSettingsTile extends ConsumerWidget {
         );
 
         if (confirm == true) {
-          final settingsBox = Hive.box('settings');
-          await settingsBox.clear();
-
-          // Clear per-feature boxes
-          final locationBox = Hive.isBoxOpen('location_settings')
-              ? Hive.box('location_settings')
-              : await Hive.openBox('location_settings');
-          await locationBox.clear();
-
-          final notificationBox = Hive.isBoxOpen('notification_settings')
-              ? Hive.box('notification_settings')
-              : await Hive.openBox('notification_settings');
-          await notificationBox.clear();
-
-          final ritualBox = Hive.isBoxOpen('ritual_completion')
-              ? Hive.box('ritual_completion')
-              : await Hive.openBox('ritual_completion');
-          await ritualBox.clear();
-
-          final sankalpaBox = Hive.isBoxOpen('sankalpas')
-              ? Hive.box('sankalpas')
-              : await Hive.openBox('sankalpas');
-          await sankalpaBox.clear();
-
-          final festivalSettingsBox = Hive.isBoxOpen('festival_settings')
-              ? Hive.box<int>('festival_settings')
-              : await Hive.openBox<int>('festival_settings');
-          await festivalSettingsBox.clear();
-
-          final festivalBox = Hive.isBoxOpen('festivals')
-              ? Hive.box<Festival>('festivals')
-              : await Hive.openBox<Festival>('festivals');
-          await festivalBox.clear();
+          await storageService.resetAll();
 
           await locationService.setLocationEnabled(false);
           await locationService.clearCache();
@@ -1000,12 +983,13 @@ class _ResetSettingsTile extends ConsumerWidget {
           ref.invalidate(homeLocationProvider);
 
           ref.invalidate(loadNotificationStateProvider);
-          ref.read(notificationEnabledProvider.notifier).state = false;
-          ref.read(shlokaNotificationEnabledProvider.notifier).state = false;
-          ref.read(notificationTimeProvider.notifier).state = (
-            hour: 8,
-            minute: 0,
-          );
+          ref.read(notificationEnabledProvider.notifier).setEnabled(false);
+          ref
+              .read(shlokaNotificationEnabledProvider.notifier)
+              .setEnabled(false);
+          ref
+              .read(notificationTimeProvider.notifier)
+              .setTime((hour: 8, minute: 0));
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

@@ -214,8 +214,10 @@ class FestivalSearchDelegate extends SearchDelegate {
 
                 if (nextDate != null && context.mounted) {
                   // Navigate
-                  ref.read(focusedMonthProvider.notifier).state = nextDate;
-                  ref.read(selectedDateProvider.notifier).state = nextDate;
+                    ref
+                      .read(focusedMonthProvider.notifier)
+                      .setFocusedMonth(nextDate);
+                    ref.read(selectedDateProvider.notifier).setDate(nextDate);
 
                   // Close search
                   close(context, null);

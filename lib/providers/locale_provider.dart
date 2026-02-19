@@ -1,6 +1,6 @@
 import 'dart:ui' show Locale;
-import 'package:flutter_riverpod/legacy.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../services/storage_service.dart';
 
 /// Supported locale information with display names
 class SupportedLocale {
@@ -29,36 +29,33 @@ const supportedLocales = [
 
 /// Provider for the current locale selection
 /// Returns null to use system default locale
-final localeProvider = StateNotifierProvider<LocaleNotifier, Locale?>((ref) {
-  return LocaleNotifier();
-});
+final localeProvider = NotifierProvider<LocaleNotifier, Locale?>(
+  LocaleNotifier.new,
+);
 
 /// Manages locale state with Hive persistence
-class LocaleNotifier extends StateNotifier<Locale?> {
-  LocaleNotifier() : super(null) {
-    _loadSavedLocale();
+class LocaleNotifier extends Notifier<Locale?> {
+  @override
+  Locale? build() {
+    final box = StorageService().getSettingsBox();
+    final savedLocale = box.get('locale') as String?;
+    if (savedLocale != null) {
+      return Locale(savedLocale);
+    }
+    return null;
   }
 
   /// Load the saved locale from Hive storage
-  void _loadSavedLocale() {
-    final box = Hive.box('settings');
-    final savedLocale = box.get('locale') as String?;
-    if (savedLocale != null) {
-      state = Locale(savedLocale);
-    }
-  }
-
-  /// Set and persist a new locale
   Future<void> setLocale(Locale locale) async {
     state = locale;
-    final box = Hive.box('settings');
+    final box = StorageService().getSettingsBox();
     await box.put('locale', locale.languageCode);
   }
 
   /// Clear the locale preference (use system default)
   Future<void> clearLocale() async {
     state = null;
-    final box = Hive.box('settings');
+    final box = StorageService().getSettingsBox();
     await box.delete('locale');
   }
 }

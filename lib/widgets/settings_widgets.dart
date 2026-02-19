@@ -90,7 +90,7 @@ class SettingsActionTile extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (trailing != null) trailing!,
+          ?trailing,
           const SizedBox(width: 8),
           Icon(
             Icons.chevron_right_rounded,

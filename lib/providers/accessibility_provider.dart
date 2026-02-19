@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../services/storage_service.dart';
 
 class AccessibilityState {
   final bool reduceMotion;
@@ -31,16 +31,11 @@ class AccessibilityState {
 }
 
 class AccessibilityNotifier extends Notifier<AccessibilityState> {
-  static const _boxName = 'settings';
   static const _key = 'accessibility_prefs';
 
   @override
   AccessibilityState build() {
-    // We assume the box is open in main.dart, similar to theme settings
-    if (!Hive.isBoxOpen(_boxName)) {
-      return const AccessibilityState();
-    }
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     final rawMap = box.get(_key, defaultValue: {});
     final map = Map<String, dynamic>.from(rawMap as Map);
 
@@ -53,8 +48,7 @@ class AccessibilityNotifier extends Notifier<AccessibilityState> {
   }
 
   Future<void> _save() async {
-    if (!Hive.isBoxOpen(_boxName)) return;
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     await box.put(_key, {
       'reduceMotion': state.reduceMotion,
       'hapticFeedback': state.hapticFeedback,
