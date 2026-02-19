@@ -39,23 +39,7 @@ class AppDrawer extends StatelessWidget {
         ? const Color(0xF5121212) // Dark theme: near-black with high opacity
         : const Color(0xF5FAFAFA); // Light theme: off-white with high opacity
 
-    final content = Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: isSidebar ? null : _drawerBorderRadius,
-        border: Border(
-          right: BorderSide(color: colors.onSurface.withValues(alpha: 0.1)),
-        ),
-        boxShadow: isSidebar
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 16,
-                  offset: const Offset(2, 0),
-                ),
-              ],
-      ),
+    final content = RepaintBoundary(
       child: Column(
         children: [
           _DrawerHeader(colors: colors),
@@ -67,14 +51,25 @@ class AppDrawer extends StatelessWidget {
 
     // When used as sidebar, don't wrap with Drawer
     if (isSidebar) {
-      return content;
+      return Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          border: Border(
+            right: BorderSide(color: colors.onSurface.withValues(alpha: 0.1)),
+          ),
+        ),
+        child: content,
+      );
     }
 
     return Drawer(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
+      backgroundColor: backgroundColor,
+      elevation: 8,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
+      surfaceTintColor: Colors.transparent,
       width: 280,
-      child: ClipRRect(borderRadius: _drawerBorderRadius, child: content),
+      shape: const RoundedRectangleBorder(borderRadius: _drawerBorderRadius),
+      child: content,
     );
   }
 }

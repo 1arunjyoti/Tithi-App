@@ -1527,9 +1527,12 @@ class _CalendarCell extends ConsumerWidget {
           final service = ref.read(hinduCalendarServiceProvider);
           await ref.read(panchangInitProvider.future);
           final hDate = await service.calculateDate(date);
+          final displayMode = ref.read(cp.tithiDisplayModeProvider);
+          if (displayMode == cp.TithiDisplayMode.continuous30) {
+            return hDate.fullTithi.toString();
+          }
           return hDate.tithi.toString();
         } catch (e) {
-          // Fallback to Gregorian date when offline/error
           return date.day.toString();
         }
       case cp.AppCalendarSystem.bengali:
@@ -1539,7 +1542,6 @@ class _CalendarCell extends ConsumerWidget {
           final bengaliDate = await service.calculateDate(date);
           return bengaliDate.day.toString();
         } catch (e) {
-          // Fallback to Gregorian date when offline/error
           return date.day.toString();
         }
       case cp.AppCalendarSystem.none:

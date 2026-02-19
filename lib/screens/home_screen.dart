@@ -20,8 +20,15 @@ import '../widgets/weather_sheet.dart';
 import '../widgets/responsive_layout.dart';
 
 /// Main home screen with calendar and event list
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isDrawerOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +39,11 @@ class HomeScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       // Only show drawer on mobile, desktop uses persistent sidebar
       drawer: isWideScreen ? null : const AppDrawer(),
+      onDrawerChanged: (isOpened) {
+        if (_isDrawerOpen != isOpened) {
+          setState(() => _isDrawerOpen = isOpened);
+        }
+      },
       appBar: AppBar(
         // Hide hamburger menu on wide screens
         automaticallyImplyLeading: !isWideScreen,
@@ -98,7 +110,12 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             )
-          : const _HomeBody(), // Mobile layout remains exactly as before
+          : RepaintBoundary(
+              child: TickerMode(
+                enabled: !_isDrawerOpen,
+                child: const _HomeBody(),
+              ),
+            ), // Mobile layout remains exactly as before
     );
   }
 

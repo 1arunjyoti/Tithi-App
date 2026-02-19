@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'widgets/error_display_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -16,6 +17,7 @@ import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/version_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'models/festival.dart';
@@ -30,6 +32,15 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Set default status bar style for Shukla (light) theme
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
+      );
 
       // Set custom error widget to replace the red error screen
       ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -58,6 +69,9 @@ void main() {
 
       // Load environment variables
       await dotenv.load();
+
+      // Preload package/version metadata before first drawer animation.
+      await warmVersionInfo();
 
       // Initialize Hive for offline storage
       await Hive.initFlutter();
@@ -199,11 +213,27 @@ class _TithiAppState extends ConsumerState<TithiApp>
       darkTheme: darkTheme,
       builder: (context, child) {
         final scale = accessibility.largeText ? 1.3 : 1.0;
+        final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+        final overlayStyle =
+            isDarkTheme
+                ? const SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.light,
+                  statusBarBrightness: Brightness.dark,
+                )
+                : const SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: Brightness.dark,
+                  statusBarBrightness: Brightness.light,
+                );
         return MediaQuery(
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: TextScaler.linear(scale)),
-          child: child!,
+          child: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: overlayStyle,
+            child: child!,
+          ),
         );
       },
       home: const LocationPermissionWrapper(),
@@ -222,13 +252,15 @@ class LocationPermissionWrapper extends ConsumerStatefulWidget {
 
 class _LocationPermissionWrapperState
     extends ConsumerState<LocationPermissionWrapper> {
-  bool _initialized = false;
   bool _showHomeScreen = false;
+  bool _permissionRequested = false;
 
   @override
   void initState() {
     super.initState();
-    _initLocationFlow();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initLocationFlow();
+    });
   }
 
   Future<void> _initLocationFlow() async {
@@ -238,8 +270,9 @@ class _LocationPermissionWrapperState
     final locationService = ref.read(locationServiceProvider);
     final isFirstLaunch = await locationService.isFirstLaunch();
 
-    if (isFirstLaunch) {
-      // First launch: Show permission request dialog
+    if (isFirstLaunch && !_permissionRequested) {
+      _permissionRequested = true;
+      // Show dialog after first frame so UI is already visible
       if (mounted) {
         await _showFirstLaunchDialog();
         await locationService.markFirstLaunchComplete();
@@ -248,7 +281,6 @@ class _LocationPermissionWrapperState
 
     if (mounted) {
       setState(() {
-        _initialized = true;
         _showHomeScreen = true;
       });
     }
@@ -367,46 +399,45 @@ class _LocationPermissionWrapperState
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) {
-      return Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: Theme.of(context).scaffoldBackgroundColor == Colors.black
-                  ? [Colors.black, Colors.black, Colors.black]
-                  : Theme.of(context).brightness == Brightness.dark
-                  ? [
-                      const Color(0xFF10002B),
-                      const Color(0xFF240046),
-                      const Color(0xFF10002B),
-                    ]
-                  : [
-                      const Color(0xFFFFFDF7),
-                      const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                      const Color(0xFFFFFDF7),
-                    ],
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Initializing...'),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
+    // Show HomeScreen as soon as location service is initialized
+    // Permission dialog will appear in background if first launch
     if (_showHomeScreen) {
       return const HomeScreen();
     }
 
-    return const SizedBox.shrink();
+    // Only show loading screen while waiting for location service init
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: Theme.of(context).scaffoldBackgroundColor == Colors.black
+                ? [Colors.black, Colors.black, Colors.black]
+                : Theme.of(context).brightness == Brightness.dark
+                ? [
+                    const Color(0xFF10002B),
+                    const Color(0xFF240046),
+                    const Color(0xFF10002B),
+                  ]
+                : [
+                    const Color(0xFFFFFDF7),
+                    const Color(0xFFFFECB3).withValues(alpha: 0.3),
+                    const Color(0xFFFFFDF7),
+                  ],
+          ),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Initializing...'),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

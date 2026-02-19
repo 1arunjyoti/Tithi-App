@@ -48,6 +48,12 @@ final hinduDateForScheduleProvider =
 
         final hDate = await service.calculateDate(date);
 
+        // Apply display mode (paksha-based 1-15 or continuous 1-30)
+        final displayMode = ref.watch(cp.tithiDisplayModeProvider);
+        final displayTithi = displayMode == cp.TithiDisplayMode.continuous30
+            ? hDate.fullTithi
+            : hDate.tithi;
+
         // Apply month system conversion if needed
         String masa = hDate.masa;
         if (monthSystem == HinduMonthSystem.purnimant) {
@@ -61,7 +67,7 @@ final hinduDateForScheduleProvider =
         final eraLabel = yearEra.shortLabel;
 
         return HinduDateData(
-          day: hDate.tithi,
+          day: displayTithi,
           month: masa,
           paksha: hDate.paksha,
           year: year,

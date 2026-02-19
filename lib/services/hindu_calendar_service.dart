@@ -27,41 +27,22 @@ class HinduCalendarService {
   ];
 
   /// Calculates the Hindu Date details for a given Gregorian date.
-  Future<({int tithi, String paksha, String masa, int vsYear, int shakaYear})>
+  Future<({int tithi, int fullTithi, String paksha, String masa, int vsYear, int shakaYear})>
   calculateDate(DateTime date) async {
     final service = _ref.read(panchangServiceProvider);
 
     // Ensure initialized
     await _ref.read(panchangInitProvider.future);
-    // Note: We should handle location if needed, defaulting to standard provider logic
-    // or just passing defaults. PanchangService methods have defaults.
 
     // 1. Calculate Tithi
-    // We reuse calculateTithi logic.
-    // Ideally we want to pass the location from provider but for now relying on defaults/service defaults.
-    // To be precise, we should pass parameters.
-    // Let's rely on service defaults for simplicity in this refactor step.
     final rawTithi = await service.calculateTithi(date);
 
     int tithi = rawTithi.floor();
-    // final double fraction = rawTithi - tithi; // Unused
-    // Tithi is 1-30.
-    // If rawTithi is 15.1 -> Tithi 16 (Krishna Pratipada).
-    // Actually standard definition: 1..15 Shukla, 16..30 Krishna.
-    // If rawTithi is 0.5 -> Tithi 1.
-    // calculateTithi returns (diff/12) + 1.
-    // If diff=0 -> 1.
-    // If diff=12 -> 2.
-    // So integer part is the tithi index roughly.
-    // Let's truncate or round?
-    // Usually Tithi is current if it prevails at sunrise.
-    // Tithi at current time `date`.
-    // Let's just take index `rawTithi.floor()`. Wait, if 1.0 -> 1.
-    // If 0.9 (impossible as +1). Minimum 1.0. Max 31.0.
 
     // Tithi Number: 1 to 15.
     String paksha = 'Shukla';
-    int displayTithi = tithi; // 1..30
+    int displayTithi = tithi; // 1..30 (raw tithi)
+    int fullTithi = tithi; // 1..30
 
     if (displayTithi > 15) {
       paksha = 'Krishna';
@@ -139,6 +120,7 @@ class HinduCalendarService {
 
     return (
       tithi: displayTithi,
+      fullTithi: fullTithi,
       paksha: paksha,
       masa: masa,
       vsYear: vsYear,

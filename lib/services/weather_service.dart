@@ -3,21 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/weather_data.dart';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 class WeatherService {
-  // Read from .env
-  String get apiKey => dotenv.env['WEATHER_API_KEY'] ?? '';
-  static const String baseUrl = 'https://api.weatherapi.com/v1';
+  static const String baseUrl = 'https://api.open-meteo.com/v1';
 
   Future<WeatherData?> fetchCurrentWeather(double lat, double lng) async {
-    if (apiKey.isEmpty || apiKey == 'YOUR_API_KEY_HERE') {
-      return null;
-    }
-
     try {
       final url = Uri.parse(
-        '$baseUrl/forecast.json?key=$apiKey&q=$lat,$lng&days=3&aqi=no&alerts=no',
+        '$baseUrl/forecast?latitude=$lat&longitude=$lng'
+        '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m'
+        '&daily=weather_code,temperature_2m_max,temperature_2m_min'
+        '&timezone=auto&forecast_days=3',
       );
 
       final response = await http
@@ -31,12 +26,11 @@ class WeatherService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return WeatherData.fromJson(data);
+        return WeatherData.fromOpenMeteo(data);
       } else {
         throw Exception('Weather API returned status ${response.statusCode}');
       }
     } catch (e) {
-      // Log error for debugging but don't crash the app
       if (kDebugMode) {
         print('Weather service error: $e');
       }

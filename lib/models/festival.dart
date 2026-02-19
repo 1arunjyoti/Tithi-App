@@ -86,8 +86,11 @@ class Festival {
     // Check paksha match (or wildcard '*')
     final pakshaMatch = paksha == '*' || paksha == currentPaksha;
 
-    // Check tithi match
-    final tithiMatch = tithi == currentTithi;
+    // Check tithi match (or range if endTithi is set)
+    bool tithiMatch = tithi == currentTithi;
+    if (!tithiMatch && panchangRules.endTithi != null) {
+      tithiMatch = currentTithi >= tithi && currentTithi <= panchangRules.endTithi!;
+    }
 
     // Check masa match (or wildcard '*')
     bool masaMatch = true;
@@ -218,6 +221,9 @@ class PanchangRules {
   @HiveField(6)
   final String? weekday;
 
+  @HiveField(7)
+  final int? endTithi;
+
   const PanchangRules({
     required this.masa,
     required this.paksha,
@@ -226,6 +232,7 @@ class PanchangRules {
     this.recurring = false,
     this.solarDate,
     this.weekday,
+    this.endTithi,
   });
 
   factory PanchangRules.fromJson(Map<String, dynamic> json) {
@@ -237,6 +244,7 @@ class PanchangRules {
       recurring: json['recurring'] ?? false,
       solarDate: json['solarDate'],
       weekday: json['weekday'],
+      endTithi: json['endTithi'],
     );
   }
 }

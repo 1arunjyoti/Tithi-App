@@ -212,3 +212,33 @@ final hinduYearEraProvider =
     NotifierProvider<HinduYearEraNotifier, HinduYearEra>(
       () => HinduYearEraNotifier(),
     );
+
+// --- Tithi Display Mode (Paksha-based vs Continuous) ---
+
+enum TithiDisplayMode { pakshaBased, continuous30 }
+
+class TithiDisplayModeNotifier extends Notifier<TithiDisplayMode> {
+  static const _boxName = 'settings';
+  static const _key = 'tithi_display_mode';
+
+  @override
+  TithiDisplayMode build() {
+    final box = Hive.box(_boxName);
+    final index = box.get(_key, defaultValue: 0) as int;
+    if (index >= 0 && index < TithiDisplayMode.values.length) {
+      return TithiDisplayMode.values[index];
+    }
+    return TithiDisplayMode.pakshaBased;
+  }
+
+  Future<void> setMode(TithiDisplayMode mode) async {
+    final box = Hive.box(_boxName);
+    await box.put(_key, mode.index);
+    state = mode;
+  }
+}
+
+final tithiDisplayModeProvider =
+    NotifierProvider<TithiDisplayModeNotifier, TithiDisplayMode>(
+      () => TithiDisplayModeNotifier(),
+    );

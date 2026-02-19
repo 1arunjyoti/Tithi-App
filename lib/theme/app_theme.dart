@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/accessibility_provider.dart';
@@ -38,6 +39,11 @@ class AppTheme {
         foregroundColor: const Color(0xFF2D3436),
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -114,6 +120,11 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -192,6 +203,11 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,

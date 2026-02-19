@@ -67,7 +67,16 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
-    // Migrated from deprecated play:core to play:app-update
+    // Required by Flutter's Play Store deferred components integration
+    // (FlutterPlayStoreSplitApplication / PlayStoreDeferredComponentManager).
+    implementation("com.google.android.play:feature-delivery:2.1.0")
+    // App update APIs (separate from split-install classes above).
     implementation("com.google.android.play:app-update:2.1.0")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
+}
+
+// Work around Gradle state tracking issue where AGP sometimes does not materialize
+// manifest merger blame output for release variants.
+tasks.matching { it.name == "processReleaseMainManifest" }.configureEach {
+    doNotTrackState("manifest merger blame file can be absent in some AGP/Gradle combinations")
 }

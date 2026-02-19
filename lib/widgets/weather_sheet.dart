@@ -57,7 +57,7 @@ class WeatherSheet extends ConsumerWidget {
             data: (data) {
               if (data == null) {
                 return const Center(
-                  child: Text('Weather data unavailable (Check API Key)'),
+                  child: Text('Weather data unavailable'),
                 );
               }
               return _buildWeatherContent(context, data, panchang);
@@ -65,7 +65,14 @@ class WeatherSheet extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, stack) => Center(child: Text('Error: $e')),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          Text(
+            'Weather data by Open-Meteo',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );

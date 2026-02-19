@@ -123,6 +123,8 @@ class SettingsScreen extends ConsumerWidget {
                           _HinduMonthSystemSetting(),
                           SettingsDivider(),
                           _HinduYearEraSetting(),
+                          SettingsDivider(),
+                          _TithiDisplayModeSetting(),
                         ],
                       ),
 
@@ -537,7 +539,6 @@ class _LanguageSetting extends ConsumerWidget {
             if (context.mounted) Navigator.pop(context);
           },
         ),
-        const Divider(),
         // Supported locales
         ...supportedLocales.map((supported) {
           return SettingsPickerItem(
@@ -745,6 +746,53 @@ class _HinduYearEraSetting extends ConsumerWidget {
           isSelected: era == currentEra,
           onTap: () async {
             await ref.read(hinduYearEraProvider.notifier).setEra(era);
+            if (context.mounted) Navigator.pop(context);
+          },
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _TithiDisplayModeSetting extends ConsumerWidget {
+  const _TithiDisplayModeSetting();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final displayMode = ref.watch(tithiDisplayModeProvider);
+    return SettingsActionTile(
+      icon: Icons.calendar_view_day_rounded,
+      title: 'Tithi Display',
+      trailing: Text(
+        displayMode == TithiDisplayMode.pakshaBased ? 'Paksha (1-15)' : '30 Days',
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colors.primary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      onTap: () => _showTithiDisplayModePicker(context, ref),
+    );
+  }
+
+  Future<void> _showTithiDisplayModePicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final currentMode = ref.read(tithiDisplayModeProvider);
+
+    await SettingsBottomSheet.show(
+      context: context,
+      title: 'Tithi Display',
+      subtitle: 'Choose how tithis are numbered in the calendar',
+      children: TithiDisplayMode.values.map((mode) {
+        return SettingsPickerItem(
+          title: mode == TithiDisplayMode.pakshaBased ? 'Paksha Based' : '30 Days',
+          subtitle: mode == TithiDisplayMode.pakshaBased
+              ? 'Show 1-15 for each paksha separately'
+              : 'Show 1-30 continuously',
+          isSelected: mode == currentMode,
+          onTap: () async {
+            await ref.read(tithiDisplayModeProvider.notifier).setMode(mode);
             if (context.mounted) Navigator.pop(context);
           },
         );
