@@ -2,14 +2,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 class MoonAnimationWidget extends StatelessWidget {
-  final String paksha;
-  final int tithi;
+  final double phase;
+  final bool isWaxing;
   final double size;
 
   const MoonAnimationWidget({
     super.key,
-    required this.paksha,
-    required this.tithi,
+    required this.phase,
+    required this.isWaxing,
     this.size = 200,
   });
 
@@ -20,8 +20,8 @@ class MoonAnimationWidget extends StatelessWidget {
       height: size,
       child: CustomPaint(
         painter: MoonPhasePainter(
-          paksha: paksha,
-          tithi: tithi,
+          phase: phase,
+          isWaxing: isWaxing,
           color: Colors.amber.shade200,
           shadowColor: const Color(0xFF1A1A2E), // Deep dark blue/black
         ),
@@ -31,14 +31,14 @@ class MoonAnimationWidget extends StatelessWidget {
 }
 
 class MoonPhasePainter extends CustomPainter {
-  final String paksha;
-  final int tithi;
+  final double phase; // 0.0 (New) to 1.0 (Full)
+  final bool isWaxing;
   final Color color;
   final Color shadowColor;
 
   MoonPhasePainter({
-    required this.paksha,
-    required this.tithi,
+    required this.phase,
+    required this.isWaxing,
     required this.color,
     required this.shadowColor,
   });
@@ -48,19 +48,8 @@ class MoonPhasePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
 
-    // Calculate phase (0.0 = New, 1.0 = Full)
-    // Shukla: 0 -> 1 (Waxing)
-    // Krishna: 1 -> 0 (Waning)
-    double phase;
-    if (paksha == 'Shukla') {
-      phase = tithi / 15.0;
-    } else {
-      // Krishna 1 is just after Full (0.93), Krishna 15 is New (0.0)
-      phase = (15.0 - tithi) / 15.0;
-    }
-
     // Clamp phase
-    phase = phase.clamp(0.0, 1.0);
+    double clampedPhase = phase.clamp(0.0, 1.0);
 
     // Draw background (shadow/unlit part)
     final shadowPaint = Paint()..color = shadowColor;
@@ -71,18 +60,8 @@ class MoonPhasePainter extends CustomPainter {
 
     // We can simulate the phase by drawing a semi-circle and an ellipse
     // The lit part depends on whether it's waxing or waning
-    // Waxing: Lit from Right. Waning: Lit from Left?
-    // Actually, in Northern Hemisphere:
-    // Waxing (Shukla): Right side lit. "Light on Right, Light is Growing"
-    // Waning (Krishna): Left side lit.
-
-    // Let's implement standard moon phase geometry
-    // We draw a semicircle for the always-lit half, and an ellipse for the terminator.
-
-    // Check if Waxing or Waning visually
-    // Shukla = Waxing (Lit from Right)
-    // Krishna = Waning (Lit from Left)
-    bool isWaxing = (paksha == 'Shukla');
+    // Waxing: Right side lit. "Light on Right, Light is Growing"
+    // Waning: Left side lit.
 
     // To simplify: Rotate canvas so "Lit side" is always right, then handle phase magnitude
     canvas.save();
@@ -118,12 +97,12 @@ class MoonPhasePainter extends CustomPainter {
     // If phase == 0, return.
     // If phase == 1, draw full Light Circle and return.
 
-    if (phase >= 0.98) {
+    if (clampedPhase >= 0.99) {
       canvas.drawCircle(center, radius, litPaint);
       canvas.restore();
       return;
     }
-    if (phase <= 0.02) {
+    if (clampedPhase <= 0.01) {
       canvas.restore();
       return;
     }
@@ -237,7 +216,7 @@ class MoonPhasePainter extends CustomPainter {
     //    - If phase < 0.5 (Crescent): Draw this Ellipse in SHADOW color. (Eating into the Right Semicircle).
     //    - If phase >= 0.5 (Gibbous): Draw this Ellipse in LIGHT color. (Adding to the Right Semicircle).
 
-    final double w = (1 - 2 * phase) * radius;
+    final double w = (1 - 2 * clampedPhase) * radius;
     final Rect ellipseRect = Rect.fromCenter(
       center: center,
       width: w.abs() * 2,
@@ -259,7 +238,7 @@ class MoonPhasePainter extends CustomPainter {
     // Actually, just drawing the arc with `useCenter: false` fills the chord shape (D-shape) if fill is on. Correct.
 
     // Step 2: Handle the ellipse part
-    if (phase < 0.5) {
+    if (clampedPhase < 0.5) {
       // Crescent: We need to "erase" the left part of the D-shape.
       // Draw shadow ellipse on top.
       // Left half of the ellipse?
@@ -301,6 +280,6 @@ class MoonPhasePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant MoonPhasePainter oldDelegate) {
-    return oldDelegate.paksha != paksha || oldDelegate.tithi != tithi;
+    return oldDelegate.phase != phase || oldDelegate.isWaxing != isWaxing;
   }
 }

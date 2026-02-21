@@ -237,7 +237,7 @@ class SettingsScreen extends ConsumerWidget {
                     .setOverride('PureDark'),
               ),
               ThemeOptionButton(
-                label: 'Krishna',
+                label: 'Purple',
                 icon: Icons.bubble_chart,
                 isSelected: currentOverride == 'Krishna',
                 onTap: () => ref

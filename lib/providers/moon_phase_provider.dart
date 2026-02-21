@@ -11,6 +11,7 @@ LocationData? _getLocationOrNull(AsyncValue<LocationData?> asyncValue) {
 /// Provider for moon phase data
 /// Uses location if available, otherwise falls back to defaults
 final moonPhaseDataProvider = FutureProvider<MoonPhaseData>((ref) async {
+  ref.keepAlive();
   final moonPhaseService = ref.watch(moonPhaseServiceProvider);
 
   // Try to get location, but don't block on it
@@ -25,6 +26,7 @@ final moonPhaseDataProvider = FutureProvider<MoonPhaseData>((ref) async {
 
 /// Provider for upcoming Amavasya dates (next 6)
 final upcomingAmavasyasProvider = FutureProvider<List<DateTime>>((ref) async {
+  ref.keepAlive();
   final moonPhaseService = ref.watch(moonPhaseServiceProvider);
 
   final locationAsync = ref.watch(currentLocationProvider);
@@ -38,6 +40,7 @@ final upcomingAmavasyasProvider = FutureProvider<List<DateTime>>((ref) async {
 
 /// Provider for upcoming Purnima dates (next 6)
 final upcomingPurnimasProvider = FutureProvider<List<DateTime>>((ref) async {
+  ref.keepAlive();
   final moonPhaseService = ref.watch(moonPhaseServiceProvider);
 
   final locationAsync = ref.watch(currentLocationProvider);

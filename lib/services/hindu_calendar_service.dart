@@ -26,8 +26,30 @@ class HinduCalendarService {
     'Phalguna',
   ];
 
+  /// Returns true if this month has a special prefix (Adhika or Nija).
+  /// Adhika = extra intercalary month; Nija = real month following an Adhika.
+  bool isAdhikaMasa(String masa) =>
+      masa.startsWith('Adhika_') || masa.startsWith('Nija_');
+
+  /// Returns the base masa name, stripping any prefix.
+  /// e.g. 'Adhika_Jyeshtha' / 'Nija_Jyeshtha' -> 'Jyeshtha', 'Jyeshtha' -> 'Jyeshtha'
+  String baseMasaName(String masa) {
+    if (masa.startsWith('Adhika_')) return masa.substring(7);
+    if (masa.startsWith('Nija_')) return masa.substring(5);
+    return masa;
+  }
+
   /// Calculates the Hindu Date details for a given Gregorian date.
-  Future<({int tithi, int fullTithi, String paksha, String masa, int vsYear, int shakaYear})>
+  Future<
+    ({
+      int tithi,
+      int fullTithi,
+      String paksha,
+      String masa,
+      int vsYear,
+      int shakaYear,
+    })
+  >
   calculateDate(DateTime date) async {
     final service = _ref.read(panchangServiceProvider);
 
@@ -59,7 +81,6 @@ class HinduCalendarService {
     // If Date is on/after -> (Gregorian + 57).
 
     int vsYear = date.year + 57;
-    // int monthIndex = hinduMonths.indexOf(masa); // Unused
 
     // Logic to determine if we are in the "late" part of Gregorian year (Mar-Dec) or "early" (Jan-Mar).
     // Chaitra is usually March/April.
@@ -99,7 +120,11 @@ class HinduCalendarService {
       // If Masa is Phalguna -> Old Year -> +56.
       // If Masa is Vaishakha -> New Year -> +57.
 
-      if (masa == 'Chaitra' || masa == 'Vaishakha' || masa == 'Jyeshtha') {
+      // Use baseMasaName to handle Adhika prefix (e.g. 'Adhika_Jyeshtha' -> 'Jyeshtha')
+      final baseMasa = baseMasaName(masa);
+      if (baseMasa == 'Chaitra' ||
+          baseMasa == 'Vaishakha' ||
+          baseMasa == 'Jyeshtha') {
         vsYear = date.year + 57;
       } else {
         // Phalguna or before
@@ -153,9 +178,12 @@ class HinduCalendarService {
     DateTime search = estimate.subtract(const Duration(days: 15));
     final targetMasa = hinduMonths[monthIndex];
 
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 65; i++) {
       final hDate = await calculateDate(search);
-      if (hDate.masa == targetMasa &&
+      // Skip 'Nija_' months (second occurrence after an Adhika) so we find
+      // the first (Adhika or normal) occurrence which is where festivals fall.
+      if (!isAdhikaMasa(hDate.masa) &&
+          baseMasaName(hDate.masa) == targetMasa &&
           hDate.tithi == 1 &&
           hDate.paksha == 'Shukla') {
         return search;

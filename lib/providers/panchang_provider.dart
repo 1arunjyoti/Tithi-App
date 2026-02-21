@@ -21,8 +21,13 @@ String _locationSignature(double latitude, double longitude) {
   return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
 }
 
-String _cacheKey(DateTime date, double latitude, double longitude) {
-  return '${_dateKey(date)}_${_locationSignature(latitude, longitude)}';
+String _cacheKey(
+  DateTime date,
+  double latitude,
+  double longitude, [
+  String suffix = '',
+]) {
+  return '${_dateKey(date)}_${_locationSignature(latitude, longitude)}${suffix.isNotEmpty ? "_$suffix" : ""}';
 }
 
 Future<Box<dynamic>> _preparePanchangCacheBox(
@@ -31,7 +36,8 @@ Future<Box<dynamic>> _preparePanchangCacheBox(
 ) async {
   final cacheBox = await StorageService().openPanchangCacheBox();
   final expectedSignature = _locationSignature(latitude, longitude);
-  final storedSignature = cacheBox.get(_panchangLocationSignatureKey) as String?;
+  final storedSignature =
+      cacheBox.get(_panchangLocationSignatureKey) as String?;
 
   if (storedSignature != expectedSignature) {
     await cacheBox.clear();
@@ -45,9 +51,10 @@ double? _getCachedRawTithi(
   Box<dynamic> cacheBox,
   DateTime date,
   double latitude,
-  double longitude,
-) {
-  final cached = cacheBox.get(_cacheKey(date, latitude, longitude));
+  double longitude, {
+  String suffix = '',
+}) {
+  final cached = cacheBox.get(_cacheKey(date, latitude, longitude, suffix));
   if (cached is num) {
     return cached.toDouble();
   }
@@ -59,9 +66,10 @@ Future<void> _storeCachedRawTithi(
   DateTime date,
   double latitude,
   double longitude,
-  double rawTithi,
-) async {
-  await cacheBox.put(_cacheKey(date, latitude, longitude), rawTithi);
+  double rawTithi, {
+  String suffix = '',
+}) async {
+  await cacheBox.put(_cacheKey(date, latitude, longitude, suffix), rawTithi);
 }
 
 /// Provider for PanchangService (already exists, re-export)
@@ -70,15 +78,14 @@ final panchangServiceProvider = Provider<PanchangService>((ref) {
 });
 
 /// Synchronous coordinates provider with Delhi fallback baked in.
-final resolvedCoordinatesProvider = Provider<({double latitude, double longitude})>((
-  ref,
-) {
-  final coords = ref.watch(coordinatesProvider);
-  return coords.maybeWhen(
-    data: (value) => (latitude: value.latitude, longitude: value.longitude),
-    orElse: () => (latitude: 28.6139, longitude: 77.2090),
-  );
-});
+final resolvedCoordinatesProvider =
+    Provider<({double latitude, double longitude})>((ref) {
+      final coords = ref.watch(coordinatesProvider);
+      return coords.maybeWhen(
+        data: (value) => (latitude: value.latitude, longitude: value.longitude),
+        orElse: () => (latitude: 28.6139, longitude: 77.2090),
+      );
+    });
 
 /// Provider that tracks if the panchang service is initialized
 final panchangInitProvider = FutureProvider<void>((ref) async {
@@ -87,81 +94,203 @@ final panchangInitProvider = FutureProvider<void>((ref) async {
 });
 
 /// Provider for panchang data of a specific date
-final panchangForDateProvider =
-    FutureProvider.autoDispose.family<PanchangData, DateTime>((ref, date) async {
-  // Ensure service is initialized
-  await ref.watch(panchangInitProvider.future);
-  // Ensure festivals are loaded
-  await ref.watch(festivalInitProvider.future);
+final panchangForDateProvider = FutureProvider.autoDispose
+    .family<PanchangData, DateTime>((ref, date) async {
+      // Ensure service is initialized
+      await ref.watch(panchangInitProvider.future);
+      // Ensure festivals are loaded
+      await ref.watch(festivalInitProvider.future);
 
-  final service = ref.read(panchangServiceProvider);
-  final festivals = ref.read(festivalProvider);
+      final service = ref.read(panchangServiceProvider);
+      final festivals = ref.read(festivalProvider);
 
-  // Get user's Hindu month system preference (Amanta or Purnimant)
-  final monthSystem = ref.watch(hinduMonthSystemProvider);
+      // Get user's Hindu month system preference (Amanta or Purnimant)
+      final monthSystem = ref.watch(hinduMonthSystemProvider);
 
-  // Get user's location coordinates (defaults to Delhi if unavailable)
-  final coords = ref.watch(resolvedCoordinatesProvider);
-  final latitude = coords.latitude;
-  final longitude = coords.longitude;
-  final cacheBox = await _preparePanchangCacheBox(latitude, longitude);
+      // Get user's location coordinates (defaults to Delhi if unavailable)
+      final coords = ref.watch(resolvedCoordinatesProvider);
+      final latitude = coords.latitude;
+      final longitude = coords.longitude;
+      final cacheBox = await _preparePanchangCacheBox(latitude, longitude);
 
-  // Calculate actual sunrise time for this date and location
-  // Hindu day traditionally starts at sunrise, so tithi at sunrise
-  // determines which tithi "owns" that Gregorian date
-  final sunriseTime = SunriseCalculator.calculateSunriseIST(
-    date: date,
-    latitude: latitude,
-    longitude: longitude,
-  );
+      final sunriseTime = SunriseCalculator.calculateSunriseIST(
+        date: date,
+        latitude: latitude,
+        longitude: longitude,
+      );
 
-  final sunsetTime = SunriseCalculator.calculateSunsetIST(
-    date: date,
-    latitude: latitude,
-    longitude: longitude,
-  );
+      final sunsetTime = SunriseCalculator.calculateSunsetIST(
+        date: date,
+        latitude: latitude,
+        longitude: longitude,
+      );
 
-  final normalizedDate = DateTime(date.year, date.month, date.day);
-  var rawTithi = _getCachedRawTithi(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-  );
+      final nextSunriseTime = SunriseCalculator.calculateSunriseIST(
+        date: date.add(const Duration(days: 1)),
+        latitude: latitude,
+        longitude: longitude,
+      );
 
-  if (rawTithi == null) {
-    rawTithi = await service.calculateTithi(
-      sunriseTime,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    await _storeCachedRawTithi(
-      cacheBox,
-      normalizedDate,
-      latitude,
-      longitude,
-      rawTithi,
-    );
-  }
-  final masa = await service.calculateMasa(
-    sunriseTime,
-    rawTithi,
-    latitude: latitude,
-    longitude: longitude,
-  );
+      final madhyahnaTime = sunriseTime.add(
+        Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
+      );
+      final aparahnaTime = sunriseTime.add(
+        Duration(
+          minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
+        ),
+      );
+      final nishitaTime = sunsetTime.add(
+        Duration(
+          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
+        ),
+      );
 
-  // If masa is not yet calculated correctly or returns 'Unknown', we might want to fallback or just pass it.
+      final normalizedDate = DateTime(date.year, date.month, date.day);
+      var rawTithi = _getCachedRawTithi(
+        cacheBox,
+        normalizedDate,
+        latitude,
+        longitude,
+      );
 
-  return PanchangData.fromRawTithi(
-    date: date,
-    rawTithi: rawTithi,
-    masa: masa,
-    allFestivals: festivals,
-    monthSystem: monthSystem,
-    sunrise: sunriseTime,
-    sunset: sunsetTime,
-  );
-  });
+      if (rawTithi == null) {
+        rawTithi = await service.calculateTithi(
+          sunriseTime,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        await _storeCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          rawTithi,
+        );
+      }
+
+      var rawTithiMadhyahna = _getCachedRawTithi(
+        cacheBox,
+        normalizedDate,
+        latitude,
+        longitude,
+        suffix: 'madhyahna',
+      );
+      if (rawTithiMadhyahna == null) {
+        rawTithiMadhyahna = await service.calculateTithi(
+          madhyahnaTime,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        await _storeCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          rawTithiMadhyahna,
+          suffix: 'madhyahna',
+        );
+      }
+
+      var rawTithiAparahna = _getCachedRawTithi(
+        cacheBox,
+        normalizedDate,
+        latitude,
+        longitude,
+        suffix: 'aparahna',
+      );
+      if (rawTithiAparahna == null) {
+        rawTithiAparahna = await service.calculateTithi(
+          aparahnaTime,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        await _storeCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          rawTithiAparahna,
+          suffix: 'aparahna',
+        );
+      }
+
+      var rawTithiNishita = _getCachedRawTithi(
+        cacheBox,
+        normalizedDate,
+        latitude,
+        longitude,
+        suffix: 'nishita',
+      );
+      if (rawTithiNishita == null) {
+        rawTithiNishita = await service.calculateTithi(
+          nishitaTime,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        await _storeCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          rawTithiNishita,
+          suffix: 'nishita',
+        );
+      }
+
+      var rawTithiNextSunrise = _getCachedRawTithi(
+        cacheBox,
+        normalizedDate,
+        latitude,
+        longitude,
+        suffix: 'nextSunrise',
+      );
+      if (rawTithiNextSunrise == null) {
+        rawTithiNextSunrise = await service.calculateTithi(
+          nextSunriseTime,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        await _storeCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          rawTithiNextSunrise,
+          suffix: 'nextSunrise',
+        );
+      }
+
+      final masa = await service.calculateMasa(
+        sunriseTime,
+        rawTithi,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final masaNextSunrise = await service.calculateMasa(
+        nextSunriseTime,
+        rawTithiNextSunrise,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      // If masa is not yet calculated correctly or returns 'Unknown', we might want to fallback or just pass it.
+
+      return PanchangData.fromRawTithi(
+        date: date,
+        rawTithi: rawTithi,
+        masa: masa,
+        allFestivals: festivals,
+        monthSystem: monthSystem,
+        sunrise: sunriseTime,
+        sunset: sunsetTime,
+        rawTithiMadhyahna: rawTithiMadhyahna,
+        rawTithiAparahna: rawTithiAparahna,
+        rawTithiNishita: rawTithiNishita,
+        rawTithiNextSunrise: rawTithiNextSunrise,
+        masaNextSunrise: masaNextSunrise,
+      );
+    });
 
 /// Provider for today's panchang
 final todayPanchangProvider = FutureProvider<PanchangData>((ref) async {
@@ -176,11 +305,8 @@ final currentPakshaProvider = Provider<AsyncValue<String>>((ref) {
 
 /// Batch provider for monthly panchang data
 /// Pre-loads entire month to eliminate N+1 query pattern in calendar
-final monthlyPanchangProvider =
-    FutureProvider.autoDispose.family<Map<DateTime, PanchangData>, DateTime>((
-      ref,
-      focusedMonth,
-    ) async {
+final monthlyPanchangProvider = FutureProvider.autoDispose
+    .family<Map<DateTime, PanchangData>, DateTime>((ref, focusedMonth) async {
       // Ensure service is initialized
       await ref.watch(panchangInitProvider.future);
       await ref.watch(festivalInitProvider.future);
@@ -238,6 +364,26 @@ final monthlyPanchangProvider =
           longitude: longitude,
         );
 
+        final nextSunriseTime = SunriseCalculator.calculateSunriseIST(
+          date: normalizedDate.add(const Duration(days: 1)),
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        final madhyahnaTime = sunriseTime.add(
+          Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
+        );
+        final aparahnaTime = sunriseTime.add(
+          Duration(
+            minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
+          ),
+        );
+        final nishitaTime = sunsetTime.add(
+          Duration(
+            minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
+          ),
+        );
+
         final cachedRawTithi = _getCachedRawTithi(
           cacheBox,
           normalizedDate,
@@ -263,9 +409,108 @@ final monthlyPanchangProvider =
           );
         }
 
+        var rawTithiMadhyahna = _getCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          suffix: 'madhyahna',
+        );
+        if (rawTithiMadhyahna == null) {
+          rawTithiMadhyahna = await service.calculateTithi(
+            madhyahnaTime,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          await _storeCachedRawTithi(
+            cacheBox,
+            normalizedDate,
+            latitude,
+            longitude,
+            rawTithiMadhyahna,
+            suffix: 'madhyahna',
+          );
+        }
+
+        var rawTithiAparahna = _getCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          suffix: 'aparahna',
+        );
+        if (rawTithiAparahna == null) {
+          rawTithiAparahna = await service.calculateTithi(
+            aparahnaTime,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          await _storeCachedRawTithi(
+            cacheBox,
+            normalizedDate,
+            latitude,
+            longitude,
+            rawTithiAparahna,
+            suffix: 'aparahna',
+          );
+        }
+
+        var rawTithiNishita = _getCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          suffix: 'nishita',
+        );
+        if (rawTithiNishita == null) {
+          rawTithiNishita = await service.calculateTithi(
+            nishitaTime,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          await _storeCachedRawTithi(
+            cacheBox,
+            normalizedDate,
+            latitude,
+            longitude,
+            rawTithiNishita,
+            suffix: 'nishita',
+          );
+        }
+
+        var rawTithiNextSunrise = _getCachedRawTithi(
+          cacheBox,
+          normalizedDate,
+          latitude,
+          longitude,
+          suffix: 'nextSunrise',
+        );
+        if (rawTithiNextSunrise == null) {
+          rawTithiNextSunrise = await service.calculateTithi(
+            nextSunriseTime,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          await _storeCachedRawTithi(
+            cacheBox,
+            normalizedDate,
+            latitude,
+            longitude,
+            rawTithiNextSunrise,
+            suffix: 'nextSunrise',
+          );
+        }
+
         final masa = await service.calculateMasa(
           sunriseTime,
           resolvedRawTithi,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+        final masaNextSunrise = await service.calculateMasa(
+          nextSunriseTime,
+          rawTithiNextSunrise,
           latitude: latitude,
           longitude: longitude,
         );
@@ -280,6 +525,11 @@ final monthlyPanchangProvider =
             monthSystem: monthSystem,
             sunrise: sunriseTime,
             sunset: sunsetTime,
+            rawTithiMadhyahna: rawTithiMadhyahna,
+            rawTithiAparahna: rawTithiAparahna,
+            rawTithiNishita: rawTithiNishita,
+            rawTithiNextSunrise: rawTithiNextSunrise,
+            masaNextSunrise: masaNextSunrise,
           ),
         );
       }
@@ -296,4 +546,34 @@ final monthlyPanchangProvider =
       }
 
       return monthData;
+    });
+
+/// Provider to calculate the exact start and end times for a specific Tithi on-demand.
+/// We pass an object or record containing the date and the precise tithi number.
+final tithiTimingsProvider =
+    FutureProvider.family<
+      ({DateTime start, DateTime end}),
+      ({DateTime date, int tithiNumber, double latitude, double longitude})
+    >((ref, params) async {
+      final service = ref.watch(panchangServiceProvider);
+      if (!service.isInitialized) {
+        await service.init();
+      }
+
+      // Calculate start and end times via binary search in the native service
+      final startTime = await service.calculateTithiStartTime(
+        params.date,
+        params.tithiNumber,
+        latitude: params.latitude,
+        longitude: params.longitude,
+      );
+
+      final endTime = await service.calculateTithiEndTime(
+        params.date,
+        params.tithiNumber,
+        latitude: params.latitude,
+        longitude: params.longitude,
+      );
+
+      return (start: startTime, end: endTime);
     });

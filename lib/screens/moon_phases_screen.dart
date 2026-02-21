@@ -112,13 +112,27 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
             child: SizedBox(
               height: 180,
               width: 180,
-              child: MoonAnimationWidget(
-                paksha: data.isShukla ? 'Shukla' : 'Krishna',
-                tithi: data.currentTithi.floor() <= 15
-                    ? data.currentTithi.floor()
-                    : data.currentTithi.floor() - 15,
+              child: Hero(
+                tag: 'moon_icon',
+                child: MoonAnimationWidget(
+                  phase:
+                      (data.currentTithi - 1.0) /
+                      30.0, // Maps 1.0-31.0 -> 0.0-1.0
+                  isWaxing: data.isShukla,
+                ),
               ),
             ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Precise illumination percentage
+        Text(
+          'Illumination: ${ref.read(moonPhaseServiceProvider).getMoonIllumination(data.currentTithi).toStringAsFixed(1)}%',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 24),

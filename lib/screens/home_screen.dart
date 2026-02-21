@@ -304,7 +304,7 @@ class _HomeBody extends ConsumerWidget {
                         const DailyQuoteWidget(),
 
                         // Bottom padding for FAB
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -405,8 +405,8 @@ class _PakshaIndicator extends ConsumerWidget {
             Row(
               children: [
                 MoonAnimationWidget(
-                  paksha: panchang.paksha,
-                  tithi: panchang.tithiNumber,
+                  phase: (panchang.tithiNumber - 1.0) / 30.0,
+                  isWaxing: panchang.paksha == 'Shukla',
                   size: 40,
                 ),
                 const SizedBox(width: 12),

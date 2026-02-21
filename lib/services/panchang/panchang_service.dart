@@ -83,20 +83,24 @@ class PanchangService {
     final daysSinceNewMoon = diffDegrees / 12.19074;
 
     // Estimate date of previous New Moon
-    final newMoonDate = date.subtract(
+    final prevNewMoonDate = date.subtract(
       Duration(minutes: (daysSinceNewMoon * 1440).round()),
     );
 
-    // Approximate sun longitude based on date
-    // The Sun moves approximately 1 degree per day
-    // Spring equinox (March 21) = 0 degrees Aries
-    final marchEquinox = DateTime(newMoonDate.year, 3, 21);
-    final daysFromEquinox = newMoonDate.difference(marchEquinox).inDays;
-    double sunLongitude = (daysFromEquinox % 365.25) * (360 / 365.25);
-    if (sunLongitude < 0) sunLongitude += 360;
+    // Estimate date of next New Moon (~29.53 days after the previous one)
+    const synodicMonth = 29.530588853;
+    final nextNewMoonDate = prevNewMoonDate.add(
+      Duration(minutes: (synodicMonth * 1440).round()),
+    );
 
-    // Map to masa (same as native implementation)
-    final index = (sunLongitude / 30).floor() % 12;
+    // Approximate sun longitude based on date (1 degree/day from spring equinox)
+    double sunLongitude(DateTime d) {
+      final marchEquinox = DateTime(d.year, 3, 21);
+      final daysFromEquinox = d.difference(marchEquinox).inDays;
+      double sunLng = (daysFromEquinox % 365.25) * (360 / 365.25);
+      if (sunLng < 0) sunLng += 360;
+      return sunLng;
+    }
 
     const masas = [
       'Vaishakha', // Aries
@@ -113,7 +117,18 @@ class PanchangService {
       'Chaitra', // Pisces
     ];
 
-    return masas[index];
+    final prevIndex = (sunLongitude(prevNewMoonDate) / 30).floor() % 12;
+    final nextIndex = (sunLongitude(nextNewMoonDate) / 30).floor() % 12;
+
+    final masaName = masas[prevIndex];
+
+    // If prevIndex == nextIndex → Adhika month (no sankranti) → return Adhika prefix.
+    if (prevIndex == nextIndex) {
+      return 'Adhika_$masaName';
+    }
+
+    // Nija (real) or normal month (has sankranti) → return plain name (festivals match).
+    return masaName;
   }
 
   Future<DateTime?> findNextFestivalOccurrence(
@@ -123,6 +138,28 @@ class PanchangService {
     double longitude = 77.2090,
   }) async {
     final baseDate = startDate ?? DateTime.now();
+
+    // Handle solar festivals (fixed Gregorian dates) directly to avoid 380-day iteration
+    if (festival.conditions == 'Solar' &&
+        festival.panchangRules.solarDate != null) {
+      final parts = festival.panchangRules.solarDate!.split('-');
+      if (parts.length == 2) {
+        final month = int.tryParse(parts[0]) ?? 1;
+        final day = int.tryParse(parts[1]) ?? 1;
+        var nextDate = DateTime(baseDate.year, month, day);
+        final baseDateOnly = DateTime(
+          baseDate.year,
+          baseDate.month,
+          baseDate.day,
+        );
+
+        if (nextDate.isBefore(baseDateOnly)) {
+          nextDate = DateTime(baseDate.year + 1, month, day);
+        }
+        return nextDate;
+      }
+    }
+
     var date = _estimateFestivalSearchStart(baseDate, festival);
 
     if (date.isBefore(baseDate)) {
@@ -233,5 +270,29 @@ class PanchangService {
     }
 
     return DateTime(year, targetMonth);
+  }
+
+  /// Calculates the exact start time of a specific tithi (Web Fallback)
+  Future<DateTime> calculateTithiStartTime(
+    DateTime approxDate,
+    int targetTithiNum, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    // Web does not have FFI Swiss Ephemeris.
+    // Return approximate date to satisfy compilation.
+    return approxDate.subtract(const Duration(hours: 12));
+  }
+
+  /// Calculates the exact end time of a specific tithi (Web Fallback)
+  Future<DateTime> calculateTithiEndTime(
+    DateTime approxDate,
+    int targetTithiNum, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    // Web does not have FFI Swiss Ephemeris.
+    // Return approximate date to satisfy compilation.
+    return approxDate.add(const Duration(hours: 12));
   }
 }

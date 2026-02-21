@@ -55,6 +55,11 @@ class PanchangData {
     HinduMonthSystem monthSystem = HinduMonthSystem.amanta,
     DateTime? sunrise,
     DateTime? sunset,
+    double? rawTithiMadhyahna,
+    double? rawTithiAparahna,
+    double? rawTithiNishita,
+    double? rawTithiNextSunrise,
+    String masaNextSunrise = '',
   }) {
     final tithiIndex = rawTithi.floor();
 
@@ -73,9 +78,91 @@ class PanchangData {
     final tithiName = _getTithiName(tithiNumber);
 
     // Find matching festivals (pass month system for proper conversion)
-    final matchingFestivals = allFestivals
-        .where((f) => f.matchesTithi(paksha, tithiNumber, masa, monthSystem))
-        .toList();
+    final matchingFestivals = allFestivals.where((f) {
+      if (f.conditions == 'Solar' && f.panchangRules.solarDate != null) {
+        final dateStr =
+            "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+        if (f.panchangRules.solarDate == dateStr) {
+          return true;
+        }
+      }
+
+      double targetRawTithi = rawTithi;
+      if (f.id == 'ganesh_chaturthi' && rawTithiMadhyahna != null) {
+        targetRawTithi = rawTithiMadhyahna;
+      } else if (f.id == 'maha_shivaratri' && rawTithiNishita != null) {
+        targetRawTithi = rawTithiNishita;
+      } else if ((f.id == 'vijayadashami' || f.id == 'dussehra') &&
+          rawTithiAparahna != null) {
+        targetRawTithi = rawTithiAparahna;
+      } else if (f.id == 'parashurama_jayanti' && rawTithiMadhyahna != null) {
+        targetRawTithi = rawTithiMadhyahna;
+      } else {
+        // Standard check: Does it match Sunrise Tithi?
+        final targetIndex = targetRawTithi.floor();
+        String targetPaksha = targetIndex <= 15 ? 'Shukla' : 'Krishna';
+        int targetTithiNum = targetIndex <= 15 ? targetIndex : targetIndex - 15;
+        bool isMatch = f.matchesTithi(
+          targetPaksha,
+          targetTithiNum,
+          masa,
+          monthSystem,
+        );
+
+        // Fallback for Kshaya Tithi:
+        // If it didn't match the Sunrise Tithi, check if the required Tithi
+        // falls entirely between this Sunrise and the next Sunrise.
+        if (!isMatch && rawTithiNextSunrise != null) {
+          int currentSunriseIndex = rawTithi.floor();
+          int nextSunriseIndex = rawTithiNextSunrise.floor();
+
+          if (nextSunriseIndex < currentSunriseIndex) {
+            nextSunriseIndex += 30; // Handle wrap-around
+          }
+
+          // If the difference > 1, there is at least one skipped Tithi
+          if (nextSunriseIndex - currentSunriseIndex > 1) {
+            for (int i = currentSunriseIndex + 1; i < nextSunriseIndex; i++) {
+              int skippedIndex = i > 30 ? i - 30 : i;
+
+              String kshayaPaksha = skippedIndex <= 15 ? 'Shukla' : 'Krishna';
+              int kshayaTithiNum = skippedIndex <= 15
+                  ? skippedIndex
+                  : skippedIndex - 15;
+
+              // If the Kshaya Tithi crosses the Amavasya/Purnima boundary, it belongs to the next month/paksha
+              // Use the masaNextSunrise if it evaluates true.
+              String testMasa = masa;
+              if (skippedIndex == 1 || skippedIndex == 16) {
+                testMasa = masaNextSunrise.isNotEmpty ? masaNextSunrise : masa;
+              }
+
+              if (f.matchesTithi(
+                    kshayaPaksha,
+                    kshayaTithiNum,
+                    masa,
+                    monthSystem,
+                  ) ||
+                  f.matchesTithi(
+                    kshayaPaksha,
+                    kshayaTithiNum,
+                    testMasa,
+                    monthSystem,
+                  )) {
+                return true;
+              }
+            }
+          }
+        }
+        return isMatch;
+      }
+
+      final targetIndex = targetRawTithi.floor();
+      String targetPaksha = targetIndex <= 15 ? 'Shukla' : 'Krishna';
+      int targetTithiNum = targetIndex <= 15 ? targetIndex : targetIndex - 15;
+
+      return f.matchesTithi(targetPaksha, targetTithiNum, masa, monthSystem);
+    }).toList();
 
     return PanchangData(
       date: date,

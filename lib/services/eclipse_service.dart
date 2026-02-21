@@ -12,10 +12,7 @@ class EclipseService {
   EclipseService();
 
   /// Get Swiss Ephemeris bindings
-  SwissEphBindings get _bindings {
-    // Access bindings through jyotish initialization
-    return SwissEphBindings();
-  }
+  late final SwissEphBindings _bindings = SwissEphBindings();
 
   /// Get upcoming eclipses (both solar and lunar)
   /// Returns eclipses sorted by date

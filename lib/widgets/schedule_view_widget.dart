@@ -43,11 +43,8 @@ class ScheduleDateData {
 }
 
 /// Provider for Hindu date with settings applied
-final hinduDateForScheduleProvider =
-    FutureProvider.autoDispose.family<HinduDateData?, DateTime>((
-      ref,
-      date,
-    ) async {
+final hinduDateForScheduleProvider = FutureProvider.autoDispose
+    .family<HinduDateData?, DateTime>((ref, date) async {
       final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
       final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
 
@@ -75,6 +72,8 @@ final hinduDateForScheduleProvider =
         if (monthSystem == HinduMonthSystem.purnimant) {
           masa = convertAmantaToPurnimant(hDate.masa, hDate.paksha);
         }
+        // Replace underscores with spaces for display (e.g. 'Adhika_Jyeshtha' -> 'Adhika Jyeshtha')
+        masa = masa.replaceAll('_', ' ');
 
         // Get year based on era selection
         final year = yearEra == HinduYearEra.vikramSamvat
@@ -95,11 +94,8 @@ final hinduDateForScheduleProvider =
     });
 
 /// Provider for Bengali date for a specific date
-final bengaliDateForScheduleProvider =
-    FutureProvider.autoDispose.family<
-      ({int day, String month, int year})?,
-      DateTime
-    >((ref, date) async {
+final bengaliDateForScheduleProvider = FutureProvider.autoDispose
+    .family<({int day, String month, int year})?, DateTime>((ref, date) async {
       final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
       final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
 
@@ -117,11 +113,8 @@ final bengaliDateForScheduleProvider =
       }
     });
 
-final scheduleDateDataProvider =
-    FutureProvider.autoDispose.family<ScheduleDateData, DateTime>((
-      ref,
-      date,
-    ) async {
+final scheduleDateDataProvider = FutureProvider.autoDispose
+    .family<ScheduleDateData, DateTime>((ref, date) async {
       final panchang = await ref.watch(panchangForDateProvider(date).future);
 
       final results = await Future.wait<Object?>([
@@ -217,7 +210,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
       // Update focused month provider (for sync with calendar view)
       Future.microtask(() {
         if (mounted) {
-            ref
+          ref
               .read(cp.focusedMonthProvider.notifier)
               .setFocusedMonth(visibleDate);
         }
@@ -572,14 +565,22 @@ class _ScheduleDateItem extends ConsumerWidget {
       // Hindu as primary: show masa and tithi with proper settings
       if (hinduDate != null) {
         primaryMonth = hinduDate.month
-            .substring(0, hinduDate.month.length.clamp(0, 4))
+            .split(' ')
+            .last
+            .substring(0, hinduDate.month.split(' ').last.length.clamp(0, 4))
             .toUpperCase();
         primaryDay = '${hinduDate.day}';
       } else {
         // Fallback to panchang data
         primaryMonth = panchang.masa.isNotEmpty
             ? panchang.masa
-                  .substring(0, panchang.masa.length.clamp(0, 4))
+                  .replaceAll('_', ' ')
+                  .split(' ')
+                  .last
+                  .substring(
+                    0,
+                    panchang.masa.split('_').last.length.clamp(0, 4),
+                  )
                   .toUpperCase()
             : gregorianMonth;
         primaryDay = '${panchang.tithiNumber}';

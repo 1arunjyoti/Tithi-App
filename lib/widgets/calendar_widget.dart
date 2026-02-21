@@ -15,8 +15,15 @@ import '../theme/app_theme.dart';
 class _CalendarCellData {
   final String primary;
   final String? secondary;
+  final bool hasFestivals;
+  final bool hasMajorFestival;
 
-  const _CalendarCellData({required this.primary, this.secondary});
+  const _CalendarCellData({
+    required this.primary,
+    this.secondary,
+    this.hasFestivals = false,
+    this.hasMajorFestival = false,
+  });
 }
 
 class _AdaptiveCalendarData {
@@ -66,10 +73,12 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
   cp.AppCalendarSystem secondary,
   cp.TithiDisplayMode displayMode,
 ) async {
-  if (primary == cp.AppCalendarSystem.hindu ||
+  final needsHinduInit =
+      primary == cp.AppCalendarSystem.hindu ||
       secondary == cp.AppCalendarSystem.hindu ||
       primary == cp.AppCalendarSystem.bengali ||
-      secondary == cp.AppCalendarSystem.bengali) {
+      secondary == cp.AppCalendarSystem.bengali;
+  if (needsHinduInit) {
     await ref.read(panchangInitProvider.future);
   }
 
@@ -91,9 +100,23 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
         displayMode,
       );
     }
+
+    // Fetch festival info for this date so the adaptive grid has it
+    bool hasFestivals = false;
+    bool hasMajorFestival = false;
+    try {
+      final panchang = await ref.read(
+        panchangForDateProvider(normalizedDate).future,
+      );
+      hasFestivals = panchang.hasFestivals;
+      hasMajorFestival = panchang.majorFestivals.isNotEmpty;
+    } catch (_) {}
+
     result[normalizedDate] = _CalendarCellData(
       primary: pDate,
       secondary: sDate,
+      hasFestivals: hasFestivals,
+      hasMajorFestival: hasMajorFestival,
     );
   }
 
@@ -183,7 +206,9 @@ final adaptiveCalendarDataProvider =
       } else {
         final service = ref.read(hinduCalendarServiceProvider);
         final hDate = await service.calculateDate(args.focusedMonth);
-        final monthIndex = service.hinduMonths.indexOf(hDate.masa);
+        final monthIndex = service.hinduMonths.indexOf(
+          service.baseMasaName(hDate.masa),
+        );
         final year = hDate.vsYear;
         startDate = await service.getMonthStart(year, monthIndex);
 
@@ -474,11 +499,12 @@ class CalendarWidget extends ConsumerWidget {
             );
             final isToday = isSameDay(date, DateTime.now());
 
-            // Use pre-loaded panchang data from cache
             final normalizedDate = DateTime(date.year, date.month, date.day);
             final cellData = adaptiveData.cellData[normalizedDate];
-            final panchang = monthlyPanchang[normalizedDate];
-            final hasFestivals = panchang?.hasFestivals ?? false;
+            // Festival info is embedded in cellData (from adaptive provider)
+            // which uses the correct lunar date range — no Gregorian mismatch.
+            final hasFestivals = cellData?.hasFestivals ?? false;
+            final hasMajorFestival = cellData?.hasMajorFestival ?? false;
 
             return GestureDetector(
               onTap: () {
@@ -497,12 +523,7 @@ class CalendarWidget extends ConsumerWidget {
                     secondaryText: cellData?.secondary,
                   ),
                   if (hasFestivals)
-                    _buildFestivalMarkerFromCache(
-                          context,
-                          date,
-                          monthlyPanchang,
-                        ) ??
-                        const SizedBox(),
+                    _buildFestivalDot(context, hasMajorFestival),
                 ],
               ),
             );
@@ -593,7 +614,9 @@ class CalendarWidget extends ConsumerWidget {
     final currentYear = yearEra == HinduYearEra.vikramSamvat
         ? hDate.vsYear
         : hDate.shakaYear;
-    final currentMonthIndex = service.hinduMonths.indexOf(hDate.masa);
+    final currentMonthIndex = service.hinduMonths.indexOf(
+      service.baseMasaName(hDate.masa),
+    );
 
     // Calculate era years for 1976 and 2076 (matching Gregorian range)
     int minYear;
@@ -1050,7 +1073,9 @@ class CalendarWidget extends ConsumerWidget {
       final service = ref.read(hinduCalendarServiceProvider);
       await ref.read(panchangInitProvider.future);
       final hDate = await service.calculateDate(focusedMonth);
-      final hIndex = service.hinduMonths.indexOf(hDate.masa);
+      final hIndex = service.hinduMonths.indexOf(
+        service.baseMasaName(hDate.masa),
+      );
       var newIndex = hIndex - 1;
       var newYear = hDate.vsYear;
       if (newIndex < 0) {
@@ -1094,7 +1119,9 @@ class CalendarWidget extends ConsumerWidget {
       final service = ref.read(hinduCalendarServiceProvider);
       await ref.read(panchangInitProvider.future);
       final hDate = await service.calculateDate(focusedMonth);
-      final hIndex = service.hinduMonths.indexOf(hDate.masa);
+      final hIndex = service.hinduMonths.indexOf(
+        service.baseMasaName(hDate.masa),
+      );
       var newIndex = hIndex + 1;
       var newYear = hDate.vsYear;
       if (newIndex > 11) {
@@ -1111,6 +1138,7 @@ class CalendarWidget extends ConsumerWidget {
   }
 
   /// Optimized festival marker using pre-loaded monthly panchang cache
+  /// Used by the Gregorian TableCalendar path.
   Widget? _buildFestivalMarkerFromCache(
     BuildContext context,
     DateTime date,
@@ -1121,7 +1149,12 @@ class CalendarWidget extends ConsumerWidget {
 
     if (panchang == null || !panchang.hasFestivals) return null;
 
-    // Show dot marker for festivals
+    return _buildFestivalDot(context, panchang.majorFestivals.isNotEmpty);
+  }
+
+  /// Festival dot marker for use in the adaptive (Hindu/Bengali) grid.
+  /// Takes pre-resolved flags from cellData so no Gregorian date-range mismatch.
+  Widget _buildFestivalDot(BuildContext context, bool isMajor) {
     return Positioned(
       bottom: 1,
       left: 0,
@@ -1131,9 +1164,7 @@ class CalendarWidget extends ConsumerWidget {
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: panchang.majorFestivals.isNotEmpty
-                ? context.colors.primary
-                : context.colors.secondary,
+            color: isMajor ? context.colors.primary : context.colors.secondary,
             shape: BoxShape.circle,
           ),
         ),
@@ -1157,6 +1188,8 @@ final calendarHeaderDataProvider =
         DateTime date,
         cp.AppCalendarSystem primary,
         cp.AppCalendarSystem secondary,
+        HinduYearEra hinduYearEra,
+        HinduMonthSystem hinduMonthSystem,
       })
     >((ref, args) async {
       return _buildCalendarHeaderData(
@@ -1164,6 +1197,8 @@ final calendarHeaderDataProvider =
         args.date,
         args.primary,
         args.secondary,
+        args.hinduYearEra,
+        args.hinduMonthSystem,
       );
     });
 
@@ -1172,17 +1207,27 @@ Future<_HeaderData> _buildCalendarHeaderData(
   DateTime date,
   cp.AppCalendarSystem primary,
   cp.AppCalendarSystem secondary,
+  HinduYearEra hinduYearEra,
+  HinduMonthSystem hinduMonthSystem,
 ) async {
   String primaryText;
   String? secondaryText;
 
-  primaryText = await _getSystemHeaderTextForCalendar(ref, date, primary);
+  primaryText = await _getSystemHeaderTextForCalendar(
+    ref,
+    date,
+    primary,
+    hinduYearEra,
+    hinduMonthSystem,
+  );
 
   if (primary == cp.AppCalendarSystem.gregorian) {
     final monthRange = await _getTraditionalMonthRangeForCalendar(
       ref,
       date,
       secondary,
+      hinduYearEra,
+      hinduMonthSystem,
     );
     if (monthRange != null) {
       secondaryText = monthRange;
@@ -1199,7 +1244,13 @@ Future<_HeaderData> _buildCalendarHeaderData(
       secondaryText = monthRange;
     }
   } else if (secondary != cp.AppCalendarSystem.none && secondary != primary) {
-    secondaryText = await _getSystemHeaderTextForCalendar(ref, date, secondary);
+    secondaryText = await _getSystemHeaderTextForCalendar(
+      ref,
+      date,
+      secondary,
+      hinduYearEra,
+      hinduMonthSystem,
+    );
   }
 
   return _HeaderData(primaryText: primaryText, secondaryText: secondaryText);
@@ -1209,6 +1260,8 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
   Ref ref,
   DateTime date,
   cp.AppCalendarSystem system,
+  HinduYearEra hinduYearEra,
+  HinduMonthSystem hinduMonthSystem,
 ) async {
   if (system != cp.AppCalendarSystem.bengali &&
       system != cp.AppCalendarSystem.hindu) {
@@ -1250,14 +1303,17 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
       final startHDate = await service.calculateDate(startOfMonth);
       final endHDate = await service.calculateDate(endOfMonth);
 
-      startMonth = startHDate.masa;
-      endMonth = endHDate.masa;
+      startMonth = hinduMonthSystem == HinduMonthSystem.purnimant
+          ? convertAmantaToPurnimant(startHDate.masa, startHDate.paksha)
+          : startHDate.masa;
+      endMonth = hinduMonthSystem == HinduMonthSystem.purnimant
+          ? convertAmantaToPurnimant(endHDate.masa, endHDate.paksha)
+          : endHDate.masa;
 
-      final yearEra = ref.read(cp.hinduYearEraProvider);
-      startYear = yearEra == HinduYearEra.vikramSamvat
+      startYear = hinduYearEra == HinduYearEra.vikramSamvat
           ? startHDate.vsYear
           : startHDate.shakaYear;
-      endYear = yearEra == HinduYearEra.vikramSamvat
+      endYear = hinduYearEra == HinduYearEra.vikramSamvat
           ? endHDate.vsYear
           : endHDate.shakaYear;
 
@@ -1326,7 +1382,9 @@ Future<String?> _getGregorianMonthRangeForCalendar(
       await ref.read(panchangInitProvider.future);
 
       final hDate = await service.calculateDate(date);
-      final monthIndex = service.hinduMonths.indexOf(hDate.masa);
+      final monthIndex = service.hinduMonths.indexOf(
+        service.baseMasaName(hDate.masa),
+      );
       final year = hDate.vsYear;
 
       startDate = await service.getMonthStart(year, monthIndex);
@@ -1362,6 +1420,8 @@ Future<String> _getSystemHeaderTextForCalendar(
   Ref ref,
   DateTime date,
   cp.AppCalendarSystem system,
+  HinduYearEra hinduYearEra,
+  HinduMonthSystem hinduMonthSystem,
 ) async {
   switch (system) {
     case cp.AppCalendarSystem.bengali:
@@ -1379,11 +1439,16 @@ Future<String> _getSystemHeaderTextForCalendar(
         final service = ref.read(hinduCalendarServiceProvider);
         await ref.read(panchangInitProvider.future);
         final hDate = await service.calculateDate(date);
-        final yearEra = ref.read(cp.hinduYearEraProvider);
-        final displayYear = yearEra == HinduYearEra.vikramSamvat
+        final displayYear = hinduYearEra == HinduYearEra.vikramSamvat
             ? hDate.vsYear
             : hDate.shakaYear;
-        return '${hDate.masa} $displayYear';
+        final displayMasa = hinduMonthSystem == HinduMonthSystem.purnimant
+            ? convertAmantaToPurnimant(
+                hDate.masa,
+                hDate.paksha,
+              ).replaceAll('_', ' ')
+            : hDate.masa.replaceAll('_', ' ');
+        return '$displayMasa $displayYear';
       } catch (_) {
         return _formatGregorianHeader(date);
       }
@@ -1429,11 +1494,15 @@ class _CalendarHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
     final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
+    final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
+    final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
     final headerDataAsync = ref.watch(
       calendarHeaderDataProvider((
         date: focusedMonth,
         primary: primarySystem,
         secondary: secondarySystem,
+        hinduYearEra: hinduYearEra,
+        hinduMonthSystem: hinduMonthSystem,
       )),
     );
     final headerData = headerDataAsync.maybeWhen(

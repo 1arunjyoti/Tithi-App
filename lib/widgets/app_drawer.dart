@@ -33,10 +33,10 @@ class AppDrawer extends StatelessWidget {
     final colors = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Use solid color with opacity instead of expensive BackdropFilter
+    // Use solid color instead of expensive transparency
     final backgroundColor = isDark
-        ? const Color(0xF5121212) // Dark theme: near-black with high opacity
-        : const Color(0xF5FAFAFA); // Light theme: off-white with high opacity
+        ? const Color(0xFF121212) // Dark theme: near-black
+        : const Color(0xFFFAFAFA); // Light theme: off-white
 
     final content = RepaintBoundary(
       child: Column(
@@ -63,8 +63,8 @@ class AppDrawer extends StatelessWidget {
 
     return Drawer(
       backgroundColor: backgroundColor,
-      elevation: 8,
-      shadowColor: Colors.black.withValues(alpha: 0.15),
+      elevation: 0,
+      shadowColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       width: 280,
       shape: const RoundedRectangleBorder(borderRadius: _drawerBorderRadius),
@@ -85,30 +85,15 @@ class _DrawerHeader extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.1),
-        borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(topRight: Radius.circular(32)),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.wb_sunny_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
+          Image.asset(
+            'assets/icons/app_drawer_image.png',
+            width: 52,
+            height: 52,
           ),
           const SizedBox(width: 16),
           Column(
@@ -254,15 +239,7 @@ class _DrawerMenuItem extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
-          ),
-          child: Icon(icon, color: colors.primary, size: 20),
-        ),
+        leading: Icon(icon, color: colors.primary, size: 24),
         title: Text(
           title,
           style: textTheme.titleMedium?.copyWith(
@@ -303,20 +280,10 @@ class _ViewModeToggleItem extends ConsumerWidget {
           }
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
-          ),
-          child: Icon(
-            isSchedule
-                ? Icons.calendar_month_rounded
-                : Icons.view_agenda_rounded,
-            color: colors.primary,
-            size: 20,
-          ),
+        leading: Icon(
+          isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
+          color: colors.primary,
+          size: 24,
         ),
         title: Text(
           isSchedule
@@ -361,18 +328,10 @@ class _AboutMenuItem extends ConsumerWidget {
       child: ListTile(
         onTap: () => _showAboutDialog(context, ref, l10n),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
-          ),
-          child: Icon(
-            Icons.info_outline_rounded,
-            color: colors.primary,
-            size: 20,
-          ),
+        leading: Icon(
+          Icons.info_outline_rounded,
+          color: colors.primary,
+          size: 24,
         ),
         title: Text(
           l10n?.aboutApp ?? 'About',
@@ -405,22 +364,14 @@ class _AboutMenuItem extends ConsumerWidget {
 
     if (!navigator.mounted) return;
 
-    final colors = Theme.of(navigator.context).colorScheme;
     showAboutDialog(
       context: navigator.context,
       applicationName: l10n?.appTitle ?? 'Tithi',
       applicationVersion: version,
-      applicationIcon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: colors.primary,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.wb_sunny_rounded,
-          color: Colors.white,
-          size: 32,
-        ),
+      applicationIcon: Image.asset(
+        'assets/icons/logo_transparent.png',
+        width: 48,
+        height: 48,
       ),
       applicationLegalese:
           l10n?.applicationLegalese ??

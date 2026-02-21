@@ -7,16 +7,12 @@ import 'location_provider.dart';
 /// Auto-refreshes based on location changes
 final upcomingEclipsesProvider = FutureProvider<List<Eclipse>>((ref) async {
   final eclipseService = ref.watch(eclipseServiceProvider);
-  final locationData = ref.watch(currentLocationProvider);
+  final location = await ref.watch(currentLocationProvider.future);
 
-  return locationData.when(
-    data: (location) => eclipseService.getUpcomingEclipses(
-      count: 12,
-      latitude: location?.latitude ?? 28.6139,
-      longitude: location?.longitude ?? 77.2090,
-    ),
-    loading: () => eclipseService.getUpcomingEclipses(),
-    error: (_, _) => eclipseService.getUpcomingEclipses(),
+  return eclipseService.getUpcomingEclipses(
+    count: 12,
+    latitude: location?.latitude ?? 28.6139,
+    longitude: location?.longitude ?? 77.2090,
   );
 });
 
@@ -30,23 +26,20 @@ class SelectedEclipseNotifier extends Notifier<Eclipse?> {
   }
 }
 
-final selectedEclipseProvider = NotifierProvider<SelectedEclipseNotifier, Eclipse?>(
-  SelectedEclipseNotifier.new,
-);
+final selectedEclipseProvider =
+    NotifierProvider<SelectedEclipseNotifier, Eclipse?>(
+      SelectedEclipseNotifier.new,
+    );
 
 /// Provider for eclipse with local visibility details
-final eclipseWithVisibilityProvider =
-    FutureProvider.autoDispose.family<Eclipse, Eclipse>((ref, eclipse) async {
-  final eclipseService = ref.watch(eclipseServiceProvider);
-  final locationData = ref.watch(currentLocationProvider);
+final eclipseWithVisibilityProvider = FutureProvider.autoDispose
+    .family<Eclipse, Eclipse>((ref, eclipse) async {
+      final eclipseService = ref.watch(eclipseServiceProvider);
+      final location = await ref.watch(currentLocationProvider.future);
 
-  return locationData.when(
-    data: (location) => eclipseService.getEclipseWithVisibility(
-      eclipse: eclipse,
-      latitude: location?.latitude ?? 28.6139,
-      longitude: location?.longitude ?? 77.2090,
-    ),
-    loading: () => eclipse,
-    error: (_, _) => eclipse,
-  );
+      return eclipseService.getEclipseWithVisibility(
+        eclipse: eclipse,
+        latitude: location?.latitude ?? 28.6139,
+        longitude: location?.longitude ?? 77.2090,
+      );
     });

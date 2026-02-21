@@ -106,8 +106,14 @@ class PanchangService {
     final daysSinceNewMoon = diffDegrees / 12.19074;
 
     // Estimate date of previous New Moon
-    final newMoonDate = date.subtract(
+    final prevNewMoonDate = date.subtract(
       Duration(minutes: (daysSinceNewMoon * 1440).round()),
+    );
+
+    // Estimate date of next New Moon (~29.53 days after the previous one)
+    const synodicMonth = 29.530588853;
+    final nextNewMoonDate = prevNewMoonDate.add(
+      Duration(minutes: (synodicMonth * 1440).round()),
     );
 
     final location = GeographicLocation(
@@ -115,25 +121,19 @@ class PanchangService {
       longitude: longitude,
     );
 
-    // Get Sun's position at New Moon
-    final sun = await Jyotish().getPlanetPosition(
+    // Get Sun's position at previous New Moon
+    final sunPrev = await Jyotish().getPlanetPosition(
       planet: Planet.sun,
-      dateTime: newMoonDate,
+      dateTime: prevNewMoonDate,
       location: location,
     );
 
-    // Map Sun's sidereal longitude to Hindu Month (Amanta)
-    double lng = sun.longitude;
-
-    // Normalize
-    while (lng < 0) {
-      lng += 360;
-    }
-    while (lng >= 360) {
-      lng -= 360;
-    }
-
-    final index = (lng / 30).floor();
+    // Get Sun's position at next New Moon
+    final sunNext = await Jyotish().getPlanetPosition(
+      planet: Planet.sun,
+      dateTime: nextNewMoonDate,
+      location: location,
+    );
 
     const masas = [
       'Vaishakha', // 0-30 Aries
@@ -150,10 +150,29 @@ class PanchangService {
       'Chaitra', // 330-360 Pisces
     ];
 
-    if (index >= 0 && index < masas.length) {
-      return masas[index];
+    // Map Sun's sidereal longitude to zodiac index
+    int zodiacIndex(double lng) {
+      double l = lng % 360;
+      if (l < 0) l += 360;
+      return (l / 30).floor().clamp(0, 11);
     }
-    return 'Unknown';
+
+    final prevIndex = zodiacIndex(sunPrev.longitude);
+    final nextIndex = zodiacIndex(sunNext.longitude);
+
+    final masaName = masas[prevIndex];
+
+    // Adhika (intercalary) masa detection:
+    // If prevIndex == nextIndex, no Surya Sankranti occurred this month → Adhika month.
+    // In this case, return the 'Adhika_' prefix so regular festivals DO NOT match (e.g., skip May 27).
+    if (prevIndex == nextIndex) {
+      return 'Adhika_$masaName';
+    }
+
+    // Nija (real) masa detection:
+    // If it has a sankranti, it's either a normal month or a Nija month.
+    // In either case, it should be the plain masa name so festivals DO match (e.g. June 25 shows).
+    return masaName;
   }
 
   Future<DateTime?> findNextFestivalOccurrence(
@@ -163,6 +182,28 @@ class PanchangService {
     double longitude = 77.2090,
   }) async {
     final baseDate = startDate ?? DateTime.now();
+
+    // Handle solar festivals (fixed Gregorian dates) directly to avoid 380-day iteration
+    if (festival.conditions == 'Solar' &&
+        festival.panchangRules.solarDate != null) {
+      final parts = festival.panchangRules.solarDate!.split('-');
+      if (parts.length == 2) {
+        final month = int.tryParse(parts[0]) ?? 1;
+        final day = int.tryParse(parts[1]) ?? 1;
+        var nextDate = DateTime(baseDate.year, month, day);
+        final baseDateOnly = DateTime(
+          baseDate.year,
+          baseDate.month,
+          baseDate.day,
+        );
+
+        if (nextDate.isBefore(baseDateOnly)) {
+          nextDate = DateTime(baseDate.year + 1, month, day);
+        }
+        return nextDate;
+      }
+    }
+
     var date = _estimateFestivalSearchStart(baseDate, festival);
 
     if (date.isBefore(baseDate)) {
@@ -273,5 +314,98 @@ class PanchangService {
     }
 
     return DateTime(year, targetMonth);
+  }
+
+  /// Calculates the exact start time of a specific tithi near an approximate date
+  Future<DateTime> calculateTithiStartTime(
+    DateTime approxDate,
+    int targetTithiNum, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    DateTime current = approxDate;
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    Future<int> getTithi(DateTime dt) async {
+      final sun = await Jyotish().getPlanetPosition(
+        planet: Planet.sun,
+        dateTime: dt,
+        location: location,
+      );
+      final moon = await Jyotish().getPlanetPosition(
+        planet: Planet.moon,
+        dateTime: dt,
+        location: location,
+      );
+      double diff = moon.longitude - sun.longitude;
+      if (diff < 0) diff += 360;
+      return ((diff / 12) + 1).floor();
+    }
+
+    int currentTithiNum = await getTithi(current);
+
+    // Step backward by hours until we exit the target tithi
+    while (currentTithiNum == targetTithiNum) {
+      current = current.subtract(const Duration(hours: 1));
+      currentTithiNum = await getTithi(current);
+    }
+
+    // We exited into the previous tithi. Step forward by minutes until we enter it again.
+    while (currentTithiNum != targetTithiNum) {
+      current = current.add(const Duration(minutes: 1));
+      currentTithiNum = await getTithi(current);
+    }
+
+    return current;
+  }
+
+  /// Calculates the exact end time of a specific tithi near an approximate date
+  Future<DateTime> calculateTithiEndTime(
+    DateTime approxDate,
+    int targetTithiNum, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    DateTime current = approxDate;
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    Future<int> getTithi(DateTime dt) async {
+      final sun = await Jyotish().getPlanetPosition(
+        planet: Planet.sun,
+        dateTime: dt,
+        location: location,
+      );
+      final moon = await Jyotish().getPlanetPosition(
+        planet: Planet.moon,
+        dateTime: dt,
+        location: location,
+      );
+      double diff = moon.longitude - sun.longitude;
+      if (diff < 0) diff += 360;
+      return ((diff / 12) + 1).floor();
+    }
+
+    int currentTithiNum = await getTithi(current);
+
+    // Step forward by hours until we exit the target tithi
+    while (currentTithiNum == targetTithiNum) {
+      current = current.add(const Duration(hours: 1));
+      currentTithiNum = await getTithi(current);
+    }
+
+    // We exited into the next tithi. Step backward by minutes until we enter it again.
+    while (currentTithiNum != targetTithiNum) {
+      current = current.subtract(const Duration(minutes: 1));
+      currentTithiNum = await getTithi(current);
+    }
+
+    // The exact minute it ends is this minute + 1
+    return current.add(const Duration(minutes: 1));
   }
 }

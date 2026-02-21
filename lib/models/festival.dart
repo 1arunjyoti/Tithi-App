@@ -89,7 +89,8 @@ class Festival {
     // Check tithi match (or range if endTithi is set)
     bool tithiMatch = tithi == currentTithi;
     if (!tithiMatch && panchangRules.endTithi != null) {
-      tithiMatch = currentTithi >= tithi && currentTithi <= panchangRules.endTithi!;
+      tithiMatch =
+          currentTithi >= tithi && currentTithi <= panchangRules.endTithi!;
     }
 
     // Check masa match (or wildcard '*')
