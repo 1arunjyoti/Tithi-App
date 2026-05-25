@@ -12,8 +12,15 @@ class AppTheme {
     borderRadius: BorderRadius.circular(24),
   );
 
+  /// OPT-3: static final fields so ThemeData + GoogleFonts text-theme objects
+  /// are constructed exactly once (on first class access) rather than on every
+  /// widget rebuild that calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
+  static final ThemeData shuklaTheme = _buildShuklaTheme();
+  static final ThemeData krishnaTheme = _buildKrishnaTheme();
+  static final ThemeData pureDarkTheme = _buildPureDarkTheme();
+
   /// Shukla Paksha (Waxing Moon) - Vibrant Warm Theme
-  static ThemeData get shuklaTheme {
+  static ThemeData _buildShuklaTheme() {
     // Vibrant Orange/Gold Palette
     const primaryColor = Color(0xFFFF9F1C); // Vibrant Orange
     const secondaryColor = Color(0xFFFFBF69); // Mellow Yellow-Orange
@@ -91,7 +98,7 @@ class AppTheme {
   }
 
   /// Krishna Paksha (Waning Moon) - Deep Space / Neon Theme
-  static ThemeData get krishnaTheme {
+  static ThemeData _buildKrishnaTheme() {
     // Cyber/Space Palette
     const primaryColor = Color(0xFF7B2CBF); // Deep Purple
     const secondaryColor = Color(0xFF9D4EDD); // Brighter Purple
@@ -172,7 +179,7 @@ class AppTheme {
   }
 
   /// Pure Dark Theme (OLED Black) - Professional & Clean
-  static ThemeData get pureDarkTheme {
+  static ThemeData _buildPureDarkTheme() {
     // 1. Define a seed color for proper tonal generation (Saffron/Gold)
     const seedColor = Color(0xFFFFB74D);
 

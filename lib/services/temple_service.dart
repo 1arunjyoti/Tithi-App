@@ -18,6 +18,16 @@ class TempleService {
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
 
+  // Distance calculator shared across all map calls.
+  // Declared at field level (rather than inside the Overpass response handler)
+  // to make the intent clear; `const` ensures no repeated heap allocation.
+  static const Distance _distanceCalculator = Distance();
+
+  // SEC-1: client-side rate limiter — prevents rapid successive taps from
+  // hammering the Overpass API and triggering IP-level 429 bans.
+  static const Duration _minRequestGap = Duration(seconds: 5);
+  DateTime? _lastRequestTime;
+
   /// Fetches Hindu temples near the given coordinates using Overpass API.
   /// [radius] is in meters.
   Future<List<Temple>> fetchNearbyTemples(
@@ -27,6 +37,16 @@ class TempleService {
     int page = 0,
     int pageSize = 80,
   }) async {
+    // SEC-1: enforce minimum gap between requests to avoid 429 responses.
+    final now = DateTime.now();
+    if (_lastRequestTime != null) {
+      final elapsed = now.difference(_lastRequestTime!);
+      if (elapsed < _minRequestGap) {
+        await Future.delayed(_minRequestGap - elapsed);
+      }
+    }
+    _lastRequestTime = DateTime.now();
+
     final requestLimit = ((page + 1) * pageSize).clamp(pageSize, 300);
 
     // Overpass QL query:
@@ -58,14 +78,12 @@ class TempleService {
             print('Found ${elements.length} temples from $baseUrl');
           }
 
-          const Distance distanceCalculator = Distance();
-
           final temples =
               elements.map((e) {
                 final temple = Temple.fromJson(e as Map<String, dynamic>);
 
-                // Calculate distance
-                final dist = distanceCalculator.as(
+                // Calculate distance using the class-level constant (OPT-8)
+                final dist = _distanceCalculator.as(
                   LengthUnit.Meter,
                   LatLng(lat, lon),
                   LatLng(temple.latitude, temple.longitude),

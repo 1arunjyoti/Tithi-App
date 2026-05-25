@@ -41,9 +41,15 @@ class RitualStateNotifier extends Notifier<Map<String, bool>> {
     state = loadedState;
   }
 
-  /// Toggle the completion status of a ritual
+  /// Toggle the completion status of a ritual.
+  /// Guards against the race where [_init] has not yet completed by awaiting
+  /// it when [_box] is still null (BUG-MEDIUM-6).
   Future<void> toggleRitual(String id) async {
     if (_box == null) await _init();
+    if (_box == null) {
+      // _init failed — nothing we can persist.
+      return;
+    }
 
     final currentState = state[id] ?? false;
     final newState = !currentState;

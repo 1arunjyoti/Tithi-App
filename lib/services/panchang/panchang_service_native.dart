@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:jyotish/jyotish.dart';
 import '../../models/festival.dart';
+import '../../models/hindu_month_system.dart';
 import '../panchang_init/panchang_init.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
@@ -12,8 +13,19 @@ class PanchangService {
   bool _isInitialized = false;
   String? _ephePath;
 
-  /// Cache for tithi calculations (key: date_lat_lon)
-  final Map<String, double> _tithiCache = {};
+  /// BUG-08: cache is static so all PanchangService instances share it
+  /// (background isolate + main isolate no longer maintain separate cache copies).
+  /// BUG-MEDIUM-5: Bounded LRU cache – evicts oldest entries when size exceeds
+  /// [_maxCacheSize] to prevent unbounded memory growth on long-running sessions.
+  static const int _maxCacheSize = 500;
+  static final Map<String, double> _tithiCache = {};
+
+  /// OPT-7: Cache for Sun’s ecliptic longitude keyed by date+hour.
+  /// calculateMasa makes two getPlanetPosition(Sun) calls per invocation;
+  /// day-to-day calls on adjacent dates overlap heavily, so caching cuts FFI
+  /// work substantially when computing a full month of panchang data.
+  static const int _maxSunCacheSize = 100;
+  static final Map<String, double> _sunLongitudeCache = {};
 
   bool get isInitialized => _isInitialized;
 
@@ -83,9 +95,19 @@ class PanchangService {
 
     // Tithi = diff / 12
     // We add 1 because Tithi starts from 1, not 0.
-    final tithi = (diff / 12) + 1;
+    // Guard against the floating-point fringe where diff rounds to exactly
+    // 360°, which would produce tithi = 31.0 — out of the [1, 30] cycle.
+    double tithi = (diff / 12) + 1;
+    if (tithi >= 31.0) tithi -= 30.0;
 
-    // Store in cache
+    // Store in cache with LRU eviction
+    if (_tithiCache.length >= _maxCacheSize) {
+      // Remove the oldest ~20% of entries to amortize eviction cost
+      final keysToRemove = _tithiCache.keys.take(_maxCacheSize ~/ 5).toList();
+      for (final key in keysToRemove) {
+        _tithiCache.remove(key);
+      }
+    }
     _tithiCache[cacheKey] = tithi;
 
     return tithi;
@@ -121,19 +143,9 @@ class PanchangService {
       longitude: longitude,
     );
 
-    // Get Sun's position at previous New Moon
-    final sunPrev = await Jyotish().getPlanetPosition(
-      planet: Planet.sun,
-      dateTime: prevNewMoonDate,
-      location: location,
-    );
-
-    // Get Sun's position at next New Moon
-    final sunNext = await Jyotish().getPlanetPosition(
-      planet: Planet.sun,
-      dateTime: nextNewMoonDate,
-      location: location,
-    );
+    // OPT-7: use the Sun-longitude cache helper to avoid redundant FFI calls.
+    final sunLongPrev = await _getCachedSunLongitude(prevNewMoonDate, location);
+    final sunLongNext = await _getCachedSunLongitude(nextNewMoonDate, location);
 
     const masas = [
       'Vaishakha', // 0-30 Aries
@@ -157,8 +169,8 @@ class PanchangService {
       return (l / 30).floor().clamp(0, 11);
     }
 
-    final prevIndex = zodiacIndex(sunPrev.longitude);
-    final nextIndex = zodiacIndex(sunNext.longitude);
+    final prevIndex = zodiacIndex(sunLongPrev);
+    final nextIndex = zodiacIndex(sunLongNext);
 
     final masaName = masas[prevIndex];
 
@@ -173,6 +185,34 @@ class PanchangService {
     // If it has a sankranti, it's either a normal month or a Nija month.
     // In either case, it should be the plain masa name so festivals DO match (e.g. June 25 shows).
     return masaName;
+  }
+
+  /// OPT-7: Returns the Sun’s ecliptic longitude for [dt], using a bounded
+  /// in-memory cache keyed by (date+hour) to avoid repeated FFI calls when
+  /// [calculateMasa] is invoked on adjacent new-moon dates.
+  Future<double> _getCachedSunLongitude(
+    DateTime dt,
+    GeographicLocation location,
+  ) async {
+    final key =
+        '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}-${dt.hour.toString().padLeft(2, '0')}';
+    if (_sunLongitudeCache.containsKey(key)) return _sunLongitudeCache[key]!;
+
+    final sun = await Jyotish().getPlanetPosition(
+      planet: Planet.sun,
+      dateTime: dt,
+      location: location,
+    );
+
+    if (_sunLongitudeCache.length >= _maxSunCacheSize) {
+      final toRemove =
+          _sunLongitudeCache.keys.take(_maxSunCacheSize ~/ 5).toList();
+      for (final k in toRemove) {
+        _sunLongitudeCache.remove(k);
+      }
+    }
+    _sunLongitudeCache[key] = sun.longitude;
+    return sun.longitude;
   }
 
   Future<DateTime?> findNextFestivalOccurrence(
@@ -204,13 +244,14 @@ class PanchangService {
       }
     }
 
+    // BUG-05: single 380-day pass – the redundant brute-force fallback loop
+    // is removed. We start from the heuristic estimate (clamped to baseDate)
+    // and search forward once.
     var date = _estimateFestivalSearchStart(baseDate, festival);
-
     if (date.isBefore(baseDate)) {
       date = baseDate;
     }
 
-    // Limit search to ~380 days
     for (int i = 0; i < 380; i++) {
       final checkDate = DateTime(date.year, date.month, date.day, 6);
 
@@ -238,43 +279,14 @@ class PanchangService {
         longitude: longitude,
       );
 
-      if (festival.matchesTithi(paksha, tithiNumber, masa)) {
-        return date;
-      }
-
-      date = date.add(const Duration(days: 1));
-    }
-
-    // Fallback: full brute-force from base date if heuristic window missed
-    date = baseDate;
-    for (int i = 0; i < 380; i++) {
-      final checkDate = DateTime(date.year, date.month, date.day, 6);
-
-      final rawTithi = await calculateTithi(
-        checkDate,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      final tithiIndex = rawTithi.floor();
-      String paksha;
-      int tithiNumber;
-      if (tithiIndex <= 15) {
-        paksha = 'Shukla';
-        tithiNumber = tithiIndex;
-      } else {
-        paksha = 'Krishna';
-        tithiNumber = tithiIndex - 15;
-      }
-
-      final masa = await calculateMasa(
-        checkDate,
-        rawTithi,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      if (festival.matchesTithi(paksha, tithiNumber, masa)) {
+      // BUG-04: pass `date` so weekday constraints are evaluated
+      if (festival.matchesTithi(
+        paksha,
+        tithiNumber,
+        masa,
+        HinduMonthSystem.amanta,
+        date,
+      )) {
         return date;
       }
 
@@ -313,17 +325,24 @@ class PanchangService {
       year += 1;
     }
 
-    return DateTime(year, targetMonth);
+    // SMELL-14: Subtract 45 days from the Gregorian approximation so that
+    // Adhika (intercalary) months — which can shift the real Hindu month ~30
+    // days later than the heuristic estimates — are still covered by the
+    // caller’s 380-day forward search window.  The caller clamps the result
+    // back to [baseDate] if it falls in the past.
+    final estimate = DateTime(year, targetMonth);
+    return estimate.subtract(const Duration(days: 45));
   }
 
-  /// Calculates the exact start time of a specific tithi near an approximate date
+  /// BUG-06: Calculates the exact start time of a specific tithi using binary
+  /// search instead of linear stepping, reducing worst-case FFI calls from
+  /// O(hours + minutes) ≈ 168 to O(log(minutes in 2 days)) ≈ 25.
   Future<DateTime> calculateTithiStartTime(
     DateTime approxDate,
     int targetTithiNum, {
     double latitude = 28.6139,
     double longitude = 77.2090,
   }) async {
-    DateTime current = approxDate;
     final location = GeographicLocation(
       latitude: latitude,
       longitude: longitude,
@@ -342,34 +361,55 @@ class PanchangService {
       );
       double diff = moon.longitude - sun.longitude;
       if (diff < 0) diff += 360;
-      return ((diff / 12) + 1).floor();
+      // BUG-1: guard wrap at 360° (same fix as calculateTithi)
+      double raw = (diff / 12) + 1;
+      if (raw >= 31.0) raw -= 30.0;
+      return raw.floor();
     }
 
-    int currentTithiNum = await getTithi(current);
+    // Establish a search window: lo must be outside the target tithi,
+    // hi must be inside it.
+    DateTime lo = approxDate.subtract(const Duration(days: 2));
+    DateTime hi = approxDate;
 
-    // Step backward by hours until we exit the target tithi
-    while (currentTithiNum == targetTithiNum) {
-      current = current.subtract(const Duration(hours: 1));
-      currentTithiNum = await getTithi(current);
+    // BUG-2: walk forward with an iteration guard (max ~30 days = 360 × 2 h).
+    // A Kshaya (skipped) tithi would otherwise loop infinitely.
+    var hiGuard = 0;
+    while (await getTithi(hi) != targetTithiNum && hiGuard++ < 360) {
+      hi = hi.add(const Duration(hours: 2));
+    }
+    // Tithi not found within search window — return the approximate date as
+    // a safe fallback rather than blocking the caller indefinitely.
+    if (hiGuard >= 360) return approxDate;
+
+    // Walk lo back until it is outside the target tithi.
+    var loGuard = 0;
+    while (await getTithi(lo) == targetTithiNum && loGuard++ < 360) {
+      lo = lo.subtract(const Duration(hours: 2));
     }
 
-    // We exited into the previous tithi. Step forward by minutes until we enter it again.
-    while (currentTithiNum != targetTithiNum) {
-      current = current.add(const Duration(minutes: 1));
-      currentTithiNum = await getTithi(current);
+    // Binary search: narrow lo/hi until they are 1 minute apart.
+    while (hi.difference(lo).inMinutes > 1) {
+      final mid =
+          lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
+      if (await getTithi(mid) == targetTithiNum) {
+        hi = mid;
+      } else {
+        lo = mid;
+      }
     }
 
-    return current;
+    return hi; // first minute of the target tithi
   }
 
-  /// Calculates the exact end time of a specific tithi near an approximate date
+  /// BUG-06: Calculates the exact end time of a specific tithi using binary
+  /// search instead of linear stepping.
   Future<DateTime> calculateTithiEndTime(
     DateTime approxDate,
     int targetTithiNum, {
     double latitude = 28.6139,
     double longitude = 77.2090,
   }) async {
-    DateTime current = approxDate;
     final location = GeographicLocation(
       latitude: latitude,
       longitude: longitude,
@@ -388,24 +428,41 @@ class PanchangService {
       );
       double diff = moon.longitude - sun.longitude;
       if (diff < 0) diff += 360;
-      return ((diff / 12) + 1).floor();
+      // BUG-1: guard wrap at 360° (same fix as calculateTithi)
+      double raw = (diff / 12) + 1;
+      if (raw >= 31.0) raw -= 30.0;
+      return raw.floor();
     }
 
-    int currentTithiNum = await getTithi(current);
+    // Establish a search window: lo must be inside the target tithi,
+    // hi must be outside it.
+    DateTime lo = approxDate;
+    DateTime hi = approxDate.add(const Duration(days: 2));
 
-    // Step forward by hours until we exit the target tithi
-    while (currentTithiNum == targetTithiNum) {
-      current = current.add(const Duration(hours: 1));
-      currentTithiNum = await getTithi(current);
+    // BUG-2: walk back with an iteration guard (max ~30 days = 360 × 2 h).
+    var loGuard = 0;
+    while (await getTithi(lo) != targetTithiNum && loGuard++ < 360) {
+      lo = lo.subtract(const Duration(hours: 2));
+    }
+    if (loGuard >= 360) return approxDate;
+
+    // Walk hi forward until it is outside the target tithi.
+    var hiGuard = 0;
+    while (await getTithi(hi) == targetTithiNum && hiGuard++ < 360) {
+      hi = hi.add(const Duration(hours: 2));
     }
 
-    // We exited into the next tithi. Step backward by minutes until we enter it again.
-    while (currentTithiNum != targetTithiNum) {
-      current = current.subtract(const Duration(minutes: 1));
-      currentTithiNum = await getTithi(current);
+    // Binary search: narrow lo/hi until they are 1 minute apart.
+    while (hi.difference(lo).inMinutes > 1) {
+      final mid =
+          lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
+      if (await getTithi(mid) == targetTithiNum) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
     }
 
-    // The exact minute it ends is this minute + 1
-    return current.add(const Duration(minutes: 1));
+    return hi; // first minute after the target tithi ends
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
+import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/temple_map_screen.dart';
 import '../screens/moon_phases_screen.dart';
@@ -141,6 +142,12 @@ class _DrawerMenuList extends StatelessWidget {
           icon: Icons.spa_rounded,
           title: 'My Sankalpas',
           onTap: () => _navigateTo(context, const SankalpaListScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.event_available_rounded,
+          title: 'Festival Countdowns',
+          onTap: () => _navigateTo(context, const FestivalCountdownScreen()),
         ),
 
         _DrawerMenuItem(

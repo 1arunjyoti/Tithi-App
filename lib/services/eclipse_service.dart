@@ -9,7 +9,11 @@ final eclipseServiceProvider = Provider<EclipseService>((ref) {
 
 /// Service for calculating and predicting eclipses
 class EclipseService {
-  EclipseService();
+  // OPT-4: singleton so SwissEphBindings (which loads a native library) is
+  // created only once rather than on every Provider.read call.
+  static final EclipseService _instance = EclipseService._internal();
+  factory EclipseService() => _instance;
+  EclipseService._internal();
 
   /// Get Swiss Ephemeris bindings
   late final SwissEphBindings _bindings = SwissEphBindings();

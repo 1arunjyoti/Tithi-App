@@ -35,9 +35,23 @@ class WeatherFailure extends WeatherResult {
 }
 
 class WeatherService {
-  static const String baseUrl = 'https://api.open-meteo.com/v1';
+  // SEC-2: base URL is a named constant so it can be easily swapped or
+  // overridden via --dart-define=WEATHER_BASE_URL=https://... at build time.
+  static const String baseUrl = String.fromEnvironment(
+    'WEATHER_BASE_URL',
+    defaultValue: 'https://api.open-meteo.com/v1',
+  );
 
   Future<WeatherResult> fetchCurrentWeather(double lat, double lng) async {
+    // SEC-2: retry once on server error before giving up.
+    return _doFetch(lat, lng, attempt: 1);
+  }
+
+  Future<WeatherResult> _doFetch(
+    double lat,
+    double lng, {
+    required int attempt,
+  }) async {
     try {
       final url = Uri.parse(
         '$baseUrl/forecast?latitude=$lat&longitude=$lng'
@@ -61,6 +75,11 @@ class WeatherService {
           );
         }
       } else {
+        if (attempt < 2) {
+          // SEC-2: retry once on non-4xx server errors.
+          await Future.delayed(const Duration(milliseconds: 500));
+          return _doFetch(lat, lng, attempt: attempt + 1);
+        }
         return WeatherFailure(
           WeatherError(
             type: WeatherErrorType.server,

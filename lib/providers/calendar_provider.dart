@@ -1,6 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import '../models/hindu_month_system.dart';
 import '../services/storage_service.dart';
+
+/// Notifier that tracks "today's" date and is refreshed at midnight so that
+/// consumers (e.g. [todayPanchangProvider]) automatically reflect the new day.
+class TodayDateNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() => DateTime.now();
+
+  /// Update the tracked date (called by the midnight timer in [main.dart]).
+  void setToday(DateTime date) => state = date;
+}
+
+final todayDateProvider =
+    NotifierProvider<TodayDateNotifier, DateTime>(TodayDateNotifier.new);
 
 /// Provider for currently selected date in calendar
 class SelectedDateNotifier extends Notifier<DateTime> {
@@ -117,92 +131,35 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   @override
   CalendarPreferences build() {
     final box = StorageService().getSettingsBox();
-
-    StartingDayOfWeek parseStartOfWeek() {
-      final index = box.get(_startOfWeekKey, defaultValue: 0) as int;
-      if (index >= 0 && index < StartingDayOfWeek.values.length) {
-        return StartingDayOfWeek.values[index];
-      }
-      return StartingDayOfWeek.sunday;
-    }
-
-    PrimaryEventView parsePrimaryEventView() {
-      final index = box.get(_primaryEventViewKey, defaultValue: 0) as int;
-      if (index >= 0 && index < PrimaryEventView.values.length) {
-        return PrimaryEventView.values[index];
-      }
-      return PrimaryEventView.tithi;
-    }
-
-    AppCalendarSystem parsePrimaryCalendarSystem() {
-      final index =
-          box.get(
-                _primaryCalendarSystemKey,
-                defaultValue: AppCalendarSystem.gregorian.index,
-              )
-              as int;
-      if (index >= 0 && index < AppCalendarSystem.values.length) {
-        return AppCalendarSystem.values[index];
-      }
-      return AppCalendarSystem.gregorian;
-    }
-
-    AppCalendarSystem parseSecondaryCalendarSystem() {
-      final index =
-          box.get(
-                _secondaryCalendarSystemKey,
-                defaultValue: AppCalendarSystem.none.index,
-              )
-              as int;
-      if (index >= 0 && index < AppCalendarSystem.values.length) {
-        return AppCalendarSystem.values[index];
-      }
-      return AppCalendarSystem.none;
-    }
-
-    HinduMonthSystem parseHinduMonthSystem() {
-      final index =
-          box.get(
-                _hinduMonthSystemKey,
-                defaultValue: HinduMonthSystem.amanta.index,
-              )
-              as int;
-      if (index >= 0 && index < HinduMonthSystem.values.length) {
-        return HinduMonthSystem.values[index];
-      }
-      return HinduMonthSystem.amanta;
-    }
-
-    HinduYearEra parseHinduYearEra() {
-      final index =
-          box.get(
-                _hinduYearEraKey,
-                defaultValue: HinduYearEra.vikramSamvat.index,
-              )
-              as int;
-      if (index >= 0 && index < HinduYearEra.values.length) {
-        return HinduYearEra.values[index];
-      }
-      return HinduYearEra.vikramSamvat;
-    }
-
-    TithiDisplayMode parseTithiDisplayMode() {
-      final index = box.get(_tithiDisplayModeKey, defaultValue: 0) as int;
-      if (index >= 0 && index < TithiDisplayMode.values.length) {
-        return TithiDisplayMode.values[index];
-      }
-      return TithiDisplayMode.pakshaBased;
-    }
-
+    // SMELL-8: replaced 7 identical local parse functions with a single
+    // generic helper. Each call is now one line instead of four.
     return CalendarPreferences(
-      startOfWeek: parseStartOfWeek(),
-      primaryEventView: parsePrimaryEventView(),
-      primaryCalendarSystem: parsePrimaryCalendarSystem(),
-      secondaryCalendarSystem: parseSecondaryCalendarSystem(),
-      hinduMonthSystem: parseHinduMonthSystem(),
-      hinduYearEra: parseHinduYearEra(),
-      tithiDisplayMode: parseTithiDisplayMode(),
+      startOfWeek: _parseEnum(box, _startOfWeekKey, StartingDayOfWeek.values, StartingDayOfWeek.sunday),
+      primaryEventView: _parseEnum(box, _primaryEventViewKey, PrimaryEventView.values, PrimaryEventView.tithi),
+      primaryCalendarSystem: _parseEnum(box, _primaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.gregorian),
+      secondaryCalendarSystem: _parseEnum(box, _secondaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.none),
+      hinduMonthSystem: _parseEnum(box, _hinduMonthSystemKey, HinduMonthSystem.values, HinduMonthSystem.amanta),
+      hinduYearEra: _parseEnum(box, _hinduYearEraKey, HinduYearEra.values, HinduYearEra.vikramSamvat),
+      tithiDisplayMode: _parseEnum(box, _tithiDisplayModeKey, TithiDisplayMode.values, TithiDisplayMode.pakshaBased),
     );
+  }
+
+  /// Generic enum parser from a Hive [Box] entry (SMELL-8).
+  ///
+  /// Reads the integer index stored under [key] and maps it to the
+  /// corresponding element of [values].  Returns [defaultValue] when the
+  /// key is absent or its index is out of range.
+  static T _parseEnum<T extends Enum>(
+    Box<dynamic> box,
+    String key,
+    List<T> values,
+    T defaultValue,
+  ) {
+    final index = box.get(key, defaultValue: defaultValue.index) as int;
+    if (index >= 0 && index < values.length) {
+      return values[index];
+    }
+    return defaultValue;
   }
 
   Future<void> setStartOfWeek(StartingDayOfWeek day) async {

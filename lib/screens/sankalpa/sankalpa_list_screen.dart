@@ -267,7 +267,7 @@ class _SankalpaCard extends ConsumerWidget {
             ] else ...[
               Text(
                 l10n.completedOn(
-                  DateFormat.yMMMd().format(sankalpa.endDate ?? DateTime.now()),
+                  DateFormat.yMMMd().format(sankalpa.endDate),
                 ),
                 style: const TextStyle(color: Colors.green),
               ),

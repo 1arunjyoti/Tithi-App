@@ -80,7 +80,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
         else
           _buildNoFestivalsCard(context),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
       ],
     );
   }

@@ -82,8 +82,8 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
     await ref.read(panchangInitProvider.future);
   }
 
-  final Map<DateTime, _CalendarCellData> result = {};
-  for (final date in dates) {
+  // PERF-2: Compute all dates in parallel instead of sequentially.
+  final entries = await Future.wait(dates.map((date) async {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final pDate = await _calendarDateForSystem(
       ref,
@@ -112,15 +112,18 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
       hasMajorFestival = panchang.majorFestivals.isNotEmpty;
     } catch (_) {}
 
-    result[normalizedDate] = _CalendarCellData(
-      primary: pDate,
-      secondary: sDate,
-      hasFestivals: hasFestivals,
-      hasMajorFestival: hasMajorFestival,
+    return MapEntry(
+      normalizedDate,
+      _CalendarCellData(
+        primary: pDate,
+        secondary: sDate,
+        hasFestivals: hasFestivals,
+        hasMajorFestival: hasMajorFestival,
+      ),
     );
-  }
+  }));
 
-  return result;
+  return Map.fromEntries(entries);
 }
 
 final gregorianCalendarCellDataProvider =

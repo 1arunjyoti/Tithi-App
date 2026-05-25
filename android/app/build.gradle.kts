@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.compile.JavaCompile
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -55,7 +57,7 @@ android {
         variant.outputs
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
-                val outputName = "tithi-${variant.versionName}-${variant.buildType.name}.apk"
+                val outputName = "tithi-${variant.versionName}+${variant.versionCode}-${variant.buildType.name}.apk"
                 output.outputFileName = outputName
             }
     }
@@ -79,4 +81,18 @@ dependencies {
 // manifest merger blame output for release variants.
 tasks.matching { it.name == "processReleaseMainManifest" }.configureEach {
     doNotTrackState("manifest merger blame file can be absent in some AGP/Gradle combinations")
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    if (name == "compileReleaseJavaWithJavac") {
+        doFirst {
+            val registrantFile = file("src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java")
+
+            if (registrantFile.exists()) {
+                val filteredLines = registrantFile.readLines()
+                    .filterNot { line -> line.contains("integration_test") }
+                registrantFile.writeText(filteredLines.joinToString("\n"))
+            }
+        }
+    }
 }

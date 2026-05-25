@@ -4,7 +4,12 @@ import '../models/festival.dart';
 import '../models/sankalpa.dart';
 
 /// Centralized Hive box orchestration for startup and reset flows.
+/// SMELL-4: Const singleton – the class is stateless so every call-site can
+/// share a single canonical instance without needless heap allocations.
 class StorageService {
+  const StorageService._();
+  static const StorageService _instance = StorageService._();
+  factory StorageService() => _instance;
   static const String settingsBoxName = 'settings';
   static const String locationSettingsBoxName = 'location_settings';
   static const String notificationSettingsBoxName = 'notification_settings';

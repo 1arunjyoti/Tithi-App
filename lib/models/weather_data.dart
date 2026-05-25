@@ -40,6 +40,8 @@ class WeatherData {
     final daily = json['daily'];
 
     final conditionCode = current['weather_code'] as int;
+    // SMELL-5: _getConditionFromCode now returns (text, emoji) directly,
+    // eliminating the intermediate WeatherAPI-style code and _getConditionIcon.
     final condition = _getConditionFromCode(conditionCode);
 
     List<DailyForecast> forecastList = [];
@@ -56,7 +58,7 @@ class WeatherData {
           maxTemp: (maxTemps[i] as num).toDouble(),
           minTemp: (minTemps[i] as num).toDouble(),
           conditionText: forecastCondition.$1,
-          conditionIcon: _getConditionIcon(forecastCondition.$2),
+          conditionIcon: forecastCondition.$2,
         ));
       }
     }
@@ -64,7 +66,7 @@ class WeatherData {
     return WeatherData(
       temperature: (current['temperature_2m'] as num).toDouble(),
       conditionText: condition.$1,
-      conditionIcon: _getConditionIcon(condition.$2),
+      conditionIcon: condition.$2,
       humidity: (current['relative_humidity_2m'] as num).toInt(),
       windSpeed: (current['wind_speed_10m'] as num).toDouble(),
       feelsLike: (current['apparent_temperature'] as num).toDouble(),
@@ -73,57 +75,57 @@ class WeatherData {
     );
   }
 
-  static (String, int) _getConditionFromCode(int code) {
+  /// Maps a WMO weather code directly to (description, emoji).
+  /// SMELL-5: single function replaces the old two-step approach of
+  /// _getConditionFromCode (returned an intermediate WeatherAPI int code)
+  /// followed by _getConditionIcon (mapped that int to an emoji string).
+  static (String, String) _getConditionFromCode(int code) {
     switch (code) {
       case 0:
-        return ('Clear sky', 1000);
+        return ('Clear sky', '☀️');
       case 1:
-        return ('Mainly clear', 1000);
+        return ('Mainly clear', '☀️');
       case 2:
-        return ('Partly cloudy', 1003);
+        return ('Partly cloudy', '⛅');
       case 3:
-        return ('Overcast', 1006);
+        return ('Overcast', '☁️');
       case 45:
       case 48:
-        return ('Foggy', 1135);
+        return ('Foggy', '🌫️');
       case 51:
       case 53:
       case 55:
-        return ('Drizzle', 1063);
+        return ('Drizzle', '🌦️');
       case 56:
       case 57:
-        return ('Freezing drizzle', 1069);
+        return ('Freezing drizzle', '🌨️');
       case 61:
       case 63:
       case 65:
-        return ('Rain', 1183);
+        return ('Rain', '🌧️');
       case 66:
       case 67:
-        return ('Freezing rain', 1066);
+        return ('Freezing rain', '❄️');
       case 71:
       case 73:
       case 75:
-        return ('Snowfall', 1066);
+        return ('Snowfall', '❄️');
       case 77:
-        return ('Snow grains', 1066);
+        return ('Snow grains', '❄️');
       case 80:
       case 81:
       case 82:
-        return ('Rain showers', 1186);
+        return ('Rain showers', '🌦️');
       case 85:
       case 86:
-        return ('Snow showers', 1066);
+        return ('Snow showers', '❄️');
       case 95:
-        return ('Thunderstorm', 1087);
+        return ('Thunderstorm', '⛈️');
       case 96:
       case 99:
-        return ('Thunderstorm with hail', 1087);
+        return ('Thunderstorm with hail', '⛈️');
       default:
-        return ('Unknown', 1000);
+        return ('Unknown', '☀️');
     }
-  }
-
-  static String _getConditionIcon(int weatherApiCode) {
-    return 'https://cdn.weatherapi.com/weather/64x64/day/$weatherApiCode.png';
   }
 }

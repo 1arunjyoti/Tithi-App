@@ -1,4 +1,3 @@
-import 'package:tithi/services/panchang/panchang_service_native.dart';
 import 'package:jyotish/jyotish.dart';
 
 // Just writing the static implementations of the logic to replace in the service file.

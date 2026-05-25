@@ -5,9 +5,6 @@ import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
 import 'storage_service.dart';
 
-// For web platform detection
-const bool _kIsWeb = kIsWeb;
-
 /// Location data model
 class LocationData {
   final double latitude;
@@ -198,13 +195,14 @@ class LocationService {
       // Check permission
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (kDebugMode) {
-            print('Location permission denied');
-          }
-          return _getCachedLocation();
+        // SMELL-7: Do NOT auto-request permission here. Permission requests
+        // should only originate from explicit user actions in the UI.
+        // Return cached location instead so background refreshes don't
+        // unexpectedly pop a system dialog.
+        if (kDebugMode) {
+          print('Location permission denied – skipping auto-request');
         }
+        return _getCachedLocation();
       }
 
       if (permission == LocationPermission.deniedForever) {
@@ -216,14 +214,14 @@ class LocationService {
 
       // Try to get last known position first (faster) - not supported on web
       Position? position;
-      if (!_kIsWeb) {
+      if (!kIsWeb) {
         position = await Geolocator.getLastKnownPosition();
       }
 
       // If no last known position, get current position
       // Web uses standard LocationSettings, mobile uses AndroidSettings for FOSS
       position ??= await Geolocator.getCurrentPosition(
-        locationSettings: _kIsWeb
+        locationSettings: kIsWeb
             ? const LocationSettings(
                 accuracy: LocationAccuracy.medium,
                 timeLimit: Duration(seconds: 15),
@@ -367,6 +365,13 @@ class LocationService {
   /// SET home location manually
   Future<void> setHomeLocation(double lat, double lng, String address) async {
     _ensureInitialized();
+    // SEC-3: validate coordinate ranges before persisting.
+    if (lat < -90 || lat > 90) {
+      throw ArgumentError.value(lat, 'lat', 'Latitude must be in [-90, 90]');
+    }
+    if (lng < -180 || lng > 180) {
+      throw ArgumentError.value(lng, 'lng', 'Longitude must be in [-180, 180]');
+    }
     await _box?.put(_keyHomeLat, lat);
     await _box?.put(_keyHomeLng, lng);
     await _box?.put(_keyHomeAddress, address);

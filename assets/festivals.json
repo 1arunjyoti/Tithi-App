@@ -451,7 +451,6 @@
       "audio_stotra": ""
     }
   },
-
   {
     "id": "akshaya_tritiya",
     "name": "Akshaya Tritiya",
@@ -730,7 +729,8 @@
       "masa": "Vaishakha",
       "paksha": "Shukla",
       "tithi": 3,
-      "conditions": "Tritiya"
+      "conditions": "Tritiya",
+      "timingOverride": "madhyahna"
     },
     "rituals": {
       "steps": [
@@ -830,7 +830,6 @@
       "audio_stotra": ""
     }
   },
-
   {
     "id": "vat_savitri",
     "name": "Vat Savitri Vrat",
@@ -1360,7 +1359,8 @@
       "masa": "Bhadrapada",
       "paksha": "Shukla",
       "tithi": 4,
-      "conditions": "Chaturthi"
+      "conditions": "Chaturthi",
+      "timingOverride": "madhyahna"
     },
     "rituals": {
       "steps": [
@@ -2104,7 +2104,8 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 10,
-      "conditions": "Dashami"
+      "conditions": "Dashami",
+      "timingOverride": "aparahna"
     },
     "rituals": {
       "steps": [
@@ -3342,7 +3343,8 @@
       "masa": "Magha",
       "paksha": "Krishna",
       "tithi": 14,
-      "conditions": "Chaturdashi"
+      "conditions": "Chaturdashi",
+      "timingOverride": "nishita"
     },
     "rituals": {
       "steps": [
@@ -3478,8 +3480,6 @@
       "audio_stotra": ""
     }
   },
-  
-
   {
     "id": "ekadashi_shukla",
     "name": "Ekadashi (Shukla)",

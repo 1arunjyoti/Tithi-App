@@ -212,13 +212,14 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       solarDate: fields[5] as String?,
       weekday: fields[6] as String?,
       endTithi: fields[7] as int?,
+      timingOverride: fields[8] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, PanchangRules obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.masa)
       ..writeByte(1)
@@ -234,7 +235,9 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       ..writeByte(6)
       ..write(obj.weekday)
       ..writeByte(7)
-      ..write(obj.endTithi);
+      ..write(obj.endTithi)
+      ..writeByte(8)
+      ..write(obj.timingOverride);
   }
 
   @override

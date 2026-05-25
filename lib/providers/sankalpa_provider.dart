@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/sankalpa.dart';
 import '../services/sankalpa_service.dart';
@@ -25,9 +26,23 @@ class SankalpaListNotifier extends Notifier<List<Sankalpa>> {
   }
 
   Future<void> _loadSankalpas() async {
-    // Ensure service is initialized (it might be lazy, so safe to call init)
-    await _service.init();
-    state = _service.getAllSankalpas();
+    try {
+      // Ensure service is initialized (it might be lazy, so safe to call init)
+      await _service.init();
+      state = _service.getAllSankalpas();
+    } catch (e, stack) {
+      // SMELL-12: surface the error via Flutter's error reporting instead of
+      // swallowing it silently.  Consumers keep the previous state ([] on
+      // first load) unchanged so the UI doesn't crash.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: stack,
+          library: 'SankalpaListNotifier',
+          context: ErrorDescription('loading sankalpas from storage'),
+        ),
+      );
+    }
   }
 
   Future<void> addSankalpa(Sankalpa sankalpa) async {

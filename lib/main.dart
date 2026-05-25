@@ -15,6 +15,7 @@ import 'package:jyotish/jyotish.dart';
 import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
+import 'providers/calendar_provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/version_provider.dart';
 import 'theme/app_theme.dart';
@@ -23,7 +24,6 @@ import 'models/festival.dart';
 import 'models/sankalpa.dart';
 import 'services/notification_service.dart';
 import 'services/storage_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -66,9 +66,6 @@ void main() {
       if (!kIsWeb) {
         await initPlatformFeatures();
       }
-
-      // Load environment variables
-      await dotenv.load();
 
       // Preload package/version metadata before first drawer animation.
       await warmVersionInfo();
@@ -115,16 +112,36 @@ class TithiApp extends ConsumerStatefulWidget {
 
 class _TithiAppState extends ConsumerState<TithiApp>
     with WidgetsBindingObserver {
+  Timer? _midnightTimer;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _scheduleMidnightRefresh();
+  }
+
+  /// Schedules a one-shot timer that fires just after midnight so that
+  /// [todayDateProvider] (and anything that depends on it) is refreshed
+  /// to the new calendar date without requiring an app restart.
+  void _scheduleMidnightRefresh() {
+    _midnightTimer?.cancel();
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = midnight.difference(now) + const Duration(seconds: 1);
+    _midnightTimer = Timer(delay, () {
+      if (mounted) {
+        ref.read(todayDateProvider.notifier).setToday(DateTime.now());
+      }
+      _scheduleMidnightRefresh(); // re-arm for the following midnight
+    });
   }
 
   @override
   void dispose() {
+    _midnightTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    // Clean up Jyotish resources when app is disposed
+    // Clean up Jyotish resources when app is disposed (BUG-01: single disposal site)
     try {
       final jyotish = Jyotish();
       if (jyotish.isInitialized) {
@@ -143,19 +160,6 @@ class _TithiAppState extends ConsumerState<TithiApp>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       unawaited(locationService.markAppBackgrounded());
-    }
-
-    // Optionally handle app lifecycle events
-    if (state == AppLifecycleState.detached) {
-      // App is about to be terminated
-      try {
-        final jyotish = Jyotish();
-        if (jyotish.isInitialized) {
-          jyotish.dispose();
-        }
-      } catch (e) {
-        debugPrint('Error disposing Jyotish on app detached: $e');
-      }
     }
   }
 

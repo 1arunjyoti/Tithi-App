@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../models/festival.dart';
+import '../../models/hindu_month_system.dart';
 
 /// Web implementation of PanchangService
 /// Uses simplified calculations since FFI-based Swiss Ephemeris is not available on web
@@ -160,13 +161,12 @@ class PanchangService {
       }
     }
 
+    // BUG-05: single 380-day pass (redundant fallback loop removed).
     var date = _estimateFestivalSearchStart(baseDate, festival);
-
     if (date.isBefore(baseDate)) {
       date = baseDate;
     }
 
-    // Limit search to ~380 days
     for (int i = 0; i < 380; i++) {
       final checkDate = DateTime(date.year, date.month, date.day, 6);
 
@@ -194,43 +194,14 @@ class PanchangService {
         longitude: longitude,
       );
 
-      if (festival.matchesTithi(paksha, tithiNumber, masa)) {
-        return date;
-      }
-
-      date = date.add(const Duration(days: 1));
-    }
-
-    // Fallback: full brute-force from base date if heuristic window missed
-    date = baseDate;
-    for (int i = 0; i < 380; i++) {
-      final checkDate = DateTime(date.year, date.month, date.day, 6);
-
-      final rawTithi = await calculateTithi(
-        checkDate,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      final tithiIndex = rawTithi.floor();
-      String paksha;
-      int tithiNumber;
-      if (tithiIndex <= 15) {
-        paksha = 'Shukla';
-        tithiNumber = tithiIndex;
-      } else {
-        paksha = 'Krishna';
-        tithiNumber = tithiIndex - 15;
-      }
-
-      final masa = await calculateMasa(
-        checkDate,
-        rawTithi,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      if (festival.matchesTithi(paksha, tithiNumber, masa)) {
+      // BUG-04: pass `date` so weekday constraints are evaluated
+      if (festival.matchesTithi(
+        paksha,
+        tithiNumber,
+        masa,
+        HinduMonthSystem.amanta,
+        date,
+      )) {
         return date;
       }
 

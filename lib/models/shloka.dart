@@ -10,10 +10,12 @@ class Shloka {
   });
 
   factory Shloka.fromJson(Map<String, dynamic> json) {
+    // SEC-3: Null-safe casts – avoid TypeError when JSON fields are null or
+    // not the expected type.
     return Shloka(
-      text: json['text'] as String,
-      translation: json['translation'] as String,
-      source: json['source'] as String,
+      text: json['text'] as String? ?? '',
+      translation: json['translation'] as String? ?? '',
+      source: json['source'] as String? ?? '',
     );
   }
 
