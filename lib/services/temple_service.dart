@@ -50,24 +50,32 @@ class TempleService {
     final requestLimit = ((page + 1) * pageSize).clamp(pageSize, 300);
 
     // Overpass QL query:
-    // [out:json][timeout:25];node(around:radius,lat,lon)["amenity"="place_of_worship"]["religion"="hindu"];out;
+    // Include nodes/ways/relations and request centers for non-node features.
+    // [out:json][timeout:25];nwr(around:radius,lat,lon)["amenity"="place_of_worship"]["religion"="hindu"];out center;
     // Added [timeout:25] (seconds) to the query itself
     final query =
-        '[out:json][timeout:25];node(around:$radius,$lat,$lon)["amenity"="place_of_worship"]["religion"="hindu"];out $requestLimit;';
+        '[out:json][timeout:25];nwr(around:$radius,$lat,$lon)["amenity"="place_of_worship"]["religion"="hindu"];out center $requestLimit;';
 
     final encodedQuery = Uri.encodeComponent(query);
 
     // Try each server until success
     for (final baseUrl in _overpassServers) {
       try {
-        final url = Uri.parse('$baseUrl?data=$encodedQuery');
+        final url = Uri.parse(baseUrl);
 
         if (kDebugMode) {
           print('Fetching temples from: $baseUrl');
         }
 
         final response = await http
-            .get(url)
+            .post(
+              url,
+              headers: const {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'User-Agent': 'tithi/overpass (flutter_map; contact@tithi.app)',
+              },
+              body: 'data=$encodedQuery',
+            )
             .timeout(const Duration(seconds: 30));
 
         if (response.statusCode == 200) {
@@ -120,6 +128,13 @@ class TempleService {
           // Server error, try next
           if (kDebugMode) {
             print('Overpass ${response.statusCode} from $baseUrl');
+          }
+          continue;
+        } else {
+          if (kDebugMode) {
+            print(
+              'Overpass ${response.statusCode} from $baseUrl: ${response.body}',
+            );
           }
           continue;
         }

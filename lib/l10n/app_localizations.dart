@@ -717,7 +717,7 @@ abstract class AppLocalizations {
   /// Privacy policy - data stays local explanation
   ///
   /// In en, this message translates to:
-  /// **'Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, and event processing happen directly on your device. We do not collect, store, or transmit your personal data to any external servers.'**
+  /// **'Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, event processing happen directly on your device and the app keeps working without a network. We do not collect, store, or transmit your personal data to any external servers.'**
   String get privacyYourDataDesc;
 
   /// Privacy policy section title
@@ -741,7 +741,7 @@ abstract class AppLocalizations {
   /// Privacy policy - offline functionality explanation
   ///
   /// In en, this message translates to:
-  /// **'The app works completely offline after the initial download. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.'**
+  /// **'The app works completely offline. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.'**
   String get privacyOfflineDesc;
 
   /// Privacy policy section title

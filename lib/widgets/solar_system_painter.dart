@@ -11,6 +11,7 @@ class SolarSystemPainter extends CustomPainter {
     this.isDark = false,
     this.zoomLevel = 1.0,
     this.showZodiac = false,
+    this.panOffset = Offset.zero,
   });
 
   final SolarSystemData solarSystemData;
@@ -18,6 +19,7 @@ class SolarSystemPainter extends CustomPainter {
   final bool isDark;
   final double zoomLevel;
   final bool showZodiac;
+  final Offset panOffset;
 
   /// Whether this is geocentric (Earth-centered) view
   bool get isGeocentric =>
@@ -30,6 +32,14 @@ class SolarSystemPainter extends CustomPainter {
 
     // Draw background gradient and stars
     _drawBackground(canvas, size, center, maxRadius);
+
+    canvas.save();
+    canvas.translate(panOffset.dx, panOffset.dy);
+
+    // Subtle radial guides to visually separate sections from the center
+    if (showZodiac) {
+      _drawCenterGuides(canvas, center, maxRadius);
+    }
 
     // Draw Zodiac Ring (if enabled)
     if (showZodiac) {
@@ -48,6 +58,24 @@ class SolarSystemPainter extends CustomPainter {
 
     // Draw planets
     _drawPlanets(canvas, center, maxRadius);
+    canvas.restore();
+  }
+
+  void _drawCenterGuides(Canvas canvas, Offset center, double maxRadius) {
+    final guidePaint = Paint()
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.08)
+          : Colors.white.withValues(alpha: 0.12)
+      ..strokeWidth = 1.0;
+
+    for (int i = 0; i < 12; i++) {
+      final angle = i * 30 * math.pi / 180;
+      final end = Offset(
+        center.dx + maxRadius * math.cos(angle),
+        center.dy + maxRadius * math.sin(angle),
+      );
+      canvas.drawLine(center, end, guidePaint);
+    }
   }
 
   void _drawBackground(
@@ -163,6 +191,31 @@ class SolarSystemPainter extends CustomPainter {
       );
     }
 
+    // Draw degree labels every 15 degrees
+    for (int i = 0; i < 24; i++) {
+      final degree = i * 15;
+      final degreeAngle = -(degree * math.pi / 180);
+      final degreeRadius = radius * 1.12;
+      final dx = center.dx + degreeRadius * math.cos(degreeAngle);
+      final dy = center.dy + degreeRadius * math.sin(degreeAngle);
+
+      textPainter.text = TextSpan(
+        text: '$degree°',
+        style: TextStyle(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.45)
+              : Colors.white.withValues(alpha: 0.55),
+          fontSize: 9,
+          fontWeight: FontWeight.w500,
+        ),
+      );
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(dx - textPainter.width / 2, dy - textPainter.height / 2),
+      );
+    }
+
     // Draw outer circle
     canvas.drawCircle(center, radius, paint);
     canvas.drawCircle(center, radius * 0.85, paint);
@@ -208,11 +261,7 @@ class SolarSystemPainter extends CustomPainter {
     // Draw sun core
     final sunPaint = Paint()
       ..shader = const RadialGradient(
-        colors: [
-          Color(0xFFFFFFE0),
-          Color(0xFFFFD700),
-          Color(0xFFFF8C00),
-        ],
+        colors: [Color(0xFFFFFFE0), Color(0xFFFFD700), Color(0xFFFF8C00)],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
     canvas.drawCircle(center, 18, sunPaint);
@@ -249,10 +298,7 @@ class SolarSystemPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: const TextSpan(
         text: '🌍',
-        style: TextStyle(
-          fontSize: 16,
-          shadows: [Shadow(blurRadius: 10)],
-        ),
+        style: TextStyle(fontSize: 16, shadows: [Shadow(blurRadius: 10)]),
       ),
       textDirection: TextDirection.ltr,
     );
@@ -420,7 +466,8 @@ class SolarSystemPainter extends CustomPainter {
         oldDelegate.selectedPlanetIndex != selectedPlanetIndex ||
         oldDelegate.isDark != isDark ||
         oldDelegate.zoomLevel != zoomLevel ||
-        oldDelegate.showZodiac != showZodiac;
+        oldDelegate.showZodiac != showZodiac ||
+        oldDelegate.panOffset != panOffset;
   }
 }
 
@@ -430,23 +477,29 @@ class PlanetHitTester {
     required this.solarSystemData,
     required this.size,
     this.zoomLevel = 1.0,
+    this.panOffset = Offset.zero,
   });
 
   final SolarSystemData solarSystemData;
   final Size size;
   final double zoomLevel;
+  final Offset panOffset;
 
   /// Returns the index of the planet at the given position, or null if none
   int? hitTest(Offset position) {
     final center = Offset(size.width / 2, size.height / 2);
+    final adjustedCenter = Offset(
+      center.dx + panOffset.dx,
+      center.dy + panOffset.dy,
+    );
     final maxRadius = (math.min(size.width, size.height) / 2 - 20) * zoomLevel;
 
     for (int i = solarSystemData.planets.length - 1; i >= 0; i--) {
       final planet = solarSystemData.planets[i];
       if (planet.orbitRadius == 0) continue; // Skip sun
 
-      final x = center.dx + planet.visualX * maxRadius;
-      final y = center.dy - planet.visualY * maxRadius;
+      final x = adjustedCenter.dx + planet.visualX * maxRadius;
+      final y = adjustedCenter.dy - planet.visualY * maxRadius;
       final planetPos = Offset(x, y);
 
       final distance = (position - planetPos).distance;

@@ -10,7 +10,6 @@ import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
-import 'privacy_policy_screen.dart';
 import '../providers/accessibility_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../models/hindu_month_system.dart';
@@ -132,26 +131,6 @@ class SettingsScreen extends ConsumerWidget {
                           _ResetSettingsTile(),
                         ],
                       ),
-
-                      const SizedBox(height: 32),
-
-                      SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
-                      SettingsGroupCard(
-                        children: [
-                          SettingsActionTile(
-                            icon: Icons.privacy_tip_rounded,
-                            title: l10n?.privacyPolicy ?? 'Privacy Policy',
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const PrivacyPolicyScreen(),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
                       const SizedBox(height: 32),
                       Center(
                         child: Text(
@@ -973,9 +952,10 @@ class _ResetSettingsTile extends ConsumerWidget {
           ref
               .read(shlokaNotificationEnabledProvider.notifier)
               .setEnabled(false);
-          ref
-              .read(notificationTimeProvider.notifier)
-              .setTime((hour: 8, minute: 0));
+          ref.read(notificationTimeProvider.notifier).setTime((
+            hour: 8,
+            minute: 0,
+          ));
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(

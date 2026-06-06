@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/shloka.dart';
+import '../providers/panchang_provider.dart';
 import '../services/shloka_service.dart';
 import '../theme/app_theme.dart';
-import 'package:share_plus/share_plus.dart';
 
 // Provider to get today's shloka
 final dailyShlokaProvider = FutureProvider<Shloka?>((ref) async {
   final service = ShlokaService();
   await service.init();
-  return service.getShlokaForToday();
+
+  final panchang = await ref.watch(todayPanchangProvider.future);
+  final festivalIds = panchang.festivals
+      .map((festival) => festival.id)
+      .toList();
+  return service.getShlokaForDate(panchang.date, festivalIds: festivalIds);
 });
 
 // UI State provider for collapse/expand

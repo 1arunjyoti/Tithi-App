@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:jyotish/jyotish.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
@@ -72,6 +73,16 @@ void main() {
 
       // Initialize Hive for offline storage
       await Hive.initFlutter();
+
+      if (!kIsWeb) {
+        await FMTCObjectBoxBackend().initialise(
+          maxDatabaseSize: 256 * 1024 * 1024,
+        );
+        const tileStore = FMTCStore('osm_tiles');
+        if (!await tileStore.manage.ready) {
+          await tileStore.manage.create(maxLength: 8000);
+        }
+      }
 
       // Register Adapters
       Hive.registerAdapter(FestivalAdapter());

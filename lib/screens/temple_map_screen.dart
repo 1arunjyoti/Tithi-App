@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_geojson2/flutter_map_geojson2.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/temple.dart';
 import '../services/temple_service.dart';
@@ -24,6 +26,10 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   final MapController _mapController = MapController();
   // Static to avoid re-instantiation on widget recreation
   static final TempleService _templeService = TempleService();
+  static const FMTCStore _tileStore = FMTCStore('osm_tiles');
+  final FMTCTileProvider _tileProvider = _tileStore.getTileProvider(
+    cachedValidDuration: const Duration(days: 30),
+  );
 
   List<Temple> _temples = [];
   bool _isLoading = false;
@@ -31,7 +37,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   int _currentPage = 0;
   bool _hasMoreTemples = true;
   static const int _pageSize = 80;
-  Timer? _mapMoveDebounce;
 
   // Default center (India)
   LatLng _center = const LatLng(20.5937, 78.9629);
@@ -39,7 +44,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
 
   @override
   void dispose() {
-    _mapMoveDebounce?.cancel();
     super.dispose();
   }
 
@@ -131,16 +135,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
     return 15000;
   }
 
-  void _onMapPositionChanged(MapCamera camera, bool hasGesture) {
-    if (!hasGesture) return;
-    _mapMoveDebounce?.cancel();
-    _mapMoveDebounce = Timer(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        _fetchTemples();
-      }
-    });
-  }
-
   void _onMapReady() {
     if (_userLocation != null) {
       _mapController.move(_userLocation!, 14.0);
@@ -179,13 +173,23 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               initialCenter: _center,
               initialZoom: _zoom,
               onMapReady: _onMapReady,
-              onPositionChanged: _onMapPositionChanged,
             ),
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName:
                     'com.example.tithi', // Update with actual package
+                tileProvider: _tileProvider,
+              ),
+              GeoJsonLayer.asset(
+                'assets/map_data/india_boundary.geojson',
+                styleDefaults: const GeoJsonStyleDefaults(
+                  strokeColor: Colors.orange,
+                  strokeOpacity: 1.0,
+                  strokeWidth: 1.5,
+                  fillColor: Colors.transparent,
+                  fillOpacity: 0.0,
+                ),
               ),
               MarkerLayer(
                 markers: [
@@ -233,13 +237,9 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                 button: true,
                 label: l10n.searchHere,
                 child: FloatingActionButton.extended(
-                  onPressed: () => _fetchTemples(reset: _temples.isEmpty),
+                  onPressed: () => _fetchTemples(reset: true),
                   icon: const Icon(Icons.search),
-                  label: Text(
-                    _temples.isNotEmpty && _hasMoreTemples
-                        ? l10n.loadMore
-                        : l10n.searchHere,
-                  ),
+                  label: Text(l10n.searchHere),
                   backgroundColor: context.colors.primaryContainer,
                   foregroundColor: context.colors.onPrimaryContainer,
                 ),

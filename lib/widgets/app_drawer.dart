@@ -7,6 +7,7 @@ import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/temple_map_screen.dart';
 import '../screens/moon_phases_screen.dart';
+import '../screens/about_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../screens/sankalpa/sankalpa_list_screen.dart';
@@ -333,7 +334,7 @@ class _AboutMenuItem extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        onTap: () => _showAboutDialog(context, ref, l10n),
+        onTap: () => _navigateToAbout(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         leading: Icon(
           Icons.info_outline_rounded,
@@ -356,33 +357,13 @@ class _AboutMenuItem extends ConsumerWidget {
     );
   }
 
-  Future<void> _showAboutDialog(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations? l10n,
-  ) async {
+  void _navigateToAbout(BuildContext context) {
     final navigator = Navigator.of(context);
-    // Use ResponsiveLayout to check if we are in a drawer
     if (!ResponsiveLayout.isTabletOrLarger(context)) {
       navigator.pop();
     }
-
-    final version = await ref.read(versionStringProvider.future);
-
-    if (!navigator.mounted) return;
-
-    showAboutDialog(
-      context: navigator.context,
-      applicationName: l10n?.appTitle ?? 'Tithi',
-      applicationVersion: version,
-      applicationIcon: Image.asset(
-        'assets/icons/logo_transparent.png',
-        width: 48,
-        height: 48,
-      ),
-      applicationLegalese:
-          l10n?.applicationLegalese ??
-          '© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma',
+    navigator.push(
+      MaterialPageRoute(builder: (context) => const AboutScreen()),
     );
   }
 }

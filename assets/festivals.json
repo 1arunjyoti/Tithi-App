@@ -2086,15 +2086,15 @@
       "nameSanskrith": "",
       "nameEnglish": "Dussehra / Vijayadashami",
       "nameHindi": "दशहरा",
-      "nameBengali": "",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameBengali": "দশহরা / বিজয়াদশমী",
+      "nameTelugu": "విజయదశమి",
+      "nameKannada": "ವಿಜಯದಶಮಿ",
+      "nameTamil": "விஜயதசமி",
+      "nameMalayalam": "വിജയദശമി"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "red, saffron, orange"
     },
     "purpose": {
       "description": "Victory of Good over Evil - Rama's victory over Ravana",

@@ -22,6 +22,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   bool _isAnimating = false;
   double _animationSpeed = 1.0; // Days per frame
   Timer? _animationTimer;
+  Offset _panOffset = Offset.zero;
 
   @override
   void dispose() {
@@ -498,9 +499,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             onPressed: () {
               final currentZoom =
                   (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
-                ref
-                  .read(zoomLevelProvider.notifier)
-                  .setZoom((currentZoom + 0.25).clamp(0.5, 3.0));
+              final newZoom = (currentZoom + 0.25).clamp(0.5, 3.0);
+              ref.read(zoomLevelProvider.notifier).setZoom(newZoom);
+              if (newZoom == 1.0 && _panOffset != Offset.zero) {
+                setState(() => _panOffset = Offset.zero);
+              }
             },
             tooltip: l10n.zoomIn,
             child: const Icon(Icons.add),
@@ -525,9 +528,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             onPressed: () {
               final currentZoom =
                   (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
-                ref
-                  .read(zoomLevelProvider.notifier)
-                  .setZoom((currentZoom - 0.25).clamp(0.5, 3.0));
+              final newZoom = (currentZoom - 0.25).clamp(0.5, 3.0);
+              ref.read(zoomLevelProvider.notifier).setZoom(newZoom);
+              if (newZoom == 1.0 && _panOffset != Offset.zero) {
+                setState(() => _panOffset = Offset.zero);
+              }
             },
             tooltip: l10n.zoomOut,
             child: const Icon(Icons.remove),
@@ -563,12 +568,18 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           solarSystemData: data,
           size: size,
           zoomLevel: zoomLevel,
+          panOffset: _panOffset,
         );
 
         return Semantics(
           label: AppLocalizations.of(context)!.planetPositions,
           button: true,
           child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onPanUpdate: (details) {
+              if (zoomLevel <= 1.0) return;
+              setState(() => _panOffset += details.delta);
+            },
             onTapDown: (details) {
               final hitIndex = hitTester.hitTest(details.localPosition);
               if (hitIndex != null) {
@@ -589,6 +600,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   isDark: isDark,
                   zoomLevel: zoomLevel,
                   showZodiac: showZodiac,
+                  panOffset: _panOffset,
                 ),
               ),
             ),
@@ -791,8 +803,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             tooltip: AppLocalizations.of(context)!.heliocentric,
             isSelected: isHeliocentric,
             onTap: () => ref
-              .read(solarSystemViewModeProvider.notifier)
-              .setViewMode(SolarSystemViewMode.heliocentric),
+                .read(solarSystemViewModeProvider.notifier)
+                .setViewMode(SolarSystemViewMode.heliocentric),
           ),
           _buildModeChip(
             context,
@@ -800,8 +812,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             tooltip: AppLocalizations.of(context)!.geocentric,
             isSelected: !isHeliocentric,
             onTap: () => ref
-              .read(solarSystemViewModeProvider.notifier)
-              .setViewMode(SolarSystemViewMode.geocentric),
+                .read(solarSystemViewModeProvider.notifier)
+                .setViewMode(SolarSystemViewMode.geocentric),
           ),
         ],
       ),
