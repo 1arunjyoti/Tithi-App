@@ -1,6 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_geojson2/flutter_map_geojson2.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
@@ -16,6 +22,12 @@ class LocationPickerScreen extends ConsumerStatefulWidget {
 
 class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   final MapController _mapController = MapController();
+  final FMTCTileProvider _tileProvider = FMTCTileProvider(
+    stores: const {'osm_tiles': BrowseStoreStrategy.readUpdateCreate},
+    cachedValidDuration: const Duration(days: 30),
+  );
+  StreamSubscription<Position>? _positionSubscription;
+  bool _autoCenterEnabled = true;
   LatLng _center = const LatLng(28.6139, 77.2090); // Default Delhi
   bool _isLoading = false;
 
@@ -31,6 +43,50 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         });
       }
     });
+    _startLiveLocation();
+  }
+
+  @override
+  void dispose() {
+    _positionSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startLiveLocation() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    final locationSettings = defaultTargetPlatform == TargetPlatform.android
+        ? AndroidSettings(
+            accuracy: LocationAccuracy.medium,
+            distanceFilter: 10,
+            forceLocationManager: true,
+          )
+        : const LocationSettings(
+            accuracy: LocationAccuracy.medium,
+            distanceFilter: 10,
+          );
+
+    _positionSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+          (position) {
+            if (!_autoCenterEnabled || !mounted) return;
+            final nextCenter = LatLng(position.latitude, position.longitude);
+            setState(() {
+              _center = nextCenter;
+            });
+            _mapController.move(nextCenter, _mapController.camera.zoom);
+          },
+        );
   }
 
   Future<void> _onSelectLocation() async {
@@ -86,16 +142,41 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     }
   }
 
+  Future<void> _recenterToLiveLocation() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+      locationSettings: defaultTargetPlatform == TargetPlatform.android
+          ? AndroidSettings(
+              accuracy: LocationAccuracy.medium,
+              forceLocationManager: true,
+            )
+          : const LocationSettings(accuracy: LocationAccuracy.medium),
+    );
+
+    final nextCenter = LatLng(position.latitude, position.longitude);
+    if (!mounted) return;
+    setState(() {
+      _autoCenterEnabled = true;
+      _center = nextCenter;
+    });
+    _mapController.move(nextCenter, _mapController.camera.zoom);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(
-          l10n?.setHomeLocation ?? 'Set Home Location',
-          style: const TextStyle(color: Colors.black),
-        ),
+        title: Text(l10n?.setHomeLocation ?? 'Set Home Location'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -116,8 +197,10 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _center,
-              initialZoom: 13.0,
               onPositionChanged: (pos, hasGesture) {
+                if (hasGesture) {
+                  _autoCenterEnabled = false;
+                }
                 _center = pos.center;
               },
             ),
@@ -125,30 +208,45 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.tithi',
+                tileProvider: _tileProvider,
+              ),
+              GeoJsonLayer.asset(
+                'assets/map_data/india_boundary.geojson',
+                styleDefaults: const GeoJsonStyleDefaults(
+                  strokeColor: Colors.orange,
+                  strokeWidth: 1.5,
+                  fillColor: Colors.transparent,
+                  fillOpacity: 0.0,
+                ),
               ),
               // Simple Credits overlay
               const RichAttributionWidget(
                 attributions: [
-                  TextSourceAttribution(
-                    'OpenStreetMap contributors',
-                    onTap: null, // tap action
-                  ),
+                  TextSourceAttribution('OpenStreetMap contributors'),
                 ],
               ),
             ],
           ),
 
           // Center Pin
-          const Center(
-            child: Icon(Icons.location_on, color: Colors.red, size: 48),
+          Center(
+            child: Semantics(
+              label: l10n?.mapPinLocation ?? 'Map pin location',
+              child: const Icon(Icons.location_on, color: Colors.red, size: 48),
+            ),
           ),
 
           // Zoom Controls
           Positioned(
             right: 16,
-            top: 120,
+            bottom: 180,
             child: Column(
               children: [
+                _buildZoomButton(
+                  icon: Icons.my_location,
+                  onTap: _recenterToLiveLocation,
+                ),
+                const SizedBox(height: 8),
                 _buildZoomButton(
                   icon: Icons.add,
                   onTap: () {
@@ -178,7 +276,6 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               decoration: AppTheme.glassmorphism(
                 context: context,
                 opacity: 0.8,
-                borderRadius: 24,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

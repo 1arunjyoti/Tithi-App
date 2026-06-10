@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
+import '../theme/app_theme.dart';
 
 class FestivalShareCard extends StatelessWidget {
   final Festival festival;
@@ -8,160 +10,164 @@ class FestivalShareCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Fixed dimensions for consistency - Instagram portrait ratio is good but maybe square is safer for generic sharing
-    // Let's go with a nice portrait card: 1080x1920 logical pixels (scaled down by device)
-    // Actually, usually we share the screenshot of what's rendered.
-    // We will build a container that attempts to look "premium".
+    final l10n = AppLocalizations.of(context)!;
+    final colors = context.colors;
+    final textTheme = context.textTheme;
+    final tithiText = festival.tithi != 0
+        ? '${festival.paksha} • ${l10n.tithi} ${festival.tithi}'
+        : festival.paksha;
 
-    return Container(
-      width: 400, // Logical width for capture
-      height: 600, // Logical height for capture
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            const Color(0xFF1E1E2C), // Deep dark background
-            const Color(0xFF2D2D44),
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Background ornamental circles
-          Positioned(
-            top: -100,
-            left: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.amber.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -50,
-            right: -50,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.deepPurple.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth.clamp(280.0, 520.0).toDouble()
+            : 400.0;
+        final cardHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight.clamp(420.0, 900.0).toDouble()
+            : cardWidth * 1.5;
 
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Icon / Header
-                Icon(
-                  Icons.auto_awesome, // Placeholder for festival icon
-                  size: 64,
-                  color: Colors.amber,
-                ),
-                const SizedBox(height: 32),
-
-                // Festival Name
-                Text(
-                  festival.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontFamily:
-                        'Serif', // Use a serif font for elegance if available
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                if (festival.nameHindi != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    festival.nameHindi!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
+        return SizedBox(
+          width: cardWidth,
+          height: cardHeight,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  colors.surfaceContainerHighest.withValues(alpha: 0.95),
+                  colors.surface,
                 ],
-                const SizedBox(height: 24),
-
-                // Date/Tithi details
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(50),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Text(
-                    "${festival.paksha} ${festival.tithi != 0 ? '• Tithi ${festival.tithi}' : ''}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -100,
+                  left: -100,
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.primary.withValues(alpha: 0.08),
                     ),
                   ),
                 ),
-                const SizedBox(height: 48),
-
-                // Description Quote
-                Text(
-                  festival.description,
-                  textAlign: TextAlign.center,
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.6,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontStyle: FontStyle.italic,
+                Positioned(
+                  bottom: -50,
+                  right: -50,
+                  child: Container(
+                    width: 250,
+                    height: 250,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.secondary.withValues(alpha: 0.08),
+                    ),
                   ),
                 ),
 
-                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Icon(Icons.auto_awesome, size: 64, color: colors.primary),
+                      const SizedBox(height: 24),
 
-                // Footer / Branding
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.calendar_month,
-                      color: Colors.amber,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Tithi App",
-                      style: TextStyle(
-                        color: Colors.amber.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        letterSpacing: 1.5,
+                      Text(
+                        festival.name,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colors.onSurface,
+                          letterSpacing: 1.2,
+                        ),
                       ),
-                    ),
-                  ],
+                      if (festival.nameHindi != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          festival.nameHindi!,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: textTheme.titleLarge?.copyWith(
+                            color: colors.onSurface.withValues(alpha: 0.75),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surface.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(50),
+                          border: Border.all(
+                            color: colors.outline.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Text(
+                          tithiText,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colors.onSurface,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      Expanded(
+                        child: Center(
+                          child: SingleChildScrollView(
+                            child: Text(
+                              festival.description,
+                              textAlign: TextAlign.center,
+                              style: textTheme.bodyLarge?.copyWith(
+                                height: 1.6,
+                                color: colors.onSurface.withValues(alpha: 0.85),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.calendar_month,
+                            color: colors.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.appTitle,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
               ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -17,6 +17,12 @@ import '../models/planet_position.dart';
 class EphemerisService {
   SwissEphBindings? _bindings;
   bool _isInitialized = false;
+  
+  /// Cache for planet position calculations (key: planet_julianDay_lat_lon_flags)
+  final Map<String, PlanetPosition> _positionCache = {};
+  
+  /// Maximum cache size to prevent memory issues
+  static const int _maxCacheSize = 1000;
 
   /// Initializes the Swiss Ephemeris service.
   ///
@@ -73,6 +79,24 @@ class EphemerisService {
       throw CalculationException('EphemerisService is not initialized');
     }
 
+    // Generate cache key
+    final julianDay = _dateTimeToJulianDay(dateTime);
+    final cacheKey = '${planet.swissEphId}_${julianDay.toStringAsFixed(6)}_${location.latitude.toStringAsFixed(4)}_${location.longitude.toStringAsFixed(4)}_${flags.toSwissEphFlag()}';
+    
+    // Check cache first
+    if (_positionCache.containsKey(cacheKey)) {
+      return _positionCache[cacheKey]!;
+    }
+    
+    // Enforce cache size limit
+    if (_positionCache.length >= _maxCacheSize) {
+      // Remove oldest entries (simple FIFO)
+      final keysToRemove = _positionCache.keys.take(_maxCacheSize ~/ 4).toList();
+      for (final key in keysToRemove) {
+        _positionCache.remove(key);
+      }
+    }
+
     try {
       // Set topocentric position if required
       if (flags.useTopocentric) {
@@ -120,11 +144,16 @@ class EphemerisService {
           results[0] = (results[0] - ayanamsa + 360) % 360;
         }
 
-        return PlanetPosition.fromSwissEph(
+        final position = PlanetPosition.fromSwissEph(
           planet: planet,
           dateTime: dateTime,
           results: results,
         );
+        
+        // Store in cache
+        _positionCache[cacheKey] = position;
+        
+        return position;
       } finally {
         malloc.free(errorBuffer);
       }

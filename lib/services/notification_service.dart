@@ -1,11 +1,18 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:workmanager/workmanager.dart';
+import '../utils/date_utils.dart';
 import 'shloka_service.dart';
 import '../models/sankalpa.dart';
+import '../models/hindu_month_system.dart';
+import '../models/panchang_data.dart';
+import 'panchang_service.dart';
+import 'storage_service.dart';
+import 'sunrise_calculator.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -28,9 +35,14 @@ void callbackDispatcher() {
 
       return Future.value(true);
     } catch (e) {
-      if (kDebugMode) {
-        print('WorkManager task failed: $e');
-      }
+      // SMELL-07: always surface background task failures, not just in debug.
+      debugPrint('WorkManager task failed: $e');
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          context: ErrorDescription('WorkManager callbackDispatcher'),
+        ),
+      );
       return Future.value(false);
     }
   });
@@ -38,6 +50,10 @@ void callbackDispatcher() {
 
 /// Notification service for scheduling daily tithi notifications
 /// FOSS-compatible: Uses native Android NotificationCompat, no Google Play Services
+///
+/// BUG-3 fix: singleton so the background isolate (callbackDispatcher),
+/// main.dart, and the Riverpod provider all share the same Hive box
+/// and notification-ID counter — prevents ID collisions.
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -74,11 +90,13 @@ class NotificationService {
     }
   }
 
-  static const String _boxName = 'notification_settings';
   static const String _keyEnabled = 'notifications_enabled';
   static const String _keyHour = 'notification_hour';
   static const String _keyMinute = 'notification_minute';
   static const String _keyShlokaEnabled = 'shloka_enabled';
+  static const String _keyDailyTitle = 'daily_title';
+  static const String _keyDailyBody = 'daily_body';
+  static const String _keyDailyContentDate = 'daily_content_date';
   static const int _dailyNotificationId = 1;
   static const int _shlokaNotificationIdBase = 1000;
 
@@ -90,31 +108,34 @@ class NotificationService {
 
   // Base ID for sankalpa notifications (unique range to avoid collision)
   static const int _sankalpaNotificationIdBase = 10000;
+  // Hive keys for the persisted sankalpa → notification-ID mapping.
+  static const String _keySankalpaIdCounter = '_sankalpa_nid_counter';
+  static const String _keySankalpaIdPrefix = '_sankalpa_nid_';
 
   /// Initialize the notification service
   Future<void> init() async {
     if (_isInitialized) return;
 
     try {
-      // Initialize timezone data
-      tz_data.initializeTimeZones();
+      // BUG-12: tz_data.initializeTimeZones() is already called in main() before
+      // this method is reached in the normal app flow.  Calling it again here
+      // wastes ~2 MB of timezone-table work.  The call is kept in
+      // callbackDispatcher (background isolate) where main() has NOT run.
+      // tz_data.initializeTimeZones(); ← removed
 
-      // Get device timezone using native Dart
-      final deviceTimeZone = _getDeviceTimezone();
+      // BUG-07: Use flutter_timezone for reliable IANA timezone identification
+      // instead of the manual UTC-offset table which breaks under DST.
+      final deviceTimeZone = await _getDeviceTimezone();
       tz.setLocalLocation(tz.getLocation(deviceTimeZone));
 
       // Initialize Hive box
-      _box = await Hive.openBox(_boxName);
+      _box = await StorageService().openNotificationSettingsBox();
 
       // Initialize notifications
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
-      const iosSettings = DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestBadgePermission: true,
-        requestSoundPermission: true,
-      );
+      const iosSettings = DarwinInitializationSettings();
 
       const initSettings = InitializationSettings(
         android: androidSettings,
@@ -128,9 +149,17 @@ class NotificationService {
 
       _isInitialized = true;
 
-      // Check enabled state and reschedule if needed
-      final notificationsEnabled = await isEnabled();
-      final shlokasEnabled = await isShlokaEnabled();
+      // Precompute/cache daily notification content so background scheduling
+      // can function even without full app/provider context.
+      await _refreshDailyNotificationContent();
+
+      // SMELL-2: read flags directly from the box (synchronous Hive get) instead
+      // of calling await isEnabled() / await isShlokaEnabled(), which wrap the
+      // same synchronous read in an unnecessary Future.
+      final notificationsEnabled =
+          _box?.get(_keyEnabled, defaultValue: false) ?? false;
+      final shlokasEnabled =
+          _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
 
       if (kDebugMode) {
         if (notificationsEnabled) {
@@ -193,20 +222,21 @@ class NotificationService {
     return (hour: hour, minute: minute);
   }
 
-  /// Set notification time
+  // SMELL-02: cache the enabled flag to avoid two awaited Hive reads.
   Future<void> setNotificationTime(int hour, int minute) async {
     _ensureInitialized();
     await _box?.put(_keyHour, hour);
     await _box?.put(_keyMinute, minute);
 
-    // Reschedule with new time
-    if (await isEnabled()) {
+    // Read flags directly from the box — same synchronous Hive get as isEnabled()
+    final enabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
+    if (enabled) {
       await scheduleDailyNotification();
-    }
-
-    // Reschedule shlokas with new time (only if both main and shloka are enabled)
-    if (await isEnabled() && await isShlokaEnabled()) {
-      await _scheduleUpcomingShlokas();
+      final shlokaEnabled =
+          _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
+      if (shlokaEnabled) {
+        await _scheduleUpcomingShlokas();
+      }
     }
   }
 
@@ -221,7 +251,9 @@ class NotificationService {
     _ensureInitialized();
     await _box?.put(_keyShlokaEnabled, enabled);
 
-    if (enabled && await isEnabled()) {
+    // SMELL-2: read main-enabled flag directly from the box.
+    final mainEnabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
+    if (enabled && mainEnabled) {
       // Only schedule if main notifications are also enabled
       await _scheduleUpcomingShlokas();
     } else if (!enabled) {
@@ -240,8 +272,11 @@ class NotificationService {
   /// Schedule upcoming Shloka notifications for the next 7 days
   Future<void> _scheduleUpcomingShlokas() async {
     _ensureInitialized();
-    // Only schedule if both main notifications AND shloka are enabled
-    if (!await isEnabled() || !await isShlokaEnabled()) return;
+    // SMELL-2: read flags directly from the box instead of async isEnabled() calls.
+    final enabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
+    final shlokaEnabled =
+        _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
+    if (!enabled || !shlokaEnabled) return;
 
     await cancelShlokaNotifications();
 
@@ -280,8 +315,6 @@ class NotificationService {
         'tithi_shloka',
         'Daily Shloka',
         channelDescription: 'Spiritual verses and quotes',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
         icon: '@mipmap/ic_launcher',
       );
 
@@ -371,10 +404,14 @@ class NotificationService {
       iOS: iosDetails,
     );
 
+    final content = await _getDailyNotificationContent();
+    final resolvedTitle = title ?? content.title;
+    final resolvedBody = body ?? content.body;
+
     await _notifications.zonedSchedule(
       _dailyNotificationId,
-      title ?? '🙏 Tithi Today',
-      body ?? 'Open to see today\'s panchang details',
+      resolvedTitle,
+      resolvedBody,
       scheduledDate,
       notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -386,7 +423,120 @@ class NotificationService {
     }
   }
 
-  /// Show immediate notification (for testing)
+  Future<void> _refreshDailyNotificationContent() async {
+    final generated = await _buildDailyNotificationContent();
+    await _box?.put(_keyDailyTitle, generated.title);
+    await _box?.put(_keyDailyBody, generated.body);
+    await _box?.put(_keyDailyContentDate, _dateKey(DateTime.now()));
+  }
+
+  Future<({String title, String body})> _getDailyNotificationContent() async {
+    final todayKey = _dateKey(DateTime.now());
+    final cachedDate = _box?.get(_keyDailyContentDate) as String?;
+    final cachedTitle = _box?.get(_keyDailyTitle) as String?;
+    final cachedBody = _box?.get(_keyDailyBody) as String?;
+
+    if (cachedDate == todayKey && cachedTitle != null && cachedBody != null) {
+      return (title: cachedTitle, body: cachedBody);
+    }
+
+    await _refreshDailyNotificationContent();
+    return (
+      title: (_box?.get(_keyDailyTitle) as String?) ?? '🙏 Tithi Today',
+      body:
+          (_box?.get(_keyDailyBody) as String?) ??
+          'Open to see today\'s panchang details',
+    );
+  }
+
+  Future<({String title, String body})> _buildDailyNotificationContent() async {
+    try {
+      final storageService = StorageService();
+      final locationBox = await storageService.openLocationSettingsBox();
+      final latitude =
+          (locationBox.get('cached_lat', defaultValue: 28.6139) as num)
+              .toDouble();
+      final longitude =
+          (locationBox.get('cached_lng', defaultValue: 77.2090) as num)
+              .toDouble();
+
+      final settingsBox = await storageService.openSettingsBox();
+      final monthSystemIndex =
+          (settingsBox.get(
+                'hindu_month_system',
+                defaultValue: HinduMonthSystem.amanta.index,
+              )
+              as int);
+      final monthSystem =
+          (monthSystemIndex >= 0 &&
+              monthSystemIndex < HinduMonthSystem.values.length)
+          ? HinduMonthSystem.values[monthSystemIndex]
+          : HinduMonthSystem.amanta;
+
+      final service = PanchangService();
+      await service.init();
+
+      final today = DateTime.now();
+      final date = DateTime(today.year, today.month, today.day);
+
+      final sunriseTime = SunriseCalculator.calculateSunriseIST(
+        date: date,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final rawTithi = await service.calculateTithi(
+        sunriseTime,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final masa = await service.calculateMasa(
+        sunriseTime,
+        rawTithi,
+        latitude: latitude,
+        longitude: longitude,
+      );
+
+      final panchang = PanchangData.fromRawTithi(
+        date: date,
+        rawTithi: rawTithi,
+        masa: masa,
+        monthSystem: monthSystem,
+        sunrise: sunriseTime,
+        sunset: SunriseCalculator.calculateSunsetIST(
+          date: date,
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+
+      return (
+        title: '🙏 ${panchang.tithiName}',
+        body: '${panchang.paksha} • ${panchang.tithiNumber} (${panchang.masa})',
+      );
+    } catch (e, stack) {
+      // BUG-MEDIUM-7: Surface the error instead of swallowing it silently.
+      debugPrint('Failed to build notification content: $e\n$stack');
+      return (
+        title: '🙏 Tithi Today',
+        body: 'Open to see today\'s panchang details',
+      );
+    }
+  }
+
+  // SMELL-01: delegate to shared panchangDateKey utility
+  String _dateKey(DateTime date) => panchangDateKey(date);
+
+  /// BUG-07: Returns the device's IANA timezone name using flutter_timezone.
+  /// Falls back to 'Asia/Kolkata' (app's primary audience) if unavailable.
+  Future<String> _getDeviceTimezone() async {
+    try {
+      return await FlutterTimezone.getLocalTimezone();
+    } catch (e) {
+      debugPrint('flutter_timezone unavailable, defaulting to Asia/Kolkata: $e');
+      return 'Asia/Kolkata';
+    }
+  }
   Future<void> showTestNotification({
     required String title,
     required String body,
@@ -428,15 +578,29 @@ class NotificationService {
     }
   }
 
+  /// Returns a stable, collision-free notification ID for the given sankalpa.
+  /// IDs are persisted in the notification Hive box so they survive restarts.
+  int _getOrCreateSankalpaNotificationId(String sankalpaId) {
+    final mapKey = '$_keySankalpaIdPrefix$sankalpaId';
+    final existing = _box?.get(mapKey) as int?;
+    if (existing != null) return existing;
+
+    // Allocate next sequential ID.
+    final counter = (_box?.get(_keySankalpaIdCounter, defaultValue: 0) as int?) ?? 0;
+    final newId = _sankalpaNotificationIdBase + counter;
+    _box?.put(_keySankalpaIdCounter, counter + 1);
+    _box?.put(mapKey, newId);
+    return newId;
+  }
+
   /// Schedule a specific sankalpa reminder
   Future<void> scheduleSankalpaReminder(Sankalpa sankalpa) async {
     _ensureInitialized();
     if (sankalpa.isCompleted) return;
 
-    // Generate stable notification ID from sankalpa ID
-    // Use a deterministic hash within the sankalpa ID range to avoid collisions
-    final notificationId =
-        _sankalpaNotificationIdBase + (sankalpa.id.hashCode.abs() % 10000);
+    // Use a persisted counter to guarantee unique IDs (replaces hashCode % 10000
+    // which had collision risk after ~125 sankalpas).
+    final notificationId = _getOrCreateSankalpaNotificationId(sankalpa.id);
 
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
@@ -458,10 +622,9 @@ class NotificationService {
     // Actually, if we have duration, we should check if today + days remaining is valid.
 
     // Sankalpa model logic: it has endDate.
-    if (sankalpa.endDate != null &&
-        scheduledDate.isAfter(
+    if (scheduledDate.isAfter(
           tz.TZDateTime.from(
-            sankalpa.endDate!,
+            sankalpa.endDate,
             tz.local,
           ).add(const Duration(days: 1)),
         )) {
@@ -509,8 +672,7 @@ class NotificationService {
 
   /// Cancel a sankalpa reminder
   Future<void> cancelSankalpaReminder(String id) async {
-    final notificationId =
-        _sankalpaNotificationIdBase + (id.hashCode.abs() % 10000);
+    final notificationId = _getOrCreateSankalpaNotificationId(id);
     await _notifications.cancel(notificationId);
     if (kDebugMode) {
       print('Cancelled sankalpa notification: $id (ID: $notificationId)');
@@ -538,65 +700,5 @@ class NotificationService {
       await _box!.close();
     }
     _isInitialized = false;
-  }
-
-  /// Get device timezone name from offset
-  /// Uses common timezone mappings based on UTC offset
-  String _getDeviceTimezone() {
-    final now = DateTime.now();
-    final offset = now.timeZoneOffset;
-    final offsetHours = offset.inHours;
-    final offsetMinutes = offset.inMinutes % 60;
-
-    // Map common offsets to timezone names
-    // This covers the majority of users
-    final offsetToTimezone = {
-      // Asia
-      (5, 30): 'Asia/Kolkata', // IST (India)
-      (5, 45): 'Asia/Kathmandu', // Nepal
-      (6, 0): 'Asia/Dhaka', // Bangladesh
-      (6, 30): 'Asia/Yangon', // Myanmar
-      (7, 0): 'Asia/Bangkok', // Thailand, Vietnam
-      (8, 0): 'Asia/Singapore', // Singapore, Malaysia, Philippines
-      (9, 0): 'Asia/Tokyo', // Japan, Korea
-      (9, 30): 'Australia/Darwin', // Australia NT
-      (10, 0): 'Australia/Sydney', // Australia Eastern
-      (10, 30): 'Australia/Adelaide', // Australia SA
-      // Middle East
-      (3, 0): 'Asia/Riyadh', // Saudi Arabia
-      (3, 30): 'Asia/Tehran', // Iran
-      (4, 0): 'Asia/Dubai', // UAE
-      (4, 30): 'Asia/Kabul', // Afghanistan
-      // Europe
-      (0, 0): 'Europe/London', // UK, Portugal
-      (1, 0): 'Europe/Paris', // Central Europe
-      (2, 0): 'Europe/Athens', // Eastern Europe
-      // Americas
-      (-5, 0): 'America/New_York', // US Eastern
-      (-6, 0): 'America/Chicago', // US Central
-      (-7, 0): 'America/Denver', // US Mountain
-      (-8, 0): 'America/Los_Angeles', // US Pacific
-      (-3, 0): 'America/Sao_Paulo', // Brazil
-    };
-
-    final key = (offsetHours, offsetMinutes.abs());
-    final timezone = offsetToTimezone[key];
-
-    if (timezone != null) {
-      if (kDebugMode) {
-        print(
-          'Detected timezone: $timezone (UTC${offsetHours >= 0 ? '+' : ''}$offsetHours:${offsetMinutes.abs().toString().padLeft(2, '0')})',
-        );
-      }
-      return timezone;
-    }
-
-    // Default to Asia/Kolkata for this app's primary audience
-    if (kDebugMode) {
-      print(
-        'Unknown timezone offset UTC${offsetHours >= 0 ? '+' : ''}$offsetHours:${offsetMinutes.abs().toString().padLeft(2, '0')}, defaulting to Asia/Kolkata',
-      );
-    }
-    return 'Asia/Kolkata';
   }
 }

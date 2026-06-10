@@ -1,17 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive/hive.dart';
+import '../services/storage_service.dart';
 
 /// View mode for the home screen
 enum HomeViewMode { calendar, schedule }
 
 /// Notifier for Home View Mode preference with Hive persistence
 class HomeViewModeNotifier extends Notifier<HomeViewMode> {
-  static const _boxName = 'settings';
   static const _key = 'home_view_mode';
 
   @override
   HomeViewMode build() {
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     final index = box.get(_key, defaultValue: 0) as int;
     if (index >= 0 && index < HomeViewMode.values.length) {
       return HomeViewMode.values[index];
@@ -20,7 +19,7 @@ class HomeViewModeNotifier extends Notifier<HomeViewMode> {
   }
 
   Future<void> setViewMode(HomeViewMode mode) async {
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     await box.put(_key, mode.index);
     state = mode;
   }

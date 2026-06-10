@@ -16,6 +16,8 @@ class SankalpaAdapter extends TypeAdapter<Sankalpa> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
+    // Field 5 (endDate) is read for backward compat but ignored;
+    // endDate is now a derived getter on Sankalpa.
     return Sankalpa(
       id: fields[0] as String?,
       title: fields[1] as String,
@@ -26,7 +28,7 @@ class SankalpaAdapter extends TypeAdapter<Sankalpa> {
       reminderMinute: fields[7] as int,
       isCompleted: fields[8] as bool,
       dailyCompletions: (fields[9] as List?)?.cast<DateTime>(),
-    )..endDate = fields[5] as DateTime?;
+    );
   }
 
   @override

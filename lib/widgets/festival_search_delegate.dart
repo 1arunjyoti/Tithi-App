@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/festival.dart';
+import '../models/panchang_data.dart';
 import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
@@ -128,16 +129,30 @@ class FestivalSearchDelegate extends SearchDelegate {
     // Let's use a Card-like look that fits the theme
 
     return GestureDetector(
-      onTap: () {
-        // Show details
-        showModalBottomSheet(
+      onTap: () async {
+        // Try to find the next occurrence date so we can pass panchang context
+        final panchangService = ref.read(panchangServiceProvider);
+        final nextDate = await panchangService.findNextFestivalOccurrence(
+          festival,
+        );
+
+        // Fetch panchang for that date if found
+        PanchangData? panchang;
+        if (nextDate != null) {
+          try {
+            panchang = await ref.read(panchangForDateProvider(nextDate).future);
+          } catch (_) {
+            // Fall through – sheet works without panchang too
+          }
+        }
+
+        if (!context.mounted) return;
+        await showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => EventDetailSheet(
-            festival: festival,
-            panchang: null, // No specific date context
-          ),
+          builder: (context) =>
+              EventDetailSheet(festival: festival, panchang: panchang),
         );
       },
       child: Container(
@@ -217,8 +232,10 @@ class FestivalSearchDelegate extends SearchDelegate {
 
                 if (nextDate != null && context.mounted) {
                   // Navigate
-                  ref.read(focusedMonthProvider.notifier).state = nextDate;
-                  ref.read(selectedDateProvider.notifier).state = nextDate;
+                  ref
+                      .read(focusedMonthProvider.notifier)
+                      .setFocusedMonth(nextDate);
+                  ref.read(selectedDateProvider.notifier).setDate(nextDate);
 
                   // Close search
                   close(context, null);

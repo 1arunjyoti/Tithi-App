@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/sankalpa.dart';
 import '../../providers/sankalpa_provider.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 
 class SankalpaCreateScreen extends ConsumerStatefulWidget {
@@ -43,8 +44,47 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
     }
   }
 
+  Future<void> _showCustomDaysDialog() async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: _selectedDuration.toString());
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.customDays),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: InputDecoration(labelText: l10n.durationDays),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () {
+              final parsed = int.tryParse(controller.text.trim());
+              if (parsed != null && parsed > 0) {
+                Navigator.pop(dialogContext, parsed);
+              }
+            },
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+
+    controller.dispose();
+
+    if (result != null && mounted) {
+      setState(() => _selectedDuration = result);
+    }
+  }
+
   void _saveSankalpa() {
     if (_formKey.currentState!.validate()) {
+      final l10n = AppLocalizations.of(context)!;
       try {
         final sankalpa = Sankalpa(
           title: _titleController.text.trim(),
@@ -59,7 +99,7 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Sankalpa created successfully!')),
+            SnackBar(content: Text(l10n.sankalpaCreatedSuccessfully)),
           );
           Navigator.of(context).pop();
         }
@@ -67,8 +107,8 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to save Sankalpa: $e'),
-              backgroundColor: Colors.red,
+              content: Text(l10n.failedToSaveSankalpa(e.toString())),
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         }
@@ -78,9 +118,10 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Intention'),
+        title: Text(l10n.newIntention),
         backgroundColor: Colors.transparent,
       ),
       body: Container(
@@ -96,21 +137,21 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      'What is your Sankalpa?',
+                      l10n.whatIsYourSankalpa,
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 24),
                     TextFormField(
                       controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Intention Title',
-                        hintText: 'e.g., Chant Gayatri Mantra 108 times',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.intentionTitle,
+                        hintText: l10n.intentionTitleHint,
+                        border: const OutlineInputBorder(),
                         filled: true,
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a title';
+                          return l10n.pleaseEnterTitle;
                         }
                         return null;
                       },
@@ -118,10 +159,10 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _descriptionController,
-                      decoration: const InputDecoration(
-                        labelText: 'Description (Optional)',
-                        hintText: 'Add specific details or mantra text...',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.descriptionOptional,
+                        hintText: l10n.descriptionHint,
+                        border: const OutlineInputBorder(),
                         filled: true,
                       ),
                       maxLines: 3,
@@ -129,7 +170,7 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                     const SizedBox(height: 32),
 
                     Text(
-                      'Duration (Days)',
+                      l10n.durationDays,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
@@ -138,7 +179,7 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                       children: [
                         ..._durationPresets.map(
                           (days) => ChoiceChip(
-                            label: Text('$days Days'),
+                            label: Text(l10n.daysCount(days)),
                             selected: _selectedDuration == days,
                             onSelected: (selected) {
                               if (selected) {
@@ -148,16 +189,13 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                           ),
                         ),
                         ChoiceChip(
-                          label: const Text('Custom'),
+                          label: Text(l10n.custom),
                           selected: !_durationPresets.contains(
                             _selectedDuration,
                           ),
                           onSelected: (selected) async {
                             if (selected) {
-                              // Show simple dialog to input custom days
-                              // For MVP just defaulting to 100 or current for now
-                              // In a real app showDialog with number input
-                              setState(() => _selectedDuration = 90);
+                              await _showCustomDaysDialog();
                             }
                           },
                         ),
@@ -168,7 +206,7 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                         padding: const EdgeInsets.only(top: 8),
                         child: Row(
                           children: [
-                            const Text('Custom Days: '),
+                            Text('${l10n.customDays}: '),
                             SizedBox(
                               width: 80,
                               child: TextFormField(
@@ -190,7 +228,7 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
 
                     const SizedBox(height: 32),
                     Text(
-                      'Daily Reminder Time',
+                      l10n.dailyReminderTime,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
@@ -209,7 +247,7 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                     FilledButton.icon(
                       onPressed: _saveSankalpa,
                       icon: const Icon(Icons.check),
-                      label: const Text('Create Sankalpa'),
+                      label: Text(l10n.createSankalpa),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.all(16),
                       ),

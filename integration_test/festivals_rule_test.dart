@@ -124,7 +124,7 @@ void main() {
   });
 
   testWidgets('Verify Diwali 2024 (Oct 31)', (WidgetTester tester) async {
-    final diwali2024 = DateTime(2024, 10, 31, 18, 0);
+    final diwali2024 = DateTime(2024, 10, 31, 18);
     final tithi = await service.calculateTithi(diwali2024);
     final details = getTithiDetails(tithi);
 

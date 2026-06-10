@@ -4,6 +4,8 @@ import '../models/weather_data.dart';
 import '../providers/weather_provider.dart';
 import '../models/panchang_data.dart';
 import '../providers/panchang_provider.dart';
+import '../services/weather_service.dart';
+import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 class WeatherSheet extends ConsumerWidget {
@@ -11,6 +13,7 @@ class WeatherSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final weatherAsync = ref.watch(currentWeatherProvider);
     // Also show sunrise/sunset as it was the entry point
     final todayPanchangAsync = ref.watch(todayPanchangProvider);
@@ -26,7 +29,6 @@ class WeatherSheet extends ConsumerWidget {
             color: Theme.of(
               context,
             ).colorScheme.outlineVariant.withValues(alpha: 0.2),
-            width: 1,
           ),
         ),
       ),
@@ -47,7 +49,7 @@ class WeatherSheet extends ConsumerWidget {
           ),
 
           Text(
-            'Weather Details',
+            l10n.weatherDetails,
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
@@ -55,18 +57,30 @@ class WeatherSheet extends ConsumerWidget {
           const SizedBox(height: 24),
 
           weatherAsync.when(
-            data: (data) {
-              if (data == null) {
-                return const Center(
-                  child: Text('Weather data unavailable (Check API Key)'),
+            data: (result) {
+              if (result == null) {
+                return Center(child: Text(l10n.weatherDataUnavailable));
+              }
+              if (result is WeatherFailure) {
+                return Center(
+                  child: Text(l10n.errorMessage(result.error.message)),
                 );
               }
+              final data = (result as WeatherSuccess).data;
               return _buildWeatherContent(context, data, panchang);
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, stack) => Center(child: Text('Error: $e')),
+            error: (e, stack) =>
+                Center(child: Text(l10n.errorMessage(e.toString()))),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+          Text(
+            l10n.weatherDataByOpenMeteo,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -77,6 +91,7 @@ class WeatherSheet extends ConsumerWidget {
     WeatherData data,
     PanchangData? panchang,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         Row(
@@ -96,12 +111,15 @@ class WeatherSheet extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Image.network(
-                      data.conditionIcon,
-                      width: 64,
-                      height: 64,
-                      errorBuilder: (_, _, _) =>
-                          const Icon(Icons.wb_sunny, size: 48),
+                    Semantics(
+                      label: l10n.weatherCondition(data.conditionText),
+                      child: Image.network(
+                        data.conditionIcon,
+                        width: 64,
+                        height: 64,
+                        errorBuilder: (_, _, _) =>
+                            const Icon(Icons.wb_sunny, size: 48),
+                      ),
                     ),
                   ],
                 ),
@@ -121,14 +139,14 @@ class WeatherSheet extends ConsumerWidget {
                 _buildSunRow(
                   context,
                   Icons.wb_sunny_outlined,
-                  'Sunrise',
+                  l10n.sunrise,
                   panchang?.sunrise,
                 ),
                 const SizedBox(height: 12),
                 _buildSunRow(
                   context,
                   Icons.nightlight_round,
-                  'Sunset',
+                  l10n.sunset,
                   panchang?.sunset,
                 ),
                 if (panchang?.sunrise != null && panchang?.sunset != null) ...[
@@ -151,29 +169,34 @@ class WeatherSheet extends ConsumerWidget {
           children: [
             _buildDetailItem(
               context,
-              'Humidity',
+              l10n.humidity,
               '${data.humidity}%',
               Icons.water_drop_outlined,
             ),
             _buildDetailItem(
               context,
-              'Wind',
+              l10n.wind,
               '${data.windSpeed} kph',
               Icons.air,
             ),
             _buildDetailItem(
               context,
-              'Real Feel',
+              l10n.realFeel,
               '${data.feelsLike.round()}°',
               Icons.thermostat,
             ),
-            _buildDetailItem(context, 'UV Index', '${data.uv}', Icons.wb_sunny),
+            _buildDetailItem(
+              context,
+              l10n.uvIndex,
+              '${data.uv}',
+              Icons.wb_sunny,
+            ),
           ],
         ),
         if (data.forecast.isNotEmpty) ...[
           const SizedBox(height: 32),
           Text(
-            'Forecast',
+            l10n.forecast,
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -271,6 +294,7 @@ class WeatherSheet extends ConsumerWidget {
     DateTime sunrise,
     DateTime sunset,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     final duration = sunset.difference(sunrise);
     final hours = duration.inHours;
     final minutes = duration.inMinutes % 60;
@@ -284,7 +308,7 @@ class WeatherSheet extends ConsumerWidget {
         ),
         const SizedBox(width: 4),
         Text(
-          'Daylight: ${hours}h ${minutes}m',
+          l10n.daylightDuration(hours, minutes),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),

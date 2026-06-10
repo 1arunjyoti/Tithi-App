@@ -1,14 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:jyotish/jyotish.dart';
 import '../services/planetary_view_service.dart';
 import 'location_provider.dart';
 
 /// Provider for the selected date for planetary view
 /// Defaults to current date/time
-final planetaryViewDateProvider = StateProvider<DateTime>((ref) {
-  return DateTime.now();
-});
+class PlanetaryViewDateNotifier extends Notifier<DateTime> {
+  @override
+  DateTime build() => DateTime.now();
+
+  void setDate(DateTime value) {
+    state = value;
+  }
+}
+
+final planetaryViewDateProvider =
+    NotifierProvider<PlanetaryViewDateNotifier, DateTime>(
+      PlanetaryViewDateNotifier.new,
+    );
 
 /// Provider for solar system data at the selected date
 final solarSystemDataProvider = FutureProvider<SolarSystemData>((ref) async {
@@ -30,9 +39,18 @@ final solarSystemDataProvider = FutureProvider<SolarSystemData>((ref) async {
 });
 
 /// Provider for currently selected planet (for info display)
-final selectedPlanetProvider = StateProvider<Planet?>((ref) {
-  return null;
-});
+class SelectedPlanetNotifier extends Notifier<Planet?> {
+  @override
+  Planet? build() => null;
+
+  void setPlanet(Planet? planet) {
+    state = planet;
+  }
+}
+
+final selectedPlanetProvider = NotifierProvider<SelectedPlanetNotifier, Planet?>(
+  SelectedPlanetNotifier.new,
+);
 
 /// Provider for selected planet's visual data
 final selectedPlanetDataProvider = Provider<PlanetVisualData?>((ref) {
@@ -49,11 +67,29 @@ final selectedPlanetDataProvider = Provider<PlanetVisualData?>((ref) {
 });
 
 /// Provider to toggle animation on/off
-final animationEnabledProvider = StateProvider<bool>((ref) {
-  return true;
-});
+class AnimationEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void setEnabled(bool enabled) {
+    state = enabled;
+  }
+}
+
+final animationEnabledProvider = NotifierProvider<AnimationEnabledNotifier, bool>(
+  AnimationEnabledNotifier.new,
+);
 
 /// Provider for zoom level (default 1.0)
-final zoomLevelProvider = StateProvider<double>((ref) {
-  return 1.0;
-});
+class ZoomLevelNotifier extends Notifier<double> {
+  @override
+  double build() => 1.0;
+
+  void setZoom(double zoom) {
+    state = zoom;
+  }
+}
+
+final zoomLevelProvider = NotifierProvider<ZoomLevelNotifier, double>(
+  ZoomLevelNotifier.new,
+);

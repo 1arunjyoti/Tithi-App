@@ -21,6 +21,8 @@ class EventListWidget extends ConsumerStatefulWidget {
 
 class _EventListWidgetState extends ConsumerState<EventListWidget> {
   DateTimeRange? _selectedRange;
+  Future<List<({DateTime date, Festival festival, PanchangData panchang})>>?
+  _rangeFestivalsFuture;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +80,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
         else
           _buildNoFestivalsCard(context),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -86,6 +88,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
   Widget _buildRangeEventList(BuildContext context) {
     final range = _selectedRange!;
     final dayCount = range.end.difference(range.start).inDays + 1;
+    _rangeFestivalsFuture ??= _getFestivalsInRange(range);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +101,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
         FutureBuilder<
           List<({DateTime date, Festival festival, PanchangData panchang})>
         >(
-          future: _getFestivalsInRange(range),
+          future: _rangeFestivalsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -229,6 +232,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
               }
               setState(() {
                 _selectedRange = null;
+                _rangeFestivalsFuture = null;
               });
             },
             icon: Icon(
@@ -244,8 +248,9 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
 
   Future<void> _showDateRangePicker() async {
     if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.selectionClick();
+      await HapticFeedback.selectionClick();
     }
+    if (!mounted) return;
 
     final selectedDate = ref.read(selectedDateProvider);
     final initialRange = DateTimeRange(
@@ -255,7 +260,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
 
     final range = await showDateRangePicker(
       context: context,
-      firstDate: DateTime(1976, 1, 1),
+      firstDate: DateTime(1976),
       lastDate: DateTime(2076, 12, 31),
       initialDateRange: initialRange,
       helpText: 'Select date range (Gregorian dates)',
@@ -273,28 +278,54 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
       },
     );
 
+    if (!mounted) return;
+
     if (range != null) {
       setState(() {
         _selectedRange = range;
+        _rangeFestivalsFuture = _getFestivalsInRange(range);
       });
     }
   }
 
   Future<List<({DateTime date, Festival festival, PanchangData panchang})>>
   _getFestivalsInRange(DateTimeRange range) async {
+    final dayCount = range.end.difference(range.start).inDays + 1;
+    final dates = List<DateTime>.generate(
+      dayCount,
+      (index) => range.start.add(Duration(days: index)),
+    );
+
+    const batchSize = 8;
     final results =
         <({DateTime date, Festival festival, PanchangData panchang})>[];
-    final dayCount = range.end.difference(range.start).inDays + 1;
 
-    for (int i = 0; i < dayCount; i++) {
-      final date = range.start.add(Duration(days: i));
-      try {
-        final panchang = await ref.read(panchangForDateProvider(date).future);
-        for (final festival in panchang.festivals) {
-          results.add((date: date, festival: festival, panchang: panchang));
+    for (int i = 0; i < dates.length; i += batchSize) {
+      final end = (i + batchSize) > dates.length ? dates.length : i + batchSize;
+      final batch = dates.sublist(i, end);
+
+      final batchPanchang = await Future.wait(
+        batch.map((date) async {
+          try {
+            final panchang = await ref.read(
+              panchangForDateProvider(date).future,
+            );
+            return (date: date, panchang: panchang);
+          } catch (_) {
+            return null;
+          }
+        }),
+      );
+
+      for (final entry in batchPanchang) {
+        if (entry == null) continue;
+        for (final festival in entry.panchang.festivals) {
+          results.add((
+            date: entry.date,
+            festival: festival,
+            panchang: entry.panchang,
+          ));
         }
-      } catch (_) {
-        // Skip dates with errors
       }
     }
 
@@ -308,11 +339,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -523,11 +550,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         children: [
           Icon(
@@ -552,11 +575,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         children: [
           Icon(

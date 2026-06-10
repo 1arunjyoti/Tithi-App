@@ -20,8 +20,8 @@ class Sankalpa extends HiveObject {
   @HiveField(4)
   final int durationDays;
 
-  @HiveField(5)
-  DateTime? endDate;
+  // endDate is now a derived getter (was @HiveField(5), kept in adapter for
+  // backward-compatible reads). See sankalpa.g.dart.
 
   @HiveField(6)
   final int reminderHour;
@@ -46,20 +46,27 @@ class Sankalpa extends HiveObject {
     this.isCompleted = false,
     List<DateTime>? dailyCompletions,
   }) : id = id ?? const Uuid().v4(),
-       dailyCompletions = dailyCompletions ?? [] {
-    endDate = startDate.add(Duration(days: durationDays));
-  }
+       dailyCompletions = dailyCompletions ?? [];
 
-  /// Returns the current day number (1-based) relative to start date
+  /// The computed end date, always derived from [startDate] + [durationDays].
+  /// Previously a mutable @HiveField(5); now a getter so it can never go stale.
+  DateTime get endDate => startDate.add(Duration(days: durationDays));
+
+  /// Returns the current day number (1-based) relative to start date.
+  /// Both timestamps are normalised to midnight so the result is purely
+  /// calendar-day based and does not depend on the time the sankalpa was
+  /// created or the exact moment it is queried (BUG-4 fix).
   int get currentDayNumber {
     final now = DateTime.now();
-    final difference = now.difference(startDate).inDays;
-    return difference + 1; // 1-based index
+    final today = DateTime(now.year, now.month, now.day);
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    return today.difference(start).inDays + 1; // 1-based index
   }
 
-  /// Returns total days remaining
+  /// Returns total days remaining (clamped to 0 so it never goes negative
+  /// when the sankalpa has expired).
   int get daysRemaining {
-    return durationDays - currentDayNumber;
+    return (durationDays - currentDayNumber).clamp(0, durationDays);
   }
 
   /// Creates a copy with updated fields

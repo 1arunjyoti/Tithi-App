@@ -26,42 +26,45 @@ class HinduCalendarService {
     'Phalguna',
   ];
 
+  /// Returns true if this month has a special prefix (Adhika or Nija).
+  /// Adhika = extra intercalary month; Nija = real month following an Adhika.
+  bool isAdhikaMasa(String masa) =>
+      masa.startsWith('Adhika_') || masa.startsWith('Nija_');
+
+  /// Returns the base masa name, stripping any prefix.
+  /// e.g. 'Adhika_Jyeshtha' / 'Nija_Jyeshtha' -> 'Jyeshtha', 'Jyeshtha' -> 'Jyeshtha'
+  String baseMasaName(String masa) {
+    if (masa.startsWith('Adhika_')) return masa.substring(7);
+    if (masa.startsWith('Nija_')) return masa.substring(5);
+    return masa;
+  }
+
   /// Calculates the Hindu Date details for a given Gregorian date.
-  Future<({int tithi, String paksha, String masa, int vsYear, int shakaYear})>
+  Future<
+    ({
+      int tithi,
+      int fullTithi,
+      String paksha,
+      String masa,
+      int vsYear,
+      int shakaYear,
+    })
+  >
   calculateDate(DateTime date) async {
     final service = _ref.read(panchangServiceProvider);
 
     // Ensure initialized
     await _ref.read(panchangInitProvider.future);
-    // Note: We should handle location if needed, defaulting to standard provider logic
-    // or just passing defaults. PanchangService methods have defaults.
 
     // 1. Calculate Tithi
-    // We reuse calculateTithi logic.
-    // Ideally we want to pass the location from provider but for now relying on defaults/service defaults.
-    // To be precise, we should pass parameters.
-    // Let's rely on service defaults for simplicity in this refactor step.
     final rawTithi = await service.calculateTithi(date);
 
     int tithi = rawTithi.floor();
-    // final double fraction = rawTithi - tithi; // Unused
-    // Tithi is 1-30.
-    // If rawTithi is 15.1 -> Tithi 16 (Krishna Pratipada).
-    // Actually standard definition: 1..15 Shukla, 16..30 Krishna.
-    // If rawTithi is 0.5 -> Tithi 1.
-    // calculateTithi returns (diff/12) + 1.
-    // If diff=0 -> 1.
-    // If diff=12 -> 2.
-    // So integer part is the tithi index roughly.
-    // Let's truncate or round?
-    // Usually Tithi is current if it prevails at sunrise.
-    // Tithi at current time `date`.
-    // Let's just take index `rawTithi.floor()`. Wait, if 1.0 -> 1.
-    // If 0.9 (impossible as +1). Minimum 1.0. Max 31.0.
 
     // Tithi Number: 1 to 15.
     String paksha = 'Shukla';
-    int displayTithi = tithi; // 1..30
+    int displayTithi = tithi; // 1..30 (raw tithi)
+    int fullTithi = tithi; // 1..30
 
     if (displayTithi > 15) {
       paksha = 'Krishna';
@@ -78,7 +81,6 @@ class HinduCalendarService {
     // If Date is on/after -> (Gregorian + 57).
 
     int vsYear = date.year + 57;
-    // int monthIndex = hinduMonths.indexOf(masa); // Unused
 
     // Logic to determine if we are in the "late" part of Gregorian year (Mar-Dec) or "early" (Jan-Mar).
     // Chaitra is usually March/April.
@@ -118,7 +120,11 @@ class HinduCalendarService {
       // If Masa is Phalguna -> Old Year -> +56.
       // If Masa is Vaishakha -> New Year -> +57.
 
-      if (masa == 'Chaitra' || masa == 'Vaishakha' || masa == 'Jyeshtha') {
+      // Use baseMasaName to handle Adhika prefix (e.g. 'Adhika_Jyeshtha' -> 'Jyeshtha')
+      final baseMasa = baseMasaName(masa);
+      if (baseMasa == 'Chaitra' ||
+          baseMasa == 'Vaishakha' ||
+          baseMasa == 'Jyeshtha') {
         vsYear = date.year + 57;
       } else {
         // Phalguna or before
@@ -139,6 +145,7 @@ class HinduCalendarService {
 
     return (
       tithi: displayTithi,
+      fullTithi: fullTithi,
       paksha: paksha,
       masa: masa,
       vsYear: vsYear,
@@ -171,9 +178,12 @@ class HinduCalendarService {
     DateTime search = estimate.subtract(const Duration(days: 15));
     final targetMasa = hinduMonths[monthIndex];
 
-    for (int i = 0; i < 35; i++) {
+    for (int i = 0; i < 65; i++) {
       final hDate = await calculateDate(search);
-      if (hDate.masa == targetMasa &&
+      // Skip 'Nija_' months (second occurrence after an Adhika) so we find
+      // the first (Adhika or normal) occurrence which is where festivals fall.
+      if (!isAdhikaMasa(hDate.masa) &&
+          baseMasaName(hDate.masa) == targetMasa &&
           hDate.tithi == 1 &&
           hDate.paksha == 'Shukla') {
         return search;

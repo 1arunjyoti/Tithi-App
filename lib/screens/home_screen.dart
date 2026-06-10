@@ -15,13 +15,21 @@ import '../widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/moon_animation_widget.dart';
 import '../widgets/daily_quote_widget.dart';
+import '../widgets/festival_countdown_card.dart';
 import '../widgets/festival_search_delegate.dart';
 import '../widgets/weather_sheet.dart';
 import '../widgets/responsive_layout.dart';
 
 /// Main home screen with calendar and event list
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isDrawerOpen = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +40,11 @@ class HomeScreen extends StatelessWidget {
       extendBodyBehindAppBar: true,
       // Only show drawer on mobile, desktop uses persistent sidebar
       drawer: isWideScreen ? null : const AppDrawer(),
+      onDrawerChanged: (isOpened) {
+        if (_isDrawerOpen != isOpened) {
+          setState(() => _isDrawerOpen = isOpened);
+        }
+      },
       appBar: AppBar(
         // Hide hamburger menu on wide screens
         automaticallyImplyLeading: !isWideScreen,
@@ -46,7 +59,7 @@ class HomeScreen extends StatelessWidget {
                   Icons.search_rounded,
                   color: context.colors.onSurface,
                 ),
-                tooltip: 'Search Festivals',
+                tooltip: l10n?.searchFestivals ?? 'Search Festivals',
                 onPressed: () {
                   showSearch(
                     context: context,
@@ -98,7 +111,12 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             )
-          : const _HomeBody(), // Mobile layout remains exactly as before
+          : RepaintBoundary(
+              child: TickerMode(
+                enabled: !_isDrawerOpen,
+                child: const _HomeBody(),
+              ),
+            ), // Mobile layout remains exactly as before
     );
   }
 
@@ -153,8 +171,8 @@ class _JumpToTodayFab extends ConsumerWidget {
     return FloatingActionButton(
       onPressed: () {
         final now = DateTime.now();
-        ref.read(focusedMonthProvider.notifier).state = now;
-        ref.read(selectedDateProvider.notifier).state = now;
+        ref.read(focusedMonthProvider.notifier).setFocusedMonth(now);
+        ref.read(selectedDateProvider.notifier).setDate(now);
       },
       tooltip: l10n?.goToToday ?? 'Go to Today',
       backgroundColor: context.colors.primary,
@@ -172,40 +190,17 @@ class _HomeBody extends ConsumerWidget {
     final accessibility = ref.watch(accessibilityProvider);
     final viewMode = ref.watch(homeViewModeProvider);
     final isScheduleView = viewMode == HomeViewMode.schedule;
-    final l10n = AppLocalizations.of(context);
 
     return Stack(
       children: [
-        // Ambient Background Gradient - Cached with RepaintBoundary
+        // Ambient Background — delegates to AppTheme.backgroundDecoration
+        // so the gradient logic lives in one place (SMELL-1).
         Positioned.fill(
           child: RepaintBoundary(
             child: Container(
-              decoration: BoxDecoration(
-                gradient: accessibility.reduceMotion
-                    ? null
-                    : LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors:
-                            context.theme.scaffoldBackgroundColor ==
-                                Colors.black
-                            ? [Colors.black, Colors.black, Colors.black]
-                            : context.isDark
-                            ? [
-                                const Color(0xFF10002B),
-                                const Color(0xFF240046),
-                                const Color(0xFF10002B),
-                              ]
-                            : [
-                                const Color(0xFFFFFDF7),
-                                const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                                const Color(0xFFFFFDF7),
-                              ],
-                      ),
-                color: accessibility.reduceMotion
-                    ? context.theme.scaffoldBackgroundColor
-                    : null,
-              ),
+              decoration: accessibility.reduceMotion
+                  ? BoxDecoration(color: context.theme.scaffoldBackgroundColor)
+                  : AppTheme.backgroundDecoration(context),
             ),
           ),
         ),
@@ -220,75 +215,45 @@ class _HomeBody extends ConsumerWidget {
                 const Expanded(child: ScheduleViewWidget())
               else
                 // Calendar View
-                Expanded(
+                const Expanded(
                   child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                        // Calendar
-                        const CalendarWidget(),
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: RepaintBoundary(
+                      child: Column(
+                        children: [
+                          // Calendar
+                          CalendarWidget(),
 
-                        const SizedBox(height: 8),
+                          SizedBox(height: 16),
 
-                        // Event List Title
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: context.colors.onSurface.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  thickness: 1,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: Text(
-                                  l10n?.events ?? "EVENTS",
-                                  style: context.textTheme.labelSmall?.copyWith(
-                                    letterSpacing: 1.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: context.colors.primary,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: context.colors.onSurface.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  thickness: 1,
-                                ),
-                              ),
-                            ],
+                          // Event list
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: EventListWidget(),
                           ),
-                        ),
 
-                        const SizedBox(height: 8),
+                          SizedBox(height: 2),
 
-                        // Event list
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: EventListWidget(),
-                        ),
+                          // Paksha indicator
+                          _PakshaIndicator(),
 
-                        const SizedBox(height: 2),
+                          SizedBox(height: 16),
 
-                        // Paksha indicator
-                        const _PakshaIndicator(),
+                          // Daily Shloka
+                          DailyQuoteWidget(),
 
-                        const SizedBox(height: 16),
+                          SizedBox(height: 16),
 
-                        // Daily Shloka
-                        const DailyQuoteWidget(),
+                          // Featured festival countdown
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: FestivalCountdownCard(),
+                          ),
 
-                        // Bottom padding for FAB
-                        const SizedBox(height: 80),
-                      ],
+                          // Bottom padding for FAB
+                          SizedBox(height: 40),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -381,20 +346,15 @@ class _PakshaIndicator extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 12),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-        decoration: AppTheme.glassmorphism(
-          context: context,
-          opacity: 0.1,
-          borderRadius: 24,
-          ref: ref,
-        ),
+        decoration: AppTheme.glassmorphism(context: context, ref: ref),
         child: Column(
           children: [
             // Top Row: Moon, Title, and Sun/Moon Time
             Row(
               children: [
                 MoonAnimationWidget(
-                  paksha: panchang.paksha,
-                  tithi: panchang.tithiNumber,
+                  phase: (panchang.tithiNumber - 1.0) / 30.0,
+                  isWaxing: panchang.paksha == 'Shukla',
                   size: 40,
                 ),
                 const SizedBox(width: 12),

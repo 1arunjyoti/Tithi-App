@@ -5,10 +5,10 @@ import 'package:latlong2/latlong.dart';
 import '../models/temple.dart';
 
 class TempleService {
-  // Singleton instance
-  static final TempleService _instance = TempleService._internal();
-  factory TempleService() => _instance;
-  TempleService._internal();
+  TempleService({http.Client? client}) : _client = client ?? http.Client();
+
+  final http.Client _client;
+  bool _isClosed = false;
 
   // List of available Overpass API servers
   final List<String> _overpassServers = [
@@ -18,32 +18,69 @@ class TempleService {
     'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   ];
 
+  // Distance calculator shared across all map calls.
+  // Declared at field level (rather than inside the Overpass response handler)
+  // to make the intent clear; `const` ensures no repeated heap allocation.
+  static const Distance _distanceCalculator = Distance();
+
+  // SEC-1: client-side rate limiter — prevents rapid successive taps from
+  // hammering the Overpass API and triggering IP-level 429 bans.
+  static const Duration _minRequestGap = Duration(seconds: 5);
+  DateTime? _lastRequestTime;
+
   /// Fetches Hindu temples near the given coordinates using Overpass API.
   /// [radius] is in meters.
   Future<List<Temple>> fetchNearbyTemples(
     double lat,
     double lon, {
     double radius = 5000,
+    int page = 0,
+    int pageSize = 80,
   }) async {
+    if (_isClosed) {
+      throw StateError('TempleService has been closed.');
+    }
+
+    // SEC-1: enforce minimum gap between requests to avoid 429 responses.
+    final now = DateTime.now();
+    if (_lastRequestTime != null) {
+      final elapsed = now.difference(_lastRequestTime!);
+      if (elapsed < _minRequestGap) {
+        await Future.delayed(_minRequestGap - elapsed);
+      }
+    }
+    _lastRequestTime = DateTime.now();
+
+    final requestLimit = ((page + 1) * pageSize).clamp(pageSize, 300);
+
     // Overpass QL query:
-    // [out:json][timeout:25];node(around:radius,lat,lon)["amenity"="place_of_worship"]["religion"="hindu"];out;
+    // Include nodes/ways/relations and request centers for non-node features.
+    // [out:json][timeout:25];nwr(around:radius,lat,lon)["amenity"="place_of_worship"]["religion"="hindu"];out center;
     // Added [timeout:25] (seconds) to the query itself
     final query =
-        '[out:json][timeout:25];node(around:$radius,$lat,$lon)["amenity"="place_of_worship"]["religion"="hindu"];out;';
+        '[out:json][timeout:25];nwr(around:$radius,$lat,$lon)["amenity"="place_of_worship"]["religion"="hindu"];out center $requestLimit;';
 
     final encodedQuery = Uri.encodeComponent(query);
 
     // Try each server until success
     for (final baseUrl in _overpassServers) {
       try {
-        final url = Uri.parse('$baseUrl?data=$encodedQuery');
+        final url = Uri.parse(baseUrl);
 
         if (kDebugMode) {
           print('Fetching temples from: $baseUrl');
         }
 
-        final response = await http
-            .get(url)
+        final response = await _client
+            .post(
+              url,
+              headers: const {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Connection': 'close',
+                'User-Agent': 'tithi/overpass (flutter_map; contact@tithi.app)',
+              },
+              body: 'data=$encodedQuery',
+            )
             .timeout(const Duration(seconds: 30));
 
         if (response.statusCode == 200) {
@@ -54,26 +91,38 @@ class TempleService {
             print('Found ${elements.length} temples from $baseUrl');
           }
 
-          final Distance distanceCalculator = const Distance();
+          final temples =
+              elements.map((e) {
+                final temple = Temple.fromJson(e as Map<String, dynamic>);
 
-          return elements.map((e) {
-            final temple = Temple.fromJson(e as Map<String, dynamic>);
+                // Calculate distance using the class-level constant (OPT-8)
+                final dist = _distanceCalculator.as(
+                  LengthUnit.Meter,
+                  LatLng(lat, lon),
+                  LatLng(temple.latitude, temple.longitude),
+                );
 
-            // Calculate distance
-            final dist = distanceCalculator.as(
-              LengthUnit.Meter,
-              LatLng(lat, lon),
-              LatLng(temple.latitude, temple.longitude),
-            );
+                return Temple(
+                  id: temple.id,
+                  name: temple.name,
+                  latitude: temple.latitude,
+                  longitude: temple.longitude,
+                  distance: dist.toDouble(),
+                );
+              }).toList()..sort(
+                (a, b) => (a.distance ?? double.infinity).compareTo(
+                  b.distance ?? double.infinity,
+                ),
+              );
 
-            return Temple(
-              id: temple.id,
-              name: temple.name,
-              latitude: temple.latitude,
-              longitude: temple.longitude,
-              distance: dist.toDouble(),
-            );
-          }).toList();
+          final start = page * pageSize;
+          if (start >= temples.length) {
+            return [];
+          }
+          final end = (start + pageSize) > temples.length
+              ? temples.length
+              : (start + pageSize);
+          return temples.sublist(start, end);
         } else if (response.statusCode == 429) {
           // Too many requests, try next server immediately
           if (kDebugMode) {
@@ -84,6 +133,13 @@ class TempleService {
           // Server error, try next
           if (kDebugMode) {
             print('Overpass ${response.statusCode} from $baseUrl');
+          }
+          continue;
+        } else {
+          if (kDebugMode) {
+            print(
+              'Overpass ${response.statusCode} from $baseUrl: ${response.body}',
+            );
           }
           continue;
         }
@@ -101,5 +157,14 @@ class TempleService {
       print('All Overpass servers failed');
     }
     return [];
+  }
+
+  void close() {
+    if (_isClosed) {
+      return;
+    }
+
+    _client.close();
+    _isClosed = true;
   }
 }

@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import '../models/sankalpa.dart';
 import '../services/sankalpa_service.dart';
 import '../services/notification_service.dart';
@@ -9,25 +9,40 @@ final sankalpaServiceProvider = Provider<SankalpaService>((ref) {
   return SankalpaService();
 });
 
-final sankalpaListProvider =
-    StateNotifierProvider<SankalpaListNotifier, List<Sankalpa>>((ref) {
-      final service = ref.watch(sankalpaServiceProvider);
-      final notificationService = ref.read(notificationServiceProvider);
-      return SankalpaListNotifier(service, notificationService);
-    });
+final sankalpaListProvider = NotifierProvider<SankalpaListNotifier, List<Sankalpa>>(
+  SankalpaListNotifier.new,
+);
 
-class SankalpaListNotifier extends StateNotifier<List<Sankalpa>> {
-  final SankalpaService _service;
-  final NotificationService _notificationService;
+class SankalpaListNotifier extends Notifier<List<Sankalpa>> {
+  late final SankalpaService _service;
+  late final NotificationService _notificationService;
 
-  SankalpaListNotifier(this._service, this._notificationService) : super([]) {
+  @override
+  List<Sankalpa> build() {
+    _service = ref.watch(sankalpaServiceProvider);
+    _notificationService = ref.read(notificationServiceProvider);
     _loadSankalpas();
+    return const [];
   }
 
   Future<void> _loadSankalpas() async {
-    // Ensure service is initialized (it might be lazy, so safe to call init)
-    await _service.init();
-    state = _service.getAllSankalpas();
+    try {
+      // Ensure service is initialized (it might be lazy, so safe to call init)
+      await _service.init();
+      state = _service.getAllSankalpas();
+    } catch (e, stack) {
+      // SMELL-12: surface the error via Flutter's error reporting instead of
+      // swallowing it silently.  Consumers keep the previous state ([] on
+      // first load) unchanged so the UI doesn't crash.
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: stack,
+          library: 'SankalpaListNotifier',
+          context: ErrorDescription('loading sankalpas from storage'),
+        ),
+      );
+    }
   }
 
   Future<void> addSankalpa(Sankalpa sankalpa) async {

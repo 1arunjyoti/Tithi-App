@@ -459,5 +459,263 @@ class AppLocalizationsSa extends AppLocalizations {
   String get days => 'days';
 
   @override
-  String get today => 'Today';
+  String get today => 'अद्य';
+
+  @override
+  String get tomorrow => 'श्वः';
+
+  @override
+  String daysFromNow(int days) {
+    return '$days दिनानि';
+  }
+
+  @override
+  String get now => 'अधुना!';
+
+  @override
+  String get currentMoonPhase => 'वर्तमानचन्द्रकलादर्शनम्';
+
+  @override
+  String get mapPinLocation => 'मानचित्रपिनस्थानम्';
+
+  @override
+  String get nearbyTemples => 'समीपवर्तिनः देवालयाः';
+
+  @override
+  String get searchHere => 'अत्र अन्वेषयतु';
+
+  @override
+  String get loadMore => 'अधिकं आनयतु';
+
+  @override
+  String get templeMarker => 'देवालयचिह्नम्';
+
+  @override
+  String kmAway(String distance) {
+    return '$distance कि.मी. दूरम्';
+  }
+
+  @override
+  String get nearby => 'समीपे';
+
+  @override
+  String get getDirections => 'दिशानिर्देशं प्राप्नुत';
+
+  @override
+  String get couldNotOpenMaps => 'मानचित्रं न उद्घाटितम्';
+
+  @override
+  String errorLaunchingMaps(String error) {
+    return 'मानचित्रप्रारम्भे त्रुटिः: $error';
+  }
+
+  @override
+  String get templeSearchFailed => 'समीपदेवालयाः न प्राप्ताः। पुनः प्रयतध्वम्।';
+
+  @override
+  String get yourLocation => 'भवतः स्थानम्';
+
+  @override
+  String get newIntention => 'नवसङ्कल्पः';
+
+  @override
+  String get whatIsYourSankalpa => 'भवतः सङ्कल्पः कः?';
+
+  @override
+  String get intentionTitle => 'सङ्कल्पशीर्षकम्';
+
+  @override
+  String get intentionTitleHint => 'उदाहरणम्: गायत्रीमन्त्रं १०८ वारं जप';
+
+  @override
+  String get pleaseEnterTitle => 'कृपया शीर्षकं प्रविशतु';
+
+  @override
+  String get descriptionOptional => 'विवरणम् (वैकल्पिकम्)';
+
+  @override
+  String get descriptionHint => 'विशेषविवरणं वा मन्त्रपाठं योजयतु...';
+
+  @override
+  String get durationDays => 'अवधिः (दिनानि)';
+
+  @override
+  String daysCount(int count) {
+    return '$count दिनानि';
+  }
+
+  @override
+  String get custom => 'इच्छानुसारम्';
+
+  @override
+  String get customDays => 'इच्छानुसारदिनानि';
+
+  @override
+  String get dailyReminderTime => 'दैनिकस्मरणकालः';
+
+  @override
+  String get createSankalpa => 'सङ्कल्पं निर्मीयताम्';
+
+  @override
+  String get save => 'सञ्चिनोतु';
+
+  @override
+  String get sankalpaCreatedSuccessfully => 'सङ्कल्पः सफलतया निर्मितः!';
+
+  @override
+  String failedToSaveSankalpa(String error) {
+    return 'सङ्कल्पसञ्चयने विफलम्: $error';
+  }
+
+  @override
+  String get mySankalpas => 'मम सङ्कल्पाः';
+
+  @override
+  String get active => 'सक्रियः';
+
+  @override
+  String get completed => 'समाप्तः';
+
+  @override
+  String get noCompletedIntentionsYet =>
+      'अद्यावधि कश्चित् समाप्तसङ्कल्पः नास्ति';
+
+  @override
+  String get startNewSpiritualJourney => 'नवाम् आध्यात्मिकयात्रां प्रारभध्वम्';
+
+  @override
+  String get deleteSankalpa => 'सङ्कल्पं अपसारयेत्?';
+
+  @override
+  String get deleteSankalpaMessage => 'एषा क्रिया प्रत्यावर्तनीया नास्ति।';
+
+  @override
+  String get delete => 'अपसारयतु';
+
+  @override
+  String get markCompleteIncomplete => 'समाप्त/असमाप्त चिनोतु';
+
+  @override
+  String dayOf(int current, int total) {
+    return 'दिनम् $current / $total';
+  }
+
+  @override
+  String get doneForToday => 'अद्य कृते';
+
+  @override
+  String get markTodayAsDone => 'अद्य समाप्तं चिनोतु';
+
+  @override
+  String reminderAt(String time) {
+    return 'स्मारणम्: $time';
+  }
+
+  @override
+  String completedOn(String date) {
+    return 'समाप्तम्: $date';
+  }
+
+  @override
+  String get weatherDetails => 'वातावरणविवरणम्';
+
+  @override
+  String get weatherDataUnavailable => 'वातावरणदत्तांशः अनुपलब्धः';
+
+  @override
+  String errorMessage(String error) {
+    return 'त्रुटिः: $error';
+  }
+
+  @override
+  String get weatherDataByOpenMeteo => 'Open-Meteo प्रदत्तं वातावरणदत्तांशम्';
+
+  @override
+  String weatherCondition(String condition) {
+    return 'वातावरणस्थिति: $condition';
+  }
+
+  @override
+  String get sunrise => 'सूर्योदयः';
+
+  @override
+  String get sunset => 'सूर्यास्तः';
+
+  @override
+  String get humidity => 'आर्द्रता';
+
+  @override
+  String get wind => 'वायुः';
+
+  @override
+  String get realFeel => 'अनुभूततापः';
+
+  @override
+  String get uvIndex => 'यूवी सूचकः';
+
+  @override
+  String get forecast => 'पूर्वानुमानम्';
+
+  @override
+  String daylightDuration(int hours, int minutes) {
+    return 'दिवालोकः: $hoursघ $minutesमि';
+  }
+
+  @override
+  String get searchFestivals => 'उत्सवान् अन्विष्यताम्';
+
+  @override
+  String get permissionRequired => 'अनुमतिः अपेक्षिता';
+
+  @override
+  String get locationPermissionPermanentlyDenied =>
+      'स्थान-अनुमतिः स्थायिरूपेण निषिद्धा। कृपया उपकरणस्य सेटिङ्ग्स् मध्ये ताम् सक्रियताम्।';
+
+  @override
+  String get openSettings => 'सेटिङ्ग्स् उद्घाटयतु';
+
+  @override
+  String get selectMonth => 'मासः चयन्यताम्';
+
+  @override
+  String get recenterMap => 'मानचित्रं पुनः केन्द्रीकरोतु';
+
+  @override
+  String get zoomIn => 'विस्तारयतु';
+
+  @override
+  String get zoomOut => 'संकोचयतु';
+
+  @override
+  String get back30Days => '३० दिनानि पश्चात्';
+
+  @override
+  String get back1Day => '१ दिनं पश्चात्';
+
+  @override
+  String get forward1Day => '१ दिनं अग्रे';
+
+  @override
+  String get forward30Days => '३० दिनानि अग्रे';
+
+  @override
+  String get playAnimation => 'चलच्चित्रं चालयतु';
+
+  @override
+  String get pauseAnimation => 'चलच्चित्रं स्थगयतु';
+
+  @override
+  String get speedLabel => 'वेगः';
+
+  @override
+  String get heliocentric => 'सौरकेन्द्रितम्';
+
+  @override
+  String get geocentric => 'भूकेन्द्रितम्';
+
+  @override
+  String get distance => 'दूरता';
+
+  @override
+  String get orbit => 'कक्षा';
 }
