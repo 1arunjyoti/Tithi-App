@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/accessibility_provider.dart';
@@ -11,8 +12,15 @@ class AppTheme {
     borderRadius: BorderRadius.circular(24),
   );
 
+  /// OPT-3: static final fields so ThemeData + GoogleFonts text-theme objects
+  /// are constructed exactly once (on first class access) rather than on every
+  /// widget rebuild that calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
+  static final ThemeData shuklaTheme = _buildShuklaTheme();
+  static final ThemeData krishnaTheme = _buildKrishnaTheme();
+  static final ThemeData pureDarkTheme = _buildPureDarkTheme();
+
   /// Shukla Paksha (Waxing Moon) - Vibrant Warm Theme
-  static ThemeData get shuklaTheme {
+  static ThemeData _buildShuklaTheme() {
     // Vibrant Orange/Gold Palette
     const primaryColor = Color(0xFFFF9F1C); // Vibrant Orange
     const secondaryColor = Color(0xFFFFBF69); // Mellow Yellow-Orange
@@ -29,8 +37,6 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
-        surface: surfaceColor,
-        onPrimary: Colors.white,
         onSecondary: Colors.brown.shade900,
         onSurface: const Color(0xFF2D3436),
       ),
@@ -40,6 +46,11 @@ class AppTheme {
         foregroundColor: const Color(0xFF2D3436),
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -57,9 +68,9 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 4,
       ),
-      bottomSheetTheme: BottomSheetThemeData(
+      bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surfaceColor,
-        shape: const RoundedRectangleBorder(
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
       ),
@@ -87,7 +98,7 @@ class AppTheme {
   }
 
   /// Krishna Paksha (Waning Moon) - Deep Space / Neon Theme
-  static ThemeData get krishnaTheme {
+  static ThemeData _buildKrishnaTheme() {
     // Cyber/Space Palette
     const primaryColor = Color(0xFF7B2CBF); // Deep Purple
     const secondaryColor = Color(0xFF9D4EDD); // Brighter Purple
@@ -102,14 +113,13 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
         surface: surfaceColor,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: Colors.white,
       ),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
@@ -117,6 +127,11 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -134,9 +149,9 @@ class AppTheme {
         foregroundColor: Colors.black, // High contrast on Neon Cyan
         elevation: 8,
       ),
-      bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: const Color(0xFF240046),
-        shape: const RoundedRectangleBorder(
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Color(0xFF240046),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
       ),
@@ -164,7 +179,7 @@ class AppTheme {
   }
 
   /// Pure Dark Theme (OLED Black) - Professional & Clean
-  static ThemeData get pureDarkTheme {
+  static ThemeData _buildPureDarkTheme() {
     // 1. Define a seed color for proper tonal generation (Saffron/Gold)
     const seedColor = Color(0xFFFFB74D);
 
@@ -195,6 +210,11 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -268,11 +288,8 @@ class AppTheme {
     final isPureDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;
 
-    // Check accessibility overrides
-    bool isHighContrast = false;
-    if (ref != null) {
-      isHighContrast = ref.watch(accessibilityProvider).highContrast;
-    }
+    final isHighContrast =
+        ref?.read(glassmorphismConfigProvider).isHighContrast ?? false;
 
     // High Contrast Mode / Pure Dark
     if (isPureDark || isHighContrast) {
@@ -283,7 +300,6 @@ class AppTheme {
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1,
         ),
       );
     }
@@ -307,7 +323,6 @@ class AppTheme {
             context,
           ).primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
           blurRadius: blur,
-          spreadRadius: 0,
         ),
       ],
     );
@@ -378,7 +393,6 @@ class GlassmorphismConfig {
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
               : Colors.black.withValues(alpha: 0.1),
-          width: 1,
         ),
       );
     }
@@ -401,7 +415,6 @@ class GlassmorphismConfig {
         BoxShadow(
           color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
           blurRadius: blur,
-          spreadRadius: 0,
         ),
       ],
     );

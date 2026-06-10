@@ -69,7 +69,8 @@ class Festival {
   bool get recurring => panchangRules.recurring;
   List<String> get ritualSteps => rituals.steps;
 
-  /// Check if this festival matches the given paksha and tithi
+  /// Check if this festival matches the given paksha, tithi, masa, and
+  /// optionally the weekday of [date] when [panchangRules.weekday] is set.
   ///
   /// [monthSystem] - The calendar system being used (Amanta or Purnimant).
   /// Festivals are stored in Amanta format, so when Purnimant is selected,
@@ -79,6 +80,7 @@ class Festival {
     int currentTithi, [
     String currentMasa = '',
     HinduMonthSystem monthSystem = HinduMonthSystem.amanta,
+    DateTime? date,
   ]) {
     // Skip solar festivals (like Makar Sankranti)
     if (conditions == 'Solar') return false;
@@ -86,14 +88,18 @@ class Festival {
     // Check paksha match (or wildcard '*')
     final pakshaMatch = paksha == '*' || paksha == currentPaksha;
 
-    // Check tithi match
-    final tithiMatch = tithi == currentTithi;
+    // Check tithi match (or range if endTithi is set)
+    bool tithiMatch = tithi == currentTithi;
+    if (!tithiMatch && panchangRules.endTithi != null) {
+      tithiMatch =
+          currentTithi >= tithi && currentTithi <= panchangRules.endTithi!;
+    }
 
     // Check masa match (or wildcard '*')
     bool masaMatch = true;
     if (masa != '*' && currentMasa.isNotEmpty) {
-      // If using Purnimant system, convert the current masa to Amanta for comparison
-      // since festivals are stored in Amanta format
+      // If using Purnimant system, convert the current masa to Amanta for
+      // comparison since festivals are stored in Amanta format.
       String compareMasa = currentMasa;
       if (monthSystem == HinduMonthSystem.purnimant) {
         compareMasa = convertPurnimantToAmanta(currentMasa, currentPaksha);
@@ -101,7 +107,27 @@ class Festival {
       masaMatch = masa == compareMasa;
     }
 
-    return pakshaMatch && tithiMatch && masaMatch;
+    // BUG-04: Check weekday constraint when set and a reference date is provided.
+    bool weekdayMatch = true;
+    if (panchangRules.weekday != null &&
+        panchangRules.weekday!.isNotEmpty &&
+        date != null) {
+      const weekdayMap = {
+        'Monday': DateTime.monday,
+        'Tuesday': DateTime.tuesday,
+        'Wednesday': DateTime.wednesday,
+        'Thursday': DateTime.thursday,
+        'Friday': DateTime.friday,
+        'Saturday': DateTime.saturday,
+        'Sunday': DateTime.sunday,
+      };
+      final requiredWeekday = weekdayMap[panchangRules.weekday!];
+      if (requiredWeekday != null) {
+        weekdayMatch = date.weekday == requiredWeekday;
+      }
+    }
+
+    return pakshaMatch && tithiMatch && masaMatch && weekdayMatch;
   }
 
   @override
@@ -218,6 +244,16 @@ class PanchangRules {
   @HiveField(6)
   final String? weekday;
 
+  @HiveField(7)
+  final int? endTithi;
+
+  /// SMELL-05: Which timing checkpoint to use when evaluating this festival.
+  /// Replaces the hardcoded switch on festival ID in PanchangData.fromRawTithi.
+  /// Valid values: 'madhyahna', 'aparahna', 'nishita'.
+  /// Null (default) = use sunrise tithi.
+  @HiveField(8)
+  final String? timingOverride;
+
   const PanchangRules({
     required this.masa,
     required this.paksha,
@@ -226,6 +262,8 @@ class PanchangRules {
     this.recurring = false,
     this.solarDate,
     this.weekday,
+    this.endTithi,
+    this.timingOverride,
   });
 
   factory PanchangRules.fromJson(Map<String, dynamic> json) {
@@ -237,6 +275,8 @@ class PanchangRules {
       recurring: json['recurring'] ?? false,
       solarDate: json['solarDate'],
       weekday: json['weekday'],
+      endTithi: json['endTithi'],
+      timingOverride: json['timingOverride'],
     );
   }
 }

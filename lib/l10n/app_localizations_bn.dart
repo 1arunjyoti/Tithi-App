@@ -459,5 +459,264 @@ class AppLocalizationsBn extends AppLocalizations {
   String get days => 'days';
 
   @override
-  String get today => 'Today';
+  String get today => 'আজ';
+
+  @override
+  String get tomorrow => 'আগামীকাল';
+
+  @override
+  String daysFromNow(int days) {
+    return '$days দিন';
+  }
+
+  @override
+  String get now => 'এখন!';
+
+  @override
+  String get currentMoonPhase => 'বর্তমান চন্দ্র পর্যায় দৃশ্য';
+
+  @override
+  String get mapPinLocation => 'মানচিত্র পিন অবস্থান';
+
+  @override
+  String get nearbyTemples => 'কাছাকাছি মন্দির';
+
+  @override
+  String get searchHere => 'এখানে খুঁজুন';
+
+  @override
+  String get loadMore => 'আরও লোড করুন';
+
+  @override
+  String get templeMarker => 'মন্দির মার্কার';
+
+  @override
+  String kmAway(String distance) {
+    return '$distance কিমি দূরে';
+  }
+
+  @override
+  String get nearby => 'কাছাকাছি';
+
+  @override
+  String get getDirections => 'দিকনির্দেশ পান';
+
+  @override
+  String get couldNotOpenMaps => 'মানচিত্র খোলা যায়নি';
+
+  @override
+  String errorLaunchingMaps(String error) {
+    return 'মানচিত্র চালু করতে ত্রুটি: $error';
+  }
+
+  @override
+  String get templeSearchFailed =>
+      'কাছাকাছি মন্দির পাওয়া যায়নি। আবার চেষ্টা করুন।';
+
+  @override
+  String get yourLocation => 'আপনার অবস্থান';
+
+  @override
+  String get newIntention => 'নতুন সংকল্প';
+
+  @override
+  String get whatIsYourSankalpa => 'আপনার সংকল্প কী?';
+
+  @override
+  String get intentionTitle => 'সংকল্পের শিরোনাম';
+
+  @override
+  String get intentionTitleHint => 'যেমন: ১০৮ বার গায়ত্রী মন্ত্র জপ';
+
+  @override
+  String get pleaseEnterTitle => 'দয়া করে একটি শিরোনাম লিখুন';
+
+  @override
+  String get descriptionOptional => 'বিবরণ (ঐচ্ছিক)';
+
+  @override
+  String get descriptionHint => 'বিশেষ বিবরণ বা মন্ত্রের পাঠ যোগ করুন...';
+
+  @override
+  String get durationDays => 'সময়কাল (দিন)';
+
+  @override
+  String daysCount(int count) {
+    return '$count দিন';
+  }
+
+  @override
+  String get custom => 'কাস্টম';
+
+  @override
+  String get customDays => 'কাস্টম দিন';
+
+  @override
+  String get dailyReminderTime => 'দৈনিক রিমাইন্ডারের সময়';
+
+  @override
+  String get createSankalpa => 'সংকল্প তৈরি করুন';
+
+  @override
+  String get save => 'সংরক্ষণ করুন';
+
+  @override
+  String get sankalpaCreatedSuccessfully => 'সংকল্প সফলভাবে তৈরি হয়েছে!';
+
+  @override
+  String failedToSaveSankalpa(String error) {
+    return 'সংকল্প সংরক্ষণে ব্যর্থ: $error';
+  }
+
+  @override
+  String get mySankalpas => 'আমার সংকল্পসমূহ';
+
+  @override
+  String get active => 'সক্রিয়';
+
+  @override
+  String get completed => 'সম্পন্ন';
+
+  @override
+  String get noCompletedIntentionsYet => 'এখনও কোনো সম্পন্ন সংকল্প নেই';
+
+  @override
+  String get startNewSpiritualJourney =>
+      'একটি নতুন আধ্যাত্মিক যাত্রা শুরু করুন';
+
+  @override
+  String get deleteSankalpa => 'সংকল্প মুছে ফেলবেন?';
+
+  @override
+  String get deleteSankalpaMessage => 'এই কাজটি ফিরিয়ে আনা যাবে না।';
+
+  @override
+  String get delete => 'মুছুন';
+
+  @override
+  String get markCompleteIncomplete => 'সম্পন্ন/অসম্পন্ন চিহ্নিত করুন';
+
+  @override
+  String dayOf(int current, int total) {
+    return 'দিন $current / $total';
+  }
+
+  @override
+  String get doneForToday => 'আজকের জন্য সম্পন্ন';
+
+  @override
+  String get markTodayAsDone => 'আজ সম্পন্ন হিসেবে চিহ্নিত করুন';
+
+  @override
+  String reminderAt(String time) {
+    return 'রিমাইন্ডার: $time';
+  }
+
+  @override
+  String completedOn(String date) {
+    return 'সম্পন্ন হয়েছে: $date';
+  }
+
+  @override
+  String get weatherDetails => 'আবহাওয়ার বিবরণ';
+
+  @override
+  String get weatherDataUnavailable => 'আবহাওয়ার তথ্য পাওয়া যায়নি';
+
+  @override
+  String errorMessage(String error) {
+    return 'ত্রুটি: $error';
+  }
+
+  @override
+  String get weatherDataByOpenMeteo => 'Open-Meteo থেকে আবহাওয়ার তথ্য';
+
+  @override
+  String weatherCondition(String condition) {
+    return 'আবহাওয়ার অবস্থা: $condition';
+  }
+
+  @override
+  String get sunrise => 'সূর্যোদয়';
+
+  @override
+  String get sunset => 'সূর্যাস্ত';
+
+  @override
+  String get humidity => 'আর্দ্রতা';
+
+  @override
+  String get wind => 'বাতাস';
+
+  @override
+  String get realFeel => 'অনুভূত তাপমাত্রা';
+
+  @override
+  String get uvIndex => 'ইউভি সূচক';
+
+  @override
+  String get forecast => 'পূর্বাভাস';
+
+  @override
+  String daylightDuration(int hours, int minutes) {
+    return 'দিনের আলো: $hoursঘ $minutesমি';
+  }
+
+  @override
+  String get searchFestivals => 'উৎসব খুঁজুন';
+
+  @override
+  String get permissionRequired => 'অনুমতি প্রয়োজন';
+
+  @override
+  String get locationPermissionPermanentlyDenied =>
+      'অবস্থান অনুমতি স্থায়ীভাবে অস্বীকৃত হয়েছে। অনুগ্রহ করে ডিভাইস সেটিংসে এটি চালু করুন।';
+
+  @override
+  String get openSettings => 'সেটিংস খুলুন';
+
+  @override
+  String get selectMonth => 'মাস নির্বাচন করুন';
+
+  @override
+  String get recenterMap => 'মানচিত্র পুনরায় কেন্দ্র করুন';
+
+  @override
+  String get zoomIn => 'জুম ইন';
+
+  @override
+  String get zoomOut => 'জুম আউট';
+
+  @override
+  String get back30Days => '৩০ দিন পিছনে';
+
+  @override
+  String get back1Day => '১ দিন পিছনে';
+
+  @override
+  String get forward1Day => '১ দিন সামনে';
+
+  @override
+  String get forward30Days => '৩০ দিন সামনে';
+
+  @override
+  String get playAnimation => 'অ্যানিমেশন চালান';
+
+  @override
+  String get pauseAnimation => 'অ্যানিমেশন বিরতি দিন';
+
+  @override
+  String get speedLabel => 'গতি';
+
+  @override
+  String get heliocentric => 'সূর্যকেন্দ্রিক';
+
+  @override
+  String get geocentric => 'ভূকেন্দ্রিক';
+
+  @override
+  String get distance => 'দূরত্ব';
+
+  @override
+  String get orbit => 'কক্ষপথ';
 }

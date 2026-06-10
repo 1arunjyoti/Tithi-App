@@ -266,7 +266,7 @@
   "@shareApp": {
     "description": "Menu item to share the app"
   },
-  "shareAppMessage": "Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi",
+  "shareAppMessage": "Check out Tithi - The Vedic Calendar App! Download now: https://tithiapp.netlify.app/",
   "@shareAppMessage": {
     "description": "Text shared when user shares the app"
   },
@@ -444,7 +444,7 @@
   "@privacyYourDataStays": {
     "description": "Privacy policy section title"
   },
-  "privacyYourDataDesc": "Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, and event processing happen directly on your device. We do not collect, store, or transmit your personal data to any external servers.",
+  "privacyYourDataDesc": "Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, event processing happen directly on your device and the app keeps working without a network. We do not collect, store, or transmit your personal data to any external servers.",
   "@privacyYourDataDesc": {
     "description": "Privacy policy - data stays local explanation"
   },
@@ -460,7 +460,7 @@
   "@privacyOffline": {
     "description": "Privacy policy section title"
   },
-  "privacyOfflineDesc": "The app works completely offline after the initial download. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.",
+  "privacyOfflineDesc": "The app works completely offline. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.",
   "@privacyOfflineDesc": {
     "description": "Privacy policy - offline functionality explanation"
   },
@@ -609,5 +609,391 @@
   "today": "Today",
   "@today": {
     "description": "Label for today"
+  },
+  "tomorrow": "Tomorrow",
+  "@tomorrow": {
+    "description": "Label for tomorrow"
+  },
+  "daysFromNow": "{days} days",
+  "@daysFromNow": {
+    "description": "Number of days until an event",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "now": "Now!",
+  "@now": {
+    "description": "Label used when countdown has reached the target time"
+  },
+  "currentMoonPhase": "Current moon phase visualization",
+  "@currentMoonPhase": {
+    "description": "Accessibility label for custom moon phase paint widget"
+  },
+  "mapPinLocation": "Map pin location",
+  "@mapPinLocation": {
+    "description": "Accessibility label for center map pin"
+  },
+  "nearbyTemples": "Nearby Temples",
+  "@nearbyTemples": {
+    "description": "Temple map screen title"
+  },
+  "searchHere": "Search Here",
+  "@searchHere": {
+    "description": "Button label to search nearby temples around current map center"
+  },
+  "loadMore": "Load More",
+  "@loadMore": {
+    "description": "Button label to load next page of nearby temples"
+  },
+  "templeMarker": "Temple marker",
+  "@templeMarker": {
+    "description": "Accessibility prefix for temple map markers"
+  },
+  "kmAway": "{distance} km away",
+  "@kmAway": {
+    "description": "Distance text for temple details",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "2.5"
+      }
+    }
+  },
+  "nearby": "Nearby",
+  "@nearby": {
+    "description": "Short text when exact temple distance is unavailable"
+  },
+  "getDirections": "Get Directions",
+  "@getDirections": {
+    "description": "Button label to open maps for directions"
+  },
+  "couldNotOpenMaps": "Could not open maps",
+  "@couldNotOpenMaps": {
+    "description": "Error message when map app cannot be opened"
+  },
+  "errorLaunchingMaps": "Error launching maps: {error}",
+  "@errorLaunchingMaps": {
+    "description": "Error message when launching map app fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "No app available"
+      }
+    }
+  },
+  "templeSearchFailed": "Unable to fetch nearby temples. Please try again.",
+  "@templeSearchFailed": {
+    "description": "Error message when nearby temple fetch fails"
+  },
+  "yourLocation": "Your location",
+  "@yourLocation": {
+    "description": "Accessibility label for user's location marker"
+  },
+  "newIntention": "New Intention",
+  "@newIntention": {
+    "description": "Title and button text for creating a new sankalpa"
+  },
+  "whatIsYourSankalpa": "What is your Sankalpa?",
+  "@whatIsYourSankalpa": {
+    "description": "Prompt text on sankalpa create screen"
+  },
+  "intentionTitle": "Intention Title",
+  "@intentionTitle": {
+    "description": "Label for sankalpa title input"
+  },
+  "intentionTitleHint": "e.g., Chant Gayatri Mantra 108 times",
+  "@intentionTitleHint": {
+    "description": "Hint text for sankalpa title field"
+  },
+  "pleaseEnterTitle": "Please enter a title",
+  "@pleaseEnterTitle": {
+    "description": "Validation error for empty sankalpa title"
+  },
+  "descriptionOptional": "Description (Optional)",
+  "@descriptionOptional": {
+    "description": "Label for optional sankalpa description"
+  },
+  "descriptionHint": "Add specific details or mantra text...",
+  "@descriptionHint": {
+    "description": "Hint text for optional sankalpa description"
+  },
+  "durationDays": "Duration (Days)",
+  "@durationDays": {
+    "description": "Label for sankalpa duration section"
+  },
+  "daysCount": "{count} Days",
+  "@daysCount": {
+    "description": "Duration choice chip label",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "40"
+      }
+    }
+  },
+  "custom": "Custom",
+  "@custom": {
+    "description": "Label for custom duration option"
+  },
+  "customDays": "Custom Days",
+  "@customDays": {
+    "description": "Label for custom day value"
+  },
+  "dailyReminderTime": "Daily Reminder Time",
+  "@dailyReminderTime": {
+    "description": "Section label for sankalpa reminder time"
+  },
+  "createSankalpa": "Create Sankalpa",
+  "@createSankalpa": {
+    "description": "Primary action button to create sankalpa"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Generic save action"
+  },
+  "sankalpaCreatedSuccessfully": "Sankalpa created successfully!",
+  "@sankalpaCreatedSuccessfully": {
+    "description": "Success message when sankalpa is created"
+  },
+  "failedToSaveSankalpa": "Failed to save Sankalpa: {error}",
+  "@failedToSaveSankalpa": {
+    "description": "Error message when saving sankalpa fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "I/O error"
+      }
+    }
+  },
+  "mySankalpas": "My Sankalpas",
+  "@mySankalpas": {
+    "description": "Sankalpa list screen title"
+  },
+  "active": "Active",
+  "@active": {
+    "description": "Tab label for active items"
+  },
+  "completed": "Completed",
+  "@completed": {
+    "description": "Tab label for completed items"
+  },
+  "noCompletedIntentionsYet": "No completed intentions yet",
+  "@noCompletedIntentionsYet": {
+    "description": "Empty state message for completed sankalpas"
+  },
+  "startNewSpiritualJourney": "Start a new spiritual journey",
+  "@startNewSpiritualJourney": {
+    "description": "Empty state message for active sankalpas"
+  },
+  "deleteSankalpa": "Delete Sankalpa?",
+  "@deleteSankalpa": {
+    "description": "Delete confirmation dialog title"
+  },
+  "deleteSankalpaMessage": "This action cannot be undone.",
+  "@deleteSankalpaMessage": {
+    "description": "Delete confirmation dialog message"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete action label"
+  },
+  "markCompleteIncomplete": "Mark Complete/Incomplete",
+  "@markCompleteIncomplete": {
+    "description": "Popup menu label to toggle sankalpa completion"
+  },
+  "dayOf": "Day {current} of {total}",
+  "@dayOf": {
+    "description": "Progress label in sankalpa card",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "7"
+      },
+      "total": {
+        "type": "int",
+        "example": "40"
+      }
+    }
+  },
+  "doneForToday": "Done for today",
+  "@doneForToday": {
+    "description": "Tooltip when today's sankalpa progress is already marked"
+  },
+  "markTodayAsDone": "Mark today as done",
+  "@markTodayAsDone": {
+    "description": "Tooltip to mark today's sankalpa progress"
+  },
+  "reminderAt": "Reminder: {time}",
+  "@reminderAt": {
+    "description": "Reminder time label in sankalpa card",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "6:00 AM"
+      }
+    }
+  },
+  "completedOn": "Completed on {date}",
+  "@completedOn": {
+    "description": "Completion date label in history tab",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "Feb 19, 2026"
+      }
+    }
+  },
+  "weatherDetails": "Weather Details",
+  "@weatherDetails": {
+    "description": "Weather bottom sheet title"
+  },
+  "weatherDataUnavailable": "Weather data unavailable",
+  "@weatherDataUnavailable": {
+    "description": "Shown when weather service returns no data"
+  },
+  "errorMessage": "Error: {error}",
+  "@errorMessage": {
+    "description": "Generic error message with details",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network timeout"
+      }
+    }
+  },
+  "weatherDataByOpenMeteo": "Weather data by Open-Meteo",
+  "@weatherDataByOpenMeteo": {
+    "description": "Credit text for weather source"
+  },
+  "weatherCondition": "Weather condition: {condition}",
+  "@weatherCondition": {
+    "description": "Accessibility label for weather icon",
+    "placeholders": {
+      "condition": {
+        "type": "String",
+        "example": "Partly cloudy"
+      }
+    }
+  },
+  "sunrise": "Sunrise",
+  "@sunrise": {
+    "description": "Label for sunrise time"
+  },
+  "sunset": "Sunset",
+  "@sunset": {
+    "description": "Label for sunset time"
+  },
+  "humidity": "Humidity",
+  "@humidity": {
+    "description": "Weather metric label"
+  },
+  "wind": "Wind",
+  "@wind": {
+    "description": "Weather metric label"
+  },
+  "realFeel": "Real Feel",
+  "@realFeel": {
+    "description": "Weather metric label for feels-like temperature"
+  },
+  "uvIndex": "UV Index",
+  "@uvIndex": {
+    "description": "Weather metric label"
+  },
+  "forecast": "Forecast",
+  "@forecast": {
+    "description": "Weather forecast section title"
+  },
+  "daylightDuration": "Daylight: {hours}h {minutes}m",
+  "@daylightDuration": {
+    "description": "Daylight duration text",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "11"
+      },
+      "minutes": {
+        "type": "int",
+        "example": "45"
+      }
+    }
+  },
+  "searchFestivals": "Search Festivals",
+  "@searchFestivals": {
+    "description": "Tooltip text for opening festival search"
+  },
+  "permissionRequired": "Permission Required",
+  "@permissionRequired": {
+    "description": "Title for permission required dialog"
+  },
+  "locationPermissionPermanentlyDenied": "Location permission was permanently denied. Please enable it in your device settings.",
+  "@locationPermissionPermanentlyDenied": {
+    "description": "Message shown when location permission is denied forever"
+  },
+  "openSettings": "Open Settings",
+  "@openSettings": {
+    "description": "Action label to open app settings"
+  },
+  "selectMonth": "Select month",
+  "@selectMonth": {
+    "description": "Title text for month selection dialog"
+  },
+  "recenterMap": "Recenter map",
+  "@recenterMap": {
+    "description": "Accessibility label for recenter map button"
+  },
+  "zoomIn": "Zoom in",
+  "@zoomIn": {
+    "description": "Accessibility label for zoom in action"
+  },
+  "zoomOut": "Zoom out",
+  "@zoomOut": {
+    "description": "Accessibility label for zoom out action"
+  },
+  "back30Days": "Back 30 days",
+  "@back30Days": {
+    "description": "Tooltip for moving timeline back by thirty days"
+  },
+  "back1Day": "Back 1 day",
+  "@back1Day": {
+    "description": "Tooltip for moving timeline back by one day"
+  },
+  "forward1Day": "Forward 1 day",
+  "@forward1Day": {
+    "description": "Tooltip for moving timeline forward by one day"
+  },
+  "forward30Days": "Forward 30 days",
+  "@forward30Days": {
+    "description": "Tooltip for moving timeline forward by thirty days"
+  },
+  "playAnimation": "Play animation",
+  "@playAnimation": {
+    "description": "Tooltip for starting timeline animation"
+  },
+  "pauseAnimation": "Pause animation",
+  "@pauseAnimation": {
+    "description": "Tooltip for pausing timeline animation"
+  },
+  "speedLabel": "Speed",
+  "@speedLabel": {
+    "description": "Label for animation speed control"
+  },
+  "heliocentric": "Heliocentric",
+  "@heliocentric": {
+    "description": "Tooltip for heliocentric mode"
+  },
+  "geocentric": "Geocentric",
+  "@geocentric": {
+    "description": "Tooltip for geocentric mode"
+  },
+  "distance": "Distance",
+  "@distance": {
+    "description": "Label for planet distance value"
+  },
+  "orbit": "Orbit",
+  "@orbit": {
+    "description": "Label for orbital period value"
   }
 }

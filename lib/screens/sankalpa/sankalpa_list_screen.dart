@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../providers/sankalpa_provider.dart';
 import '../../models/sankalpa.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import 'sankalpa_create_screen.dart';
 
@@ -11,6 +12,7 @@ class SankalpaListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final sankalpas = ref.watch(sankalpaListProvider);
     final activeSankalpas = sankalpas.where((s) => !s.isCompleted).toList();
     final completedSankalpas = sankalpas.where((s) => s.isCompleted).toList();
@@ -19,12 +21,12 @@ class SankalpaListScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('My Sankalpas'),
+          title: Text(l10n.mySankalpas),
           backgroundColor: Colors.transparent,
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Active'),
-              Tab(text: 'Completed'),
+              Tab(text: l10n.active),
+              Tab(text: l10n.completed),
             ],
           ),
         ),
@@ -34,7 +36,7 @@ class SankalpaListScreen extends ConsumerWidget {
               MaterialPageRoute(builder: (_) => const SankalpaCreateScreen()),
             );
           },
-          label: const Text('New Intention'),
+          label: Text(l10n.newIntention),
           icon: const Icon(Icons.add),
         ),
         body: Container(
@@ -64,6 +66,7 @@ class _SankalpaList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     if (sankalpas.isEmpty) {
       return Center(
         child: Column(
@@ -77,8 +80,8 @@ class _SankalpaList extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               isHistory
-                  ? 'No completed intentions yet'
-                  : 'Start a new spiritual journey',
+                  ? l10n.noCompletedIntentionsYet
+                  : l10n.startNewSpiritualJourney,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: Theme.of(context).disabledColor,
               ),
@@ -93,7 +96,11 @@ class _SankalpaList extends ConsumerWidget {
       itemCount: sankalpas.length,
       itemBuilder: (context, index) {
         final sankalpa = sankalpas[index];
-        return _SankalpaCard(sankalpa: sankalpa, isHistory: isHistory);
+        return _SankalpaCard(
+          key: ValueKey('sankalpa_${sankalpa.id}_$index'),
+          sankalpa: sankalpa,
+          isHistory: isHistory,
+        );
       },
     );
   }
@@ -103,10 +110,37 @@ class _SankalpaCard extends ConsumerWidget {
   final Sankalpa sankalpa;
   final bool isHistory;
 
-  const _SankalpaCard({required this.sankalpa, required this.isHistory});
+  const _SankalpaCard({
+    super.key,
+    required this.sankalpa,
+    required this.isHistory,
+  });
+
+  Future<bool> _confirmDelete(BuildContext context, AppLocalizations l10n) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteSankalpa),
+        content: Text(l10n.deleteSankalpaMessage),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    return confirmed ?? false;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final progress = sankalpa.currentDayNumber / sankalpa.durationDays;
     final clampedProgress = progress.clamp(0.0, 1.0);
     // final daysRemaining = sankalpa.daysRemaining;
@@ -140,27 +174,29 @@ class _SankalpaCard extends ConsumerWidget {
                 ),
                 if (!isHistory)
                   PopupMenuButton<String>(
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       if (value == 'delete') {
-                        ref
+                        final confirmed = await _confirmDelete(context, l10n);
+                        if (!confirmed) return;
+                        await ref
                             .read(sankalpaListProvider.notifier)
                             .deleteSankalpa(sankalpa.id);
                       } else if (value == 'toggle') {
-                        ref
+                        await ref
                             .read(sankalpaListProvider.notifier)
                             .toggleCompletion(sankalpa.id);
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'toggle',
-                        child: Text('Mark Complete/Incomplete'),
+                        child: Text(l10n.markCompleteIncomplete),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          'Delete',
-                          style: TextStyle(color: Colors.red),
+                          l10n.delete,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -183,7 +219,10 @@ class _SankalpaCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Day ${sankalpa.currentDayNumber} of ${sankalpa.durationDays}',
+                          l10n.dayOf(
+                            sankalpa.currentDayNumber,
+                            sankalpa.durationDays,
+                          ),
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
                         const SizedBox(height: 4),
@@ -208,21 +247,28 @@ class _SankalpaCard extends ConsumerWidget {
                       todayMarked ? Icons.check_circle : Icons.circle_outlined,
                     ),
                     tooltip: todayMarked
-                        ? 'Done for today'
-                        : 'Mark today as done',
+                        ? l10n.doneForToday
+                        : l10n.markTodayAsDone,
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                'Reminder: ${TimeOfDay(hour: sankalpa.reminderHour, minute: sankalpa.reminderMinute).format(context)}',
+                l10n.reminderAt(
+                  TimeOfDay(
+                    hour: sankalpa.reminderHour,
+                    minute: sankalpa.reminderMinute,
+                  ).format(context),
+                ),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(context).disabledColor,
                 ),
               ),
             ] else ...[
               Text(
-                'Completed on ${DateFormat.yMMMd().format(sankalpa.endDate ?? DateTime.now())}',
+                l10n.completedOn(
+                  DateFormat.yMMMd().format(sankalpa.endDate),
+                ),
                 style: const TextStyle(color: Colors.green),
               ),
             ],

@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/temple_map_screen.dart';
 import '../screens/moon_phases_screen.dart';
+import '../screens/about_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../screens/sankalpa/sankalpa_list_screen.dart';
@@ -34,31 +35,12 @@ class AppDrawer extends StatelessWidget {
     final colors = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    // Use solid color with opacity instead of expensive BackdropFilter
+    // Use solid color instead of expensive transparency
     final backgroundColor = isDark
-        ? const Color(0xF5121212) // Dark theme: near-black with high opacity
-        : const Color(0xF5FAFAFA); // Light theme: off-white with high opacity
+        ? const Color(0xFF121212) // Dark theme: near-black
+        : const Color(0xFFFAFAFA); // Light theme: off-white
 
-    final content = Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: isSidebar ? null : _drawerBorderRadius,
-        border: Border(
-          right: BorderSide(
-            color: colors.onSurface.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        boxShadow: isSidebar
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 16,
-                  offset: const Offset(2, 0),
-                ),
-              ],
-      ),
+    final content = RepaintBoundary(
       child: Column(
         children: [
           _DrawerHeader(colors: colors),
@@ -70,14 +52,25 @@ class AppDrawer extends StatelessWidget {
 
     // When used as sidebar, don't wrap with Drawer
     if (isSidebar) {
-      return content;
+      return Container(
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          border: Border(
+            right: BorderSide(color: colors.onSurface.withValues(alpha: 0.1)),
+          ),
+        ),
+        child: content,
+      );
     }
 
     return Drawer(
-      backgroundColor: Colors.transparent,
+      backgroundColor: backgroundColor,
       elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
       width: 280,
-      child: ClipRRect(borderRadius: _drawerBorderRadius, child: content),
+      shape: const RoundedRectangleBorder(borderRadius: _drawerBorderRadius),
+      child: content,
     );
   }
 }
@@ -94,30 +87,15 @@ class _DrawerHeader extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
-      decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.1),
-        borderRadius: const BorderRadius.only(topRight: Radius.circular(32)),
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.only(topRight: Radius.circular(32)),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colors.primary,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.wb_sunny_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
+          Image.asset(
+            'assets/icons/app_drawer_image.png',
+            width: 52,
+            height: 52,
           ),
           const SizedBox(width: 16),
           Column(
@@ -165,6 +143,12 @@ class _DrawerMenuList extends StatelessWidget {
           icon: Icons.spa_rounded,
           title: 'My Sankalpas',
           onTap: () => _navigateTo(context, const SankalpaListScreen()),
+        ),
+
+        _DrawerMenuItem(
+          icon: Icons.event_available_rounded,
+          title: 'Festival Countdowns',
+          onTap: () => _navigateTo(context, const FestivalCountdownScreen()),
         ),
 
         _DrawerMenuItem(
@@ -216,16 +200,10 @@ class _DrawerMenuList extends StatelessWidget {
               ShareParams(
                 text:
                     l10n?.shareAppMessage ??
-                    'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi',
+                    'Check out Tithi - The Vedic Calendar App! Download now: https://tithiapp.netlify.app/',
               ),
             );
           },
-        ),
-
-        _DrawerMenuItem(
-          icon: Icons.star_rounded,
-          title: l10n?.rateUs ?? 'Rate Us',
-          onTap: () => _launchRating(context),
         ),
 
         // About item
@@ -243,20 +221,6 @@ class _DrawerMenuList extends StatelessWidget {
       navigator.pop();
     }
     navigator.push(MaterialPageRoute(builder: (context) => screen));
-  }
-
-  Future<void> _launchRating(BuildContext context) async {
-    final navigator = Navigator.of(context);
-    final isWideScreen = ResponsiveLayout.isTabletOrLarger(context);
-
-    // Only pop if we are in a drawer
-    if (!isWideScreen) {
-      navigator.pop();
-    }
-    final Uri url = Uri.parse(''); // TODO: Replace with actual ID
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
   }
 }
 
@@ -282,15 +246,7 @@ class _DrawerMenuItem extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
-          ),
-          child: Icon(icon, color: colors.primary, size: 20),
-        ),
+        leading: Icon(icon, color: colors.primary, size: 24),
         title: Text(
           title,
           style: textTheme.titleMedium?.copyWith(
@@ -331,20 +287,10 @@ class _ViewModeToggleItem extends ConsumerWidget {
           }
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
-          ),
-          child: Icon(
-            isSchedule
-                ? Icons.calendar_month_rounded
-                : Icons.view_agenda_rounded,
-            color: colors.primary,
-            size: 20,
-          ),
+        leading: Icon(
+          isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
+          color: colors.primary,
+          size: 24,
         ),
         title: Text(
           isSchedule
@@ -387,20 +333,12 @@ class _AboutMenuItem extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        onTap: () => _showAboutDialog(context, ref, l10n),
+        onTap: () => _navigateToAbout(context),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.onSurface.withValues(alpha: 0.05)),
-          ),
-          child: Icon(
-            Icons.info_outline_rounded,
-            color: colors.primary,
-            size: 20,
-          ),
+        leading: Icon(
+          Icons.info_outline_rounded,
+          color: colors.primary,
+          size: 24,
         ),
         title: Text(
           l10n?.aboutApp ?? 'About',
@@ -418,41 +356,13 @@ class _AboutMenuItem extends ConsumerWidget {
     );
   }
 
-  Future<void> _showAboutDialog(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations? l10n,
-  ) async {
+  void _navigateToAbout(BuildContext context) {
     final navigator = Navigator.of(context);
-    // Use ResponsiveLayout to check if we are in a drawer
     if (!ResponsiveLayout.isTabletOrLarger(context)) {
       navigator.pop();
     }
-
-    final version = await ref.read(versionStringProvider.future);
-
-    if (!navigator.mounted) return;
-
-    final colors = Theme.of(navigator.context).colorScheme;
-    showAboutDialog(
-      context: navigator.context,
-      applicationName: l10n?.appTitle ?? 'Tithi',
-      applicationVersion: version,
-      applicationIcon: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: colors.primary,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.wb_sunny_rounded,
-          color: Colors.white,
-          size: 32,
-        ),
-      ),
-      applicationLegalese:
-          l10n?.applicationLegalese ??
-          '© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma',
+    navigator.push(
+      MaterialPageRoute(builder: (context) => const AboutScreen()),
     );
   }
 }

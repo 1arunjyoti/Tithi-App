@@ -9,13 +9,14 @@ final eclipseServiceProvider = Provider<EclipseService>((ref) {
 
 /// Service for calculating and predicting eclipses
 class EclipseService {
-  EclipseService();
+  // OPT-4: singleton so SwissEphBindings (which loads a native library) is
+  // created only once rather than on every Provider.read call.
+  static final EclipseService _instance = EclipseService._internal();
+  factory EclipseService() => _instance;
+  EclipseService._internal();
 
   /// Get Swiss Ephemeris bindings
-  SwissEphBindings get _bindings {
-    // Access bindings through jyotish initialization
-    return SwissEphBindings();
-  }
+  late final SwissEphBindings _bindings = SwissEphBindings();
 
   /// Get upcoming eclipses (both solar and lunar)
   /// Returns eclipses sorted by date
@@ -249,7 +250,6 @@ class EclipseService {
       partialEnd: times[2] > 0 ? _bindings.julianDayToDateTime(times[2]) : null,
       totalStart: times[3] > 0 ? _bindings.julianDayToDateTime(times[3]) : null,
       totalEnd: times[4] > 0 ? _bindings.julianDayToDateTime(times[4]) : null,
-      magnitude: null, // Global magnitude not directly available
       centerLatitude: location?['latitude'] as double?,
       centerLongitude: location?['longitude'] as double?,
       visibleAtLocation: visibleLocally,

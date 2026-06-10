@@ -17,14 +17,19 @@ class Temple {
     // Overpass API returns "lat" and "lon" for nodes.
     // Tags contain metadata like name.
     final tags = json['tags'] as Map<String, dynamic>? ?? {};
-    final lat = json['lat'] as double? ?? 0.0;
-    final lon = json['lon'] as double? ?? 0.0;
+    // SEC-2: Clamp coordinates to valid geographic ranges so malformed API
+    // responses don't propagate invalid values into map widgets.
+    final center = json['center'] as Map<String, dynamic>?;
+    final latValue = (json['lat'] as num?) ?? (center?['lat'] as num?) ?? 0.0;
+    final lonValue = (json['lon'] as num?) ?? (center?['lon'] as num?) ?? 0.0;
+    final lat = latValue.toDouble().clamp(-90.0, 90.0);
+    final lon = lonValue.toDouble().clamp(-180.0, 180.0);
 
     // Sometimes name is multilingual, try to find a sensible default
     String name = tags['name'] ?? tags['name:en'] ?? 'Unknown Temple';
 
     return Temple(
-      id: json['id'] as int,
+      id: json['id'] as int? ?? 0,
       name: name,
       latitude: lat,
       longitude: lon,

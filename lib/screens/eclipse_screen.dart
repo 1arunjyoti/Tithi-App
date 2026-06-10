@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../models/eclipse.dart';
 import '../providers/eclipse_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/responsive_layout.dart';
 
 /// Screen displaying upcoming eclipses
 class EclipseScreen extends ConsumerWidget {
@@ -23,34 +24,43 @@ class EclipseScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: SafeArea(
-          child: eclipsesAsync.when(
-            data: (eclipses) => _buildEclipseList(context, ref, eclipses),
-            loading: () =>
-                const Center(child: CircularProgressIndicator.adaptive()),
-            error: (e, _) => Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: theme.colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(l10n.errorLoadingData),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => ref.refresh(upcomingEclipsesProvider),
-                    child: Text(l10n.retry),
-                  ),
-                ],
+      body: Stack(
+        children: [
+          // Background - isolated in its own RepaintBoundary
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: Container(
+                decoration: AppTheme.backgroundDecoration(context),
               ),
             ),
           ),
-        ),
+          SafeArea(
+            child: eclipsesAsync.when(
+              data: (eclipses) => _buildEclipseList(context, ref, eclipses),
+              loading: () =>
+                  const Center(child: CircularProgressIndicator.adaptive()),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: theme.colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(l10n.errorLoadingData),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(upcomingEclipsesProvider),
+                      child: Text(l10n.retry),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -70,24 +80,25 @@ class EclipseScreen extends ConsumerWidget {
     final solarEclipses = eclipses.where((e) => e.type.isSolar).toList();
     final lunarEclipses = eclipses.where((e) => e.type.isLunar).toList();
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Solar Eclipses Section
-        if (solarEclipses.isNotEmpty) ...[
-          _buildSectionHeader(context, l10n.solarEclipses, '☀️'),
-          const SizedBox(height: 12),
-          ...solarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
-          const SizedBox(height: 24),
+    return CenteredContent(
+      maxWidth: 900,
+      child: ListView(
+        addRepaintBoundaries: false,
+        padding: ResponsiveLayout.responsivePadding(context),
+        children: [
+          if (solarEclipses.isNotEmpty) ...[
+            _buildSectionHeader(context, l10n.solarEclipses, '☀️'),
+            const SizedBox(height: 12),
+            ...solarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
+            const SizedBox(height: 24),
+          ],
+          if (lunarEclipses.isNotEmpty) ...[
+            _buildSectionHeader(context, l10n.lunarEclipses, '🌙'),
+            const SizedBox(height: 12),
+            ...lunarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
+          ],
         ],
-
-        // Lunar Eclipses Section
-        if (lunarEclipses.isNotEmpty) ...[
-          _buildSectionHeader(context, l10n.lunarEclipses, '🌙'),
-          const SizedBox(height: 12),
-          ...lunarEclipses.map((e) => _buildEclipseCard(context, ref, e)),
-        ],
-      ],
+      ),
     );
   }
 
@@ -123,15 +134,16 @@ class EclipseScreen extends ConsumerWidget {
         ? theme.colorScheme.primary
         : theme.colorScheme.secondary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        ref: ref,
-        borderRadius: 16,
-        border: Border.all(color: typeColor.withValues(alpha: 0.3), width: 1),
-      ),
-      child: Material(
+    return RepaintBoundary(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: AppTheme.glassmorphism(
+          context: context,
+          ref: ref,
+          borderRadius: 16,
+          border: Border.all(color: typeColor.withValues(alpha: 0.3)),
+        ),
+        child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -236,7 +248,11 @@ class EclipseScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.visibility, size: 16, color: Colors.green),
+                      const Icon(
+                        Icons.visibility,
+                        size: 16,
+                        color: Colors.green,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         l10n.visibleFromYourLocation,
@@ -262,8 +278,9 @@ class EclipseScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showEclipseDetails(BuildContext context, Eclipse eclipse) {
     final theme = Theme.of(context);

@@ -176,7 +176,7 @@ void main() {
 
     test('Verify Diwali 2024 - October 31, 2024 (Known Amavasya)', () async {
       // Diwali 2024 was on October 31, 2024 - Krishna Paksha Amavasya
-      final diwali2024 = DateTime(2024, 10, 31, 18, 0); // Evening time
+      final diwali2024 = DateTime(2024, 10, 31, 18); // Evening time
       final tithi = await service.calculateTithi(diwali2024);
       final details = getTithiDetails(tithi);
 
@@ -204,7 +204,7 @@ void main() {
       'Verify Diwali 2025 - November 20, 2025 (Expected Amavasya)',
       () async {
         // Diwali 2025 is expected on November 20, 2025
-        final diwali2025 = DateTime(2025, 11, 20, 18, 0);
+        final diwali2025 = DateTime(2025, 11, 20, 18);
         final tithi = await service.calculateTithi(diwali2025);
         final details = getTithiDetails(tithi);
 

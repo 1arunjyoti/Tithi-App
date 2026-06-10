@@ -49,25 +49,33 @@
 
 1. **Clone the repository**:
 
-    ```bash
-    git clone https://github.com/yourusername/tithi.git
-    cd tithi
-    ```
+   ```bash
+   git clone https://github.com/yourusername/tithi.git
+   cd tithi
+   ```
 
 2. **Install Dependencies**:
 
-    ```bash
-    flutter pub get
-    ```
+   ```bash
+   flutter pub get
+   ```
 
 3. **Prepare Assets**:
-    Ensure the Swiss Ephemeris data files (`*.se1`) are present in `assets/ephe/`.
+   Ensure the Swiss Ephemeris data files (`*.se1`) are present in `assets/ephe/`.
 
 4. **Run the App**:
 
-    ```bash
-    flutter run
-    ```
+   ```bash
+   flutter run
+   ```
+
+### Release Build With Auto-Bump
+
+Use the wrapper script to increment the build number in `pubspec.yaml` and then build the release APK:
+
+```powershell
+.\build_release.ps1
+```
 
 ## 📁 Project Structure
 

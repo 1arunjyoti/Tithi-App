@@ -2,171 +2,154 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/notification_provider.dart';
+import '../providers/storage_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
-import 'privacy_policy_screen.dart';
 import '../providers/accessibility_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../models/hindu_month_system.dart';
 import '../widgets/settings_widgets.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(l10n?.settings ?? 'Settings'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: context.colors.surface.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.arrow_back_rounded),
-          ),
-          onPressed: () => Navigator.pop(context),
+    final accessibility = ref.watch(accessibilityProvider);
+    final mediaQuery = MediaQuery.of(context);
+
+    return MediaQuery(
+      data: mediaQuery.copyWith(
+        textScaler: TextScaler.linear(
+          mediaQuery.textScaler.scale(1.0) *
+              (accessibility.largeText ? 1.1 : 1.0),
         ),
+        disableAnimations: accessibility.reduceMotion
+            ? true
+            : mediaQuery.disableAnimations,
       ),
-      body: Stack(
-        children: [
-          // Background Gradient - Wrapped in RepaintBoundary
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors:
-                        context.theme.scaffoldBackgroundColor == Colors.black
-                        ? [Colors.black, Colors.black]
-                        : context.isDark
-                        ? [const Color(0xFF10002B), const Color(0xFF240046)]
-                        : [
-                            const Color(0xFFFFFDF7),
-                            const Color(0xFFFFECB3).withValues(alpha: 0.2),
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          title: Text(l10n?.settings ?? 'Settings'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: context.colors.surface.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back_rounded),
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Stack(
+          children: [
+            // Background — delegates to AppTheme.backgroundDecoration (SMELL-1)
+            Positioned.fill(
+              child: RepaintBoundary(
+                child: Container(
+                  decoration: AppTheme.backgroundDecoration(context),
+                ),
+              ),
+            ),
+
+            SafeArea(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: ListView(
+                    padding: const EdgeInsets.all(24),
+                    children: [
+                      SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
+                      _buildThemeSection(context),
+
+                      const SizedBox(height: 32),
+
+                      SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
+                      const SettingsGroupCard(
+                        children: [
+                          // Hide notifications on web - not supported
+                          if (!kIsWeb) ...[
+                            _NotificationSettings(),
+                            SettingsDivider(),
                           ],
+                          _LocationSettings(),
+                          SettingsDivider(),
+                          _HomeLocationSetting(),
+                          SettingsDivider(),
+                          _LanguageSetting(),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      SettingsSectionHeader(l10n?.calendar ?? 'CALENDAR'),
+                      const SettingsGroupCard(
+                        children: [
+                          _StartOfWeekSetting(),
+                          SettingsDivider(),
+                          _PrimaryViewSetting(),
+                          SettingsDivider(),
+                          _PrimaryCalendarSetting(),
+                          SettingsDivider(),
+                          _SecondaryCalendarSetting(),
+                          SettingsDivider(),
+                          _HinduMonthSystemSetting(),
+                          SettingsDivider(),
+                          _HinduYearEraSetting(),
+                          SettingsDivider(),
+                          _TithiDisplayModeSetting(),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      SettingsSectionHeader(
+                        l10n?.accessibility ?? 'ACCESSIBILITY',
+                      ),
+                      const _AccessibilitySettings(),
+
+                      const SizedBox(height: 32),
+
+                      SettingsSectionHeader(
+                        l10n?.dataStorage ?? 'DATA & STORAGE',
+                      ),
+                      const SettingsGroupCard(
+                        children: [
+                          _ClearCacheSetting(),
+                          SettingsDivider(),
+                          _ResetSettingsTile(),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      Center(
+                        child: Text(
+                          l10n?.madeWithLove ??
+                              'Made with ❤️ for Sanatan Dharma',
+                          style: context.textTheme.labelSmall?.copyWith(
+                            color: context.colors.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-
-          SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: ListView(
-                  padding: const EdgeInsets.all(24),
-                  children: [
-                    SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
-                    _buildThemeSection(context),
-
-                    const SizedBox(height: 32),
-
-                    SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
-                    SettingsGroupCard(
-                      children: [
-                        // Hide notifications on web - not supported
-                        if (!kIsWeb) ...[
-                          const _NotificationSettings(),
-                          const SettingsDivider(),
-                        ],
-                        const _LocationSettings(),
-                        const SettingsDivider(),
-                        const _HomeLocationSetting(),
-                        const SettingsDivider(),
-                        const _LanguageSetting(),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    SettingsSectionHeader(l10n?.calendar ?? 'CALENDAR'),
-                    SettingsGroupCard(
-                      children: [
-                        const _StartOfWeekSetting(),
-                        const SettingsDivider(),
-                        const _PrimaryViewSetting(),
-                        const SettingsDivider(),
-                        const _PrimaryCalendarSetting(),
-                        const SettingsDivider(),
-                        const _SecondaryCalendarSetting(),
-                        const SettingsDivider(),
-                        const _HinduMonthSystemSetting(),
-                        const SettingsDivider(),
-                        const _HinduYearEraSetting(),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    SettingsSectionHeader(
-                      l10n?.accessibility ?? 'ACCESSIBILITY',
-                    ),
-                    const _AccessibilitySettings(),
-
-                    const SizedBox(height: 32),
-
-                    SettingsSectionHeader(
-                      l10n?.dataStorage ?? 'DATA & STORAGE',
-                    ),
-                    SettingsGroupCard(
-                      children: [
-                        const _ClearCacheSetting(),
-                        const SettingsDivider(),
-                        const _ResetSettingsTile(),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
-                    SettingsGroupCard(
-                      children: [
-                        SettingsActionTile(
-                          icon: Icons.privacy_tip_rounded,
-                          title: l10n?.privacyPolicy ?? 'Privacy Policy',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PrivacyPolicyScreen(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-                    Center(
-                      child: Text(
-                        l10n?.madeWithLove ?? 'Made with ❤️ for Sanatan Dharma',
-                        style: context.textTheme.labelSmall?.copyWith(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -188,8 +171,6 @@ class SettingsScreen extends StatelessWidget {
             isDark: isDark,
             isPureDark: isPureDark,
             primaryColor: theme.primaryColor,
-            opacity: 0.1,
-            borderRadius: 24,
           ),
           padding: const EdgeInsets.all(16),
           child: Wrap(
@@ -221,7 +202,7 @@ class SettingsScreen extends StatelessWidget {
                     .setOverride('PureDark'),
               ),
               ThemeOptionButton(
-                label: 'Krishna',
+                label: 'Purple',
                 icon: Icons.bubble_chart,
                 isSelected: currentOverride == 'Krishna',
                 onTap: () => ref
@@ -262,7 +243,18 @@ class _NotificationSettings extends ConsumerWidget {
           onChanged: (val) async {
             if (val) {
               final granted = await notificationService.requestPermission();
-              if (!granted) return;
+              if (!granted) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Notification permission denied. Please enable it in system settings.',
+                      ),
+                    ),
+                  );
+                }
+                return;
+              }
             }
             await notificationService.setEnabled(val);
             ref.invalidate(loadNotificationStateProvider);
@@ -349,12 +341,8 @@ class _LocationSettings extends ConsumerWidget {
     final locationService = ref.read(locationServiceProvider);
     final isEnabledAsync = ref.watch(locationEnabledProvider);
 
-    // Get the enabled state, defaulting to false while loading/error
-    final isEnabled = isEnabledAsync.when(
-      data: (val) => val,
-      loading: () => false,
-      error: (e, s) => false,
-    );
+    final isEnabled = isEnabledAsync.whenOrNull(data: (val) => val);
+    final isLoading = isEnabledAsync.isLoading;
 
     return SettingsSwitchTile(
       icon: Icons.location_on_rounded,
@@ -371,67 +359,73 @@ class _LocationSettings extends ConsumerWidget {
         loading: () => l10n?.fetchingLocation ?? 'Fetching location...',
         error: (e, s) => l10n?.locationUnavailable ?? 'Location unavailable',
       ),
-      value: isEnabled,
-      onChanged: (val) async {
-        if (val) {
-          // User wants to enable location
-          var permission = await Geolocator.checkPermission();
+      value: isEnabled ?? false,
+      isLoading: isLoading,
+      onChanged: isEnabled == null
+          ? null
+          : (val) async {
+              if (val) {
+                // User wants to enable location
+                var permission = await Geolocator.checkPermission();
 
-          if (permission == LocationPermission.deniedForever) {
-            // Permission permanently denied, guide user to app settings
-            if (context.mounted) {
-              final shouldOpenSettings = await showDialog<bool>(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Permission Required'),
-                  content: const Text(
-                    'Location permission was permanently denied. Please enable it in your device settings.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      child: Text(l10n?.cancel ?? 'Cancel'),
-                    ),
-                    FilledButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      child: const Text('Open Settings'),
-                    ),
-                  ],
-                ),
-              );
+                if (permission == LocationPermission.deniedForever) {
+                  // Permission permanently denied, guide user to app settings
+                  if (context.mounted) {
+                    final shouldOpenSettings = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(
+                          l10n?.permissionRequired ?? 'Permission Required',
+                        ),
+                        content: Text(
+                          l10n?.locationPermissionPermanentlyDenied ??
+                              'Location permission was permanently denied. Please enable it in your device settings.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, false),
+                            child: Text(l10n?.cancel ?? 'Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            child: Text(l10n?.openSettings ?? 'Open Settings'),
+                          ),
+                        ],
+                      ),
+                    );
 
-              if (shouldOpenSettings == true) {
-                await Geolocator.openAppSettings();
+                    if (shouldOpenSettings == true) {
+                      await Geolocator.openAppSettings();
+                    }
+                    return; // Don't enable until user grants permission manually
+                  }
+                }
+
+                if (permission == LocationPermission.denied) {
+                  permission = await Geolocator.requestPermission();
+                  if (permission == LocationPermission.denied ||
+                      permission == LocationPermission.deniedForever) {
+                    // Permission still denied, don't enable
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            l10n?.locationPermissionDenied ??
+                                'Location permission denied.',
+                          ),
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                }
               }
-              return; // Don't enable until user grants permission manually
-            }
-          }
 
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
-            if (permission == LocationPermission.denied ||
-                permission == LocationPermission.deniedForever) {
-              // Permission still denied, don't enable
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n?.locationPermissionDenied ??
-                          'Location permission denied.',
-                    ),
-                  ),
-                );
-              }
-              return;
-            }
-          }
-        }
-
-        await locationService.setLocationEnabled(val);
-        // Invalidate both providers to refresh state
-        ref.invalidate(locationEnabledProvider);
-        ref.invalidate(currentLocationProvider);
-      },
+              await locationService.setLocationEnabled(val);
+              // Invalidate both providers to refresh state
+              ref.invalidate(locationEnabledProvider);
+              ref.invalidate(currentLocationProvider);
+            },
     );
   }
 }
@@ -512,7 +506,6 @@ class _LanguageSetting extends ConsumerWidget {
             if (context.mounted) Navigator.pop(context);
           },
         ),
-        const Divider(),
         // Supported locales
         ...supportedLocales.map((supported) {
           return SettingsPickerItem(
@@ -556,7 +549,9 @@ class _StartOfWeekSetting extends ConsumerWidget {
         final newValue = startOfWeek == StartingDayOfWeek.sunday
             ? StartingDayOfWeek.monday
             : StartingDayOfWeek.sunday;
-        await ref.read(startOfWeekProvider.notifier).setStartOfWeek(newValue);
+        await ref
+            .read(calendarPreferencesProvider.notifier)
+            .setStartOfWeek(newValue);
       },
     );
   }
@@ -587,7 +582,7 @@ class _PrimaryViewSetting extends ConsumerWidget {
         final nextIndex =
             (primaryView.index + 1) % PrimaryEventView.values.length;
         ref
-            .read(primaryEventViewProvider.notifier)
+            .read(calendarPreferencesProvider.notifier)
             .setPrimaryView(PrimaryEventView.values[nextIndex]);
       },
     );
@@ -674,7 +669,9 @@ class _HinduMonthSystemSetting extends ConsumerWidget {
           subtitle: system.description,
           isSelected: system == currentSystem,
           onTap: () async {
-            await ref.read(hinduMonthSystemProvider.notifier).setSystem(system);
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setHinduMonthSystem(system);
             if (context.mounted) Navigator.pop(context);
           },
         );
@@ -719,7 +716,62 @@ class _HinduYearEraSetting extends ConsumerWidget {
           subtitle: era.description,
           isSelected: era == currentEra,
           onTap: () async {
-            await ref.read(hinduYearEraProvider.notifier).setEra(era);
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setHinduYearEra(era);
+            if (context.mounted) Navigator.pop(context);
+          },
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _TithiDisplayModeSetting extends ConsumerWidget {
+  const _TithiDisplayModeSetting();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final displayMode = ref.watch(tithiDisplayModeProvider);
+    return SettingsActionTile(
+      icon: Icons.calendar_view_day_rounded,
+      title: 'Tithi Display',
+      trailing: Text(
+        displayMode == TithiDisplayMode.pakshaBased
+            ? 'Paksha (1-15)'
+            : '30 Days',
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colors.primary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      onTap: () => _showTithiDisplayModePicker(context, ref),
+    );
+  }
+
+  Future<void> _showTithiDisplayModePicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final currentMode = ref.read(tithiDisplayModeProvider);
+
+    await SettingsBottomSheet.show(
+      context: context,
+      title: 'Tithi Display',
+      subtitle: 'Choose how tithis are numbered in the calendar',
+      children: TithiDisplayMode.values.map((mode) {
+        return SettingsPickerItem(
+          title: mode == TithiDisplayMode.pakshaBased
+              ? 'Paksha Based'
+              : '30 Days',
+          subtitle: mode == TithiDisplayMode.pakshaBased
+              ? 'Show 1-15 for each paksha separately'
+              : 'Show 1-30 continuously',
+          isSelected: mode == currentMode,
+          onTap: () async {
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setTithiDisplayMode(mode);
             if (context.mounted) Navigator.pop(context);
           },
         );
@@ -744,7 +796,7 @@ class _AccessibilitySettings extends ConsumerWidget {
           title: l10n?.reduceMotion ?? 'Reduce Motion',
           subtitle: l10n?.disableAnimations ?? 'Disable animations & effects',
           value: accessibility.reduceMotion,
-          onChanged: notifier.toggleReduceMotion,
+          onChanged: (v) async => notifier.toggleReduceMotion(v),
         ),
         const SettingsDivider(),
         if (!kIsWeb) ...[
@@ -753,7 +805,7 @@ class _AccessibilitySettings extends ConsumerWidget {
             title: l10n?.hapticFeedback ?? 'Haptic Feedback',
             subtitle: l10n?.vibrateOnTouch ?? 'Vibrate on touch interactions',
             value: accessibility.hapticFeedback,
-            onChanged: notifier.toggleHapticFeedback,
+            onChanged: (v) async => notifier.toggleHapticFeedback(v),
           ),
           const SettingsDivider(),
         ],
@@ -764,7 +816,7 @@ class _AccessibilitySettings extends ConsumerWidget {
               l10n?.solidBackgrounds ??
               'Solid backgrounds for better readability',
           value: accessibility.highContrast,
-          onChanged: notifier.toggleHighContrast,
+          onChanged: (v) async => notifier.toggleHighContrast(v),
         ),
         const SettingsDivider(),
         SettingsSwitchTile(
@@ -772,7 +824,7 @@ class _AccessibilitySettings extends ConsumerWidget {
           title: l10n?.largeText ?? 'Large Text',
           subtitle: l10n?.increaseTextSize ?? 'Increase text size globally',
           value: accessibility.largeText,
-          onChanged: notifier.toggleLargeText,
+          onChanged: (v) async => notifier.toggleLargeText(v),
         ),
       ],
     );
@@ -798,12 +850,12 @@ Future<void> _showCalendarSystemPicker(
         onTap: () async {
           if (isPrimary) {
             await ref
-                .read(primaryCalendarSystemProvider.notifier)
-                .setSystem(system);
+                .read(calendarPreferencesProvider.notifier)
+                .setPrimaryCalendarSystem(system);
           } else {
             await ref
-                .read(secondaryCalendarSystemProvider.notifier)
-                .setSystem(system);
+                .read(calendarPreferencesProvider.notifier)
+                .setSecondaryCalendarSystem(system);
           }
           if (context.mounted) Navigator.pop(context);
         },
@@ -843,6 +895,9 @@ class _ResetSettingsTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final notificationService = ref.read(notificationServiceProvider);
+    final locationService = ref.read(locationServiceProvider);
+    final storageService = ref.read(storageServiceProvider);
     return SettingsActionTile(
       icon: Icons.restore_rounded,
       title: l10n?.resetAppSettings ?? 'Reset App Settings',
@@ -872,19 +927,43 @@ class _ResetSettingsTile extends ConsumerWidget {
         );
 
         if (confirm == true) {
-          final box = Hive.box('settings');
-          await box.clear();
-          await ref.read(locationServiceProvider).setLocationEnabled(false);
+          await storageService.resetAll();
+
+          await locationService.setLocationEnabled(false);
+          await locationService.clearCache();
+          await notificationService.cancelAllNotifications();
 
           // Reset providers
           ref.invalidate(startOfWeekProvider);
           ref.invalidate(primaryEventViewProvider);
           ref.invalidate(themeOverrideProvider);
+          ref.invalidate(primaryCalendarSystemProvider);
+          ref.invalidate(secondaryCalendarSystemProvider);
+          ref.invalidate(hinduMonthSystemProvider);
+          ref.invalidate(hinduYearEraProvider);
+          ref.invalidate(localeProvider);
+          ref.invalidate(accessibilityProvider);
+          ref.invalidate(currentLocationProvider);
+          ref.invalidate(locationEnabledProvider);
+          ref.invalidate(homeLocationProvider);
+
+          ref.invalidate(loadNotificationStateProvider);
+          ref.read(notificationEnabledProvider.notifier).setEnabled(false);
+          ref
+              .read(shlokaNotificationEnabledProvider.notifier)
+              .setEnabled(false);
+          ref.read(notificationTimeProvider.notifier).setTime((
+            hour: 8,
+            minute: 0,
+          ));
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(l10n?.appResetComplete ?? 'App reset complete'),
+                content: Text(
+                  l10n?.appResetComplete ?? 'App reset complete',
+                  textScaler: MediaQuery.of(context).textScaler,
+                ),
               ),
             );
           }

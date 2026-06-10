@@ -1,9 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/location_service.dart';
 
-/// Provider for LocationService singleton
+/// Provider for LocationService instance
 final locationServiceProvider = Provider<LocationService>((ref) {
-  return LocationService(); // Uses singleton factory
+  final service = LocationService();
+  ref.onDispose(() {
+    unawaited(service.dispose());
+  });
+  return service;
 });
 
 /// Provider that tracks if location service is initialized
@@ -68,13 +74,11 @@ final coordinatesProvider =
     });
 
 /// Action provider to refresh location
-final refreshLocationProvider = FutureProvider.family<LocationData?, void>((
-  ref,
-  _,
-) async {
-  ref.invalidate(currentLocationProvider);
-  return ref.read(currentLocationProvider.future);
-});
+final refreshLocationProvider = FutureProvider.autoDispose
+    .family<LocationData?, void>((ref, _) async {
+      ref.invalidate(currentLocationProvider);
+      return ref.read(currentLocationProvider.future);
+    });
 
 /// Provider for Home Location
 final homeLocationProvider = Provider<LocationData?>((ref) {

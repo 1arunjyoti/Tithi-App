@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'widgets/error_display_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,18 +10,21 @@ import 'l10n/app_localizations.dart';
 import 'l10n/fallback_localization_delegates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:nominatim_geocoding/nominatim_geocoding.dart' hide Locale;
 import 'package:timezone/data/latest.dart' as tz_data;
+import 'package:jyotish/jyotish.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'providers/location_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
+import 'providers/calendar_provider.dart';
 import 'providers/locale_provider.dart';
+import 'providers/version_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
 import 'models/festival.dart';
 import 'models/sankalpa.dart';
 import 'services/notification_service.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'services/storage_service.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -29,6 +33,15 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+
+      // Set default status bar style for Shukla (light) theme
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
+      );
 
       // Set custom error widget to replace the red error screen
       ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -55,11 +68,21 @@ void main() {
         await initPlatformFeatures();
       }
 
-      // Load environment variables
-      await dotenv.load(fileName: ".env");
+      // Preload package/version metadata before first drawer animation.
+      await warmVersionInfo();
 
       // Initialize Hive for offline storage
       await Hive.initFlutter();
+
+      if (!kIsWeb) {
+        await FMTCObjectBoxBackend().initialise(
+          maxDatabaseSize: 256 * 1024 * 1024,
+        );
+        const tileStore = FMTCStore('osm_tiles');
+        if (!await tileStore.manage.ready) {
+          await tileStore.manage.create(maxLength: 8000);
+        }
+      }
 
       // Register Adapters
       Hive.registerAdapter(FestivalAdapter());
@@ -71,13 +94,11 @@ void main() {
       Hive.registerAdapter(MediaAdapter());
       Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
 
-      await Hive.openBox('settings');
+      final storageService = StorageService();
+      await storageService.init();
 
       // Initialize timezone for notifications
       tz_data.initializeTimeZones();
-
-      // Initialize Nominatim Geocoding with cache
-      await NominatimGeocoding.init(reqCacheNum: 50);
 
       // Initialize WorkManager for background notifications
       await NotificationService().initWorkManager();
@@ -93,11 +114,68 @@ void main() {
 }
 
 /// Main app widget with dynamic theming
-class TithiApp extends ConsumerWidget {
+class TithiApp extends ConsumerStatefulWidget {
   const TithiApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TithiApp> createState() => _TithiAppState();
+}
+
+class _TithiAppState extends ConsumerState<TithiApp>
+    with WidgetsBindingObserver {
+  Timer? _midnightTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _scheduleMidnightRefresh();
+  }
+
+  /// Schedules a one-shot timer that fires just after midnight so that
+  /// [todayDateProvider] (and anything that depends on it) is refreshed
+  /// to the new calendar date without requiring an app restart.
+  void _scheduleMidnightRefresh() {
+    _midnightTimer?.cancel();
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day + 1);
+    final delay = midnight.difference(now) + const Duration(seconds: 1);
+    _midnightTimer = Timer(delay, () {
+      if (mounted) {
+        ref.read(todayDateProvider.notifier).setToday(DateTime.now());
+      }
+      _scheduleMidnightRefresh(); // re-arm for the following midnight
+    });
+  }
+
+  @override
+  void dispose() {
+    _midnightTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    // Clean up Jyotish resources when app is disposed (BUG-01: single disposal site)
+    try {
+      final jyotish = Jyotish();
+      if (jyotish.isInitialized) {
+        jyotish.dispose();
+      }
+    } catch (e) {
+      debugPrint('Error disposing Jyotish: $e');
+    }
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final locationService = ref.read(locationServiceProvider);
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      unawaited(locationService.markAppBackgrounded());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final darkTheme = ref.watch(darkThemeProvider);
     final accessibility = ref.watch(accessibilityProvider);
@@ -154,11 +232,26 @@ class TithiApp extends ConsumerWidget {
       darkTheme: darkTheme,
       builder: (context, child) {
         final scale = accessibility.largeText ? 1.3 : 1.0;
+        final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+        final overlayStyle = isDarkTheme
+            ? const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark,
+              )
+            : const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+              );
         return MediaQuery(
           data: MediaQuery.of(
             context,
           ).copyWith(textScaler: TextScaler.linear(scale)),
-          child: child!,
+          child: AnnotatedRegion<SystemUiOverlayStyle>(
+            value: overlayStyle,
+            child: child!,
+          ),
         );
       },
       home: const LocationPermissionWrapper(),
@@ -177,35 +270,37 @@ class LocationPermissionWrapper extends ConsumerStatefulWidget {
 
 class _LocationPermissionWrapperState
     extends ConsumerState<LocationPermissionWrapper> {
-  bool _initialized = false;
   bool _showHomeScreen = false;
+  bool _permissionRequested = false;
 
   @override
   void initState() {
     super.initState();
-    _initLocationFlow();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initLocationFlow();
+    });
   }
 
   Future<void> _initLocationFlow() async {
     // Wait for location service to initialize
     await ref.read(locationInitProvider.future);
 
+    if (mounted && !_showHomeScreen) {
+      setState(() {
+        _showHomeScreen = true;
+      });
+    }
+
     final locationService = ref.read(locationServiceProvider);
     final isFirstLaunch = await locationService.isFirstLaunch();
 
-    if (isFirstLaunch) {
-      // First launch: Show permission request dialog
+    if (isFirstLaunch && !_permissionRequested) {
+      _permissionRequested = true;
+      // Show dialog after first frame so UI is already visible
       if (mounted) {
         await _showFirstLaunchDialog();
         await locationService.markFirstLaunchComplete();
       }
-    }
-
-    if (mounted) {
-      setState(() {
-        _initialized = true;
-        _showHomeScreen = true;
-      });
     }
   }
 
@@ -322,46 +417,45 @@ class _LocationPermissionWrapperState
 
   @override
   Widget build(BuildContext context) {
-    if (!_initialized) {
-      return Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: Theme.of(context).scaffoldBackgroundColor == Colors.black
-                  ? [Colors.black, Colors.black, Colors.black]
-                  : Theme.of(context).brightness == Brightness.dark
-                  ? [
-                      const Color(0xFF10002B),
-                      const Color(0xFF240046),
-                      const Color(0xFF10002B),
-                    ]
-                  : [
-                      const Color(0xFFFFFDF7),
-                      const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                      const Color(0xFFFFFDF7),
-                    ],
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Initializing...'),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
+    // Show HomeScreen as soon as location service is initialized
+    // Permission dialog will appear in background if first launch
     if (_showHomeScreen) {
       return const HomeScreen();
     }
 
-    return const SizedBox.shrink();
+    // Only show loading screen while waiting for location service init
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: Theme.of(context).scaffoldBackgroundColor == Colors.black
+                ? [Colors.black, Colors.black, Colors.black]
+                : Theme.of(context).brightness == Brightness.dark
+                ? [
+                    const Color(0xFF10002B),
+                    const Color(0xFF240046),
+                    const Color(0xFF10002B),
+                  ]
+                : [
+                    const Color(0xFFFFFDF7),
+                    const Color(0xFFFFECB3).withValues(alpha: 0.3),
+                    const Color(0xFFFFFDF7),
+                  ],
+          ),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Initializing...'),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

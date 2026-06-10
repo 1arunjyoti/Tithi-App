@@ -7,34 +7,11 @@ import '../l10n/app_localizations.dart';
 
 /// Compact widget showing countdown to next Amavasya and Purnima
 /// Designed for integration into the home screen
-class MoonCountdownWidget extends ConsumerStatefulWidget {
+class MoonCountdownWidget extends ConsumerWidget {
   const MoonCountdownWidget({super.key});
 
   @override
-  ConsumerState<MoonCountdownWidget> createState() =>
-      _MoonCountdownWidgetState();
-}
-
-class _MoonCountdownWidgetState extends ConsumerState<MoonCountdownWidget> {
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    // Update countdown every minute
-    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final moonPhaseAsync = ref.watch(moonPhaseDataProvider);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -129,10 +106,13 @@ class _MoonCountdownWidgetState extends ConsumerState<MoonCountdownWidget> {
               ),
             ],
           ),
-          child: Icon(
-            data.isShukla ? Icons.brightness_3 : Icons.brightness_2,
-            color: isDark ? Colors.indigo.shade900 : Colors.orange.shade800,
-            size: 32,
+          child: Hero(
+            tag: 'moon_icon',
+            child: Icon(
+              data.isShukla ? Icons.brightness_3 : Icons.brightness_2,
+              color: isDark ? Colors.indigo.shade900 : Colors.orange.shade800,
+              size: 32,
+            ),
           ),
         ),
         const SizedBox(width: 16),
@@ -198,14 +178,58 @@ class _CountdownRow extends StatelessWidget {
           ),
         ),
         const Spacer(),
-        Text(
-          _formatCountdown(countdown),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
+        _LiveCountdownText(targetDate: DateTime.now().add(countdown)),
       ],
+    );
+  }
+}
+
+class _LiveCountdownText extends StatefulWidget {
+  final DateTime targetDate;
+
+  const _LiveCountdownText({required this.targetDate});
+
+  @override
+  State<_LiveCountdownText> createState() => _LiveCountdownTextState();
+}
+
+class _LiveCountdownTextState extends State<_LiveCountdownText> {
+  Timer? _timer;
+  late Duration _countdown;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateCountdown();
+    // Update just this text every minute
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _updateCountdown();
+        });
+      }
+    });
+  }
+
+  void _updateCountdown() {
+    _countdown = widget.targetDate.difference(DateTime.now());
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Text(
+      _formatCountdown(_countdown),
+      style: theme.textTheme.bodyMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: theme.colorScheme.onSurface,
+      ),
     );
   }
 

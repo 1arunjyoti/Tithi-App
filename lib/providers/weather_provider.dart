@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/weather_data.dart';
 import '../services/weather_service.dart';
 import 'location_provider.dart';
 
@@ -7,7 +6,7 @@ final weatherServiceProvider = Provider<WeatherService>((ref) {
   return WeatherService();
 });
 
-final currentWeatherProvider = FutureProvider<WeatherData?>((ref) async {
+final currentWeatherProvider = FutureProvider<WeatherResult?>((ref) async {
   final service = ref.watch(weatherServiceProvider);
   final coordsAsync = ref.watch(coordinatesProvider);
   final coords = coordsAsync.asData?.value;

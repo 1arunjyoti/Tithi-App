@@ -460,4 +460,262 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get today => 'आज';
+
+  @override
+  String get tomorrow => 'कल';
+
+  @override
+  String daysFromNow(int days) {
+    return '$days दिन';
+  }
+
+  @override
+  String get now => 'अभी!';
+
+  @override
+  String get currentMoonPhase => 'वर्तमान चंद्र कला दृश्य';
+
+  @override
+  String get mapPinLocation => 'मानचित्र पिन स्थान';
+
+  @override
+  String get nearbyTemples => 'निकट के मंदिर';
+
+  @override
+  String get searchHere => 'यहाँ खोजें';
+
+  @override
+  String get loadMore => 'और लोड करें';
+
+  @override
+  String get templeMarker => 'मंदिर चिन्ह';
+
+  @override
+  String kmAway(String distance) {
+    return '$distance किमी दूर';
+  }
+
+  @override
+  String get nearby => 'पास में';
+
+  @override
+  String get getDirections => 'दिशा प्राप्त करें';
+
+  @override
+  String get couldNotOpenMaps => 'मैप नहीं खोल सके';
+
+  @override
+  String errorLaunchingMaps(String error) {
+    return 'मैप खोलने में त्रुटि: $error';
+  }
+
+  @override
+  String get templeSearchFailed =>
+      'निकट के मंदिर नहीं मिल सके। कृपया पुनः प्रयास करें।';
+
+  @override
+  String get yourLocation => 'आपका स्थान';
+
+  @override
+  String get newIntention => 'नई संकल्पना';
+
+  @override
+  String get whatIsYourSankalpa => 'आपका संकल्प क्या है?';
+
+  @override
+  String get intentionTitle => 'संकल्प शीर्षक';
+
+  @override
+  String get intentionTitleHint => 'जैसे: गायत्री मंत्र 108 बार जप';
+
+  @override
+  String get pleaseEnterTitle => 'कृपया शीर्षक दर्ज करें';
+
+  @override
+  String get descriptionOptional => 'विवरण (वैकल्पिक)';
+
+  @override
+  String get descriptionHint => 'विशेष विवरण या मंत्र पाठ जोड़ें...';
+
+  @override
+  String get durationDays => 'अवधि (दिन)';
+
+  @override
+  String daysCount(int count) {
+    return '$count दिन';
+  }
+
+  @override
+  String get custom => 'कस्टम';
+
+  @override
+  String get customDays => 'कस्टम दिन';
+
+  @override
+  String get dailyReminderTime => 'दैनिक रिमाइंडर समय';
+
+  @override
+  String get createSankalpa => 'संकल्प बनाएँ';
+
+  @override
+  String get save => 'सहेजें';
+
+  @override
+  String get sankalpaCreatedSuccessfully => 'संकल्प सफलतापूर्वक बनाया गया!';
+
+  @override
+  String failedToSaveSankalpa(String error) {
+    return 'संकल्प सहेजने में विफल: $error';
+  }
+
+  @override
+  String get mySankalpas => 'मेरे संकल्प';
+
+  @override
+  String get active => 'सक्रिय';
+
+  @override
+  String get completed => 'पूर्ण';
+
+  @override
+  String get noCompletedIntentionsYet => 'अभी तक कोई पूर्ण संकल्प नहीं';
+
+  @override
+  String get startNewSpiritualJourney => 'नई आध्यात्मिक यात्रा शुरू करें';
+
+  @override
+  String get deleteSankalpa => 'संकल्प हटाएँ?';
+
+  @override
+  String get deleteSankalpaMessage => 'यह क्रिया पूर्ववत नहीं की जा सकती।';
+
+  @override
+  String get delete => 'हटाएँ';
+
+  @override
+  String get markCompleteIncomplete => 'पूर्ण/अपूर्ण चिह्नित करें';
+
+  @override
+  String dayOf(int current, int total) {
+    return 'दिन $current / $total';
+  }
+
+  @override
+  String get doneForToday => 'आज के लिए पूर्ण';
+
+  @override
+  String get markTodayAsDone => 'आज को पूर्ण चिह्नित करें';
+
+  @override
+  String reminderAt(String time) {
+    return 'रिमाइंडर: $time';
+  }
+
+  @override
+  String completedOn(String date) {
+    return 'पूर्ण हुआ: $date';
+  }
+
+  @override
+  String get weatherDetails => 'मौसम विवरण';
+
+  @override
+  String get weatherDataUnavailable => 'मौसम डेटा उपलब्ध नहीं';
+
+  @override
+  String errorMessage(String error) {
+    return 'त्रुटि: $error';
+  }
+
+  @override
+  String get weatherDataByOpenMeteo => 'Open-Meteo द्वारा मौसम डेटा';
+
+  @override
+  String weatherCondition(String condition) {
+    return 'मौसम स्थिति: $condition';
+  }
+
+  @override
+  String get sunrise => 'सूर्योदय';
+
+  @override
+  String get sunset => 'सूर्यास्त';
+
+  @override
+  String get humidity => 'आर्द्रता';
+
+  @override
+  String get wind => 'हवा';
+
+  @override
+  String get realFeel => 'अनुभूत ताप';
+
+  @override
+  String get uvIndex => 'यूवी सूचकांक';
+
+  @override
+  String get forecast => 'पूर्वानुमान';
+
+  @override
+  String daylightDuration(int hours, int minutes) {
+    return 'दिन का प्रकाश: $hoursघं $minutesमि';
+  }
+
+  @override
+  String get searchFestivals => 'त्योहार खोजें';
+
+  @override
+  String get permissionRequired => 'अनुमति आवश्यक';
+
+  @override
+  String get locationPermissionPermanentlyDenied =>
+      'स्थान अनुमति स्थायी रूप से अस्वीकृत है। कृपया इसे अपने डिवाइस सेटिंग्स में सक्षम करें।';
+
+  @override
+  String get openSettings => 'सेटिंग्स खोलें';
+
+  @override
+  String get selectMonth => 'माह चुनें';
+
+  @override
+  String get recenterMap => 'मानचित्र को पुनः केंद्रित करें';
+
+  @override
+  String get zoomIn => 'ज़ूम इन';
+
+  @override
+  String get zoomOut => 'ज़ूम आउट';
+
+  @override
+  String get back30Days => '30 दिन पीछे';
+
+  @override
+  String get back1Day => '1 दिन पीछे';
+
+  @override
+  String get forward1Day => '1 दिन आगे';
+
+  @override
+  String get forward30Days => '30 दिन आगे';
+
+  @override
+  String get playAnimation => 'एनिमेशन चलाएँ';
+
+  @override
+  String get pauseAnimation => 'एनिमेशन रोकें';
+
+  @override
+  String get speedLabel => 'गति';
+
+  @override
+  String get heliocentric => 'सूर्यकेन्द्रीय';
+
+  @override
+  String get geocentric => 'भूकेन्द्रीय';
+
+  @override
+  String get distance => 'दूरी';
+
+  @override
+  String get orbit => 'कक्षा';
 }

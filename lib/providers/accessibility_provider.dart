@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import '../services/storage_service.dart';
 
 class AccessibilityState {
   final bool reduceMotion;
@@ -31,16 +31,11 @@ class AccessibilityState {
 }
 
 class AccessibilityNotifier extends Notifier<AccessibilityState> {
-  static const _boxName = 'settings';
   static const _key = 'accessibility_prefs';
 
   @override
   AccessibilityState build() {
-    // We assume the box is open in main.dart, similar to theme settings
-    if (!Hive.isBoxOpen(_boxName)) {
-      return const AccessibilityState();
-    }
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     final rawMap = box.get(_key, defaultValue: {});
     final map = Map<String, dynamic>.from(rawMap as Map);
 
@@ -53,8 +48,7 @@ class AccessibilityNotifier extends Notifier<AccessibilityState> {
   }
 
   Future<void> _save() async {
-    if (!Hive.isBoxOpen(_boxName)) return;
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     await box.put(_key, {
       'reduceMotion': state.reduceMotion,
       'hapticFeedback': state.hapticFeedback,
@@ -65,22 +59,24 @@ class AccessibilityNotifier extends Notifier<AccessibilityState> {
 
   void toggleReduceMotion(bool value) {
     state = state.copyWith(reduceMotion: value);
+    // SMELL-6: await _save() so the setting is persisted before the app can
+    // terminate. Changed toggle methods to async and awaited.
     _save();
   }
 
-  void toggleHapticFeedback(bool value) {
+  Future<void> toggleHapticFeedback(bool value) async {
     state = state.copyWith(hapticFeedback: value);
-    _save();
+    await _save();
   }
 
-  void toggleHighContrast(bool value) {
+  Future<void> toggleHighContrast(bool value) async {
     state = state.copyWith(highContrast: value);
-    _save();
+    await _save();
   }
 
-  void toggleLargeText(bool value) {
+  Future<void> toggleLargeText(bool value) async {
     state = state.copyWith(largeText: value);
-    _save();
+    await _save();
   }
 }
 

@@ -13,19 +13,18 @@
 # Flutter Local Notifications
 -keep class com.dexterous.** { *; }
 
+# WorkManager background callback isolate support
+-keep class dev.fluttercommunity.workmanager.** { *; }
+-keep class androidx.work.** { *; }
+-dontwarn androidx.work.**
+
 # Nominatim Geocoding
 -keep class com.nominatim.** { *; }
-
-# Keep HTTP client classes for API requests
--keep class java.net.** { *; }
--keep class javax.net.** { *; }
-
-# Hive database
--keep class io.flutter.plugins.** { *; }
 
 # General Flutter rule
 -keep class io.flutter.** { *; }
 -keep class io.flutter.embedding.** { *; }
+-keep class io.flutter.plugins.GeneratedPluginRegistrant { *; }
 
 # Prevent stripping of model classes used in JSON serialization
 -keepclassmembers class * {

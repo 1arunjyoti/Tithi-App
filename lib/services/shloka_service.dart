@@ -31,20 +31,42 @@ class ShlokaService {
     }
   }
 
-  /// Get a consistent shloka for a given date
-  Shloka? getShlokaForDate(DateTime date) {
+  /// Get a consistent shloka for a given date.
+  ///
+  /// When [festivalIds] are provided, prefer shlokas tagged for those
+  /// festivals. Falls back to the full list if no matches are found.
+  Shloka? getShlokaForDate(
+    DateTime date, {
+    List<String> festivalIds = const [],
+  }) {
     if (_shlokas.isEmpty) return null;
 
-    // Use date hash to pick a consistent shloka for the day
-    // This ensures all users (and re-opens) see the same shloka for the same day
+    var shlokaPool = _shlokas;
+    if (festivalIds.isNotEmpty) {
+      final normalizedIds = festivalIds
+          .map((id) => id.trim())
+          .where((id) => id.isNotEmpty)
+          .toSet();
+      if (normalizedIds.isNotEmpty) {
+        final festivalPool = _shlokas
+            .where((shloka) => shloka.festivalIds.any(normalizedIds.contains))
+            .toList();
+        if (festivalPool.isNotEmpty) {
+          shlokaPool = festivalPool;
+        }
+      }
+    }
+
+    // Use date hash to pick a consistent shloka for the day.
+    // This ensures all users (and re-opens) see the same shloka for the same day.
     final dayHash = date.year * 10000 + date.month * 100 + date.day;
-    final index = dayHash % _shlokas.length;
-    return _shlokas[index];
+    final index = dayHash % shlokaPool.length;
+    return shlokaPool[index];
   }
 
   /// Get shloka for today
-  Shloka? getShlokaForToday() {
-    return getShlokaForDate(DateTime.now());
+  Shloka? getShlokaForToday({List<String> festivalIds = const []}) {
+    return getShlokaForDate(DateTime.now(), festivalIds: festivalIds);
   }
 
   /// Get a list of shlokas for the next N days

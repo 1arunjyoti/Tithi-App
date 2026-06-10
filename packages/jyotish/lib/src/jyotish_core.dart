@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 import 'exceptions/jyotish_exception.dart';
 import 'models/calculation_flags.dart';
 import 'models/geographic_location.dart';
@@ -107,7 +109,8 @@ class Jyotish {
 
   /// Calculates positions for multiple planets at once.
   ///
-  /// This is more efficient than calling [getPlanetPosition] multiple times.
+  /// PERF-3: Runs all planet calculations in parallel via [Future.wait]
+  /// since each FFI call is independent.
   ///
   /// [planets] - List of planets to calculate positions for.
   /// [dateTime] - The date and time for the calculation.
@@ -126,18 +129,19 @@ class Jyotish {
   }) async {
     _ensureInitialized();
 
-    final Map<Planet, PlanetPosition> positions = {};
+    final entries = await Future.wait(
+      planets.map((planet) async => MapEntry(
+        planet,
+        await getPlanetPosition(
+          planet: planet,
+          dateTime: dateTime,
+          location: location,
+          flags: flags,
+        ),
+      )),
+    );
 
-    for (final planet in planets) {
-      positions[planet] = await getPlanetPosition(
-        planet: planet,
-        dateTime: dateTime,
-        location: location,
-        flags: flags,
-      );
-    }
-
-    return positions;
+    return Map.fromEntries(entries);
   }
 
   /// Calculates positions for all major planets.
@@ -236,4 +240,12 @@ class Jyotish {
 
   /// Gets whether the library has been initialized.
   bool get isInitialized => _isInitialized;
+
+  /// Resets the singleton instance so that tests can start with a clean state.
+  /// This should ONLY be used in test code.
+  @visibleForTesting
+  static void resetForTesting() {
+    _instance?.dispose();
+    _instance = null;
+  }
 }

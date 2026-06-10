@@ -29,22 +29,11 @@ class PrivacyPolicyScreen extends ConsumerWidget {
       ),
       body: Stack(
         children: [
-          // Ambient Background
+          // Ambient Background — delegates to AppTheme.backgroundDecoration (SMELL-1)
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: context.theme.scaffoldBackgroundColor == Colors.black
-                      ? [Colors.black, Colors.black]
-                      : context.isDark
-                      ? [const Color(0xFF10002B), const Color(0xFF240046)]
-                      : [
-                          const Color(0xFFFFFDF7),
-                          const Color(0xFFFFECB3).withValues(alpha: 0.2),
-                        ],
-                ),
+            child: RepaintBoundary(
+              child: Container(
+                decoration: AppTheme.backgroundDecoration(context),
               ),
             ),
           ),
@@ -128,12 +117,7 @@ class PrivacyPolicyScreen extends ConsumerWidget {
   }) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.1,
-        borderRadius: 24,
-        ref: ref,
-      ),
+      decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

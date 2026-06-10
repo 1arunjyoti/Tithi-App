@@ -25,7 +25,7 @@ void main() {
 
       for (int day = 15; day <= 18; day++) {
         for (int hour in [0, 6, 12, 18]) {
-          final date = DateTime(2025, 4, day, hour, 0);
+          final date = DateTime(2025, 4, day, hour);
           final tithi = await service.calculateTithi(date);
           final tithiNum = tithi.floor();
           final paksha = tithiNum <= 15 ? 'Shukla' : 'Krishna';
@@ -47,7 +47,7 @@ void main() {
 
       for (int day = 13; day <= 16; day++) {
         for (int hour in [0, 6, 12, 18]) {
-          final date = DateTime(2025, 6, day, hour, 0);
+          final date = DateTime(2025, 6, day, hour);
           final tithi = await service.calculateTithi(date);
           final tithiNum = tithi.floor();
           final paksha = tithiNum <= 15 ? 'Shukla' : 'Krishna';
@@ -69,7 +69,7 @@ void main() {
 
       for (int day = 15; day <= 17; day++) {
         for (int hour in [0, 6, 12, 18]) {
-          final date = DateTime(2025, 5, day, hour, 0);
+          final date = DateTime(2025, 5, day, hour);
           final tithi = await service.calculateTithi(date);
           final tithiNum = tithi.floor();
           final paksha = tithiNum <= 15 ? 'Shukla' : 'Krishna';

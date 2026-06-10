@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:jyotish/jyotish.dart';
 
 /// View mode for solar system visualization
@@ -18,9 +17,19 @@ final planetaryViewServiceProvider = Provider<PlanetaryViewService>((ref) {
 });
 
 /// Provider for current view mode
-final solarSystemViewModeProvider = StateProvider<SolarSystemViewMode>((ref) {
-  return SolarSystemViewMode.heliocentric;
-});
+class SolarSystemViewModeNotifier extends Notifier<SolarSystemViewMode> {
+  @override
+  SolarSystemViewMode build() => SolarSystemViewMode.heliocentric;
+
+  void setViewMode(SolarSystemViewMode viewMode) {
+    state = viewMode;
+  }
+}
+
+final solarSystemViewModeProvider =
+    NotifierProvider<SolarSystemViewModeNotifier, SolarSystemViewMode>(
+      SolarSystemViewModeNotifier.new,
+    );
 
 /// Data class representing a planet's visual position
 class PlanetVisualData {
@@ -206,7 +215,7 @@ class PlanetaryViewService {
     // Use astronomical flags (tropical, heliocentric) for heliocentric view
     // to match NASA's Eyes on the Solar System
     final flags = viewMode == SolarSystemViewMode.heliocentric
-        ? CalculationFlags.astronomical(heliocentric: true)
+        ? CalculationFlags.astronomical()
         : CalculationFlags.astronomical(heliocentric: false);
 
     final positions = await Jyotish().getMultiplePlanetPositions(
@@ -248,7 +257,7 @@ class PlanetaryViewService {
         final earthY = math.sin(earthAngle) * earthOrbitRadius;
 
         // Moon orbits around Earth at a small offset
-        final moonOffset = 0.04; // Small offset for visibility
+        const moonOffset = 0.04; // Small offset for visibility
         angleRad = position.longitude * math.pi / 180;
         visualX = earthX + math.cos(angleRad) * moonOffset;
         visualY = earthY + math.sin(angleRad) * moonOffset;

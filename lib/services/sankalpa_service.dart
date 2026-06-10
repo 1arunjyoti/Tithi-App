@@ -1,26 +1,31 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive/hive.dart';
 import '../models/sankalpa.dart';
+import 'storage_service.dart';
 
 class SankalpaService {
-  static const String _boxName = 'sankalpas';
+  Box<Sankalpa>? _box;
 
   Future<void> init() async {
-    if (!Hive.isBoxOpen(_boxName)) {
-      await Hive.openBox<Sankalpa>(_boxName);
-    }
+    _box ??= await StorageService().openSankalpasBox();
   }
 
-  Box<Sankalpa> get _box => Hive.box<Sankalpa>(_boxName);
+  Box<Sankalpa> get _requireBox {
+    final box = _box;
+    if (box == null) {
+      throw StateError('SankalpaService not initialized. Call init() first.');
+    }
+    return box;
+  }
 
   /// Get all sankalpas
   List<Sankalpa> getAllSankalpas() {
-    return _box.values.toList();
+    return _requireBox.values.toList();
   }
 
   /// Get active sankalpas (not completed and end date not passed)
   List<Sankalpa> getActiveSankalpas() {
     // final now = DateTime.now();
-    return _box.values.where((s) {
+    return _requireBox.values.where((s) {
       if (s.isCompleted) return false;
       // Optional: Check if expired? For now, just explicit completion check
       // OR maybe strict date check: s.endDate != null && s.endDate!.isAfter(now)
@@ -30,27 +35,28 @@ class SankalpaService {
 
   /// Get completed sankalpas
   List<Sankalpa> getCompletedSankalpas() {
-    return _box.values.where((s) => s.isCompleted).toList();
+    return _requireBox.values.where((s) => s.isCompleted).toList();
   }
 
   /// Add a new sankalpa
   Future<void> addSankalpa(Sankalpa sankalpa) async {
-    await _box.put(sankalpa.id, sankalpa);
+    await _requireBox.put(sankalpa.id, sankalpa);
   }
 
   /// Update an existing sankalpa
   Future<void> updateSankalpa(Sankalpa sankalpa) async {
-    await _box.put(sankalpa.id, sankalpa);
+    await _requireBox.put(sankalpa.id, sankalpa);
   }
 
   /// Delete a sankalpa
   Future<void> deleteSankalpa(String id) async {
-    await _box.delete(id);
+    await _requireBox.delete(id);
   }
 
   /// Mark daily progress for a sankalpa
   Future<void> markDailyCompletion(String id, DateTime date) async {
-    final sankalpa = _box.get(id);
+    final box = _requireBox;
+    final sankalpa = box.get(id);
     if (sankalpa != null) {
       // Create a new list to ensure Hive detects the change
       final newCompletions = List<DateTime>.from(sankalpa.dailyCompletions);
@@ -71,7 +77,7 @@ class SankalpaService {
 
   /// Toggle completion status
   Future<void> toggleCompletion(String id) async {
-    final sankalpa = _box.get(id);
+    final sankalpa = _requireBox.get(id);
     if (sankalpa != null) {
       final updated = sankalpa.copyWith(isCompleted: !sankalpa.isCompleted);
       await updateSankalpa(updated);

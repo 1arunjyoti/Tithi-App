@@ -27,4 +27,4 @@ def remove_background(input_path, output_path, tolerance=30):
 
 if __name__ == "__main__":
     # Change the filename below to target a different icon if needed
-    remove_background("assets/images/logo_mandala.png", "assets/icons/logo_transparent.png")
+    remove_background("assets/images/logo_image3.png", "assets/icons/logo_transparent.png")

@@ -2,51 +2,61 @@
   {
     "text": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।\nमा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥",
     "translation": "You have a right to perform your prescribed duty, but you are not entitled to the fruits of action. Never consider yourself the cause of the results of your activities, and never be attached to not doing your duty.",
-    "source": "Bhagavad Gita 2.47"
+    "source": "Bhagavad Gita 2.47",
+    "festivalIds": []
   },
   {
     "text": "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत।\nअभ्युत्थानमधर्मस्य तदात्मानं सृजाम्यहम्॥",
     "translation": "Whenever there is a decline in righteousness and an increase in unrighteousness, O Arjuna, at that time I manifest myself.",
-    "source": "Bhagavad Gita 4.7"
+    "source": "Bhagavad Gita 4.7",
+    "festivalIds": []
   },
   {
     "text": "परित्राणाय साधूनां विनाशाय च दुष्कृताम्।\nधर्मसंस्थापनार्थाय सम्भवामि युगे युगे॥",
     "translation": "To deliver the pious and to annihilate the miscreants, as well as to reestablish the principles of religion, I Myself appear, millennium after millennium.",
-    "source": "Bhagavad Gita 4.8"
+    "source": "Bhagavad Gita 4.8",
+    "festivalIds": []
   },
   {
     "text": "वसुधैव कुटुम्बकम",
     "translation": "The world is one family.",
-    "source": "Maha Upanishad 6.72"
+    "source": "Maha Upanishad 6.72",
+    "festivalIds": []
   },
   {
     "text": "असतो मा सद्गमय।\nतमसो मा ज्योतिर्गमय।\nमृत्योर्मा अमृतं गमय॥",
     "translation": "Lead me from the unreal to the real.\nLead me from darkness to light.\nLead me from death to immortality.",
-    "source": "Brihadaranyaka Upanishad 1.3.28"
+    "source": "Brihadaranyaka Upanishad 1.3.28",
+    "festivalIds": []
   },
   {
     "text": "विद्या ददाति विनयं विनयाद् याति पात्रताम्।\nपात्रत्वात् धनमाप्नोति धनात् धर्मं ततः सुखम्॥",
     "translation": "Knowledge gives humility, from humility, one attains character; from character, one acquires wealth; from wealth good deeds (righteousness) follow and then happiness.",
-    "source": "Hitopadesha"
+    "source": "Hitopadesha",
+    "festivalIds": []
   },
   {
     "text": "सत्यमेव जयते नानृतं",
     "translation": "Truth alone triumphs; not falsehood.",
-    "source": "Mundaka Upanishad 3.1.6"
+    "source": "Mundaka Upanishad 3.1.6",
+    "festivalIds": []
   },
   {
     "text": "योगः कर्मसु कौशलम्",
     "translation": "Yoga is excellence in action.",
-    "source": "Bhagavad Gita 2.50"
+    "source": "Bhagavad Gita 2.50",
+    "festivalIds": []
   },
   {
     "text": "अहिंसा परमो धर्मः",
     "translation": "Non-violence is the ultimate dharma.",
-    "source": "Mahabharata"
+    "source": "Mahabharata",
+    "festivalIds": []
   },
   {
     "text": "उद्यमेन हि सिध्यन्ति कार्याणि न मनोरथैः।\nन हि सुप्तस्य सिंहस्य प्रविशन्ति मुखे मृगाः॥",
     "translation": "Success is achieved by effort, not just by wishing. Deer do not enter the mouth of a sleeping lion.",
-    "source": "Subhashita"
+    "source": "Subhashita",
+    "festivalIds": []
   }
 ]

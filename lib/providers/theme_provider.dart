@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../theme/app_theme.dart';
+import '../services/storage_service.dart';
 
 /// Notifier for manually overriding theme with Hive persistence
 class ThemeOverrideNotifier extends Notifier<String?> {
-  static const _boxName = 'settings';
   static const _key = 'theme_override';
 
   @override
   String? build() {
-    // Box is already opened in main.dart
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     return box.get(_key) as String?;
   }
 
   void setOverride(String? override) {
-    final box = Hive.box(_boxName);
+    final box = StorageService().getSettingsBox();
     if (override == null) {
       box.delete(_key);
     } else {
