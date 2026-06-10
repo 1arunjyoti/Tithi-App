@@ -22,8 +22,8 @@ class LocationPickerScreen extends ConsumerStatefulWidget {
 
 class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   final MapController _mapController = MapController();
-  static const FMTCStore _tileStore = FMTCStore('osm_tiles');
-  final FMTCTileProvider _tileProvider = _tileStore.getTileProvider(
+  final FMTCTileProvider _tileProvider = FMTCTileProvider(
+    stores: const {'osm_tiles': BrowseStoreStrategy.readUpdateCreate},
     cachedValidDuration: const Duration(days: 30),
   );
   StreamSubscription<Position>? _positionSubscription;
@@ -214,7 +214,6 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                 'assets/map_data/india_boundary.geojson',
                 styleDefaults: const GeoJsonStyleDefaults(
                   strokeColor: Colors.orange,
-                  strokeOpacity: 1.0,
                   strokeWidth: 1.5,
                   fillColor: Colors.transparent,
                   fillOpacity: 0.0,

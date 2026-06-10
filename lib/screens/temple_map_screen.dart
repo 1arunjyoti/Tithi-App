@@ -24,10 +24,9 @@ class TempleMapScreen extends ConsumerStatefulWidget {
 
 class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   final MapController _mapController = MapController();
-  // Static to avoid re-instantiation on widget recreation
-  static final TempleService _templeService = TempleService();
-  static const FMTCStore _tileStore = FMTCStore('osm_tiles');
-  final FMTCTileProvider _tileProvider = _tileStore.getTileProvider(
+  final TempleService _templeService = TempleService();
+  final FMTCTileProvider _tileProvider = FMTCTileProvider(
+    stores: const {'osm_tiles': BrowseStoreStrategy.readUpdateCreate},
     cachedValidDuration: const Duration(days: 30),
   );
 
@@ -36,6 +35,9 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   LatLng? _userLocation;
   int _currentPage = 0;
   bool _hasMoreTemples = true;
+  int _requestGeneration = 0;
+  String? _inFlightQueryKey;
+  String? _lastCompletedQueryKey;
   static const int _pageSize = 80;
 
   // Default center (India)
@@ -44,6 +46,10 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
 
   @override
   void dispose() {
+    _requestGeneration++;
+    _templeService.close();
+    unawaited(_tileProvider.dispose());
+    _mapController.dispose();
     super.dispose();
   }
 
@@ -65,7 +71,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
             _center = _userLocation!;
             _zoom = 14.0;
           });
-          await _fetchTemples(force: true);
+          await _fetchTemples(center: _userLocation!, zoom: _zoom, force: true);
         }
       }
     } finally {
@@ -75,7 +81,12 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
     }
   }
 
-  Future<void> _fetchTemples({bool reset = true, bool force = false}) async {
+  Future<void> _fetchTemples({
+    bool reset = true,
+    bool force = false,
+    LatLng? center,
+    double? zoom,
+  }) async {
     if (_isLoading && !force) return;
 
     if (reset) {
@@ -85,20 +96,31 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
       return;
     }
 
+    final requestCenter = center ?? _mapController.camera.center;
+    final requestZoom = zoom ?? _mapController.camera.zoom;
+    final radius = _radiusFromZoom(requestZoom);
+    final page = _currentPage;
+    final queryKey = _templeQueryKey(requestCenter, radius, page);
+
+    if (_inFlightQueryKey == queryKey) {
+      return;
+    }
+    if (!force && reset && _lastCompletedQueryKey == queryKey) {
+      return;
+    }
+
+    final requestGeneration = ++_requestGeneration;
+    _inFlightQueryKey = queryKey;
     setState(() => _isLoading = true);
     try {
-      // Use current map center to fetch
-      final center = _mapController.camera.center;
-      final zoom = _mapController.camera.zoom;
-      final radius = _radiusFromZoom(zoom);
       final temples = await _templeService.fetchNearbyTemples(
-        center.latitude,
-        center.longitude,
+        requestCenter.latitude,
+        requestCenter.longitude,
         radius: radius,
-        page: _currentPage,
+        page: page,
       );
 
-      if (mounted) {
+      if (mounted && requestGeneration == _requestGeneration) {
         setState(() {
           if (reset) {
             _temples = temples;
@@ -113,19 +135,29 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
             _currentPage++;
           }
         });
+        _lastCompletedQueryKey = queryKey;
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && requestGeneration == _requestGeneration) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(l10n.templeSearchFailed)));
       }
     } finally {
-      if (mounted) {
+      if (_inFlightQueryKey == queryKey) {
+        _inFlightQueryKey = null;
+      }
+      if (mounted && requestGeneration == _requestGeneration) {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  String _templeQueryKey(LatLng center, double radius, int page) {
+    final lat = center.latitude.toStringAsFixed(4);
+    final lon = center.longitude.toStringAsFixed(4);
+    return '$lat,$lon:${radius.round()}:$page';
   }
 
   double _radiusFromZoom(double zoom) {
@@ -185,7 +217,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                 'assets/map_data/india_boundary.geojson',
                 styleDefaults: const GeoJsonStyleDefaults(
                   strokeColor: Colors.orange,
-                  strokeOpacity: 1.0,
                   strokeWidth: 1.5,
                   fillColor: Colors.transparent,
                   fillOpacity: 0.0,
@@ -237,7 +268,9 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                 button: true,
                 label: l10n.searchHere,
                 child: FloatingActionButton.extended(
-                  onPressed: () => _fetchTemples(reset: true),
+                  onPressed: _isLoading
+                      ? null
+                      : () => _fetchTemples(),
                   icon: const Icon(Icons.search),
                   label: Text(l10n.searchHere),
                   backgroundColor: context.colors.primaryContainer,
@@ -257,14 +290,16 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               child: FloatingActionButton(
                 heroTag: 'recenter',
                 mini: true,
-                onPressed: () {
-                  if (_userLocation != null) {
-                    _mapController.move(_userLocation!, 15.0);
-                    _fetchTemples();
-                  } else {
-                    _initLocation();
-                  }
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        if (_userLocation != null) {
+                          _mapController.move(_userLocation!, 15.0);
+                          _fetchTemples(center: _userLocation!, zoom: 15.0);
+                        } else {
+                          _initLocation();
+                        }
+                      },
                 child: const Icon(Icons.my_location),
               ),
             ),

@@ -5,10 +5,10 @@ import 'package:latlong2/latlong.dart';
 import '../models/temple.dart';
 
 class TempleService {
-  // Singleton instance
-  static final TempleService _instance = TempleService._internal();
-  factory TempleService() => _instance;
-  TempleService._internal();
+  TempleService({http.Client? client}) : _client = client ?? http.Client();
+
+  final http.Client _client;
+  bool _isClosed = false;
 
   // List of available Overpass API servers
   final List<String> _overpassServers = [
@@ -37,6 +37,10 @@ class TempleService {
     int page = 0,
     int pageSize = 80,
   }) async {
+    if (_isClosed) {
+      throw StateError('TempleService has been closed.');
+    }
+
     // SEC-1: enforce minimum gap between requests to avoid 429 responses.
     final now = DateTime.now();
     if (_lastRequestTime != null) {
@@ -67,11 +71,12 @@ class TempleService {
           print('Fetching temples from: $baseUrl');
         }
 
-        final response = await http
+        final response = await _client
             .post(
               url,
               headers: const {
                 'Content-Type': 'application/x-www-form-urlencoded',
+                'Connection': 'close',
                 'User-Agent': 'tithi/overpass (flutter_map; contact@tithi.app)',
               },
               body: 'data=$encodedQuery',
@@ -152,5 +157,14 @@ class TempleService {
       print('All Overpass servers failed');
     }
     return [];
+  }
+
+  void close() {
+    if (_isClosed) {
+      return;
+    }
+
+    _client.close();
+    _isClosed = true;
   }
 }

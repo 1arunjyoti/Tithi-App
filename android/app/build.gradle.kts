@@ -1,10 +1,53 @@
 import org.gradle.api.tasks.compile.JavaCompile
+import java.io.File
+import java.io.FileInputStream
+import java.util.Properties
 
 plugins {
     id("com.android.application")
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
+fun signingValue(propertyName: String, environmentName: String): String? {
+    return (keystoreProperties[propertyName] as String?)?.takeIf { it.isNotBlank() }
+        ?: System.getenv(environmentName)?.takeIf { it.isNotBlank() }
+}
+
+fun signingFile(path: String): File {
+    val candidate = File(path)
+    return if (candidate.isAbsolute) candidate else rootProject.file(path)
+}
+
+val releaseStoreFile = signingValue("storeFile", "TITHI_RELEASE_STORE_FILE")
+val releaseStorePassword = signingValue("storePassword", "TITHI_RELEASE_STORE_PASSWORD")
+val releaseKeyAlias = signingValue("keyAlias", "TITHI_RELEASE_KEY_ALIAS")
+val releaseKeyPassword = signingValue("keyPassword", "TITHI_RELEASE_KEY_PASSWORD")
+
+fun missingReleaseSigningValues(): List<String> {
+    return buildList {
+        if (releaseStoreFile == null) {
+            add("storeFile or TITHI_RELEASE_STORE_FILE")
+        } else if (!signingFile(releaseStoreFile).isFile) {
+            add("existing keystore file at $releaseStoreFile")
+        }
+        if (releaseStorePassword == null) {
+            add("storePassword or TITHI_RELEASE_STORE_PASSWORD")
+        }
+        if (releaseKeyAlias == null) {
+            add("keyAlias or TITHI_RELEASE_KEY_ALIAS")
+        }
+        if (releaseKeyPassword == null) {
+            add("keyPassword or TITHI_RELEASE_KEY_PASSWORD")
+        }
+    }
 }
 
 android {
@@ -33,22 +76,37 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            releaseStoreFile?.let { storeFile = signingFile(it) }
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releaseKeyPassword
+        }
+    }
+
     buildTypes {
+        create("staging") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+            matchingFallbacks += listOf("debug")
+        }
+
         release {
             // Enable R8/ProGuard code shrinking
             isMinifyEnabled = true
             isShrinkResources = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // TODO: Add your own signing config for the release build.
-            // To create release signing:
-            // 1. Generate keystore: keytool -genkey -v -keystore release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000
-            // 2. Create android/key.properties with: storePassword, keyPassword, keyAlias, storeFile path
-            // 3. Update this config to load from key.properties
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
+
+            ndk {
+                debugSymbolLevel = "SYMBOL_TABLE"
+            }
         }
     }
 
@@ -75,6 +133,25 @@ dependencies {
     // App update APIs (separate from split-install classes above).
     implementation("com.google.android.play:app-update:2.1.0")
     implementation("com.google.android.play:app-update-ktx:2.1.0")
+}
+
+tasks.matching {
+    it.name in setOf(
+        "validateSigningRelease",
+        "packageRelease",
+        "bundleRelease",
+    )
+}.configureEach {
+    doFirst {
+        val missingValues = missingReleaseSigningValues()
+        if (missingValues.isNotEmpty()) {
+            throw GradleException(
+                "Release signing is not configured. Add android/key.properties " +
+                    "from android/key.properties.example or set the TITHI_RELEASE_* " +
+                    "environment variables. Missing: ${missingValues.joinToString(", ")}"
+            )
+        }
+    }
 }
 
 // Work around Gradle state tracking issue where AGP sometimes does not materialize

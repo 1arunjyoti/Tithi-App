@@ -218,80 +218,42 @@ class _HomeBody extends ConsumerWidget {
                 const Expanded(
                   child: SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      children: [
-                        // Calendar
-                        CalendarWidget(),
+                    child: RepaintBoundary(
+                      child: Column(
+                        children: [
+                          // Calendar
+                          CalendarWidget(),
 
-                        SizedBox(height: 16),
+                          SizedBox(height: 16),
 
-                        // Event List Title
-                        /* Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Divider(
-                                  color: context.colors.onSurface.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  thickness: 1,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                child: Text(
-                                  l10n?.events ?? "EVENTS",
-                                  style: context.textTheme.labelSmall?.copyWith(
-                                    letterSpacing: 1.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: context.colors.primary,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Divider(
-                                  color: context.colors.onSurface.withValues(
-                                    alpha: 0.1,
-                                  ),
-                                  thickness: 1,
-                                ),
-                              ),
-                            ],
+                          // Event list
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: EventListWidget(),
                           ),
-                        ), */
 
-                        //SizedBox(height: 8),
+                          SizedBox(height: 2),
 
-                        // Event list
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: EventListWidget(),
-                        ),
+                          // Paksha indicator
+                          _PakshaIndicator(),
 
-                        SizedBox(height: 2),
+                          SizedBox(height: 16),
 
-                        // Paksha indicator
-                        _PakshaIndicator(),
+                          // Daily Shloka
+                          DailyQuoteWidget(),
 
-                        SizedBox(height: 16),
+                          SizedBox(height: 16),
 
-                        // Daily Shloka
-                        DailyQuoteWidget(),
+                          // Featured festival countdown
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: FestivalCountdownCard(),
+                          ),
 
-                        SizedBox(height: 16),
-
-                        // Featured festival countdown
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          child: FestivalCountdownCard(),
-                        ),
-
-                        // Bottom padding for FAB
-                        SizedBox(height: 40),
-                      ],
+                          // Bottom padding for FAB
+                          SizedBox(height: 40),
+                        ],
+                      ),
                     ),
                   ),
                 ),

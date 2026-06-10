@@ -203,7 +203,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareAppMessage =>
-      'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi';
+      'Check out Tithi - The Vedic Calendar App! Download now: https://tithiapp.netlify.app/';
 
   @override
   String get rateUs => 'Rate Us';

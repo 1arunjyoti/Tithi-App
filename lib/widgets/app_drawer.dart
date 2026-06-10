@@ -200,8 +200,7 @@ class _DrawerMenuList extends StatelessWidget {
               ShareParams(
                 text:
                     l10n?.shareAppMessage ??
-                    'Check out Tithi - The Vedic Calendar App! Download now: https://tithi.app',
-                //TODO: Add website hosted link
+                    'Check out Tithi - The Vedic Calendar App! Download now: https://tithiapp.netlify.app/',
               ),
             );
           },

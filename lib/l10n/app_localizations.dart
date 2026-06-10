@@ -477,7 +477,7 @@ abstract class AppLocalizations {
   /// Text shared when user shares the app
   ///
   /// In en, this message translates to:
-  /// **'Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi'**
+  /// **'Check out Tithi - The Vedic Calendar App! Download now: https://tithiapp.netlify.app/'**
   String get shareAppMessage;
 
   /// Menu item to rate the app

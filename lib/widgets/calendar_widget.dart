@@ -1184,26 +1184,22 @@ class _HeaderData {
   _HeaderData({required this.primaryText, this.secondaryText});
 }
 
-final calendarHeaderDataProvider =
-    FutureProvider.family<
-      _HeaderData,
-      ({
-        DateTime date,
-        cp.AppCalendarSystem primary,
-        cp.AppCalendarSystem secondary,
-        HinduYearEra hinduYearEra,
-        HinduMonthSystem hinduMonthSystem,
-      })
-    >((ref, args) async {
-      return _buildCalendarHeaderData(
-        ref,
-        args.date,
-        args.primary,
-        args.secondary,
-        args.hinduYearEra,
-        args.hinduMonthSystem,
-      );
-    });
+final calendarHeaderDataProvider = FutureProvider<_HeaderData>((ref) async {
+  final date = ref.watch(cp.focusedMonthProvider);
+  final primary = ref.watch(cp.primaryCalendarSystemProvider);
+  final secondary = ref.watch(cp.secondaryCalendarSystemProvider);
+  final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
+  final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
+
+  return _buildCalendarHeaderData(
+    ref,
+    date,
+    primary,
+    secondary,
+    hinduYearEra,
+    hinduMonthSystem,
+  );
+});
 
 Future<_HeaderData> _buildCalendarHeaderData(
   Ref ref,
@@ -1495,24 +1491,9 @@ class _CalendarHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
-    final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
-    final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
-    final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
-    final headerDataAsync = ref.watch(
-      calendarHeaderDataProvider((
-        date: focusedMonth,
-        primary: primarySystem,
-        secondary: secondarySystem,
-        hinduYearEra: hinduYearEra,
-        hinduMonthSystem: hinduMonthSystem,
-      )),
-    );
-    final headerData = headerDataAsync.maybeWhen(
-      data: (data) => data,
-      orElse: () =>
-          _HeaderData(primaryText: _formatGregorianHeader(focusedMonth)),
-    );
+    final headerDataAsync = ref.watch(calendarHeaderDataProvider);
+    final headerData = headerDataAsync.valueOrNull ??
+        _HeaderData(primaryText: _formatGregorianHeader(focusedMonth));
     final materialL10n = MaterialLocalizations.of(context);
 
     return Container(

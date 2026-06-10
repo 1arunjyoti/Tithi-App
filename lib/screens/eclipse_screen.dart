@@ -24,10 +24,17 @@ class EclipseScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: RepaintBoundary(
-        child: Container(
-          decoration: AppTheme.backgroundDecoration(context),
-          child: SafeArea(
+      body: Stack(
+        children: [
+          // Background - isolated in its own RepaintBoundary
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: Container(
+                decoration: AppTheme.backgroundDecoration(context),
+              ),
+            ),
+          ),
+          SafeArea(
             child: eclipsesAsync.when(
               data: (eclipses) => _buildEclipseList(context, ref, eclipses),
               loading: () =>
@@ -53,7 +60,7 @@ class EclipseScreen extends ConsumerWidget {
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -76,6 +83,7 @@ class EclipseScreen extends ConsumerWidget {
     return CenteredContent(
       maxWidth: 900,
       child: ListView(
+        addRepaintBoundaries: false,
         padding: ResponsiveLayout.responsivePadding(context),
         children: [
           if (solarEclipses.isNotEmpty) ...[
@@ -126,15 +134,16 @@ class EclipseScreen extends ConsumerWidget {
         ? theme.colorScheme.primary
         : theme.colorScheme.secondary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        ref: ref,
-        borderRadius: 16,
-        border: Border.all(color: typeColor.withValues(alpha: 0.3)),
-      ),
-      child: Material(
+    return RepaintBoundary(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: AppTheme.glassmorphism(
+          context: context,
+          ref: ref,
+          borderRadius: 16,
+          border: Border.all(color: typeColor.withValues(alpha: 0.3)),
+        ),
+        child: Material(
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -269,8 +278,9 @@ class EclipseScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _showEclipseDetails(BuildContext context, Eclipse eclipse) {
     final theme = Theme.of(context);

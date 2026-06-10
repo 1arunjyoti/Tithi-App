@@ -34,10 +34,12 @@ class FestivalCountdownScreen extends ConsumerWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Container(
-              decoration: accessibility.reduceMotion
-                  ? BoxDecoration(color: context.theme.scaffoldBackgroundColor)
-                  : AppTheme.backgroundDecoration(context),
+            child: RepaintBoundary(
+              child: Container(
+                decoration: accessibility.reduceMotion
+                    ? BoxDecoration(color: context.theme.scaffoldBackgroundColor)
+                    : AppTheme.backgroundDecoration(context),
+              ),
             ),
           ),
           SafeArea(

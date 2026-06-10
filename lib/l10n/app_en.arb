@@ -266,7 +266,7 @@
   "@shareApp": {
     "description": "Menu item to share the app"
   },
-  "shareAppMessage": "Check out Tithi - The Vedic Calendar App! Download now: https://example.com/tithi",
+  "shareAppMessage": "Check out Tithi - The Vedic Calendar App! Download now: https://tithiapp.netlify.app/",
   "@shareAppMessage": {
     "description": "Text shared when user shares the app"
   },

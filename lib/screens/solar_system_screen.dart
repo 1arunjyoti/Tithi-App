@@ -59,9 +59,6 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final solarSystemAsync = ref.watch(solarSystemDataProvider);
-    final selectedPlanetData = ref.watch(selectedPlanetDataProvider);
-    final viewDate = ref.watch(planetaryViewDateProvider);
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
@@ -91,57 +88,70 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           ),
         ],
       ),
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: SafeArea(
-          child: Stack(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: Container(
+                decoration: AppTheme.backgroundDecoration(context),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Stack(
             children: [
               // Main content column
               Column(
                 children: [
                   // Top controls row
-                  _buildTopControls(context, theme, viewDate, l10n),
+                  _buildTopControls(context, theme, l10n),
 
                   // Solar system visualization
                   Expanded(
-                    child: solarSystemAsync.when(
-                      skipLoadingOnReload: true,
-                      data: (data) => _buildSolarSystem(
-                        context,
-                        data,
-                        isDark,
-                        showZodiac: _showZodiac,
-                      ),
-                      loading: () => const Center(
-                        child: CircularProgressIndicator.adaptive(),
-                      ),
-                      error: (e, _) => Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: theme.colorScheme.error,
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final solarSystemAsync = ref.watch(solarSystemDataProvider);
+                        return solarSystemAsync.when(
+                          skipLoadingOnReload: true,
+                          data: (data) => _buildSolarSystem(
+                            context,
+                            ref,
+                            data,
+                            isDark,
+                            showZodiac: _showZodiac,
+                          ),
+                          loading: () => const Center(
+                            child: CircularProgressIndicator.adaptive(),
+                          ),
+                          error: (e, _) => Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 48,
+                                  color: theme.colorScheme.error,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(l10n.errorLoadingData),
+                                const SizedBox(height: 8),
+                                ElevatedButton(
+                                  onPressed: () =>
+                                      ref.refresh(solarSystemDataProvider),
+                                  child: Text(l10n.retry),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            Text(l10n.errorLoadingData),
-                            const SizedBox(height: 8),
-                            ElevatedButton(
-                              onPressed: () =>
-                                  ref.refresh(solarSystemDataProvider),
-                              child: Text(l10n.retry),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
 
                   // Planet info panel (MOVED TO STACK)
 
                   // Time slider control
-                  _buildTimeSlider(context, theme, viewDate, l10n),
+                  _buildTimeSlider(context, theme, l10n),
                 ],
               ),
 
@@ -149,27 +159,33 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               _buildZoomControls(context, theme),
 
               // Planet info panel overlay
-              if (selectedPlanetData != null)
-                Positioned(
-                  top: 100,
-                  right: ResponsiveLayout.value(
-                    context,
-                    mobile: 16.0,
-                    tablet: 24.0,
-                    desktop: 32.0,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 300),
-                    child: _buildPlanetInfoPanel(
+              Consumer(
+                builder: (context, ref, _) {
+                  final selectedPlanetData = ref.watch(selectedPlanetDataProvider);
+                  if (selectedPlanetData == null) return const SizedBox.shrink();
+                  return Positioned(
+                    top: 100,
+                    right: ResponsiveLayout.value(
                       context,
-                      selectedPlanetData,
-                      isDark,
+                      mobile: 16.0,
+                      tablet: 24.0,
+                      desktop: 32.0,
                     ),
-                  ),
-                ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      child: _buildPlanetInfoPanel(
+                        context,
+                        selectedPlanetData,
+                        isDark,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
+      ],
       ),
     );
   }
@@ -177,7 +193,6 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   Widget _buildTopControls(
     BuildContext context,
     ThemeData theme,
-    DateTime viewDate,
     AppLocalizations l10n,
   ) {
     return Container(
@@ -196,32 +211,37 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           _buildViewModeToggle(context, theme),
           const Spacer(),
           // Date chip
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.calendar_today,
-                  size: 14,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  DateFormat('MMM d, y').format(viewDate),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+          Consumer(
+            builder: (context, ref, _) {
+              final viewDate = ref.watch(planetaryViewDateProvider);
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
-              ],
-            ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.calendar_today,
+                      size: 14,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      DateFormat('MMM d, y').format(viewDate),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(width: 8),
           // Zodiac Toggle
@@ -240,10 +260,12 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   Widget _buildTimeSlider(
     BuildContext context,
     ThemeData theme,
-    DateTime viewDate,
     AppLocalizations l10n,
   ) {
-    // Time slider spans from -1 year to +1 year
+    return Consumer(
+      builder: (context, ref, _) {
+        final viewDate = ref.watch(planetaryViewDateProvider);
+        // Time slider spans from -1 year to +1 year
     final now = DateTime.now();
     final minDate = now.subtract(const Duration(days: 365));
     final maxDate = now.add(const Duration(days: 365));
@@ -450,6 +472,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildTimeButton(
@@ -544,6 +568,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
   Widget _buildSolarSystem(
     BuildContext context,
+    WidgetRef ref,
     SolarSystemData data,
     bool isDark, {
     required bool showZodiac,

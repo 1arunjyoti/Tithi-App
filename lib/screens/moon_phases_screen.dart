@@ -59,10 +59,17 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
           ),
         ),
       ),
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: SafeArea(
-          child: Center(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: Container(
+                decoration: AppTheme.backgroundDecoration(context),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 800),
               child: moonPhaseAsync.when(
@@ -91,7 +98,8 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
               ),
             ),
           ),
-        ),
+          ),
+        ],
       ),
     );
   }

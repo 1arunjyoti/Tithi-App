@@ -9,8 +9,9 @@ import '../theme/app_theme.dart';
 class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
-  // TODO: Change the URL to the actual privacy policy page once it's live
-  static final Uri _privacyPolicyUrl = Uri.parse('https://tithi.app/privacy');
+  static final Uri _privacyPolicyUrl = Uri.parse(
+    'https://tithiapp.netlify.app/privacy',
+  );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
