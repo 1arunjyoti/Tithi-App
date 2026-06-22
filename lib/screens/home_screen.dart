@@ -18,7 +18,9 @@ import '../widgets/daily_quote_widget.dart';
 import '../widgets/festival_countdown_card.dart';
 import '../widgets/festival_search_delegate.dart';
 import '../widgets/weather_sheet.dart';
+import '../widgets/pro_upgrade_sheet.dart';
 import '../widgets/responsive_layout.dart';
+import '../providers/pro_provider.dart';
 
 /// Main home screen with calendar and event list
 class HomeScreen extends StatefulWidget {
@@ -336,11 +338,12 @@ class _PakshaIndicator extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
+        final isPro = ref.read(proProvider);
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
-          builder: (context) => const WeatherSheet(),
+          builder: (context) => isPro ? const WeatherSheet() : const ProUpgradeSheet(),
         );
       },
       child: Container(
