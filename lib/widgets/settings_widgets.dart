@@ -65,38 +65,41 @@ class SettingsActionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return ListTile(
-      onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        onTap();
-      },
-      contentPadding: const EdgeInsets.all(16),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: context.colors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(icon, color: context.colors.primary, size: 22),
-      ),
-      title: Text(
-        title,
-        style: context.textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ?trailing,
-          const SizedBox(width: 8),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: context.colors.onSurface.withValues(alpha: 0.4),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        onTap: () {
+          if (ref.read(accessibilityProvider).hapticFeedback) {
+            HapticFeedback.lightImpact();
+          }
+          onTap();
+        },
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: context.colors.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
+          child: Icon(icon, color: context.colors.primary, size: 22),
+        ),
+        title: Text(
+          title,
+          style: context.textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ?trailing,
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: context.colors.onSurface.withValues(alpha: 0.4),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -348,26 +351,29 @@ class SettingsPickerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(
-        title,
-        style: TextStyle(
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? context.colors.primary : context.colors.onSurface,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            color: isSelected ? context.colors.primary : context.colors.onSurface,
+          ),
         ),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle!,
+                style: context.textTheme.bodySmall?.copyWith(
+                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                ),
+              )
+            : null,
+        trailing: isSelected
+            ? Icon(Icons.check_circle_rounded, color: context.colors.primary)
+            : null,
+        onTap: onTap,
       ),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: context.textTheme.bodySmall?.copyWith(
-                color: context.colors.onSurface.withValues(alpha: 0.6),
-              ),
-            )
-          : null,
-      trailing: isSelected
-          ? Icon(Icons.check_circle_rounded, color: context.colors.primary)
-          : null,
-      onTap: onTap,
     );
   }
 }

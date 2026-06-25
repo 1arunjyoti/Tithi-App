@@ -75,7 +75,7 @@ class PanchangData {
     }
 
     // Get tithi name
-    final tithiName = _getTithiName(tithiNumber);
+    final tithiName = _getTithiName(tithiNumber, paksha);
 
     // Find matching festivals (pass month system for proper conversion)
     final matchingFestivals = allFestivals.where((f) {
@@ -159,7 +159,7 @@ class PanchangData {
     );
   }
 
-  static String _getTithiName(int tithiNum) {
+  static String _getTithiName(int tithiNum, String paksha) {
     const tithiNames = [
       '',
       'Pratipada',
@@ -178,8 +178,13 @@ class PanchangData {
       'Chaturdashi',
       'Purnima/Amavasya',
     ];
-    if (tithiNum >= 1 && tithiNum <= 15) {
+    if (tithiNum >= 1 && tithiNum <= 14) {
       return tithiNames[tithiNum];
+    }
+    if (tithiNum == 15) {
+      if (paksha == 'Shukla') return 'Purnima';
+      if (paksha == 'Krishna') return 'Amavasya';
+      return 'Purnima/Amavasya';
     }
     return 'Unknown';
   }

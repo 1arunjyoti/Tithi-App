@@ -47,6 +47,12 @@ target_link_libraries(swisseph
     m  # math library
 )
 
+# Keep the shared library compatible with Android devices that use 16 KB pages.
+target_link_options(swisseph PRIVATE
+    "-Wl,-z,max-page-size=16384"
+    "-Wl,-z,common-page-size=16384"
+)
+
 # Compiler flags for position-independent code
 target_compile_options(swisseph PRIVATE -fPIC -O2)
 

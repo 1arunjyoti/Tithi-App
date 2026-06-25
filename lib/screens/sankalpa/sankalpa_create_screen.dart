@@ -232,15 +232,18 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 16),
-                    ListTile(
-                      tileColor: Theme.of(context).cardColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    Material(
+                      color: Colors.transparent,
+                      child: ListTile(
+                        tileColor: Theme.of(context).cardColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        leading: const Icon(Icons.alarm),
+                        title: Text(_selectedTime.format(context)),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        onTap: () => _selectTime(context),
                       ),
-                      leading: const Icon(Icons.alarm),
-                      title: Text(_selectedTime.format(context)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => _selectTime(context),
                     ),
 
                     const SizedBox(height: 48),

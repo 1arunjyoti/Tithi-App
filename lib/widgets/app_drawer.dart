@@ -243,21 +243,24 @@ class _DrawerMenuItem extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(icon, color: colors.primary, size: 24),
-        title: Text(
-          title,
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 15,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          leading: Icon(icon, color: colors.primary, size: 24),
+          title: Text(
+            title,
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+            ),
           ),
-        ),
-        trailing: Icon(
-          Icons.chevron_right_rounded,
-          size: 16,
-          color: colors.onSurface.withValues(alpha: 0.4),
+          trailing: Icon(
+            Icons.chevron_right_rounded,
+            size: 16,
+            color: colors.onSurface.withValues(alpha: 0.4),
+          ),
         ),
       ),
     );
@@ -278,42 +281,45 @@ class _ViewModeToggleItem extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: () {
-          ref.read(homeViewModeProvider.notifier).toggle();
-          final navigator = Navigator.of(context);
-          if (!ResponsiveLayout.isTabletOrLarger(context)) {
-            navigator.pop();
-          }
-        },
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(
-          isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
-          color: colors.primary,
-          size: 24,
-        ),
-        title: Text(
-          isSchedule
-              ? (l10n?.calendarView ?? 'Calendar View')
-              : (l10n?.scheduleView ?? 'Schedule View'),
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 15,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () {
+            ref.read(homeViewModeProvider.notifier).toggle();
+            final navigator = Navigator.of(context);
+            if (!ResponsiveLayout.isTabletOrLarger(context)) {
+              navigator.pop();
+            }
+          },
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          leading: Icon(
+            isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
+            color: colors.primary,
+            size: 24,
           ),
-        ),
-        subtitle: Text(
-          isSchedule
-              ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
-              : (l10n?.switchToSchedule ?? 'Switch to event list'),
-          style: textTheme.bodySmall?.copyWith(
-            color: colors.onSurface.withValues(alpha: 0.5),
-            fontSize: 12,
+          title: Text(
+            isSchedule
+                ? (l10n?.calendarView ?? 'Calendar View')
+                : (l10n?.scheduleView ?? 'Schedule View'),
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+            ),
           ),
-        ),
-        trailing: Icon(
-          Icons.swap_horiz_rounded,
-          size: 20,
-          color: colors.primary.withValues(alpha: 0.7),
+          subtitle: Text(
+            isSchedule
+                ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
+                : (l10n?.switchToSchedule ?? 'Switch to event list'),
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.onSurface.withValues(alpha: 0.5),
+              fontSize: 12,
+            ),
+          ),
+          trailing: Icon(
+            Icons.swap_horiz_rounded,
+            size: 20,
+            color: colors.primary.withValues(alpha: 0.7),
+          ),
         ),
       ),
     );
@@ -332,25 +338,28 @@ class _AboutMenuItem extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        onTap: () => _navigateToAbout(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        leading: Icon(
-          Icons.info_outline_rounded,
-          color: colors.primary,
-          size: 24,
-        ),
-        title: Text(
-          l10n?.aboutApp ?? 'About',
-          style: textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w500,
-            fontSize: 15,
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () => _navigateToAbout(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          leading: Icon(
+            Icons.info_outline_rounded,
+            color: colors.primary,
+            size: 24,
           ),
-        ),
-        trailing: Icon(
-          Icons.chevron_right_rounded,
-          size: 16,
-          color: colors.onSurface.withValues(alpha: 0.4),
+          title: Text(
+            l10n?.aboutApp ?? 'About',
+            style: textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+            ),
+          ),
+          trailing: Icon(
+            Icons.chevron_right_rounded,
+            size: 16,
+            color: colors.onSurface.withValues(alpha: 0.4),
+          ),
         ),
       ),
     );

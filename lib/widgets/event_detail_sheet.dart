@@ -7,7 +7,8 @@ import '../models/panchang_data.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/share_service.dart';
-import 'ritual_checklist_widget.dart';
+
+final _descExpandedProvider = StateProvider.autoDispose<bool>((ref) => false);
 
 /// Bottom sheet showing festival details with glassmorphism
 class EventDetailSheet extends ConsumerWidget {
@@ -169,30 +170,84 @@ class EventDetailSheet extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          _buildFormattedText(
                             festival.description,
-                            style: context.textTheme.bodyLarge?.copyWith(
+                            context.textTheme.bodyLarge?.copyWith(
                               fontSize: 16,
                               height: 1.5,
                             ),
                           ),
                           if (hasAdditionalDesc) ...[
                             const SizedBox(height: 12),
-                            Divider(
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.15,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              festival.purpose.additionalDescription,
-                              style: context.textTheme.bodyMedium?.copyWith(
-                                fontSize: 14,
-                                height: 1.5,
-                                color: context.colors.onSurface.withValues(
-                                  alpha: 0.8,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    ref.read(_descExpandedProvider.notifier).update((state) => !state);
+                                  },
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                      horizontal: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          ref.watch(_descExpandedProvider)
+                                              ? 'Show Less'
+                                              : 'Read More',
+                                          style: context.textTheme.labelLarge
+                                              ?.copyWith(
+                                                color: themeColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          ref.watch(_descExpandedProvider)
+                                              ? Icons.keyboard_arrow_up
+                                              : Icons.keyboard_arrow_down,
+                                          color: themeColor,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
+                            ),
+                            AnimatedSize(
+                              duration: const Duration(milliseconds: 200),
+                              curve: Curves.easeInOut,
+                              alignment: Alignment.topCenter,
+                              child: ref.watch(_descExpandedProvider)
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 8),
+                                        Divider(
+                                          color: context.colors.onSurface
+                                              .withValues(alpha: 0.15),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        _buildFormattedText(
+                                          festival
+                                              .purpose.additionalDescription,
+                                          context.textTheme.bodyMedium
+                                              ?.copyWith(
+                                                fontSize: 14,
+                                                height: 1.5,
+                                                color: context.colors.onSurface
+                                                    .withValues(alpha: 0.8),
+                                              ),
+                                        ),
+                                      ],
+                                    )
+                                  : const SizedBox.shrink(),
                             ),
                           ],
                         ],
@@ -304,12 +359,14 @@ class EventDetailSheet extends ConsumerWidget {
                                     Icons.access_time,
                                     'Begins',
                                     startStr,
+                                    trailing: _buildTimingInfoButton(context),
                                   ),
                                   _buildInfoRow(
                                     context,
                                     Icons.access_time_filled,
                                     'Ends',
                                     endStr,
+                                    trailing: _buildTimingInfoButton(context),
                                   ),
                                 ],
                               );
@@ -375,7 +432,7 @@ class EventDetailSheet extends ConsumerWidget {
                       const SizedBox(height: 24),
                       _buildSectionHeader(
                         context,
-                        icon: Icons.checklist_rounded,
+                        icon: Icons.spa_outlined,
                         label:
                             AppLocalizations.of(context)?.ritualsAndPractices ??
                             'Rituals & Practices',
@@ -383,7 +440,10 @@ class EventDetailSheet extends ConsumerWidget {
                       ),
                       const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 20,
+                        ),
                         decoration: AppTheme.glassmorphism(
                           context: context,
                           ref: ref,
@@ -394,17 +454,73 @@ class EventDetailSheet extends ConsumerWidget {
                           ) {
                             final index = entry.key;
                             final ritual = entry.value;
+                            final totalSteps = festival.rituals.steps.length;
 
-                            final dateStr =
-                                panchang?.date.toIso8601String().split(
-                                  'T',
-                                )[0] ??
-                                'generic';
-                            final ritualId = '${dateStr}_${festival.id}_$index';
-
-                            return RitualChecklistWidget(
-                              ritualId: ritualId,
-                              label: ritual,
+                            return IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Column(
+                                    children: [
+                                      Container(
+                                        width: 24,
+                                        height: 24,
+                                        decoration: BoxDecoration(
+                                          color: themeColor.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: themeColor.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          '${index + 1}',
+                                          style: context.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: themeColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                        ),
+                                      ),
+                                      if (index < totalSteps - 1)
+                                        Expanded(
+                                          child: Container(
+                                            width: 1.5,
+                                            color: themeColor.withValues(
+                                              alpha: 0.25,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: EdgeInsets.only(
+                                        bottom: index < totalSteps - 1
+                                            ? 20.0
+                                            : 4.0,
+                                      ),
+                                      child: Text(
+                                        ritual,
+                                        style: context.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              fontSize: 15,
+                                              height: 1.5,
+                                              color: context.colors.onSurface
+                                                  .withValues(alpha: 0.9),
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             );
                           }).toList(),
                         ),
@@ -483,8 +599,9 @@ class EventDetailSheet extends ConsumerWidget {
     BuildContext context,
     IconData icon,
     String label,
-    String value,
-  ) {
+    String value, {
+    Widget? trailing,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -506,8 +623,96 @@ class EventDetailSheet extends ConsumerWidget {
               ),
             ),
           ),
+          if (trailing != null) ...[const SizedBox(width: 8), trailing],
         ],
       ),
+    );
+  }
+
+  Widget _buildTimingInfoButton(BuildContext context) {
+    return InkWell(
+      onTap: () => _showTimingDialog(context),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Icon(
+          Icons.info_outline_rounded,
+          size: 16,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+
+  void _showTimingDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Timing Note',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: Text(
+            'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(height: 1.35, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Got it'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildFormattedText(String text, TextStyle? baseStyle) {
+    final parts = text.split('**');
+    if (parts.length == 1) {
+      return Text(text, style: baseStyle);
+    }
+
+    final spans = <TextSpan>[];
+    for (int i = 0; i < parts.length; i++) {
+      if (parts[i].isEmpty && i == 0) continue;
+
+      final isBold = i.isOdd;
+      spans.add(
+        TextSpan(
+          text: parts[i],
+          style: baseStyle?.copyWith(
+            fontWeight: isBold ? FontWeight.bold : baseStyle.fontWeight,
+          ),
+        ),
+      );
+    }
+
+    return Text.rich(
+      TextSpan(children: spans),
+      style: baseStyle,
     );
   }
 }
