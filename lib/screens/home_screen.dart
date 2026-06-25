@@ -270,10 +270,11 @@ class _PakshaIndicator extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final todayPanchang = ref.watch(todayPanchangProvider);
+    final selectedDate = ref.watch(selectedDateProvider);
+    final selectedPanchang = ref.watch(panchangForDateProvider(selectedDate));
     final cityName = ref.watch(cityNameProvider);
 
-    return todayPanchang.when(
+    return selectedPanchang.when(
       data: (panchang) => _buildIndicatorContent(
         context,
         ref,
@@ -298,6 +299,11 @@ class _PakshaIndicator extends ConsumerWidget {
     final primaryView = ref.watch(primaryEventViewProvider);
     final isShukla = panchang.paksha == 'Shukla';
     final l10n = AppLocalizations.of(context);
+    final selectedDate = ref.watch(selectedDateProvider);
+    final now = DateTime.now();
+    final isToday = selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
 
     // Determine what to show based on preference
     String title;
@@ -310,10 +316,14 @@ class _PakshaIndicator extends ConsumerWidget {
             orElse: () => panchang.festivals.first,
           );
           title = festival.name;
-          subtitle = l10n?.todaysFestival ?? 'Today\'s Festival';
+          subtitle = isToday
+              ? (l10n?.todaysFestival ?? 'Today\'s Festival')
+              : (l10n?.festival ?? 'Festival');
         } else {
           title = panchang.tithiName;
-          subtitle = l10n?.noFestivalsToday ?? 'Tithi • No Festivals Today';
+          subtitle = isToday
+              ? (l10n?.noFestivalsToday ?? 'Tithi • No Festivals Today')
+              : (l10n?.noFestivalsOnThisDay ?? 'Tithi • No Festivals');
         }
         break;
 

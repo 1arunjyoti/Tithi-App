@@ -241,36 +241,39 @@ class _FestivalSearchTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        tileColor: colors.surfaceContainerHighest.withValues(alpha: 0.3),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: isMajor ? 0.18 : 0.1),
-            borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: onTap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          tileColor: colors.surfaceContainerHighest.withValues(alpha: 0.3),
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: colors.primary.withValues(alpha: isMajor ? 0.18 : 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              isMajor ? Icons.celebration_rounded : Icons.event_rounded,
+              color: colors.primary,
+            ),
           ),
-          child: Icon(
-            isMajor ? Icons.celebration_rounded : Icons.event_rounded,
-            color: colors.primary,
+          title: Text(
+            festival.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
+          subtitle: festival.nameHindi == null
+              ? null
+              : Text(
+                  festival.nameHindi!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+          trailing: const Icon(Icons.add_circle_outline_rounded),
         ),
-        title: Text(
-          festival.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: festival.nameHindi == null
-            ? null
-            : Text(
-                festival.nameHindi!,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-        trailing: const Icon(Icons.add_circle_outline_rounded),
       ),
     );
   }

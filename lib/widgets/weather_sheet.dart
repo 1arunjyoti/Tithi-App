@@ -4,6 +4,7 @@ import '../models/weather_data.dart';
 import '../providers/weather_provider.dart';
 import '../models/panchang_data.dart';
 import '../providers/panchang_provider.dart';
+import '../providers/calendar_provider.dart';
 import '../services/weather_service.dart';
 import '../l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -16,8 +17,9 @@ class WeatherSheet extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final weatherAsync = ref.watch(currentWeatherProvider);
     // Also show sunrise/sunset as it was the entry point
-    final todayPanchangAsync = ref.watch(todayPanchangProvider);
-    final panchang = todayPanchangAsync.asData?.value;
+    final selectedDate = ref.watch(selectedDateProvider);
+    final panchangAsync = ref.watch(panchangForDateProvider(selectedDate));
+    final panchang = panchangAsync.asData?.value;
 
     return Container(
       padding: const EdgeInsets.all(24),

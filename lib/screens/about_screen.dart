@@ -110,44 +110,47 @@ class AboutScreen extends ConsumerWidget {
                         context: context,
                         ref: ref,
                       ),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: context.colors.primary.withValues(
-                              alpha: 0.1,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: context.colors.primary.withValues(
+                                alpha: 0.1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            borderRadius: BorderRadius.circular(12),
+                            child: Icon(
+                              Icons.language_rounded,
+                              color: context.colors.primary,
+                              size: 22,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.language_rounded,
-                            color: context.colors.primary,
-                            size: 22,
+                          title: Text(
+                            'Detailed privacy policy',
+                            style: context.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: context.colors.onSurface,
+                            ),
                           ),
-                        ),
-                        title: Text(
-                          'Detailed privacy policy',
-                          style: context.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: context.colors.onSurface,
+                          subtitle: Text(
+                            'Read the full policy on our website',
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colors.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          'Read the full policy on our website',
-                          style: context.textTheme.bodySmall?.copyWith(
+                          trailing: Icon(
+                            Icons.open_in_new_rounded,
                             color: context.colors.onSurface.withValues(
-                              alpha: 0.7,
+                              alpha: 0.6,
                             ),
                           ),
+                          onTap: () => _openPrivacyPolicy(context),
                         ),
-                        trailing: Icon(
-                          Icons.open_in_new_rounded,
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                        onTap: () => _openPrivacyPolicy(context),
                       ),
                     ),
                     const SizedBox(height: 24),
