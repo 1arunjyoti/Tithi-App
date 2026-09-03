@@ -19,6 +19,8 @@ import '../widgets/festival_countdown_card.dart';
 import '../widgets/festival_search_delegate.dart';
 import '../widgets/weather_sheet.dart';
 import '../widgets/responsive_layout.dart';
+import '../widgets/home_widget_card.dart';
+import '../providers/home_widget_provider.dart';
 
 /// Main home screen with calendar and event list
 class HomeScreen extends StatefulWidget {
@@ -187,6 +189,8 @@ class _HomeBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keep home widget in sync with all countdowns
+    ref.watch(homeWidgetSyncProvider);
     final accessibility = ref.watch(accessibilityProvider);
     final viewMode = ref.watch(homeViewModeProvider);
     final isScheduleView = viewMode == HomeViewMode.schedule;
@@ -248,6 +252,14 @@ class _HomeBody extends ConsumerWidget {
                           Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: FestivalCountdownCard(),
+                          ),
+
+                          SizedBox(height: 12),
+
+                          // Home screen widget affordance
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: HomeWidgetCard(),
                           ),
 
                           // Bottom padding for FAB

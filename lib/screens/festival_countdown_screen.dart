@@ -5,14 +5,18 @@ import '../models/festival.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
 import '../providers/festival_provider.dart';
+import '../providers/home_widget_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/festival_countdown_card.dart';
+import '../widgets/home_widget_card.dart';
 
 class FestivalCountdownScreen extends ConsumerWidget {
   const FestivalCountdownScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keep widget in sync
+    ref.watch(homeWidgetSyncProvider);
     final accessibility = ref.watch(accessibilityProvider);
     final countdowns = ref.watch(allFestivalCountdownTargetsProvider);
     final preferences = ref.watch(festivalCountdownPreferencesProvider);
@@ -37,7 +41,9 @@ class FestivalCountdownScreen extends ConsumerWidget {
             child: RepaintBoundary(
               child: Container(
                 decoration: accessibility.reduceMotion
-                    ? BoxDecoration(color: context.theme.scaffoldBackgroundColor)
+                    ? BoxDecoration(
+                        color: context.theme.scaffoldBackgroundColor,
+                      )
                     : AppTheme.backgroundDecoration(context),
               ),
             ),
@@ -46,13 +52,24 @@ class FestivalCountdownScreen extends ConsumerWidget {
             child: countdowns.when(
               data: (targets) {
                 if (targets.isEmpty) {
-                  return const _EmptyCountdowns();
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: const [
+                      _EmptyCountdowns(),
+                      SizedBox(height: 20),
+                      HomeWidgetCard(),
+                    ],
+                  );
                 }
 
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                   itemBuilder: (context, index) {
-                    final target = targets[index];
+                    // Header widget card at index 0
+                    if (index == 0) {
+                      return const HomeWidgetCard();
+                    }
+                    final target = targets[index - 1];
                     final isPinned = preferences.isPinnedToHome(target.id);
                     return FestivalCountdownTile(
                       target: target,
@@ -65,7 +82,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
                     );
                   },
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemCount: targets.length,
+                  itemCount: targets.length + 1,
                 );
               },
               loading: () => const Padding(
@@ -245,7 +262,9 @@ class _FestivalSearchTile extends StatelessWidget {
         color: Colors.transparent,
         child: ListTile(
           onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           tileColor: colors.surfaceContainerHighest.withValues(alpha: 0.3),
           leading: Container(
             width: 44,

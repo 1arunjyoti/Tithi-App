@@ -40,6 +40,35 @@
             </intent-filter>
         </activity>
         
+        <!-- Festival countdown home screen widget -->
+        <receiver
+            android:name=".widget.FestivalCountdownWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/festival_countdown_widget_info" />
+        </receiver>
+
+        <!-- Collection backing for the widget ListView (scrollable rows) -->
+        <service
+            android:name=".widget.FestivalCountdownWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
+        <!-- Widget-local theme picker: shown on add, and on API 31+ via
+             long-press → Reconfigure (see widgetFeatures="reconfigurable") -->
+        <activity
+            android:name=".widget.FestivalCountdownWidgetConfigureActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.DayNight">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
         <!-- Scheduled notification receiver -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">

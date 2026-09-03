@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Night overrides: when the app theme is Auto (ThemeMode.system),
+         the widget automatically follows the device dark theme. -->
+    <color name="widget_background">#FF1E1E1E</color>
+    <color name="widget_item_background">#FF2A2A2A</color>
+    <color name="widget_badge_background">#FF2A2A2A</color>
+    <color name="widget_primary_text">#FFFFA000</color>
+    <color name="widget_title_text">#FFE0E0E0</color>
+    <color name="widget_secondary_text">#FFBDBDBD</color>
+    <color name="widget_hint_text">#FF757575</color>
+</resources>

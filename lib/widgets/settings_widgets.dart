@@ -52,13 +52,15 @@ class SettingsGroupCard extends ConsumerWidget {
 class SettingsActionTile extends ConsumerWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final Widget? trailing;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const SettingsActionTile({
     super.key,
     required this.icon,
     required this.title,
+    this.subtitle,
     required this.onTap,
     this.trailing,
   });
@@ -68,12 +70,15 @@ class SettingsActionTile extends ConsumerWidget {
     return Material(
       color: Colors.transparent,
       child: ListTile(
-        onTap: () {
-          if (ref.read(accessibilityProvider).hapticFeedback) {
-            HapticFeedback.lightImpact();
-          }
-          onTap();
-        },
+        enabled: onTap != null,
+        onTap: onTap == null
+            ? null
+            : () {
+                if (ref.read(accessibilityProvider).hapticFeedback) {
+                  HapticFeedback.lightImpact();
+                }
+                onTap!.call();
+              },
         contentPadding: const EdgeInsets.all(16),
         leading: Container(
           padding: const EdgeInsets.all(10),
@@ -89,6 +94,14 @@ class SettingsActionTile extends ConsumerWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
+        subtitle: subtitle == null
+            ? null
+            : Text(
+                subtitle!,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

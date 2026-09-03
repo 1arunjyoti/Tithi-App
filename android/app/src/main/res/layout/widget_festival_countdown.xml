@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Festival countdown widget. The header is fixed; the ListView takes all
+     remaining space (height=0dp, weight=1) so resizing never leaves a blank gap
+     and never hides cards — the list scrolls internally when small and expands
+     when large. Colors resolve via values / values-night so Auto theme follows
+     the device; forced app themes are applied in code. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="12dp">
+
+    <!-- Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_brand"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Tithi"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:id="@+id/widget_header_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="@color/widget_secondary_text"
+            tools:text="4 countdowns" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Festival Countdowns"
+        android:textColor="@color/widget_title_text"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- Scrollable countdown list: fills leftover space, scrolls when small -->
+    <ListView
+        android:id="@+id/widget_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="6dp"
+        android:scrollbars="vertical"
+        android:clipToPadding="false" />
+
+    <!-- Empty state (shown via setEmptyView, kept gone until then) -->
+    <TextView
+        android:id="@+id/widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No countdowns pinned.\nOpen app to add festivals."
+        android:textColor="@color/widget_secondary_text"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:padding="16dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+</LinearLayout>
