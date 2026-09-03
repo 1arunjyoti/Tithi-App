@@ -45,18 +45,60 @@ class SankalpaListNotifier extends Notifier<List<Sankalpa>> {
     }
   }
 
+  /// Ensures the shared NotificationService is initialized before use.
+  /// Sankalpa screens can run without Settings ever being opened (which is
+  /// what normally triggers notificationInitProvider), and every schedule /
+  /// cancel call throws "not initialized" otherwise.
+  Future<void> _ensureNotificationsReady() async {
+    await ref.read(notificationInitProvider.future);
+  }
+
+  /// Schedules a reminder without ever breaking sankalpa CRUD: notification
+  /// failures are reported but the sankalpa itself is already saved.
+  Future<void> _scheduleReminderQuietly(Sankalpa sankalpa) async {
+    try {
+      await _ensureNotificationsReady();
+      await _notificationService.scheduleSankalpaReminder(sankalpa);
+    } catch (e, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: stack,
+          library: 'SankalpaListNotifier',
+          context: ErrorDescription('scheduling sankalpa reminder'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _cancelReminderQuietly(String id) async {
+    try {
+      await _ensureNotificationsReady();
+      await _notificationService.cancelSankalpaReminder(id);
+    } catch (e, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: e,
+          stack: stack,
+          library: 'SankalpaListNotifier',
+          context: ErrorDescription('cancelling sankalpa reminder'),
+        ),
+      );
+    }
+  }
+
   Future<void> addSankalpa(Sankalpa sankalpa) async {
     await _service.addSankalpa(sankalpa);
 
     // Use the shared notification service instance
-    await _notificationService.scheduleSankalpaReminder(sankalpa);
+    await _scheduleReminderQuietly(sankalpa);
 
     await _loadSankalpas();
   }
 
   Future<void> deleteSankalpa(String id) async {
     // Cancel notification using shared instance
-    await _notificationService.cancelSankalpaReminder(id);
+    await _cancelReminderQuietly(id);
 
     await _service.deleteSankalpa(id);
     await _loadSankalpas();
@@ -70,9 +112,9 @@ class SankalpaListNotifier extends Notifier<List<Sankalpa>> {
     final sankalpa = state.firstWhere((s) => s.id == id);
 
     if (sankalpa.isCompleted) {
-      await _notificationService.cancelSankalpaReminder(id);
+      await _cancelReminderQuietly(id);
     } else {
-      await _notificationService.scheduleSankalpaReminder(sankalpa);
+      await _scheduleReminderQuietly(sankalpa);
     }
   }
 

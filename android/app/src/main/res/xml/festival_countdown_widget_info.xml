@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:updatePeriodMillis="86400000"
+    android:initialLayout="@layout/widget_festival_countdown"
+    android:previewLayout="@layout/widget_festival_countdown"
+    android:previewImage="@mipmap/launcher_icon"
+    android:configure="app.tithi.pro.widget.FestivalCountdownWidgetConfigureActivity"
+    android:widgetFeatures="reconfigurable"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:widgetCategory="home_screen"
+    android:description="@string/widget_description">
+</appwidget-provider>

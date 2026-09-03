@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -246,9 +246,15 @@ class _NotificationSettings extends ConsumerWidget {
               if (!granted) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
+                    SnackBar(
+                      content: const Text(
                         'Notification permission denied. Please enable it in system settings.',
+                      ),
+                      action: SnackBarAction(
+                        label: 'Open Settings',
+                        onPressed: () {
+                          Geolocator.openAppSettings();
+                        },
                       ),
                     ),
                   );
@@ -256,8 +262,37 @@ class _NotificationSettings extends ConsumerWidget {
                 return;
               }
             }
-            await notificationService.setEnabled(val);
-            ref.invalidate(loadNotificationStateProvider);
+            // Optimistic update so the switch responds instantly. The loader
+            // invalidation in `finally` re-syncs from storage afterwards.
+            ref.read(notificationEnabledProvider.notifier).setEnabled(val);
+            try {
+              await notificationService.setEnabled(val);
+            } catch (e) {
+              debugPrint('Failed to set daily notifications to $val: $e');
+              // Revert so the switch reflects the real (unchanged) state.
+              ref.read(notificationEnabledProvider.notifier).setEnabled(!val);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Could not turn notifications ${val ? 'on' : 'off'} ($e). Please try again.',
+                    ),
+                    // Enable failures are commonly the OS-level gate
+                    // (_assertSystemNotificationsAllowed), so offer the fix.
+                    action: val
+                        ? SnackBarAction(
+                            label: 'Open Settings',
+                            onPressed: () {
+                              Geolocator.openAppSettings();
+                            },
+                          )
+                        : null,
+                  ),
+                );
+              }
+            } finally {
+              ref.invalidate(loadNotificationStateProvider);
+            }
           },
         ),
         if (isEnabled) ...[
@@ -269,8 +304,28 @@ class _NotificationSettings extends ConsumerWidget {
             subtitle: 'Get a daily spiritual verse',
             value: ref.watch(shlokaNotificationEnabledProvider),
             onChanged: (val) async {
-              await notificationService.setShlokaEnabled(val);
-              ref.invalidate(loadNotificationStateProvider);
+              ref
+                  .read(shlokaNotificationEnabledProvider.notifier)
+                  .setEnabled(val);
+              try {
+                await notificationService.setShlokaEnabled(val);
+              } catch (e) {
+                debugPrint('Failed to set shloka notifications to $val: $e');
+                ref
+                    .read(shlokaNotificationEnabledProvider.notifier)
+                    .setEnabled(!val);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
+                      ),
+                    ),
+                  );
+                }
+              } finally {
+                ref.invalidate(loadNotificationStateProvider);
+              }
             },
           ),
           const SettingsDivider(),
@@ -312,11 +367,25 @@ class _NotificationSettings extends ConsumerWidget {
               );
 
               if (time != null) {
-                await notificationService.setNotificationTime(
-                  time.hour,
-                  time.minute,
-                );
-                ref.invalidate(loadNotificationStateProvider);
+                try {
+                  await notificationService.setNotificationTime(
+                    time.hour,
+                    time.minute,
+                  );
+                } catch (e) {
+                  debugPrint('Failed to set notification time: $e');
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Could not update notification time ($e). Please try again.',
+                        ),
+                      ),
+                    );
+                  }
+                } finally {
+                  ref.invalidate(loadNotificationStateProvider);
+                }
               }
             },
           ),

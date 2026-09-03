@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Semantic widget colors (light defaults). Night qualifier overrides these
+         so ThemeMode.system automatically follows the device theme. -->
+    <color name="widget_background">#FFFFFDF7</color>
+    <color name="widget_item_background">#FFFFECB3</color>
+    <color name="widget_badge_background">#FFFFF8E7</color>
+    <color name="widget_primary_text">#FF8B4513</color>
+    <color name="widget_title_text">#FF3E2723</color>
+    <color name="widget_secondary_text">#FF8B7355</color>
+    <color name="widget_hint_text">#FFBC9B6A</color>
+
+    <!-- Fixed light palette (mirrors AppTheme.shuklaTheme) for forced-light mode -->
+    <color name="widget_background_light">#FFFFFDF7</color>
+    <color name="widget_item_background_light">#FFFFECB3</color>
+    <color name="widget_badge_background_light">#FFFFF8E7</color>
+    <color name="widget_primary_text_light">#FF8B4513</color>
+    <color name="widget_title_text_light">#FF3E2723</color>
+    <color name="widget_secondary_text_light">#FF8B7355</color>
+    <color name="widget_hint_text_light">#FFBC9B6A</color>
+
+    <!-- Fixed dark palette (mirrors AppTheme.pureDarkTheme) for forced-dark mode -->
+    <color name="widget_background_dark">#FF1E1E1E</color>
+    <color name="widget_item_background_dark">#FF2A2A2A</color>
+    <color name="widget_badge_background_dark">#FF2A2A2A</color>
+    <color name="widget_primary_text_dark">#FFFFA000</color>
+    <color name="widget_title_text_dark">#FFE0E0E0</color>
+    <color name="widget_secondary_text_dark">#FFBDBDBD</color>
+    <color name="widget_hint_text_dark">#FF757575</color>
+</resources>

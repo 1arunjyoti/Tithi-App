@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single countdown card for the widget ListView. Fixed 68dp height
+     (52dp badge + 8dp padding top/bottom) so every card measures identically
+     and the list scrolls predictably. Radii/colors mirror AppTheme. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_row"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="68dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/widget_item_background"
+    android:padding="8dp">
+
+    <LinearLayout
+        android:id="@+id/widget_badge"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@drawable/widget_badge_background">
+
+        <TextView
+            android:id="@+id/widget_days"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="12" />
+
+        <TextView
+            android:id="@+id/widget_days_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="days"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="9sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="10dp">
+
+        <TextView
+            android:id="@+id/widget_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_title_text"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Diwali" />
+
+        <TextView
+            android:id="@+id/widget_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_secondary_text"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Tue, Oct 21 • 12 days to go" />
+    </LinearLayout>
+
+</LinearLayout>

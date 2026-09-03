@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Semantic background: resolves to light/dark via widget_colors qualifiers,
+     so Auto theme follows the device. 20dp radius matches AppTheme glassmorphism.
+     No stroke: an outline drawn on the widget's outer edge renders as a
+     visible border line against contrasting wallpapers. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="20dp" />
+    <solid android:color="@color/widget_background" />
+</shape>

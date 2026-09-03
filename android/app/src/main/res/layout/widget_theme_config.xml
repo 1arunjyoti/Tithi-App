@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Theme picker shown when the widget is added and via long-press →
+     Reconfigure (API 31+, widgetFeatures="reconfigurable"). Uses the widget's
+     own semantic colors so the screen matches the widget in both modes. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Widget theme"
+        android:textColor="@color/widget_title_text"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Festival Countdowns"
+        android:textColor="@color/widget_secondary_text"
+        android:textSize="13sp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="16dp" />
+
+    <RadioGroup
+        android:id="@+id/widget_theme_group"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/widget_theme_auto"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto"
+            android:textColor="@color/widget_title_text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Follows the device theme"
+            android:textColor="@color/widget_secondary_text"
+            android:textSize="12sp"
+            android:layout_marginStart="32dp"
+            android:layout_marginBottom="12dp" />
+
+        <RadioButton
+            android:id="@+id/widget_theme_shukla"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Shukla"
+            android:textColor="@color/widget_title_text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Light theme"
+            android:textColor="@color/widget_secondary_text"
+            android:textSize="12sp"
+            android:layout_marginStart="32dp"
+            android:layout_marginBottom="12dp" />
+
+        <RadioButton
+            android:id="@+id/widget_theme_dark"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dark"
+            android:textColor="@color/widget_title_text"
+            android:textSize="15sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Dark theme"
+            android:textColor="@color/widget_secondary_text"
+            android:textSize="12sp"
+            android:layout_marginStart="32dp"
+            android:layout_marginBottom="12dp" />
+    </RadioGroup>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/widget_theme_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            style="?android:attr/borderlessButtonStyle" />
+
+        <Button
+            android:id="@+id/widget_theme_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Save" />
+    </LinearLayout>
+
+</LinearLayout>

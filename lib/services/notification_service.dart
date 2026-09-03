@@ -126,7 +126,19 @@ class NotificationService {
       // BUG-07: Use flutter_timezone for reliable IANA timezone identification
       // instead of the manual UTC-offset table which breaks under DST.
       final deviceTimeZone = await _getDeviceTimezone();
-      tz.setLocalLocation(tz.getLocation(deviceTimeZone));
+      try {
+        tz.setLocalLocation(tz.getLocation(deviceTimeZone));
+      } catch (e) {
+        // Some devices/ROMs report non-IANA names (e.g. abbreviations or
+        // UTC offsets) which make tz.getLocation throw. Fall back to
+        // Asia/Kolkata (app's primary audience) instead of bricking init —
+        // a throwing init leaves the service uninitialized forever and makes
+        // the settings toggle snap back to OFF on every attempt.
+        debugPrint(
+          'Unknown timezone "$deviceTimeZone", falling back to Asia/Kolkata: $e',
+        );
+        tz.setLocalLocation(tz.getLocation('Asia/Kolkata'));
+      }
 
       // Initialize Hive box
       _box = await StorageService().openNotificationSettingsBox();
@@ -135,7 +147,14 @@ class NotificationService {
       const androidSettings = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
       );
-      const iosSettings = DarwinInitializationSettings();
+      // Don't auto-prompt on iOS at init: permission is requested explicitly
+      // when the user flips the toggle (requestPermission), so merely opening
+      // Settings must not pop a system dialog.
+      const iosSettings = DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      );
 
       const initSettings = InitializationSettings(
         android: androidSettings,
@@ -149,9 +168,11 @@ class NotificationService {
 
       _isInitialized = true;
 
-      // Precompute/cache daily notification content so background scheduling
-      // can function even without full app/provider context.
-      await _refreshDailyNotificationContent();
+      // NOTE: no eager _refreshDailyNotificationContent() here. Content is
+      // refreshed lazily by scheduleDailyNotification() via
+      // _getDailyNotificationContent(), so init stays cheap (no ephemeris
+      // copy, no Jyotish native init, no tithi calc — PanchangService is not
+      // a singleton) when notifications are disabled.
 
       // SMELL-2: read flags directly from the box (synchronous Hive get) instead
       // of calling await isEnabled() / await isShlokaEnabled(), which wrap the
@@ -173,11 +194,19 @@ class NotificationService {
         }
       }
 
-      // Only schedule if enabled
+      // Only schedule if enabled. Scheduling failures must not fail init:
+      // a throwing init leaves _isInitialized false, so every later
+      // setEnabled/isEnabled throws ("not initialized") and the settings
+      // toggle snaps back to OFF permanently. Log and continue instead —
+      // the toggle and the periodic WorkManager task will retry scheduling.
       if (notificationsEnabled) {
-        await scheduleDailyNotification();
-        if (shlokasEnabled) {
-          await _scheduleUpcomingShlokas();
+        try {
+          await scheduleDailyNotification();
+          if (shlokasEnabled) {
+            await _scheduleUpcomingShlokas();
+          }
+        } catch (e) {
+          debugPrint('Failed to reschedule notifications during init: $e');
         }
       }
     } catch (e) {
@@ -202,15 +231,48 @@ class NotificationService {
     return _box?.get(_keyEnabled, defaultValue: false) ?? false;
   }
 
-  /// Enable or disable notifications
+  /// Enable or disable notifications.
+  ///
+  /// The persisted flag is rolled back if (re)scheduling fails, so storage
+  /// never claims notifications are ON while nothing is scheduled. Callers
+  /// (e.g. the settings toggle) should catch the rethrown error to show
+  /// feedback and revert any optimistic UI update.
   Future<void> setEnabled(bool enabled) async {
     _ensureInitialized();
+    final previous =
+        _box?.get(_keyEnabled, defaultValue: false) as bool? ?? false;
     await _box?.put(_keyEnabled, enabled);
 
-    if (enabled) {
-      await scheduleDailyNotification();
-    } else {
-      await cancelAllNotifications();
+    try {
+      if (enabled) {
+        // Fail fast with a clear message when the OS blocks notifications
+        // (e.g. revoked after granting): zonedSchedule would otherwise
+        // "succeed" silently while nothing is ever shown.
+        await _assertSystemNotificationsAllowed();
+        await scheduleDailyNotification();
+        // Re-enabling the master switch must also restore shlokas: the
+        // shloka flag survives disable, but disable cancels their schedules.
+        final shlokaEnabled =
+            _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
+        if (shlokaEnabled) {
+          await _scheduleUpcomingShlokas();
+        }
+      } else {
+        // Cancel only the daily + shloka schedules. Sankalpa reminders have
+        // their own lifecycle and must survive toggling daily notifications
+        // (use cancelAllNotifications() only for full reset flows).
+        await _notifications.cancel(_dailyNotificationId);
+        await cancelShlokaNotifications();
+      }
+    } catch (e) {
+      // Roll back so the toggle can reflect the real state on retry.
+      try {
+        await _box?.put(_keyEnabled, previous);
+      } catch (rollbackError) {
+        debugPrint('Failed to roll back notification flag: $rollbackError');
+      }
+      debugPrint('Failed to ${enabled ? 'enable' : 'disable'} notifications: $e');
+      rethrow;
     }
   }
 
@@ -223,20 +285,36 @@ class NotificationService {
   }
 
   // SMELL-02: cache the enabled flag to avoid two awaited Hive reads.
+  ///
+  /// The persisted time is rolled back if rescheduling fails, so the shown
+  /// time never disagrees with the active schedule.
   Future<void> setNotificationTime(int hour, int minute) async {
     _ensureInitialized();
+    final prevHour = (_box?.get(_keyHour, defaultValue: 8) as int?) ?? 8;
+    final prevMinute = (_box?.get(_keyMinute, defaultValue: 0) as int?) ?? 0;
     await _box?.put(_keyHour, hour);
     await _box?.put(_keyMinute, minute);
 
-    // Read flags directly from the box — same synchronous Hive get as isEnabled()
-    final enabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
-    if (enabled) {
-      await scheduleDailyNotification();
-      final shlokaEnabled =
-          _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
-      if (shlokaEnabled) {
-        await _scheduleUpcomingShlokas();
+    try {
+      // Read flags directly from the box — same synchronous Hive get as isEnabled()
+      final enabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
+      if (enabled) {
+        await scheduleDailyNotification();
+        final shlokaEnabled =
+            _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
+        if (shlokaEnabled) {
+          await _scheduleUpcomingShlokas();
+        }
       }
+    } catch (e) {
+      try {
+        await _box?.put(_keyHour, prevHour);
+        await _box?.put(_keyMinute, prevMinute);
+      } catch (rollbackError) {
+        debugPrint('Failed to roll back notification time: $rollbackError');
+      }
+      debugPrint('Failed to set notification time: $e');
+      rethrow;
     }
   }
 
@@ -246,18 +324,34 @@ class NotificationService {
     return _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
   }
 
-  /// Enable or disable Shloka notifications
+  /// Enable or disable Shloka notifications.
+  ///
+  /// Like [setEnabled], the persisted flag is rolled back if scheduling
+  /// fails so callers can revert optimistic UI updates on error.
   Future<void> setShlokaEnabled(bool enabled) async {
     _ensureInitialized();
+    final previous =
+        _box?.get(_keyShlokaEnabled, defaultValue: false) as bool? ?? false;
     await _box?.put(_keyShlokaEnabled, enabled);
 
-    // SMELL-2: read main-enabled flag directly from the box.
-    final mainEnabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
-    if (enabled && mainEnabled) {
-      // Only schedule if main notifications are also enabled
-      await _scheduleUpcomingShlokas();
-    } else if (!enabled) {
-      await cancelShlokaNotifications();
+    try {
+      // SMELL-2: read main-enabled flag directly from the box.
+      final mainEnabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
+      if (enabled && mainEnabled) {
+        // Only schedule if main notifications are also enabled
+        await _assertSystemNotificationsAllowed();
+        await _scheduleUpcomingShlokas();
+      } else if (!enabled) {
+        await cancelShlokaNotifications();
+      }
+    } catch (e) {
+      try {
+        await _box?.put(_keyShlokaEnabled, previous);
+      } catch (rollbackError) {
+        debugPrint('Failed to roll back shloka flag: $rollbackError');
+      }
+      debugPrint('Failed to set shloka notifications to $enabled: $e');
+      rethrow;
     }
   }
 
@@ -344,19 +438,114 @@ class NotificationService {
     }
   }
 
-  /// Request notification permission (Android 13+)
+  /// Request notification permission.
+  ///
+  /// Returns true when notifications may be scheduled. Never throws: plugin
+  /// errors (e.g. MissingPluginException on platforms without a registered
+  /// implementation) fail closed with a log so the settings toggle can show
+  /// the "permission denied" message instead of snapping back silently.
   Future<bool> requestPermission() async {
-    final android = _notifications
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+    try {
+      final android = _notifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        final granted = await android.requestNotificationsPermission();
+        return granted ?? false;
+      }
 
-    if (android != null) {
-      final granted = await android.requestNotificationsPermission();
-      return granted ?? false;
+      final ios = _notifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (ios != null) {
+        final granted = await ios.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        return granted ?? false;
+      }
+
+      final macos = _notifications
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      if (macos != null) {
+        final granted = await macos.requestPermissions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+        return granted ?? false;
+      }
+
+      // No runtime permission model (e.g. Windows/Linux/web).
+      return true;
+    } catch (e) {
+      debugPrint('Notification permission request failed: $e');
+      return false;
     }
+  }
 
-    return true;
+  /// Throws a descriptive [StateError] when the OS currently blocks this
+  /// app's notifications (e.g. the user revoked permission in system
+  /// settings after granting it). Scheduling APIs "succeed" silently in
+  /// that state, so enable paths must check first instead of leaving the
+  /// toggle ON while nothing can ever fire.
+  ///
+  /// Fail-open when the check itself is unavailable (unknown platform or
+  /// plugin error): the schedule attempt will surface real failures.
+  Future<void> _assertSystemNotificationsAllowed() async {
+    try {
+      final android = _notifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        final enabled = await android.areNotificationsEnabled();
+        if (enabled == false) {
+          throw StateError(
+            'Notifications are disabled for Tithi in system settings',
+          );
+        }
+        return;
+      }
+
+      final ios = _notifications
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (ios != null) {
+        final status = await ios.checkPermissions();
+        if (status != null && !status.isEnabled) {
+          throw StateError(
+            'Notifications are disabled for Tithi in system settings',
+          );
+        }
+        return;
+      }
+
+      final macos = _notifications
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      if (macos != null) {
+        final status = await macos.checkPermissions();
+        if (status != null && !status.isEnabled) {
+          throw StateError(
+            'Notifications are disabled for Tithi in system settings',
+          );
+        }
+        return;
+      }
+      // No OS-level gate to check (Windows/Linux/web).
+    } on StateError {
+      rethrow;
+    } catch (e) {
+      debugPrint('System notification check unavailable, proceeding: $e');
+    }
   }
 
   /// Schedule daily notification
@@ -532,13 +721,14 @@ class NotificationService {
   Future<String> _getDeviceTimezone() async {
     try {
       final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      return timezoneInfo;
+      if (timezoneInfo.isNotEmpty) return timezoneInfo;
+      debugPrint('flutter_timezone returned empty name, using Asia/Kolkata');
     } catch (e) {
       debugPrint(
         'flutter_timezone unavailable, defaulting to Asia/Kolkata: $e',
       );
-      return 'Asia/Kolkata';
     }
+    return 'Asia/Kolkata';
   }
 
   Future<void> showTestNotification({
