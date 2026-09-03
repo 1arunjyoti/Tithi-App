@@ -143,7 +143,7 @@ class NotificationService {
       );
 
       await _notifications.initialize(
-        settings: initSettings,
+        initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
@@ -265,7 +265,7 @@ class NotificationService {
   Future<void> cancelShlokaNotifications() async {
     // Cancel IDs 1000 to 1006 (7 days)
     for (int i = 0; i < 7; i++) {
-      await _notifications.cancel(id: _shlokaNotificationIdBase + i);
+      await _notifications.cancel(_shlokaNotificationIdBase + i);
     }
   }
 
@@ -330,11 +330,11 @@ class NotificationService {
       );
 
       await _notifications.zonedSchedule(
-        id: _shlokaNotificationIdBase + i,
-        title: 'Daily Wisdom',
-        body: '"${shlokas[i].text}"\n\n${shlokas[i].translation}',
-        scheduledDate: scheduledDate,
-        notificationDetails: notificationDetails,
+        _shlokaNotificationIdBase + i,
+        'Daily Wisdom',
+        '"${shlokas[i].text}"\n\n${shlokas[i].translation}',
+        scheduledDate,
+        notificationDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
     }
@@ -364,7 +364,7 @@ class NotificationService {
     _ensureInitialized();
 
     // Cancel existing notification first
-    await _notifications.cancel(id: _dailyNotificationId);
+    await _notifications.cancel(_dailyNotificationId);
 
     final time = await getNotificationTime();
 
@@ -409,11 +409,11 @@ class NotificationService {
     final resolvedBody = body ?? content.body;
 
     await _notifications.zonedSchedule(
-      id: _dailyNotificationId,
-      title: resolvedTitle,
-      body: resolvedBody,
-      scheduledDate: scheduledDate,
-      notificationDetails: notificationDetails,
+      _dailyNotificationId,
+      resolvedTitle,
+      resolvedBody,
+      scheduledDate,
+      notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
     );
@@ -532,12 +532,15 @@ class NotificationService {
   Future<String> _getDeviceTimezone() async {
     try {
       final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      return timezoneInfo.identifier;
+      return timezoneInfo;
     } catch (e) {
-      debugPrint('flutter_timezone unavailable, defaulting to Asia/Kolkata: $e');
+      debugPrint(
+        'flutter_timezone unavailable, defaulting to Asia/Kolkata: $e',
+      );
       return 'Asia/Kolkata';
     }
   }
+
   Future<void> showTestNotification({
     required String title,
     required String body,
@@ -564,12 +567,7 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _notifications.show(
-      id: 0,
-      title: title,
-      body: body,
-      notificationDetails: notificationDetails,
-    );
+    await _notifications.show(0, title, body, notificationDetails);
 
     if (kDebugMode) {
       print('Showed test notification: $title');
@@ -592,7 +590,8 @@ class NotificationService {
     if (existing != null) return existing;
 
     // Allocate next sequential ID.
-    final counter = (_box?.get(_keySankalpaIdCounter, defaultValue: 0) as int?) ?? 0;
+    final counter =
+        (_box?.get(_keySankalpaIdCounter, defaultValue: 0) as int?) ?? 0;
     final newId = _sankalpaNotificationIdBase + counter;
     _box?.put(_keySankalpaIdCounter, counter + 1);
     _box?.put(mapKey, newId);
@@ -629,11 +628,11 @@ class NotificationService {
 
     // Sankalpa model logic: it has endDate.
     if (scheduledDate.isAfter(
-          tz.TZDateTime.from(
-            sankalpa.endDate,
-            tz.local,
-          ).add(const Duration(days: 1)),
-        )) {
+      tz.TZDateTime.from(
+        sankalpa.endDate,
+        tz.local,
+      ).add(const Duration(days: 1)),
+    )) {
       // Allow one day grace or stop exactly? Let's stop if past end date.
       return;
     }
@@ -659,11 +658,11 @@ class NotificationService {
     );
 
     await _notifications.zonedSchedule(
-      id: notificationId,
-      title: 'Sankalpa Reminder',
-      body: sankalpa.title,
-      scheduledDate: scheduledDate,
-      notificationDetails: notificationDetails,
+      notificationId,
+      'Sankalpa Reminder',
+      sankalpa.title,
+      scheduledDate,
+      notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
       payload: 'sankalpa:${sankalpa.id}',
@@ -679,7 +678,7 @@ class NotificationService {
   /// Cancel a sankalpa reminder
   Future<void> cancelSankalpaReminder(String id) async {
     final notificationId = _getOrCreateSankalpaNotificationId(id);
-    await _notifications.cancel(id: notificationId);
+    await _notifications.cancel(notificationId);
     if (kDebugMode) {
       print('Cancelled sankalpa notification: $id (ID: $notificationId)');
     }
