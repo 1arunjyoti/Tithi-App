@@ -33,11 +33,7 @@ class HinduCalendarService {
 
   /// Returns the base masa name, stripping any prefix.
   /// e.g. 'Adhika_Jyeshtha' / 'Nija_Jyeshtha' -> 'Jyeshtha', 'Jyeshtha' -> 'Jyeshtha'
-  String baseMasaName(String masa) {
-    if (masa.startsWith('Adhika_')) return masa.substring(7);
-    if (masa.startsWith('Nija_')) return masa.substring(5);
-    return masa;
-  }
+  String baseMasaName(String masa) => baseMasaNameStatic(masa);
 
   /// Calculates the Hindu Date details for a given Gregorian date.
   Future<
@@ -75,62 +71,13 @@ class HinduCalendarService {
     String masa = await service.calculateMasa(date, rawTithi);
 
     // 3. Calculate Year (Vikram Samvat)
-    // VS = Gregorian + 57 usually.
-    // Transition happens at Chaitra Shukla Pratipada.
-    // If Date is before Chaitra Shukla 1 -> Year is (Gregorian + 56).
-    // If Date is on/after -> (Gregorian + 57).
-
-    int vsYear = date.year + 57;
-
-    // Logic to determine if we are in the "late" part of Gregorian year (Mar-Dec) or "early" (Jan-Mar).
-    // Chaitra is usually March/April.
-    // Only Chaitra, Phalguna, Magh, Pausha are ambiguous regarding Gregorian Year?
-    // Actually, simple rule:
-    // If the calculated Masa is 'Chaitra'.. 'Phalguna'
-    // The sequence for a VS year is Chaitra(0) ... Phalguna(11).
-    // This sequence usually spans Gregorian N (Mar) to N+1 (Mar).
-    // Example: Chaitra 2081 starts April 2024.
-    // Phalguna 2081 ends March 2025.
-    // So for a date in April 2024 -> VS 2081.
-    // For a date in Feb 2025 -> VS 2081. (GregYear + 56).
-
-    // So:
-    // If date is Jan/Feb/March:
-    //    It could be VS (Year+56) if it's Phalguna/Magh/Pausha or late Chaitra(prev year?).
-    //    Wait, Chaitra starts the new year.
-    //    So if we are in Jan/Feb, we are in end of VS(Previous). i.e. 2025 -> VS 2081.
-    //    2025 + 56 = 2081.
-    //    So if date.month < 3 -> vsYear = date.year + 56.
-    //    If date.month > 4 -> vsYear = date.year + 57.
-    //    If date.month == 3 (March) or 4 (April), we need to check Masa.
-
-    if (date.month < 3) {
-      vsYear = date.year + 56;
-    } else if (date.month > 4) {
-      vsYear = date.year + 57;
-    } else {
-      // March or April.
-      // If Masa is Chaitra ->
-      //    If Paksha is Shukla -> New Year started -> +57.
-      //    If Paksha is Krishna (Amanta Chaitra vs Purnimanta?)
-      //    Amanta system: Month starts at Shukla Pratipada.
-      //    So Chaitra Shukla 1 is Day 1.
-      //    So if Masa is Chaitra, it is ALWAYS the new year in Amanta.
-      //    So Chaitra -> +57.
-      // If Masa is Phalguna -> Old Year -> +56.
-      // If Masa is Vaishakha -> New Year -> +57.
-
-      // Use baseMasaName to handle Adhika prefix (e.g. 'Adhika_Jyeshtha' -> 'Jyeshtha')
-      final baseMasa = baseMasaName(masa);
-      if (baseMasa == 'Chaitra' ||
-          baseMasa == 'Vaishakha' ||
-          baseMasa == 'Jyeshtha') {
-        vsYear = date.year + 57;
-      } else {
-        // Phalguna or before
-        vsYear = date.year + 56;
-      }
-    }
+    // VS = Gregorian + 57 on/after Chaitra Shukla Pratipada (New Year),
+    // Gregorian + 56 before it. See vikramSamvatYear for the boundary rules.
+    int vsYear = vikramSamvatYear(
+      gregorianYear: date.year,
+      gregorianMonth: date.month,
+      masa: masa,
+    );
 
     // Edge Case: 'Unknown' masa
     if (masa == 'Unknown') {
@@ -138,9 +85,11 @@ class HinduCalendarService {
       vsYear = date.year + 57;
     }
 
-    // 4. Calculate Shaka Samvat Year
-    // Shaka = Gregorian - 78 (after new year) or - 79 (before)
-    // New Year is same as Vikram: Chaitra Shukla 1
+    // 4. Calculate Shaka Samvat Year (traditional lunisolar Shaka shares the
+    // same Chaitra Shukla Pratipada New Year as Vikram; NOT the 1957 official
+    // solar civil calendar fixed at March 22).
+    // Shaka = Gregorian - 78 (after new year) or - 79 (before), which is
+    // exactly VS - 135 in both cases, so derive it to keep the invariant.
     final shakaYear = vsYear - 135; // VS - Shaka difference is 135 years
 
     return (
@@ -151,6 +100,46 @@ class HinduCalendarService {
       vsYear: vsYear,
       shakaYear: shakaYear,
     );
+  }
+
+  /// Vikram Samvat year for a Gregorian year/month and (Amanta) masa.
+  ///
+  /// Pure boundary logic, extracted for testability. Implements the spec rule:
+  /// +57 on/after Chaitra Shukla Pratipada (New Year), +56 before it.
+  /// - Jan/Feb can only hold the old year's tail (Pausha..Phalguna) -> +56.
+  /// - May..Dec can only hold the new year (Vaishakha onwards) -> +57.
+  /// - Mar/Apr straddles the New Year, so the masa decides: months from
+  ///   Chaitra onwards (Chaitra/Vaishakha/...) are the new year (+57),
+  ///   Phalguna and earlier are the old year (+56). In Amanta, any Chaitra
+  ///   day is on/after New Year by definition.
+  static int vikramSamvatYear({
+    required int gregorianYear,
+    required int gregorianMonth,
+    required String masa,
+  }) {
+    if (gregorianMonth < 3) {
+      return gregorianYear + 56;
+    }
+    if (gregorianMonth > 4) {
+      return gregorianYear + 57;
+    }
+    // March or April: use baseMasaName to handle Adhika prefix
+    // (e.g. 'Adhika_Jyeshtha' -> 'Jyeshtha').
+    final baseMasa = baseMasaNameStatic(masa);
+    if (baseMasa == 'Chaitra' ||
+        baseMasa == 'Vaishakha' ||
+        baseMasa == 'Jyeshtha') {
+      return gregorianYear + 57;
+    }
+    // Phalguna or before
+    return gregorianYear + 56;
+  }
+
+  /// Static base-masa helper so [vikramSamvatYear] stays instance-free.
+  static String baseMasaNameStatic(String masa) {
+    if (masa.startsWith('Adhika_')) return masa.substring(7);
+    if (masa.startsWith('Nija_')) return masa.substring(5);
+    return masa;
   }
 
   /// returns the Gregorian Date for the Start (Shukla Pratipada) of the given Hindu Month/Year

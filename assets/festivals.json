@@ -769,7 +769,7 @@
       "addtional_description": ""
     },
     "panchang_rules": {
-      "masa": "Vaishakha",
+      "masa": "Chaitra",
       "paksha": "Krishna",
       "tithi": 11,
       "conditions": "Ekadashi"
@@ -1308,7 +1308,7 @@
       "addtional_description": ""
     },
     "panchang_rules": {
-      "masa": "Shravana",
+      "masa": "Ashadha",
       "paksha": "Krishna",
       "tithi": 11,
       "conditions": "Ekadashi"
@@ -1646,7 +1646,7 @@
       "addtional_description": ""
     },
     "panchang_rules": {
-      "masa": "Bhadrapada",
+      "masa": "Shravana",
       "paksha": "Krishna",
       "tithi": 3,
       "conditions": "Tritiya"

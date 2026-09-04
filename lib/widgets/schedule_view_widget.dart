@@ -19,7 +19,7 @@ class HinduDateData {
   final String month; // masa name (with month system applied)
   final String paksha;
   final int year; // year in selected era
-  final String eraLabel; // "VS" or "Shaka"
+  final String eraLabel; // "Vikram" or "Shaka"
 
   HinduDateData({
     required this.day,
@@ -68,10 +68,11 @@ final hinduDateForScheduleProvider = FutureProvider.autoDispose
             : hDate.tithi;
 
         // Apply month system conversion if needed
-        String masa = hDate.masa;
-        if (monthSystem == HinduMonthSystem.purnimant) {
-          masa = convertAmantaToPurnimant(hDate.masa, hDate.paksha);
-        }
+        String masa = displayMasaName(
+          hDate.masa,
+          hDate.paksha,
+          monthSystem,
+        );
         // Replace underscores with spaces for display (e.g. 'Adhika_Jyeshtha' -> 'Adhika Jyeshtha')
         masa = masa.replaceAll('_', ' ');
 
@@ -535,6 +536,10 @@ class _ScheduleDateItem extends ConsumerWidget {
   ) {
     final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
     final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
+    // Display settings for the panchang-data fallback below (Amanta values
+    // converted at render; Shukla days are identical in both systems).
+    final monthSystem = ref.watch(cp.hinduMonthSystemProvider);
+    final tithiMode = ref.watch(cp.tithiDisplayModeProvider);
 
     // Determine what to show based on primary calendar system
     String primaryMonth;
@@ -571,19 +576,25 @@ class _ScheduleDateItem extends ConsumerWidget {
             .toUpperCase();
         primaryDay = '${hinduDate.day}';
       } else {
-        // Fallback to panchang data
+        // Fallback to panchang data (Amanta) with display settings applied.
+        final fallbackMasa = displayMasaName(
+          panchang.masa,
+          panchang.paksha,
+          monthSystem,
+        );
         primaryMonth = panchang.masa.isNotEmpty
-            ? panchang.masa
+            ? fallbackMasa
                   .replaceAll('_', ' ')
                   .split(' ')
                   .last
                   .substring(
                     0,
-                    panchang.masa.split('_').last.length.clamp(0, 4),
+                    fallbackMasa.split('_').last.length.clamp(0, 4),
                   )
                   .toUpperCase()
             : gregorianMonth;
-        primaryDay = '${panchang.tithiNumber}';
+        primaryDay =
+            '${tithiMode == cp.TithiDisplayMode.continuous30 ? panchang.tithiIndex : panchang.tithiNumber}';
       }
 
       // Show secondary based on selection

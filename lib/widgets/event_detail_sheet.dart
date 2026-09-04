@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
+import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
+import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/share_service.dart';
@@ -35,6 +37,9 @@ class EventDetailSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final themeColor =
         _parseThemeColor(festival.visuals.themeColor) ?? context.colors.primary;
+    // Month system for Masa labels: Purnimant Krishna days carry the next
+    // month's name (e.g. Janmashtami = Bhadrapada, not Shravana).
+    final monthSystem = ref.watch(hinduMonthSystemProvider);
 
     // Gather non-null, non-empty regional names
     final regionalNames = <String>[];
@@ -304,86 +309,161 @@ class EventDetailSheet extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     if (panchang != null) ...[
-                      _buildInfoRow(
-                        context,
-                        Icons.brightness_3,
-                        AppLocalizations.of(context)?.paksha ?? 'Paksha',
-                        '${panchang!.paksha} (${panchang!.isShukla ? (AppLocalizations.of(context)?.waxing ?? "Waxing") : (AppLocalizations.of(context)?.waning ?? "Waning")})',
-                      ),
-                      _buildInfoRow(
-                        context,
-                        Icons.calendar_today,
-                        AppLocalizations.of(context)?.tithi ?? 'Tithi',
-                        '${panchang!.tithiName} (T${panchang!.tithiNumber})',
-                      ),
-                      // Masa (Hindu month)
+                      // Festival-observed paksha/tithi: festivals with a
+                      // timingOverride (e.g. Ganesh Chaturthi at madhyahna)
+                      // are observed on a tithi that can differ from the
+                      // sunrise tithi, so rows and timings below follow the
+                      // festival's tithi, not the day's sunrise tithi.
+                      // Solar festivals (and rules without a tithi) have no
+                      // lunar observance: their rows stay day-based and no
+                      // timings are shown.
+                      Builder(
+                        builder: (context) {
+                          final useObserved =
+                              festival.conditions != 'Solar' &&
+                              festival.tithi >= 1;
+                          final observedPaksha = useObserved
+                              ? festival.resolvePaksha(panchang!.paksha)
+                              : panchang!.paksha;
+                          final observedIndex = useObserved
+                              ? festival.resolveTithiIndex(panchang!.paksha)
+                              : panchang!.tithiIndex;
+                          final observedNum = observedIndex <= 15
+                              ? observedIndex
+                              : observedIndex - 15;
+                          final showTimings = useObserved;
+                          final displayTithiNum =
+                              ref.watch(tithiDisplayModeProvider) ==
+                                  TithiDisplayMode.continuous30
+                              ? observedIndex
+                              : observedNum;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildInfoRow(
+                                context,
+                                Icons.brightness_3,
+                                AppLocalizations.of(context)?.paksha ?? 'Paksha',
+                                '$observedPaksha (${observedPaksha == 'Shukla' ? (AppLocalizations.of(context)?.waxing ?? "Waxing") : (AppLocalizations.of(context)?.waning ?? "Waning")})',
+                              ),
+                              _buildInfoRow(
+                                context,
+                                Icons.calendar_today,
+                                AppLocalizations.of(context)?.tithi ?? 'Tithi',
+                                // Respect the Settings tithi display mode:
+                                // paksha-based shows T1-15, continuous shows
+                                // T1-30 — of the observed (festival) tithi.
+                                '${PanchangData.tithiNameFor(observedNum, observedPaksha)} (T$displayTithiNum)',
+                              ),
+                      // Masa (Hindu month) — converted for Purnimant display.
+                      // panchang.masa is always Amanta; Krishna days take the
+                      // next month's name in Purnimant (Shukla unchanged).
                       if (panchang!.masa.isNotEmpty)
                         _buildInfoRow(
                           context,
                           Icons.wb_sunny_outlined,
                           'Masa',
-                          panchang!.masa
-                              .replaceAll('_', ' ')
-                              .split(' ')
-                              .map(
-                                (w) => w.isEmpty
-                                    ? w
-                                    : '${w[0].toUpperCase()}${w.substring(1)}',
+                          displayMasaName(
+                                panchang!.masa,
+                                panchang!.paksha,
+                                monthSystem,
                               )
-                              .join(' '),
-                        ),
-
-                      // Tithi Timings using user's location
-                      Consumer(
-                        builder: (context, ref, child) {
-                          final coords = ref.watch(resolvedCoordinatesProvider);
-                          final timingsAsync = ref.watch(
-                            tithiTimingsProvider((
-                              date: panchang!.date,
-                              tithiNumber: panchang!.tithiNumber,
-                              latitude: coords.latitude,
-                              longitude: coords.longitude,
-                            )),
-                          );
-
-                          return timingsAsync.when(
-                            data: (timings) {
-                              final dateFormat = DateFormat('h:mm a, MMM d');
-                              final startStr = dateFormat.format(timings.start);
-                              final endStr = dateFormat.format(timings.end);
-
-                              return Column(
-                                children: [
-                                  _buildInfoRow(
-                                    context,
-                                    Icons.access_time,
-                                    'Begins',
-                                    startStr,
-                                    trailing: _buildTimingInfoButton(context),
-                                  ),
-                                  _buildInfoRow(
-                                    context,
-                                    Icons.access_time_filled,
-                                    'Ends',
-                                    endStr,
-                                    trailing: _buildTimingInfoButton(context),
-                                  ),
-                                ],
-                              );
-                            },
-                            loading: () => const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
+                              .replaceAll('_', ' ')
+                                      .split(' ')
+                                      .map(
+                                        (w) => w.isEmpty
+                                            ? w
+                                            : '${w[0].toUpperCase()}${w.substring(1)}',
+                                      )
+                                      .join(' '),
                                 ),
-                              ),
-                            ),
-                            error: (err, stack) => const SizedBox.shrink(),
+
+                              // Tithi Timings using user's location.
+                              // Solar festivals (fixed Gregorian dates) have
+                              // no tithi span, so no timings are shown.
+                              if (showTimings)
+                                Consumer(
+                                  builder: (context, ref, child) {
+                                    final coords = ref.watch(
+                                      resolvedCoordinatesProvider,
+                                    );
+                                    final timingsAsync = ref.watch(
+                                      tithiTimingsProvider((
+                                        date: panchang!.date,
+                                        // Full 1-30 index of the OBSERVED
+                                        // (festival) tithi, not the sunrise
+                                        // tithi (see above).
+                                        tithiIndex: observedIndex,
+                                        latitude: coords.latitude,
+                                        longitude: coords.longitude,
+                                      )),
+                                    );
+
+                                    return timingsAsync.when(
+                                      data: (timings) {
+                                        // Kshaya (skipped) tithi: the nearest
+                                        // occurrence belongs to another
+                                        // lunation, so hide rather than show
+                                        // a wrong-month span.
+                                        if (timings == null) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final dateFormat = DateFormat(
+                                          'h:mm a, MMM d',
+                                        );
+                                        final startStr = dateFormat.format(
+                                          timings.start,
+                                        );
+                                        final endStr = dateFormat.format(
+                                          timings.end,
+                                        );
+
+                                        return Column(
+                                          children: [
+                                            _buildInfoRow(
+                                              context,
+                                              Icons.access_time,
+                                              'Begins',
+                                              startStr,
+                                              trailing:
+                                                  _buildTimingInfoButton(
+                                                    context,
+                                                  ),
+                                            ),
+                                            _buildInfoRow(
+                                              context,
+                                              Icons.access_time_filled,
+                                              'Ends',
+                                              endStr,
+                                              trailing:
+                                                  _buildTimingInfoButton(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                      loading: () => const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 8,
+                                        ),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      error: (err, stack) =>
+                                          const SizedBox.shrink(),
+                                    );
+                                  },
+                                ),
+                            ],
                           );
                         },
                       ),
@@ -399,15 +479,23 @@ class EventDetailSheet extends ConsumerWidget {
                         context,
                         Icons.calendar_today,
                         AppLocalizations.of(context)?.tithi ?? 'Tithi',
-                        'Tithi ${festival.tithi}',
+                        // Respect the Settings tithi display mode here too:
+                        // festival rules store paksha-based 1-15, so map
+                        // Krishna tithis to 16-30 in continuous mode.
+                        'Tithi ${ref.watch(tithiDisplayModeProvider) == TithiDisplayMode.continuous30 && festival.paksha == 'Krishna' ? festival.tithi + 15 : festival.tithi}',
                       ),
-                      // Masa from festival rules
+                      // Masa from festival rules (stored Amanta) — converted
+                      // for Purnimant display using the rule's own paksha.
                       if (festival.masa.isNotEmpty && festival.masa != '*')
                         _buildInfoRow(
                           context,
                           Icons.wb_sunny_outlined,
                           'Masa',
-                          festival.masa
+                          displayMasaName(
+                                festival.masa,
+                                festival.paksha,
+                                monthSystem,
+                              )
                               .replaceAll('_', ' ')
                               .split(' ')
                               .map(

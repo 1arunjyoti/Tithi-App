@@ -334,15 +334,49 @@ class PanchangService {
     return estimate.subtract(const Duration(days: 45));
   }
 
+  /// Shared helper: finds the occurrence of [targetTithiNum] nearest to
+  /// [approxDate] by searching outward in 2-hour steps (up to ±15 days).
+  ///
+  /// This matters because [approxDate] is the festival day at midnight, which
+  /// is often still the *previous* tithi (e.g. Saptami at 00:00 while sunrise
+  /// is Ashtami). A one-directional walk from there picks the wrong lunation:
+  /// walking backward finds last month's occurrence (hence "Ends: Aug 6" for
+  /// a Sep 4 festival), walking forward finds next month's. Searching outward
+  /// guarantees the day's own occurrence (hours away) wins over the adjacent
+  /// lunation's (~29.5 days away). Returns null for a Kshaya (skipped) tithi.
+  Future<DateTime?> _findNearestTithiOccurrence(
+    DateTime approxDate,
+    int targetTithiNum,
+    Future<int> Function(DateTime dt) getTithi,
+  ) async {
+    if (await getTithi(approxDate) == targetTithiNum) return approxDate;
+    // ±15 days in 2-hour steps = 180 iterations per side.
+    for (var step = 1; step <= 180; step++) {
+      final forward = approxDate.add(Duration(hours: step * 2));
+      if (await getTithi(forward) == targetTithiNum) return forward;
+      final backward = approxDate.subtract(Duration(hours: step * 2));
+      if (await getTithi(backward) == targetTithiNum) return backward;
+    }
+    return null;
+  }
+
   /// BUG-06: Calculates the exact start time of a specific tithi using binary
   /// search instead of linear stepping, reducing worst-case FFI calls from
   /// O(hours + minutes) ≈ 168 to O(log(minutes in 2 days)) ≈ 25.
+  ///
+  /// [targetTithiNum] is the full 1-30 tithi index (rawTithi.floor():
+  /// 1-15 = Shukla, 16-30 = Krishna). Pass e.g. 23 for Krishna Ashtami,
+  /// NOT 8 — the paksha-relative number is ambiguous.
   Future<DateTime> calculateTithiStartTime(
     DateTime approxDate,
     int targetTithiNum, {
     double latitude = 28.6139,
     double longitude = 77.2090,
   }) async {
+    assert(
+      targetTithiNum >= 1 && targetTithiNum <= 30,
+      'targetTithiNum must be the 1-30 tithi index, got $targetTithiNum',
+    );
     final location = GeographicLocation(
       latitude: latitude,
       longitude: longitude,
@@ -367,22 +401,25 @@ class PanchangService {
       return raw.floor();
     }
 
+    // Anchor on the nearest occurrence: approxDate (midnight) is often still
+    // the previous tithi, so establish `hi` inside the day's own occurrence
+    // rather than walking blindly forward (which overshoots to next month
+    // when approxDate is already past the tithi).
+    final inside = await _findNearestTithiOccurrence(
+      approxDate,
+      targetTithiNum,
+      getTithi,
+    );
+    // Kshaya (skipped) tithi — no occurrence nearby; return approx as fallback.
+    if (inside == null) return approxDate;
+
     // Establish a search window: lo must be outside the target tithi,
     // hi must be inside it.
-    DateTime lo = approxDate.subtract(const Duration(days: 2));
-    DateTime hi = approxDate;
+    DateTime lo = inside.subtract(const Duration(days: 2));
+    DateTime hi = inside;
 
-    // BUG-2: walk forward with an iteration guard (max ~30 days = 360 × 2 h).
-    // A Kshaya (skipped) tithi would otherwise loop infinitely.
-    var hiGuard = 0;
-    while (await getTithi(hi) != targetTithiNum && hiGuard++ < 360) {
-      hi = hi.add(const Duration(hours: 2));
-    }
-    // Tithi not found within search window — return the approximate date as
-    // a safe fallback rather than blocking the caller indefinitely.
-    if (hiGuard >= 360) return approxDate;
-
-    // Walk lo back until it is outside the target tithi.
+    // Walk lo back until it is outside the target tithi (normally 0
+    // iterations: a tithi lasts <26h so 2 days back is always outside).
     var loGuard = 0;
     while (await getTithi(lo) == targetTithiNum && loGuard++ < 360) {
       lo = lo.subtract(const Duration(hours: 2));
@@ -404,12 +441,18 @@ class PanchangService {
 
   /// BUG-06: Calculates the exact end time of a specific tithi using binary
   /// search instead of linear stepping.
+  ///
+  /// [targetTithiNum] is the full 1-30 tithi index (see [calculateTithiStartTime]).
   Future<DateTime> calculateTithiEndTime(
     DateTime approxDate,
     int targetTithiNum, {
     double latitude = 28.6139,
     double longitude = 77.2090,
   }) async {
+    assert(
+      targetTithiNum >= 1 && targetTithiNum <= 30,
+      'targetTithiNum must be the 1-30 tithi index, got $targetTithiNum',
+    );
     final location = GeographicLocation(
       latitude: latitude,
       longitude: longitude,
@@ -434,19 +477,25 @@ class PanchangService {
       return raw.floor();
     }
 
+    // Anchor on the nearest occurrence: approxDate (midnight) is often still
+    // the previous tithi, so establish `lo` inside the day's own occurrence
+    // rather than walking backward (which falls back to last month's
+    // occurrence — the "Ends: Aug 6 for a Sep 4 festival" bug).
+    final inside = await _findNearestTithiOccurrence(
+      approxDate,
+      targetTithiNum,
+      getTithi,
+    );
+    // Kshaya (skipped) tithi — no occurrence nearby; return approx as fallback.
+    if (inside == null) return approxDate;
+
     // Establish a search window: lo must be inside the target tithi,
     // hi must be outside it.
-    DateTime lo = approxDate;
-    DateTime hi = approxDate.add(const Duration(days: 2));
+    DateTime lo = inside;
+    DateTime hi = inside.add(const Duration(days: 2));
 
-    // BUG-2: walk back with an iteration guard (max ~30 days = 360 × 2 h).
-    var loGuard = 0;
-    while (await getTithi(lo) != targetTithiNum && loGuard++ < 360) {
-      lo = lo.subtract(const Duration(hours: 2));
-    }
-    if (loGuard >= 360) return approxDate;
-
-    // Walk hi forward until it is outside the target tithi.
+    // Walk hi forward until it is outside the target tithi (normally 0
+    // iterations: a tithi lasts <26h so 2 days ahead is always outside).
     var hiGuard = 0;
     while (await getTithi(hi) == targetTithiNum && hiGuard++ < 360) {
       hi = hi.add(const Duration(hours: 2));

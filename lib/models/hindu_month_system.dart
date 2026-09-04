@@ -59,6 +59,21 @@ String convertAmantaToPurnimant(String amantaMasa, String paksha) {
   return hinduMonthsOrder[nextIndex];
 }
 
+/// Display label for an Amanta [amantaMasa] on a [paksha] day under [system].
+///
+/// Single definition for UI and export so the two can never drift: Shukla
+/// days are identical in both systems; Krishna days take the next month's
+/// name in Purnimant (e.g. Janmashtami day: Shravana -> Bhadrapada).
+/// Unknown/Adhika names pass through unchanged.
+String displayMasaName(
+  String amantaMasa,
+  String paksha,
+  HinduMonthSystem system,
+) {
+  if (system != HinduMonthSystem.purnimant) return amantaMasa;
+  return convertAmantaToPurnimant(amantaMasa, paksha);
+}
+
 /// Converts a Purnimant month name to Amanta equivalent during Krishna Paksha.
 ///
 /// This is the reverse of convertAmantaToPurnimant.
@@ -88,7 +103,7 @@ extension HinduYearEraExt on HinduYearEra {
   };
 
   String get shortLabel => switch (this) {
-    HinduYearEra.vikramSamvat => 'VS',
+    HinduYearEra.vikramSamvat => 'Vikram',
     HinduYearEra.shakaSamvat => 'Shaka',
   };
 

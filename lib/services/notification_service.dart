@@ -699,9 +699,17 @@ class NotificationService {
         ),
       );
 
+      // Display the masa in the user's selected month system (Purnimant
+      // Krishna days carry the next month's name; Shukla is identical).
+      final displayMasa = displayMasaName(
+        panchang.masa,
+        panchang.paksha,
+        monthSystem,
+      );
+
       return (
         title: '🙏 ${panchang.tithiName}',
-        body: '${panchang.paksha} • ${panchang.tithiNumber} (${panchang.masa})',
+        body: '${panchang.paksha} • ${panchang.tithiNumber} ($displayMasa)',
       );
     } catch (e, stack) {
       // BUG-MEDIUM-7: Surface the error instead of swallowing it silently.
