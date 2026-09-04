@@ -44,6 +44,7 @@ dependencies:
   flutter_displaymode: ^0.7.0
   flutter_timezone: ^3.0.0
   home_widget: ^0.9.3
+  file_picker: ^11.0.3
 
 dev_dependencies:
   flutter_test:

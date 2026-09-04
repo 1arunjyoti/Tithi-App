@@ -31,6 +31,12 @@ class PanchangData {
   /// Check if this is Krishna Paksha (waning moon)
   bool get isKrishna => paksha == 'Krishna';
 
+  /// Full tithi index in the 1-30 cycle (rawTithi.floor()).
+  /// Unlike [tithiNumber] (1-15 within a paksha), this uniquely identifies
+  /// the tithi: 1-15 = Shukla, 16-30 = Krishna.
+  /// Use this when querying exact tithi start/end times.
+  int get tithiIndex => rawTithi.floor().clamp(1, 30);
+
   /// Check if there are any festivals on this day
   bool get hasFestivals => festivals.isNotEmpty;
 
@@ -44,9 +50,14 @@ class PanchangData {
 
   /// Create from raw tithi calculation
   ///
-  /// [monthSystem] - The calendar system to use for festival matching.
-  /// Defaults to Amanta. When Purnimant is selected, the masa is converted
-  /// for accurate festival matching since festivals are stored in Amanta format.
+  /// [monthSystem] - The calendar display system (Amanta or Purnimant).
+  /// Festival matching is ALWAYS done in Amanta: festivals are stored in
+  /// Amanta format and [masa]/[masaNextSunrise] are Amanta values computed
+  /// by the panchang service. Purnimant conversion is display-only and is
+  /// applied by widgets at render time — passing the display system into
+  /// matching here would double-shift Krishna-paksha masas (e.g. Amanta
+  /// Shravana Krishna misread as Purnimant and shifted to Ashadha),
+  /// making Krishna festivals such as Janmashtami disappear.
   factory PanchangData.fromRawTithi({
     required DateTime date,
     required double rawTithi,
@@ -75,7 +86,7 @@ class PanchangData {
     }
 
     // Get tithi name
-    final tithiName = _getTithiName(tithiNumber, paksha);
+    final tithiName = tithiNameFor(tithiNumber, paksha);
 
     // Find matching festivals (pass month system for proper conversion)
     final matchingFestivals = allFestivals.where((f) {
@@ -91,17 +102,25 @@ class PanchangData {
       // BUG-04: pass `date` so weekday constraints are evaluated.
       double targetRawTithi = switch (f.panchangRules.timingOverride) {
         'madhyahna' => rawTithiMadhyahna ?? rawTithi,
-        'aparahna'  => rawTithiAparahna  ?? rawTithi,
-        'nishita'   => rawTithiNishita   ?? rawTithi,
-        _           => rawTithi,
+        'aparahna' => rawTithiAparahna ?? rawTithi,
+        'nishita' => rawTithiNishita ?? rawTithi,
+        _ => rawTithi,
       };
 
       final targetIndex = targetRawTithi.floor();
       final targetPaksha = targetIndex <= 15 ? 'Shukla' : 'Krishna';
-      final targetTithiNum =
-          targetIndex <= 15 ? targetIndex : targetIndex - 15;
-      bool isMatch =
-          f.matchesTithi(targetPaksha, targetTithiNum, masa, monthSystem, date);
+      final targetTithiNum = targetIndex <= 15 ? targetIndex : targetIndex - 15;
+      // Match in Amanta: both the stored festival rules and `masa` (from
+      // calculateMasa) are Amanta. `monthSystem` is display-only; passing it
+      // here would convert an already-Amanta masa a second time and drop
+      // every Krishna-paksha festival in Purnimant mode.
+      bool isMatch = f.matchesTithi(
+        targetPaksha,
+        targetTithiNum,
+        masa,
+        HinduMonthSystem.amanta,
+        date,
+      );
 
       // Fallback for Kshaya Tithi: if the required tithi falls entirely
       // between this sunrise and the next, count it as matching today.
@@ -117,8 +136,9 @@ class PanchangData {
           for (int i = currentSunriseIndex + 1; i < nextSunriseIndex; i++) {
             int skippedIndex = i > 30 ? i - 30 : i;
             String kshayaPaksha = skippedIndex <= 15 ? 'Shukla' : 'Krishna';
-            int kshayaTithiNum =
-                skippedIndex <= 15 ? skippedIndex : skippedIndex - 15;
+            int kshayaTithiNum = skippedIndex <= 15
+                ? skippedIndex
+                : skippedIndex - 15;
 
             // If the Kshaya Tithi crosses the Amavasya/Purnima boundary,
             // use masaNextSunrise for the comparison.
@@ -129,12 +149,22 @@ class PanchangData {
 
             // BUG-5: avoid a redundant identical matchesTithi call when
             // testMasa == masa (no boundary crossing for this skipped tithi).
+            // Amanta matching (see above): `masa`/`testMasa` are Amanta.
             final matchesCurrent = f.matchesTithi(
-              kshayaPaksha, kshayaTithiNum, masa, monthSystem, date,
+              kshayaPaksha,
+              kshayaTithiNum,
+              masa,
+              HinduMonthSystem.amanta,
+              date,
             );
-            final matchesBoundary = testMasa != masa &&
+            final matchesBoundary =
+                testMasa != masa &&
                 f.matchesTithi(
-                  kshayaPaksha, kshayaTithiNum, testMasa, monthSystem, date,
+                  kshayaPaksha,
+                  kshayaTithiNum,
+                  testMasa,
+                  HinduMonthSystem.amanta,
+                  date,
                 );
             if (matchesCurrent || matchesBoundary) {
               return true;
@@ -159,7 +189,11 @@ class PanchangData {
     );
   }
 
-  static String _getTithiName(int tithiNum, String paksha) {
+  /// Tithi name for a paksha-relative number (1-15) and paksha.
+  /// Public so festival-scoped UI (e.g. the event detail sheet, which shows
+  /// the festival's observed tithi rather than the sunrise tithi) can label
+  /// any tithi without a full PanchangData.
+  static String tithiNameFor(int tithiNum, String paksha) {
     const tithiNames = [
       '',
       'Pratipada',

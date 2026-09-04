@@ -380,7 +380,9 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${panchang.tithiNumber}',
+                  // Respect the Settings tithi display mode (1-15 paksha
+                  // based vs 1-30 continuous).
+                  '${ref.watch(tithiDisplayModeProvider) == TithiDisplayMode.continuous30 ? panchang.tithiIndex : panchang.tithiNumber}',
                   style: TextStyle(
                     color: context.colors.primary,
                     fontWeight: FontWeight.bold,

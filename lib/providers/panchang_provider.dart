@@ -330,13 +330,21 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
     });
 
 /// Provider to calculate the exact start and end times for a specific Tithi on-demand.
-/// We pass an object or record containing the date and the precise tithi number.
+/// [tithiIndex] is the full 1-30 tithi index (1-15 = Shukla, 16-30 = Krishna),
+/// i.e. the festival's OBSERVED tithi ([Festival.resolveTithiIndex]) — which
+/// can differ from the day's sunrise tithi when a timingOverride applies.
+/// NOTE: do NOT pass the 1-15 paksha-relative [PanchangData.tithiNumber] here —
+/// doing so silently resolves Krishna tithis to the wrong (Shukla) fortnight.
+///
+/// Returns null when the tithi has no occurrence near [date] (Kshaya /
+/// skipped tithi): the nearest occurrence would belong to another lunation,
+/// so callers must hide timings instead of showing a wrong-month span.
 final tithiTimingsProvider =
     FutureProvider.family<
-      ({DateTime start, DateTime end}),
-      ({DateTime date, int tithiNumber, double latitude, double longitude})
+      ({DateTime start, DateTime end})?,
+      ({DateTime date, int tithiIndex, double latitude, double longitude})
     >((ref, params) async {
-      final service = ref.watch(panchangServiceProvider);
+      final service = ref.read(panchangServiceProvider);
       if (!service.isInitialized) {
         await service.init();
       }
@@ -344,17 +352,24 @@ final tithiTimingsProvider =
       // Calculate start and end times via binary search in the native service
       final startTime = await service.calculateTithiStartTime(
         params.date,
-        params.tithiNumber,
+        params.tithiIndex,
         latitude: params.latitude,
         longitude: params.longitude,
       );
 
       final endTime = await service.calculateTithiEndTime(
         params.date,
-        params.tithiNumber,
+        params.tithiIndex,
         latitude: params.latitude,
         longitude: params.longitude,
       );
+
+      // Guard: a tithi lasts <26h, so a span starting/ending more than 2
+      // days from the festival day belongs to another lunation (Kshaya).
+      if (startTime.difference(params.date).inDays.abs() > 2 ||
+          endTime.difference(params.date).inDays.abs() > 2) {
+        return null;
+      }
 
       return (start: startTime, end: endTime);
     });

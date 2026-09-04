@@ -15,3 +15,35 @@ Future<String?> saveImageToTemp(Uint8List imageBytes, String name) async {
     return null;
   }
 }
+
+/// Mobile implementation - saves text content to a temporary file.
+/// Returns the file path, or null on failure.
+Future<String?> saveTextToTemp(String content, String filename) async {
+  try {
+    final directory = await getTemporaryDirectory();
+    final safeName = filename.replaceAll(RegExp(r'[^\w\-.]+'), '_');
+    final filePath = '${directory.path}/$safeName';
+    final file = File(filePath);
+    await file.writeAsString(content);
+    return filePath;
+  } catch (e) {
+    return null;
+  }
+}
+
+/// Mobile implementation - saves text content to the app's documents
+/// directory, where it persists (unlike the cache/temp directory, which the
+/// OS may purge). No storage permission needed. Returns the file path,
+/// or null on failure.
+Future<String?> saveTextToDocuments(String content, String filename) async {
+  try {
+    final directory = await getApplicationDocumentsDirectory();
+    final safeName = filename.replaceAll(RegExp(r'[^\w\-.]+'), '_');
+    final filePath = '${directory.path}/$safeName';
+    final file = File(filePath);
+    await file.writeAsString(content);
+    return filePath;
+  } catch (e) {
+    return null;
+  }
+}

@@ -1,10 +1,17 @@
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:async' show unawaited;
+import 'dart:convert' show utf8;
+import 'dart:typed_data';
 import '../providers/calendar_provider.dart';
+import '../providers/festival_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/notification_provider.dart';
+import '../providers/panchang_provider.dart';
 import '../providers/storage_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
@@ -13,6 +20,8 @@ import '../theme/app_theme.dart';
 import '../providers/accessibility_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../models/hindu_month_system.dart';
+import '../services/festival_export_service.dart';
+import '../services/share_file/share_file.dart';
 import '../widgets/settings_widgets.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -127,6 +136,8 @@ class SettingsScreen extends ConsumerWidget {
                       const SettingsGroupCard(
                         children: [
                           _ClearCacheSetting(),
+                          SettingsDivider(),
+                          _ExportFestivalsSetting(),
                           SettingsDivider(),
                           _ResetSettingsTile(),
                         ],
@@ -955,6 +966,244 @@ class _ClearCacheSetting extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+/// Exports every festival with its computed Panchang details for a chosen
+/// year as JSON. The user picks the destination in the system save dialog
+/// (Downloads, Drive, SD card...); on web it triggers a browser download.
+class _ExportFestivalsSetting extends ConsumerWidget {
+  const _ExportFestivalsSetting();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SettingsActionTile(
+      icon: Icons.ios_share_rounded,
+      title: 'Export Festivals (JSON)',
+      subtitle: 'Save all festivals with Panchang details to a file',
+      onTap: () => _showYearPicker(context, ref),
+    );
+  }
+
+  Future<void> _showYearPicker(BuildContext context, WidgetRef ref) async {
+    final thisYear = DateTime.now().year;
+    final years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
+
+    await SettingsBottomSheet.show(
+      context: context,
+      title: 'Export Festivals',
+      subtitle: 'First occurrence of each festival in the chosen year',
+      children: years.map((year) {
+        return SettingsPickerItem(
+          title: year.toString(),
+          isSelected: year == thisYear,
+          onTap: () {
+            Navigator.pop(context);
+            _runExport(context, ref, year);
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Future<void> _runExport(
+    BuildContext context,
+    WidgetRef ref,
+    int year,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      await ref.read(festivalInitProvider.future);
+      final service = ref.read(panchangServiceProvider);
+      if (!service.isInitialized) {
+        await service.init();
+      }
+      final festivals = ref.read(festivalProvider);
+      if (festivals.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No festivals to export')),
+        );
+        return;
+      }
+      final coords = ref.read(resolvedCoordinatesProvider);
+      final monthSystem = ref.read(hinduMonthSystemProvider);
+      final yearEra = ref.read(hinduYearEraProvider);
+
+      final progress = ValueNotifier<int>(0);
+      var cancelled = false;
+      var dialogOpen = false;
+      if (!context.mounted) {
+        progress.dispose();
+        return;
+      }
+      unawaited(
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => PopScope(
+            canPop: false,
+            child: AlertDialog(
+              title: Text('Exporting $year'),
+              content: ValueListenableBuilder<int>(
+                valueListenable: progress,
+                builder: (_, done, _) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(
+                      value: festivals.isEmpty
+                          ? null
+                          : done / festivals.length,
+                    ),
+                    const SizedBox(height: 12),
+                    Text('$done / ${festivals.length} festivals'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => cancelled = true,
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ),
+        ).whenComplete(() => dialogOpen = false),
+      );
+      dialogOpen = true;
+
+      String? json;
+      try {
+        json = await FestivalExportService().exportYearJson(
+          festivals: festivals,
+          service: service,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          monthSystem: monthSystem,
+          yearEra: yearEra,
+          year: year,
+          onProgress: (done, _) => progress.value = done,
+          isCancelled: () => cancelled,
+        );
+      } finally {
+        progress.dispose();
+        if (dialogOpen && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      }
+
+      if (json == null) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Export cancelled')),
+        );
+        return;
+      }
+
+      // System save picker: the user chooses where the file goes
+      // (Downloads, Drive, SD card...). On web this starts a download and
+      // always resolves to null. If the picker itself throws (e.g. the
+      // plugin is missing from a stale install), fall back to app-private
+      // storage so the export still succeeds.
+      final filename = 'tithi-festivals-$year.json';
+      String? savedPath;
+      var pickerFailed = false;
+      try {
+        savedPath = await FilePicker.saveFile(
+          dialogTitle: 'Save festivals $year',
+          fileName: filename,
+          type: FileType.custom,
+          allowedExtensions: ['json'],
+          bytes: Uint8List.fromList(utf8.encode(json)),
+        );
+      } catch (e) {
+        debugPrint('Save picker unavailable, using app storage: $e');
+        pickerFailed = true;
+      }
+
+      if (!context.mounted) return;
+
+      if (savedPath == null && kIsWeb && !pickerFailed) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Download started')),
+        );
+        return;
+      }
+
+      if (savedPath == null && !pickerFailed) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Export cancelled')),
+        );
+        return;
+      }
+
+      // Picker unavailable: persist in app-private documents instead.
+      savedPath ??= await saveTextToDocuments(json, filename);
+      if (savedPath == null || !context.mounted) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('Could not save export file')),
+        );
+        return;
+      }
+      final displayPath = savedPath;
+
+      // Temp copy backs the optional Share action below.
+      final sharePath = await saveTextToTemp(json, filename);
+      if (!context.mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Saved'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${festivals.length} festivals exported for $year.'),
+              const SizedBox(height: 8),
+              Text(
+                filename,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                displayPath,
+                style: Theme.of(
+                  dialogContext,
+                ).textTheme.bodySmall,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Done'),
+            ),
+            if (sharePath != null)
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(dialogContext);
+                  await SharePlus.instance.share(
+                    ShareParams(
+                      files: [XFile(sharePath, mimeType: 'application/json')],
+                      subject: 'Tithi festivals $year',
+                      text:
+                          'Tithi festivals $year with Panchang details (JSON)',
+                    ),
+                  );
+                },
+                child: const Text('Share'),
+              ),
+          ],
+        ),
+      );
+    } catch (e) {
+      debugPrint('Festival export failed: $e');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
   }
 }
 

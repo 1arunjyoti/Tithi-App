@@ -69,12 +69,34 @@ class Festival {
   bool get recurring => panchangRules.recurring;
   List<String> get ritualSteps => rituals.steps;
 
+  /// Paksha this festival is observed in, falling back to the day's paksha
+  /// for wildcard ('*'/empty) rules.
+  String resolvePaksha(String dayPaksha) =>
+      (paksha == '*' || paksha.isEmpty) ? dayPaksha : paksha;
+
+  /// Full 1-30 tithi index this festival is observed on.
+  ///
+  /// Rules store the paksha-relative number (1-15), so Krishna observances
+  /// map to 16-30. [dayPaksha] disambiguates wildcard rules. Use this (not
+  /// the day's sunrise tithi) when querying exact Begins/Ends times:
+  /// festivals with a timingOverride (e.g. Ganesh Chaturthi at madhyahna)
+  /// are observed on a tithi that may differ from the sunrise tithi.
+  int resolveTithiIndex(String dayPaksha) {
+    final observed = resolvePaksha(dayPaksha) == 'Krishna'
+        ? tithi + 15
+        : tithi;
+    return observed.clamp(1, 30);
+  }
+
   /// Check if this festival matches the given paksha, tithi, masa, and
   /// optionally the weekday of [date] when [panchangRules.weekday] is set.
   ///
-  /// [monthSystem] - The calendar system being used (Amanta or Purnimant).
-  /// Festivals are stored in Amanta format, so when Purnimant is selected,
-  /// the currentMasa is converted to Amanta for accurate matching.
+  /// [monthSystem] declares the system [currentMasa] is expressed in.
+  /// Festivals are stored in Amanta format, so a Purnimant [currentMasa] is
+  /// converted back to Amanta before comparison. Callers computing masa via
+  /// the panchang service already hold Amanta values and must pass
+  /// [HinduMonthSystem.amanta] — passing the *display* system with an
+  /// Amanta masa double-shifts Krishna paksha and drops those festivals.
   bool matchesTithi(
     String currentPaksha,
     int currentTithi, [

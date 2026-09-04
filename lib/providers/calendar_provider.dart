@@ -137,10 +137,10 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
       startOfWeek: _parseEnum(box, _startOfWeekKey, StartingDayOfWeek.values, StartingDayOfWeek.sunday),
       primaryEventView: _parseEnum(box, _primaryEventViewKey, PrimaryEventView.values, PrimaryEventView.tithi),
       primaryCalendarSystem: _parseEnum(box, _primaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.gregorian),
-      secondaryCalendarSystem: _parseEnum(box, _secondaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.none),
+      secondaryCalendarSystem: _parseEnum(box, _secondaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.hindu),
       hinduMonthSystem: _parseEnum(box, _hinduMonthSystemKey, HinduMonthSystem.values, HinduMonthSystem.amanta),
-      hinduYearEra: _parseEnum(box, _hinduYearEraKey, HinduYearEra.values, HinduYearEra.vikramSamvat),
-      tithiDisplayMode: _parseEnum(box, _tithiDisplayModeKey, TithiDisplayMode.values, TithiDisplayMode.pakshaBased),
+      hinduYearEra: _parseEnum(box, _hinduYearEraKey, HinduYearEra.values, HinduYearEra.shakaSamvat),
+      tithiDisplayMode: _parseEnum(box, _tithiDisplayModeKey, TithiDisplayMode.values, TithiDisplayMode.continuous30),
     );
   }
 
