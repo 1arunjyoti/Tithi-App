@@ -13,6 +13,22 @@ class PanchangData {
   final DateTime? sunrise;
   final DateTime? sunset;
 
+  /// Instant the sunrise tithi ends (first tithi boundary after sunrise),
+  /// when it falls before the next sunrise. Null when the sunrise tithi
+  /// still prevails at the next sunrise (no daytime transition).
+  ///
+  /// Set by the panchang provider (single-day path only — the month batch
+  /// skips it for performance). Enables the two-tithi display
+  /// ("Ashtami → Navami") for squeeze cases where a short tithi such as
+  /// Navami begins after one sunrise and ends before the next, so it never
+  /// prevails at any sunrise and would otherwise be invisible between the
+  /// surrounding days (e.g. Oct 4-5 2026: Ashtami → Dashami).
+  final DateTime? tithiTransitionTime;
+
+  /// 1-30 index of the tithi taking over at [tithiTransitionTime]
+  /// (normally the sunrise tithi's index + 1, wrapping 30 → 1).
+  final int? transitionTithiIndex;
+
   const PanchangData({
     required this.date,
     required this.rawTithi,
@@ -23,6 +39,8 @@ class PanchangData {
     this.festivals = const [],
     this.sunrise,
     this.sunset,
+    this.tithiTransitionTime,
+    this.transitionTithiIndex,
   });
 
   /// Check if this is Shukla Paksha (waxing moon)
@@ -39,6 +57,31 @@ class PanchangData {
 
   /// Check if there are any festivals on this day
   bool get hasFestivals => festivals.isNotEmpty;
+
+  /// Whether a tithi transition occurs between this sunrise and the next,
+  /// i.e. the day should show two tithis ("Ashtami → Navami").
+  bool get hasTithiTransition =>
+      tithiTransitionTime != null &&
+      transitionTithiIndex != null &&
+      transitionTithiIndex! >= 1 &&
+      transitionTithiIndex! <= 30 &&
+      transitionTithiIndex != tithiIndex;
+
+  /// Paksha of the tithi taking over at [tithiTransitionTime].
+  String get transitionPaksha =>
+      transitionTithiIndex != null && transitionTithiIndex! <= 15
+      ? 'Shukla'
+      : 'Krishna';
+
+  /// Paksha-relative (1-15) number of the tithi taking over.
+  int get transitionTithiNumber {
+    final idx = transitionTithiIndex ?? tithiIndex;
+    return idx <= 15 ? idx : idx - 15;
+  }
+
+  /// Name of the tithi taking over at [tithiTransitionTime].
+  String get transitionTithiName =>
+      tithiNameFor(transitionTithiNumber, transitionPaksha);
 
   /// Get major festivals only
   List<Festival> get majorFestivals =>
@@ -71,6 +114,8 @@ class PanchangData {
     double? rawTithiNishita,
     double? rawTithiNextSunrise,
     String masaNextSunrise = '',
+    DateTime? tithiTransitionTime,
+    int? transitionTithiIndex,
   }) {
     final tithiIndex = rawTithi.floor();
 
@@ -186,6 +231,8 @@ class PanchangData {
       festivals: matchingFestivals,
       sunrise: sunrise,
       sunset: sunset,
+      tithiTransitionTime: tithiTransitionTime,
+      transitionTithiIndex: transitionTithiIndex,
     );
   }
 

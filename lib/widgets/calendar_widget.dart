@@ -853,6 +853,11 @@ class CalendarWidget extends ConsumerWidget {
                     // heavy data immediately so dots/labels don't lag.
                     cp.setCalendarMonth(ref, focused);
                   }
+                  // Active tile tap (set after setCalendarMonth, which clears
+                  // tap state as month navigation): narrows the secondary
+                  // header to this date's single month.
+                  ref.read(cp.tappedCalendarDateProvider.notifier).state =
+                      DateTime(selected.year, selected.month, selected.day);
                 },
                 onPageChanged: (focusedDay) {
                   // Single haptic for Gregorian page turns (swipe or
@@ -865,6 +870,10 @@ class CalendarWidget extends ConsumerWidget {
                   ref
                       .read(cp.focusedMonthProvider.notifier)
                       .setFocusedMonth(focusedDay);
+                  // Swiping months ends the explicit tile-tap state: the
+                  // secondary header returns to its default two-month range.
+                  ref.read(cp.tappedCalendarDateProvider.notifier).state =
+                      null;
                   // Deferred: heavy FFI follows after the page animation
                   // settles, so it never blocks settle frames.
                   ref
@@ -1091,6 +1100,10 @@ class CalendarWidget extends ConsumerWidget {
                   HapticFeedback.lightImpact();
                 }
                 ref.read(cp.selectedDateProvider.notifier).setDate(date);
+                // Active tile tap: narrows the secondary header to this
+                // date's single month with the year.
+                ref.read(cp.tappedCalendarDateProvider.notifier).state =
+                    DateTime(date.year, date.month, date.day);
               },
               child: Stack(
                 children: [
@@ -1815,9 +1828,13 @@ String _headerCacheKey(
   cp.AppCalendarSystem primary,
   cp.AppCalendarSystem secondary,
   HinduYearEra yearEra,
-  HinduMonthSystem monthSystem,
-) {
-  return '${date.year}-${date.month}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}';
+  HinduMonthSystem monthSystem, [
+  DateTime? selectedDate,
+]) {
+  final selectedKey = selectedDate == null
+      ? 'range'
+      : '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}';
+  return '${date.year}-${date.month}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}_$selectedKey';
 }
 
 _HeaderData? _cachedHeaderSync(
@@ -1825,10 +1842,11 @@ _HeaderData? _cachedHeaderSync(
   cp.AppCalendarSystem primary,
   cp.AppCalendarSystem secondary,
   HinduYearEra yearEra,
-  HinduMonthSystem monthSystem,
-) {
+  HinduMonthSystem monthSystem, [
+  DateTime? selectedDate,
+]) {
   return _headerDataCache[
-      _headerCacheKey(date, primary, secondary, yearEra, monthSystem)];
+      _headerCacheKey(date, primary, secondary, yearEra, monthSystem, selectedDate)];
 }
 
 void _storeHeaderSync(
@@ -1837,8 +1855,9 @@ void _storeHeaderSync(
   cp.AppCalendarSystem secondary,
   HinduYearEra yearEra,
   HinduMonthSystem monthSystem,
-  _HeaderData value,
-) {
+  _HeaderData value, [
+  DateTime? selectedDate,
+]) {
   if (_headerDataCache.length >= _headerDataCacheMax) {
     final toRemove =
         _headerDataCache.keys.take(_headerDataCacheMax ~/ 5).toList();
@@ -1847,7 +1866,14 @@ void _storeHeaderSync(
     }
   }
   _headerDataCache[
-      _headerCacheKey(date, primary, secondary, yearEra, monthSystem)] = value;
+      _headerCacheKey(
+        date,
+        primary,
+        secondary,
+        yearEra,
+        monthSystem,
+        selectedDate,
+      )] = value;
 }
 
 // autoDispose: one tiny _HeaderData per visited month; the sync LRU
@@ -1860,6 +1886,25 @@ final calendarHeaderDataProvider =
   final secondary = ref.watch(cp.secondaryCalendarSystemProvider);
   final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
   final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
+  // Tapping a date tile narrows the secondary range label to that date's
+  // single month; the tap state (not the default-selected today) drives a
+  // header refresh, so the two-month range stays the default. Subscribed
+  // only when the secondary header actually is a traditional range —
+  // otherwise tile taps would pointlessly recompute this header (up to 2
+  // FFI calls for a Hindu/Bengali primary label).
+  final tapNarrowsSecondary =
+      primary == cp.AppCalendarSystem.gregorian &&
+      (secondary == cp.AppCalendarSystem.hindu ||
+          secondary == cp.AppCalendarSystem.bengali);
+  final tappedDate = tapNarrowsSecondary
+      ? ref.watch(cp.tappedCalendarDateProvider)
+      : null;
+  final tappedInMonth =
+      tappedDate != null &&
+          tappedDate.year == date.year &&
+          tappedDate.month == date.month
+      ? DateTime(tappedDate.year, tappedDate.month, tappedDate.day)
+      : null;
 
   final data = await _buildCalendarHeaderData(
     ref,
@@ -1868,10 +1913,19 @@ final calendarHeaderDataProvider =
     secondary,
     hinduYearEra,
     hinduMonthSystem,
+    selectedDate: tappedInMonth,
   );
   // Feed the stale-header LRU so the next swipe shows text instantly
   // instead of falling back to bare Gregorian and flipping.
-  _storeHeaderSync(date, primary, secondary, hinduYearEra, hinduMonthSystem, data);
+  _storeHeaderSync(
+    date,
+    primary,
+    secondary,
+    hinduYearEra,
+    hinduMonthSystem,
+    data,
+    tappedInMonth,
+  );
   return data;
 });
 
@@ -1881,8 +1935,9 @@ Future<_HeaderData> _buildCalendarHeaderData(
   cp.AppCalendarSystem primary,
   cp.AppCalendarSystem secondary,
   HinduYearEra hinduYearEra,
-  HinduMonthSystem hinduMonthSystem,
-) async {
+  HinduMonthSystem hinduMonthSystem, {
+  DateTime? selectedDate,
+}) async {
   String primaryText;
   String? secondaryText;
 
@@ -1901,6 +1956,7 @@ Future<_HeaderData> _buildCalendarHeaderData(
       secondary,
       hinduYearEra,
       hinduMonthSystem,
+      selectedDate: selectedDate,
     );
     if (monthRange != null) {
       secondaryText = monthRange;
@@ -1934,14 +1990,40 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
   DateTime date,
   cp.AppCalendarSystem system,
   HinduYearEra hinduYearEra,
-  HinduMonthSystem hinduMonthSystem,
-) async {
+  HinduMonthSystem hinduMonthSystem, {
+  DateTime? selectedDate,
+}) async {
   if (system != cp.AppCalendarSystem.bengali &&
       system != cp.AppCalendarSystem.hindu) {
     return null;
   }
 
   try {
+    // Tapped date in the focused month: narrow the range to that date's
+    // single month with the year (e.g. "Shravana 1948" instead of
+    // "Shravana - Bhadrapada 1948").
+    if (selectedDate != null) {
+      if (system == cp.AppCalendarSystem.bengali) {
+        final service = ref.read(bengaliCalendarServiceProvider);
+        await ref.read(panchangInitProvider.future);
+        final selectedBDate = await service.calculateDate(selectedDate);
+        return '${selectedBDate.month} ${selectedBDate.year}';
+      } else {
+        final service = ref.read(hinduCalendarServiceProvider);
+        await ref.read(panchangInitProvider.future);
+        final selectedHDate = await service.calculateDate(selectedDate);
+        final year = hinduYearEra == HinduYearEra.vikramSamvat
+            ? selectedHDate.vsYear
+            : selectedHDate.shakaYear;
+        final masa = displayMasaName(
+          selectedHDate.masa,
+          selectedHDate.paksha,
+          hinduMonthSystem,
+        ).replaceAll('_', ' ');
+        return '$masa $year';
+      }
+    }
+
     final startOfMonth = DateTime(date.year, date.month);
     final endOfMonth = DateTime(date.year, date.month + 1, 0);
 
@@ -2176,10 +2258,36 @@ class _CalendarHeader extends ConsumerWidget {
     final secondary = ref.watch(cp.secondaryCalendarSystemProvider);
     final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
     final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
+    // Mirrors the provider's gating: subscribe to taps only when the
+    // secondary header has a tap-narrowed variant, so the key lookup stays
+    // meaningful and taps skip this widget otherwise.
+    final tappedDate =
+        primary == cp.AppCalendarSystem.gregorian &&
+            (secondary == cp.AppCalendarSystem.hindu ||
+                secondary == cp.AppCalendarSystem.bengali)
+        ? ref.watch(cp.tappedCalendarDateProvider)
+        : null;
+    final tappedInMonth =
+        tappedDate != null &&
+            tappedDate.year == focusedMonth.year &&
+            tappedDate.month == focusedMonth.month
+        ? DateTime(tappedDate.year, tappedDate.month, tappedDate.day)
+        : null;
     final headerDataAsync = ref.watch(calendarHeaderDataProvider);
     // Stale header first so swipes never show bare Gregorian then flip;
-    // fresh async data replaces it once FFI resolves.
-    final headerData = headerDataAsync.valueOrNull ??
+    // fresh async data replaces it once FFI resolves. On a date tap the
+    // tap-keyed entry misses until fresh data lands, so fall back to
+    // the range entry (previous text) rather than bare Gregorian.
+    final headerData =
+        headerDataAsync.valueOrNull ??
+        _cachedHeaderSync(
+          focusedMonth,
+          primary,
+          secondary,
+          hinduYearEra,
+          hinduMonthSystem,
+          tappedInMonth,
+        ) ??
         _cachedHeaderSync(
           focusedMonth,
           primary,

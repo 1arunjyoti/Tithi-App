@@ -96,6 +96,14 @@ final heavyFocusedMonthProvider =
       HeavyMonthNotifier.new,
     );
 
+/// Date tile the user actively tapped on the calendar. Null by default and
+/// after any month navigation — the secondary header then shows the
+/// two-month range (e.g. "Shravana - Bhadrapada 1948"). Set, it shows that
+/// date's single month with the year. Kept separate from
+/// [selectedDateProvider] (which defaults to today) so the range stays the
+/// default until an explicit tile tap.
+final tappedCalendarDateProvider = StateProvider<DateTime?>((ref) => null);
+
 /// Discrete month jump (chevron, year picker, search, today button).
 /// No page animation to protect, so both light (header/position) and
 /// heavy (FFI data) months move together. Swipes must NOT use this —
@@ -106,6 +114,9 @@ void setCalendarMonth(WidgetRef ref, DateTime month) {
   ref.read(heavyFocusedMonthProvider.notifier).settle(
         DateTime(month.year, month.month),
       );
+  // Navigating months ends the explicit tile-tap state: the secondary
+  // header returns to its default two-month range.
+  ref.read(tappedCalendarDateProvider.notifier).state = null;
 }
 
 /// Provider for calendar format (month/week/2 weeks)
