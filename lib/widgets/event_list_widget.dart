@@ -10,6 +10,7 @@ import '../providers/panchang_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../theme/app_theme.dart';
 import 'event_detail_sheet.dart';
+import 'tithi_detail_sheet.dart';
 
 /// Widget showing events/festivals for the selected date or date range
 class EventListWidget extends ConsumerStatefulWidget {
@@ -19,7 +20,8 @@ class EventListWidget extends ConsumerStatefulWidget {
   ConsumerState<EventListWidget> createState() => _EventListWidgetState();
 }
 
-class _EventListWidgetState extends ConsumerState<EventListWidget> {
+class _EventListWidgetState extends ConsumerState<EventListWidget>
+    with SingleTickerProviderStateMixin {
   DateTimeRange? _selectedRange;
   Future<List<({DateTime date, Festival festival, PanchangData panchang})>>?
   _rangeFestivalsFuture;
@@ -388,63 +390,96 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     final isShukla = panchang.isShukla;
     final moonIcon = isShukla ? Icons.brightness_3 : Icons.brightness_2;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(moonIcon, color: context.colors.primary, size: 28),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(
-                            context,
-                          )?.pakshaWithName(panchang.paksha) ??
-                          '${panchang.paksha} Paksha',
-                      style: context.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20,
-                        color: context.colors.primary,
+    // Tapping opens the tithi detail sheet (start/end/transition times).
+    // AnimatedSize smooths the month-preview → resolved swap: the preview
+    // lacks the transition line, so without this the card visibly jumps
+    // when transition data lands a beat after a date tap.
+    return GestureDetector(
+      onTap: () {
+        if (ref.read(accessibilityProvider).hapticFeedback) {
+          HapticFeedback.lightImpact();
+        }
+        _showTithiDetail(context, panchang);
+      },
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        alignment: Alignment.topCenter,
+        child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: AppTheme.glassmorphism(context: context, ref: ref),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(moonIcon, color: context.colors.primary, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(
+                              context,
+                            )?.pakshaWithName(panchang.paksha) ??
+                            '${panchang.paksha} Paksha',
+                        style: context.textTheme.headlineMedium?.copyWith(
+                          fontSize: 20,
+                          color: context.colors.primary,
+                        ),
                       ),
-                    ),
-                    Text(
-                      panchang.tithiName,
-                      style: context.textTheme.bodyLarge?.copyWith(
-                        fontSize: 16,
+                      Text(
+                        panchang.tithiName,
+                        style: context.textTheme.bodyLarge?.copyWith(
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colors.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  // Respect the Settings tithi display mode (1-15 paksha
-                  // based vs 1-30 continuous).
-                  '${ref.watch(tithiDisplayModeProvider) == TithiDisplayMode.continuous30 ? panchang.tithiIndex : panchang.tithiNumber}',
-                  style: TextStyle(
-                    color: context.colors.primary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                      // Two-tithi display for squeeze cases: when the sunrise
+                      // tithi ends before the next sunrise, the incoming tithi
+                      // (e.g. a short Navami touching no sunrise) is shown with
+                      // its transition time so no tithi is skipped over.
+                      if (panchang.hasTithiTransition)
+                        Text(
+                          '→ ${panchang.transitionTithiName} · ${DateFormat('h:mm a').format(panchang.tithiTransitionTime!)}',
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            fontSize: 14,
+                            color: context.colors.primary,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.colors.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    // Respect the Settings tithi display mode (1-15 paksha
+                    // based vs 1-30 continuous).
+                    '${ref.watch(tithiDisplayModeProvider) == TithiDisplayMode.continuous30 ? panchang.tithiIndex : panchang.tithiNumber}',
+                    style: TextStyle(
+                      color: context.colors.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: context.colors.onSurface.withValues(alpha: 0.4),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
       ),
     );
   }
@@ -661,6 +696,15 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
       backgroundColor: Colors.transparent,
       builder: (context) =>
           EventDetailSheet(festival: festival, panchang: panchang),
+    );
+  }
+
+  void _showTithiDetail(BuildContext context, PanchangData panchang) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => TithiDetailSheet(panchang: panchang),
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import '../models/festival.dart';
@@ -129,10 +130,90 @@ Future<double> _resolveTithiPoint(
   return computed;
 }
 
+/// Locates the first tithi boundary after [sunrise] — i.e. the end of the
+/// sunrise (udaya) tithi — within the window ([sunrise], [nextSunrise]].
+///
+/// [segments] must be time-ordered (time, rawTithi) points starting at
+/// [sunrise] and ending at [nextSunrise] (the provider passes its five
+/// checkpoints). The first segment straddling the boundary brackets it;
+/// bisection via [getRawTithi] then refines it to ~1-minute precision.
+///
+/// Returns null when no boundary falls in the window (the sunrise tithi
+/// still prevails at the next sunrise), or when the refined instant fails
+/// validation (wrong tithi just past it, or outside the window) — callers
+/// then show the single udaya tithi as before.
+///
+/// Tithi increases monotonically, so at most the exit from the sunrise
+/// tithi is searched even in squeeze cases where two boundaries fall in
+/// one window (e.g. Oct 4 2026: Ashtami → Navami → Dashami): surfacing the
+/// first one already makes the "lost" tithi (Navami) visible again.
+Future<({int toIndex, DateTime at})?> findSunriseTithiTransition({
+  required DateTime sunrise,
+  required DateTime nextSunrise,
+  required double rawTithiAtSunrise,
+  required List<({DateTime time, double rawTithi})> segments,
+  required Future<double> Function(DateTime time) getRawTithi,
+}) async {
+  int norm(double raw) => raw.floor().clamp(1, 30);
+
+  final from = norm(rawTithiAtSunrise);
+  final to = from % 30 + 1;
+
+  // Ordered, strictly increasing points within [sunrise, nextSunrise].
+  final points = segments
+      .where((s) => !s.time.isBefore(sunrise) && !s.time.isAfter(nextSunrise))
+      .toList()
+    ..sort((a, b) => a.time.compareTo(b.time));
+  if (points.isEmpty || points.first.time.isAfter(sunrise)) {
+    points.insert(0, (time: sunrise, rawTithi: rawTithiAtSunrise));
+  }
+
+  // First segment leaving the sunrise tithi brackets the boundary.
+  // (Two boundaries can never fall in one short segment: tithis last
+  // 19-26h while checkpoint segments span a few hours.)
+  DateTime? lo;
+  DateTime? hi;
+  for (var i = 0; i + 1 < points.length; i++) {
+    if (norm(points[i].rawTithi) == from && norm(points[i + 1].rawTithi) != from) {
+      lo = points[i].time;
+      hi = points[i + 1].time;
+      break;
+    }
+  }
+  if (lo == null || hi == null) return null;
+  if (!hi.isAfter(sunrise)) return null;
+  DateTime low = lo;
+  DateTime high = hi;
+
+  // Bisect the exit-from-`from` instant to ~1 minute.
+  var guard = 0;
+  while (high.difference(low).inMinutes > 1 && guard++ < 60) {
+    final mid = low.add(Duration(minutes: high.difference(low).inMinutes ~/ 2));
+    if (norm(await getRawTithi(mid)) == from) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  // Validate: inside the window, and the expected tithi prevails just after.
+  if (!high.isAfter(sunrise) || high.isAfter(nextSunrise)) return null;
+  if (norm(await getRawTithi(high.add(const Duration(minutes: 2)))) != to) {
+    return null;
+  }
+  return (toIndex: to, at: high);
+}
+
 /// Computes [PanchangData] for a single normalised date.
 /// All five tithi checkpoints (sunrise, madhyahna, aparahna, nishita,
 /// nextSunrise) are resolved through [_resolveTithiPoint] so results are
 /// automatically cached to / served from the Hive panchang cache box.
+///
+/// When [includeTransition] is true, the first tithi boundary after sunrise
+/// is also located (via [findSunriseTithiTransition], bracketed by the five
+/// checkpoints and refined by bisection) so the day can show two tithis
+/// ("Ashtami → Navami"). This costs extra ephemeris calls, so only the
+/// single-day path enables it — the month batch leaves it off.
 Future<PanchangData> _computePanchangData({
   required DateTime normalizedDate,
   required PanchangService service,
@@ -141,6 +222,7 @@ Future<PanchangData> _computePanchangData({
   required double latitude,
   required double longitude,
   required Box<dynamic> cacheBox,
+  bool includeTransition = false,
 }) async {
   final sunriseTime = SunriseCalculator.calculateSunriseIST(
     date: normalizedDate, latitude: latitude, longitude: longitude,
@@ -201,6 +283,68 @@ Future<PanchangData> _computePanchangData({
   );
   await cacheBox.put(masaNextCacheKey, masaNextSunrise);
 
+  // Daytime transition (single-day path only): locate the end of the
+  // sunrise tithi so squeeze cases (short tithi touching no sunrise)
+  // still surface both tithis. Best-effort — a null result simply means
+  // the day shows its single udaya tithi as before.
+  //
+  // Positive results persist in the Hive cache box (same location-scoped
+  // keys as the tithi checkpoints): without this, every tap on a
+  // transition day re-ran the ~18-call FFI bisection, and the card visibly
+  // flashed when the month-batch preview (no transition) swapped for the
+  // resolved data. Repeat visits are now zero-FFI and identical, so no
+  // swap is perceptible. (No-transition days need no entry: the
+  // checkpoint scan already returns null with zero FFI calls.)
+  DateTime? transitionTime;
+  int? transitionIndex;
+  if (includeTransition) {
+    final transTimeKey =
+        _cacheKey(normalizedDate, latitude, longitude, 'transitionTime');
+    final transIndexKey =
+        _cacheKey(normalizedDate, latitude, longitude, 'transitionIndex');
+    final cachedTime = cacheBox.get(transTimeKey);
+    final cachedIndex = cacheBox.get(transIndexKey);
+    if (cachedTime is int && cachedIndex is int) {
+      final at = DateTime.fromMillisecondsSinceEpoch(cachedTime);
+      if (cachedIndex >= 1 &&
+          cachedIndex <= 30 &&
+          at.isAfter(sunriseTime) &&
+          !at.isAfter(nextSunriseTime)) {
+        transitionTime = at;
+        transitionIndex = cachedIndex;
+      }
+    } else {
+      try {
+        final found = await findSunriseTithiTransition(
+          sunrise: sunriseTime,
+          nextSunrise: nextSunriseTime,
+          rawTithiAtSunrise: rawTithi,
+          segments: [
+            (time: sunriseTime, rawTithi: rawTithi),
+            (time: madhyahnaTime, rawTithi: rawTithiMadhyahna),
+            (time: aparahnaTime, rawTithi: rawTithiAparahna),
+            (time: nishitaTime, rawTithi: rawTithiNishita),
+            (time: nextSunriseTime, rawTithi: rawTithiNextSunrise),
+          ],
+          getRawTithi: (t) => service.calculateTithi(
+            t, latitude: latitude, longitude: longitude,
+          ),
+        );
+        transitionTime = found?.at;
+        transitionIndex = found?.toIndex;
+        if (found != null) {
+          await cacheBox.put(
+            transTimeKey,
+            found.at.millisecondsSinceEpoch,
+          );
+          await cacheBox.put(transIndexKey, found.toIndex);
+        }
+      } catch (e) {
+        debugPrint('Tithi transition search skipped: $e');
+      }
+    }
+  }
+
   return PanchangData.fromRawTithi(
     date: normalizedDate,
     rawTithi: rawTithi,
@@ -214,6 +358,8 @@ Future<PanchangData> _computePanchangData({
     rawTithiNishita: rawTithiNishita,
     rawTithiNextSunrise: rawTithiNextSunrise,
     masaNextSunrise: masaNextSunrise,
+    tithiTransitionTime: transitionTime,
+    transitionTithiIndex: transitionIndex,
   );
 }
 
@@ -263,6 +409,9 @@ final panchangForDateProvider = FutureProvider.autoDispose
         latitude: latitude,
         longitude: longitude,
         cacheBox: cacheBox,
+        // Single-day detail: also locate the daytime tithi transition so
+        // squeeze cases show two tithis (month batch skips this for speed).
+        includeTransition: true,
       );
       // Feed the stale-UI LRU so date taps render instantly next time.
       storePanchangUiSync(date, data);

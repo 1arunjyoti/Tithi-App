@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/panchang_provider.dart';
+import 'sunrise_calculator.dart';
 
 final hinduCalendarServiceProvider = Provider<HinduCalendarService>((ref) {
   return HinduCalendarService(ref);
@@ -36,6 +37,12 @@ class HinduCalendarService {
   String baseMasaName(String masa) => baseMasaNameStatic(masa);
 
   /// Calculates the Hindu Date details for a given Gregorian date.
+  ///
+  /// The tithi and masa follow the udaya (sunrise) rule, consistent with
+  /// [PanchangData]: they are evaluated at sunrise, not at midnight.
+  /// Midnight evaluation picks the previous tithi whenever a boundary falls
+  /// between 00:00 and sunrise (e.g. Sep 5 2026: Ashtami ends 00:13, so
+  /// midnight reads Ashtami/23 while sunrise correctly reads Navami/24).
   Future<
     ({
       int tithi,
@@ -52,10 +59,23 @@ class HinduCalendarService {
     // Ensure initialized
     await _ref.read(panchangInitProvider.future);
 
-    // 1. Calculate Tithi
-    final rawTithi = await service.calculateTithi(date);
+    final coords = _ref.read(resolvedCoordinatesProvider);
+    final normalized = DateTime(date.year, date.month, date.day);
+    final sunrise = SunriseCalculator.calculateSunriseIST(
+      date: normalized,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    );
 
-    int tithi = rawTithi.floor();
+    // 1. Calculate Tithi at sunrise (udaya tithi, 1-based 1..30:
+    // 1-15 Shukla with 15 = Purnima, 16-30 Krishna).
+    final rawTithi = await service.calculateTithi(
+      sunrise,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    );
+
+    int tithi = rawTithi.floor().clamp(1, 30);
 
     // Tithi Number: 1 to 15.
     String paksha = 'Shukla';
@@ -67,8 +87,13 @@ class HinduCalendarService {
       displayTithi -= 15;
     }
 
-    // 2. Calculate Masa
-    String masa = await service.calculateMasa(date, rawTithi);
+    // 2. Calculate Masa at sunrise, matching the tithi instant.
+    String masa = await service.calculateMasa(
+      sunrise,
+      rawTithi,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    );
 
     // 3. Calculate Year (Vikram Samvat)
     // VS = Gregorian + 57 on/after Chaitra Shukla Pratipada (New Year),
