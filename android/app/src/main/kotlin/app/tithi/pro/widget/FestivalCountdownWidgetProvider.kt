@@ -1,15 +1,16 @@
 package app.tithi.pro.widget
 
+import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.widget.RemoteViews
 import androidx.core.content.ContextCompat
-import es.antonborri.home_widget.HomeWidgetLaunchIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import app.tithi.pro.R
 import app.tithi.pro.MainActivity
@@ -54,6 +55,23 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
             val provider = FestivalCountdownWidgetProvider()
             ids.forEach { provider.updateSingleWidget(context, appWidgetManager, it, prefs) }
         }
+
+        /**
+         * Launcher-style PendingIntent: identical task behavior to tapping the
+         * app icon, so widget taps never create a second Recents entry.
+         */
+        fun buildLauncherPendingIntent(context: Context): PendingIntent {
+            val intent = Intent(context, MainActivity::class.java).apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_LAUNCHER)
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            var flags = PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= 23) {
+                flags = flags or PendingIntent.FLAG_IMMUTABLE
+            }
+            return PendingIntent.getActivity(context, 0, intent, flags)
+        }
     }
 
     override fun onUpdate(
@@ -90,8 +108,15 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
         widgetData: SharedPreferences,
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_festival_countdown).apply {
-            val launchIntent =
-                HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java)
+            // Launcher-style intent so a widget tap reuses the existing app
+            // task instead of opening a second window in Recents. It mirrors
+            // the LAUNCHER tap (ACTION_MAIN + CATEGORY_LAUNCHER) with
+            // SINGLE_TOP | CLEAR_TOP, so an already-running MainActivity is
+            // brought forward via onNewIntent. Must NOT use a custom action
+            // with android:taskAffinity="" — that combination forces the
+            // system (FLAG_ACTIVITY_NEW_TASK from the widget host) to create
+            // a separate task.
+            val launchIntent = buildLauncherPendingIntent(context)
             setOnClickPendingIntent(R.id.widget_container, launchIntent)
 
             // Header count reflects the full stored list (parse is length-only).

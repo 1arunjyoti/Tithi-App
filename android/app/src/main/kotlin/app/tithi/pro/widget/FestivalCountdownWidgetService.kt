@@ -2,7 +2,6 @@ package app.tithi.pro.widget
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
 import androidx.core.content.ContextCompat
@@ -75,10 +74,12 @@ class FestivalCountdownWidgetService : RemoteViewsService() {
                 )
                 views.setTextViewText(R.id.widget_date, WidgetCountdownData.dateText(item))
 
-                // Tap a row opens the app (template PendingIntent set in provider).
-                val fillIn = Intent().apply {
-                    data = Uri.parse("tithi://festival/$position")
-                }
+                // Tap a row opens the app via the template PendingIntent (launcher-
+                // style, reuses the existing task). The fill-in carries no
+                // data/extra so every row resolves to the identical intent as
+                // the launcher tap — per-row data URIs would make each tap a
+                // distinct intent and risk a separate task/window.
+                val fillIn = Intent()
                 views.setOnClickFillInIntent(R.id.widget_row, fillIn)
             }
 

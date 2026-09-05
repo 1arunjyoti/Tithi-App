@@ -2,11 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:workmanager/workmanager.dart';
 import '../utils/date_utils.dart';
 import 'shloka_service.dart';
+import '../models/festival.dart';
 import '../models/sankalpa.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
@@ -46,6 +48,19 @@ void callbackDispatcher() {
       return Future.value(false);
     }
   });
+}
+
+/// When festival reminders fire. Stored as the enum index under
+/// [NotificationService._keyFestivalTiming] (`festival_timing`).
+enum FestivalReminderTiming {
+  /// Morning of the festival, at the notification time.
+  onDay,
+
+  /// At the notification time on the eve of the festival.
+  dayBefore,
+
+  /// Both eve and day-of reminders.
+  both,
 }
 
 /// Notification service for scheduling daily tithi notifications
@@ -94,11 +109,15 @@ class NotificationService {
   static const String _keyHour = 'notification_hour';
   static const String _keyMinute = 'notification_minute';
   static const String _keyShlokaEnabled = 'shloka_enabled';
+  static const String _keyFestivalEnabled = 'festival_enabled';
+  static const String _keyFestivalTiming = 'festival_timing';
   static const String _keyDailyTitle = 'daily_title';
   static const String _keyDailyBody = 'daily_body';
   static const String _keyDailyContentDate = 'daily_content_date';
   static const int _dailyNotificationId = 1;
   static const int _shlokaNotificationIdBase = 1000;
+  static const int _festivalNotificationIdBase = 2000;
+  static const int _festivalWindowDays = 8;
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
@@ -181,11 +200,15 @@ class NotificationService {
           _box?.get(_keyEnabled, defaultValue: false) ?? false;
       final shlokasEnabled =
           _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
+      final festivalsEnabled =
+          _box?.get(_keyFestivalEnabled, defaultValue: false) ?? false;
 
       if (kDebugMode) {
-        if (notificationsEnabled) {
+        if (notificationsEnabled || festivalsEnabled) {
           print(
-            'NotificationService ready - notifications ON${shlokasEnabled ? ', shloka ON' : ''}',
+            'NotificationService ready - notifications ON'
+            '${shlokasEnabled ? ', shloka ON' : ''}'
+            '${festivalsEnabled ? ', festival ON' : ''}',
           );
         } else {
           print(
@@ -202,11 +225,25 @@ class NotificationService {
       if (notificationsEnabled) {
         try {
           await scheduleDailyNotification();
-          if (shlokasEnabled) {
-            await _scheduleUpcomingShlokas();
-          }
         } catch (e) {
           debugPrint('Failed to reschedule notifications during init: $e');
+        }
+      }
+      // Shloka reminders are independent of the daily master switch.
+      if (shlokasEnabled) {
+        try {
+          await _scheduleUpcomingShlokas();
+        } catch (e) {
+          debugPrint('Failed to reschedule shlokas during init: $e');
+        }
+      }
+      // Festival reminders are independent of the daily master switch so
+      // users can opt into festival-only notifications.
+      if (festivalsEnabled) {
+        try {
+          await _scheduleUpcomingFestivals();
+        } catch (e) {
+          debugPrint('Failed to reschedule festivals during init: $e');
         }
       }
     } catch (e) {
@@ -250,19 +287,18 @@ class NotificationService {
         // "succeed" silently while nothing is ever shown.
         await _assertSystemNotificationsAllowed();
         await scheduleDailyNotification();
-        // Re-enabling the master switch must also restore shlokas: the
-        // shloka flag survives disable, but disable cancels their schedules.
+        // Re-assert shloka schedules (independent flag; harmless if fresh).
         final shlokaEnabled =
             _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
         if (shlokaEnabled) {
           await _scheduleUpcomingShlokas();
         }
       } else {
-        // Cancel only the daily + shloka schedules. Sankalpa reminders have
-        // their own lifecycle and must survive toggling daily notifications
-        // (use cancelAllNotifications() only for full reset flows).
+        // Cancel only the daily schedule. Shloka, sankalpa, and festival
+        // reminders have their own lifecycle and must survive toggling
+        // daily notifications (use cancelAllNotifications() only for full
+        // reset flows).
         await _notifications.cancel(_dailyNotificationId);
-        await cancelShlokaNotifications();
       }
     } catch (e) {
       // Roll back so the toggle can reflect the real state on retry.
@@ -300,11 +336,16 @@ class NotificationService {
       final enabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
       if (enabled) {
         await scheduleDailyNotification();
-        final shlokaEnabled =
-            _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
-        if (shlokaEnabled) {
-          await _scheduleUpcomingShlokas();
-        }
+      }
+      final shlokaEnabled =
+          _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
+      if (shlokaEnabled) {
+        await _scheduleUpcomingShlokas();
+      }
+      final festivalsEnabled =
+          _box?.get(_keyFestivalEnabled, defaultValue: false) ?? false;
+      if (festivalsEnabled) {
+        await _scheduleUpcomingFestivals();
       }
     } catch (e) {
       try {
@@ -326,8 +367,10 @@ class NotificationService {
 
   /// Enable or disable Shloka notifications.
   ///
-  /// Like [setEnabled], the persisted flag is rolled back if scheduling
-  /// fails so callers can revert optimistic UI updates on error.
+  /// Independent of the daily master switch (like festival reminders), so
+  /// users can opt into shloka-only notifications. Like [setEnabled], the
+  /// persisted flag is rolled back if scheduling fails so callers can
+  /// revert optimistic UI updates on error.
   Future<void> setShlokaEnabled(bool enabled) async {
     _ensureInitialized();
     final previous =
@@ -335,13 +378,10 @@ class NotificationService {
     await _box?.put(_keyShlokaEnabled, enabled);
 
     try {
-      // SMELL-2: read main-enabled flag directly from the box.
-      final mainEnabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
-      if (enabled && mainEnabled) {
-        // Only schedule if main notifications are also enabled
+      if (enabled) {
         await _assertSystemNotificationsAllowed();
         await _scheduleUpcomingShlokas();
-      } else if (!enabled) {
+      } else {
         await cancelShlokaNotifications();
       }
     } catch (e) {
@@ -366,11 +406,11 @@ class NotificationService {
   /// Schedule upcoming Shloka notifications for the next 7 days
   Future<void> _scheduleUpcomingShlokas() async {
     _ensureInitialized();
-    // SMELL-2: read flags directly from the box instead of async isEnabled() calls.
-    final enabled = _box?.get(_keyEnabled, defaultValue: false) ?? false;
+    // SMELL-2: read the flag directly from the box instead of an async
+    // isShlokaEnabled() call. Independent of the daily master switch.
     final shlokaEnabled =
         _box?.get(_keyShlokaEnabled, defaultValue: false) ?? false;
-    if (!enabled || !shlokaEnabled) return;
+    if (!shlokaEnabled) return;
 
     await cancelShlokaNotifications();
 
@@ -436,6 +476,264 @@ class NotificationService {
     if (kDebugMode) {
       print('Scheduled upcoming Shloka notifications');
     }
+  }
+
+  /// Check if festival reminders are enabled.
+  Future<bool> isFestivalEnabled() async {
+    _ensureInitialized();
+    return _box?.get(_keyFestivalEnabled, defaultValue: false) ?? false;
+  }
+
+  /// Get festival reminder timing as a [FestivalReminderTiming] index
+  /// (0 = on the day, 1 = one day before, 2 = both). Defaults to on-day.
+  Future<int> getFestivalTiming() async {
+    _ensureInitialized();
+    final timing =
+        (_box?.get(_keyFestivalTiming, defaultValue: 0) as int?) ?? 0;
+    if (timing < 0 || timing > FestivalReminderTiming.values.length - 1) {
+      return 0;
+    }
+    return timing;
+  }
+
+  /// Enable or disable festival reminders.
+  ///
+  /// Independent of the daily master switch so users can opt into
+  /// festival-only notifications. Like [setShlokaEnabled], the persisted
+  /// flag is rolled back if scheduling fails.
+  Future<void> setFestivalEnabled(bool enabled) async {
+    _ensureInitialized();
+    final previous =
+        _box?.get(_keyFestivalEnabled, defaultValue: false) as bool? ?? false;
+    await _box?.put(_keyFestivalEnabled, enabled);
+
+    try {
+      if (enabled) {
+        await _assertSystemNotificationsAllowed();
+        await _scheduleUpcomingFestivals();
+      } else {
+        await cancelFestivalNotifications();
+      }
+    } catch (e) {
+      try {
+        await _box?.put(_keyFestivalEnabled, previous);
+      } catch (rollbackError) {
+        debugPrint('Failed to roll back festival flag: $rollbackError');
+      }
+      debugPrint('Failed to set festival notifications to $enabled: $e');
+      rethrow;
+    }
+  }
+
+  /// Set when festival reminders fire (0 = on the day, 1 = one day before,
+  /// 2 = both). Out-of-range values throw [ArgumentError] without touching
+  /// storage. Reschedules when reminders are enabled; rolls back on failure.
+  Future<void> setFestivalTiming(int timing) async {
+    _ensureInitialized();
+    if (timing < 0 || timing > FestivalReminderTiming.values.length - 1) {
+      throw ArgumentError.value(timing, 'timing', 'Must be 0, 1, or 2');
+    }
+    final previous =
+        (_box?.get(_keyFestivalTiming, defaultValue: 0) as int?) ?? 0;
+    await _box?.put(_keyFestivalTiming, timing);
+
+    try {
+      final enabled =
+          _box?.get(_keyFestivalEnabled, defaultValue: false) ?? false;
+      if (enabled) {
+        await _scheduleUpcomingFestivals();
+      }
+    } catch (e) {
+      try {
+        await _box?.put(_keyFestivalTiming, previous);
+      } catch (rollbackError) {
+        debugPrint('Failed to roll back festival timing: $rollbackError');
+      }
+      debugPrint('Failed to set festival timing to $timing: $e');
+      rethrow;
+    }
+  }
+
+  /// Cancel all festival reminder notifications.
+  Future<void> cancelFestivalNotifications() async {
+    // IDs [_festivalNotificationIdBase, +_festivalWindowDays * 2):
+    // two slots (on-day, day-before) per scanned day.
+    for (int i = 0; i < _festivalWindowDays * 2; i++) {
+      await _notifications.cancel(_festivalNotificationIdBase + i);
+    }
+  }
+
+  /// Schedule reminders for festivals in the next [_festivalWindowDays] days
+  /// (major preferred when several fall on one day).
+  /// Day-before reminders fire at the notification time on the eve of
+  /// the festival; on-day reminders fire at the notification time on the day.
+  /// Past times are skipped; the 6-hourly WorkManager task re-runs this via
+  /// [init], so festivals entering the window are never missed.
+  Future<void> _scheduleUpcomingFestivals() async {
+    _ensureInitialized();
+    final enabled =
+        _box?.get(_keyFestivalEnabled, defaultValue: false) ?? false;
+    if (!enabled) return;
+
+    await cancelFestivalNotifications();
+
+    final timing = await getFestivalTiming();
+    final wantOnDay = timing != FestivalReminderTiming.dayBefore.index;
+    final wantDayBefore = timing != FestivalReminderTiming.onDay.index;
+
+    final storageService = StorageService();
+    final locationBox = await storageService.openLocationSettingsBox();
+    final latitude =
+        (locationBox.get('cached_lat', defaultValue: 28.6139) as num)
+            .toDouble();
+    final longitude =
+        (locationBox.get('cached_lng', defaultValue: 77.2090) as num)
+            .toDouble();
+
+    final settingsBox = await storageService.openSettingsBox();
+    final monthSystem = _readMonthSystem(settingsBox);
+    final secondarySystem =
+        (settingsBox.get('secondary_calendar_system', defaultValue: 2)
+                as int?) ??
+            2;
+    final yearEraIndex =
+        (settingsBox.get('hindu_year_era', defaultValue: 1) as int?) ?? 1;
+    final tithiMode =
+        (settingsBox.get('tithi_display_mode', defaultValue: 1) as int?) ?? 1;
+
+    final service = PanchangService();
+    await service.init();
+    final festivals = await _loadFestivalsForNotification();
+    if (festivals.isEmpty) return;
+
+    final time = await getNotificationTime();
+    final now = tz.TZDateTime.now(tz.local);
+    final today = DateTime(now.year, now.month, now.day);
+
+    const androidDetails = AndroidNotificationDetails(
+      'tithi_festival',
+      'Festival Reminders',
+      channelDescription: 'Reminders for upcoming festivals',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    for (int i = 0; i < _festivalWindowDays; i++) {
+      final date = today.add(Duration(days: i));
+      final sunrise = SunriseCalculator.calculateSunriseIST(
+        date: date,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      final panchang = await _computePanchangForDate(
+        date: date,
+        service: service,
+        latitude: latitude,
+        longitude: longitude,
+        festivals: festivals,
+        monthSystem: monthSystem,
+        sunriseTime: sunrise,
+      );
+      if (!panchang.hasFestivals) continue;
+      // Major festivals first so the title names the most significant one.
+      final festival = panchang.majorFestivals.isNotEmpty
+          ? panchang.majorFestivals.first
+          : panchang.festivals.first;
+
+      final displayMasa = displayMasaName(
+        panchang.masa,
+        panchang.paksha,
+        monthSystem,
+      ).replaceAll('_', ' ');
+      final hinduDay =
+          tithiMode == 0 ? panchang.tithiNumber : panchang.tithiIndex;
+      final tithiIdentity =
+          '${panchang.paksha} ${panchang.tithiName} – $displayMasa';
+      final gregorianLine = DateFormat('EEEE, d MMMM yyyy').format(date);
+      final secondaryLine = _secondaryCalendarLine(
+        secondarySystem: secondarySystem,
+        date: date,
+        displayMasa: displayMasa,
+        rawMasa: panchang.masa,
+        yearEraIndex: yearEraIndex,
+        hinduDay: hinduDay,
+      );
+      final dateLines = secondaryLine == null
+          ? gregorianLine
+          : '$gregorianLine\n$secondaryLine';
+
+      if (wantOnDay) {
+        final onDay = tz.TZDateTime(
+          tz.local,
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        );
+        if (!onDay.isBefore(now)) {
+          await _notifications.zonedSchedule(
+            _festivalNotificationIdBase + i * 2,
+            festival.name,
+            'Today • $tithiIdentity\n$dateLines',
+            onDay,
+            notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          );
+        }
+      }
+      if (wantDayBefore) {
+        final eve = tz.TZDateTime(
+          tz.local,
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        ).subtract(const Duration(days: 1));
+        if (!eve.isBefore(now)) {
+          await _notifications.zonedSchedule(
+            _festivalNotificationIdBase + i * 2 + 1,
+            festival.name,
+            'Tomorrow • $tithiIdentity\n$dateLines',
+            eve,
+            notificationDetails,
+            androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+          );
+        }
+      }
+    }
+
+    if (kDebugMode) {
+      print('Scheduled upcoming festival notifications');
+    }
+  }
+
+  /// Read the Hindu month system from a settings box (safe default).
+  HinduMonthSystem _readMonthSystem(Box<dynamic> settingsBox) {
+    final index =
+        (settingsBox.get(
+                  'hindu_month_system',
+                  defaultValue: HinduMonthSystem.amanta.index,
+                )
+                as int?) ??
+            HinduMonthSystem.amanta.index;
+    if (index >= 0 && index < HinduMonthSystem.values.length) {
+      return HinduMonthSystem.values[index];
+    }
+    return HinduMonthSystem.amanta;
   }
 
   /// Request notification permission.
@@ -638,6 +936,95 @@ class NotificationService {
     );
   }
 
+  /// Full panchang for [date] with the same intraday checkpoints the app UI
+  /// uses, so festival matching (timingOverride, Kshaya) agrees with what
+  /// the user sees. Shared by the daily content and the festival scanner.
+  Future<PanchangData> _computePanchangForDate({
+    required DateTime date,
+    required PanchangService service,
+    required double latitude,
+    required double longitude,
+    required List<Festival> festivals,
+    required HinduMonthSystem monthSystem,
+    required DateTime sunriseTime,
+  }) async {
+    final sunsetTime = SunriseCalculator.calculateSunsetIST(
+      date: date,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final nextSunriseTime = SunriseCalculator.calculateSunriseIST(
+      date: date.add(const Duration(days: 1)),
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    final rawTithi = await service.calculateTithi(
+      sunriseTime,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final masa = await service.calculateMasa(
+      sunriseTime,
+      rawTithi,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    // Intraday checkpoints so timingOverride festivals (madhyahna,
+    // aparahna, nishita) and Kshaya tithis match the app UI.
+    final rawTithiMadhyahna = await service.calculateTithi(
+      sunriseTime.add(
+        Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
+      ),
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final rawTithiAparahna = await service.calculateTithi(
+      sunriseTime.add(
+        Duration(
+          minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
+        ),
+      ),
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final rawTithiNishita = await service.calculateTithi(
+      sunsetTime.add(
+        Duration(
+          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
+        ),
+      ),
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final rawTithiNextSunrise = await service.calculateTithi(
+      nextSunriseTime,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final masaNextSunrise = await service.calculateMasa(
+      nextSunriseTime,
+      rawTithiNextSunrise,
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    return PanchangData.fromRawTithi(
+      date: date,
+      rawTithi: rawTithi,
+      masa: masa,
+      allFestivals: festivals,
+      monthSystem: monthSystem,
+      sunrise: sunriseTime,
+      sunset: sunsetTime,
+      rawTithiMadhyahna: rawTithiMadhyahna,
+      rawTithiAparahna: rawTithiAparahna,
+      rawTithiNishita: rawTithiNishita,
+      rawTithiNextSunrise: rawTithiNextSunrise,
+      masaNextSunrise: masaNextSunrise,
+    );
+  }
+
   Future<({String title, String body})> _buildDailyNotificationContent() async {
     try {
       final storageService = StorageService();
@@ -674,42 +1061,75 @@ class NotificationService {
         longitude: longitude,
       );
 
-      final rawTithi = await service.calculateTithi(
-        sunriseTime,
-        latitude: latitude,
-        longitude: longitude,
-      );
-      final masa = await service.calculateMasa(
-        sunriseTime,
-        rawTithi,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      final panchang = PanchangData.fromRawTithi(
+      final panchang = await _computePanchangForDate(
         date: date,
-        rawTithi: rawTithi,
-        masa: masa,
+        service: service,
+        latitude: latitude,
+        longitude: longitude,
+        festivals: await _loadFestivalsForNotification(),
         monthSystem: monthSystem,
-        sunrise: sunriseTime,
-        sunset: SunriseCalculator.calculateSunsetIST(
-          date: date,
-          latitude: latitude,
-          longitude: longitude,
-        ),
+        sunriseTime: sunriseTime,
       );
-
       // Display the masa in the user's selected month system (Purnimant
       // Krishna days carry the next month's name; Shukla is identical).
       final displayMasa = displayMasaName(
         panchang.masa,
         panchang.paksha,
         monthSystem,
+      ).replaceAll('_', ' ');
+
+      // Secondary calendar line, respecting the user's
+      // secondary_calendar_system setting (default Hindu).
+      // Indices mirror AppCalendarSystem: 0=none, 1=gregorian, 2=hindu,
+      // 3=bengali. Raw ints (not the enum) keep this background-isolate
+      // safe with no Riverpod dependency.
+      final secondarySystem =
+          (settingsBox.get('secondary_calendar_system', defaultValue: 2)
+                  as int?) ??
+              2;
+      final yearEraIndex =
+          (settingsBox.get('hindu_year_era', defaultValue: 1) as int?) ?? 1;
+      // TithiDisplayMode: 0=pakshaBased (1-15), 1=continuous30 (1-30).
+      final tithiMode =
+          (settingsBox.get('tithi_display_mode', defaultValue: 1) as int?) ??
+              1;
+      final hinduDay =
+          tithiMode == 0 ? panchang.tithiNumber : panchang.tithiIndex;
+
+      final gregorianLine =
+          DateFormat('EEEE, d MMMM yyyy').format(date);
+      final secondaryLine = _secondaryCalendarLine(
+        secondarySystem: secondarySystem,
+        date: date,
+        displayMasa: displayMasa,
+        rawMasa: panchang.masa,
+        yearEraIndex: yearEraIndex,
+        hinduDay: hinduDay,
       );
 
+      // First line is the festival name when one falls today (major
+      // preferred, else first), matching the home screen. Otherwise the
+      // tithi identity.
+      final tithiIdentity =
+          '${panchang.paksha} ${panchang.tithiName} – $displayMasa';
+      if (panchang.hasFestivals) {
+        final festival = panchang.majorFestivals.isNotEmpty
+            ? panchang.majorFestivals.first
+            : panchang.festivals.first;
+        final dateLines = secondaryLine == null
+            ? gregorianLine
+            : '$gregorianLine\n$secondaryLine';
+        return (
+          title: festival.name,
+          body: '$tithiIdentity\n$dateLines',
+        );
+      }
+
       return (
-        title: '🙏 ${panchang.tithiName}',
-        body: '${panchang.paksha} • ${panchang.tithiNumber} ($displayMasa)',
+        title: tithiIdentity,
+        body: secondaryLine == null
+            ? gregorianLine
+            : '$gregorianLine\n$secondaryLine',
       );
     } catch (e, stack) {
       // BUG-MEDIUM-7: Surface the error instead of swallowing it silently.
@@ -719,6 +1139,161 @@ class NotificationService {
         body: 'Open to see today\'s panchang details',
       );
     }
+  }
+
+  /// Festivals for notification matching, loaded directly from Hive so this
+  /// works in the WorkManager background isolate (no Riverpod).
+  /// Returns empty on any failure so the notification falls back to tithi.
+  Future<List<Festival>> _loadFestivalsForNotification() async {
+    try {
+      // TypeAdapters are registered in main(); the background isolate needs
+      // its own registration before opening the typed box.
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(FestivalAdapter());
+      }
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(NameRegionalAdapter());
+      }
+      if (!Hive.isAdapterRegistered(2)) {
+        Hive.registerAdapter(VisualsAdapter());
+      }
+      if (!Hive.isAdapterRegistered(3)) {
+        Hive.registerAdapter(PurposeAdapter());
+      }
+      if (!Hive.isAdapterRegistered(4)) {
+        Hive.registerAdapter(PanchangRulesAdapter());
+      }
+      if (!Hive.isAdapterRegistered(5)) {
+        Hive.registerAdapter(RitualsAdapter());
+      }
+      if (!Hive.isAdapterRegistered(6)) {
+        Hive.registerAdapter(MediaAdapter());
+      }
+      final box = await StorageService().openFestivalsBox();
+      if (box.isEmpty) return const [];
+      return List<Festival>.unmodifiable(box.values);
+    } catch (e) {
+      debugPrint('Failed to load festivals for notification: $e');
+      return const [];
+    }
+  }
+
+  /// Secondary-calendar detail line for the daily notification body.
+  ///
+  /// Returns null when there is nothing distinct to add (none/gregorian,
+  /// since Gregorian is already the first body line). Hindu secondary is a
+  /// full date (`Masa day, year`, e.g. `Shravana 22, 1948`); Bengali adds
+  /// the full Bengali date via a background-safe solar approximation.
+  String? _secondaryCalendarLine({
+    required int secondarySystem,
+    required DateTime date,
+    required String displayMasa,
+    required String rawMasa,
+    required int yearEraIndex,
+    required int hinduDay,
+  }) {
+    switch (secondarySystem) {
+      case 2: // Hindu
+        // Year boundary uses the raw Amanta masa (same as
+        // HinduCalendarService.vikramSamvatYear); display uses the
+        // month-system-converted name.
+        final vsYear = _vikramSamvatYear(
+          gregorianYear: date.year,
+          gregorianMonth: date.month,
+          masa: rawMasa,
+        );
+        // yearEraIndex mirrors HinduYearEra: 0=vikramSamvat, 1=shakaSamvat.
+        if (yearEraIndex == 0) {
+          return '$displayMasa $hinduDay, Vikram $vsYear';
+        }
+        return '$displayMasa $hinduDay, Shaka ${vsYear - 135}';
+      case 3: // Bengali
+        final bengali = _approxBengaliDate(date);
+        return '${bengali.month} ${bengali.day}, ${bengali.year}';
+      case 0: // none
+      case 1: // gregorian (already shown)
+      default:
+        return null;
+    }
+  }
+
+  /// Year boundary: +57 on/after Chaitra (new year), +56 before it.
+  /// Mirrors HinduCalendarService.vikramSamvatYear without a Ref.
+  int _vikramSamvatYear({
+    required int gregorianYear,
+    required int gregorianMonth,
+    required String masa,
+  }) {
+    if (gregorianMonth < 3) return gregorianYear + 56;
+    if (gregorianMonth > 4) return gregorianYear + 57;
+    final base = _baseMasaName(masa);
+    if (base == 'Chaitra' || base == 'Vaishakha' || base == 'Jyeshtha') {
+      return gregorianYear + 57;
+    }
+    return gregorianYear + 56;
+  }
+
+  String _baseMasaName(String masa) {
+    if (masa.startsWith('Adhika_')) return masa.substring(7);
+    if (masa.startsWith('Nija_')) return masa.substring(5);
+    return masa;
+  }
+
+  /// Solar approximation of the Bengali date (Pohela Boishakh = Apr 14).
+  /// Same table as the web Bengali service; avoids FFI/Ref in the
+  /// background isolate where notifications are built.
+  ({int day, String month, int year}) _approxBengaliDate(DateTime date) {
+    const months = [
+      'Boishakh',
+      'Jyoishtho',
+      'Ashar',
+      'Srabon',
+      'Bhadro',
+      'Ashwin',
+      'Kartik',
+      'Agrahayan',
+      'Poush',
+      'Magh',
+      'Falgun',
+      'Chaitra',
+    ];
+    int bengaliYear = date.year - 593;
+    if (date.month < 4 || (date.month == 4 && date.day < 14)) {
+      bengaliYear--;
+    }
+    final starts = [
+      DateTime(date.year, 4, 14),
+      DateTime(date.year, 5, 15),
+      DateTime(date.year, 6, 15),
+      DateTime(date.year, 7, 16),
+      DateTime(date.year, 8, 16),
+      DateTime(date.year, 9, 16),
+      DateTime(date.year, 10, 17),
+      DateTime(date.year, 11, 16),
+      DateTime(date.year, 12, 16),
+      DateTime(date.year + 1, 1, 14),
+      DateTime(date.year + 1, 2, 13),
+      DateTime(date.year + 1, 3, 15),
+    ];
+    int monthIndex = 11;
+    int day = date.difference(starts[11]).inDays + 1;
+    for (int i = 0; i < starts.length; i++) {
+      if (date.isBefore(starts[i])) {
+        monthIndex = i == 0 ? 11 : i - 1;
+        final prevStart = i == 0
+            ? DateTime(date.year - 1, 3, 15)
+            : starts[i - 1];
+        day = date.difference(prevStart).inDays + 1;
+        break;
+      }
+      if (i == starts.length - 1) {
+        monthIndex = 11;
+        day = date.difference(starts[11]).inDays + 1;
+      }
+    }
+    if (day < 1) day = 1;
+    if (day > 32) day = 1;
+    return (day: day, month: months[monthIndex], year: bengaliYear);
   }
 
   // SMELL-01: delegate to shared panchangDateKey utility

@@ -48,6 +48,37 @@ final shlokaNotificationEnabledProvider =
       ShlokaNotificationEnabledNotifier.new,
     );
 
+/// Provider for festival reminder enabled state (default false, synced).
+class FestivalNotificationEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setEnabled(bool enabled) {
+    state = enabled;
+  }
+}
+
+final festivalNotificationEnabledProvider =
+    NotifierProvider<FestivalNotificationEnabledNotifier, bool>(
+      FestivalNotificationEnabledNotifier.new,
+    );
+
+/// Provider for festival reminder timing index (0 = on the day,
+/// 1 = one day before, 2 = both). Mirrors FestivalReminderTiming.
+class FestivalTimingNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void setTiming(int timing) {
+    state = timing;
+  }
+}
+
+final festivalTimingProvider =
+    NotifierProvider<FestivalTimingNotifier, int>(
+      FestivalTimingNotifier.new,
+    );
+
 /// Provider for notification time (hour, minute)
 class NotificationTimeNotifier extends Notifier<({int hour, int minute})> {
   @override
@@ -75,6 +106,14 @@ final loadNotificationStateProvider = FutureProvider<void>((ref) async {
   ref
       .read(shlokaNotificationEnabledProvider.notifier)
       .setEnabled(shlokaEnabled);
+
+  final festivalEnabled = await service.isFestivalEnabled();
+  ref.read(festivalNotificationEnabledProvider.notifier).setEnabled(
+        festivalEnabled,
+      );
+
+  final festivalTiming = await service.getFestivalTiming();
+  ref.read(festivalTimingProvider.notifier).setTiming(festivalTiming);
 
   final time = await service.getNotificationTime();
   ref.read(notificationTimeProvider.notifier).setTime(time);

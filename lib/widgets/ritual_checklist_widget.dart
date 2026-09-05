@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/ritual_state_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -23,8 +24,9 @@ class RitualChecklistWidget extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
         onTap: () {
-          // Trigger Haptic Feedback
-          HapticFeedback.lightImpact();
+          if (ref.read(accessibilityProvider).hapticFeedback) {
+            HapticFeedback.lightImpact();
+          }
 
           // Toggle state
           ref.read(ritualStateProvider.notifier).toggleRitual(ritualId);

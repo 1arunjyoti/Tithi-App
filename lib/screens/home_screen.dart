@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../models/panchang_data.dart';
@@ -173,7 +174,7 @@ class _JumpToTodayFab extends ConsumerWidget {
     return FloatingActionButton(
       onPressed: () {
         final now = DateTime.now();
-        ref.read(focusedMonthProvider.notifier).setFocusedMonth(now);
+        setCalendarMonth(ref, now);
         ref.read(selectedDateProvider.notifier).setDate(now);
       },
       tooltip: l10n?.goToToday ?? 'Go to Today',
@@ -285,6 +286,41 @@ class _PakshaIndicator extends ConsumerWidget {
     final selectedDate = ref.watch(selectedDateProvider);
     final selectedPanchang = ref.watch(panchangForDateProvider(selectedDate));
     final cityName = ref.watch(cityNameProvider);
+    // Cold taps: month batch already holds this date when visible.
+    final monthlyHit = ref
+        .watch(
+          monthlyPanchangProvider(
+            DateTime(selectedDate.year, selectedDate.month),
+          ),
+        )
+        .valueOrNull?[DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    )];
+
+    Widget staleOrSkeleton() {
+      // Month data first, then last-visited stale. True-cold keeps a
+      // content-height skeleton so the layout doesn't collapse/flash.
+      final fallback = monthlyHit ?? cachedPanchangUiSync(selectedDate);
+      if (fallback != null) {
+        return _buildIndicatorContent(
+          context,
+          ref,
+          fallback,
+          cityName.valueOrNull,
+        );
+      }
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        height: 76,
+        decoration: BoxDecoration(
+          color: context.colors.onSurface.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(24),
+        ),
+      );
+    }
 
     return selectedPanchang.when(
       data: (panchang) => _buildIndicatorContent(
@@ -297,8 +333,8 @@ class _PakshaIndicator extends ConsumerWidget {
           error: (_, _) => null,
         ),
       ),
-      loading: () => const SizedBox(height: 40),
-      error: (_, _) => const SizedBox(height: 40),
+      loading: () => staleOrSkeleton(),
+      error: (_, _) => staleOrSkeleton(),
     );
   }
 
@@ -358,6 +394,9 @@ class _PakshaIndicator extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
+        if (ref.read(accessibilityProvider).hapticFeedback) {
+          HapticFeedback.lightImpact();
+        }
         showModalBottomSheet(
           context: context,
           isScrollControlled: true,

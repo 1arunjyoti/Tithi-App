@@ -65,34 +65,66 @@ class EventDetailSheet extends ConsumerWidget {
         festival.rituals.fasting!.isNotEmpty;
     final hasMantra = festival.rituals.mantra.isNotEmpty;
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.3,
-      maxChildSize: 0.9,
-      builder: (context, scrollController) {
-        return Container(
+    // Fixed-fraction sheet instead of DraggableScrollableSheet: the
+    // draggable variant fills the whole screen and swallows scrim taps, so
+    // outside-tap dismissal silently broke (drag-down still worked). Same
+    // look, with working scrim-tap + drag dismissal like other sheets.
+    final sheetHeight = MediaQuery.of(context).size.height * 0.75;
+    return SizedBox(
+      height: sheetHeight,
+      child: Container(
           decoration: BoxDecoration(
             color: context.theme.scaffoldBackgroundColor,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
-              // Drag handle with theme color tint
+              // Drag handle with theme color tint. The taller transparent
+              // zone makes the framework drag-to-dismiss target easier to
+              // grab; visuals unchanged (handle stays centered).
               Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: themeColor.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
+                height: 32,
+                alignment: Alignment.center,
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: themeColor.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
 
-              // Content
+              // Content. A sustained downward drag past the top edge
+              // dismisses the sheet (OverscrollNotification fires only for
+              // touch drags via dragDetails, so ballistic flings can't
+              // mis-dismiss). Pixels accumulate until a ~120px drag.
               Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  padding: const EdgeInsets.all(24),
+                child: NotificationListener<ScrollNotification>(
+                  onNotification: (() {
+                    var edgeDrag = 0.0;
+                    return (ScrollNotification notification) {
+                      if (notification is ScrollStartNotification) {
+                        edgeDrag = 0;
+                      } else if (notification is OverscrollNotification &&
+                          notification.dragDetails != null &&
+                          notification.overscroll < 0) {
+                        edgeDrag += -notification.overscroll;
+                        if (edgeDrag >= 120 &&
+                            Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                          return true;
+                        }
+                      } else if (notification is ScrollUpdateNotification &&
+                          notification.metrics.pixels > 0) {
+                        // Left the edge: finger moved back into content.
+                        edgeDrag = 0;
+                      }
+                      return false;
+                    };
+                  })(),
+                  child: ListView(
+                    padding: const EdgeInsets.all(24),
                   children: [
                     // Festival name and Share button
                     Row(
@@ -652,12 +684,12 @@ class EventDetailSheet extends ConsumerWidget {
 
                     const SizedBox(height: 32),
                   ],
+                  ),
                 ),
               ),
             ],
           ),
-        );
-      },
+        ),
     );
   }
 

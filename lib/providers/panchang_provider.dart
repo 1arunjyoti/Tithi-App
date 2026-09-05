@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import '../models/festival.dart';
@@ -12,6 +14,31 @@ import 'location_provider.dart';
 import 'calendar_provider.dart';
 
 const _panchangLocationSignatureKey = '__location_signature__';
+
+// Sync in-memory stale cache for selected-date UI (EventList + Paksha).
+// panchangForDateProvider is an autoDispose family, so tapping another date
+// shows a loading spinner for a frame while FFI resolves — the flash below
+// the calendar. Stale content renders instantly; fresh data replaces it.
+final Map<DateTime, PanchangData> _panchangUiCache = {};
+const int _panchangUiCacheMax = 100;
+
+DateTime _normalizeUiDate(DateTime d) => DateTime(d.year, d.month, d.day);
+
+/// Last successful [PanchangData] for [date], if any.
+PanchangData? cachedPanchangUiSync(DateTime date) {
+  return _panchangUiCache[_normalizeUiDate(date)];
+}
+
+void storePanchangUiSync(DateTime date, PanchangData data) {
+  if (_panchangUiCache.length >= _panchangUiCacheMax) {
+    final toRemove =
+        _panchangUiCache.keys.take(_panchangUiCacheMax ~/ 5).toList();
+    for (final k in toRemove) {
+      _panchangUiCache.remove(k);
+    }
+  }
+  _panchangUiCache[_normalizeUiDate(date)] = data;
+}
 
 String _dateKey(DateTime date) => panchangDateKey(date);
 
@@ -228,7 +255,7 @@ final panchangForDateProvider = FutureProvider.autoDispose
       final longitude = coords.longitude;
       final cacheBox = await _preparePanchangCacheBox(latitude, longitude);
 
-      return _computePanchangData(
+      final data = await _computePanchangData(
         normalizedDate: DateTime(date.year, date.month, date.day),
         service: service,
         festivals: festivals,
@@ -237,6 +264,9 @@ final panchangForDateProvider = FutureProvider.autoDispose
         longitude: longitude,
         cacheBox: cacheBox,
       );
+      // Feed the stale-UI LRU so date taps render instantly next time.
+      storePanchangUiSync(date, data);
+      return data;
     });
 
 /// Provider for today's panchang.
@@ -253,9 +283,21 @@ final currentPakshaProvider = Provider<AsyncValue<String>>((ref) {
 });
 
 /// Batch provider for monthly panchang data
-/// Pre-loads entire month to eliminate N+1 query pattern in calendar
+/// Pre-loads entire month to eliminate N+1 query pattern in calendar.
+/// autoDispose with a 5-minute keepAlive: TableCalendar swipes back/forth
+/// between the same 2-3 months, so recently visited/precached months stay
+/// warm for instant landing instead of recomputing ~210 FFI calls — but
+/// each entry holds ~42 PanchangData, so idle months are released rather
+/// than retained for the whole session (unbounded family growth).
 final monthlyPanchangProvider = FutureProvider.autoDispose
     .family<Map<DateTime, PanchangData>, DateTime>((ref, focusedMonth) async {
+      final keepAliveLink = ref.keepAlive();
+      final releaseTimer = Timer(
+        const Duration(minutes: 5),
+        keepAliveLink.close,
+      );
+      ref.onDispose(releaseTimer.cancel);
+
       // Ensure service is initialized
       await ref.watch(panchangInitProvider.future);
       await ref.watch(festivalInitProvider.future);
