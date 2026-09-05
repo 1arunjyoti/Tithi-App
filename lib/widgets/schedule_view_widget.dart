@@ -211,9 +211,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
       // Update focused month provider (for sync with calendar view)
       Future.microtask(() {
         if (mounted) {
-          ref
-              .read(cp.focusedMonthProvider.notifier)
-              .setFocusedMonth(visibleDate);
+          cp.setCalendarMonth(ref, visibleDate);
         }
       });
     }
@@ -824,7 +822,7 @@ class _ScheduleDateItem extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.selectionClick();
+          HapticFeedback.lightImpact();
         }
         _showFestivalDetail(context, festival, panchang);
       },

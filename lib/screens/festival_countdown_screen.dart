@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/festival.dart';
@@ -49,7 +50,13 @@ class FestivalCountdownScreen extends ConsumerWidget {
             ),
           ),
           SafeArea(
+            // skipLoadingOnReload: pin/unpin/delete rebuilds the targets
+            // provider; without this the list is replaced by the loading
+            // shimmer on every toggle (the full-screen "flash"). The
+            // previous list stays put (and keeps its scroll offset) while
+            // the reload resolves underneath.
             child: countdowns.when(
+              skipLoadingOnReload: true,
               data: (targets) {
                 if (targets.isEmpty) {
                   return ListView(
@@ -75,10 +82,22 @@ class FestivalCountdownScreen extends ConsumerWidget {
                       target: target,
                       showActions: true,
                       isPinnedToHome: isPinned,
-                      onToggleHome: () => ref
-                          .read(festivalCountdownPreferencesProvider.notifier)
-                          .toggleHomePinned(target.id),
-                      onRemove: () => _removeCountdown(context, ref, target.id),
+                      onToggleHome: () {
+                        if (ref.read(accessibilityProvider).hapticFeedback) {
+                          HapticFeedback.lightImpact();
+                        }
+                        ref
+                            .read(
+                              festivalCountdownPreferencesProvider.notifier,
+                            )
+                            .toggleHomePinned(target.id);
+                      },
+                      onRemove: () {
+                        if (ref.read(accessibilityProvider).hapticFeedback) {
+                          HapticFeedback.lightImpact();
+                        }
+                        _removeCountdown(context, ref, target.id);
+                      },
                     );
                   },
                   separatorBuilder: (_, _) => const SizedBox(height: 10),

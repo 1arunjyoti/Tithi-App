@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import '../models/hindu_month_system.dart';
@@ -51,6 +53,60 @@ class FocusedMonthNotifier extends Notifier<DateTime> {
 final focusedMonthProvider = NotifierProvider<FocusedMonthNotifier, DateTime>(
   FocusedMonthNotifier.new,
 );
+
+/// Month driving heavy calendar data (panchang FFI, cell labels).
+/// Updated immediately on chevron taps, but debounced ~1 animation frame
+/// after TableCalendar swipes so ~250 FFI calls don't run concurrently
+/// with the page animation — the exact stutter when the next month
+/// crosses mid-screen and the header flips.
+class HeavyMonthNotifier extends Notifier<DateTime> {
+  Timer? _timer;
+
+  @override
+  DateTime build() {
+    // Owned here (not as a widget global) so the timer is cancelled when
+    // the provider is disposed — no leaked Timer holding a stale ref.
+    ref.onDispose(() => _timer?.cancel());
+    return DateTime.now();
+  }
+
+  void settle(DateTime month) {
+    _timer?.cancel();
+    state = month;
+  }
+
+  /// Debounced settle for TableCalendar swipes: the 220ms window lets the
+  /// 250ms page animation finish before ~250 FFI calls start. A newer
+  /// swipe cancels the pending one, so skipped months are never computed.
+  void scheduleDebounced(DateTime month) {
+    _timer?.cancel();
+    final target = DateTime(month.year, month.month);
+    _timer = Timer(const Duration(milliseconds: 220), () {
+      final current = ref.read(focusedMonthProvider);
+      if (current.year != target.year || current.month != target.month) {
+        return;
+      }
+      state = target;
+    });
+  }
+}
+
+final heavyFocusedMonthProvider =
+    NotifierProvider<HeavyMonthNotifier, DateTime>(
+      HeavyMonthNotifier.new,
+    );
+
+/// Discrete month jump (chevron, year picker, search, today button).
+/// No page animation to protect, so both light (header/position) and
+/// heavy (FFI data) months move together. Swipes must NOT use this —
+/// they set [focusedMonthProvider] instantly and settle heavy after
+/// the animation via the debounced helper in calendar_widget.dart.
+void setCalendarMonth(WidgetRef ref, DateTime month) {
+  ref.read(focusedMonthProvider.notifier).setFocusedMonth(month);
+  ref.read(heavyFocusedMonthProvider.notifier).settle(
+        DateTime(month.year, month.month),
+      );
+}
 
 /// Provider for calendar format (month/week/2 weeks)
 enum CalendarViewFormat { month, twoWeeks, week }

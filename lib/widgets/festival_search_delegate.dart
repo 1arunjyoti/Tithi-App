@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
@@ -130,6 +132,10 @@ class FestivalSearchDelegate extends SearchDelegate {
 
     return GestureDetector(
       onTap: () async {
+        // Immediate feedback while the occurrence lookup runs.
+        if (ref.read(accessibilityProvider).hapticFeedback) {
+          await HapticFeedback.lightImpact();
+        }
         // Try to find the next occurrence date so we can pass panchang context
         final panchangService = ref.read(panchangServiceProvider);
         final nextDate = await panchangService.findNextFestivalOccurrence(
@@ -232,9 +238,7 @@ class FestivalSearchDelegate extends SearchDelegate {
 
                 if (nextDate != null && context.mounted) {
                   // Navigate
-                  ref
-                      .read(focusedMonthProvider.notifier)
-                      .setFocusedMonth(nextDate);
+                  setCalendarMonth(ref, nextDate);
                   ref.read(selectedDateProvider.notifier).setDate(nextDate);
 
                   // Close search

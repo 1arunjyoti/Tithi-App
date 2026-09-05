@@ -38,13 +38,18 @@ class SettingsGroupCard extends ConsumerWidget {
     final isDark = theme.brightness == Brightness.dark;
     final isPureDark = theme.scaffoldBackgroundColor == Colors.black;
 
-    return Container(
-      decoration: config.getDecoration(
-        isDark: isDark,
-        isPureDark: isPureDark,
-        primaryColor: theme.primaryColor,
+    // RepaintBoundary: the glass shadow (blur 20) would otherwise repaint
+    // on every scroll frame and flicker on the GPU thread. Isolated here
+    // it caches as a display list and just translates while scrolling.
+    return RepaintBoundary(
+      child: Container(
+        decoration: config.getDecoration(
+          isDark: isDark,
+          isPureDark: isPureDark,
+          primaryColor: theme.primaryColor,
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: children),
       ),
-      child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 }
@@ -232,7 +237,7 @@ class ThemeOptionButton extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.selectionClick();
+          HapticFeedback.lightImpact();
         }
         onTap();
       },

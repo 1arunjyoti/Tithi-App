@@ -35,16 +35,32 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
 
     // Default: single date mode
     final panchangAsync = ref.watch(panchangForDateProvider(selectedDate));
+    // Cold taps: the month batch already holds this date when it belongs to
+    // the loaded/precached month, so use it instantly instead of flashing.
+    final monthKey = DateTime(selectedDate.year, selectedDate.month);
+    final monthlyHit = ref
+        .watch(monthlyPanchangProvider(monthKey))
+        .valueOrNull?[DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+        )];
 
     return panchangAsync.when(
       data: (panchang) => _buildEventList(context, panchang),
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      loading: () {
+        // Fresh month data first (cold but already loaded), then stale from
+        // a previous visit. Only true-cold dates reach the skeleton, which
+        // keeps the same card heights so the scroll extent doesn't jump.
+        if (monthlyHit != null) return _buildEventList(context, monthlyHit);
+        final stale = cachedPanchangUiSync(selectedDate);
+        if (stale != null) return _buildEventList(context, stale);
+        return _buildLoadingSkeleton(context);
+      },
       error: (error, stack) {
+        if (monthlyHit != null) return _buildEventList(context, monthlyHit);
+        final stale = cachedPanchangUiSync(selectedDate);
+        if (stale != null) return _buildEventList(context, stale);
         final l10n = AppLocalizations.of(context);
         return Center(
           child: Padding(
@@ -80,6 +96,42 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
         else
           _buildNoFestivalsCard(context),
 
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  /// Height-preserving placeholder for true-cold dates (not in month batch
+  /// and never visited). Mirrors the real card heights so the scroll extent
+  /// doesn't collapse to a spinner then jump when FFI resolves.
+  Widget _buildLoadingSkeleton(BuildContext context) {
+    final placeholder = context.colors.onSurface.withValues(alpha: 0.06);
+    Widget card({required double height, double radius = 24}) {
+      return Container(
+        width: double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: placeholder,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        card(height: 84),
+        const SizedBox(height: 16),
+        Container(
+          width: 180,
+          height: 20,
+          decoration: BoxDecoration(
+            color: placeholder,
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        const SizedBox(height: 12),
+        card(height: 76, radius: 16),
         const SizedBox(height: 16),
       ],
     );
@@ -228,7 +280,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
           IconButton(
             onPressed: () {
               if (ref.read(accessibilityProvider).hapticFeedback) {
-                HapticFeedback.selectionClick();
+                HapticFeedback.lightImpact();
               }
               setState(() {
                 _selectedRange = null;
@@ -248,7 +300,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
 
   Future<void> _showDateRangePicker() async {
     if (ref.read(accessibilityProvider).hapticFeedback) {
-      await HapticFeedback.selectionClick();
+      await HapticFeedback.lightImpact();
     }
     if (!mounted) return;
 
@@ -407,7 +459,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return GestureDetector(
       onTap: () {
         if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.selectionClick();
+          HapticFeedback.lightImpact();
         }
         _showFestivalDetail(context, festival, panchang);
       },
@@ -479,7 +531,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget> {
     return GestureDetector(
       onTap: () {
         if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.selectionClick();
+          HapticFeedback.lightImpact();
         }
         _showFestivalDetail(context, festival, panchang);
       },

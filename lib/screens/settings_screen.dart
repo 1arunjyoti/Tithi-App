@@ -21,6 +21,7 @@ import '../providers/accessibility_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../models/hindu_month_system.dart';
 import '../services/festival_export_service.dart';
+import '../services/notification_service.dart' show FestivalReminderTiming;
 import '../services/share_file/share_file.dart';
 import '../widgets/settings_widgets.dart';
 
@@ -177,13 +178,16 @@ class SettingsScreen extends ConsumerWidget {
         final isDark = theme.brightness == Brightness.dark;
         final isPureDark = theme.scaffoldBackgroundColor == Colors.black;
 
-        return Container(
-          decoration: config.getDecoration(
-            isDark: isDark,
-            isPureDark: isPureDark,
-            primaryColor: theme.primaryColor,
-          ),
-          padding: const EdgeInsets.all(16),
+        // RepaintBoundary for the same reason as SettingsGroupCard:
+        // glass shadow must not repaint on every scroll frame.
+        return RepaintBoundary(
+          child: Container(
+            decoration: config.getDecoration(
+              isDark: isDark,
+              isPureDark: isPureDark,
+              primaryColor: theme.primaryColor,
+            ),
+            padding: const EdgeInsets.all(16),
           child: Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -221,6 +225,7 @@ class SettingsScreen extends ConsumerWidget {
                     .setOverride('Krishna'),
               ),
             ],
+          ),
           ),
         );
       },
@@ -306,39 +311,125 @@ class _NotificationSettings extends ConsumerWidget {
             }
           },
         ),
-        if (isEnabled) ...[
-          const SettingsDivider(),
-          // Daily Shloka Toggle
-          SettingsSwitchTile(
-            icon: Icons.menu_book_rounded,
-            title: 'Daily Shloka',
-            subtitle: 'Get a daily spiritual verse',
-            value: ref.watch(shlokaNotificationEnabledProvider),
-            onChanged: (val) async {
-              ref
-                  .read(shlokaNotificationEnabledProvider.notifier)
-                  .setEnabled(val);
-              try {
-                await notificationService.setShlokaEnabled(val);
-              } catch (e) {
-                debugPrint('Failed to set shloka notifications to $val: $e');
-                ref
-                    .read(shlokaNotificationEnabledProvider.notifier)
-                    .setEnabled(!val);
+        const SettingsDivider(),
+        // Daily Shloka Toggle (independent of the daily master switch,
+        // so users can opt into shloka-only notifications).
+        SettingsSwitchTile(
+          icon: Icons.menu_book_rounded,
+          title: 'Daily Shloka',
+          subtitle: 'Get a daily spiritual verse',
+          value: ref.watch(shlokaNotificationEnabledProvider),
+          onChanged: (val) async {
+            if (val) {
+              final granted = await notificationService.requestPermission();
+              if (!granted) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text(
-                        'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
+                        'Notification permission denied. Please enable it in system settings.',
                       ),
                     ),
                   );
                 }
-              } finally {
-                ref.invalidate(loadNotificationStateProvider);
+                return;
               }
-            },
+            }
+            ref
+                .read(shlokaNotificationEnabledProvider.notifier)
+                .setEnabled(val);
+            try {
+              await notificationService.setShlokaEnabled(val);
+            } catch (e) {
+              debugPrint('Failed to set shloka notifications to $val: $e');
+              ref
+                  .read(shlokaNotificationEnabledProvider.notifier)
+                  .setEnabled(!val);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
+                    ),
+                  ),
+                );
+              }
+            } finally {
+              ref.invalidate(loadNotificationStateProvider);
+            }
+          },
+        ),
+        const SettingsDivider(),
+        // Festival Reminders Toggle (independent of daily master switch,
+        // so users can opt into festival-only notifications).
+        SettingsSwitchTile(
+          icon: Icons.celebration_rounded,
+          title: 'Festival Reminders',
+          subtitle: 'Notify only for festivals, on the day or before',
+          value: ref.watch(festivalNotificationEnabledProvider),
+          onChanged: (val) async {
+            if (val) {
+              final granted = await notificationService.requestPermission();
+              if (!granted) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Notification permission denied. Please enable it in system settings.',
+                      ),
+                    ),
+                  );
+                }
+                return;
+              }
+            }
+            ref
+                .read(festivalNotificationEnabledProvider.notifier)
+                .setEnabled(val);
+            try {
+              await notificationService.setFestivalEnabled(val);
+            } catch (e) {
+              debugPrint('Failed to set festival notifications to $val: $e');
+              ref
+                  .read(festivalNotificationEnabledProvider.notifier)
+                  .setEnabled(!val);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Could not turn Festival Reminders ${val ? 'on' : 'off'} ($e). Please try again.',
+                    ),
+                  ),
+                );
+              }
+            } finally {
+              ref.invalidate(loadNotificationStateProvider);
+            }
+          },
+        ),
+        if (ref.watch(festivalNotificationEnabledProvider)) ...[
+          const SettingsDivider(),
+          SettingsActionTile(
+            icon: Icons.schedule_rounded,
+            title: 'Festival Reminder Time',
+            trailing: Text(
+              _festivalTimingLabel(ref.watch(festivalTimingProvider)),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: context.textTheme.bodyMedium?.copyWith(
+                color: context.colors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            onTap: () => _showFestivalTimingPicker(context, ref),
           ),
+        ],
+        // Shared by daily, shloka, and festival reminders — shown whenever
+        // any of them is on, so single-type users can still change it.
+        if (isEnabled ||
+            ref.watch(shlokaNotificationEnabledProvider) ||
+            ref.watch(festivalNotificationEnabledProvider)) ...[
           const SettingsDivider(),
           SettingsActionTile(
             icon: Icons.access_time_rounded,
@@ -402,6 +493,57 @@ class _NotificationSettings extends ConsumerWidget {
           ),
         ],
       ],
+    );
+  }
+
+  String _festivalTimingLabel(int timing) {
+    if (timing == FestivalReminderTiming.dayBefore.index) {
+      return 'Day before';
+    }
+    if (timing == FestivalReminderTiming.both.index) {
+      return 'Both';
+    }
+    return 'On the day';
+  }
+
+  Future<void> _showFestivalTimingPicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final current = ref.read(festivalTimingProvider);
+    final notificationService = ref.read(notificationServiceProvider);
+
+    await SettingsBottomSheet.show(
+      context: context,
+      title: 'Festival Reminder Time',
+      children: FestivalReminderTiming.values.map((timing) {
+        final label = _festivalTimingLabel(timing.index);
+        return SettingsPickerItem(
+          title: label,
+          isSelected: timing.index == current,
+          onTap: () async {
+            ref.read(festivalTimingProvider.notifier).setTiming(timing.index);
+            try {
+              await notificationService.setFestivalTiming(timing.index);
+            } catch (e) {
+              debugPrint('Failed to set festival timing: $e');
+              ref.read(festivalTimingProvider.notifier).setTiming(current);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Could not update reminder time ($e). Please try again.',
+                    ),
+                  ),
+                );
+              }
+            } finally {
+              ref.invalidate(loadNotificationStateProvider);
+            }
+            if (context.mounted) Navigator.pop(context);
+          },
+        );
+      }).toList(),
     );
   }
 

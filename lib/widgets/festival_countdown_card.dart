@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../models/festival.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
 import '../theme/app_theme.dart';
 import 'event_detail_sheet.dart';
@@ -62,7 +64,12 @@ class FestivalCountdownTile extends ConsumerWidget {
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () => _showFestivalDetail(context, target.festival),
+        onTap: () {
+          if (ref.read(accessibilityProvider).hapticFeedback) {
+            HapticFeedback.lightImpact();
+          }
+          _showFestivalDetail(context, target.festival);
+        },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: AppTheme.glassmorphism(context: context, ref: ref),
