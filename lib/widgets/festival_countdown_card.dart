@@ -178,6 +178,7 @@ class FestivalCountdownTile extends ConsumerWidget {
   void _showFestivalDetail(BuildContext context, Festival festival) {
     showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => EventDetailSheet(festival: festival),

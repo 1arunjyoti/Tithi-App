@@ -402,7 +402,10 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
         _showTithiDetail(context, panchang);
       },
       child: AnimatedSize(
-        duration: const Duration(milliseconds: 200),
+        duration: AppTheme.animationDuration(
+          context,
+          const Duration(milliseconds: 200),
+        ),
         curve: Curves.easeOut,
         alignment: Alignment.topCenter,
         child: Container(
@@ -692,6 +695,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
   ) {
     showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>
@@ -702,6 +706,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
   void _showTithiDetail(BuildContext context, PanchangData panchang) {
     showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => TithiDetailSheet(panchang: panchang),

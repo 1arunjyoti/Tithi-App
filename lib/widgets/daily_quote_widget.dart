@@ -143,7 +143,10 @@ class DailyQuoteWidget extends ConsumerWidget {
                       crossFadeState: isExpanded
                           ? CrossFadeState.showSecond
                           : CrossFadeState.showFirst,
-                      duration: const Duration(milliseconds: 300),
+                      duration: AppTheme.animationDuration(
+                        context,
+                        const Duration(milliseconds: 300),
+                      ),
                     ),
 
                     // Toggle Button

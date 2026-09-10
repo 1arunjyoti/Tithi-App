@@ -12,7 +12,34 @@ import 'package:tithi/services/location_service.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/providers/festival_countdown_provider.dart';
+import 'package:tithi/providers/moon_phase_provider.dart';
+import 'package:tithi/providers/home_widget_provider.dart';
+import 'package:tithi/services/moon_phase_service.dart';
 import 'package:tithi/widgets/daily_quote_widget.dart';
+
+/// LocationService without native dependencies (GetStorage/Geolocator).
+/// The real init() never completes under flutter_test's FakeAsync clock and
+/// throws MissingPluginException on real async — both fatal to this test.
+class _FakeLocationService extends LocationService {
+  @override
+  Future<bool> isFirstLaunch() async => false;
+
+  @override
+  Future<bool> isLocationEnabled() async => false;
+
+  @override
+  Future<void> markFirstLaunchComplete() async {}
+
+  @override
+  Future<void> setLocationEnabled(bool enabled) async {}
+
+  @override
+  Future<void> markAppBackgrounded() async {}
+
+  @override
+  Future<LocationData?> getCurrentLocation() async =>
+      LocationData.defaultLocation;
+}
 
 void main() {
   setUp(() async {
@@ -46,8 +73,7 @@ void main() {
   });
 
   testWidgets('App renders correctly', (WidgetTester tester) async {
-    final locationService = LocationService();
-    await locationService.init();
+    final locationService = _FakeLocationService();
 
     final mockDate = DateTime.now();
     final normalizedMockDate = DateTime(mockDate.year, mockDate.month, mockDate.day);
@@ -64,8 +90,19 @@ void main() {
     final mockMonthlyPanchang = {
       normalizedMockDate: mockPanchang,
     };
+    // Moon countdown widget shows an indeterminate spinner while loading;
+    // the real service needs native ephemeris (FFI) unavailable in tests.
+    final mockMoonPhase = MoonPhaseData(
+      nextAmavasya: normalizedMockDate.add(const Duration(days: 10)),
+      nextPurnima: normalizedMockDate.add(const Duration(days: 3)),
+      currentTithi: 8.0,
+      isShukla: true,
+    );
 
-    // Build the app overriding FFI/computation heavy providers
+    // Build the app overriding FFI/computation heavy providers.
+    // Bounded pumps instead of pumpAndSettle below: any provider backed by
+    // native code can leave a loading spinner mounted forever under
+    // flutter_test, and pumpAndSettle would never return on its frames.
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -80,15 +117,22 @@ void main() {
           monthlyPanchangProvider.overrideWith((ref, focusedMonth) => Future.value(mockMonthlyPanchang)),
           homeFestivalCountdownTargetsProvider.overrideWith((ref) => Future.value([])),
           dailyShlokaProvider.overrideWith((ref) => Future.value()),
+          // Native-backed providers that never resolve under flutter_test:
+          // Jyotish FFI init (blocks adaptive calendar + countdown targets),
+          // moon phase ephemeris (blocks moon countdown spinner),
+          // home-screen widget platform channels.
+          panchangInitProvider.overrideWith((ref) => Future.value()),
+          moonPhaseDataProvider.overrideWith((ref) => Future.value(mockMoonPhase)),
+          homeWidgetSupportedProvider.overrideWith((ref) => Future.value(false)),
+          homeWidgetPinSupportProvider.overrideWith((ref) => Future.value(false)),
         ],
         child: const TithiApp(),
       ),
     );
-
-    // Let the FutureProviders settle and trigger state updates
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     // Verify the app title is present
     expect(find.text('Tithi'), findsOneWidget);

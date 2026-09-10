@@ -15,6 +15,7 @@ import '../models/panchang_data.dart';
 import 'panchang_service.dart';
 import 'storage_service.dart';
 import 'sunrise_calculator.dart';
+import 'bengali_calendar/bengali_calendar_data.dart';
 
 @pragma('vm:entry-point')
 void callbackDispatcher() {
@@ -164,7 +165,7 @@ class NotificationService {
 
       // Initialize notifications
       const androidSettings = AndroidInitializationSettings(
-        '@mipmap/ic_launcher',
+        '@mipmap/launcher_icon',
       );
       // Don't auto-prompt on iOS at init: permission is requested explicitly
       // when the user flips the toggle (requestPermission), so merely opening
@@ -449,7 +450,8 @@ class NotificationService {
         'tithi_shloka',
         'Daily Shloka',
         channelDescription: 'Spiritual verses and quotes',
-        icon: '@mipmap/ic_launcher',
+        icon: '@mipmap/launcher_icon',
+        largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
       );
 
       const iosDetails = DarwinNotificationDetails(
@@ -616,7 +618,8 @@ class NotificationService {
       channelDescription: 'Reminders for upcoming festivals',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/launcher_icon',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -877,7 +880,8 @@ class NotificationService {
       channelDescription: 'Daily tithi and panchang notifications',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/launcher_icon',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -1243,20 +1247,8 @@ class NotificationService {
   /// Same table as the web Bengali service; avoids FFI/Ref in the
   /// background isolate where notifications are built.
   ({int day, String month, int year}) _approxBengaliDate(DateTime date) {
-    const months = [
-      'Boishakh',
-      'Jyoishtho',
-      'Ashar',
-      'Srabon',
-      'Bhadro',
-      'Ashwin',
-      'Kartik',
-      'Agrahayan',
-      'Poush',
-      'Magh',
-      'Falgun',
-      'Chaitra',
-    ];
+    // Guide Sec 3.1 spellings; shared with the web/native services.
+    const months = kBengaliMonths;
     int bengaliYear = date.year - 593;
     if (date.month < 4 || (date.month == 4 && date.day < 14)) {
       bengaliYear--;
@@ -1326,7 +1318,8 @@ class NotificationService {
       channelDescription: 'Daily tithi and panchang notifications',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/launcher_icon',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
     );
 
     const iosDetails = DarwinNotificationDetails(
@@ -1416,7 +1409,8 @@ class NotificationService {
       channelDescription: 'Daily reminders for your intentions',
       importance: Importance.high,
       priority: Priority.high,
-      icon: '@mipmap/ic_launcher',
+      icon: '@mipmap/launcher_icon',
+      largeIcon: DrawableResourceAndroidBitmap('@mipmap/launcher_icon'),
     );
 
     const iosDetails = DarwinNotificationDetails(

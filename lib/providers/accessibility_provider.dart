@@ -57,11 +57,9 @@ class AccessibilityNotifier extends Notifier<AccessibilityState> {
     });
   }
 
-  void toggleReduceMotion(bool value) {
+  Future<void> toggleReduceMotion(bool value) async {
     state = state.copyWith(reduceMotion: value);
-    // SMELL-6: await _save() so the setting is persisted before the app can
-    // terminate. Changed toggle methods to async and awaited.
-    _save();
+    await _save();
   }
 
   Future<void> toggleHapticFeedback(bool value) async {

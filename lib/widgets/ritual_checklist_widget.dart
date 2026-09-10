@@ -50,7 +50,10 @@ class RitualChecklistWidget extends ConsumerWidget {
             children: [
               // Checkbox/Icon
               AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
+                duration: AppTheme.animationDuration(
+                  context,
+                  const Duration(milliseconds: 200),
+                ),
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(

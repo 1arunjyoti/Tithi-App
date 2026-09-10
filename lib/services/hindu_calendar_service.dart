@@ -196,7 +196,11 @@ class HinduCalendarService {
       final hDate = await calculateDate(search);
       // Skip 'Nija_' months (second occurrence after an Adhika) so we find
       // the first (Adhika or normal) occurrence which is where festivals fall.
-      if (!isAdhikaMasa(hDate.masa) &&
+      // NOTE: only Nija_ is skipped — Adhika_ IS a first occurrence. (A past
+      // revision excluded both prefixes, which made Adhika years unresolvable
+      // and fell through to the estimate fallback.)
+      final isNija = hDate.masa.startsWith('Nija_');
+      if (!isNija &&
           baseMasaName(hDate.masa) == targetMasa &&
           hDate.tithi == 1 &&
           hDate.paksha == 'Shukla') {
@@ -207,5 +211,88 @@ class HinduCalendarService {
 
     // Fallback: If not found (rare, maybe skipped tithi), return estimate
     return estimate;
+  }
+
+  /// Start of the lunar month CONTAINING [date]: one day past the nearest
+  /// earlier masa change, matched by FULL masa name so Adhika/Nija months
+  /// slice exactly one masa each. Masa-pinned (not tithi-pinned) on purpose:
+  /// a Kshaya Pratipada (tithi 1 with no sunrise — observed in this era, e.g.
+  /// Ashadha 1948 missing tithis 4 and 28) has no tithi-1 day to find, but
+  /// the masa transition is always observable. Masa attribution is constant
+  /// per lunation (memoized verdict), so transitions are clean single steps.
+  Future<DateTime> monthStartContaining(DateTime date) async {
+    final first = await calculateDate(date);
+    final targetMasa = first.masa;
+    var day = DateTime(date.year, date.month, date.day - 1);
+    for (int i = 0; i < 34; i++) {
+      final hDate = await calculateDate(day);
+      if (hDate.masa != targetMasa) {
+        return day.add(const Duration(days: 1));
+      }
+      day = day.subtract(const Duration(days: 1));
+    }
+    return DateTime(date.year, date.month, date.day - 29);
+  }
+
+  /// Start of the masa immediately AFTER the month beginning at [monthStart]:
+  /// the first date past it with a different masa. Correct by construction
+  /// across Adhika→Nija→base transitions (and across year ends), with or
+  /// without an observable Pratipada.
+  Future<DateTime> nextMonthStartAfter(DateTime monthStart) async {
+    final first = await calculateDate(monthStart);
+    final currentMasa = first.masa;
+    var day = DateTime(
+      monthStart.year,
+      monthStart.month,
+      monthStart.day + 1,
+    );
+    for (int i = 0; i < 35; i++) {
+      final hDate = await calculateDate(day);
+      if (hDate.masa != currentMasa) {
+        return day;
+      }
+      day = day.add(const Duration(days: 1));
+    }
+    return DateTime(
+      monthStart.year,
+      monthStart.month,
+      monthStart.day + 30,
+    );
+  }
+
+  /// Start of the masa immediately BEFORE the month beginning at [monthStart].
+  Future<DateTime> prevMonthStartBefore(DateTime monthStart) async {
+    final day = DateTime(
+      monthStart.year,
+      monthStart.month,
+      monthStart.day - 1,
+    );
+    return monthStartContaining(day);
+  }
+
+  /// Start of the NEXT masa from anywhere inside a month: the first date
+  /// past [date] with a different masa. Single forward scan — swipe/chevron
+  /// "next" without index arithmetic (which skips Nija months entirely) and
+  /// without assuming an observable Pratipada.
+  Future<DateTime> nextMasaStartFrom(DateTime date) async {
+    final first = await calculateDate(date);
+    final currentMasa = first.masa;
+    var day = DateTime(date.year, date.month, date.day + 1);
+    for (int i = 0; i < 35; i++) {
+      final hDate = await calculateDate(day);
+      if (hDate.masa != currentMasa) {
+        return day;
+      }
+      day = day.add(const Duration(days: 1));
+    }
+    return DateTime(date.year, date.month, date.day + 30);
+  }
+
+  /// Start of the PREVIOUS masa from anywhere inside a month: resolve the
+  /// containing month's start first, then step one masa back. (A single
+  /// backward scan would stop at the current month's own start region.)
+  Future<DateTime> prevMasaStartFrom(DateTime date) async {
+    final currentStart = await monthStartContaining(date);
+    return prevMonthStartBefore(currentStart);
   }
 }

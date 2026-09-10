@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/panchang_provider.dart';
+import 'bengali_calendar_data.dart';
 
 final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
   return BengaliCalendarService(ref);
@@ -12,21 +13,36 @@ class BengaliCalendarService {
 
   BengaliCalendarService(this._ref);
 
-  // Public getter for use in other widgets
-  List<String> get bengaliMonths => const [
-    'Boishakh',
-    'Jyoishtho',
-    'Ashar',
-    'Srabon',
-    'Bhadro',
-    'Ashwin',
-    'Kartik',
-    'Agrahayan',
-    'Poush',
-    'Magh',
-    'Falgun',
-    'Chaitra',
-  ];
+  /// Bengali solar month names, Boishakh-first (guide Sec 3.1).
+  List<String> get bengaliMonths => kBengaliMonths;
+
+  /// Bengali-script month names (বৈশাখ .. চৈত্র).
+  List<String> get bengaliMonthsBn => kBengaliMonthsBn;
+
+  /// Sanskrit names of the solar months (Vaishakha .. Chaitra).
+  List<String> get bengaliSanskritNames => kBengaliSanskritNames;
+
+  /// Sankranti starting each month (Mesha .. Meena, Appendix A).
+  List<String> get bengaliSankrantiNames => kBengaliSankrantiNames;
+
+  /// The six ritu (Grishsho .. Bosonto, guide Sec 6).
+  List<String> get bengaliSeasons => kBengaliSeasons;
+
+  /// Season for a 0-based month index.
+  String seasonForMonthIndex(int monthIndex) =>
+      bengaliSeasonForMonthIndex(monthIndex);
+
+  /// Season for a month name (alias-aware).
+  String seasonForMonthName(String month) {
+    final i = bengaliMonthIndexOf(month);
+    return i < 0 ? '' : bengaliSeasonForMonthIndex(i);
+  }
+
+  /// Sunday-first transliterated weekday names (guide Sec 7).
+  List<String> get bengaliWeekdays => kBengaliWeekdays;
+
+  /// Sunday-first Bengali-script weekday names.
+  List<String> get bengaliWeekdaysBn => kBengaliWeekdaysBn;
 
   /// Calculates the Bengali Date using simplified approximation for web.
   /// Returns a record ({int day, String month, int year}).
@@ -76,21 +92,23 @@ class BengaliCalendarService {
     return (day: day, month: bengaliMonths[monthIndex], year: bengaliYear);
   }
 
-  /// Returns approximate Gregorian start dates for Bengali months
+  /// Returns approximate Gregorian start dates for Bengali months.
+  /// Fixed-date fallback only (no FFI on web): the native service computes
+  /// these astronomically via the Bengal sankranti rule.
   List<DateTime> _getMonthStartDates(int gregorianYear) {
     return [
       DateTime(gregorianYear, 4, 14), // Boishakh
-      DateTime(gregorianYear, 5, 15), // Jyoishtho
-      DateTime(gregorianYear, 6, 15), // Ashar
-      DateTime(gregorianYear, 7, 16), // Srabon
+      DateTime(gregorianYear, 5, 15), // Joishtho
+      DateTime(gregorianYear, 6, 15), // Asharh
+      DateTime(gregorianYear, 7, 16), // Shrabon
       DateTime(gregorianYear, 8, 16), // Bhadro
-      DateTime(gregorianYear, 9, 16), // Ashwin
+      DateTime(gregorianYear, 9, 16), // Ashshin
       DateTime(gregorianYear, 10, 17), // Kartik
-      DateTime(gregorianYear, 11, 16), // Agrahayan
+      DateTime(gregorianYear, 11, 16), // Ogrohayon
       DateTime(gregorianYear, 12, 16), // Poush
       DateTime(gregorianYear + 1, 1, 14), // Magh
       DateTime(gregorianYear + 1, 2, 13), // Falgun
-      DateTime(gregorianYear + 1, 3, 15), // Chaitra
+      DateTime(gregorianYear + 1, 3, 15), // Choitro
     ];
   }
 
@@ -99,7 +117,7 @@ class BengaliCalendarService {
     // Approximate Gregorian Start
     int gYear = bengaliYear + 593;
     if (monthIndex >= 9) {
-      gYear++; // Magh, Falgun, Chaitra are in next Gregorian year
+      gYear++; // Magh, Falgun, Choitro are in next Gregorian year
     }
 
     final monthStarts = _getMonthStartDates(gYear);
@@ -108,7 +126,7 @@ class BengaliCalendarService {
     if (monthIndex < 9) {
       return monthStarts[monthIndex];
     } else {
-      // For Magh, Falgun, Chaitra - they're in the previous year's list
+      // For Magh, Falgun, Choitro - they're in the previous year's list
       return _getMonthStartDates(gYear - 1)[monthIndex];
     }
   }

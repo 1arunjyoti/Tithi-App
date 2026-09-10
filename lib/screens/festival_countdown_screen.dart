@@ -18,7 +18,6 @@ class FestivalCountdownScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Keep widget in sync
     ref.watch(homeWidgetSyncProvider);
-    final accessibility = ref.watch(accessibilityProvider);
     final countdowns = ref.watch(allFestivalCountdownTargetsProvider);
     final preferences = ref.watch(festivalCountdownPreferencesProvider);
 
@@ -41,11 +40,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
           Positioned.fill(
             child: RepaintBoundary(
               child: Container(
-                decoration: accessibility.reduceMotion
-                    ? BoxDecoration(
-                        color: context.theme.scaffoldBackgroundColor,
-                      )
-                    : AppTheme.backgroundDecoration(context),
+                decoration: AppTheme.backgroundDecoration(context),
               ),
             ),
           ),
