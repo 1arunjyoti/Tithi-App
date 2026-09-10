@@ -357,6 +357,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
     final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),

@@ -228,10 +228,19 @@ class _TithiAppState extends ConsumerState<TithiApp>
       },
       locale: locale, // User-selected locale (null = system default)
       themeMode: themeMode,
-      theme: AppTheme.shuklaTheme,
-      darkTheme: darkTheme,
+      theme: AppTheme.resolveAccessible(
+        AppTheme.shuklaTheme,
+        highContrast: accessibility.highContrast,
+        reduceMotion: accessibility.reduceMotion,
+      ),
+      darkTheme: AppTheme.resolveAccessible(
+        darkTheme,
+        highContrast: accessibility.highContrast,
+        reduceMotion: accessibility.reduceMotion,
+      ),
       builder: (context, child) {
         final scale = accessibility.largeText ? 1.3 : 1.0;
+        final mediaQuery = MediaQuery.of(context);
         final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
         final overlayStyle = isDarkTheme
             ? const SystemUiOverlayStyle(
@@ -245,9 +254,19 @@ class _TithiAppState extends ConsumerState<TithiApp>
                 statusBarBrightness: Brightness.light,
               );
         return MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(scale)),
+          data: mediaQuery.copyWith(
+            textScaler: TextScaler.linear(scale),
+            // Reduce Motion: propagate app setting globally while still
+            // respecting the OS-level disableAnimations flag.
+            disableAnimations: accessibility.reduceMotion
+                ? true
+                : mediaQuery.disableAnimations,
+            // High Contrast: propagate app setting globally while still
+            // respecting the OS-level highContrast flag.
+            highContrast: accessibility.highContrast
+                ? true
+                : mediaQuery.highContrast,
+          ),
           child: AnnotatedRegion<SystemUiOverlayStyle>(
             value: overlayStyle,
             child: child!,

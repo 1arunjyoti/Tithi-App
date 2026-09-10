@@ -56,7 +56,10 @@ String _cacheKey(
   return '${_dateKey(date)}_${_locationSignature(latitude, longitude)}${suffix.isNotEmpty ? "_$suffix" : ""}';
 }
 
-Future<Box<dynamic>> _preparePanchangCacheBox(
+/// Shared preparation for the Hive panchang cache box (also used by the
+/// calendar's adaptive cell computation so festival flags skip the
+/// single-day transition search).
+Future<Box<dynamic>> preparePanchangCacheBox(
   double latitude,
   double longitude,
 ) async {
@@ -214,7 +217,7 @@ Future<({int toIndex, DateTime at})?> findSunriseTithiTransition({
 /// checkpoints and refined by bisection) so the day can show two tithis
 /// ("Ashtami → Navami"). This costs extra ephemeris calls, so only the
 /// single-day path enables it — the month batch leaves it off.
-Future<PanchangData> _computePanchangData({
+Future<PanchangData> computePanchangData({
   required DateTime normalizedDate,
   required PanchangService service,
   required List<Festival> festivals,
@@ -267,8 +270,13 @@ Future<PanchangData> _computePanchangData({
 
   // PERF-1: Cache masa computation by date to avoid redundant FFI + astronomical
   // calculations. Masa rarely changes between consecutive days.
-  final masaCacheKey = _cacheKey(normalizedDate, latitude, longitude, 'masa');
-  final masaNextCacheKey = _cacheKey(normalizedDate, latitude, longitude, 'masaNext');
+  // Suffix v2: masa attribution changed (true-new-moon verdicts, then
+  // wrap-interpolated + bisected sampling instants). This box otherwise only
+  // clears on location change, so old strings would serve stale verdicts
+  // forever — bump the suffix again if attribution logic changes.
+  final masaCacheKey = _cacheKey(normalizedDate, latitude, longitude, 'masa2');
+  final masaNextCacheKey =
+      _cacheKey(normalizedDate, latitude, longitude, 'masaNext2');
 
   var masa = cacheBox.get(masaCacheKey) as String?;
   masa ??= await service.calculateMasa(
@@ -399,9 +407,9 @@ final panchangForDateProvider = FutureProvider.autoDispose
       final coords = ref.watch(resolvedCoordinatesProvider);
       final latitude = coords.latitude;
       final longitude = coords.longitude;
-      final cacheBox = await _preparePanchangCacheBox(latitude, longitude);
+      final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
-      final data = await _computePanchangData(
+      final data = await computePanchangData(
         normalizedDate: DateTime(date.year, date.month, date.day),
         service: service,
         festivals: festivals,
@@ -458,7 +466,7 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
       final coords = ref.watch(resolvedCoordinatesProvider);
       final latitude = coords.latitude;
       final longitude = coords.longitude;
-      final cacheBox = await _preparePanchangCacheBox(latitude, longitude);
+      final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
       // Generate dates for the entire month view (including previous/next month overflow)
       final firstDayOfMonth = DateTime(focusedMonth.year, focusedMonth.month);
@@ -494,7 +502,7 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
       ) async {
         return MapEntry(
           normalizedDate,
-          await _computePanchangData(
+          await computePanchangData(
             normalizedDate: normalizedDate,
             service: service,
             festivals: festivals,

@@ -192,7 +192,6 @@ class _HomeBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Keep home widget in sync with all countdowns
     ref.watch(homeWidgetSyncProvider);
-    final accessibility = ref.watch(accessibilityProvider);
     final viewMode = ref.watch(homeViewModeProvider);
     final isScheduleView = viewMode == HomeViewMode.schedule;
 
@@ -200,12 +199,11 @@ class _HomeBody extends ConsumerWidget {
       children: [
         // Ambient Background — delegates to AppTheme.backgroundDecoration
         // so the gradient logic lives in one place (SMELL-1).
+        // Reduce Motion is handled centrally there (flat scaffold color).
         Positioned.fill(
           child: RepaintBoundary(
             child: Container(
-              decoration: accessibility.reduceMotion
-                  ? BoxDecoration(color: context.theme.scaffoldBackgroundColor)
-                  : AppTheme.backgroundDecoration(context),
+              decoration: AppTheme.backgroundDecoration(context),
             ),
           ),
         ),
@@ -399,6 +397,7 @@ class _PakshaIndicator extends ConsumerWidget {
         }
         showModalBottomSheet(
           context: context,
+          sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (context) => const WeatherSheet(),

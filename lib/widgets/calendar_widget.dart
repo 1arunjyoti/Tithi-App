@@ -4,13 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart' as cp;
 import '../providers/panchang_provider.dart';
+import '../providers/festival_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
+import '../services/storage_service.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
@@ -67,6 +70,16 @@ void _logCalError(String where, Object e) {
   if (kDebugMode) debugPrint('[calendar] $where: $e');
 }
 
+// Verbose navigation diagnostics (debug builds only): one line per month
+// turn (intent → resolved target → sliced span → header text) with plain
+// ymd dates — no extra FFI, only values already in hand. Used to diagnose
+// Adhika/Nija boundary issues on-device; silent in release.
+void _logCalNav(String message) {
+  if (kDebugMode) debugPrint('[calnav] $message');
+}
+
+String _ymd(DateTime d) => '${d.year}-${d.month}-${d.day}';
+
 // Bounded dedupe for precache keys. The sync LRU maps above are capped,
 // but these Sets grew without bound (one entry per month × prefs combo
 // ever visited). Cap at 120; oldest half is dropped on overflow.
@@ -95,6 +108,177 @@ bool _claimPrecacheRequest(String request) {
 // native calls, so a double-tap could interleave two month resolutions
 // (wasted FFI, last-wins race). Gregorian taps are sync and unaffected.
 bool _monthNavInFlight = false;
+
+// Stale-data cache for the adaptive (Hindu/Bengali) grid. Family-arg changes
+// create a FRESH provider instance, so Riverpod keeps no previous value —
+// without this every month turn swaps the whole grid to a skeleton and back
+// (the cell "flash"). Holding the last resolved grid renders the previous
+// month instantly while the new one resolves, exactly like the Gregorian
+// path's sync stale-label/dot caches. Scoped by system+displayMode so a
+// Hindu grid is never shown as stale Bengali data.
+_AdaptiveCalendarData? _lastAdaptiveData;
+int? _lastAdaptiveSystemIndex;
+int? _lastAdaptiveModeIndex;
+// Key of [_lastAdaptiveData]. The AnimatedSwitcher below must keep showing
+// the stale grid under its OLD key while the new month loads — keying stale
+// content by the NEW month animates old cells as if they were new (the
+// swipe "flash": current month slides/fades into itself, then pops to the
+// real month). Single slide only once fresh data arrives.
+String? _lastAdaptiveKey;
+
+// Instant navigation targets for lunar months. Resolving the prev/next lunar
+// month start needs FFI (calculateDate + getMonthStart), which used to block
+// every swipe/chevron before the UI could respond. Precache (and successful
+// FFI navigation) records targets keyed by the exact focused date, so repeat
+// navigation is a sync map lookup. Forward-only entries: each is a true
+// statement about the focused date's own lunar month regardless of whether
+// the focused date is a month start.
+/// Instant navigation targets for lunar months (see above). Keys carry the
+/// [_adaptiveCacheCodeVersion] suffix, so entries computed by older logic —
+/// including ones already sitting in this isolate across a hot reload, whose
+/// static values survive — simply miss on lookup instead of misdirecting
+/// navigation. Bump the version when resolution logic changes; old keys age
+/// out through the cap below.
+final Map<String, DateTime> _adaptiveNavTargets = {};
+const int _adaptiveNavTargetsMax = 120;
+
+String _versionedNavKey(String navKey) =>
+    '${navKey}_v$_adaptiveCacheCodeVersion';
+
+DateTime? _readAdaptiveNavTarget(String navKey) {
+  return _adaptiveNavTargets[_versionedNavKey(navKey)];
+}
+
+void _storeAdaptiveNavTarget(String key, DateTime target) {
+  _ensureAdaptiveCacheLoaded();
+  if (_adaptiveNavTargets.length >= _adaptiveNavTargetsMax) {
+    _adaptiveNavTargets.remove(_adaptiveNavTargets.keys.first);
+  }
+  _adaptiveNavTargets[_versionedNavKey(key)] = target;
+  _scheduleAdaptiveCachePersist();
+}
+
+String _adaptiveNavKey(cp.AppCalendarSystem system, DateTime focusedMonth) =>
+    '${system.index}_${focusedMonth.year}_${focusedMonth.month}_${focusedMonth.day}';
+
+// Slide direction of the last adaptive month turn (+1 next, -1 previous),
+// read by the grid's AnimatedSwitcher so swipes/chevrons slide correctly.
+int _adaptiveSlideDirection = 1;
+
+// ---- Persisted adaptive caches: instant months after app restart ----
+// The nav-target map and secondary-label LRU above are memory-only, so the
+// first swipe after every launch repaid full FFI. Both are deterministic per
+// location (+displayMode for labels, baked into the key), so they persist in
+// the settings box, invalidated by the cached-location signature. Festival
+// dots are deliberately NOT persisted (festival data can change).
+const _adaptiveCacheSigKey = 'adaptive_cache_sig';
+const _adaptiveNavPersistKey = 'adaptive_nav_targets';
+const _adaptiveLabelsPersistKey = 'adaptive_secondary_labels';
+
+bool _adaptiveCacheLoaded = false;
+Timer? _adaptiveCachePersistTimer;
+
+/// Code version of the adaptive nav/label resolution logic. BUMP this
+/// whenever the meaning of a persisted entry can change (slicing, neighbor
+/// resolution, label derivation) — otherwise entries written by older logic
+/// load as truth and send navigation to the wrong (or same) month. Part of
+/// the persisted signature, so stale generations are ignored automatically.
+/// v3: month boundaries resolved by masa transition instead of tithi-1
+/// scans (Kshaya Pratipada has no tithi-1 day to find).
+/// v4: new-moon instants wrap-interpolated + bisected (noon sampling put
+/// same-day transit/new-moon coincidences on the wrong side).
+const int _adaptiveCacheCodeVersion = 4;
+
+String _adaptiveCacheSignature() {
+  try {
+    if (!Hive.isBoxOpen(StorageService.locationSettingsBoxName)) return '';
+    final box = Hive.box(StorageService.locationSettingsBoxName);
+    final lat = box.get('cached_lat', defaultValue: 28.6139);
+    final lng = box.get('cached_lng', defaultValue: 77.2090);
+    return '${lat}_${lng}_v$_adaptiveCacheCodeVersion';
+  } catch (_) {
+    return '';
+  }
+}
+
+/// Adaptive month setter that ignores no-op targets. A stale/wrong cached
+/// target equal to the viewed month would otherwise look like a frozen
+/// calendar (state set to the same value → no rebuild, no feedback).
+void _setAdaptiveMonth(WidgetRef ref, DateTime target, DateTime focusedMonth) {
+  if (target.year == focusedMonth.year &&
+      target.month == focusedMonth.month &&
+      target.day == focusedMonth.day) {
+    _logCalNav('nav settled: IGNORED self-target ${_ymd(target)}');
+    return;
+  }
+  _logCalNav('nav settled: ${_ymd(focusedMonth)} -> ${_ymd(target)}');
+  cp.setCalendarMonth(ref, target);
+}
+
+void _ensureAdaptiveCacheLoaded() {
+  if (_adaptiveCacheLoaded) return;
+  _adaptiveCacheLoaded = true;
+  try {
+    if (!Hive.isBoxOpen(StorageService.settingsBoxName)) return;
+    final box = Hive.box(StorageService.settingsBoxName);
+    final storedSig = box.get(_adaptiveCacheSigKey);
+    if (storedSig is! String || storedSig != _adaptiveCacheSignature()) {
+      return;
+    }
+    final nav = box.get(_adaptiveNavPersistKey);
+    if (nav is Map) {
+      for (final entry in nav.entries) {
+        if (entry.key is String && entry.value is int) {
+          _adaptiveNavTargets[entry.key as String] =
+              DateTime.fromMillisecondsSinceEpoch(entry.value as int);
+        }
+      }
+    }
+    final labels = box.get(_adaptiveLabelsPersistKey);
+    if (labels is Map) {
+      for (final entry in labels.entries) {
+        if (entry.key is String && entry.value is String) {
+          _secondaryDayCache[entry.key as String] = entry.value as String;
+        }
+      }
+    }
+  } catch (_) {
+    // Best-effort only; the memory caches stand alone.
+  }
+}
+
+void _scheduleAdaptiveCachePersist() {
+  // Debounced: a month turn stores ~30 labels; one write per turn, not one
+  // per cell. Fire-and-forget puts; a failed write just means next launch
+  // recomputes (correct, merely slower).
+  _adaptiveCachePersistTimer?.cancel();
+  _adaptiveCachePersistTimer = Timer(const Duration(seconds: 2), () {
+    try {
+      final sig = _adaptiveCacheSignature();
+      if (sig.isEmpty || !Hive.isBoxOpen(StorageService.settingsBoxName)) {
+        return;
+      }
+      final box = Hive.box(StorageService.settingsBoxName);
+      unawaited(box.put(_adaptiveCacheSigKey, sig));
+      unawaited(
+        box.put(
+          _adaptiveNavPersistKey,
+          Map<String, int>.fromEntries(
+            _adaptiveNavTargets.entries.map(
+              (e) => MapEntry(e.key, e.value.millisecondsSinceEpoch),
+            ),
+          ),
+        ),
+      );
+      unawaited(
+        box.put(
+          _adaptiveLabelsPersistKey,
+          Map<String, String>.of(_secondaryDayCache),
+        ),
+      );
+    } catch (_) {}
+  });
+}
 
 void _storeFestivalDotsSync(Map<DateTime, PanchangData> monthData) {
   for (final entry in monthData.entries) {
@@ -153,6 +337,7 @@ String? _cachedSecondarySync(
       system == cp.AppCalendarSystem.gregorian) {
     return null;
   }
+  _ensureAdaptiveCacheLoaded();
   return _secondaryDayCache[_secondaryCacheKey(date, system, displayMode)];
 }
 
@@ -166,6 +351,7 @@ void _storeSecondarySync(
       system == cp.AppCalendarSystem.gregorian) {
     return;
   }
+  _ensureAdaptiveCacheLoaded();
   if (_secondaryDayCache.length >= _secondaryDayCacheMax) {
     final toRemove = _secondaryDayCache.keys
         .take(_secondaryDayCacheMax ~/ 5)
@@ -175,6 +361,7 @@ void _storeSecondarySync(
     }
   }
   _secondaryDayCache[_secondaryCacheKey(date, system, displayMode)] = value;
+  _scheduleAdaptiveCachePersist();
 }
 
 String _monthPrecacheKey(
@@ -246,6 +433,19 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
     await ref.read(panchangInitProvider.future);
   }
 
+  // Shared inputs for the festival-flag fast path below, hoisted out of the
+  // per-cell closure so providers are read once per month, not ~42×.
+  final flagService = includeFestivals ? ref.read(panchangServiceProvider) : null;
+  final flagFestivals = includeFestivals ? ref.read(festivalProvider) : null;
+  final flagMonthSystem = includeFestivals ? ref.watch(cp.hinduMonthSystemProvider) : null;
+  final flagCoords = includeFestivals ? ref.watch(resolvedCoordinatesProvider) : null;
+  final flagCacheBox = includeFestivals
+      ? await preparePanchangCacheBox(
+          flagCoords!.latitude,
+          flagCoords.longitude,
+        )
+      : null;
+
   // Batched to avoid a ~42-wide FFI burst on cold months: Hindu secondary
   // labels need 2 native calls each (tithi + masa), so firing all at once
   // contends for the same native thread and janks the landing frame.
@@ -274,12 +474,23 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
     // Skipped on the Gregorian path: markers there come from
     // monthlyPanchangProvider, so per-date panchang fetches would only
     // burn FFI cycles during the swipe animation.
+    // Cheap path on purpose: computePanchangData WITHOUT the daytime
+    // transition search (that bisection exists for the single-day detail
+    // card; dots only need hasFestivals/majorFestivals, which the Hive
+    // checkpoints + festival matching resolve identically). Same 5-point
+    // tithi/masa cache as the monthly batch, so warm months are ~zero FFI.
     bool hasFestivals = false;
     bool hasMajorFestival = false;
     if (includeFestivals) {
       try {
-        final panchang = await ref.read(
-          panchangForDateProvider(normalizedDate).future,
+        final panchang = await computePanchangData(
+          normalizedDate: normalizedDate,
+          service: flagService!,
+          festivals: flagFestivals!,
+          monthSystem: flagMonthSystem!,
+          latitude: flagCoords!.latitude,
+          longitude: flagCoords.longitude,
+          cacheBox: flagCacheBox!,
         );
         hasFestivals = panchang.hasFestivals;
         hasMajorFestival = panchang.majorFestivals.isNotEmpty;
@@ -367,8 +578,10 @@ final gregorianCalendarCellDataProvider =
       );
     });
 
-// autoDispose for the same reason: the festival-dot LRU preserves markers
-// across disposal; idle lunar months are released instead of accumulating.
+// autoDispose with a 5-minute keepAlive, mirroring monthlyPanchangProvider:
+// swiping back/forth between the same lunar months stays warm for instant
+// landing instead of recomputing. Each entry holds ~42 tiny cell records,
+// so idle months are still released rather than retained for the session.
 final adaptiveCalendarDataProvider =
     FutureProvider.autoDispose.family<
       _AdaptiveCalendarData,
@@ -381,6 +594,13 @@ final adaptiveCalendarDataProvider =
         cp.TithiDisplayMode displayMode,
       })
     >((ref, args) async {
+      final keepAliveLink = ref.keepAlive();
+      final releaseTimer = Timer(
+        const Duration(minutes: 5),
+        keepAliveLink.close,
+      );
+      ref.onDispose(releaseTimer.cancel);
+
       await ref.read(panchangInitProvider.future);
 
       DateTime startDate;
@@ -401,24 +621,19 @@ final adaptiveCalendarDataProvider =
         }
         nextMonthStart = await service.getMonthStart(nextYear, nextIndex);
       } else {
+        // Exact-masa slicing: Adhika/Nija months are distinct masas and must
+        // never share one grid. Index arithmetic (baseMasaName + monthIndex)
+        // merges them (~59-day span) and skips Nija entirely.
         final service = ref.read(hinduCalendarServiceProvider);
-        final hDate = await service.calculateDate(args.focusedMonth);
-        final monthIndex = service.hinduMonths.indexOf(
-          service.baseMasaName(hDate.masa),
-        );
-        final year = hDate.vsYear;
-        startDate = await service.getMonthStart(year, monthIndex);
-
-        var nextIndex = monthIndex + 1;
-        var nextYear = year;
-        if (nextIndex > 11) {
-          nextIndex = 0;
-          nextYear++;
-        }
-        nextMonthStart = await service.getMonthStart(nextYear, nextIndex);
+        startDate = await service.monthStartContaining(args.focusedMonth);
+        nextMonthStart = await service.nextMonthStartAfter(startDate);
       }
 
       final daysInMonth = nextMonthStart.difference(startDate).inDays;
+      _logCalNav(
+        'slice ${args.adaptiveSystem} focused=${_ymd(args.focusedMonth)} '
+        'start=${_ymd(startDate)} next=${_ymd(nextMonthStart)} days=$daysInMonth',
+      );
       final startWeekDay = startDate.weekday;
       final offset = args.startOfWeek == cp.StartingDayOfWeek.sunday
           ? startWeekDay % 7
@@ -440,14 +655,11 @@ final adaptiveCalendarDataProvider =
         visibleDates.add(date);
       }
 
-      // Pad to a stable 6x7 grid so lunar months of different lengths
-      // don't change the calendar height and push content below
-      // up/down on swipe.
-      while (grid.length < 42) {
+      // Complete the final week row only (mirrors TableCalendar with
+      // sixWeekMonthsEnforced: false): lunar months render 4-6 rows so the
+      // grid height follows the month instead of pinning to 6 rows.
+      while (grid.length % 7 != 0) {
         grid.add(null);
-      }
-      while (grid.length > 42) {
-        grid.removeLast();
       }
 
       final cellData = await _buildCalendarCellData(
@@ -639,28 +851,24 @@ Future<void> _precacheAdaptiveNeighbors(
         targets.add(await service.getMonthStart(year, idx));
       }
     } else if (primarySystem == cp.AppCalendarSystem.hindu) {
+      // Exact-masa neighbors: index arithmetic skips Nija months, so resolve
+      // through the containing month's boundaries instead.
       final service = ref.read(hinduCalendarServiceProvider);
-      final hDate = await service.calculateDate(focusedMonth);
-      final hIndex = service.hinduMonths.indexOf(
-        service.baseMasaName(hDate.masa),
-      );
-      if (hIndex < 0) return;
-      for (final delta in [-1, 1]) {
-        var idx = hIndex + delta;
-        var year = hDate.vsYear;
-        if (idx < 0) {
-          idx = 11;
-          year--;
-        } else if (idx > 11) {
-          idx = 0;
-          year++;
-        }
-        targets.add(await service.getMonthStart(year, idx));
-      }
+      final currentStart = await service.monthStartContaining(focusedMonth);
+      targets.add(await service.prevMonthStartBefore(currentStart));
+      targets.add(await service.nextMonthStartAfter(currentStart));
     }
   } catch (e) {
     _logCalError('precache adaptive targets', e);
     return;
+  }
+
+  // Record instant-navigation targets for this exact focused date:
+  // targets are ordered [prev, next] on both paths.
+  if (targets.length == 2) {
+    final base = _adaptiveNavKey(primarySystem, focusedMonth);
+    _storeAdaptiveNavTarget('${base}_-1', targets[0]);
+    _storeAdaptiveNavTarget('${base}_+1', targets[1]);
   }
 
   for (final target in targets) {
@@ -717,37 +925,89 @@ class CalendarWidget extends ConsumerWidget {
     // range, so normalizing guarantees the precached next/prev months hit
     // the same provider instance after onPageChanged (TableCalendar may
     // report any day as the new focusedDay).
-    final monthKey = _normalizeMonthKey(heavyMonth);
-    final monthlyPanchangAsync = ref.watch(
-      monthlyPanchangProvider(monthKey),
-    );
-    final monthlyPanchang = monthlyPanchangAsync.when(
-      data: (data) {
-        // Feed the stale-dot LRU so the next month can render instantly
-        // while its own provider is still loading.
-        _storeFestivalDotsSync(data);
-        return data;
-      },
-      loading: () => <DateTime, PanchangData>{},
-      error: (_, _) => <DateTime, PanchangData>{},
-    );
+    final isAdaptive =
+        primarySystem == cp.AppCalendarSystem.bengali ||
+        primarySystem == cp.AppCalendarSystem.hindu;
 
-    final gregorianCellDataAsync = ref.watch(
-      gregorianCalendarCellDataProvider((
-        // Month-normalized so precached neighbors hit the same instance.
-        focusedMonth: monthKey,
-        startOfWeek: startOfWeek,
-        primarySystem: primarySystem,
-        secondarySystem: secondarySystem,
-        displayMode: displayMode,
-      )),
-    );
+    final monthKey = _normalizeMonthKey(heavyMonth);
+    // Gregorian-only data: on the adaptive path these two providers burn a
+    // full extra month of FFI (~30 dates × native calls each) whose results
+    // the lunar grid never reads. Skipping them removes ~2/3 of the work per
+    // month turn. Placeholder loading values keep the types non-nullable.
+    final monthlyPanchangAsync = isAdaptive
+        ? const AsyncValue<Map<DateTime, PanchangData>>.loading()
+        : ref.watch(monthlyPanchangProvider(monthKey));
+    final monthlyPanchang = isAdaptive
+        ? const <DateTime, PanchangData>{}
+        : monthlyPanchangAsync.when(
+            data: (data) {
+              // Feed the stale-dot LRU so the next month can render instantly
+              // while its own provider is still loading.
+              _storeFestivalDotsSync(data);
+              return data;
+            },
+            loading: () => <DateTime, PanchangData>{},
+            error: (_, _) => <DateTime, PanchangData>{},
+          );
+
+    final gregorianCellDataAsync = isAdaptive
+        ? const AsyncValue<Map<DateTime, _CalendarCellData>>.loading()
+        : ref.watch(
+            gregorianCalendarCellDataProvider((
+              // Month-normalized so precached neighbors hit the same instance.
+              focusedMonth: monthKey,
+              startOfWeek: startOfWeek,
+              primarySystem: primarySystem,
+              secondarySystem: secondarySystem,
+              displayMode: displayMode,
+            )),
+          );
+
+    // Adaptive month data, resolved stale-first below: the previous month's
+    // grid stays on screen while the new one computes (family-arg changes
+    // create fresh provider instances, so .valueOrNull is the only bridge).
+    final adaptiveAsync = isAdaptive
+        ? ref.watch(
+            adaptiveCalendarDataProvider((
+              focusedMonth: focusedMonth,
+              startOfWeek: startOfWeek,
+              adaptiveSystem: primarySystem,
+              primarySystem: primarySystem,
+              secondarySystem: secondarySystem,
+              displayMode: displayMode,
+            )),
+          )
+        : const AsyncValue<_AdaptiveCalendarData>.loading();
+    final adaptiveKey = _adaptiveNavKey(primarySystem, focusedMonth);
+    final adaptiveFresh = adaptiveAsync.valueOrNull;
+    if (adaptiveFresh != null) {
+      _lastAdaptiveData = adaptiveFresh;
+      _lastAdaptiveSystemIndex = primarySystem.index;
+      _lastAdaptiveModeIndex = displayMode.index;
+      _lastAdaptiveKey = adaptiveKey;
+    }
+    final reuseStale =
+        _lastAdaptiveData != null &&
+        _lastAdaptiveSystemIndex == primarySystem.index &&
+        _lastAdaptiveModeIndex == displayMode.index;
+    final adaptiveDisplay = adaptiveFresh ?? (reuseStale ? _lastAdaptiveData : null);
+    final adaptiveSettled = adaptiveFresh != null;
+    // While the new month loads, keep the stale grid under its OLD key so
+    // the AnimatedSwitcher holds it static (no transition). Only fresh data
+    // takes the NEW key, producing a single slide old -> new instead of the
+    // double-transition flash (old slides into itself, then pops to new).
+    final displayKey = adaptiveFresh != null
+        ? adaptiveKey
+        : (reuseStale ? (_lastAdaptiveKey ?? adaptiveKey) : adaptiveKey);
 
     // Best-effort precache of neighbor months (secondary labels + festival dots).
     // Only after the current month settled: firing neighbor FFI while the
     // current month is still computing contends for the same native thread
     // and janks the initial paint / landing frame.
-    if (monthlyPanchangAsync.hasValue || gregorianCellDataAsync.hasValue) {
+    final currentSettled = isAdaptive
+        ? adaptiveSettled
+        : (monthlyPanchangAsync.hasValue || gregorianCellDataAsync.hasValue);
+    if (currentSettled) {
       _scheduleAdjacentPrecache(
         ref,
         focusedMonth,
@@ -773,9 +1033,13 @@ class CalendarWidget extends ConsumerWidget {
             onYearTap: () => _showYearPicker(context, ref, focusedMonth),
           ),
 
-          if (primarySystem == cp.AppCalendarSystem.bengali ||
-              primarySystem == cp.AppCalendarSystem.hindu)
+          if (isAdaptive)
             // Adaptive grid has no internal PageView, so swipe is handled here.
+            // Stale-first: the previous month stays mounted under its OLD key
+            // while fresh data resolves (no animation), then slides once to
+            // the new month — the same stale-then-single-transition pattern
+            // as the Gregorian path's sync stale-label caches. No skeleton
+            // flash by default.
             GestureDetector(
               onHorizontalDragEnd: (details) {
                 if (details.primaryVelocity != null) {
@@ -787,38 +1051,66 @@ class CalendarWidget extends ConsumerWidget {
                 }
               },
               child: RepaintBoundary(
-                child: ref
-                    .watch(
-                      adaptiveCalendarDataProvider((
-                        focusedMonth: focusedMonth,
-                        startOfWeek: startOfWeek,
-                        adaptiveSystem: primarySystem,
-                        primarySystem: primarySystem,
-                        secondarySystem: secondarySystem,
-                        displayMode: displayMode,
-                      )),
-                    )
-                    .when(
-                      data: (adaptiveData) => AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 150),
-                        child: _buildAdaptiveGrid(
+                child: AnimatedSwitcher(
+                  duration: AppTheme.animationDuration(
+                    context,
+                    const Duration(milliseconds: 250),
+                  ),
+                  // Outgoing drops instantly: AnimatedSwitcher reuses this
+                  // Tween reversed for the exit, which would slide the old
+                  // grid back over the incoming one (wrong side) while
+                  // keeping 84 cells + opacity mounted — the raster spike
+                  // (~20ms) and ghost flash seen in profile captures.
+                  reverseDuration: Duration.zero,
+                  transitionBuilder: (child, animation) {
+                    // Slide-only (no fade): fade forces an opacity +
+                    // glassmorphism blur recomposite every frame and ghosts
+                    // old cells over new ones. Slide-only mirrors the
+                    // Gregorian TableCalendar page turn without overlap.
+                    final slide =
+                        Tween<Offset>(
+                          begin: Offset(
+                            0.35 * _adaptiveSlideDirection,
+                            0,
+                          ),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeOutCubic,
+                          ),
+                        );
+                    return SlideTransition(
+                      position: slide,
+                      child: child,
+                    );
+                  },
+                  child: adaptiveDisplay != null
+                      ? _buildAdaptiveGrid(
                           context,
                           ref,
                           startOfWeek,
-                          monthlyPanchang,
-                          adaptiveData,
+                          adaptiveDisplay,
                           secondarySystem,
                           displayMode,
                           selectedDate,
                           today,
-                        ),
-                      ),
+                          // Stale keeps the previous month's key (static hold,
+                          // no animation); fresh takes the new month's key so
+                          // the switcher slides exactly once old -> new.
+                          key: ValueKey(displayKey),
+                        )
+                      : adaptiveAsync.isLoading
                       // Same 6-row skeleton height as the loaded grid: keeps
                       // layout stable instead of swapping a 300px spinner
                       // for a taller/shorter grid (the main "jump" culprit).
-                      loading: () => _buildAdaptiveSkeleton(context),
-                      error: (_, _) => const SizedBox.shrink(),
-                    ),
+                      // Only on cold start — never between months.
+                      ? _buildAdaptiveSkeleton(
+                          context,
+                          key: const ValueKey('adaptive_skeleton'),
+                        )
+                      : const SizedBox.shrink(),
+                ),
               ),
             )
           else
@@ -832,7 +1124,11 @@ class CalendarWidget extends ConsumerWidget {
                 focusedDay: focusedMonth,
                 // Short, eased page animation: the default 300ms easeInOut
                 // feels sluggish while heavy providers resolve underneath.
-                pageAnimationDuration: const Duration(milliseconds: 250),
+                // Reduce Motion jumps instantly between months.
+                pageAnimationDuration: AppTheme.animationDuration(
+                  context,
+                  const Duration(milliseconds: 250),
+                ),
                 pageAnimationCurve: Curves.easeOutCubic,
                 availableGestures: AvailableGestures.horizontalSwipe,
                 startingDayOfWeek: startOfWeek == cp.StartingDayOfWeek.sunday
@@ -985,10 +1281,12 @@ class CalendarWidget extends ConsumerWidget {
     );
   }
 
-  /// Fixed-height 6-row skeleton matching the padded adaptive grid, so the
-  /// loading frame has exactly the same height as loaded content.
-  Widget _buildAdaptiveSkeleton(BuildContext context) {
+  /// 5-row skeleton for cold start (the most common lunar-month shape);
+  /// month turns reuse the stale grid instead, and row counts of 4-6 settle
+  /// naturally like the Gregorian path.
+  Widget _buildAdaptiveSkeleton(BuildContext context, {Key? key}) {
     return Column(
+      key: key,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1014,7 +1312,8 @@ class CalendarWidget extends ConsumerWidget {
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
           ),
-          itemCount: 42,
+          // 5 rows: the most common lunar-month shape (see grid padding).
+          itemCount: 35,
           itemBuilder: (context, index) => Container(
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -1031,20 +1330,21 @@ class CalendarWidget extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     cp.StartingDayOfWeek startOfWeek,
-    Map<DateTime, PanchangData> monthlyPanchang,
     _AdaptiveCalendarData adaptiveData,
     cp.AppCalendarSystem secondarySystem,
     cp.TithiDisplayMode displayMode,
     // Hoisted by the caller: watching selectedDate or calling DateTime.now()
     // inside itemBuilder would re-subscribe/re-evaluate per cell (42×).
     DateTime selectedDate,
-    DateTime today,
-  ) {
+    DateTime today, {
+    Key? key,
+  }) {
     // Feed the stale-dot LRU so a later Gregorian view (or a fast
     // back-navigation) can render dots instantly.
     _storeAdaptiveDotsSync(adaptiveData.cellData);
     final days = adaptiveData.days;
     return Column(
+      key: key,
       children: [
         // Weekday Headers
         Row(
@@ -1653,6 +1953,10 @@ class CalendarWidget extends ConsumerWidget {
   ) async {
     if (_monthNavInFlight) return;
     _monthNavInFlight = true;
+    // Load persisted nav targets before the cache-hit lookup below, so the
+    // first swipe after a restart can already move instantly.
+    _ensureAdaptiveCacheLoaded();
+    _logCalNav('nav prev intent: focused=${_ymd(focusedMonth)} system=$primarySystem');
     try {
       // Buzz here only for Hindu/Bengali (no page view, no onPageChanged).
       // Gregorian chevrons buzz via onPageChanged's page-turn animation.
@@ -1662,35 +1966,43 @@ class CalendarWidget extends ConsumerWidget {
       }
 
       if (primarySystem == cp.AppCalendarSystem.bengali) {
-        // Navigate by Bengali Month
-        final service = ref.read(bengaliCalendarServiceProvider);
-        await ref.read(panchangInitProvider.future);
-        final bDate = await service.calculateDate(focusedMonth);
-        final bIndex = service.bengaliMonths.indexOf(bDate.month);
-        var newIndex = bIndex - 1;
-        var newYear = bDate.year;
-        if (newIndex < 0) {
-          newIndex = 11;
-          newYear--;
+        // Navigate by Bengali Month — instant on cache hit (no FFI before
+        // the UI responds), FFI fallback records the target for next time.
+        _adaptiveSlideDirection = -1;
+        final navKey = '${_adaptiveNavKey(primarySystem, focusedMonth)}_-1';
+        final cached = _readAdaptiveNavTarget(navKey);
+        if (cached != null) {
+          _setAdaptiveMonth(ref, cached, focusedMonth);
+        } else {
+          final service = ref.read(bengaliCalendarServiceProvider);
+          await ref.read(panchangInitProvider.future);
+          final bDate = await service.calculateDate(focusedMonth);
+          final bIndex = service.bengaliMonths.indexOf(bDate.month);
+          var newIndex = bIndex - 1;
+          var newYear = bDate.year;
+          if (newIndex < 0) {
+            newIndex = 11;
+            newYear--;
+          }
+          final newDate = await service.getMonthStart(newYear, newIndex);
+          _storeAdaptiveNavTarget(navKey, newDate);
+          _setAdaptiveMonth(ref, newDate, focusedMonth);
         }
-        final newDate = await service.getMonthStart(newYear, newIndex);
-        cp.setCalendarMonth(ref, newDate);
       } else if (primarySystem == cp.AppCalendarSystem.hindu) {
-        // Navigate by Hindu Lunar Month
-        final service = ref.read(hinduCalendarServiceProvider);
-        await ref.read(panchangInitProvider.future);
-        final hDate = await service.calculateDate(focusedMonth);
-        final hIndex = service.hinduMonths.indexOf(
-          service.baseMasaName(hDate.masa),
-        );
-        var newIndex = hIndex - 1;
-        var newYear = hDate.vsYear;
-        if (newIndex < 0) {
-          newIndex = 11;
-          newYear--;
+        // Navigate by Hindu Lunar Month — same instant-on-hit pattern.
+        // Exact-masa step back: index arithmetic would skip Nija months.
+        _adaptiveSlideDirection = -1;
+        final navKey = '${_adaptiveNavKey(primarySystem, focusedMonth)}_-1';
+        final cached = _readAdaptiveNavTarget(navKey);
+        if (cached != null) {
+          _setAdaptiveMonth(ref, cached, focusedMonth);
+        } else {
+          final service = ref.read(hinduCalendarServiceProvider);
+          await ref.read(panchangInitProvider.future);
+          final newDate = await service.prevMasaStartFrom(focusedMonth);
+          _storeAdaptiveNavTarget(navKey, newDate);
+          _setAdaptiveMonth(ref, newDate, focusedMonth);
         }
-        final newDate = await service.getMonthStart(newYear, newIndex);
-        cp.setCalendarMonth(ref, newDate);
       } else {
         cp.setCalendarMonth(
           ref,
@@ -1713,6 +2025,10 @@ class CalendarWidget extends ConsumerWidget {
   ) async {
     if (_monthNavInFlight) return;
     _monthNavInFlight = true;
+    // Load persisted nav targets before the cache-hit lookup below, so the
+    // first swipe after a restart can already move instantly.
+    _ensureAdaptiveCacheLoaded();
+    _logCalNav('nav next intent: focused=${_ymd(focusedMonth)} system=$primarySystem');
     try {
       // Same split as _navigateToPreviousMonth: Gregorian buzzes once via
       // onPageChanged; Hindu/Bengali buzz here.
@@ -1722,34 +2038,43 @@ class CalendarWidget extends ConsumerWidget {
       }
 
       if (primarySystem == cp.AppCalendarSystem.bengali) {
-        // Navigate by Bengali Month
-        final service = ref.read(bengaliCalendarServiceProvider);
-        await ref.read(panchangInitProvider.future);
-        final bDate = await service.calculateDate(focusedMonth);
-        final bIndex = service.bengaliMonths.indexOf(bDate.month);
-        var newIndex = bIndex + 1;
-        var newYear = bDate.year;
-        if (newIndex > 11) {
-          newIndex = 0;
-          newYear++;
+        // Navigate by Bengali Month — instant on cache hit (no FFI before
+        // the UI responds), FFI fallback records the target for next time.
+        _adaptiveSlideDirection = 1;
+        final navKey = '${_adaptiveNavKey(primarySystem, focusedMonth)}_+1';
+        final cached = _readAdaptiveNavTarget(navKey);
+        if (cached != null) {
+          _setAdaptiveMonth(ref, cached, focusedMonth);
+        } else {
+          final service = ref.read(bengaliCalendarServiceProvider);
+          await ref.read(panchangInitProvider.future);
+          final bDate = await service.calculateDate(focusedMonth);
+          final bIndex = service.bengaliMonths.indexOf(bDate.month);
+          var newIndex = bIndex + 1;
+          var newYear = bDate.year;
+          if (newIndex > 11) {
+            newIndex = 0;
+            newYear++;
+          }
+          final newDate = await service.getMonthStart(newYear, newIndex);
+          _storeAdaptiveNavTarget(navKey, newDate);
+          _setAdaptiveMonth(ref, newDate, focusedMonth);
         }
-        final newDate = await service.getMonthStart(newYear, newIndex);
-        cp.setCalendarMonth(ref, newDate);
       } else if (primarySystem == cp.AppCalendarSystem.hindu) {
-        final service = ref.read(hinduCalendarServiceProvider);
-        await ref.read(panchangInitProvider.future);
-        final hDate = await service.calculateDate(focusedMonth);
-        final hIndex = service.hinduMonths.indexOf(
-          service.baseMasaName(hDate.masa),
-        );
-        var newIndex = hIndex + 1;
-        var newYear = hDate.vsYear;
-        if (newIndex > 11) {
-          newIndex = 0;
-          newYear++;
+        // Exact-masa step forward: lands on Nija months instead of skipping
+        // them like index arithmetic did.
+        _adaptiveSlideDirection = 1;
+        final navKey = '${_adaptiveNavKey(primarySystem, focusedMonth)}_+1';
+        final cached = _readAdaptiveNavTarget(navKey);
+        if (cached != null) {
+          _setAdaptiveMonth(ref, cached, focusedMonth);
+        } else {
+          final service = ref.read(hinduCalendarServiceProvider);
+          await ref.read(panchangInitProvider.future);
+          final newDate = await service.nextMasaStartFrom(focusedMonth);
+          _storeAdaptiveNavTarget(navKey, newDate);
+          _setAdaptiveMonth(ref, newDate, focusedMonth);
         }
-        final newDate = await service.getMonthStart(newYear, newIndex);
-        cp.setCalendarMonth(ref, newDate);
       } else {
         cp.setCalendarMonth(
           ref,
@@ -1982,6 +2307,10 @@ Future<_HeaderData> _buildCalendarHeaderData(
     );
   }
 
+  _logCalNav(
+    'header date=${_ymd(date)} primary=$primary secondary=$secondary '
+    '-> "$primaryText" / "$secondaryText"',
+  );
   return _HeaderData(primaryText: primaryText, secondaryText: secondaryText);
 }
 
@@ -2062,12 +2391,12 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
         startHDate.masa,
         startHDate.paksha,
         hinduMonthSystem,
-      );
+      ).replaceAll('_', ' ');
       endMonth = displayMasaName(
         endHDate.masa,
         endHDate.paksha,
         hinduMonthSystem,
-      );
+      ).replaceAll('_', ' ');
 
       startYear = hinduYearEra == HinduYearEra.vikramSamvat
           ? startHDate.vsYear
@@ -2138,24 +2467,13 @@ Future<String?> _getGregorianMonthRangeForCalendar(
       endDate = await service.getMonthStart(nextYear, nextIndex);
       endDate = endDate.subtract(const Duration(days: 1));
     } else {
+      // Exact-masa range: the containing month only, so an Adhika month no
+      // longer stretches the range across both Adhika and Nija.
       final service = ref.read(hinduCalendarServiceProvider);
       await ref.read(panchangInitProvider.future);
 
-      final hDate = await service.calculateDate(date);
-      final monthIndex = service.hinduMonths.indexOf(
-        service.baseMasaName(hDate.masa),
-      );
-      final year = hDate.vsYear;
-
-      startDate = await service.getMonthStart(year, monthIndex);
-
-      var nextIndex = monthIndex + 1;
-      var nextYear = year;
-      if (nextIndex > 11) {
-        nextIndex = 0;
-        nextYear++;
-      }
-      endDate = await service.getMonthStart(nextYear, nextIndex);
+      startDate = await service.monthStartContaining(date);
+      endDate = await service.nextMonthStartAfter(startDate);
       endDate = endDate.subtract(const Duration(days: 1));
     }
 

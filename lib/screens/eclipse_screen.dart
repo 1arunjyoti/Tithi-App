@@ -289,6 +289,7 @@ class EclipseScreen extends ConsumerWidget {
 
     showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => Container(

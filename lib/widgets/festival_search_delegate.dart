@@ -7,6 +7,7 @@ import '../providers/accessibility_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
+import '../theme/app_theme.dart';
 
 import 'event_detail_sheet.dart';
 
@@ -155,6 +156,7 @@ class FestivalSearchDelegate extends SearchDelegate {
         if (!context.mounted) return;
         await showModalBottomSheet(
           context: context,
+          sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
           builder: (context) =>

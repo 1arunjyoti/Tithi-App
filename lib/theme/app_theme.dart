@@ -275,6 +275,94 @@ class AppTheme {
     return pureDarkTheme;
   }
 
+  /// True when High Contrast is requested (app setting propagated via
+  /// MediaQuery, or the OS-level highContrast flag).
+  static bool highContrastOf(BuildContext context) {
+    return MediaQuery.maybeHighContrastOf(context) ?? false;
+  }
+
+  /// Alpha to use for de-emphasized text/icons. Returns 1.0 when High
+  /// Contrast is on so secondary content stays legible.
+  static double contrastAlpha(BuildContext context, double normal) {
+    return highContrastOf(context) ? 1.0 : normal;
+  }
+
+  /// High-contrast wrapper for any base theme. Light becomes pure
+  /// white/black; dark becomes black background, white text, and a
+  /// brightened primary when the base uses deep purple.
+  static ThemeData withHighContrast(ThemeData base) {
+    final isDark = base.brightness == Brightness.dark;
+    if (!isDark) {
+      return base.copyWith(
+        scaffoldBackgroundColor: Colors.white,
+        colorScheme: base.colorScheme.copyWith(
+          surface: Colors.white,
+          onSurface: Colors.black,
+        ),
+        appBarTheme: base.appBarTheme.copyWith(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+        ),
+        cardTheme: base.cardTheme.copyWith(color: Colors.white, elevation: 0),
+        bottomSheetTheme: base.bottomSheetTheme.copyWith(
+          backgroundColor: Colors.white,
+        ),
+        textTheme: base.textTheme.copyWith(
+          bodyLarge: base.textTheme.bodyLarge?.copyWith(color: Colors.black),
+          bodyMedium: base.textTheme.bodyMedium?.copyWith(
+            color: Colors.black.withValues(alpha: 0.87),
+          ),
+        ),
+      );
+    }
+    // Dark HC: flatten to black, force white text, brighten deep-purple
+    // primary (Krishna #7B2CBF has ~1.5:1 on dark backgrounds).
+    final basePrimary = base.colorScheme.primary;
+    final brightPrimary = basePrimary == const Color(0xFF7B2CBF)
+        ? const Color(0xFFC77DFF)
+        : basePrimary;
+    return base.copyWith(
+      scaffoldBackgroundColor: Colors.black,
+      colorScheme: base.colorScheme.copyWith(
+        primary: brightPrimary,
+        surface: Colors.black,
+        onSurface: Colors.white,
+        // Bright primaries (light purple / amber) need black text on top.
+        onPrimary: Colors.black,
+      ),
+      appBarTheme: base.appBarTheme.copyWith(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+      ),
+      cardTheme: base.cardTheme.copyWith(color: Colors.black, elevation: 0),
+      bottomSheetTheme: base.bottomSheetTheme.copyWith(
+        backgroundColor: Colors.black,
+      ),
+      textTheme: base.textTheme.copyWith(
+        bodyLarge: base.textTheme.bodyLarge?.copyWith(color: Colors.white),
+        bodyMedium: base.textTheme.bodyMedium?.copyWith(color: Colors.white),
+      ),
+    );
+  }
+
+  static final ThemeData shuklaHighContrastTheme = withHighContrast(
+    shuklaTheme,
+  );
+  static final ThemeData krishnaHighContrastTheme = withHighContrast(
+    krishnaTheme,
+  );
+  static final ThemeData pureDarkHighContrastTheme = withHighContrast(
+    pureDarkTheme,
+  );
+
+  /// Returns the cached HC variant for a known base theme.
+  static ThemeData resolveHighContrast(ThemeData base) {
+    if (identical(base, krishnaTheme)) return krishnaHighContrastTheme;
+    if (identical(base, pureDarkTheme)) return pureDarkHighContrastTheme;
+    if (identical(base, shuklaTheme)) return shuklaHighContrastTheme;
+    return withHighContrast(base);
+  }
+
   /// Glassmorphism decoration for cards and sheets
   static BoxDecoration glassmorphism({
     required BuildContext context,
@@ -288,18 +376,32 @@ class AppTheme {
     final isPureDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;
 
-    final isHighContrast =
+    final appHighContrast =
         ref?.read(glassmorphismConfigProvider).isHighContrast ?? false;
+    final isHighContrast = appHighContrast || highContrastOf(context);
 
-    // High Contrast Mode / Pure Dark
-    if (isPureDark || isHighContrast) {
+    // High Contrast: solid surfaces with strong borders (dark: black card
+    // + white 0.7 border so it reads on a flattened black background).
+    if (isHighContrast) {
       return BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
+              ? Colors.white.withValues(alpha: 0.7)
+              : Colors.black.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+      );
+    }
+
+    // Pure Dark (non-HC): keep existing subtle solid style.
+    if (isPureDark) {
+      return BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.1),
         ),
       );
     }
@@ -328,15 +430,85 @@ class AppTheme {
     );
   }
 
-  /// Standard background decoration with gradient
+  /// Returns [normal] unless Reduce Motion / OS disableAnimations is on,
+  /// in which case a 1ms duration so implicit animations jump to end state.
+  /// NOTE: must NOT be [Duration.zero] — AnimatedSize with a zero duration
+  /// completes synchronously inside its own performLayout and crashes with
+  /// "A RenderAnimatedSize was mutated in its own performLayout"
+  /// (RenderAnimatedSize._layoutStable → controller.forward during layout).
+  static Duration animationDuration(BuildContext context, Duration normal) {
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    return disableAnimations ? const Duration(milliseconds: 1) : normal;
+  }
+
+  /// True when animations should be skipped (app Reduce Motion or OS setting).
+  static bool reduceMotionOf(BuildContext context) {
+    return MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+  }
+
+  /// AnimationStyle for showModalBottomSheet: near-instant when Reduce Motion
+  /// is on, else null (framework default slide/fade). The framework route
+  /// transitions ignore MediaQuery.disableAnimations, so sheets need this
+  /// explicit hook (a caller-passed AnimationController would NOT be disposed
+  /// by the route — willDisposeAnimationController=false — hence a style).
+  static AnimationStyle? sheetAnimationStyleOf(BuildContext context) {
+    if (!reduceMotionOf(context)) return null;
+    return const AnimationStyle(
+      duration: Duration(milliseconds: 1),
+      reverseDuration: Duration(milliseconds: 1),
+    );
+  }
+
+  /// Applies the High Contrast and/or Reduced Motion theme variants to [base].
+  /// Reduced Motion swaps the platform page transitions for instant ones —
+  /// MaterialPageRoute ignores MediaQuery.disableAnimations, so without this
+  /// every screen push still slides at full speed.
+  static ThemeData resolveAccessible(
+    ThemeData base, {
+    required bool highContrast,
+    required bool reduceMotion,
+  }) {
+    var theme = highContrast ? resolveHighContrast(base) : base;
+    if (reduceMotion) theme = withReducedMotion(theme);
+    return theme;
+  }
+
+  /// Returns [base] with instant page transitions (new page appears with no
+  /// slide/fade). Applied when Reduce Motion is on.
+  static ThemeData withReducedMotion(ThemeData base) {
+    return base.copyWith(pageTransitionsTheme: instantPageTransitionsTheme);
+  }
+
+  /// PageTransitionsTheme that shows the incoming page immediately on every
+  /// platform. Covers all MaterialPageRoute pushes app-wide from one place.
+  static const PageTransitionsTheme instantPageTransitionsTheme =
+      PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _InstantPageTransitionsBuilder(),
+          TargetPlatform.iOS: _InstantPageTransitionsBuilder(),
+          TargetPlatform.linux: _InstantPageTransitionsBuilder(),
+          TargetPlatform.macOS: _InstantPageTransitionsBuilder(),
+          TargetPlatform.windows: _InstantPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: _InstantPageTransitionsBuilder(),
+        },
+      );
+
+  /// Standard background decoration with gradient.
+  /// Returns a flat scaffold-colored background when Reduce Motion or High
+  /// Contrast is on, so all callers respect the setting without per-screen
+  /// branching.
   static BoxDecoration backgroundDecoration(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPureDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;
 
-    // We can't easily access accessibility provider here without ref, so basic gradient
     if (isPureDark) {
       return const BoxDecoration(color: Colors.black);
+    }
+
+    if (reduceMotionOf(context) || highContrastOf(context)) {
+      return BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor);
     }
 
     return BoxDecoration(
@@ -356,6 +528,24 @@ class AppTheme {
               ],
       ),
     );
+  }
+}
+
+/// PageTransitionsBuilder that shows the new page instantly (Reduce Motion).
+/// The route still runs its 300ms controller invisibly, but with the child
+/// returned directly there is no visible slide/fade on push or pop.
+class _InstantPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _InstantPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return child;
   }
 }
 
@@ -384,8 +574,22 @@ class GlassmorphismConfig {
     double borderRadius = 24,
     Border? border,
   }) {
-    // High Contrast Mode / Pure Dark - return solid decoration
-    if (isPureDark || isHighContrast) {
+    // High Contrast: solid + strong border (dark HC uses black card so it
+    // stays legible on the flattened black background).
+    if (isHighContrast) {
+      return BoxDecoration(
+        color: isDark ? Colors.black : Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.7)
+              : Colors.black.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+      );
+    }
+    // Pure Dark (non-HC) - return solid decoration
+    if (isPureDark) {
       return BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(borderRadius),

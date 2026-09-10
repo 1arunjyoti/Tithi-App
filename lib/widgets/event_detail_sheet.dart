@@ -257,7 +257,10 @@ class EventDetailSheet extends ConsumerWidget {
                               ],
                             ),
                             AnimatedSize(
-                              duration: const Duration(milliseconds: 200),
+                              duration: AppTheme.animationDuration(
+                                context,
+                                const Duration(milliseconds: 200),
+                              ),
                               curve: Curves.easeInOut,
                               alignment: Alignment.topCenter,
                               child: ref.watch(_descExpandedProvider)

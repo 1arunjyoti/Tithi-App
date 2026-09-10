@@ -242,7 +242,10 @@ class ThemeOptionButton extends ConsumerWidget {
         onTap();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppTheme.animationDuration(
+          context,
+          const Duration(milliseconds: 200),
+        ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? context.colors.primary : Colors.transparent,
@@ -342,6 +345,7 @@ class SettingsBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       backgroundColor: Colors.transparent,
       builder: (context) => SettingsBottomSheet(
         title: title,

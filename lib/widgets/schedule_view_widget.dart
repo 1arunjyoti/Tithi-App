@@ -245,6 +245,8 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
 
   void _scrollToToday({bool animated = true}) {
     final now = DateTime.now();
+    // Reduce Motion skips smooth scrolling and jumps instantly.
+    final reduceMotion = AppTheme.reduceMotionOf(context);
     // Use jump logic if we need to re-anchor
     final difference = now.difference(_anchorDate).inDays;
 
@@ -254,7 +256,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
     }
 
     if (difference == 0 && _scrollController.hasClients) {
-      if (animated) {
+      if (animated && !reduceMotion) {
         _scrollController.animateTo(
           0,
           duration: const Duration(milliseconds: 500),
@@ -889,6 +891,7 @@ class _ScheduleDateItem extends ConsumerWidget {
   ) {
     showModalBottomSheet(
       context: context,
+      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>

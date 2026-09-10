@@ -96,6 +96,82 @@ String convertPurnimantToAmanta(String purnimantMasa, String paksha) {
 /// - Shaka Samvat: Starts 78 CE (Official Indian Calendar, South India)
 enum HinduYearEra { vikramSamvat, shakaSamvat }
 
+/// Amanta masa names by sidereal Sun rashi (0 = Aries .. 11 = Pisces).
+/// A lunation's masa takes the name of the rashi holding its first new moon.
+const List<String> masaNamesBySunRashi = [
+  'Vaishakha', // 0-30 Aries
+  'Jyeshtha', // 30-60 Taurus
+  'Ashadha', // 60-90 Gemini
+  'Shravana', // 90-120 Cancer
+  'Bhadrapada', // 120-150 Leo
+  'Ashwin', // 150-180 Virgo
+  'Kartika', // 180-210 Libra
+  'Margashirsha', // 210-240 Scorpio
+  'Pausha', // 240-270 Sagittarius
+  'Magha', // 270-300 Capricorn
+  'Phalguna', // 300-330 Aquarius
+  'Chaitra', // 330-360 Pisces
+];
+
+/// Map Sun's sidereal longitude to rashi index (0-11).
+int sunRashiIndex(double longitude) {
+  double l = longitude % 360;
+  if (l < 0) l += 360;
+  return (l / 30).floor().clamp(0, 11);
+}
+
+/// Pure Adhika verdict + naming for a bracketing new-moon pair.
+/// Adhika (intercalary) masa: no Surya Sankranti between the new moons,
+/// i.e. both instants share a rashi. The name comes from the first new moon.
+/// Pure (no ephemeris) so it is directly unit-testable.
+({bool adhika, String masa}) resolveAdhikaVerdict({
+  required double sunLongN1,
+  required double sunLongN2,
+}) {
+  final prevIndex = sunRashiIndex(sunLongN1);
+  final nextIndex = sunRashiIndex(sunLongN2);
+  final masaName = masaNamesBySunRashi[prevIndex];
+  return (adhika: prevIndex == nextIndex, masa: masaName);
+}
+
+/// Pure: distance of [rawTithi] (1..30) to the new-moon wrap point (30.0) on
+/// the 30-cycle. Used to pick the candidate instant nearest a true new moon
+/// without any ephemeris, so it is directly unit-testable.
+double newMoonDistance(double rawTithi) {
+  final t = rawTithi % 30;
+  return (30.0 - t) % 30;
+}
+
+/// Pure: index i such that the new moon falls between candidate tithis[i]
+/// (pre-wrap, high) and tithis[i+1] (post-wrap, low); -1 when no adjacent
+/// pair straddles the wrap. Pure (no ephemeris) so directly unit-testable.
+int wrapPairIndex(List<double> tithis) {
+  for (int i = 0; i + 1 < tithis.length; i++) {
+    if (tithis[i] > 20.0 && tithis[i + 1] < 10.0) return i;
+  }
+  return -1;
+}
+
+/// Pure: linear interpolation of the new-moon instant between [dayA] (tithi
+/// [tA], pre-wrap) and [dayB] (tithi [tB], post-wrap). Tithi rate varies
+/// smoothly, so over 24h this pins the instant to ~±2h for free — no extra
+/// ephemeris calls. Sampling the Sun there (instead of at noon) keeps
+/// same-day transit/new-moon coincidences on the correct side. Pure, so
+/// directly unit-testable.
+DateTime interpolateNewMoonInstant(
+  DateTime dayA,
+  double tA,
+  DateTime dayB,
+  double tB,
+) {
+  final before = (30.0 - tA).clamp(0.0, 30.0);
+  final after = tB.clamp(0.0, 30.0);
+  final total = before + after;
+  final frac = total <= 0 ? 0.5 : before / total;
+  final micros = (dayB.difference(dayA).inMicroseconds * frac).round();
+  return dayA.add(Duration(microseconds: micros));
+}
+
 extension HinduYearEraExt on HinduYearEra {
   String get label => switch (this) {
     HinduYearEra.vikramSamvat => 'Vikram Samvat',
