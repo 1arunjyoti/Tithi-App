@@ -78,7 +78,7 @@ class WeatherService {
         if (attempt < 2) {
           // SEC-2: retry once on non-4xx server errors.
           await Future.delayed(const Duration(milliseconds: 500));
-          return _doFetch(lat, lng, attempt: attempt + 1);
+          return await _doFetch(lat, lng, attempt: attempt + 1);
         }
         return WeatherFailure(
           WeatherError(

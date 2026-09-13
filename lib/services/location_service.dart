@@ -225,7 +225,7 @@ class LocationService {
         if (kDebugMode) {
           print('Location services are disabled');
         }
-        return _getCachedLocation();
+        return await _getCachedLocation();
       }
 
       // Check permission
@@ -238,14 +238,14 @@ class LocationService {
         if (kDebugMode) {
           print('Location permission denied – skipping auto-request');
         }
-        return _getCachedLocation();
+        return await _getCachedLocation();
       }
 
       if (permission == LocationPermission.deniedForever) {
         if (kDebugMode) {
           print('Location permission permanently denied');
         }
-        return _getCachedLocation();
+        return await _getCachedLocation();
       }
 
       // Try to get last known position first (faster) - not supported on web
@@ -287,7 +287,7 @@ class LocationService {
       if (kDebugMode) {
         print('Error getting location: $e');
       }
-      return _getCachedLocation();
+      return await _getCachedLocation();
     }
   }
 
