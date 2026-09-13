@@ -329,6 +329,50 @@
     }
   },
   {
+    "id": "matsya_jayanti",
+    "name": "Matsya Jayanti",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "मत्स्य जयन्ती",
+      "nameEnglish": "Matsya Jayanti",
+      "nameHindi": "मत्स्य जयंती",
+      "nameBengali": "মত্স্য জয়ন্তী",
+      "nameTelugu": "మత్స్య జయంతి",
+      "nameKannada": "ಮತ್ಸ್ಯ ಜಯಂತಿ",
+      "nameTamil": "மத்ஸ்ய ஜெயந்தி",
+      "nameMalayalam": "മത്സ്യ ജയന്തി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The appearance day of Lord Matsya — Vishnu's first avatar, who took the form of a divine fish to save King Manu, the Saptarishis, and the Vedas from the great deluge (Mahapralaya)",
+      "addtional_description": "Matsya Jayanti commemorates the first incarnation of Lord Vishnu, who appeared as Matsya — the divine fish — during the Satya Yuga. The festival falls on the Tritiya of the Shukla Paksha of Chaitra, placing it within the Chaitra Navratri season and often alongside the Gangaur festivities.\n\nThe legend holds that at the close of one age, a great deluge (Mahapralaya) would destroy the earth. King Satyavrata Manu, performing his morning prayers in the river, caught a tiny fish in his cupped hands. The fish spoke, asking for protection, and Manu placed it in a jar. But the fish grew — from jar to pond, pond to lake, lake to river, until finally it filled the ocean itself, its horn gleaming like the crescent moon. Then the fish revealed its true nature: it was Lord Vishnu, and he warned Manu that the deluge was seven days away. He instructed Manu to build a great ship, gather the seeds of all plants, pairs of every living being, the Sapta Rishis, and the Vedas, and to tether the ship to the fish's horn using the serpent Vasuki as a rope.\n\nWhen the floods came and swallowed the earth, Matsya guided the ship through the roiling cosmic ocean to the peaks of the Himalayas — and in the depths below, he slew the demon Hayagriva (also called Somakudu), who had stolen the Vedas from Brahma and hidden them in the ocean's floor. The Vedas were restored, the waters receded, and life began again with Manu, the progenitor of the next age.\n\nMatsya holds a singular place in the Dashavatara: it is the first time Vishnu chose to enter creation in an embodied form to prevent its total annihilation. Every subsequent avatar, from Kurma to Kalki, follows the pattern Matsya established — the divine descending in whatever form is needed to preserve what must be preserved. The fish — a creature of the waters, the smallest and most unremarkable of beings — becomes the vehicle of the highest protection, teaching that the divine will take the humblest form to save what matters. The only Matsya-avatar temple in India is the Vedanarayana Swamy Temple at Nagalapuram in Andhra Pradesh, where grand celebrations are held on this day."
+    },
+    "panchang_rules": {
+      "masa": "Chaitra",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Morning Snana and Sankalpa: Devotees bathe in the morning, ideally in a sacred river or with water mixed with Ganga jal, and take the sankalpa to observe the Matsya Jayanti vrat for protection and spiritual merit",
+        "Vishnu Puja: Lord Vishnu in his Matsya form is worshipped with tulsi leaves, flowers, sandalwood paste, and a lit lamp",
+        "Matsya Katha Shravana: The story of the divine fish, King Manu, the great deluge, and the recovery of the Vedas from the demon Hayagriva is recited or listened to with devotion",
+        "Vishnu Sahasranama and Matsya Purana Recitation: The thousand names of Vishnu and passages from the Matsya Purana are recited, believed to cleanse the devotee of sins and guide them toward righteousness",
+        "Naivedya and Dana: Food is offered to the Lord and distributed as prasad; charity — food, clothes, or money to Brahmins and the needy — is considered highly meritorious on this day"
+      ],
+      "mantra": "ॐ मत्स्य नारायणाय नमः \n\n(Om Matsya Narayanaya Namah — salutation to Matsya Narayana, the divine fish who preserved the Vedas and guided Manu through the deluge)",
+      "fasting": "Devotees observe a day-long fast on Matsya Jayanti, beginning from the previous night; some refrain from even drinking water until sunrise, breaking the fast only after worshipping Lord Vishnu"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+
+  {
     "id": "ram_navami",
     "name": "Ram Navami",
     "category": "major",
@@ -572,6 +616,49 @@
       ],
       "mantra": "",
       "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "kurma_jayanti",
+    "name": "Kurma Jayanti",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "कूर्म जयन्ती",
+      "nameEnglish": "Kurma Jayanti",
+      "nameHindi": "कूर्म जयंती",
+      "nameBengali": "কূর্ম জয়ন্তী",
+      "nameTelugu": "కూర్మ జయంతి",
+      "nameKannada": "ಕೂರ್ಮ ಜಯಂತಿ",
+      "nameTamil": "கூர்ம ஜெயந்தி",
+      "nameMalayalam": "കൂർമ്മ ജയന്തി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The appearance day of Lord Kurma — Vishnu's second avatar, the divine tortoise who dove beneath the cosmic ocean and bore Mount Mandara on his back so the churning that produced the nectar of immortality could continue",
+      "addtional_description": "Kurma Jayanti commemorates the second incarnation of Lord Vishnu, who appeared as Kurma — the divine tortoise — during the Satya Yuga. The festival falls on the Purnima of the Shukla Paksha of Vaishakha, the same full moon that is celebrated as Buddha Purnima.\n\nThe legend of Kurma is inseparable from the Samudra Manthan — the churning of the cosmic ocean. When the gods, weakened by the demons' ascendency, sought the amrita, the nectar of immortality, they needed to churn the ocean to obtain it. They used Mount Mandara as the churning rod and the serpent king Vasuki as the rope, with the gods pulling one end and the demons the other. But as the churning began, the mountain — too heavy for the ocean to bear — began to sink. And then Vishnu descended: he took the form of a gigantic tortoise, dove to the ocean floor, and lifted Mount Mandara upon his shell. The churning continued upon his back — and from it emerged the treasures of the cosmos: the goddess Lakshmi, the moon, the wish-fulfilling tree, the seven-headed horse, the elephant Airavata, the physician Dhanvantari with the pot of amrita, and finally the halahala poison that rose last of all, which Shiva drank to save creation.\n\nKurma's role in the story is the one that teaches most: he is the foundation no one sees. The gods and demons churn, the mountain turns, the treasures emerge — but beneath it all, silent and unmoving, the tortoise bears the entire weight of the churning on his back. Without Kurma, there is no nectar; there is no Lakshmi; there is no story. The Kurma Purana, spoken by the Lord in this form, imparts the knowledge of the four purusharthas — Dharma, Artha, Kama, and Moksha — to the sages: the four aims of human life, held in balance the way the tortoise holds the mountain. And the Linga Purana carries a second telling: when the earth herself began to sink into the netherworld, it was Kurma who upheld her on his back — the tortoise as the bedrock beneath the world.\n\nWorshipping Lord Kurma is believed to bring prosperity and longevity. The most ancient Kurma temple in India is the Kurmanathaswamy Temple at Srikurmam in Andhra Pradesh, where the Lord is worshipped as Shri Kurmanathaswamy alongside Goddess Lakshmi as Kurmanayaki, through both Vaishnava and Shaiva traditions. On this day, devotees bathe in sacred rivers, observe a one-day vrat, and recite the Kurma Purana and the Vishnu Sahasranama."
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima"
+    },
+    "rituals": {
+      "steps": [
+        "Tirtha Snana: Devotees bathe in a sacred river or with water mixed with Ganga jal, purifying themselves for the Kurma Jayanti vrat",
+        "Kurma Puja: Lord Vishnu in his Kurma form — the tortoise bearing Mount Mandara on his shell — is worshipped with tulsi leaves, flowers, sandalwood paste, and a lit lamp",
+        "Kurma Katha Shravana: The story of the Samudra Manthan — the churning of the ocean, the sinking of Mount Mandara, and Kurma's silent foundation beneath it — is recited or listened to with devotion",
+        "Kurma Purana and Vishnu Sahasranama Recitation: Passages from the Kurma Purana (in which the Lord teaches the four purusharthas) and the thousand names of Vishnu are recited",
+        "Naivedya and Dana: Food is offered to the Lord and distributed as prasad; charitable acts — food, clothes, and money to the needy — hold special significance on this day"
+      ],
+      "mantra": "ॐ कूर्माय नमः (Om Kurmaya Namah — salutation to Kurma, the divine tortoise who bears the weight of the world)",
+      "fasting": "Devotees observe a one-day vrat on Kurma Jayanti, worshipping Lord Kurma for prosperity and longevity, and taking food only after the evening puja"
     },
     "media": {
       "audio_stotra": ""
@@ -1243,43 +1330,89 @@
     }
   },
   {
-    "id": "janmashtami",
-    "name": "Krishna Janmashtami",
+    "id": "kalki_jayanti",
+    "name": "Kalki Jayanti",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Krishna Janmashtami",
-      "nameHindi": "कृष्ण जन्माष्टमी",
-      "nameBengali": "কৃষ্ণ জন্মাষ্টমী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "कल्कि जयन्ती",
+      "nameEnglish": "Kalki Jayanti",
+      "nameHindi": "कल्कि जयंती",
+      "nameBengali": "কল্কি জয়ন্তী",
+      "nameTelugu": "కల్కి జయంతి",
+      "nameKannada": "ಕಲ್ಕಿ ಜಯಂತಿ",
+      "nameTamil": "கல்கி ஜெயந்தி",
+      "nameMalayalam": "കൽകി ജയന്തി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Birth of Lord Krishna",
-      "addtional_description": ""
+      "description": "The day of remembrance of Lord Kalki — Vishnu's tenth and final avatar, prophesied to appear at the end of Kali Yuga riding a white horse, wielding a blazing sword, to destroy adharma and restore the age of truth",
+      "addtional_description": "Kalki Jayanti is unlike every other festival in the Hindu calendar, for it honours an avatar who has not yet appeared. The first nine avatars of Vishnu — from Matsya the fish to Krishna and the Buddha — are understood to have already descended. Kalki is the tenth and last, prophesied in the Srimad Bhagavatam and the Kalki Purana to manifest at the close of the present age, the Kali Yuga, when dharma has collapsed and the world stands in need of radical renewal.\n\nAccording to the Puranas, when adharma reaches its peak — when rulers become plunderers, when a person's worth is measured only by wealth, when truth itself has become rare — Vishnu will be born in the village of Shambhala, to a Brahmin named Vishnuyasha and his wife Sumati. Grown to adulthood, he will ride a white horse named Devadatta (in some traditions, a form of Garuda himself), carrying a blazing, comet-like sword. He will travel the earth, confronting corrupt kings and false prophets, destroying the forces of unrighteousness in a single sweep, and clearing the ground for Satya Yuga — the age of truth — to begin again.\n\nThe festival is therefore less a birthday than an anticipation. It asks the devotee not to look back with gratitude but to look ahead with hope — and, more importantly, to look inward. The vrat and puja of Kalki Jayanti carry a quiet question: which part of my own conduct belongs to Kali Yuga rather than Satya Yuga? The avatar clears the world; the observance asks us to clear ourselves. The day falls on the Shashthi of the Shukla Paksha of Shravana, within the month of Sawan, and is observed mainly by Vaishnavas who keep the cycle of Vishnu's avatars. Because the worship is directed to Vishnu in his Kalki form, the day fits naturally into the wider Sawan devotion to Vishnu."
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Shukla",
+      "tithi": 6,
+      "conditions": "Shashthi"
+    },
+    "rituals": {
+      "steps": [
+        "Morning Snana and Sankalpa: Devotees bathe in the morning and take the sankalpa to observe the Kalki Jayanti vrat, dedicating the day to contemplation of dharma and the avatar to come",
+        "Vishnu Puja: Lord Vishnu in his Kalki form — the rider of the white horse Devadatta, wielding the blazing sword — is worshipped with tulsi, flowers, sandalwood, and a lit lamp",
+        "Kalki Katha and Bhagavatam Recitation: The prophecy of Kalki's birth at Shambhala, his mission to destroy adharma, and the restoration of Satya Yuga is recited or listened to with devotion",
+        "Vishnu Sahasranama Japa: The thousand names of Vishnu are recited, connecting the devotee to the full arc of the Dashavatara — from the first avatar (Matsya) to the final one (Kalki)",
+        "Reflection and Dana: The day is given to inward reflection on one's own conduct and adherence to dharma; charity is offered — food, clothes, and money to the needy — as an act of alignment with the values the coming avatar represents"
+      ],
+      "mantra": "ॐ नमो भगवते कल्क्यवताराय नमः \n\n(Om Namo Bhagavate Kalkyavataraya Namah — salutation to Lord Kalki, the future avatar who will end Kali Yuga and restore the age of truth)",
+      "fasting": "Devotees observe a day-long fast on Kalki Jayanti, taking only fruits, milk, and water, or a single sattvic meal after evening puja; the fast is believed to strengthen one's commitment to dharma and invoke the blessings of the avatar to come"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "janmashtami",
+    "name": "Krishna Janmashtami",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "कृष्ण जन्माष्टमी",
+      "nameEnglish": "Krishna Janmashtami",
+      "nameHindi": "कृष्ण जन्माष्टमी",
+      "nameBengali": "কৃষ্ণ জন্মাষ্টমী",
+      "nameTelugu": "శ్రీకృష్ణ జన్మాష్టమి",
+      "nameKannada": "ಶ್ರೀಕೃಷ್ಣ ಜನ್ಮಾಷ್ಟಮಿ",
+      "nameTamil": "கிருஷ்ண ஜெயந்தி",
+      "nameMalayalam": "അഷ്ടമിരോഹിണി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The birth of Lord Krishna at midnight in Mathura's prison — the eighth avatar of Vishnu, born under Rohini Nakshatra on the Ashtami of the Krishna Paksha, whose arrival is welcomed with fasting, the Nishita Puja, and the breaking of Dahi Handi",
+      "addtional_description": "Krishna Janmashtami — also called Gokulashtami, Krishnashtami, or in Kerala Ashtami Rohini — celebrates the birth of Lord Krishna, the eighth avatar of Vishnu, born at midnight on the Ashtami of the Krishna Paksha of Shravana (Amanta), under the Rohini Nakshatra. It is the one major Hindu festival whose entire calculation turns on midnight rather than sunrise: because Krishna was born in the Nishita Kala — the Vedic midnight — the principal worship is performed at midnight, not in the morning [cite:9f46cf4e].\n\nThe story of the birth is told in the Bhagavata Purana, Skandha 10. Devaki, sister of the tyrant Kamsa, had been imprisoned with her husband Vasudeva when a divine voice proclaimed that her eighth child would be Kamsa's slayer. Seven children were taken. But when the eighth was born — at midnight, in the prison cell — the chains fell away, the guards fell asleep, and the doors opened of their own accord. Vasudeva carried the newborn across the flooded Yamuna to Gokul, where he exchanged the infant Krishna with the newborn daughter of Yashoda and Nanda. Krishna grew up as a cowherd in Vrindavan, his identity hidden, his divinity showing through every stolen butter, every dance on the riverbank, every demon he quietly dispatched — until the prophecy was fulfilled and Kamsa fell.\n\nThe observance of Janmashtami centres on the midnight moment. Devotees fast through the day — some taking only fruits and milk (phalahar), some observing a complete nirjala fast without even water — and stay awake until the Nishita Puja, when the infant Krishna is bathed in panchamrit, dressed, placed in a decorated cradle, and worshipped with the full sixteen-step ritual. The conch is blown, bells are rung, and the birth is welcomed with bhajans that carry through the night. The fast is broken at Parana — either after the midnight puja or at the next sunrise, after both the Ashtami tithi and Rohini Nakshatra have ended [cite:4f38e1ab].\n\nThe next morning brings Nandotsav — the celebration of Krishna's arrival in Nanda's household — and in Maharashtra, Gujarat, and the cities of the north, the exuberant Dahi Handi: a pot of curd and butter is hoisted high above the street, and teams of young men build human pyramids to reach and break it, re-enacting the child Krishna's own raids on the butter pots of Gokul. Jhankis — decorated tableaux depicting scenes from Krishna's life, from the prison birth to the Raas Leela — are displayed in temples and homes across the Braj region and beyond. ISKCON temples worldwide hold all-night kirtan, the Bhagavatam recited from Skandha 10 through the hours until the birth moment."
     },
     "panchang_rules": {
       "masa": "Shravana",
       "paksha": "Krishna",
       "tithi": 8,
-      "conditions": "Ashtami"
+      "conditions": "Ashtami",
+      "timingOverride": "nishita"
     },
     "rituals": {
       "steps": [
-        "Midnight puja",
-        "Fasting",
-        "Dahi Handi",
-        "Bhajan",
-        "Jhankis"
+        "Morning Sankalpa and Fasting: Devotees take the sankalpa to observe the Janmashtami vrat after morning rituals; the fast — phalahar (fruits and milk) or nirjala (without water) — continues through the day and night until the midnight birth",
+        "Daytime Preparation: The puja space is cleaned and decorated; a jhula (cradle) is prepared for the infant Krishna; jhankis (tableaux) depicting scenes from Krishna's life are arranged in homes and temples",
+        "Midnight Nishita Puja: At the Nishita Kala — the Vedic midnight, the moment of the birth — the infant Krishna is bathed in panchamrit, dressed and decorated, placed in the cradle, and worshipped with the full sixteen-step ritual; the conch is blown and bells rung to welcome the birth",
+        "Chappan Bhog: Fifty-six food items are offered to the Lord — including butter, makhana, sweets, and milk preparations, the foods Krishna loved — and distributed as prasad after the midnight aarti",
+        "Bhajan and Kirtan through the Night: Devotees stay awake singing bhajans and kirtans, reciting the Bhagavata Purana (Skandha 10), and keeping vigil until dawn",
+        "Parana: The fast is broken either after the midnight puja or at the next sunrise, after both the Ashtami tithi and Rohini Nakshatra have ended",
+        "Nandotsav and Dahi Handi: The next morning, the celebration of Krishna's arrival in Nanda's household; in many regions, a pot of curd and butter is hung high above the street and broken by teams forming human pyramids — re-enacting the child Krishna's butter raids"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "वसुदेवसुतं देवं कंसचाणूरमर्दनम् । देवकीपरमानन्दं कृष्णं वन्दे जगद्गुरुम् ॥ \n\n(Vasudeva-sutam devam Kamsa-Chanura-mardanam, Devaki-paramanandam Krishnam vande jagadgurum — 'I bow to Krishna, the guru of the worlds, son of Vasudeva, slayer of Kamsa and Chanura, the supreme delight of Devaki')",
+      "fasting": "The Janmashtami vrat is among the most rigorous Vaishnava observances: devotees fast through the day and night — some on fruits and milk (phalahar), some completely without water (nirjala) — breaking the fast only at Parana, either after the midnight birth-puja or at the next sunrise after Ashtami tithi and Rohini Nakshatra have both ended"
     },
     "media": {
       "audio_stotra": ""
@@ -1370,14 +1503,14 @@
     }
   },
   {
-    "id": "ganesh_chaturthi",
-    "name": "Ganesh Chaturthi",
+    "id": "koushiki_amavasya",
+    "name": "Koushiki Amavasya",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Ganesh Chaturthi",
-      "nameHindi": "गणेश चतुर्थी",
-      "nameBengali": "গণেশ চতুর্থী",
+      "nameSanskrith": "कौशिकी अमावस्या",
+      "nameEnglish": "Koushiki Amavasya",
+      "nameHindi": "कौशिकी अमावस्या",
+      "nameBengali": "কৌশিকী অমাবস্যা",
       "nameTelugu": "",
       "nameKannada": "",
       "nameTamil": "",
@@ -1385,11 +1518,102 @@
     },
     "visuals": {
       "image": "",
+      "theme_color": "#1a0500"
+    },
+    "purpose": {
+      "description": "Worship of Devi Kaushiki — the fierce form of Parvati who emerged from her kosha (sheath) to destroy the demons Shumbha and Nishumbha; also the night of Maa Tara and Maa Kali sadhana",
+      "addtional_description": "Observed as the Purnimanta Bhadrapada Amavasya, this is also called Kushgrahini Amavasya because kush grass is ritually collected and stored on this day for use in shraddha, tarpan, and yajnas throughout the year. In Bengal it is closely tied to Tarapith, where the night is known as 'Tara Ratri' and devotees believe sadhak Bamakshyapa attained siddhi on this night."
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Krishna",
+      "tithi": 15,
+      "conditions": "Amavasya",
+      "timingOverride": "nishita"
+    },
+    "rituals": {
+      "steps": [
+        "Snana (ritual bath) and donning clean clothes",
+        "Lighting of ghee pradip (south-facing mustard oil or ghee lamp)",
+        "Shodashopachar Puja of Maa Tara / Maa Kali",
+        "Mantra jaap and tantric sadhana through the night (Nishitha Kaal)",
+        "Tarpan and shraddha for ancestors (pitri tarpan)",
+        "Daan — offering food, clothes, and help to the needy",
+        "Kush grass collection and preservation for ritual use"
+      ],
+      "mantra": "ॐ ह्रीं स्त्रीं हुं फट्",
+      "fasting": "Devotees may observe a day-long fast, breaking it after the night puja; not universally prescribed but undertaken by sadhaks"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "varaha_jayanti",
+    "name": "Varaha Jayanti",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "वराह जयन्ती",
+      "nameEnglish": "Varaha Jayanti",
+      "nameHindi": "वराह जयंती",
+      "nameBengali": "বরাহ জয়ন্তী",
+      "nameTelugu": "వరాహ జయంతి",
+      "nameKannada": "ವರಾಹ ಜಯಂತಿ",
+      "nameTamil": "வராஹ ஜெயந்தி",
+      "nameMalayalam": "വരാഹ ജയന്തി"
+    },
+    "visuals": {
+      "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Birth of Lord Ganesha",
-      "addtional_description": ""
+      "description": "The appearance day of Lord Varaha — Vishnu's third avatar, who took the form of a boar to rescue Mother Earth (Bhudevi) from the cosmic ocean and slay the demon Hiranyaksha",
+      "addtional_description": "Varaha Jayanti commemorates the appearance of Lord Varaha, the third incarnation of Lord Vishnu, who manifested in the form of a divine boar during the Satya Yuga. The festival falls on the Tritiya of the Shukla Paksha of Bhadrapada — and the story it tells is the story of the earth itself being saved.\n\nThe legend holds that the demon Hiranyaksha, brother of Hiranyakashipu, grew so powerful through his austerities that he tormented the universe. In his arrogance he plunged the earth (Bhudevi) into the cosmic ocean, hiding her in the depths of Rasatala, where no god could reach. The gods, helpless, appealed to Lord Vishnu. From the nostril of Brahma, a tiny boar emerged — no larger than a thumb — and in an instant it grew to the size of a mountain, its tusks gleaming like the crescent moon. Varaha dove into the cosmic ocean, his massive body churning the waters, and descended through the layers of the underworld to find Bhudevi resting on the ocean floor. He lifted her gently on his tusks, carrying her back to the surface, and restored her to her rightful place in the cosmos. Then he turned to Hiranyaksha, who challenged him to battle, and slew him after a combat that is said to have lasted a thousand years.\n\nThe avatar holds a teaching that runs deeper than its dramatic surface. Varaha is the only Vishnu avatar who takes an animal form for a redemptive rather than punitive purpose — he does not come to punish, but to rescue. He descends into darkness, finds what was lost, lifts it up, and restores it. The earth that was submerged is Bhudevi herself — the Goddess who becomes Vishnu's consort in this form, for Varaha is often depicted with Bhudevi seated beside him or on his lap, both of them radiating serenity after the rescue. The boar — a creature of the mud, the lowliest of animals — becomes the vehicle of the highest grace, teaching that the divine will take whatever form is needed to save what matters, and that no form is too humble for the sacred.\n\nVaraha Jayanti is observed with puja to Lord Vishnu in his Varaha form, fasting, recitation of the Varaha Katha, and charity — particularly gifts connected to land, grain, or shelter, in remembrance of the one who rescued the earth. The Bhu Varaha Swamy Temple at Tirumala is among the most important centres of Varaha worship, and special pujas are held in Vishnu temples across India on this day."
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 3,
+      "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Morning Snana and Sankalpa: Devotees bathe in the morning, ideally in a sacred river or with water mixed with Ganga jal, and take the sankalpa to observe the Varaha Jayanti vrat for protection and prosperity",
+        "Varaha Puja: An image or idol of Lord Varaha — the boar-headed, human-bodied form lifting Bhudevi — is installed and worshipped with tulsi leaves, flowers, sandalwood paste, and a lit lamp",
+        "Varaha Katha Shravana: The story of Varaha's descent into the cosmic ocean, the rescue of Bhudevi, and the slaying of Hiranyaksha is recited or listened to with devotion",
+        "Abhishekam: In temples, the deity of Varaha is given a ceremonial bath (abhishekam) with water, milk, curd, ghee, honey, and panchamrita, accompanied by the chanting of Vishnu mantras",
+        "Naivedya and Dana: Food is offered to the Lord and distributed as prasad; charity is given — especially land, grain, food, or shelter-related gifts, in honour of the one who rescued the earth itself",
+        "Vishnu Aarti and Jagran: The day closes with aarti before the deity; some devotees observe a night vigil (jagran), retelling the stories of Vishnu's avatars and singing bhajans"
+      ],
+      "mantra": "ॐ नमो भगवते वराहाय धरणीधराय स्वाहा (Om Namo Bhagavate Varahaya Dharani-dharaya Svaha — salutation to Lord Varaha, the upholder of the earth)",
+      "fasting": "Devotees observe a day-long fast on Varaha Jayanti, taking only fruits, milk, and water, or a single sattvic meal in the evening after puja; the fast is believed to grant protection, courage, and the removal of fear"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+
+  {
+    "id": "ganesh_chaturthi",
+    "name": "Ganesh Chaturthi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "गणेश चतुर्थी",
+      "nameEnglish": "Ganesh Chaturthi",
+      "nameHindi": "गणेश चतुर्थी",
+      "nameBengali": "গণেশ চতুর্থী",
+      "nameTelugu": "వినాయక చవితి",
+      "nameKannada": "ಗಣೇಶ ಚತುರ್ಥಿ",
+      "nameTamil": "விநாயகர் சதுர்த்தி",
+      "nameMalayalam": "ഗണേശ ചതുർത്ഥി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": "#FF8C00"
+    },
+    "purpose": {
+      "description": "Celebrates the birth of Lord Ganesha, the remover of obstacles and god of wisdom, prosperity, and new beginnings.",
+      "addtional_description": "Observed for 10 days (Bhadrapada Shukla Chaturthi to Ananta Chaturdashi), culminating in Ganesh Visarjan. Widely celebrated across India, especially in Maharashtra, Gujarat, Karnataka, and Andhra Pradesh."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1400,13 +1624,16 @@
     },
     "rituals": {
       "steps": [
-        "Ganesh Sthapana",
-        "Modak offering",
-        "Aarti",
-        "Visarjan after 10 days"
+        "Ganesh Sthapana — installation of the clay idol on a raised platform",
+        "Prana Pratishtha — invoking life into the idol with mantras",
+        "Shodashopachara — 16 forms of worship including offerings of durva grass and red flowers",
+        "Modak and prasad offering — Ganesha's favourite sweet dumplings",
+        "Evening Aarti with family and community",
+        "Daily puja for 10 days",
+        "Ganesh Visarjan — immersion of the idol in water with procession"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ गं गणपतये नमः",
+      "fasting": "Devotees observe a partial day fast; some refrain from consuming non-vegetarian food and onion-garlic during the festival period."
     },
     "media": {
       "audio_stotra": ""
@@ -1417,22 +1644,22 @@
     "name": "Rishi Panchami",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "ऋषि पञ्चमी",
       "nameEnglish": "Rishi Panchami",
       "nameHindi": "ऋषि पंचमी",
       "nameBengali": "ঋষি পঞ্চমী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "ఋషి పంచమి",
+      "nameKannada": "ಋಷಿ ಪಂಚಮಿ",
+      "nameTamil": "ரிஷி பஞ்சமி",
+      "nameMalayalam": "ഋഷി പഞ്ചമി"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#6B8E23"
     },
     "purpose": {
-      "description": "Rishi Panchami day is dedicated to Goddess Parvati",
-      "addtional_description": ""
+      "description": "A vrat dedicated to the Saptarishis (seven sages) — Kashyapa, Atri, Bharadwaja, Vishvamitra, Gautama, Jamadagni, and Vashishtha — observed to express gratitude to the Rishis for their contributions to humanity and to seek forgiveness for unintentional sins.",
+      "additional_description": "Predominantly observed by women, especially in Nepal, Maharashtra, and parts of North India. Traditionally associated with seeking purification and forgiveness for any inadvertent transgressions of menstrual taboos. The vrat underscores the honouring of spiritual teachers and the Rishi tradition as the foundation of Sanatana Dharma."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1442,13 +1669,17 @@
     },
     "rituals": {
       "steps": [
-        "Parvati Puja",
-        "Fasting",
-        "Reading Rishi Panchami Stotram",
-        "Temple visit"
+        "Early morning ritual bath, traditionally using herbs and cow dung (Gomaya)",
+        "Sankalpa for the Rishi Panchami vrat",
+        "Worship of the Saptarishis with offerings of flowers, fruits, and sesame seeds",
+        "Recitation of Rishi Panchami Katha and Stotram",
+        "Application of red kumkum tilak — symbolising devotion to the Rishi tradition",
+        "Fasting throughout the day",
+        "Offering food to a Brahmin or Rishi as a mark of Guru Bhakti",
+        "Breaking the fast after sunset with a simple sattvic meal"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ सप्तर्षिभ्यो नमः",
+      "fasting": "Devotees observe a strict fast — many consume only once after sunset, eating sattvic food prepared without onion, garlic, or salt. Some observe a nirjala (waterless) fast."
     },
     "media": {
       "audio_stotra": ""
@@ -1459,22 +1690,22 @@
     "name": "Balarama Jayanti",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "बलराम जयन्ती",
       "nameEnglish": "Balarama Jayanti",
       "nameHindi": "बलराम जयंती",
       "nameBengali": "বলরাম জয়ন্তী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "బలరామ జయంతి",
+      "nameKannada": "ಬಲರಾಮ ಜಯಂತಿ",
+      "nameTamil": "பலராம ஜெயந்தி",
+      "nameMalayalam": "ബലരാമ ജയന്തി"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#C4A35A"
     },
     "purpose": {
-      "description": "Birth of Lord Balarama",
-      "addtional_description": ""
+      "description": "Celebrates the birth of Lord Balarama (Balabhadra), the elder brother of Lord Krishna and the avatar of Adishesha, the cosmic serpent. He is revered as the deity of agriculture, strength, and the bearer of the plough (Haladhara).",
+      "additional_description": "Also known as Baladeva Jayanti or Hal Shashti. Observed on Bhadrapada Shukla Shashti, six days after Krishna Janmashtami. Particularly celebrated in Vrindavan, Mathura, and ISKCON temples worldwide. Balarama embodies strength, simplicity, and agricultural prosperity."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1484,13 +1715,16 @@
     },
     "rituals": {
       "steps": [
-        "Balarama Puja",
-        "Fasting",
-        "Reading Balarama Jayanti Stotram",
-        "Temple visit"
+        "Early morning bath and sankalpa for the vrat",
+        "Worship of Lord Balarama with offerings of milk, curd, and grains",
+        "Abhishek of Balarama's idol with panchamrit",
+        "Recitation of Balarama Katha and Stotram",
+        "Offering of halad (plough) and agricultural tools as a mark of respect",
+        "Visiting Krishna-Balaram temples, especially in Vrindavan and Mathura",
+        "Distribution of prasad — kheer and sweets made from milk and grains"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते बलरामाय",
+      "fasting": "Devotees observe a day-long fast, breaking it after sunset with a sattvic meal. Milk-based foods are particularly favoured as Balarama is associated with agriculture and dairy."
     },
     "media": {
       "audio_stotra": ""
@@ -1501,22 +1735,22 @@
     "name": "Vishwakarma Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "विश्वकर्मा पूजा",
       "nameEnglish": "Vishwakarma Puja",
       "nameHindi": "विश्वकर्मा पूजा",
       "nameBengali": "বিশ্বকর্মা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "విశ్వకర్మ పూజ",
+      "nameKannada": "ವಿಶ್ವಕರ್ಮ ಪೂಜೆ",
+      "nameTamil": "விஸ்வகர்மா பூஜை",
+      "nameMalayalam": "വിശ്വകർമ്മ പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#B8860B"
     },
     "purpose": {
-      "description": "Vishwakarma Puja day is dedicated to Lord Vishwakarma, the divine architect",
-      "addtional_description": "Lord Vishwakarma is revered as the creator of mechanical sciences, architecture and Vastu Shastra. Craftsmen of every field and profession worship Lord Vishwakarma as their patron deity."
+      "description": "Dedicated to Lord Vishwakarma, the divine architect and craftsman of the gods, who is revered as the creator of mechanical sciences, architecture, weaponry, and Vastu Shastra.",
+      "additional_description": "Artisans, craftsmen, engineers, mechanics, factory workers, and professionals across every trade worship Lord Vishwakarma as their patron deity. Celebrated widely in West Bengal, Odisha, Assam, Bihar, and Jharkhand, often with kite flying. The festival falls on a fixed solar date (17 September / Kanya Sankranti) rather than a lunar tithi."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1527,13 +1761,16 @@
     },
     "rituals": {
       "steps": [
-        "Worship of Lord Vishwakarma",
-        "Puja of tools and machinery",
-        "Kite flying",
-        "Distribution of Prasad"
+        "Cleaning and decorating workplaces, factories, and workshops",
+        "Installation of Lord Vishwakarma's idol or image at the workspace",
+        "Puja of tools, machinery, and instruments with flowers and vermilion",
+        "Offering of sweets, fruits, and incense to the deity and tools",
+        "Recitation of Vishwakarma Stotram and seeking blessings for safety and productivity",
+        "Kite flying — a popular tradition especially in Bengal",
+        "Distribution of prasad among workers, colleagues, and family"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ श्री विश्वकर्मणे नमः",
+      "fasting": "No strict fast is observed. The focus is on worship of tools and machinery. Some devotees refrain from using their tools or working on this day as a mark of reverence."
     },
     "media": {
       "audio_stotra": ""
@@ -1544,22 +1781,22 @@
     "name": "Radha Ashtami",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "राधा अष्टमी",
       "nameEnglish": "Radha Ashtami",
       "nameHindi": "राधा अष्टमी",
       "nameBengali": "রাধা অষ্টমী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "రాధ అష్టమి",
+      "nameKannada": "ರಾಧೆ ಅಷ್ಟಮಿ",
+      "nameTamil": "ராதா அஷ்டமி",
+      "nameMalayalam": "രാധാ അഷ്ടമി"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#D4628A"
     },
     "purpose": {
-      "description": "Radha Ashtami day is dedicated to Goddess Parvati",
-      "addtional_description": ""
+      "description": "Celebrates the birth of Goddess Radha, the divine consort and eternal beloved of Lord Krishna. She is revered as the embodiment of pure devotion (Bhakti) and the supreme goddess of Vrindavan.",
+      "additional_description": "Observed on Bhadrapada Shukla Ashtami, 15 days after Krishna Janmashtami. Particularly celebrated in Barsana (Radha's birthplace), Vrindavan, and ISKCON temples worldwide. Radha is considered the Hladini Shakti — the internal potency of Krishna — and her worship is inseparable from Krishna bhakti."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1569,13 +1806,17 @@
     },
     "rituals": {
       "steps": [
-        "Parvati Puja",
-        "Fasting",
-        "Reading Radha Ashtami Stotram",
-        "Temple visit"
+        "Early morning bath and sankalpa for the Radha Ashtami vrat",
+        "Worship of Radha-Krishna together with offerings of flowers, fruits, and sweets",
+        "Abhishek of Radha's idol with panchamrit",
+        "Recitation of Radha Stotram, Radha Katha, and devotional bhajans",
+        "Chanting of the Radha-Krishna mantra and singing kirtan",
+        "Visiting Radha temples, especially in Barsana and Vrindavan",
+        "Offering of chappan bhog (56 food items) in temples",
+        "Breaking the fast after sunset with prasad"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ राधिकायै नमः",
+      "fasting": "Devotees observe a day-long fast, some consuming only milk and fruits. The fast is broken after evening puja with sattvic prasad. Onion and garlic are avoided."
     },
     "media": {
       "audio_stotra": ""
@@ -1586,22 +1827,22 @@
     "name": "Ganesh Visarjan",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "गणेश विसर्जन",
       "nameEnglish": "Ganesh Visarjan",
       "nameHindi": "गणेश विसर्जन",
       "nameBengali": "গণেশ বিসর্জন",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "వినాయక నిమజ్జనం",
+      "nameKannada": "ಗಣೇಶ ವಿಸರ್ಜನೆ",
+      "nameTamil": "விநாயகர் உற்சவ முடிவு",
+      "nameMalayalam": "ഗണേശ വിസർജ്ജനം"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#E67300"
     },
     "purpose": {
-      "description": "",
-      "addtional_description": ""
+      "description": "The ritual immersion (Visarjan) of Lord Ganesha's idol on Ananta Chaturdashi, marking the conclusion of the 10-day Ganesh Chaturthi festival. Devotees bid farewell with the prayer for his early return next year.",
+      "additional_description": "Also observed as Ananta Chaturdashi Vrat, dedicated to Lord Ananta (Vishnu). The day combines Ganesha's farewell with the worship of the infinite divine. Celebrated with grand processions, music, and community gatherings, especially in Maharashtra."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1611,13 +1852,16 @@
     },
     "rituals": {
       "steps": [
-        "Ganesh Visarjan",
-        "Fasting",
-        "Reading Ganesh Visarjan Stotram",
-        "Temple visit"
+        "Final morning puja of the Ganesha idol — Uttar Puja",
+        "Offering of modak, flowers, and durva grass",
+        "Recitation of Ganesh Visarjan Stotram and seeking forgiveness (Apology Aarti)",
+        "Nimantak — formal invitation to return next year",
+        "Procession (Yatra) to the immersion site with music and chanting",
+        "Immersion (Visarjan) of the idol in a river, lake, or sea",
+        "Distribution of prasad and seeking blessings"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "गणपति बप्पा मोरया, पुढच्या वर्षी लवकर या",
+      "fasting": "Some devotees observe a fast on Ananta Chaturdashi, breaking it after the Visarjan. Devotionally, many refrain from onion-garlic and non-vegetarian food on this day."
     },
     "media": {
       "audio_stotra": ""
@@ -1628,22 +1872,22 @@
     "name": "Kajari Teej",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "कजरी तीज",
       "nameEnglish": "Kajari Teej",
       "nameHindi": "कजरी तीज",
       "nameBengali": "কজরী তীজ",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "కజారీ తీజ్",
+      "nameKannada": "ಕಜಾರಿ ತೀಜ್",
+      "nameTamil": "கஜாரி தீஜ்",
+      "nameMalayalam": "കജാരി തീജ്"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Third day of Krishna Paksha dedicated to Goddess Parvati",
-      "addtional_description": ""
+      "description": "A monsoon festival dedicated to Goddess Parvati, observed by married women for the wellbeing and longevity of their husbands. The name 'Kajari' is derived from the dark, kohl-like clouds of the monsoon and the folk songs (Kajri) sung during this period.",
+      "additional_description": "Celebrated on Bhadrapada Krishna Tritiya, about nine days after Hariyali Teej. Particularly popular in Rajasthan, Uttar Pradesh (especially the Bundelkhand and Varanasi regions), and Madhya Pradesh. Women worship the Neem tree and sing Kajri folk songs expressing the longing of a newlywed bride for her maternal home during the rains."
     },
     "panchang_rules": {
       "masa": "Shravana",
@@ -1653,13 +1897,18 @@
     },
     "rituals": {
       "steps": [
-        "Neem tree worship",
-        "Fasting",
-        "Folk songs",
-        "Parvati Puja"
+        "Early morning bath and preparation for the vrat",
+        "Sankalpa for the wellbeing of husband and family",
+        "Worship of the Neem tree — symbolising healing and protection",
+        "Making clay idols of Shiva-Parvati for puja",
+        "Offering of fruits, flowers, and sweets to Goddess Parvati",
+        "Singing of Kajri folk songs in groups",
+        "Swinging on decorated jhulas (swings) hung from trees",
+        "Listening to Kajari Teej Katha",
+        "Breaking the fast after evening puja"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ पार्वत्यै नमः",
+      "fasting": "Married women observe a day-long nirjala or phalahar fast, breaking it after evening puja with sattvic food. Some consume only milk and fruits."
     },
     "media": {
       "audio_stotra": ""
@@ -1670,22 +1919,22 @@
     "name": "Hartalika Teej",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "हरतालिका तीज",
       "nameEnglish": "Hartalika Teej",
       "nameHindi": "हरतालिका तीज",
       "nameBengali": "হরতালিকা তীজ",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "హరతాళిక తీజ్",
+      "nameKannada": "ಹರತಾಳಿಕ ತೀಜ್",
+      "nameTamil": "ஹரதாளிகா தீஜ்",
+      "nameMalayalam": "ഹരതാളിക തീജ്"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Strict fast for unmarried girls seeking good husbands",
-      "addtional_description": ""
+      "description": "A strict vrat dedicated to Lord Shiva and Goddess Parvati, commemorating Parvati's deep penance to win Shiva as her husband. Observed by both married women for their husband's long life and unmarried girls seeking a righteous and loving spouse.",
+      "additional_description": "The name 'Hartalika' comes from 'Harat' (abduction) and 'Aalika' (friend) — referring to the legend where Parvati's friends took her away to the forest to prevent her father from marrying her to Lord Vishnu against her will. This is the most rigorous of the three Teej festivals, falling on Bhadrapada Shukla Tritiya, one day before Ganesh Chaturthi. Widely celebrated in Uttar Pradesh, Rajasthan, Bihar, and Maharashtra."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1695,13 +1944,18 @@
     },
     "rituals": {
       "steps": [
-        "Shiva-Parvati Puja",
-        "Nirjala fasting",
-        "Making clay idols",
-        "Night vigil"
+        "Early morning bath — ideally in a river or with sacred water",
+        "Sankalpa for the vrat, seeking Shiva-Parvati's blessings",
+        "Making clay idols of Shiva, Parvati, and Ganesh for the day's worship",
+        "Decoration of the puja space with leaves, flowers, and banana stalks",
+        "Shodashopachara puja of Shiva-Parvati with offerings of bilva leaves, flowers, and fruits",
+        "Tying of the sacred red thread (kalawa)",
+        "Recitation of Hartalika Teej Katha",
+        "Night vigil (Jagaran) with bhajans and kirtan",
+        "Next morning — visarjan of clay idols and breaking of the fast"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमः शिवाय पार्वती पतये नमः",
+      "fasting": "The most rigorous of the three Teej fasts — observed as nirjala (without water) for 24 hours, from sunrise to the next morning. Married women and unmarried girls both participate. The fast is broken only after completing the next morning's puja."
     },
     "media": {
       "audio_stotra": ""
@@ -1751,26 +2005,69 @@
     }
   },
   {
-    "id": "anant_chaturdashi",
-    "name": "Anant Chaturdashi",
+    "id": "vamana_jayanti",
+    "name": "Vamana Jayanti",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Anant Chaturdashi",
-      "nameHindi": "अनंत चतुर्दशी",
-      "nameBengali": "অনন্ত চতুর্দশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "वामन जयन्ती",
+      "nameEnglish": "Vamana Jayanti",
+      "nameHindi": "वामन जयंती",
+      "nameBengali": "বামন জয়ন্তী",
+      "nameTelugu": "వామన జయంతి",
+      "nameKannada": "ವಾಮನ ಜಯಂತಿ",
+      "nameTamil": "வாமன ஜெயந்தி",
+      "nameMalayalam": "വാമന ജയന്തി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Worship of Lord Vishnu's infinite form - Ganesh Visarjan",
-      "addtional_description": ""
+      "description": "The appearance day of Lord Vamana — Vishnu's fifth avatar, born as a dwarf Brahmin boy who measured the universe in three steps and humbled the righteous demon-king Mahabali",
+      "addtional_description": "Vamana Jayanti commemorates the fifth incarnation of Lord Vishnu, who appeared as Vamana — a diminutive Brahmin boy — during the Treta Yuga. The festival falls on the Dwadashi of the Shukla Paksha of Bhadrapada, a day that also coincides with the season of Onam in Kerala, where the same legend is celebrated from the perspective of the beloved King Mahabali.\n\nThe story holds that the demon-king Mahabali, grandson of Prahlada, had grown so powerful through his devotion and his yagnas that he conquered the three worlds. The gods, displaced from their heavens, appealed to Lord Vishnu. Rather than confronting Bali with force, Vishnu chose a different path: he was born to Sage Kashyapa and his wife Aditi as a dwarf Brahmin — Vamana, small enough to be overlooked, carrying a wooden umbrella and a kamandalu, his thread ceremony performed, his manner gentle.\n\nMahabali was performing a great yagna and granting boons to all who came. Vamana approached him and asked for three paces of land — as much as he could measure in three steps. Bali's guru Shukracharya warned him that this was no ordinary Brahmin, but Bali, bound by his word, granted the request. Instantly Vamana grew to a cosmic form — Trivikrama, the master of the three worlds. His first step covered the entire earth. His second step reached the heavens, spanning all of the cosmos. With nowhere left for the third step, Bali, recognizing the Lord before him, offered his own head. Vamana placed his foot on Bali's head and pressed him down to the netherworld (Patala) — but granted him the boon that he could return to his kingdom once a year, which Kerala celebrates as Onam.\n\nThe avatar carries a teaching that runs deeper than its dramatic surface. Vamana is the first avatar in which Vishnu takes a fully human form, and he takes it not as a warrior but as a student — a young Brahmin with nothing but a water pot and an umbrella. He does not defeat Bali by force but by the very generosity Bali himself offered, turning the king's own virtue into the instrument of his humbling. And Bali, for his part, is not condemned: he is blessed, for his devotion was genuine and his promise was kept. The divine comes as the smallest thing in the room, and asks for almost nothing — and that 'almost nothing' turns out to be everything."
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 12,
+      "conditions": "Dwadashi"
+    },
+    "rituals": {
+      "steps": [
+        "Morning Snana and Sankalpa: Devotees bathe in the morning and take the sankalpa to observe the Vamana Jayanti vrat; the scriptures specify that the avatar appeared during the Abhijit Muhurat at midday, making midday worship especially significant",
+        "Vamana Puja: Lord Vishnu in his Vamana form — the dwarf Brahmin with umbrella and kamandalu, or as Trivikrama spanning the cosmos — is worshipped with tulsi leaves, flowers, sandalwood paste, and a lit lamp",
+        "Vamana Katha Shravana: The story of Vamana's three steps, Mahabali's generosity, and Bali's blessing to return once a year is recited or listened to with devotion",
+        "Vishnu Sahasranama and Dashavatara Stotra: The thousand names of Vishnu and the hymn to his ten avatars are recited, honouring Vamana's place as the first fully human form and the turning point of the Dashavatara",
+        "Naivedya and Dana: Food is offered to the Lord and distributed as prasad; charity — especially land, grain, food, or footwear (recalling Vamana's barefoot journey) — is considered highly meritorious on this day"
+      ],
+      "mantra": "ॐ वामनाय नमः \n\n(Om Vamanaya Namah — salutation to Vamana, the dwarf who measured the universe in three steps)",
+      "fasting": "Devotees observe a day-long fast on Vamana Jayanti; many also observe the Parivartini Ekadashi fast the previous day, breaking it on Vamana Dwadashi morning before continuing with the Vamana vrat"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "anant_chaturdashi",
+    "name": "Anant Chaturdashi",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "अनन्त चतुर्दशी",
+      "nameEnglish": "Anant Chaturdashi",
+      "nameHindi": "अनंत चतुर्दशी",
+      "nameBengali": "অনন্ত চতুর্দশী",
+      "nameTelugu": "అనంత చతుర్దశి",
+      "nameKannada": "ಅನಂತ ಚತುರ್ದಶಿ",
+      "nameTamil": "அனந்த சதுர்தசி",
+      "nameMalayalam": "അനന്ത ചതുർദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": "#1E6091"
+    },
+    "purpose": {
+      "description": "Worship of Lord Vishnu in his infinite, formless aspect as Ananta (the endless one), represented reclining on the cosmic serpent Adishesha. Also marks the day of Ganesh Visarjan, concluding the 10-day Ganesh Chaturthi festival.",
+      "additional_description": "Devotees tie a sacred thread (Anant Sutra) with 14 knots, symbolising the 14 worlds or 14 years of Anant Vrat's original observance by King Sushen. The vrat is undertaken for 14 consecutive years to seek blessings of prosperity, longevity, and liberation from worldly bondages. Predominantly observed in North India, Maharashtra, and parts of Gujarat."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1780,13 +2077,17 @@
     },
     "rituals": {
       "steps": [
-        "Anant thread tying",
-        "Vishnu Puja",
-        "Ganesh Visarjan",
-        "14-knot thread worship"
+        "Early morning bath and sankalpa for the Anant Vrat",
+        "Installation of Lord Ananta (Vishnu reclining on Adishesha) on a kalash or image",
+        "Preparation of the Anant Sutra — a sacred thread with 14 knots, dyed red or yellow",
+        "Shodashopachara puja with offerings of kheer, milk, and fruits",
+        "Tying of the Anant Sutra by men on the right wrist and women on the left",
+        "Recitation of Anant Katha — the legend of King Sushen and Pandavas",
+        "Visarjan of Ganesh idol (for those observing Ganesh Chaturthi)",
+        "Breaking the fast after the thread ceremony and puja"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते अनन्ताय",
+      "fasting": "Devotees observe a day-long fast, some consuming only a single sattvic meal after sunset. The fast is traditionally continued for 14 consecutive years. Onion, garlic, and non-vegetarian food are avoided."
     },
     "media": {
       "audio_stotra": ""
@@ -1797,22 +2098,22 @@
     "name": "Pitru Paksha Begins",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "पितृ पक्ष",
       "nameEnglish": "Pitru Paksha Begins",
       "nameHindi": "पितृ पक्ष",
       "nameBengali": "পিতৃ পক্ষ",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "పితృ పక్షం",
+      "nameKannada": "ಪಿತೃ ಪಕ್ಷ",
+      "nameTamil": "பித்ரு பக்ஷம்",
+      "nameMalayalam": "പിതൃ പക്ഷം"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#8B7355"
     },
     "purpose": {
-      "description": "16-day period to honor ancestors",
-      "addtional_description": ""
+      "description": "A 16-day lunar period dedicated to honouring and offering oblations to one's departed ancestors (Pitrus). It begins on Bhadrapada Krishna Pratipada, the day after Bhadrapada Purnima, and concludes on Mahalaya Amavasya (Bhadrapada Amavasya).",
+      "additional_description": "Also known as Shraddha Paksha or Mahalaya Paksha. During this period, Hindus perform Shraddha rituals — including Tarpan (water offerings), Pind Daan (rice ball offerings), and feeding Brahmins — to express gratitude to ancestors and seek their blessings for the family. The rites are typically performed at holy sites such as Gaya, Varanasi, Prayagraj, and Rameshwaram, as well as at home. Auspicious activities like weddings, housewarmings, and new ventures are traditionally avoided during this period."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1822,13 +2123,17 @@
     },
     "rituals": {
       "steps": [
-        "Shraddha",
-        "Tarpan",
-        "Pind Daan",
-        "Feeding Brahmins"
+        "Sankalpa — taking the vow with the name of the ancestor and gotra",
+        "Tarpan — offering water mixed with sesame seeds (tila) and kusha grass to ancestors",
+        "Pind Daan — offering rice balls (pindas) to the departed souls",
+        "Shraddha — complete ritual with invocation of Vishnu and the Pitrus",
+        "Feeding Brahmins or crows (symbolic messengers to ancestors)",
+        "Offering food and dakshina to the priests",
+        "Recitation of Garuda Purana or Pitru Stotram",
+        "Performing the rites at a holy riverbank or temple if possible"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ पितृभ्यो नमः स्वधायै नमः",
+      "fasting": "No festive fasting is observed. Instead, devotees eat a simple sattvic meal after performing the Shraddha rituals. Some observe a partial fast until the rites are completed. Onion, garlic, and non-vegetarian food are avoided throughout the 16-day period."
     },
     "media": {
       "audio_stotra": ""
@@ -1839,22 +2144,22 @@
     "name": "Mahalaya Amavasya",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "महालया अमावस्या",
       "nameEnglish": "Mahalaya Amavasya",
       "nameHindi": "महालया अमावस्या",
       "nameBengali": "মহালয়া অমাবস্যা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "మహాళయ అమావాస్య",
+      "nameKannada": "ಮಹಾಳಯ ಅಮಾವಾಸ್ಯ",
+      "nameTamil": "மகாளய அமாவாஸ்யை",
+      "nameMalayalam": "മഹാളയ അമാവാസ്യ"
     },
     "visuals": {
       "image": "",
-      "theme_color": ""
+      "theme_color": "#2B2B6B"
     },
     "purpose": {
-      "description": "Most important day for ancestor worship - End of Pitru Paksha and the beginning of Devi Paksha",
-      "addtional_description": "It is observed on the new moon day (Amavasya) of the Bhadrapada month, marking the end of Pitru Paksha (the fortnight dedicated to ancestors) and the beginning of Devi Paksha (the fortnight dedicated to Goddess Durga). \n\nMahalaya Amavasya represents a sacred day of prayer, remembrance, and preparation for welcoming Goddess Durga to Earth. On this day, people perform Tarpan and Shraddha rituals to pay homage to their ancestors, seeking blessings for peace, prosperity, and protection. \n\n**Why Mahalaya is Important-**\n**End of Pitru Paksha:** The two-week period before Mahalaya is dedicated to offering food, prayers, and water (Tarpan) to ancestors. Mahalaya marks its completion. \n**Beginning of Devi Paksha:** From this day onwards, the energy shifts towards devotion to Goddess Durga, setting the stage for Durga Puja celebrations."
+      "description": "The most important day for ancestor worship — marks the end of Pitru Paksha (the 16-day period dedicated to ancestors) and the beginning of Devi Paksha (the fortnight of Goddess Durga). Observed on the Amavasya (new moon) of Bhadrapada month.",
+      "additional_description": "Mahalaya Amavasya represents a sacred day of prayer, remembrance, and preparation for welcoming Goddess Durga to Earth. Devotees perform Tarpan and Shraddha rituals to pay homage to their ancestors, seeking blessings for peace, prosperity, and protection. End of Pitru Paksha: The two-week period before Mahalaya is dedicated to offering food, prayers, and water (Tarpan) to ancestors; Mahalaya marks its completion. Beginning of Devi Paksha: From this day onwards, the energy shifts towards devotion to Goddess Durga, setting the stage for Durga Puja and Navaratri celebrations. In Bengal, listening to the Mahishasura Mardini radio broadcast at dawn is a cherished cultural tradition."
     },
     "panchang_rules": {
       "masa": "Bhadrapada",
@@ -1864,14 +2169,16 @@
     },
     "rituals": {
       "steps": [
-        "Shraddha: Ritual food offerings made to forefathers at Gaya or home",
-        "Tarpan: Offering water, sesame seeds, and prayers to ancestors on riverbanks or at home.",
-        "Pind Daan",
-        "Listening to Mahishasura Mardini: A radio recital by Birendra Krishna Bhadra has become a cultural tradition in Bengal.",
-        "Early Morning Prayers: Devotees wake up before sunrise to perform spiritual practices." 
+        "Early morning prayers — devotees wake before sunrise for spiritual practices",
+        "Tarpan — offering water mixed with sesame seeds and kusha grass to ancestors at riverbanks or at home",
+        "Pind Daan — offering rice balls to the departed souls",
+        "Shraddha — complete ritual food offerings made to forefathers, at Gaya, Varanasi, or home",
+        "Feeding Brahmins and crows as symbolic messengers to ancestors",
+        "Listening to Mahishasura Mardini — the dawn radio recital by Birendra Krishna Bhadra, a cultural tradition in Bengal",
+        "Invoking Goddess Durga — symbolic welcome marking the start of Devi Paksha"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ पितृभ्यो स्वधायै नमः ॐ दुर्गायै नमः",
+      "fasting": "No festive fasting. Devotees eat a simple sattvic meal after completing Shraddha rituals. Some observe a partial fast until the rites are done. Onion, garlic, and non-vegetarian food are avoided."
     },
     "media": {
       "audio_stotra": ""
@@ -1882,22 +2189,22 @@
     "name": "Sharad Navratri Begins",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "शारदीय नवरात्रि",
       "nameEnglish": "Sharad Navratri Begins",
       "nameHindi": "शरद नवरात्रि",
-      "nameBengali": "শরদ নবরাত্রি",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameBengali": "শারদীয় নবরাত্রি",
+      "nameTelugu": "శరద్ నవరాత్రి",
+      "nameKannada": "ಶರದ್ ನವರಾತ್ರಿ",
+      "nameTamil": "சரத் நவராத்திரி",
+      "nameMalayalam": "ശരദ് നവരാത്രി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Navratri is a nine days festival dedicated to Goddess Durga",
-      "addtional_description": "Navratri is a Sanskrit word which literally means nine nights. During these nine nights and ten days, Goddess Durga is worshipped in 9 different forms, known as Navdurga. The tenth day is celebrated as Vijayadashami when idols of Goddess Durga are immersed into the water body.\n\nNavratri is very popular festival in the western states of Gujarat, Maharashtra and the southern state of Karnataka.\n\nIn West Bengal Navratri is celebrated as Durga Puja. In West Bengal, Goddess Durga is worshipped on the last three days of Navratri and these three days are famously known as Durga Saptami, Durga Ashtami and Durga Navami"
+      "description": "The nine-night festival of Goddess Durga begins — Ghatasthapana is performed, the Navadurga cycle opens with Maa Shailaputri, and nine days of worship, fasting, and celebration commence",
+      "addtional_description": "Navratri — from the Sanskrit 'nava' (nine) and 'ratri' (night) — is the festival of nine nights dedicated to Goddess Durga, celebrated from the Pratipada to the Navami of the Shukla Paksha of Ashwin. Over these nine nights and ten days, the Goddess is worshipped in her nine forms, the Navadurga: Shailaputri, Brahmacharini, Chandraghanta, Kushmanda, Skandamata, Katyayani, Kalaratri, Mahagauri, and Siddhidatri — one form for each day, from the daughter of the mountain to the giver of perfections. The tenth day is Vijayadashami, the day of victory, celebrated as Ravana Dahan in the north, Ayudha Puja in the south, and Durga Visarjan in the east.\n\nThe festival falls at the junction of seasons — the monsoon giving way to autumn — a transition the tradition treats as sacred, when the Goddess is closest to the earth and most accessible to her devotees. In many households and temples, the Durga Saptashati (Devi Mahatmya) is recited across the nine days, telling the story of Durga's battle with Mahishasura.\n\nEach region of India gives Navratri its own colour. In Gujarat the nights belong to garba and dandiya raas, danced in concentric circles before the Goddess; in Maharashtra Ghatasthapana begins a nine-day observance that concludes with Kojagari Purnima; in Karnataka and Tamil Nadu homes display the Bombe Habba or Golu — stepped arrangements of dolls depicting gods, goddesses, and daily life; and in North India the nine days carry Ramlila performances toward Ravana Dahan. In West Bengal, Navratri coincides with Durga Puja — the Goddess arriving on Shashthi, being worshipped through Maha Saptami, Maha Ashtami and Maha Navami, and departing on Dashami in the great immersion procession."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -1907,9 +2214,13 @@
     },
     "rituals": {
       "steps": [
+        "Ghatasthapana (Kalash Sthapana): A sacred earthen pot is installed with soil and barley seeds, a coconut wrapped in red cloth placed atop it with mango leaves — invoking the Goddess to reside in the Kalash for the nine days",
+        "Sowing of Barley (Jau/Khet): Barley seeds are sown in the soil beneath the Kalash; over nine days they grow into golden shoots, cut on Dashami and distributed as blessing",
+        "Shailaputri Puja: On Day 1, the Goddess is worshipped as Maa Shailaputri, the daughter of the mountain Himalaya, riding the bull and holding a trishul and lotus — the first of the Navadurga",
+        "Aarti and Bhog: The daily cycle of worship begins — morning and evening aarti before the Kalash, with sattvic food offered as bhog and taken as prasad"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ देवी शैलपुत्र्यै नमः \n\n(Om Devi Shailaputryai Namah — salutation to Shailaputri, the daughter of the mountain, with whom the nine-form cycle begins)",
+      "fasting": "The nine-day Navratri fast begins today: many devotees observe a complete fast on fruits and milk for all nine days; others fast on the first and last days only, or take one sattvic meal a day without grains"
     },
     "media": {
       "audio_stotra": ""
@@ -1920,28 +2231,39 @@
     "name": "Ghatasthapana, Shailputri Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Ghatasthapana/ Shailputri Puja",
-      "nameHindi": "घटस्थापना/ शैलपुत्री पूजा",
-      "nameBengali": "ঘটস্থাপনা/ শৈলপুত্রী পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "शैलपुत्री पूजा",
+      "nameEnglish": "Ghatasthapana / Shailputri Puja",
+      "nameHindi": "घटस्थापना / शैलपुत्री पूजा",
+      "nameBengali": "ঘটস্থাপনা / শৈলপুত্রী পূজা",
+      "nameTelugu": "ఘటస్థాపన / శైలపుత్రి పూజ",
+      "nameKannada": "ಘಟಸ್ಥಾಪನ / ಶೈಲಪುತ್ರಿ ಪೂಜೆ",
+      "nameTamil": "கடஸ்தாபன / சைலபுத்ரி பூஜை",
+      "nameMalayalam": "ഘടസ്ഥാപന / ശൈലപുത്രി പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "Orange"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Ghatasthapana marks the beginning of nine days festivity",
-      "addtional_description": "After the self-immolation as Goddess Sati, Goddess Parvati took birth as the daughter of Lord Himalaya. In Sanskrit Shail means the mountain and due to which Goddess was known as Shailputri, the daughter of the mountain. Goddess Shailputri is worshipped on the first day of Navratri"
+      "description": "Day 1 of Sharad Navratri — Ghatasthapana invokes the Goddess into the Kalash, and she is worshipped as Maa Shailputri, the daughter of the mountain, the first of the Navadurga",
+      "addtional_description": "Maa Shailputri is the first of the Navadurga, worshipped on the Pratipada of Sharad Navratri. Her name means 'daughter of the mountain' — Shaila (mountain) and Putri (daughter) — for she is Parvati, born as the daughter of Lord Himalaya and Queen Maina. She is depicted as two-armed, riding a white bull (Nandi), holding a trishul in her right hand and a lotus in her left, her body radiant and serene. Her muladhara chakra is said to be activated by her worship, grounding the devotee's nine-day journey.\n\nHer story reaches back to the previous birth. In an earlier life she was Sati, daughter of Daksha Prajapati. When Daksha organised a great yagna and deliberately insulted Shiva by not inviting him, Sati — unable to bear the dishonour to her husband — immolated herself in the fire of her own yogic power. She was then reborn as Parvati, daughter of Himalaya, and performed severe penance through countless years to win Shiva as her husband again — the same penance that, in another telling, turned her dark and was washed away by the Ganga to become Mahagauri. Thus Shailaputri is the beginning of the cycle in every sense: the first form of Durga, the first day of Navratri, and the Goddess's own rebirth as the daughter of the mountain, determined to reclaim what she had lost.\n\nThe day's defining ritual is Ghatasthapana — the installation of the Kalash that will hold the Goddess's presence for all nine days. An earthen pot is filled with soil and barley seeds, a coconut wrapped in red cloth is placed atop it with mango leaves, and the Goddess is invoked into it with mantra. The barley sown beneath the Kalash grows over the nine days into golden shoots, cut on Vijayadashami and kept as a blessing for the year. Ghatasthapana is performed during the first one-third of the day while the Pratipada tithi prevails — the only ritual of Navratri with a specific window, because the Kalash must be established before the Goddess can be worshipped in any of her forms."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 1,
       "conditions": "Pratipada"
+    },
+    "rituals": {
+      "steps": [
+        "Ghatasthapana: An earthen pot is filled with soil and barley seeds, a coconut wrapped in red cloth is placed on it with mango leaves, and the Goddess is invoked to reside in the Kalash for the nine days — performed within the first one-third of Pratipada day",
+        "Sowing of Barley (Jau): Barley seeds are sown beneath the Kalash; their growth across nine days is watched as a sign of the Goddess's blessing, and the golden shoots are cut on Vijayadashami",
+        "Shailaputri Avahan and Dhyan: The Goddess is invoked in her form as Shailaputri — two-armed, riding the white bull, holding trishul and lotus — and meditated upon as the ground of the nine-day journey, activating the muladhara chakra",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the Kalash and the image of Shailaputri — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Aarti and Bhog: The daily rhythm of Navratri begins — morning and evening aarti before the Kalash, with sattvic food offered as bhog and taken as prasad"
+      ],
+      "mantra": "वन्दे वृषभारूढां च चन्द्रार्धकृतशेखराम् । शूलं वृषं गते पद्मे शैलपुत्रीं नमाम्यहम् ॥ \n\n(Vande vrishabharudham cha chandrardhakrita-shekharam, shulam vrisham gate padme shailaputrim namamyaham — 'I bow to Shailaputri, who rides the bull, wears the crescent moon, and holds the trishul and lotus')",
+      "fasting": "The Navratri fast begins today: devotees observe a sattvic diet, avoiding grains, onion, garlic, and non-vegetarian food; many take only fruits and milk, or eat one simple meal a day"
     }
   },
   {
@@ -1949,28 +2271,39 @@
     "name": "Chandra Darshana, Brahmacharini Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Chandra Darshana, Brahmacharini Puja",
-      "nameHindi": "चंद्र दर्शन, ब्रह्मचारिणी पूजा",
-      "nameBengali": "চন্দ্র দর্শন, ব্রহ্মচারিণী পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "चन्द्रदर्शन / ब्रह्मचारिणी पूजा",
+      "nameEnglish": "Chandra Darshana / Brahmacharini Puja",
+      "nameHindi": "चन्द्र दर्शन / ब्रह्मचारिणी पूजा",
+      "nameBengali": "চন্দ্র দর্শন / ব্রহ্মচারিণী পূজা",
+      "nameTelugu": "చంద్ర దర్శన / బ్రహ్మచారిణి పూజ",
+      "nameKannada": "ಚಂದ್ರ ದರ್ಶನ / ಬ್ರಹ್ಮಚಾರಿಣಿ ಪೂಜೆ",
+      "nameTamil": "சந்திர தரிசன / பிரம்மசாரிணி பூஜை",
+      "nameMalayalam": "ചന്ദ്ര ദർശന / ബ്രഹ്മചാരിണി പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "White"
+      "theme_color": "#ffffff"
     },
     "purpose": {
-      "description": "Brahmacharini Puja is performed on the second day of Navratri",
-      "addtional_description": "After Kushmanda form, Goddess Parvati took birth at the home of Daksha Prajapati. In this form the Goddess Parvati was a great Sati and her unmarried form is worshipped as Goddess Brahmacharini.\n\nGoddess Brahmacharini is worshipped on the second day of Navratri. She is the goddess of penance and devotion. The name Brahmacharini means one who practices penance and austerity. She is depicted as a fair-complexioned goddess, holding a rosary in her right hand and a water utensil in her left hand."
+      "description": "Day 2 of Sharad Navratri — the first crescent moon is sighted at dusk, and the Goddess is worshipped as Maa Brahmacharini, the barefoot ascetic walking the path of penance",
+      "addtional_description": "Maa Brahmacharini is the second of the Navadurga, worshipped on the Dwitiya of Sharad Navratri. Her name means 'one who practices penance and austerity' — Brahma (tapas, sacred austerity) and Charini (one who walks the path) — and she embodies the unmarried Parvati in her years of severe penance to win Shiva as her husband. She is depicted as radiant and serene, clad in white, walking barefoot — the only Navadurga form without a mount — carrying a japa mala (rosary) in her right hand and a kamandalu (water pot) in her left. Her barefoot walking is itself the icon: the Goddess as a young ascetic, moving steadily through the forest with no possession but her devotion. Her worship is said to activate the svadhisthana chakra and to grant the devotee unwavering devotion, wisdom, and endurance.\n\nHer story follows directly from Shailputri's. Reborn as the daughter of Himalaya after her self-immolation as Sati, the young Parvati was told by the sage Narada that her destiny was Shiva — but he was absorbed in meditation and unattainable. She abandoned her palace comforts and went into the forests to perform tapas. For a thousand years she ate only fruits and leaves; then only fallen leaves; then she gave up even those, surviving on sunlight, then water, then air — until the severity of her austerity shook the heavens. It was this penance, undertaken in the Brahmacharini phase, that turned her body dark and led eventually to the Ganga washing her back to radiance as Mahagauri on Day 8. Thus the nine-day cycle traces her actual journey: from the daughter of the mountain on Day 1, through the years of penance on Day 2, toward the final perfection of Day 9.\n\nThe day is also marked by Chandra Darshana — the sighting of the first crescent moon. After the dark fortnight of Pitru Paksha ends with the Amavasya, the Dwitiya evening brings the first visible sliver of the new moon in the western sky at dusk. Sighting this crescent is held auspicious, and offering water (arghya) to the moon at this moment calms the mind — fitting for the day of the Goddess who governs the steadiness of the mind in penance."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 2,
       "conditions": "Dwitiya"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Puja: The daily worship of the Kalash established on Day 1 continues — fresh flowers, incense, and lamp offered morning and evening before the Goddess's presence",
+        "Brahmacharini Dhyan and Mantra Japa: Meditate on the Goddess as the barefoot ascetic in white, walking steadily with her japa mala and kamandalu, and recite her seed mantra 'Om Devi Brahmacharinyai Namah' — her worship is said to awaken the svadhisthana chakra",
+        "Chandra Darshana: At dusk, sight the first crescent of the new moon low in the western sky, and offer arghya (water) to the moon — the mind-soothing observance that accompanies this day's worship",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the image of Brahmacharini — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Aarti and Bhog: The sattvic Navratri bhog is offered and taken as prasad, and the day's aarti is performed before the Kalash"
+      ],
+      "mantra": "या देवी सर्वभूतेषु तपश्चर्यारूपेण संस्थिता । नमस्तस्यै नमस्तस्यै नमस्तस्यै नमो नमः ॥ \n\n(Ya devi sarvabhuteshu tapashcharya-rupena samsthita, namas tasyai namas tasyai namas tasyai namo namah — salutation to the Devi who dwells in all beings as penance and austerity)",
+      "fasting": "The Navratri fast continues on Day 2: many devotees eat only one simple sattvic meal, or take fruits and milk, surviving as the Goddess herself did in her years of forest penance"
     }
   },
   {
@@ -1978,28 +2311,39 @@
     "name": "Sindoor Tritiya, Chandraghanta Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Sindoor Tritiya, Chandraghanta Puja",
-      "nameHindi": "सिंदूर तृतीया, चंद्रघंटा पूजा",
-      "nameBengali": "সিন্দুর তৃতীয়া, চন্দ্রঘণ্টা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "सिन्दूरतृतीया / चन्द्रघण्टा पूजा",
+      "nameEnglish": "Sindoor Tritiya / Chandraghanta Puja",
+      "nameHindi": "सिंदूर तृतीया / चंद्रघंटा पूजा",
+      "nameBengali": "সিন্দুর তৃতীয়া / চন্দ্রঘণ্টা পূজা",
+      "nameTelugu": "సిందూర తృతీయ / చంద్రఘంట పూజ",
+      "nameKannada": "ಸಿಂದೂರ ತೃತೀಯಾ / ಚಂದ್ರಘಂಟಾ ಪೂಜೆ",
+      "nameTamil": "சிந்தூர திருதீயா / சந்திரகண்ட பூஜை",
+      "nameMalayalam": "സിന്ദൂര തൃതീയ / ചന്ദ്രഘണ്ടാ പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "Red"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Chandraghanta Puja is performed on the third day of Navratri",
-      "addtional_description": "Goddess Chandraghanta is the married form the Goddess Parvati. After getting married to Lord Shiva Goddess Mahagauri started adorning her forehead with half Chandra and due to which Goddess Parvati was known as Goddess Chandraghanta."
+      "description": "Day 3 of Sharad Navratri — the married form of the Goddess is worshipped as Maa Chandraghanta, the bride with the moon-bell on her forehead, serene and battle-ready at once",
+      "addtional_description": "Maa Chandraghanta is the third of the Navadurga, worshipped on the Tritiya of Sharad Navratri. She is the married form of Goddess Parvati — after her wedding to Lord Shiva, she adorned her forehead with a half-moon (ardhachandra) shaped like a bell, and from this ornament she takes her name: Chandra (moon) and Ghanta (bell). She is depicted as golden-complexioned, ten-armed, riding a lion — carrying the weapons of war in some hands (trishul, sword, mace, arrow) while others remain in gestures of blessing and protection. Her worship is said to activate the manipura chakra, the seat of courage and will.\n\nThe form holds a paradox that defines her: she is at once the beautiful, serene bride and the fierce warrior ready for battle. The sound of the moon-bell on her forehead is said to drive away negative energies and terrify demons — the same bell whose echo opens every temple in India even today. Devotees worship her for courage, fearlessness, and protection from evil: she is the Goddess who has attained her heart's desire and now stands guard over it. Her roar — the lion's cry with the bell's resonance — is said to silence all that threatens her devotees.\n\nThe day is also observed as Sindoor Tritiya, honouring the vermilion that marks the married state. Married women apply sindoor to the Goddess and receive it as her blessing — for Chandraghanta is the form of the Devi who embodies both the blessing of marriage and the strength to defend it. On this day the Goddess's serene face and upraised weapons stand together, teaching that peace is not the absence of the capacity for war, but the strength that makes war unnecessary."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 3,
       "conditions": "Tritiya"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Puja: The daily worship of the Kalash continues — flowers, incense, and lamp offered before the Goddess's presence morning and evening",
+        "Chandraghanta Dhyan and Mantra Japa: Meditate on the Goddess as ten-armed, lion-riding, with the moon-bell on her forehead — serene and weapon-ready at once — and recite her seed mantra 'Om Devi Chandraghantayai Namah', awakening the manipura chakra of courage",
+        "Sindoor Arpana: Vermilion (sindoor) is offered to the Goddess — married women apply it at her feet and receive it as her blessing, honouring the married form of the Devi",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the image of Chandraghanta — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Aarti and Bhog: The sattvic Navratri bhog is offered to the Goddess, and the day's aarti is performed with the ringing of bells — the sound that echoes her own moon-bell and drives away negativity"
+      ],
+      "mantra": "ॐ देवी चन्द्रघण्टायै नमः \n\n(Om Devi Chandraghantayai Namah — salutation to Chandraghanta, she whose moon-bell terrifies the forces of darkness)",
+      "fasting": "The Navratri fast continues on Day 3: devotees maintain the sattvic diet, eating only fruits, milk, or one simple meal, and offering the first portion of food to the Goddess before eating"
     }
   },
   {
@@ -2007,28 +2351,39 @@
     "name": "Kushmanda Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "कूष्माण्डा पूजा",
       "nameEnglish": "Kushmanda Puja",
       "nameHindi": "कुश्मांडा पूजा",
       "nameBengali": "কুশ্মান্ডা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "కూష్మాండ పూజ",
+      "nameKannada": "ಕೂಷ್ಮಾಂಡ ಪೂಜೆ",
+      "nameTamil": "கூஷ்மாண்ட பூஜை",
+      "nameMalayalam": "കൂഷ്മാണ്ഡ പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "Royal blue"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Kushmanda Puja is performed on the fourth day of Navratri",
-      "addtional_description": "After taking form of Siddhidatri, Goddess Parvati started living inside the center of the Sun so that He can liberate energy to the universe. Since then Goddess is known as Kushmanda. Kushmanda is the Goddess who has the power and capability to live inside the Sun. The glow and radiance of her body is as luminous as that of the Sun."
+      "description": "Day 4 of Sharad Navratri — worship of Maa Kushmanda, the Goddess who smiled the universe into being and now dwells at the centre of the Sun, the source of all light and warmth",
+      "addtional_description": "Maa Kushmanda is the fourth of the Navadurga, worshipped on the Chaturthi of Sharad Navratri. She is the cosmic creator — the form of the Goddess that existed before anything else, when the universe was void and without warmth. Her name holds the act of creation within it: Ku (little), Ushma (warmth, energy), and Anda (the cosmic egg) — 'she who created the little warm egg that became everything.' For it is said that in the beginning there was only darkness, and the Goddess smiled, and from her smile the cosmic egg emerged — containing the seed of all creation, glowing with the first warmth the universe had ever known. When the egg opened, light spilled into the void, and the universe unfolded. She then took her seat at the centre of the Sun itself, and it is her radiance that makes the Sun shine — every ray of light and warmth that reaches the earth passes through her. Her body glows like ten million suns.\n\nShe is depicted as eight-armed, riding a lioness — holding the kamandalu, japa mala, bow, arrow, lotus, and a pot of nectar (amrita kalasha), with one hand raised in abhaya mudra, the gesture of fearlessness. Her worship is said to activate the anahata chakra, the seat of love and vitality, and to grant health, energy, and the creative power to bring light into any darkness. In some traditions, a sweet offering of ash-gourd halwa — kushmanda is also the Sanskrit word for the gourd — is presented to the Goddess on this day, the pumpkin held to represent the cosmic egg she smiled into being.\n\nOn Day 4, the Navadurga journey reaches its radiant centre. The first three forms walked the Goddess's story — the daughter, the ascetic, the bride. From here, the forms open outward into her cosmic nature: the creator who holds the Sun, the mother who holds a son, the warrior who battles the demon. Kushmanda is the hinge — the smile that began it all, the warmth at the centre of everything, the reason there is light."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 4,
       "conditions": "Chaturthi"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Puja: The daily worship of the Kalash continues — flowers, incense, and lamp offered before the Goddess's presence morning and evening",
+        "Kushmanda Dhyan and Mantra Japa: Meditate on the Goddess as eight-armed, lion-riding, radiant as ten million suns, dwelling at the centre of the Sun — and recite her seed mantra 'Om Devi Kushmandayai Namah', awakening the anahata chakra of love and vitality",
+        "Kushmanda Naivedya: In some traditions, a sweet halwa made from ash gourd (kushmanda) is offered to the Goddess — the gourd representing the cosmic egg she smiled into being",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the image of Kushmanda — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Aarti and Bhog: The sattvic Navratri bhog is offered to the Goddess, and the day's aarti is performed with the lamp held toward the sun — the Goddess's own dwelling"
+      ],
+      "mantra": "ॐ देवी कूष्माण्डायै नमः \n\n(Om Devi Kushmandayai Namah — salutation to Kushmanda, she whose smile lit the universe into being)",
+      "fasting": "The Navratri fast continues on Day 4: devotees maintain the sattvic diet, offering the day's food first to the Goddess and eating only after the bhog has been distributed as prasad"
     }
   },
   {
@@ -2036,28 +2391,39 @@
     "name": "Skandamata Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "स्कन्दमाता पूजा",
       "nameEnglish": "Skandamata Puja",
       "nameHindi": "स्कंदमाता पूजा",
       "nameBengali": "স্কন্দমাতা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "స్కందమాత పూజ",
+      "nameKannada": "ಸ್ಕಂದಮಾತ ಪೂಜೆ",
+      "nameTamil": "ஸ்கந்தமாதா பூஜை",
+      "nameMalayalam": "സ്കന്ദമാതാ പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "Yellow"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Skandamata Puja is performed on the fifth day of Navratri",
-      "addtional_description": "Skandamata means 'Mother of Skanda' in Sanskrit. Skanda is another name for Kartikeya, the war god who became the commander of lord Shiva's divine army."
+      "description": "Day 5 of Sharad Navratri — worship of Maa Skandamata, the Mother holding the infant Skanda in her lap, the form of the Goddess as mother whose worship also pleases her son Kartikeya",
+      "addtional_description": "Maa Skandamata is the fifth of the Navadurga, worshipped on the Panchami of Sharad Navratri. Her name means 'Mother of Skanda' — Skanda being another name for Kartikeya, the six-headed war god who leads the divine army of Lord Shiva. She is depicted as four-armed, seated on a lion, holding lotus flowers in two hands, with one hand raised in abhaya mudra (the gesture of fearlessness) and the fourth supporting the infant Skanda seated in her lap. Her complexion is golden, her expression serene and full of maternal grace, and her worship is said to activate the vishuddha chakra, the seat of purification and expression.\n\nThe story behind this form follows from the cosmic arc of the Navadurga. After Durga had taken form as the creator Kushmanda, the demon Tarakasura — blessed with a boon that only a son of Shiva could kill him — began to terrorise the universe. The gods pleaded with Shiva, and from Shiva's seed, nurtured by the goddesses and guarded by Agni, was born Kartikeya, also called Skanda — the six-headed boy who would grow to lead the divine army and slay Tarakasura. In her Skandamata form, the Goddess holds the infant who is the universe's hope, and to worship the Mother in this form is to worship the Son also — she grants the devotion of a mother's love, and she brings the blessing of her son's warrior protection. There is a further teaching: that the Devi who creates the universe (Kushmanda) also bears its deliverer, and that the creative and the protective are one gesture.\n\nOn Day 5, the Navadurga journey reaches its tender centre. The first four forms traced the Goddess's own arc — daughter, ascetic, bride, creator. Now she becomes the mother, and the form brings a particular comfort: the Devi as the one who holds her child close, whose lap is the safest place in the universe, and whose blessing flows through the love of motherhood. Devotees who worship Skandamata are said to receive, along with her grace, the protection of Skanda himself — for the Mother is never worshipped without her Son."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 5,
       "conditions": "Panchami"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Puja: The daily worship of the Kalash continues — flowers, incense, and lamp offered before the Goddess's presence morning and evening",
+        "Skandamata Dhyan and Mantra Japa: Meditate on the Goddess as four-armed, lion-seated, golden, holding the infant Skanda in her lap with lotus flowers and abhaya mudra — and recite her seed mantra 'Om Devi Skandamatayai Namah', awakening the vishuddha chakra of purification",
+        "Skanda Aradhana: Alongside the Mother, the infant Kartikeya in her lap is also honoured — for Skandamata is never worshipped without her Son, and her blessing carries his protection",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the image of Skandamata with Skanda — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Aarti and Bhog: The sattvic Navratri bhog is offered to the Mother and her Son, and the day's aarti is performed before the Kalash"
+      ],
+      "mantra": "ॐ देवी स्कन्दमातायै नमः (Om Devi Skandamatayai Namah — salutation to Skandamata, the Mother who holds Skanda and grants her son's protection along with her own)",
+      "fasting": "The Navratri fast continues on Day 5: devotees maintain the sattvic diet, offering the day's food first to the Mother and her Son before eating as prasad"
     }
   },
   {
@@ -2065,28 +2431,40 @@
     "name": "Katyayani Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Saraswati Avahan, Katyayani Puja",
-      "nameHindi": "सरस्वती अवाहन, कात्यायनी पूजा",
-      "nameBengali": "সরস্বতী আভাহন, কাত্যায়নী পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "कात्यायनी पूजा",
+      "nameEnglish": "Katyayani Puja",
+      "nameHindi": "कात्यायनी पूजा",
+      "nameBengali": "কাত্যায়নী পূজা",
+      "nameTelugu": "కాత్యాయని పూజ",
+      "nameKannada": "ಕಾತ್ಯಾಯನಿ ಪೂಜೆ",
+      "nameTamil": "காத்யாயநி பூஜை",
+      "nameMalayalam": "കാത്യായനി പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "Green"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Katyayani Puja is performed on the sixth day of Navratri",
-      "addtional_description": "Katyayani is the sixth form of Goddess Durga. She is worshipped on the sixth day of Navratri. To destroy demon Mahishasura, Goddess Parvati took the form of Goddess Katyayani. It was the most violent form of Goddess Parvati. In this form Goddess Parvati is also known as Warrior Goddess. She is depicted as a fierce goddess riding a lion and carrying weapons in her hands."
+      "description": "Day 6 of Sharad Navratri — worship of Maa Katyayani, the warrior Goddess born to sage Katyayana to destroy the demon Mahishasura",
+      "addtional_description": "Maa Katyayani is the sixth of the Navadurga, worshipped on the Shashthi of Sharad Navratri. She is the warrior form of the Goddess — born for a single purpose: to destroy the buffalo demon Mahishasura, who had conquered the heavens and could not be slain by any god or man. When the combined divine fire of Brahma, Vishnu and Shiva erupted from the wrath of the trinity, it concentrated into a single blazing mountain of light at the ashrama of Sage Katyayana. The sage gathered that radiance and shaped it into a girl — the most powerful form the Goddess had ever taken — and she was named Katyayani, the daughter of Katyayana. She is depicted as four-armed, riding a magnificent lion, carrying a lotus and a sword, her remaining hands in mudras of blessing and fearlessness. Her worship is said to activate the ajna chakra, the seat of intuition and inner vision.\n\nShe is the Goddess at the height of her martial power — calm, golden, radiant, and utterly destructive to evil. In the Devi Mahatmya, it is Katyayani who rides out to meet Mahishasura, who shifts shape from buffalo to lion to man to elephant as he battles her, and who finally pins him down with her foot and drives her trishul through his chest. Because she was born to fight this battle, her worship is believed to destroy inner demons — fear, anger, ego, desire — as she destroyed the outer one. Unmarried girls worship Katyayani in particular, seeking the boon of a righteous husband, following the example of the gopis of Braj, who observed the Katyayani Vrata on the banks of the Yamuna to win Krishna as their beloved."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 6,
-      "conditions": "Shashthi"
+      "conditions": "Shashthi",
+      "vriddhi": "first"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Puja: The daily worship of the Kalash continues — flowers, incense, and lamp offered before the Goddess's presence morning and evening",
+        "Katyayani Dhyan and Mantra Japa: Meditate on the Goddess as four-armed, lion-riding, carrying sword and lotus — the warrior born of the trinity's combined fire — and recite her seed mantra 'Om Devi Katyayanyai Namah', awakening the ajna chakra of intuition",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the image of Katyayani — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Pushpanjali: Flowers are offered at the Goddess's feet with mantra, the day's principal act of surrender to the warrior form",
+        "Aarti and Bhog: The sattvic Navratri bhog is offered to the Goddess, and the day's aarti is performed before the Kalash"
+      ],
+      "mantra": "ॐ देवी कात्यायन्यै नमः \n\n(Om Devi Katyayanyai Namah — salutation to Katyayani, the warrior daughter of Sage Katyayana, destroyer of Mahishasura and of the inner demons of fear and ego)",
+      "fasting": "The Navratri fast continues on Day 6: unmarried girls in particular observe the Katyayani Vrata, fasting and praying for a righteous husband, following the gopis of Braj who worshipped her on the banks of the Yamuna"
     }
   },
   {
@@ -2094,24 +2472,35 @@
     "name": "Saraswati Avahan",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "सरस्वत्यावाहनम्",
       "nameEnglish": "Saraswati Avahan",
       "nameHindi": "सरस्वती अवाहन",
       "nameBengali": "সরস্বতী আভাহন",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "సరస్వతి ఆవాహన",
+      "nameKannada": "ಸರಸ್ವತಿ ಆವಾಹನ",
+      "nameTamil": "சரஸ்வதி ஆவாஹன",
+      "nameMalayalam": "സരസ്വതി ആവാഹന"
     },
     "purpose": {
-      "description": "The first day of Saraswati Puja during Navratri is known as Saraswati Avahan.",
-      "addtional_description": ""
+      "description": "The invocation of Goddess Saraswati at the beginning of her three-day autumnal puja — books, instruments, and tools of learning are placed before the Goddess of wisdom and not touched until Vijaya Dashami",
+      "addtional_description": "Saraswati Avahan is the first day of the autumnal Saraswati Puja observed in Bengal and eastern India during the final days of Sharad Navratri. Avahan means 'invitation' — this is the ritual of invoking Goddess Saraswati, asking her to descend and be present for the three days of her worship. The three-day arc runs: Avahan (the invitation), Saraswati Puja (the main day of worship), and Vijaya (the conclusion, coinciding with Vijaya Dashami).\n\nGoddess Saraswati is the Devi of learning, wisdom, music, and the arts — depicted as serene and white-clad, seated on a lotus or riding her swan, holding the veena in her hands with a book and a mala beside her, dressed in the colour of purity and the full moon. She represents the river of consciousness that flows through all knowledge.\n\nOn the day of Avahan, families place before the Goddess everything that represents learning and work in the household: books, pens, musical instruments, account books, tools of trade, and in modern homes even laptops and study materials. These are then left undisturbed until Vijaya Dashami, when they are retrieved with the Goddess's blessing and work resumes. The practice holds a teaching: that the instruments of our intelligence are themselves sacred, and that pausing to acknowledge the source of all wisdom is itself a form of wisdom.\n\nSaraswati Avahan falls on the day the Mula Nakshatra prevails at sunrise during Ashwin Shukla — not on a fixed tithi. This means the date moves within the Navratri sequence: some years it lands on Shashthi, others on Saptami. The Mula Nakshatra is associated with the roots of knowledge — the foundation upon which all learning stands — making it the fitting astronomical moment to invoke the Goddess who is the source of all wisdom."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
-      "tithi": 6,
-      "conditions": "Saptami"
+      "tithi": 7,
+      "conditions": "Mula Nakshatra",
+      "vriddhi": "first"
+    },
+    "rituals": {
+      "steps": [
+        "Avahan (Invocation): The Goddess Saraswati is invoked into her image or a Kalash with mantra — the formal invitation asking her to be present for the three days of her puja",
+        "Placement of Books and Instruments: Books, musical instruments, pens, tools of trade and learning — and in modern homes, study materials and work equipment — are placed before the Goddess as her offering and left undisturbed",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the invoked Goddess — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Aarti and Pranam: The day's aarti is performed before Saraswati, and the family pranams — asking her blessing for the three days of worship ahead"
+      ],
+      "mantra": "या कुन्देन्दुतुषारहारधवला या शुभ्रवस्त्रावृता । या वीणावरदण्डमण्डितकरा या श्वेतपद्मासना ॥ \n\n(Ya Kundendu Tushara Hara Dhavala, ya shubra-vastravrta, ya veena-varadanda-mandita-kara, ya shveta-padm-asana — the opening verse of the Saraswati Vandana, saluting her who is white as the jasmine moon, dressed in purity, holding the veena, seated on the white lotus)",
+      "fasting": "Many devotees observe a simple fast on Saraswati Avahan, eating only after the Goddess has been invoked and the day's offerings made"
     }
   },
   {
@@ -2119,28 +2508,129 @@
     "name": "Kalaratri Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "कालरात्रि पूजा",
       "nameEnglish": "Kalaratri Puja",
       "nameHindi": "कालरात्रि पूजा",
       "nameBengali": "কালরাত্রি পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "కాళరాత్రి పూజ",
+      "nameKannada": "ಕಾಳರಾತ್ರಿ ಪೂಜೆ",
+      "nameTamil": "காலராத்ரி பூஜை",
+      "nameMalayalam": "കാളരാത്രി പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "Grey"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Goddess Kalaratri is worshipped on the seventh day of Navratri.",
-      "addtional_description": "When the Goddess Parvati removed outer golden skin to kill demons named Shumbha and Nishumbha, She was known as Goddess Kalaratri. Kalaratri is the fiercest and the most ferocious form of Goddess Parvati."
+      "description": "Day 7 of Sharad Navratri — worship of Maa Kalaratri, the dark night of the Goddess, the most fearsome form of Durga whose hands offer only fearlessness and blessings",
+      "addtional_description": "Maa Kalaratri is the seventh of the Navadurga, worshipped on the Saptami of Sharad Navratri. Her name means 'the dark night' — Kala (time, death, darkness) and Ratri (night) — and she is the fiercest, most ferocious form the Goddess ever takes. When the demons Shumbha and Nishumbha seized the heavens and no god could stand against them, Goddess Parvati shed her golden outer skin, and from within emerged the form of pure destructive night: Kalaratri. She is depicted with a complexion dark as a monsoon cloud, her hair let loose and boundless, three blazing eyes, and four arms — carrying a curved sword and an iron hook in two, while the other two hands extend in abhaya mudra (the gesture of fearlessness) and varada mudra (the gesture of granting boons). She rides a donkey — the humblest of all mounts, for she who is the night of time itself carries no pretence.\n\nThe paradox of her form is the teaching. She is the most terrifying face in the pantheon — the night that swallows all things, the fire that consumes ignorance — yet her outstretched hands offer only fearlessness and blessing. Her devotees call her Shubhankari, 'the auspicious one,' because she destroys only what must be destroyed: the darkness of ignorance, the ego that separates the soul from truth, the fear that keeps the heart small. To the demon she is annihilation; to the devotee she is the mother who arrives at the darkest hour and carries you through the night.\n\nOn Day 7, the Navadurga journey reaches its darkest point — deliberately. The sequence is structured so that the worshipper walks through the night: after the warrior rides out on Day 6, Day 7 is the night of the battle at its most fierce, when only destruction can clear the ground for what follows. And what follows is the dawn: Mahagauri on Day 8, radiant as the moon after rain, the Goddess restored to her most luminous form. Kalaratri is thus not the end of anything — she is the passage. The night exists so that the morning can arrive."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 7,
-      "conditions": "Saptami"
+      "conditions": "Saptami",
+      "vriddhi": "first"
+    },
+    "rituals": {
+      "steps": [
+        "Kalash Puja: The daily worship of the Kalash continues — flowers, incense, and lamp offered before the Goddess's presence morning and evening",
+        "Kalaratri Dhyan and Mantra Japa: Meditate on the Goddess as dark as the monsoon cloud, hair unbound, three-eyed, riding the donkey — fearsome to behold yet extending abhaya and varada — and recite her seed mantra 'Om Devi Kalaratryai Namah', invoking her as Shubhankari, the auspicious destroyer of inner darkness",
+        "Shodashopachara Puja: The full sixteen-step worship is offered to the image of Kalaratri — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, and arati",
+        "Pushpanjali: Flowers are offered at the Goddess's feet with mantra, surrendering to her the fears and ignorance that she exists to destroy",
+        "Aarti and Bhog: The sattvic Navratri bhog is offered to the Goddess, and the day's aarti is performed before the Kalash — a lamp held steady against the dark"
+      ],
+      "mantra": "ॐ देवी कालरात्र्यै नमः (Om Devi Kalaratryai Namah — salutation to Kalaratri, the dark night who is Shubhankari, the auspicious one, destroyer of ignorance and bestower of fearlessness)",
+      "fasting": "The Navratri fast continues on Day 7: devotees maintain the sattvic diet through the darkest day of the sequence, eating only after the bhog has been offered to the Goddess of the night"
+    }
+  },
+  {
+    "id": "sharad_navratri_mahagauri_puja",
+    "name": "Sharad Navratri- Maa Mahagauri",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "महागौरी",
+      "nameEnglish": "Sharad Navratri- Maa Mahagauri",
+      "nameHindi": "शारदीय नवरात्र- माँ महागौरी",
+      "nameBengali": "শারদীয় নবরাত্রি- মা মহাগৌরী",
+      "nameTelugu": "శరద్ నవరాత్రి- మా మహాగౌరి",
+      "nameKannada": "ಶರದ್ ನವರಾತ್ರಿ- ಮಾ ಮಹಾಗೌರಿ",
+      "nameTamil": "சரத் நவராத்திரி- மா மஹாகௌரி",
+      "nameMalayalam": "ശരദ് നവരാത്രി- മാ മഹാഗൗരി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Day 8 of Sharad Navratri — worship of Maa Mahagauri, the radiant white form of Durga who represents purity, peace, and the fulfilment of devotion",
+      "addtional_description": "Maa Mahagauri is the eighth of the Navadurga, worshipped on the Ashtami of Sharad Navratri. Her name means 'the extremely radiant one' — Maha (great) and Gauri (white, luminous, golden) — and she is depicted as four-armed, riding a white bull (Vrishabha), draped in white garments, holding a trishul and a damaru, with one hand raised in abhaya mudra, the gesture of fearlessness. She is eternally sixteen years old, her complexion like jasmine and the moon.\n\nThe legend behind her form holds that Parvati, desiring Shiva as her husband, performed severe penance for thousands of years in the Himalayan forests. The accumulated dirt, heat, and austerity of her tapas turned her body dark — she became known as Kali, the dark one. When Shiva, moved by her devotion, finally appeared before her, he washed her with the purifying waters of the Ganga, and her darkness fell away to reveal a form of surpassing radiance — Mahagauri, luminous as moonlight upon snow. The myth carries its own teaching: that no austerity stains the soul, and that devotion, however long it takes, is always answered.\n\nMaha Ashtami is also the day of Sandhi Puja — the juncture where Ashtami tithi ends and Navami begins — when the Goddess is worshipped in her fierce form as Chamunda, the slayer of Chanda and Munda. In Bengal this is the heart of Durga Puja, with its Kumari Puja, pushpanjali, and the 108-lamp Sandhi rite; in North India it is the day of Kanya Puja, when nine young girls are honoured as the nine forms of the Goddess. Many devotees consider Ashtami the most sacred day of the entire Navratri fast."
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Shukla",
+      "tithi": 8,
+      "conditions": "Ashtami",
+      "vriddhi": "first"
+    },
+    "rituals": {
+      "steps": [
+        "Kalasha Puja: Continue the nine-day worship established on Day 1, offering fresh flowers, incense, and a lit lamp before the Kalash and the image of Mahagauri",
+        "Mahagauri Dhyan and Mantra Japa: Meditate on the Goddess as four-armed, white-clad, riding the bull, and recite her seed mantra 'Om Devi Mahagauryai Namah' through the day",
+        "Sandhi Puja: At the Ashtami–Navami juncture, the Goddess is worshipped as Chamunda — the 48-minute window of 108 lamps and 108 lotuses, the most potent moment of Navratri",
+        "Kanya Puja: Nine young girls are invited, their feet washed, and they are worshipped as the nine forms of Durga with food, vermilion, and gifts",
+        "Pushpanjali and Bhog: Offer flowers with mantra, and present the day's bhog — typically kheer or halwa-puri — first to the Goddess, then distributed as prasad"
+      ],
+      "mantra": "ॐ देवी महागौर्यै नमः (Om Devi Mahagauryai Namah — salutation to Mahagauri, the luminous one)",
+      "fasting": "Ashtami is among the most important fasting days of Navratri; devotees keep a fruit-and-milk or waterless fast through the day, breaking it only after evening pushpanjali or Kanya Puja"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "sharad_navratri_siddhidatri_puja",
+    "name": "Sharad Navratri- Maa Siddhidatri",
+    "category": "major",
+    "displayPriority": 2,
+    "nameRegional": {
+      "nameSanskrith": "सिद्धिदात्री",
+      "nameEnglish": "Sharad Navratri- Maa Siddhidatri",
+      "nameHindi": "शारदीय नवरात्र- माँ सिद्धिदात्री",
+      "nameBengali": "শারদীয় নবরাত্রি- মা সিদ্ধিদাত্রী",
+      "nameTelugu": "శరద్ నవరాత్రి- మా సిద్ధిదాత్రి",
+      "nameKannada": "ಶರದ್ ನವರಾತ್ರಿ- ಮಾ ಸಿದ್ಧಿದಾತ್ರಿ",
+      "nameTamil": "சரத் நவராத்திரி- மா சித்திதாத்ரி",
+      "nameMalayalam": "ശരദ് നവരാത്രി- മാ സിദ്ധിദാത്രി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Day 9 of Sharad Navratri — worship of Maa Siddhidatri, the bestower of all siddhis, the ninth and final form of Navadurga",
+      "addtional_description": "Maa Siddhidatri is the ninth and final form of the Navadurga, worshipped on the Navami of Sharad Navratri. Her name means 'the giver of siddhis' — Siddhi meaning supernatural power or perfection, and Datri meaning giver — and she is the bestower of all accomplishments, both worldly and spiritual. She is depicted as four-armed, seated upon a fully bloomed lotus, holding a mace (gada), a discus (chakra), a book (pustaka), and a lotus (kamala). Unlike the other Navadurga forms, she does not ride a mount — the lotus itself is her seat.\n\nThe legend of her manifestation says that when the universe was still formless, the Supreme Goddess — Adi Parashakti — emerged from the left side of Lord Shiva's body. Shiva himself worshipped her, and pleased by his devotion, she bestowed upon him the eighteen siddhis, the supernatural perfections that include anima (becoming infinitesimal), mahima (becoming immense), and prapti (the power to obtain anything). Because even Shiva reveres her, she is called the Goddess of gods, demons, and all beings alike.\n\nOn Navami, the Navratri fast reaches its conclusion. Devotees perform the final Kanya Puja — worshipping nine girls as the nine forms of Durga — and break their nine-day fast with the prasad. Homa and Navami Puja are performed, and the nine-day cycle of Navadurga worship culminates: having journeyed from Shailaputri on Day 1 through each form, the devotee arrives at Siddhidatri, the giver of the fruits of all that worship."
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Shukla",
+      "tithi": 9,
+      "conditions": "Navami",
+      "vriddhi": "first"
+    },
+    "rituals": {
+      "steps": [
+        "Kalasha Puja: Continue and conclude the nine-day worship, offering flowers, incense, and a lit lamp before the Kalash and the image of Siddhidatri",
+        "Siddhidatri Dhyan and Mantra Japa: Meditate on the Goddess as four-armed, lotus-seated, holding mace, discus, book, and lotus, and recite her seed mantra 'Om Devi Siddhidatryai Namah'",
+        "Kanya Puja: Nine young girls are worshipped as the nine forms of Durga — their feet washed, vermilion applied, and halwa-puri-chana served before gifts and dakshina — concluding the Navratri Kanya Puja tradition",
+        "Navami Homa: The fire ritual is performed, offering ghee and grains into the sacred fire with mantra, completing the nine-day worship cycle",
+        "Breaking the Fast: The Navratri fast is broken with prasad from the Kanya Puja and the Homa, and devotees seek the Goddess's blessings for the fulfilment of their vows"
+      ],
+      "mantra": "ॐ देवी सिद्धिदात्र्यै नमः (Om Devi Siddhidatryai Namah — salutation to Siddhidatri, the giver of perfections)",
+      "fasting": "The Navratri fast is traditionally concluded on Navami; devotees break their fast after Kanya Puja and the Navami Homa, taking prasad as their first full meal in nine days"
+    },
+    "media": {
+      "audio_stotra": ""
     }
   },
   {
@@ -2148,51 +2638,64 @@
     "name": "Saraswati Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "सरस्वती पूजा",
       "nameEnglish": "Saraswati Puja",
       "nameHindi": "सरस्वती पूजा",
       "nameBengali": "সরস্বতী পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "సరస్వతి పూజ",
+      "nameKannada": "ಸರಸ್ವತಿ ಪೂಜೆ",
+      "nameTamil": "சரஸ்வதி பூஜை",
+      "nameMalayalam": "സരസ്വതി പൂജ"
     },
     "visuals": {
       "image": "",
-      "theme_color": "White"
+      "theme_color": "#ffffff"
     },
     "purpose": {
-      "description": "Saraswati Puja is performed on the eighth day of Navratri",
-      "addtional_description": "The second day of Saraswati Puja during Navratri is known as Saraswati Pradhan Puja day. Pradhan Puja day is the main Saraswati Puja day."
+      "description": "The main day of Saraswati Puja during Navratri — the Goddess of learning is worshipped with full honours, and the books and instruments placed before her since Avahan remain in her keeping",
+      "addtional_description": "Saraswati Puja is the principal day of the three-day autumnal worship of Goddess Saraswati — the middle day of the arc that runs Avahan (the invocation), Saraswati Puja (the main worship), and Vijaya (the conclusion). In Bengal, Saraswati is worshipped alongside Durga during the great puja days, for she is the daughter of Durga — part of the divine family that descends to earth each autumn, alongside Lakshmi, Ganesha, and Kartikeya. She is depicted as serene and white-clad, seated on a lotus or riding her swan, holding the veena in her hands with a book and a japa mala beside her — the Goddess of learning, wisdom, music, and the arts, dressed in the colour of purity and the full moon, representing the river of consciousness that flows through all knowledge.\n\nOn the main puja day, the Goddess receives the full sixteen-step worship — and students of every age come to her first. In Bengal this is the day when schoolchildren and students place their books and study materials before Saraswati and ask for her blessing on their learning; even adults place tools of their trade and intellectual work before her. The books placed at Avahan remain undisturbed until Vijaya Dashami, when they are retrieved with her blessing. The tradition holds that Saraswati does not demand renunciation of the world — she asks only that the instruments of learning be treated with reverence, for they are the vessels through which wisdom enters a life.\n\nThe autumn Saraswati Puja is quieter and more domestic than the spring Vasant Panchami observance — it sits within the household's Durga Puja rather than standing alone — but for students it is the more personal of the two: the day to sit before the Goddess of learning and ask that the coming year's study be blessed."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 7,
-      "conditions": "Saptami"
+      "conditions": "Purva Ashadha Nakshatra",
+      "vriddhi": "first"
+    },
+    "rituals": {
+      "steps": [
+        "Saraswati Dhyan: The Goddess is meditated upon as white-clad, lotus-seated, holding the veena — the river of consciousness flowing through all knowledge",
+        "Shodashopachara Puja: The full sixteen-step worship is offered — seat, water, bath, white clothes and ornaments, white flowers, incense, lamp, food, and arati",
+        "Pushpanjali: Students offer flowers at the Goddess's feet, asking her blessing on their learning — the day's central act for schoolchildren and scholars alike",
+        "Homa (in some traditions): A small fire ritual is performed with the Saraswati mantra, offering ghee and grains into the consecrated fire",
+        "Aarti and Bhog: The day's aarti is performed before Saraswati, and white-coloured sweets — kheer, sandesh, or khirer nadu — are offered as bhog and taken as prasad"
+      ],
+      "mantra": "ॐ ऐं सरस्वत्यै नमः (Om Aim Saraswatyai Namah — salutation to Saraswati with her bija mantra 'Aim', the seed syllable of wisdom and speech)",
+      "fasting": "Devotees observing the Saraswati Puja day often eat only after the pushpanjali is complete; students in particular keep a fast until they have offered flowers and received prasad"
     }
   },
   {
     "id": "shashthi_durga_puja",
     "name": "Durga Puja- Shashthi",
     "category": "major",
+    "displayPriority": 1,
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "दुर्गा पूजा- षष्ठी",
       "nameEnglish": "Durga Puja- Shashthi",
       "nameHindi": "दुर्गा पूजा- शष्ठी",
       "nameBengali": "দুর্গা পূজা- শষ্ঠী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "దుర్గా పూజ- షష్ఠి",
+      "nameKannada": "ದುರ್ಗಾ ಪೂಜೆ- ಷಷ್ಠಿ",
+      "nameTamil": "துர்கா பூஜை- சஷ்டி",
+      "nameMalayalam": "ദുർഗ്ഗാ പൂജ- ഷഷ്ടി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Kalparambha and Akal Bodhon- ceremonial beginning of Durga Puja",
-      "addtional_description": "Kalparambha is the ceremonial beginning of Durga Puja rituals, performed on the sixth day (Shashti Tithi) of the festival. It involves installing a sacred pot (Kalash) filled with water and invoking Goddess Durga to reside either in a Bilva tree or the Kalash. This ritual, also known as Bilva Nimantran in other parts of India, sets the stage for the main festivities and is equivalent to Ghatasthapana performed during Navratri in other regions. \n\nAkal Bodhon means 'untimely awakening' of Goddess Durga. According to legend, when Lord Rama needed to fight Ravana, he was advised by Brahma to awaken Goddess Durga during her sleep period (the six months when gods remain asleep, during the sun's southward journey). This awakening of the sleeping goddess during an 'untimely' period established the tradition of Durga Puja during Sharad Navratri"
+      "description": "Kalparambha and Akal Bodhon — the ceremonial beginning of Durga Puja, when the Goddess is invoked into the Bilva tree and the Kalash",
+      "addtional_description": "Shashthi marks the formal opening of Durga Puja through two intertwined rituals. Kalparambha is the ceremonial starting point of the entire puja: a sacred pot (Kalash) filled with Ganga water is installed, twigs of auspicious trees are gathered, and Goddess Durga is invoked to descend and reside in a Bilva (bael) tree or in the Kalash itself. In much of North India the same moment is observed as Ghatasthapana during Navratri, and as Bilva Nimantran — the formal invitation to the bael tree — elsewhere.\n\nThe second ritual, Akal Bodhon ('the untimely awakening'), gives Bengal's autumnal puja its origin story. The Devi is traditionally worshipped in spring (Basant Panchami onwards); when Lord Rama needed her blessings before his battle with Ravana, Brahma advised him to awaken the sleeping Goddess — the gods rest during the sun's six-month southward journey — in the 'wrong' season of Ashwin. Rama's out-of-season invocation was so powerful that it established Sharadiya Durga Puja, the autumnal puja that has been celebrated every year since. Performed in the evening, the Bodhon is followed by three days of intense worship: Maha Saptami (Nabapatrika and prana-pratishtha), Maha Ashtami (Sandhi Puja), and Maha Navami, concluding with immersion on Dashami."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2202,13 +2705,13 @@
     },
     "rituals": {
       "steps": [
-        "Ghatasthapana (Kalash Installation)- Install a sacred earthen pot (ghata) filled with Ganga water, mango leaves, and twigs of various trees including Asvattha (fig), Bata (Indian fig), Asoka, and jackfruit",
-        "Kalash Decoration- Decorate the Kalash with turmeric, vermilion, and flowers",
-        "Sankalp (Resolution): The family head takes a sacred vow to perform Durga Puja rituals authentically for the next three days (Maha Saptami, Maha Ashtami, and Maha Navami)",
-        "Bilva Tree Worship: Invoke Goddess Durga to reside in a Bilva (Bael) tree or the Kalash",
-        "Goddess Invitation (Amantran): Sacred act of inviting the goddess to accept the puja"
+        "Kalparambha (Ceremonial Beginning): Install a sacred earthen pot (ghata) filled with Ganga water, mango leaves, and coconut, and gather the twigs of auspicious trees — Asvattha (sacred fig), Bata (banyan), Asoka, and jackfruit — that will be used over the coming days",
+        "Sankalpa (Sacred Resolve): The family head or priest formally resolves to perform the Durga Puja authentically for the next three days (Maha Saptami, Maha Ashtami, and Maha Navami), naming the day, tithi, and purpose of the vrata",
+        "Bilva Nimantran (Inviting the Bilva): The Bilva (bael) tree is worshipped and the Goddess is invoked into it with red flowers, vermilion, water, and mantra — the tree becomes her seat for the duration of the puja",
+        "Akal Bodhon (Untimely Awakening): In the evening, the Goddess is ceremonially awakened out of season, commemorating Rama's invocation of Durga before his battle with Ravana",
+        "Amantran (Formal Invitation): The Goddess is respectfully invited to accept the puja and take her place in the home or pandal, after which the main three-day rites may begin"
       ],
-      "mantra": "",
+      "mantra": "सर्वमङ्गलमाङ्गल्ये शिवे सर्वार्थसाधिके । शरण्ये त्र्यम्बके गौरि नारायणि नमोऽस्तुते ॥ \n\n(Sarva-mangala-mangalye shive sarvartha-sadhike, sharanye tryambake gauri Narayani namostute)",
       "fasting": ""
     },
     "media": {
@@ -2219,39 +2722,41 @@
     "id": "saptami_durga_puja",
     "name": "Durga Puja- Saptami",
     "category": "major",
+    "displayPriority": 1,
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "दुर्गा पूजा- सप्तमी",
       "nameEnglish": "Durga Puja- Saptami",
-      "nameHindi": "सप्तमी दुर्गा पूजा",
-      "nameBengali": "সপ্তমী দুর্গা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameHindi": "दुर्गा पूजा- सप्तमी",
+      "nameBengali": "দুর্গা পূজা- সপ্তমী",
+      "nameTelugu": "దుర్గా పూజ- సప్తమి",
+      "nameKannada": "ದುರ್ಗಾ ಪೂಜೆ- ಸಪ್ತಮಿ",
+      "nameTamil": "துர்கா பூஜை- சப்தமி",
+      "nameMalayalam": "ദുർഗ്ഗാ പൂജ- സപ്തമി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Maha Saptami is also known as Navpatrika Puja(Kolabou Puja) and it is the first day of Durga Puja",
-      "addtional_description": "On Maha Saptami day Goddess Durga is invoked in a group of nine plants known as Navpatrika. Navpatrika is formed by bundling nine different plants including the branch of Bilva tree of the previous day. After that Navpatrika is given a ceremonial bath, adorned with a red or orange colored cloth and installed on a wooden seat on the right side of image of Durga.\n\nMaha Saptami Puja begins with Mahasnan. For Maha Snan a mirror is placed on a platter in such a way that the reflection of the Goddess Durga is seen in the mirror. It is the refection of Goddess Durga in the mirror which is given the ritualistic bath using various materials. After bath ceremony the ritual of Prana Pratishtha (प्राण प्रतिष्ठा) takes place"
+      "description": "Maha Saptami — the first great day of worship: Navapatrika (Kolabou) snan, Mahasnan, and Prana Pratishtha awaken the Goddess in her nine-plant form",
+      "addtional_description": "Maha Saptami opens the principal days of Durga Puja. Its central rite is the Navapatrika — literally 'nine leaves' — in which nine plants, each embodying a form of the Goddess, are bundled together with the Bilva branch invoked the previous evening. At dawn, before sunrise, the bundle is carried to a river or other water body and given its ceremonial bath (Kolabou snan). It is then draped in a red-bordered sari, adorned as a bride, and installed on a wooden seat to the right of Durga's image. In popular Bengali custom the Kolabou is affectionately treated as Ganesha's bride, though scripturally the nine plants together represent the Goddess herself in nine forms.\n\nThe puja proper begins with Mahasnan — a mirror is placed on a platter so that Durga's reflection is caught in it, and it is the reflection that is bathed with sacred materials: water, milk, ghee, honey, and other offerings. Next comes Prana Pratishtha, the ritual invocation of divine presence into the idol and the Navapatrika, after which the Goddess is worshipped with the full Shodashopachara — the sixteen traditional offerings from asana (seat) and padya (water for the feet) through arati and pushpanjali. Devotees gather through the morning for anjali, offering flowers at the Goddess's feet, and many keep a fast until the offerings are made."
     },
     "panchang_rules": {
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 7,
-      "conditions": "Saptami"
+      "conditions": "Saptami",
+      "vriddhi": "second"
     },
     "rituals": {
       "steps": [
-        "Kolabou Snan: Sacred bath of nine plants in river/water body before sunrise",
-        "Mahasnan: Mirror ritual where Goddess Durga's reflection is bathed with puja essentials",
-        "Navpatrika Installation: Nine plants (banana, kacchi, turmeric, bilva, barley, pomegranate, asoka, manaka, rice) tied together and installed",
-        "Shodashopachara Puja: Sixteen-step elaborate worship with traditional offerings",
-        "Prana Pratishtha: Divine energy invocation into Goddess idol and Navpatrika"
+        "Navapatrika Snan (Kolabou Bath): Before sunrise, the bundle of nine plants — banana (kadali), kachu (arum), turmeric, Bilva, barley, pomegranate, Asoka, manaka, and paddy — is carried to a river or water body and ceremonially bathed",
+        "Sringara and Installation: The bathed Navapatrika is draped in a red-bordered sari, adorned like a bride, and installed on a wooden seat to the right of Durga's image",
+        "Mahasnan (Great Bath): A mirror is placed on a platter so the Goddess's reflection appears in it; the reflection — not the idol — is then bathed with water, milk, ghee, honey, and sacred materials",
+        "Prana Pratishtha: Divine presence is ritually invoked into the idol and the Navapatrika, consecrating them as the living form of the Goddess",
+        "Shodashopachara Puja: The full sixteen-step worship — seat, water, bath, clothes, ornaments, flowers, incense, lamp, food, betel, and arati — continues through the day, with devotees offering anjali (flowers) at the Goddess's feet"
       ],
-      "mantra": "",
+      "mantra": "या देवी सर्वभूतेषु शक्तिरूपेण संस्थिता । नमस्तस्यै नमस्तस्यै नमस्तस्यै नमो नमः ॥ \n\n(Ya devi sarvabhuteshu shakti-rupena samsthita, namas tasyai namas tasyai namas tasyai namo namah — salutation to the Devi who dwells in all beings as power, repeated three times before each offering)",
       "fasting": ""
     },
     "media": {
@@ -2262,23 +2767,24 @@
     "id": "ashtami_durga_puja",
     "name": "Durga Puja- Mahashtami",
     "category": "major",
+    "displayPriority": 1,
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Durga Puja- Mahashtami",
-      "nameHindi": "महाष्टमी दुर्गा पूजा",
-      "nameBengali": "মহাষ্টমী দুর্গা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "दुर्गा पूजा- महाष्टमी",
+      "nameEnglish": "Durga Puja- Ashtami",
+      "nameHindi": "दुर्गा पूजा- महाष्टमी",
+      "nameBengali": "দুর্গা পূজা- মহাষ্টমী",
+      "nameTelugu": "దుర్గా పూజ- మహాష్టమి",
+      "nameKannada": "ದುರ್ಗಾ ಪೂಜೆ- ಮಹಾಷ್ಟಮಿ",
+      "nameTamil": "துர்கா பூஜை- மஹாஷ்டமி",
+      "nameMalayalam": "ദുർഗ്ഗാ പൂജ- മഹാഷ്ടമി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Mahashtami, also known as Maha Durgashtami, is second day of Durga Puja",
-      "addtional_description": "Maha Ashtami is one of the most important days of Durga Puja. On Maha Ashtami nine small pots are installed and nine Shaktis of Durga are invoked in them. All nine forms of Goddess Durga are worshipped during Maha Ashtami Puja. Young unmarried girls, being treated as Goddess Durga itself, are also worshipped on Maha Ashtami. Worshipping of young girls during Durga Puja is known as Kumari Puja\n\nSandhi Puja is also falls on Maha Ashtami. The time window of the last 24 minutes of Ashtami Tithi and the first 24 minutes of Navami Tithi is known as Sandhi Time or the holy juncture during Durga Puja. Sandhi time is considered the most auspicious time during whole Durga Puja."
+      "description": "Maha Ashtami — the most potent day of Durga Puja: the nine forms of the Goddess are worshipped, young girls are honoured as the living Devi, and Sandhi Puja marks the moment she slew the demons Chanda and Munda",
+      "addtional_description": "Maha Ashtami is the most intense day of Durga Puja. Nine small pots (nava-kalasha) are installed and the nine forms of the Goddess are invoked into them, and the day's puja is offered to all nine together — it is Durga's own day at the height of her power. Alongside the ritual worship, Kumari Puja is performed: young unmarried girls, classically nine of them aged two to ten, are seated, bathed, decorated with vermilion and new clothes, and worshipped as the living embodiment of the Goddess — the belief being that the Devi manifests most purely in the girl child. Families offer them food, gifts, and dakshina with full reverence.\n\nSandhi Puja — the 'juncture' worship — is the climax of the entire festival and falls within Maha Ashtami. It occupies the last 24 minutes of Ashtami tithi and the first 24 minutes of Navami tithi: a 48-minute window when the Goddess is worshipped in her fierce form as Chamunda. According to the Devi Mahatmya, it was at this very juncture that the Devi sprang from the brows of the warring goddesses and slew the demons Chanda and Munda. Because the window is fixed by the tithi, not the clock, it can fall at any hour — midnight observances are common. During Sandhi Puja, 108 lamps are lit and 108 lotuses offered, and the moment is considered the most auspicious of the whole puja."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2288,13 +2794,13 @@
     },
     "rituals": {
       "steps": [
-        "Mahasnan: Ritual bath before sunrise for devotees",
-        "Kumari Puja: Worship nine young girls (ages 2-10) as living forms of Goddess Durga",
-        "Sandhi Puja: 48-minute ritual at Ashtami-Navami junction - most intense moment with 108 lamps and specific mantras",
-        "Pushpanjali: Three rounds of flower offerings with mantras (morning, midday, before Sandhi Puja)"
+        "Mahasnan and Nava-kalasha Puja: The ritual bath is given and nine small pots are installed, invoking the nine forms of the Goddess into them; all nine are worshipped together through the day",
+        "Pushpanjali: Devotees offer flowers at the Goddess's feet in rounds with mantra — morning, midday, and a final round before Sandhi Puja — many fasting until the flowers are offered",
+        "Kumari Puja: Young unmarried girls are seated as the living Goddess, their feet washed, vermilion applied, and new clothes, food, and gifts offered to them with full ritual honour",
+        "Sandhi Puja: At the 48-minute juncture where Ashtami tithi ends and Navami begins, the Goddess is worshipped as Chamunda with 108 lamps, 108 lotuses, red hibiscus flowers, and the beating of drums — the fiercest and most auspicious moment of the festival"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "कात्यायनाय विद्महे कन्याकुमारीं धीमहि तन्नो दुर्गाः प्रचोदयात् ॥ \n\n(Katyayanaya vidmahe kanya-kumarim dhimahi, tanno Durgah prachodayat — the Durga Gayatri, the principal mantra of Durgashtami worship)",
+      "fasting": "Many devotees observe a complete fast on Maha Ashtami, taking food and water only after the morning pushpanjali; some hold it through the day until the evening's Sandhi Puja offerings are made"
     },
     "media": {
       "audio_stotra": ""
@@ -2305,22 +2811,22 @@
     "name": "Kumari Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "कुमारी पूजा",
       "nameEnglish": "Kumari Puja",
       "nameHindi": "कुमारी पूजा",
       "nameBengali": "কুমারী পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "కుమారి పూజ",
+      "nameKannada": "ಕುಮಾರಿ ಪೂಜೆ",
+      "nameTamil": "குமாரி பூஜை",
+      "nameMalayalam": "കുമാരി പൂജ"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Worship of young unmarried girls as living forms of Goddess Durga",
-      "addtional_description": "Kumari Puja is a significant ritual during Navratri and Durga Puja. Kumari Puja is also known as Kanya Puja, Kumarika Puja and Kanjak Puja"
+      "description": "The worship of young unmarried girls as living embodiments of Goddess Durga, performed on Maha Ashtami",
+      "addtional_description": "Kumari Puja — also known as Kanya Puja, Kumarika Puja, or Kanjak Puja — is the worship of a young unmarried girl as the living Goddess. The philosophy behind it is that the Devi's power resides in its purest, unmanifest form in the kumari, the girl child who is yet to enter worldly life: she is not a symbol of the Goddess but, for the duration of the ritual, her presence. In Bengal the rite is performed on Maha Ashtami, most commonly with a single girl, though some panchayats worship nine, each representing a stage of the Goddess — Kumari, Trimurti, Kalyani, Rohini, Kali, Chandika, Shambhavi, Durga, and Subhadra — classically aged two to ten. A young boy is worshipped alongside as Batuk Bhairava, her guard.\n\nThe tradition was made famous far beyond Bengal by Sri Ramakrishna, who in 1883 worshipped a young Muslim girl as the Divine Mother with the full sixteen-step ritual, dissolving all distinctions of caste and creed in the act. In North India the same rite survives as Kanjak or Kanya Puja during Navratri, where girls are invited into homes, their feet washed, and halwa-puri-chana served to them before they are seen off with gifts and money. Across both traditions, the etiquette is the same: the girls are treated with the complete reverence owed to a deity, never scolded or hurried, and the family serves them before eating."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2330,9 +2836,13 @@
     },
     "rituals": {
       "steps": [
-        "Kumari Puja: Worship nine young girls (ages 2-10) as living forms of Goddess Durga"
+        "Seating the Kumari: The girl — one, or nine aged two to ten — is seated on an asana and greeted with devotion; a boy is seated alongside as Batuk Bhairava",
+        "Padya and Sringara: Her feet are washed, and she is adorned with vermilion, alta on her hands and feet, flowers, sandalwood paste, and new clothes",
+        "Shodashopachara Puja: She is worshipped with the full sixteen offerings — seat, water, bath, clothes, ornaments, flowers, incense, lamp, and food — exactly as to an installed deity",
+        "Naivedya and Dakshina: She is served food — traditionally khichuri and labra with sweets in Bengal, halwa-puri-chana in Kanjak tradition — and given gifts and money",
+        "Pranama: The family bows and touches her feet, and sees her off with full honours; nothing she does during the puja is corrected or scolded"
       ],
-      "mantra": "",
+      "mantra": "या देवी सर्वभूतेषु बालरूपेण संस्थिता । नमस्तस्यै नमस्तस्यै नमस्तस्यै नमो नमः ॥ \n\n(Ya devi sarvabhuteshu bala-rupena samsthita, namas tasyai namas tasyai namas tasyai namo namah — salutation to the Devi who dwells in all beings in the form of a young girl)",
       "fasting": ""
     },
     "media": {
@@ -2343,23 +2853,24 @@
     "id": "navami_durga_puja",
     "name": "Durga Puja- Maha Navami",
     "category": "major",
+    "displayPriority": 1,
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Durga Puja- Maha Navami",
-      "nameHindi": "नवमी दुर्गा पूजा",
-      "nameBengali": "মহানবমী দুর্গা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "दुर्गा पूजा- महानवमी",
+      "nameEnglish": "Durga Puja- Navami",
+      "nameHindi": "दुर्गा पूजा- महानवमी",
+      "nameBengali": "দুর্গা পূজা- মহানবমী",
+      "nameTelugu": "దుర్గా పూజ- మహానవమి",
+      "nameKannada": "ದುರ್ಗಾ ಪೂಜೆ- ಮಹಾನವಮಿ",
+      "nameTamil": "துர்கா பூஜை- மஹாநவமி",
+      "nameMalayalam": "ദുർഗ്ഗാ പൂജ- മഹാനവമി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Maha Navami is the ninth and second-last day of Durga Puja celebrations.",
-      "addtional_description": "Durga Puja on Maha Navami begins with Mahasnan and Shodashopachar Puja. On Maha Navami Goddess Durga is worshipped as Mahisasuramardini which means the Annihilator of the Buffalo Demon"
+      "description": "Maha Navami — the last full day of Durga Puja, when the Goddess is worshipped as Mahishasuramardini, the annihilator of the buffalo demon",
+      "addtional_description": "Maha Navami is the ninth and final full day of worship. The day's puja begins with Mahasnan and the full Shodashopachara, and on this day the Goddess is worshipped in her aspect as Mahishasuramardini — she who slew the buffalo demon Mahishasura. According to the Devi Mahatmya, the Devi battled the demon through the days of the puja, and her victory is commemorated the following morning as Vijaya Dashami, the tenth day of triumph. Navami is thus the day of the Goddess at the very summit of her power, immediately before her departure.\n\nThe defining ritual of Maha Navami is the concluding Homa — the fire sacrifice offered into a consecrated pit with ghee, grains, and mantra, after which the three days of puja are ritually complete. The day is also famous for its bhog: the grandest of the festival, when khichuri, labra, and sweets are offered to the Goddess in vast quantities and then distributed as prasad; devotees commonly fast until the bhog has been offered. Where the Ashtami–Navami junction falls on Navami's side of midnight, the 48-minute Sandhi Puja to Chamunda is observed during Navami, and families who could not perform Kumari Puja on Ashtami do so today."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2369,11 +2880,13 @@
     },
     "rituals": {
       "steps": [
-        "Sandhi Puja (48-minute Ceremony): Performed at the exact junction of Ashtami and Navami tithis. Commemorates Goddess Durga taking her fierce Chamunda form to kill demons Chanda and Munda.",
-        "Navami Homa (Fire Ritual)",
-        "Maha Aarti: Grand lamp-waving with conch shells, bells, and dhak drums"
+        "Mahasnan and Shodashopachara Puja: The Goddess is given the ritual bath and worshipped with the full sixteen offerings, in her form as Mahishasuramardini, the slayer of the buffalo demon",
+        "Sandhi Puja (where the junction falls on Navami): The 48-minute worship of Chamunda at the Ashtami–Navami tithi junction, with 108 lamps and 108 lotuses, observed during Navami whenever the juncture falls on this side of midnight",
+        "Navami Homa: The concluding fire ritual — ghee, grains, and offerings are made into the consecrated fire with mantra, completing the three days of puja",
+        "Maha Bhog: The grandest food offering of the festival — khichuri, labra, fried vegetables, and sweets — is laid before the Goddess and then distributed to all as prasad, with devotees taking their own food only afterwards",
+        "Maha Aarti: The grand lamp-waving with conch shells, bells, and dhaak drums, after which devotees offer their final pushpanjali and pranam of the festival"
       ],
-      "mantra": "",
+      "mantra": "अयि गिरिनन्दिनि नन्दितमेदिनि \n\n(Ayi giri-nandini, nandita-medini — 'O daughter of the mountain, joy of the world': the opening of the Mahishasura Mardini Stotra)",
       "fasting": ""
     },
     "media": {
@@ -2384,23 +2897,24 @@
     "id": "dasami_durga_puja",
     "name": "Durga Puja- Dasami",
     "category": "major",
+    "displayPriority": 1,
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "दुर्गा पूजा- विजयादशमी",
       "nameEnglish": "Durga Puja- Dasami",
-      "nameHindi": "दशमी दुर्गा पूजा",
-      "nameBengali": "দশমী দুর্গা পূজা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameHindi": "दुर्गा पूजा- दशमी",
+      "nameBengali": "দুর্গা পূজা- দশমী",
+      "nameTelugu": "దుర్గా పూజ- దశమి",
+      "nameKannada": "ದುರ್ಗಾ ಪೂಜೆ- ದಶಮಿ",
+      "nameTamil": "துர்கா பூஜை- தசமி",
+      "nameMalayalam": "ദുർഗ്ഗാ പൂജ- ദശമി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Dasami is the final day of Durga Puja and marks the immersion of Goddess Durga's idol in water.",
-      "addtional_description": "Durga Visarjan on Vijaya Dashami is the emotional farewell ceremony marking the end of Durga Puja celebrations. This ritual involves the ceremonial immersion of clay idols of Goddess Durga in rivers or water bodies, symbolizing her return to her celestial abode after her nine-day stay on Earth. \nSindoor Utsav is a famous event during Durga Puja especially in West Bengal. On the day of Bengal Vijayadashami idols of Durga are immersed which culminates Durga Puja festivities. In the evening married women applies vermillion, famously known as Sindoor, to each other. After that Bijoya greetings and sweets are exchanged."
+      "description": "Vijaya Dashami — the day of farewell: Devi Baran, Sindoor Khela, and the immersion (bisarjan) that closes Durga Puja",
+      "addtional_description": "Dashami is the tenth and final day of Durga Puja, the day of both victory and farewell. Vijaya Dashami commemorates the Goddess's triumph over Mahishasura, but in Bengal it is equally the emotional end of the festival — for here Durga is not only the fierce warrior but a daughter visiting her parental home, and her departure is bid with tears, vermilion, and the promise of return. In the evening the clay idols are immersed in rivers and water bodies, symbolising her return to her celestial abode after her days on Earth.\n\nBefore the immersion comes the farewell to the Goddess herself. Married women perform Devi Baran — each sumangali offers bel leaves, paddy, and vermilion at the Goddess's feet and feeds her sweets as one would a departing daughter. Then follows the famous Sindoor Utsav (Sindoor Khela): the women first apply sindoor to Durga and her entourage, then to each other's faces and hair-partings, dressed in white-and-red, wishing each other long and blessed married life. The play of vermilion is the festival's most iconic image of Dashami.\n\nThe immersion procession then carries the idols to the water with dhaak drums, conch shells, cymbals, and the cry that echoes through every Bengali neighbourhood — Aschhe bochhor abar hobe, 'it will happen again next year'. In the evening begins Bijoya: the young touch the feet of their elders, embraces (kolakuli) and sweets are exchanged, and the greeting 'Shubho Bijoya' carries the festival's warmth for days after the Goddess has gone."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2410,11 +2924,13 @@
     },
     "rituals": {
       "steps": [
-        "Darpan Bisarjan: Final symbolic ceremony where Goddess's reflection is shown in mirror or water vessel. Represents taking leave of the Goddess before physical immersion",
-        "Sindur Khela (Vermilion Play): Married women first offer sindoor to Goddess Durga. Then apply vermilion to each other's faces and hair-partings",
-        "Bisarjan (Immersion) Process: Clay idols carried in grand procession with traditional drumming (dhak). Procession includes conch shells, cymbals, and devotional chants."
+        "Devi Baran (Farewell Offering): Married women, dressed in white-and-red, offer bel leaves, paddy, and vermilion at the Goddess's feet and feed her sweets, as one bids farewell to a departing daughter",
+        "Sindoor Khela (Vermilion Play): The women apply sindoor to the Goddess and her family, then to each other's faces and hair-partings, wishing one another long and blessed married life",
+        "Darpan Bisarjan: The Goddess's reflection is shown in a mirror or vessel of water — the symbolic taking of leave before the physical immersion",
+        "Bisarjan (Immersion) Procession: The clay idols are carried in grand procession with dhaak drums, conch shells, cymbals, and devotional chants, to the cry of 'Aschhe bochhor abar hobe' — it will happen again next year",
+        "Bijoya Greetings: In the evening, the young touch elders' feet, kolakuli embraces and sweets are exchanged, and 'Shubho Bijoya' greetings carry the festival to its close"
       ],
-      "mantra": "",
+      "mantra": "या देवी सर्वभूतेषु शान्तिरूपेण संस्थिता । नमस्तस्यै नमस्तस्यै नमस्तस्यै नमो नमः ॥ \n\n(Ya devi sarvabhuteshu shanti-rupena samsthita, namas tasyai namas tasyai namas tasyai namo namah — salutation to the Devi who dwells in all beings as peace, the fitting farewell verse)",
       "fasting": ""
     },
     "media": {
@@ -2425,11 +2941,12 @@
     "id": "dussehra",
     "name": "Dussehra / Vijayadashami",
     "category": "major",
+    "displayPriority": 3,
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "विजयादशमी",
       "nameEnglish": "Dussehra / Vijayadashami",
-      "nameHindi": "दशहरा",
-      "nameBengali": "দশহরা / বিজয়াদশমী",
+      "nameHindi": "विजयादशमी / दशहरा",
+      "nameBengali": "বিজয়াদশমী / দশহরা",
       "nameTelugu": "విజయదశమి",
       "nameKannada": "ವಿಜಯದಶಮಿ",
       "nameTamil": "விஜயதசமி",
@@ -2437,11 +2954,11 @@
     },
     "visuals": {
       "image": "",
-      "theme_color": "red, saffron, orange"
+      "theme_color": ""
     },
     "purpose": {
-      "description": "Vijayadashami is celebrated as victory of Lord Rama over Demon Ravana. Vijayadashami is also known as Dussehra or Dasara",
-      "addtional_description": "Vijayadashami is the tenth and final day of Sharad Navratri. The festival derives its name from 'Vijay' (victory) and 'Dashami' (tenth), meaning 'the day of victory'.\n\n**Dual Significance:**\n**Lord Rama's Victory:** Commemorates Rama's triumph over the ten-headed demon king Ravana, who had abducted Rama's wife Sita, as described in the Ramayana epic.\n**Goddess Durga's Victory:** In eastern and southern India, marks Durga's slaying of the buffalo demon Mahishasura after nine days of battle"
+      "description": "The tenth and final day of Sharad Navratri — victory of Rama over Ravana, of Durga over Mahishasura, and the triumph of good over evil",
+      "addtional_description": "Vijayadashami is the tenth and final day of Sharad Navratri, and both its names carry the same meaning: Vijayadashami from 'vijaya' (victory) and 'dashami' (tenth) — the day of victory — and Dussehra from the Sanskrit 'dasha-hara', the removal of ten, read both as Ravana's ten heads and as the ten vices the festival asks one to burn within oneself.\n\nIts significance is twofold. In the Ramayana tradition of North India, this is the day Lord Rama defeated the ten-headed demon king Ravana who had abducted Sita — celebrated through nine nights of Ramlila theatre and the burning of towering effigies. In the eastern and southern traditions, it is the day Goddess Durga slew the buffalo demon Mahishasura after nine days of battle; in Bengal it is at once her day of victory and her day of farewell, when she is sent home with vermilion, tears, and the promise of return.\n\nSouth India gives the day its own distinctive colour: the worship of the instruments of one's work and learning. Ayudha Puja honours tools, vehicles, machines and books as vessels of the divine; Vidyarambham initiates small children into learning, their first letters written in rice; and the Shami tree is worshipped — for it was on a Shami that the Pandavas hid their weapons during exile, retrieving them on this very day to begin their campaign of victory. Across all regions, Vijayadashami is counted among the most auspicious days of the year to begin any new venture."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2452,19 +2969,14 @@
     },
     "rituals": {
       "steps": [
-        "North India - Rama's Victory Celebrations:",
-        "Ramlila Performances: Dramatic enactments of Ramayana story over 9 days, culminating with Ravana's defeat.",
-        "Ravana Dahan: Burning of giant effigies of Ravana, Kumbhakarna, and Meghnad symbolizing destruction of evil.",
-        "Aparajita Puja: Worship of invincible goddess for victory and success",
-        "South India - Knowledge and Tools Worship:",
-        "Ayudha Puja: Worship of tools, instruments, books, and vehicles - honoring divine in implements of work",
-        "Vidyarambham/Aksharabhyasam: Initiation of children into education - writing \"Om\" on rice",
-        "Shami Puja: Worship of Shami (Jammi) tree, recalling Pandavas retrieving hidden weapons",
-        "Jammi Leaf Exchange: Exchanging Shami leaves as \"gold\" custom",
-        "Eastern India - Durga's Departure:",
-        "Durga Visarjan: Grand procession carrying clay idols to river for immersion",
-        "Sindoor Khela: Married women smear vermilion while bidding farewell to Goddess Durga",
-        "Bishorjon: Immersion ceremony marking end of Durga Puja"
+        "Ramlila Performances (North India): Nine days of dramatic enactment of the Ramayana reach their climax with Ravana's defeat",
+        "Ravana Dahan (North India): Giant effigies of Ravana, Kumbhakarna and Meghnad are burnt at dusk, to fireworks and cheering crowds, symbolising the destruction of evil",
+        "Aparajita Puja (North India): Worship of Aparajita, the invincible Goddess, for victory and success in one's undertakings",
+        "Ayudha Puja (South India): Tools, instruments, machines, vehicles and books are cleaned, decorated, and worshipped — honouring the divine in the implements of one's work",
+        "Vidyarambham / Aksharabhyasam (South India): Small children are initiated into learning, writing their first letters — traditionally 'Om' traced in a plate of rice grains",
+        "Shami Puja and Leaf Exchange (South and West India): The Shami tree is worshipped, recalling the Pandavas retrieving their hidden weapons on this day; its leaves are exchanged as gold",
+        "Devi Baran and Sindoor Khela (Bengal): Married women bid farewell to the Goddess with bel leaves, paddy and vermilion, and play sindoor with one another before her departure",
+        "Bisharjan (Bengal and East India): The clay idols of Durga are carried in grand procession with dhaak drums and immersed, closing Durga Puja with the cry of 'Aschhe bochhor abar hobe'"
       ],
       "mantra": "",
       "fasting": ""
@@ -2478,18 +2990,18 @@
     "name": "Kojagori Puja",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "कोजागरी लक्ष्मी पूजा",
       "nameEnglish": "Kojagori Puja",
       "nameHindi": "कोजागरी पूजा",
-      "nameBengali": "",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameBengali": "কোজাগরী লক্ষ্মী পূজা",
+      "nameTelugu": "కోజాగరి పూజ",
+      "nameKannada": "ಕೋಜಾಗರಿ ಪೂಜೆ",
+      "nameTamil": "கோஜாகரி பூஜை",
+      "nameMalayalam": "കോജാഗരി പൂജ"
     },
     "purpose": {
       "description": "Kojagari Puja is one of the major festivals celebrated in West Bengal, Odisha and Assam. A special worship of Goddess Lakshmi is performed on this day",
-      "addtional_description": "Meaning of \"Kojagara\": The term comes from the Sanskrit phrase \"Ko Jagarti?\" meaning \"Who is awake?\" - reflecting the core belief that Goddess Lakshmi visits Earth on this night and asks \"Who is awake?\" blessing only those who remain vigilant in devotion. \n\nAccording to the Kojagara Vrat Story, Goddess Lakshmi visits the world on the night of Ashwin Purnima and She bestows wealth and prosperity on those devotees who are awakened on this night."
+      "addtional_description": "Kojagori Puja (also spelled Kojagari or Kojagara) is the special worship of Goddess Lakshmi on the full-moon night of Ashwin — the Sharad Purnima — observed across West Bengal, Odisha and Assam. The name comes from the Sanskrit 'Ko jagarti?' — 'Who is awake?' — and holds the festival's whole belief: on this night Lakshmi descends to earth and wanders from house to house asking the question, blessing with wealth and prosperity only those she finds awake in devotion. To be found sleeping is to miss her visit for the year.\n\nThe Bengali observance begins at dusk, when courtyards and thresholds are decorated with alpona — patterns painted in white rice paste, including the Goddess's footprints walking into the house. Lakshmi is worshipped at night with paddy (dhan), lotus, coins and gold, sugarcane and sweets, accompanied by the owl, her mount. The signature offering is khiri — kheer or payesh — which is placed under the open sky: the full moon of Sharad Purnima is believed to drip amrita, nectar, into it, and the moon-blessed kheer is eaten as prasad the next morning.\n\nBecause the Goddess must find the household awake, families traditionally keep vigil through the night — playing cards, carrom or dice until dawn, a custom that has made Kojagari a night of indoor festivity as much as worship. In Odisha the same full moon is also celebrated as Kumar Purnima, when unmarried girls worship the moon for a good husband, and across North India the identical kheer-under-moonlight tradition marks Sharad Purnima — the year's most beautiful moon, celebrated wherever it is seen."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2499,10 +3011,14 @@
     },
     "rituals": {
       "steps": [
-        "Lakshmi Puja"
+        "Alpona: At dusk, courtyards and thresholds are painted with white rice-paste patterns — lotus motifs and the Goddess's footprints walking into the home",
+        "Lakshmi Puja: At night, the Goddess is worshipped with paddy (dhan), lotus, coins and gold, sugarcane, and sweets, with her owl mount beside her",
+        "Khiri Bhog: Kheer or payesh is offered to Lakshmi and then placed under the open full moon, believed to receive the moon's nectar overnight",
+        "Night Vigil: The family stays awake through the night — traditionally over games of cards, carrom, or dice — so that Lakshmi, asking 'Who is awake?', finds them alert",
+        "Morning Prasad: The moon-blessed kheer is distributed among family and neighbours as prasad"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "नमस्तेऽस्तु महामाये श्रीपीठे सुरपूजिते । शङ्खचक्रगदाहस्ते महालक्ष्मि नमोऽस्तुते ॥ \n\n(Namastestu mahamaye shree-pithe sura-pujite, shankha-chakra-gada-haste Mahalakshmi namostute — salutation to Mahamaya, enthroned in abundance, holding conch, discus and mace)",
+      "fasting": "Devotees observing the Kojagara vrat keep a day-long fast, taking food — traditionally the moon-blessed kheer — only after the night's Lakshmi Puja is complete"
     }
   },
   {
@@ -2510,22 +3026,22 @@
     "name": "Sharad Purnima",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "शरद् पूर्णिमा",
       "nameEnglish": "Sharad Purnima",
       "nameHindi": "शरद पूर्णिमा",
       "nameBengali": "শরদ পূর্ণিমা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "శరద్ పౌర్ణమి",
+      "nameKannada": "ಶರದ್ ಪೌರ್ಣಮಿ",
+      "nameTamil": "சரத் பௌர்ணமி",
+      "nameMalayalam": "ശരദ് പൗർണമി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Brightest full moon - Krishna's Raas Leela night",
-      "addtional_description": ""
+      "description": "The fullest, brightest moon of the year — the night of Krishna's Maha Raas with the gopis, and of kheer set out to catch the moon's nectar",
+      "addtional_description": "Sharad Purnima is the full moon of the Ashwin month, and by common reckoning the most beautiful moon of the year: the monsoon has washed the skies clean, the moon is near the earth, and it is said to shine on this night with all sixteen of its kalas — its phases — complete. The night is traditionally called the Kaumudi celebration, the festival of moonlight, and the moon's rays are believed to be charged with amrita, nectar — a belief Ayurveda honours by prescribing moonlight exposure as healing.\n\nIt is also the night, says the Bhagavata tradition, of Krishna's Maha Raas: the night Krishna multiplied himself to dance with every gopi of Braj under the full moon in Vrindavan — which is why this full moon is also called Raas Purnima, and why night-long Raas Leela performances fill the temples of Vrindavan and Nathdwara on this date. In Gujarat the same moon is danced under as raas-garba; in Odisha it is Kumar Purnima, when unmarried girls worship the moon; and in Bengal it is Kojagori Lakshmi Puja, when the Goddess walks the earth asking 'Who is awake?' — one moon, many doors into the same night.\n\nThe best-known household observance is the kheer: rice cooked in milk and sugar, placed on the terrace or courtyard under the open moon for the night, so that the moon's nectar may fall upon it. It is eaten as prasad the next morning, and families gather through the night to keep it company — the quiet Indian tradition of simply being awake with a beautiful moon."
     },
     "panchang_rules": {
       "masa": "Ashwin",
@@ -2535,12 +3051,13 @@
     },
     "rituals": {
       "steps": [
-        "Moon gazing",
-        "Kheer under moonlight",
-        "Lakshmi Puja",
-        "Night celebration"
+        "Moonrise Darshan: The full moon is greeted as it rises — the year's most complete moon, believed to hold all sixteen kalas",
+        "Kheer Under the Moon: Rice kheer is prepared and left overnight on the terrace or courtyard under the open sky, to receive the moon's nectar; it is eaten as prasad the next morning",
+        "Lakshmi Puja: In eastern India the night is observed as Kojagari Lakshmi Puja, with worship of the Goddess who blesses those she finds awake",
+        "Raas Leela: Night-long dance-drama performances of Krishna's Maha Raas are staged in the temples of Braj and Vaishnava centres; in Gujarat the night belongs to raas-garba",
+        "Night Vigil: Families keep watch together through the moonlit night — the simplest and oldest observance of Sharad Purnima"
       ],
-      "mantra": "",
+      "mantra": "ॐ नमो भगवते वासुदेवाय \n\n(Om Namo Bhagavate Vasudevaya — the twelve-syllable salutation to Krishna, befitting the night of the Maha Raas)",
       "fasting": ""
     },
     "media": {
@@ -3356,10 +3873,11 @@
       "addtional_description": ""
     },
     "panchang_rules": {
-      "masa": "Thai",
-      "paksha": "Shukla",
-      "tithi": 15,
-      "conditions": "Purnima"
+      "masa": "Pausha",
+      "paksha": "*",
+      "tithi": 0,
+      "conditions": "Solar",
+      "solarDate": "01-14"
     },
     "rituals": {
       "steps": [

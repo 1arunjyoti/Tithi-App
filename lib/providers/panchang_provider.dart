@@ -6,6 +6,7 @@ import 'package:hive/hive.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
+import '../services/festival_matching_pipeline.dart';
 import '../services/panchang_service.dart';
 import '../services/storage_service.dart';
 import '../services/sunrise_calculator.dart';
@@ -207,25 +208,34 @@ Future<({int toIndex, DateTime at})?> findSunriseTithiTransition({
   return (toIndex: to, at: high);
 }
 
-/// Computes [PanchangData] for a single normalised date.
-/// All five tithi checkpoints (sunrise, madhyahna, aparahna, nishita,
-/// nextSunrise) are resolved through [_resolveTithiPoint] so results are
-/// automatically cached to / served from the Hive panchang cache box.
+/// All five intraday tithi checkpoints plus the instants they were sampled at.
 ///
-/// When [includeTransition] is true, the first tithi boundary after sunrise
-/// is also located (via [findSunriseTithiTransition], bracketed by the five
-/// checkpoints and refined by bisection) so the day can show two tithis
-/// ("Ashtami → Navami"). This costs extra ephemeris calls, so only the
-/// single-day path enables it — the month batch leaves it off.
-Future<PanchangData> computePanchangData({
+/// Extracted so the single-day path can reuse the month batch's results:
+/// the month map is the single source of truth for festival matches, and the
+/// single-day view only resolves the daytime transition on top of it.
+typedef TithiCheckpoints = ({
+  DateTime sunriseTime,
+  DateTime sunsetTime,
+  DateTime nextSunriseTime,
+  DateTime madhyahnaTime,
+  DateTime aparahnaTime,
+  DateTime nishitaTime,
+  DateTime dominantTime,
+  double rawTithi,
+  double rawTithiMadhyahna,
+  double rawTithiAparahna,
+  double rawTithiNishita,
+  double rawTithiNextSunrise,
+  double rawTithiDominant,
+});
+
+/// Resolves the five cached tithi checkpoints for [normalizedDate].
+Future<TithiCheckpoints> resolveTithiCheckpoints({
   required DateTime normalizedDate,
   required PanchangService service,
-  required List<Festival> festivals,
-  required HinduMonthSystem monthSystem,
   required double latitude,
   required double longitude,
   required Box<dynamic> cacheBox,
-  bool includeTransition = false,
 }) async {
   final sunriseTime = SunriseCalculator.calculateSunriseIST(
     date: normalizedDate, latitude: latitude, longitude: longitude,
@@ -247,6 +257,9 @@ Future<PanchangData> computePanchangData({
   final nishitaTime = sunsetTime.add(
     Duration(minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2),
   );
+  // Dominant-tithi checkpoint (Drik grace): the instant up to which a tithi
+  // beginning after sunrise still counts for this Gregorian day.
+  final dominantTime = sunriseTime.add(kDominantTithiGrace);
 
   final rawTithi = await _resolveTithiPoint(
     cacheBox, normalizedDate, latitude, longitude, service, sunriseTime,
@@ -267,6 +280,122 @@ Future<PanchangData> computePanchangData({
     cacheBox, normalizedDate, latitude, longitude, service, nextSunriseTime,
     suffix: 'nextSunrise',
   );
+  final rawTithiDominant = await _resolveTithiPoint(
+    cacheBox, normalizedDate, latitude, longitude, service, dominantTime,
+    suffix: 'dominant',
+  );
+
+  return (
+    sunriseTime: sunriseTime,
+    sunsetTime: sunsetTime,
+    nextSunriseTime: nextSunriseTime,
+    madhyahnaTime: madhyahnaTime,
+    aparahnaTime: aparahnaTime,
+    nishitaTime: nishitaTime,
+    dominantTime: dominantTime,
+    rawTithi: rawTithi,
+    rawTithiMadhyahna: rawTithiMadhyahna,
+    rawTithiAparahna: rawTithiAparahna,
+    rawTithiNishita: rawTithiNishita,
+    rawTithiNextSunrise: rawTithiNextSunrise,
+    rawTithiDominant: rawTithiDominant,
+  );
+}
+
+/// Locates the end of the sunrise tithi (first tithi boundary after
+/// [checkpoints].sunriseTime) so squeeze cases still surface both tithis.
+/// Best-effort — null means the day shows its single udaya tithi as before.
+/// Positive results persist in [cacheBox] (same location-scoped keys as the
+/// tithi checkpoints) so repeat visits are zero-FFI.
+Future<({DateTime? at, int? index})> resolveDayTransition({
+  required DateTime normalizedDate,
+  required PanchangService service,
+  required double latitude,
+  required double longitude,
+  required Box<dynamic> cacheBox,
+  required TithiCheckpoints checkpoints,
+}) async {
+  final transTimeKey =
+      _cacheKey(normalizedDate, latitude, longitude, 'transitionTime');
+  final transIndexKey =
+      _cacheKey(normalizedDate, latitude, longitude, 'transitionIndex');
+  final cachedTime = cacheBox.get(transTimeKey);
+  final cachedIndex = cacheBox.get(transIndexKey);
+  if (cachedTime is int && cachedIndex is int) {
+    final at = DateTime.fromMillisecondsSinceEpoch(cachedTime);
+    if (cachedIndex >= 1 &&
+        cachedIndex <= 30 &&
+        at.isAfter(checkpoints.sunriseTime) &&
+        !at.isAfter(checkpoints.nextSunriseTime)) {
+      return (at: at, index: cachedIndex);
+    }
+  }
+  try {
+    final found = await findSunriseTithiTransition(
+      sunrise: checkpoints.sunriseTime,
+      nextSunrise: checkpoints.nextSunriseTime,
+      rawTithiAtSunrise: checkpoints.rawTithi,
+      segments: [
+        (time: checkpoints.sunriseTime, rawTithi: checkpoints.rawTithi),
+        (time: checkpoints.madhyahnaTime, rawTithi: checkpoints.rawTithiMadhyahna),
+        (time: checkpoints.aparahnaTime, rawTithi: checkpoints.rawTithiAparahna),
+        (time: checkpoints.nishitaTime, rawTithi: checkpoints.rawTithiNishita),
+        (time: checkpoints.nextSunriseTime, rawTithi: checkpoints.rawTithiNextSunrise),
+      ],
+      getRawTithi: (t) => service.calculateTithi(
+        t, latitude: latitude, longitude: longitude,
+      ),
+    );
+    if (found != null) {
+      await cacheBox.put(
+        transTimeKey,
+        found.at.millisecondsSinceEpoch,
+      );
+      await cacheBox.put(transIndexKey, found.toIndex);
+    }
+    return (at: found?.at, index: found?.toIndex);
+  } catch (e) {
+    debugPrint('Tithi transition search skipped: $e');
+    return (at: null, index: null);
+  }
+}
+
+/// Computes [PanchangData] for a single normalised date.
+/// All five tithi checkpoints (sunrise, madhyahna, aparahna, nishita,
+/// nextSunrise) are resolved through [_resolveTithiPoint] so results are
+/// automatically cached to / served from the Hive panchang cache box.
+///
+/// When [includeTransition] is true, the first tithi boundary after sunrise
+/// is also located (via [findSunriseTithiTransition], bracketed by the five
+/// checkpoints and refined by bisection) so the day can show two tithis
+/// ("Ashtami → Navami"). This costs extra ephemeris calls, so only the
+/// single-day path enables it — the month batch leaves it off.
+Future<PanchangData> computePanchangData({
+  required DateTime normalizedDate,
+  required PanchangService service,
+  required List<Festival> festivals,
+  required HinduMonthSystem monthSystem,
+  required double latitude,
+  required double longitude,
+  required Box<dynamic> cacheBox,
+  bool includeTransition = false,
+}) async {
+  final TithiCheckpoints checkpoints = await resolveTithiCheckpoints(
+    normalizedDate: normalizedDate,
+    service: service,
+    latitude: latitude,
+    longitude: longitude,
+    cacheBox: cacheBox,
+  );
+  final sunriseTime = checkpoints.sunriseTime;
+  final sunsetTime = checkpoints.sunsetTime;
+  final nextSunriseTime = checkpoints.nextSunriseTime;
+  final rawTithi = checkpoints.rawTithi;
+  final rawTithiMadhyahna = checkpoints.rawTithiMadhyahna;
+  final rawTithiAparahna = checkpoints.rawTithiAparahna;
+  final rawTithiNishita = checkpoints.rawTithiNishita;
+  final rawTithiNextSunrise = checkpoints.rawTithiNextSunrise;
+  final rawTithiDominant = checkpoints.rawTithiDominant;
 
   // PERF-1: Cache masa computation by date to avoid redundant FFI + astronomical
   // calculations. Masa rarely changes between consecutive days.
@@ -291,66 +420,45 @@ Future<PanchangData> computePanchangData({
   );
   await cacheBox.put(masaNextCacheKey, masaNextSunrise);
 
+  // Nakshatra at sunrise (for nakshatra-conditioned festivals such as
+  // Saraswati Avahan on Mula). Computed only when some festival needs it —
+  // otherwise the extra Moon FFI call per day is skipped. Hive-cached like
+  // the tithi checkpoints.
+  String? nakshatraAtSunrise;
+  if (festivals.any((f) => f.nakshatraCondition != null)) {
+    final nakKey = _cacheKey(normalizedDate, latitude, longitude, 'nakshatra');
+    final cachedNak = cacheBox.get(nakKey);
+    if (cachedNak is String && hinduNakshatras.contains(cachedNak)) {
+      nakshatraAtSunrise = cachedNak;
+    } else {
+      nakshatraAtSunrise = await service.calculateNakshatra(
+        sunriseTime, latitude: latitude, longitude: longitude,
+      );
+      if (nakshatraAtSunrise != null) {
+        await cacheBox.put(nakKey, nakshatraAtSunrise);
+      }
+    }
+  }
+
   // Daytime transition (single-day path only): locate the end of the
   // sunrise tithi so squeeze cases (short tithi touching no sunrise)
   // still surface both tithis. Best-effort — a null result simply means
-  // the day shows its single udaya tithi as before.
-  //
-  // Positive results persist in the Hive cache box (same location-scoped
-  // keys as the tithi checkpoints): without this, every tap on a
-  // transition day re-ran the ~18-call FFI bisection, and the card visibly
-  // flashed when the month-batch preview (no transition) swapped for the
-  // resolved data. Repeat visits are now zero-FFI and identical, so no
-  // swap is perceptible. (No-transition days need no entry: the
-  // checkpoint scan already returns null with zero FFI calls.)
+  // the day shows its single udaya tithi as before. Shared with the
+  // single-day provider (month batch skips this for speed); see
+  // resolveDayTransition.
   DateTime? transitionTime;
   int? transitionIndex;
   if (includeTransition) {
-    final transTimeKey =
-        _cacheKey(normalizedDate, latitude, longitude, 'transitionTime');
-    final transIndexKey =
-        _cacheKey(normalizedDate, latitude, longitude, 'transitionIndex');
-    final cachedTime = cacheBox.get(transTimeKey);
-    final cachedIndex = cacheBox.get(transIndexKey);
-    if (cachedTime is int && cachedIndex is int) {
-      final at = DateTime.fromMillisecondsSinceEpoch(cachedTime);
-      if (cachedIndex >= 1 &&
-          cachedIndex <= 30 &&
-          at.isAfter(sunriseTime) &&
-          !at.isAfter(nextSunriseTime)) {
-        transitionTime = at;
-        transitionIndex = cachedIndex;
-      }
-    } else {
-      try {
-        final found = await findSunriseTithiTransition(
-          sunrise: sunriseTime,
-          nextSunrise: nextSunriseTime,
-          rawTithiAtSunrise: rawTithi,
-          segments: [
-            (time: sunriseTime, rawTithi: rawTithi),
-            (time: madhyahnaTime, rawTithi: rawTithiMadhyahna),
-            (time: aparahnaTime, rawTithi: rawTithiAparahna),
-            (time: nishitaTime, rawTithi: rawTithiNishita),
-            (time: nextSunriseTime, rawTithi: rawTithiNextSunrise),
-          ],
-          getRawTithi: (t) => service.calculateTithi(
-            t, latitude: latitude, longitude: longitude,
-          ),
-        );
-        transitionTime = found?.at;
-        transitionIndex = found?.toIndex;
-        if (found != null) {
-          await cacheBox.put(
-            transTimeKey,
-            found.at.millisecondsSinceEpoch,
-          );
-          await cacheBox.put(transIndexKey, found.toIndex);
-        }
-      } catch (e) {
-        debugPrint('Tithi transition search skipped: $e');
-      }
-    }
+    final found = await resolveDayTransition(
+      normalizedDate: normalizedDate,
+      service: service,
+      latitude: latitude,
+      longitude: longitude,
+      cacheBox: cacheBox,
+      checkpoints: checkpoints,
+    );
+    transitionTime = found.at;
+    transitionIndex = found.index;
   }
 
   return PanchangData.fromRawTithi(
@@ -366,6 +474,8 @@ Future<PanchangData> computePanchangData({
     rawTithiNishita: rawTithiNishita,
     rawTithiNextSunrise: rawTithiNextSunrise,
     masaNextSunrise: masaNextSunrise,
+    nakshatraAtSunrise: nakshatraAtSunrise,
+    rawTithiDominant: rawTithiDominant,
     tithiTransitionTime: transitionTime,
     transitionTithiIndex: transitionIndex,
   );
@@ -392,7 +502,14 @@ final panchangInitProvider = FutureProvider<void>((ref) async {
   await service.init();
 });
 
-/// Provider for panchang data of a specific date
+/// Provider for panchang data of a specific date.
+///
+/// Single source of truth for festival matches: the Vriddhi-filtered month
+/// map ([monthlyPanchangProvider]). This provider reads the day's entry from
+/// there — never matching independently — and only resolves the daytime
+/// tithi transition on top (the month batch skips that search for speed).
+/// On cold start / deep-link the month batch loads first (~30 Hive-cached
+/// FFI reads); the direct-compute fallback below runs only if that fails.
 final panchangForDateProvider = FutureProvider.autoDispose
     .family<PanchangData, DateTime>((ref, date) async {
       // Ensure service is initialized
@@ -401,16 +518,54 @@ final panchangForDateProvider = FutureProvider.autoDispose
       await ref.watch(festivalInitProvider.future);
 
       final service = ref.read(panchangServiceProvider);
-      final festivals = ref.read(festivalProvider);
-      final monthSystem = ref.watch(hinduMonthSystemProvider);
-
       final coords = ref.watch(resolvedCoordinatesProvider);
       final latitude = coords.latitude;
       final longitude = coords.longitude;
       final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
+      final normalized = DateTime(date.year, date.month, date.day);
+      try {
+        final monthData = await ref.watch(
+          monthlyPanchangProvider(DateTime(normalized.year, normalized.month))
+              .future,
+        );
+        final entry = monthData[normalized];
+        if (entry != null) {
+          // Month batch skips the transition search: resolve it here for the
+          // two-tithi display ("Ashtami → Navami") on squeeze days.
+          final checkpoints = await resolveTithiCheckpoints(
+            normalizedDate: normalized,
+            service: service,
+            latitude: latitude,
+            longitude: longitude,
+            cacheBox: cacheBox,
+          );
+          final transition = await resolveDayTransition(
+            normalizedDate: normalized,
+            service: service,
+            latitude: latitude,
+            longitude: longitude,
+            cacheBox: cacheBox,
+            checkpoints: checkpoints,
+          );
+          final data = (transition.at == null || transition.index == null)
+              ? entry.copyWith(clearTransition: true)
+              : entry.copyWith(
+                  tithiTransitionTime: transition.at,
+                  transitionTithiIndex: transition.index,
+                );
+          // Feed the stale-UI LRU so date taps render instantly next time.
+          storePanchangUiSync(date, data);
+          return data;
+        }
+      } catch (e) {
+        debugPrint('Month-map single-day lookup failed, falling back: $e');
+      }
+
+      final festivals = ref.read(festivalProvider);
+      final monthSystem = ref.watch(hinduMonthSystemProvider);
       final data = await computePanchangData(
-        normalizedDate: DateTime(date.year, date.month, date.day),
+        normalizedDate: normalized,
         service: service,
         festivals: festivals,
         monthSystem: monthSystem,
@@ -419,6 +574,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
         cacheBox: cacheBox,
         // Single-day detail: also locate the daytime tithi transition so
         // squeeze cases show two tithis (month batch skips this for speed).
+        // NOTE: this fallback path is unfiltered for Vriddhi; it runs only
+        // when the month map itself failed to load.
         includeTransition: true,
       );
       // Feed the stale-UI LRU so date taps render instantly next time.
@@ -485,17 +642,14 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
         Duration(days: 7 - (lastDayOfMonth.weekday % 7)),
       );
 
-      final dates = <DateTime>[];
-      for (
-        var date = startDate;
-        date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
-        date = date.add(const Duration(days: 1))
-      ) {
-        dates.add(DateTime(date.year, date.month, date.day));
-      }
-
+      // Grid dates are derived from [startDate]/[endDate] below; the
+      // computation set is padded by 2 days for Vriddhi edge runs.
       const batchSize = 8;
-      final monthData = <DateTime, PanchangData>{};
+      // Full computation map, padded by 2 days on each side: Vriddhi runs
+      // can straddle the grid edge, and trimming a run without its neighbor
+      // would keep the wrong day. Padding days are Hive-cached, so the cost
+      // is ~zero on repeat visits. Only grid dates are returned.
+      final fullData = <DateTime, PanchangData>{};
 
       Future<MapEntry<DateTime, PanchangData>> computeDateEntry(
         DateTime normalizedDate,
@@ -514,15 +668,40 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
         );
       }
 
-      for (var i = 0; i < dates.length; i += batchSize) {
-        final end = (i + batchSize) > dates.length
-            ? dates.length
+      final paddedStart = startDate.subtract(const Duration(days: 2));
+      final paddedEnd = endDate.add(const Duration(days: 2));
+      final allDates = <DateTime>[];
+      for (
+        var date = paddedStart;
+        date.isBefore(paddedEnd) || date.isAtSameMomentAs(paddedEnd);
+        date = date.add(const Duration(days: 1))
+      ) {
+        allDates.add(DateTime(date.year, date.month, date.day));
+      }
+
+      for (var i = 0; i < allDates.length; i += batchSize) {
+        final end = (i + batchSize) > allDates.length
+            ? allDates.length
             : i + batchSize;
-        final batch = dates.sublist(i, end);
+        final batch = allDates.sublist(i, end);
         final entries = await Future.wait(batch.map(computeDateEntry));
         for (final entry in entries) {
-          monthData[entry.key] = entry.value;
+          fullData[entry.key] = entry.value;
         }
+      }
+
+      // Single code path for Vriddhi trimming: the month map (padded) is
+      // filtered once here; every consumer reads the filtered result.
+      final filtered = applyVriddhiFilter(fullData);
+      final monthData = <DateTime, PanchangData>{};
+      for (
+        var date = startDate;
+        date.isBefore(endDate) || date.isAtSameMomentAs(endDate);
+        date = date.add(const Duration(days: 1))
+      ) {
+        final key = DateTime(date.year, date.month, date.day);
+        final value = filtered[key];
+        if (value != null) monthData[key] = value;
       }
 
       return monthData;

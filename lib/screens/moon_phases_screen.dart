@@ -1,12 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/moon_phase_provider.dart';
+import '../providers/panchang_provider.dart';
 import '../services/moon_phase_service.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/moon_animation_widget.dart';
 import '../theme/app_theme.dart';
+
+/// Scrub offset in days from today for the hero moon. 0 = today.
+final moonScrubOffsetProvider = StateProvider.autoDispose<int>((ref) => 0);
+
+/// Scrub range in days. Panchang month batches are Hive-cached, so stepping
+/// through these dates stays cheap (no per-step ephemeris work).
+const int moonScrubRangeDays = 15;
+
+/// Clamps a scrub offset into the supported range.
+int clampMoonScrubOffset(int value) =>
+    value.clamp(-moonScrubRangeDays, moonScrubRangeDays);
 
 /// Full-screen moon phases view with detailed countdown and upcoming dates
 class MoonPhasesScreen extends ConsumerStatefulWidget {
@@ -19,6 +33,7 @@ class MoonPhasesScreen extends ConsumerStatefulWidget {
 class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  double _dragAccum = 0;
 
   @override
   void initState() {
@@ -31,6 +46,31 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  /// Accumulates horizontal drag distance into whole-day scrub steps.
+  void _scrubBy(double dx) {
+    _dragAccum += dx;
+    const pixelsPerDay = 28.0;
+    final steps = (_dragAccum / pixelsPerDay).truncate();
+    if (steps == 0) return;
+    _dragAccum -= steps * pixelsPerDay;
+    final current = ref.read(moonScrubOffsetProvider);
+    final next = clampMoonScrubOffset(current + steps);
+    if (next != current) {
+      ref.read(moonScrubOffsetProvider.notifier).state = next;
+    }
+  }
+
+  /// Snaps the hero moon back to today.
+  void _resetScrub() {
+    _dragAccum = 0;
+    if (ref.read(moonScrubOffsetProvider) != 0) {
+      if (ref.read(accessibilityProvider).hapticFeedback) {
+        HapticFeedback.lightImpact();
+      }
+      ref.read(moonScrubOffsetProvider.notifier).state = 0;
+    }
   }
 
   @override
@@ -48,6 +88,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
+          dividerColor: Colors.transparent,
           tabs: [
             Tab(text: l10n.purnima),
             Tab(text: l10n.amavasya),
@@ -70,34 +111,34 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
           ),
           SafeArea(
             child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: moonPhaseAsync.when(
-                data: (data) => _buildContent(context, data, l10n, isDark),
-                loading: () =>
-                    const Center(child: CircularProgressIndicator.adaptive()),
-                error: (e, _) => Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 48,
-                        color: theme.colorScheme.error,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(l10n.errorLoadingData),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () => ref.refresh(moonPhaseDataProvider),
-                        child: Text(l10n.retry),
-                      ),
-                    ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: moonPhaseAsync.when(
+                  data: (data) => _buildContent(context, data, l10n, isDark),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator.adaptive()),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: theme.colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(l10n.errorLoadingData),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: () => ref.refresh(moonPhaseDataProvider),
+                          child: Text(l10n.retry),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           ),
         ],
       ),
@@ -110,23 +151,123 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
     AppLocalizations l10n,
     bool isDark,
   ) {
+    // Scrubbed day: stale-while-reloading keeps moon, labels and illumination
+    // self-consistent while the next day's panchang resolves (same pattern
+    // as the Daily Wisdom card).
+    final offset = ref.watch(moonScrubOffsetProvider);
+    final now = DateTime.now();
+    final shownDate = DateTime(now.year, now.month, now.day + offset);
+    final dayPanchang = ref
+        .watch(panchangForDateProvider(shownDate))
+        .valueOrNull;
+    final bool shownWaxing = dayPanchang != null
+        ? dayPanchang.paksha == 'Shukla'
+        : data.isShukla;
+    // Painter phase is a lit fraction (0 = new, 1 = full), not a day count.
+    final double targetPhase = dayPanchang != null
+        ? MoonPhaseService.illuminationFractionForDay(
+            tithiNumber: dayPanchang.tithiNumber,
+            isShukla: shownWaxing,
+            rawTithi: dayPanchang.rawTithi,
+          )
+        : ref
+                  .read(moonPhaseServiceProvider)
+                  .getMoonIllumination(data.currentTithi) /
+              100.0;
+    final double illumination01 = targetPhase;
+
     return Column(
       children: [
         const SizedBox(height: 16),
-        // Large moon visualization - wrapped in RepaintBoundary for performance
+        // Scrubbable moon visualization - wrapped in RepaintBoundary for performance
         RepaintBoundary(
           child: Semantics(
             label: l10n.currentMoonPhase,
-            child: SizedBox(
-              height: 180,
-              width: 180,
-              child: Hero(
-                tag: 'moon_icon',
-                child: MoonAnimationWidget(
-                  phase:
-                      (data.currentTithi - 1.0) /
-                      30.0, // Maps 1.0-31.0 -> 0.0-1.0
-                  isWaxing: data.isShukla,
+            child: Listener(
+              key: const ValueKey('moon-scrub-area'),
+              // Raw pointer moves (not a drag recognizer): they bypass the
+              // gesture arena, so scrubbing coexists with the double-tap
+              // reset. A HorizontalDragGestureRecognizer starves here —
+              // the double-tap tracker holds the arena and drag updates
+              // never resolve.
+              behavior: HitTestBehavior.opaque,
+              onPointerMove: (event) => _scrubBy(event.delta.dx),
+              onPointerUp: (_) => _dragAccum = 0,
+              onPointerCancel: (_) => _dragAccum = 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onDoubleTap: _resetScrub,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 168,
+                      width: 168,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amber.withValues(
+                              alpha: 0.10 + 0.40 * illumination01,
+                            ),
+                            blurRadius: 24 + 36 * illumination01,
+                          ),
+                        ],
+                      ),
+                      child: Hero(
+                        tag: 'moon_icon',
+                        child: TweenAnimationBuilder<double>(
+                          duration: AppTheme.animationDuration(
+                            context,
+                            const Duration(milliseconds: 350),
+                          ),
+                          tween: Tween<double>(end: targetPhase),
+                          builder: (context, phase, _) => MoonAnimationWidget(
+                            phase: phase,
+                            isWaxing: shownWaxing,
+                            size: 168,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      offset == 0
+                          ? l10n.today
+                          : DateFormat.yMMMd().format(shownDate),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    // Fixed-height slot: swapping tithi/hint/empty while
+                    // scrubbing must not move the content below.
+                    SizedBox(
+                      height: 28,
+                      child: Center(
+                        child: dayPanchang != null
+                            ? Text(
+                                '${dayPanchang.tithiName} • ${dayPanchang.paksha}',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              )
+                            : offset == 0
+                            ? Text(
+                                'Drag to explore • Double-tap resets',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.4),
+                                    ),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -135,7 +276,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
         const SizedBox(height: 12),
         // Precise illumination percentage
         Text(
-          'Illumination: ${ref.read(moonPhaseServiceProvider).getMoonIllumination(data.currentTithi).toStringAsFixed(1)}%',
+          'Illumination: ${(illumination01 * 100).toStringAsFixed(1)}%',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: Theme.of(
               context,

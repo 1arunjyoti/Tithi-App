@@ -47,3 +47,37 @@ Future<String?> saveTextToDocuments(String content, String filename) async {
     return null;
   }
 }
+
+/// Mobile implementation - deletes share-image temp files older than
+/// [maxAge]. Share sheets timestamp every image and never clean up, so this
+/// best-effort purge (run before saving a new one) stops the temp directory
+/// from growing without bound. Never throws; returns the removal count.
+Future<int> purgeOldShareImages({
+  Duration maxAge = const Duration(days: 1),
+}) async {
+  try {
+    final directory = await getTemporaryDirectory();
+    var removed = 0;
+    await for (final entity in directory.list()) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.isNotEmpty
+          ? entity.uri.pathSegments.last
+          : '';
+      if (!name.startsWith('festival_share_') &&
+          !name.startsWith('daily-wisdom')) {
+        continue;
+      }
+      final modified = (await entity.stat()).modified;
+      if (DateTime.now().difference(modified) <= maxAge) continue;
+      try {
+        await entity.delete();
+        removed++;
+      } catch (_) {
+        continue;
+      }
+    }
+    return removed;
+  } catch (_) {
+    return 0;
+  }
+}

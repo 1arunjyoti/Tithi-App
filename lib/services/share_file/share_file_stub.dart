@@ -17,3 +17,8 @@ Future<String?> saveTextToDocuments(String content, String filename) async {
   // On web, we cannot save files to the file system
   return null;
 }
+
+/// Stub implementation for web - nothing to purge without temp files.
+Future<int> purgeOldShareImages({Duration maxAge = const Duration(days: 1)}) {
+  return Future.value(0);
+}

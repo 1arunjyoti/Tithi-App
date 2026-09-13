@@ -12,6 +12,7 @@ import '../providers/panchang_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../services/bengali_calendar_service.dart';
+import '../services/festival_matching_pipeline.dart';
 import '../services/hindu_calendar_service.dart';
 import '../services/storage_service.dart';
 import '../models/hindu_month_system.dart';
@@ -452,6 +453,56 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
   // 8-at-a-time matches monthlyPanchangProvider and keeps precache effective.
   const batchSize = 8;
   final result = <DateTime, _CalendarCellData>{};
+
+  // Festival flags through the shared pipeline (NOT per-cell): compute the
+  // padded range once, trim Vriddhi runs once, then read booleans per cell.
+  // Padding ±2 days keeps runs straddling the grid edge resolving correctly;
+  // only grid dates are looked up below. Same 5-point tithi/masa cache as
+  // the monthly batch, so warm months are ~zero FFI. Reading flags from an
+  // unfiltered per-cell compute instead would let dots disagree with the
+  // detail sheets on trimmed days.
+  Map<DateTime, PanchangData> filteredFlags = const {};
+  if (includeFestivals && dates.isNotEmpty) {
+    final padStart = dates.first.subtract(const Duration(days: 2));
+    final padEnd = dates.last.add(const Duration(days: 2));
+    final padDates = <DateTime>[];
+    for (
+      var d = padStart;
+      !d.isAfter(padEnd);
+      d = d.add(const Duration(days: 1))
+    ) {
+      padDates.add(DateTime(d.year, d.month, d.day));
+    }
+    final flagData = <DateTime, PanchangData>{};
+    Future<void> computeFlag(DateTime normalizedDate) async {
+      try {
+        // Cheap path on purpose: computePanchangData WITHOUT the daytime
+        // transition search (that bisection exists for the single-day detail
+        // card; dots only need hasFestivals/majorFestivals). Individual
+        // failures leave that day dotless rather than failing the month.
+        flagData[normalizedDate] = await computePanchangData(
+          normalizedDate: normalizedDate,
+          service: flagService!,
+          festivals: flagFestivals!,
+          monthSystem: flagMonthSystem!,
+          latitude: flagCoords!.latitude,
+          longitude: flagCoords.longitude,
+          cacheBox: flagCacheBox!,
+        );
+      } catch (e) {
+        _logCalError('festival flag $normalizedDate', e);
+      }
+    }
+
+    for (var i = 0; i < padDates.length; i += batchSize) {
+      final end = (i + batchSize) > padDates.length
+          ? padDates.length
+          : i + batchSize;
+      await Future.wait(padDates.sublist(i, end).map(computeFlag));
+    }
+    filteredFlags = applyVriddhiFilter(flagData);
+  }
+
   Future<MapEntry<DateTime, _CalendarCellData>> computeCell(DateTime date) async {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final pDate = await _calendarDateForSystem(
@@ -474,29 +525,14 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
     // Skipped on the Gregorian path: markers there come from
     // monthlyPanchangProvider, so per-date panchang fetches would only
     // burn FFI cycles during the swipe animation.
-    // Cheap path on purpose: computePanchangData WITHOUT the daytime
-    // transition search (that bisection exists for the single-day detail
-    // card; dots only need hasFestivals/majorFestivals, which the Hive
-    // checkpoints + festival matching resolve identically). Same 5-point
-    // tithi/masa cache as the monthly batch, so warm months are ~zero FFI.
+    // Flags read from the pipeline-filtered precompute above — dots agree
+    // with detail sheets by construction (trimmed entries leave no dot).
     bool hasFestivals = false;
     bool hasMajorFestival = false;
     if (includeFestivals) {
-      try {
-        final panchang = await computePanchangData(
-          normalizedDate: normalizedDate,
-          service: flagService!,
-          festivals: flagFestivals!,
-          monthSystem: flagMonthSystem!,
-          latitude: flagCoords!.latitude,
-          longitude: flagCoords.longitude,
-          cacheBox: flagCacheBox!,
-        );
-        hasFestivals = panchang.hasFestivals;
-        hasMajorFestival = panchang.majorFestivals.isNotEmpty;
-      } catch (e) {
-        _logCalError('festival flag $normalizedDate', e);
-      }
+      final flagged = filteredFlags[normalizedDate];
+      hasFestivals = flagged?.hasFestivals ?? false;
+      hasMajorFestival = flagged?.majorFestivals.isNotEmpty ?? false;
     }
 
     return MapEntry(

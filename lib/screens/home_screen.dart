@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
+import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/view_mode_provider.dart';
+import '../services/moon_phase_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/calendar_widget.dart';
 import '../widgets/event_list_widget.dart';
@@ -285,17 +287,18 @@ class _PakshaIndicator extends ConsumerWidget {
     final selectedPanchang = ref.watch(panchangForDateProvider(selectedDate));
     final cityName = ref.watch(cityNameProvider);
     // Cold taps: month batch already holds this date when visible.
-    final monthlyHit = ref
-        .watch(
-          monthlyPanchangProvider(
-            DateTime(selectedDate.year, selectedDate.month),
-          ),
-        )
-        .valueOrNull?[DateTime(
-      selectedDate.year,
-      selectedDate.month,
-      selectedDate.day,
-    )];
+    final monthlyHit =
+        ref
+            .watch(
+              monthlyPanchangProvider(
+                DateTime(selectedDate.year, selectedDate.month),
+              ),
+            )
+            .valueOrNull?[DateTime(
+          selectedDate.year,
+          selectedDate.month,
+          selectedDate.day,
+        )];
 
     Widget staleOrSkeleton() {
       // Month data first, then last-visited stale. True-cold keeps a
@@ -347,7 +350,8 @@ class _PakshaIndicator extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final selectedDate = ref.watch(selectedDateProvider);
     final now = DateTime.now();
-    final isToday = selectedDate.year == now.year &&
+    final isToday =
+        selectedDate.year == now.year &&
         selectedDate.month == now.month &&
         selectedDate.day == now.day;
 
@@ -357,10 +361,8 @@ class _PakshaIndicator extends ConsumerWidget {
     switch (primaryView) {
       case PrimaryEventView.festival:
         if (panchang.festivals.isNotEmpty) {
-          final festival = panchang.festivals.firstWhere(
-            (f) => f.category == 'major',
-            orElse: () => panchang.festivals.first,
-          );
+          // Ranked festivals win; otherwise legacy major-first behaviour.
+          final festival = primaryFestival(panchang.festivals);
           title = festival.name;
           subtitle = isToday
               ? (l10n?.todaysFestival ?? 'Today\'s Festival')
@@ -413,7 +415,11 @@ class _PakshaIndicator extends ConsumerWidget {
             Row(
               children: [
                 MoonAnimationWidget(
-                  phase: (panchang.tithiNumber - 1.0) / 30.0,
+                  phase: MoonPhaseService.illuminationFractionForDay(
+                    tithiNumber: panchang.tithiNumber,
+                    isShukla: panchang.paksha == 'Shukla',
+                    rawTithi: panchang.rawTithi,
+                  ),
                   isWaxing: panchang.paksha == 'Shukla',
                   size: 40,
                 ),
