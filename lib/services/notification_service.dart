@@ -37,7 +37,7 @@ void callbackDispatcher() {
       final service = NotificationService();
       await service.init();
 
-      return Future.value(true);
+      return true;
     } catch (e) {
       // SMELL-07: always surface background task failures, not just in debug.
       debugPrint('WorkManager task failed: $e');
@@ -47,7 +47,7 @@ void callbackDispatcher() {
           context: ErrorDescription('WorkManager callbackDispatcher'),
         ),
       );
-      return Future.value(false);
+      return false;
     }
   });
 }
