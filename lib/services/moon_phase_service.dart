@@ -255,10 +255,13 @@ class MoonPhaseService {
 
   /// Calculates moon illumination percentage (0-100)
   /// Based on current tithi
-  double getMoonIllumination(double tithi) {
-    // Tithi is from 1.0 to 31.0
-    // Peak Amavasya (0%) is at 1.0 (and 31.0)
-    // Peak Purnima (100%) is at 16.0
+  double getMoonIllumination(double tithi) => illuminationForTithi(tithi);
+
+  /// Static illumination curve shared by [getMoonIllumination].
+  /// Tithi is from 1.0 to 31.0.
+  /// Peak Amavasya (0%) is at 1.0 (and 31.0).
+  /// Peak Purnima (100%) is at 16.0.
+  static double illuminationForTithi(double tithi) {
     if (tithi <= 16.0) {
       // Waxing: 1.0 is 0%, 16.0 is 100%
       return ((tithi - 1.0) / 15.0) * 100.0;
@@ -266,5 +269,43 @@ class MoonPhaseService {
       // Waning: 16.0 is 100%, 31.0 is 0%
       return ((31.0 - tithi) / 15.0) * 100.0;
     }
+  }
+
+  /// Lit fraction 0.0-1.0 for [MoonPhasePainter] from a day's panchang data.
+  ///
+  /// Prefers the fractional sunrise [rawTithi] (astronomically exact for that
+  /// moment, monotonic across the new-moon boundary). Falls back to a
+  /// mid-tithi estimate when it is missing or garbage.
+  ///
+  /// The painter reads `phase` as a lit fraction (0 = new, 1 = full) and
+  /// handles waxing/waning purely via its side flag — so a linear
+  /// day-count mapping like `(tithi - 1) / 30` is wrong here (it renders
+  /// Amavasya as nearly full and Purnima as half). Sampling at tithi *start*
+  /// is also wrong: Amavasya day (30 → 6.7%) would read brighter than the
+  /// following Pratipada (1 → 0%), straddling the true minimum (31.0).
+  static double illuminationFractionForDay({
+    required int tithiNumber,
+    required bool isShukla,
+    double? rawTithi,
+  }) {
+    final normalized = _normalizeRawTithi(rawTithi);
+    if (normalized != null) {
+      return (illuminationForTithi(normalized) / 100.0).clamp(0.0, 1.0);
+    }
+    // Mid-tithi estimate: symmetric across the 31.0 minimum
+    // (Krishna 15 and Shukla 1 both read 3.3%).
+    final continuous =
+        (isShukla ? tithiNumber : 15 + tithiNumber).toDouble() + 0.5;
+    return (illuminationForTithi(continuous) / 100.0).clamp(0.0, 1.0);
+  }
+
+  /// Normalizes a fractional sunrise tithi into [1, 31]. The web fallback
+  /// wraps (30, 31] into (0, 1] (late Amavasya), which is shifted back.
+  /// Returns null for missing or out-of-range input.
+  static double? _normalizeRawTithi(double? raw) {
+    if (raw == null || raw.isNaN || raw.isInfinite || raw <= 0) return null;
+    final t = raw < 1 ? raw + 30 : raw;
+    if (t < 1 || t > 31) return null;
+    return t;
   }
 }

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:jyotish/jyotish.dart';
 import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
+import '../festival_matching_pipeline.dart';
 import '../panchang_init/panchang_init.dart';
+import '../sunrise_calculator.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
 /// Uses FFI-based Swiss Ephemeris for accurate calculations
@@ -111,6 +113,37 @@ class PanchangService {
     _tithiCache[cacheKey] = tithi;
 
     return tithi;
+  }
+
+  /// Nakshatra prevailing at [date] (canonical name, e.g. 'Mula').
+  ///
+  /// Derived from the sidereal Moon longitude — the same Lahiri frame
+  /// [calculateTithi] uses: index = floor(longitude / (360/27)).
+  /// Returns null instead of throwing when uninitialized or the ephemeris
+  /// call fails, so one bad sample degrades to "nakshatra festivals don't
+  /// match today" rather than breaking the whole day.
+  Future<String?> calculateNakshatra(
+    DateTime date, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    if (!_isInitialized) return null;
+    try {
+      final moon = await Jyotish().getPlanetPosition(
+        planet: Planet.moon,
+        dateTime: date,
+        location: GeographicLocation(
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+      return nakshatraForLongitude(moon.longitude);
+    } catch (e) {
+      if (kDebugMode) {
+        print('calculateNakshatra failed: $e');
+      }
+      return null;
+    }
   }
 
   Future<String> calculateMasa(
@@ -334,41 +367,124 @@ class PanchangService {
     }
 
     for (int i = 0; i < 380; i++) {
-      final checkDate = DateTime(date.year, date.month, date.day, 6);
-
-      final rawTithi = await calculateTithi(
-        checkDate,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      final tithiIndex = rawTithi.floor();
-      String paksha;
-      int tithiNumber;
-      if (tithiIndex <= 15) {
-        paksha = 'Shukla';
-        tithiNumber = tithiIndex;
-      } else {
-        paksha = 'Krishna';
-        tithiNumber = tithiIndex - 15;
+      Future<bool> matchesOn(DateTime day) async {
+        final probe = DateTime(day.year, day.month, day.day, 6);
+        final probeRawTithi = await calculateTithi(
+          probe,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        final probeIndex = probeRawTithi.floor();
+        final String probePaksha;
+        final int probeTithiNumber;
+        if (probeIndex <= 15) {
+          probePaksha = 'Shukla';
+          probeTithiNumber = probeIndex;
+        } else {
+          probePaksha = 'Krishna';
+          probeTithiNumber = probeIndex - 15;
+        }
+        final probeMasa = await calculateMasa(
+          probe,
+          probeRawTithi,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        // Nakshatra override (e.g. Mula Avahan): one Moon-longitude read
+        // per probe day, only when this festival needs it.
+        final probeNakshatra = festival.nakshatraCondition != null
+            ? await calculateNakshatra(
+                probe,
+                latitude: latitude,
+                longitude: longitude,
+              )
+            : null;
+        // BUG-04: pass `date` so weekday constraints are evaluated.
+        // Shared pipeline: nakshatra overrides and tithi rules agree with
+        // the UI grid by construction.
+        final probeMatch = matchesFestivalOnDay(
+          festival: festival,
+          paksha: probePaksha,
+          tithiNumber: probeTithiNumber,
+          masa: probeMasa,
+          nakshatra: probeNakshatra,
+          date: day,
+        );
+        if (probeMatch) return true;
+        // Dominant-tithi grace (Drik rule, same as the UI batch): a tithi
+        // beginning within kDominantTithiGrace after TRUE sunrise counts
+        // for this day. Override festivals keep their own checkpoint, and
+        // nakshatra festivals returned above.
+        const sunriseOverrides = {'madhyahna', 'aparahna', 'nishita'};
+        final usesSunrise = festival.panchangRules.timingOverride == null ||
+            !sunriseOverrides.contains(festival.panchangRules.timingOverride);
+        if (usesSunrise && festival.nakshatraCondition == null) {
+          final daySunrise = SunriseCalculator.calculateSunriseIST(
+            date: DateTime(day.year, day.month, day.day),
+            latitude: latitude,
+            longitude: longitude,
+          );
+          final domRaw = await calculateTithi(
+            daySunrise.add(kDominantTithiGrace),
+            latitude: latitude,
+            longitude: longitude,
+          );
+          final domIndex = domRaw.floor().clamp(1, 30);
+          if (domIndex != probeIndex) {
+            final String domPaksha;
+            final int domNum;
+            if (domIndex <= 15) {
+              domPaksha = 'Shukla';
+              domNum = domIndex;
+            } else {
+              domPaksha = 'Krishna';
+              domNum = domIndex - 15;
+            }
+            var domMasa = probeMasa;
+            if (probeIndex == 30 && domIndex == 1) {
+              domMasa = await calculateMasa(
+                daySunrise.add(kDominantTithiGrace),
+                domRaw,
+                latitude: latitude,
+                longitude: longitude,
+              );
+            }
+            return festival.matchesTithi(
+              domPaksha,
+              domNum,
+              domMasa,
+              HinduMonthSystem.amanta,
+              day,
+            );
+          }
+        }
+        return false;
       }
 
-      final masa = await calculateMasa(
-        checkDate,
-        rawTithi,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
       // BUG-04: pass `date` so weekday constraints are evaluated
-      if (festival.matchesTithi(
-        paksha,
-        tithiNumber,
-        masa,
-        HinduMonthSystem.amanta,
-        date,
-      )) {
-        return date;
+      if (await matchesOn(date)) {
+        // Shared pipeline: a Vriddhi run resolves to first/last/both days so
+        // countdown, search, export and notifications agree with the UI grid.
+        final baseDateOnly = DateTime(
+          baseDate.year,
+          baseDate.month,
+          baseDate.day,
+        );
+        final resolved = await resolveVriddhiCandidate(
+          festival: festival,
+          candidate: date,
+          baseDate: baseDateOnly,
+          matchesDay: matchesOn,
+        );
+        if (resolved.occurrence != null) {
+          return DateTime(
+            resolved.occurrence!.year,
+            resolved.occurrence!.month,
+            resolved.occurrence!.day,
+          );
+        }
+        date = resolved.resumeFrom;
+        continue;
       }
 
       date = date.add(const Duration(days: 1));

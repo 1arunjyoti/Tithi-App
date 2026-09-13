@@ -26,13 +26,16 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       panchangRules: fields[6] as PanchangRules,
       rituals: fields[7] as Rituals,
       media: fields[8] as Media,
+      // HiveField(9) added for displayPriority; old boxes lack it → null
+      // (no override, current order preserved).
+      displayPriority: fields[9] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Festival obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +53,9 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       ..writeByte(7)
       ..write(obj.rituals)
       ..writeByte(8)
-      ..write(obj.media);
+      ..write(obj.media)
+      ..writeByte(9)
+      ..write(obj.displayPriority);
   }
 
   @override
@@ -213,13 +218,15 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       weekday: fields[6] as String?,
       endTithi: fields[7] as int?,
       timingOverride: fields[8] as String?,
+      // HiveField(9) added for vriddhi; old boxes lack it → default 'both'.
+      vriddhi: fields[9] as String? ?? 'both',
     );
   }
 
   @override
   void write(BinaryWriter writer, PanchangRules obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.masa)
       ..writeByte(1)
@@ -237,7 +244,9 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       ..writeByte(7)
       ..write(obj.endTithi)
       ..writeByte(8)
-      ..write(obj.timingOverride);
+      ..write(obj.timingOverride)
+      ..writeByte(9)
+      ..write(obj.vriddhi);
   }
 
   @override

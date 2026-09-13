@@ -109,4 +109,46 @@ void main() {
       }
     });
   });
+
+  group('Solar festivals use fixed Gregorian dates', () {
+    // Pongal was once stored as a lunisolar Thai/Shukla/15 (Purnima) rule
+    // whose masa never equals a computed lunisolar masa, so it never fired.
+    // It is a solar harvest festival on Jan 14, same as Makar Sankranti.
+    test('Pongal guard: Solar 01-14 (same day as Makar Sankranti)', () {
+      // Arrange
+      final rules = _rulesOf(_loadFestivalJson(), 'pongal');
+
+      // Act + Assert
+      expect(rules['conditions'], equals('Solar'));
+      expect(rules['solarDate'], equals('01-14'));
+      expect(rules['tithi'], equals(0));
+      expect(rules['paksha'], equals('*'));
+    });
+
+    test('Pongal matches Jan 14 regardless of tithi/masa', () {
+      // Arrange
+      final festivals = _loadFestivalJson();
+      final pongal = Festival.fromJson(
+        festivals.firstWhere((f) => f['id'] == 'pongal'),
+      );
+
+      // Act
+      final onDay = PanchangData.fromRawTithi(
+        date: DateTime(2026, 1, 14),
+        rawTithi: 5.5,
+        masa: 'Pausha',
+        allFestivals: [pongal],
+      );
+      final offDay = PanchangData.fromRawTithi(
+        date: DateTime(2026, 1, 15),
+        rawTithi: 15.5, // Purnima — the old dead Thai/Shukla/15 rule
+        masa: 'Thai',
+        allFestivals: [pongal],
+      );
+
+      // Assert
+      expect(onDay.festivals.map((f) => f.id), contains('pongal'));
+      expect(offDay.festivals.map((f) => f.id), isNot(contains('pongal')));
+    });
+  });
 }

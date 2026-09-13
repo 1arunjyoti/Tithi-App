@@ -360,6 +360,98 @@ void main() {
     });
   });
 
+  group('Kshaya (skipped tithi) fallback', () {
+    // A tithi that begins after one sunrise and ends before the next owns
+    // no sunrise. The engine credits it to the earlier day so its festivals
+    // still fire (see FESTIVALS_Modification_GUIDE.md "Kshaya").
+    Festival kshayaFestival(String id, String masa, String paksha, int tithi) =>
+        Festival.fromJson({
+          'id': id,
+          'name': id,
+          'panchang_rules': {
+            'masa': masa,
+            'paksha': paksha,
+            'tithi': tithi,
+            'conditions': 'Panchami',
+          },
+        });
+
+    test('skipped tithi matches the earlier day', () {
+      // Arrange: sunrise sees Chaturthi (index 4), next sunrise sees
+      // Shashthi (index 6) — Panchami (index 5) owns no sunrise.
+      final panchami = kshayaFestival(
+        'test_panchami',
+        'Shravana',
+        'Shukla',
+        5,
+      );
+
+      // Act
+      final panchang = PanchangData.fromRawTithi(
+        date: DateTime(2026, 8, 10),
+        rawTithi: 4.2,
+        rawTithiNextSunrise: 6.3,
+        masa: 'Shravana',
+        allFestivals: [panchami],
+        sunrise: DateTime(2026, 8, 10, 6),
+        sunset: DateTime(2026, 8, 10, 18, 30),
+      );
+
+      // Assert
+      expect(panchang.festivals.map((f) => f.id), contains('test_panchami'));
+    });
+
+    test('non-skipped tithi still misses on a kshaya day', () {
+      // Arrange: same skipped-Panchami setup, but the festival wants
+      // Saptami (index 7), which no checkpoint covers.
+      final saptami = kshayaFestival('test_saptami', 'Shravana', 'Shukla', 7);
+
+      // Act
+      final panchang = PanchangData.fromRawTithi(
+        date: DateTime(2026, 8, 10),
+        rawTithi: 4.2,
+        rawTithiNextSunrise: 6.3,
+        masa: 'Shravana',
+        allFestivals: [saptami],
+        sunrise: DateTime(2026, 8, 10, 6),
+        sunset: DateTime(2026, 8, 10, 18, 30),
+      );
+
+      // Assert
+      expect(panchang.festivals, isEmpty);
+    });
+
+    test('boundary skip across Amavasya uses the next lunation masa', () {
+      // Arrange: sunrise sees Amavasya (index 30), next sunrise sees
+      // Shukla Dwitiya (index 2) — Shukla Pratipada (index 1) is skipped
+      // across the new moon, so it belongs to the next lunation's masa.
+      final nextMasaPratipada = kshayaFestival(
+        'test_next_pratipada',
+        'Vaishakha',
+        'Shukla',
+        1,
+      );
+
+      // Act
+      final panchang = PanchangData.fromRawTithi(
+        date: DateTime(2026, 4, 27),
+        rawTithi: 30.2,
+        rawTithiNextSunrise: 2.3,
+        masa: 'Chaitra',
+        masaNextSunrise: 'Vaishakha',
+        allFestivals: [nextMasaPratipada],
+        sunrise: DateTime(2026, 4, 27, 6),
+        sunset: DateTime(2026, 4, 27, 18, 30),
+      );
+
+      // Assert
+      expect(
+        panchang.festivals.map((f) => f.id),
+        contains('test_next_pratipada'),
+      );
+    });
+  });
+
   group('Elongation segments map to the documented tithis', () {
     // Locks the 12°-segment table: segment s covers elongation
     // [s*12, s*12+12) and must yield (paksha, number, name) below.

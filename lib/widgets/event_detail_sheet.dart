@@ -19,24 +19,12 @@ class EventDetailSheet extends ConsumerWidget {
 
   const EventDetailSheet({super.key, required this.festival, this.panchang});
 
-  // Parse a hex color string like '#FF5733' or 'FF5733' to a Color
-  Color? _parseThemeColor(String hex) {
-    if (hex.isEmpty) return null;
-    try {
-      final clean = hex.replaceAll('#', '');
-      if (clean.length == 6) {
-        return Color(int.parse('FF$clean', radix: 16));
-      } else if (clean.length == 8) {
-        return Color(int.parse(clean, radix: 16));
-      }
-    } catch (_) {}
-    return null;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeColor =
-        _parseThemeColor(festival.visuals.themeColor) ?? context.colors.primary;
+    // Intentionally ignore festival.visuals.themeColor: per-festival colors
+    // made text/background inconsistent across sheets (e.g. near-black
+    // #1a0500). Always use the app primary color.
+    final themeColor = context.colors.primary;
     // Month system for Masa labels: Purnimant Krishna days carry the next
     // month's name (e.g. Janmashtami = Bhadrapada, not Shravana).
     final monthSystem = ref.watch(hinduMonthSystemProvider);
@@ -73,58 +61,57 @@ class EventDetailSheet extends ConsumerWidget {
     return SizedBox(
       height: sheetHeight,
       child: Container(
-          decoration: BoxDecoration(
-            color: context.theme.scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              // Drag handle with theme color tint. The taller transparent
-              // zone makes the framework drag-to-dismiss target easier to
-              // grab; visuals unchanged (handle stays centered).
-              Container(
-                height: 32,
-                alignment: Alignment.center,
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: themeColor.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        decoration: BoxDecoration(
+          color: context.theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          children: [
+            // Drag handle with theme color tint. The taller transparent
+            // zone makes the framework drag-to-dismiss target easier to
+            // grab; visuals unchanged (handle stays centered).
+            Container(
+              height: 32,
+              alignment: Alignment.center,
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: themeColor.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
+            ),
 
-              // Content. A sustained downward drag past the top edge
-              // dismisses the sheet (OverscrollNotification fires only for
-              // touch drags via dragDetails, so ballistic flings can't
-              // mis-dismiss). Pixels accumulate until a ~120px drag.
-              Expanded(
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (() {
-                    var edgeDrag = 0.0;
-                    return (ScrollNotification notification) {
-                      if (notification is ScrollStartNotification) {
-                        edgeDrag = 0;
-                      } else if (notification is OverscrollNotification &&
-                          notification.dragDetails != null &&
-                          notification.overscroll < 0) {
-                        edgeDrag += -notification.overscroll;
-                        if (edgeDrag >= 120 &&
-                            Navigator.of(context).canPop()) {
-                          Navigator.of(context).pop();
-                          return true;
-                        }
-                      } else if (notification is ScrollUpdateNotification &&
-                          notification.metrics.pixels > 0) {
-                        // Left the edge: finger moved back into content.
-                        edgeDrag = 0;
+            // Content. A sustained downward drag past the top edge
+            // dismisses the sheet (OverscrollNotification fires only for
+            // touch drags via dragDetails, so ballistic flings can't
+            // mis-dismiss). Pixels accumulate until a ~120px drag.
+            Expanded(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (() {
+                  var edgeDrag = 0.0;
+                  return (ScrollNotification notification) {
+                    if (notification is ScrollStartNotification) {
+                      edgeDrag = 0;
+                    } else if (notification is OverscrollNotification &&
+                        notification.dragDetails != null &&
+                        notification.overscroll < 0) {
+                      edgeDrag += -notification.overscroll;
+                      if (edgeDrag >= 120 && Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                        return true;
                       }
-                      return false;
-                    };
-                  })(),
-                  child: ListView(
-                    padding: const EdgeInsets.all(24),
+                    } else if (notification is ScrollUpdateNotification &&
+                        notification.metrics.pixels > 0) {
+                      // Left the edge: finger moved back into content.
+                      edgeDrag = 0;
+                    }
+                    return false;
+                  };
+                })(),
+                child: ListView(
+                  padding: const EdgeInsets.all(24),
                   children: [
                     // Festival name and Share button
                     Row(
@@ -221,7 +208,9 @@ class EventDetailSheet extends ConsumerWidget {
                               children: [
                                 InkWell(
                                   onTap: () {
-                                    ref.read(_descExpandedProvider.notifier).update((state) => !state);
+                                    ref
+                                        .read(_descExpandedProvider.notifier)
+                                        .update((state) => !state);
                                   },
                                   borderRadius: BorderRadius.circular(8),
                                   child: Padding(
@@ -276,7 +265,8 @@ class EventDetailSheet extends ConsumerWidget {
                                         const SizedBox(height: 8),
                                         _buildFormattedText(
                                           festival
-                                              .purpose.additionalDescription,
+                                              .purpose
+                                              .additionalDescription,
                                           context.textTheme.bodyMedium
                                               ?.copyWith(
                                                 fontSize: 14,
@@ -294,44 +284,6 @@ class EventDetailSheet extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Fasting / Vrat info
-                    if (hasFasting) ...[
-                      _buildSectionHeader(
-                        context,
-                        icon: Icons.self_improvement,
-                        label: 'Fasting / Vrat',
-                        color: themeColor,
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: AppTheme.glassmorphism(
-                          context: context,
-                          ref: ref,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.restaurant_outlined,
-                              color: themeColor,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                festival.rituals.fasting!,
-                                style: context.textTheme.bodyMedium?.copyWith(
-                                  height: 1.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
 
                     // Panchang info
                     _buildSectionHeader(
@@ -354,7 +306,15 @@ class EventDetailSheet extends ConsumerWidget {
                       // timings are shown.
                       Builder(
                         builder: (context) {
+                          // Nakshatra-observed festivals (e.g. Saraswati
+                          // Avahan on Mula): the stored tithi is
+                          // documentation only. Paksha/Tithi/Masa rows stay
+                          // day-based, a Nakshatra row is added, and no
+                          // tithi span is shown (it would mislead).
+                          final isNakshatraObserved =
+                              festival.nakshatraCondition != null;
                           final useObserved =
+                              !isNakshatraObserved &&
                               festival.conditions != 'Solar' &&
                               festival.tithi >= 1;
                           final observedPaksha = useObserved
@@ -366,7 +326,8 @@ class EventDetailSheet extends ConsumerWidget {
                           final observedNum = observedIndex <= 15
                               ? observedIndex
                               : observedIndex - 15;
-                          final showTimings = useObserved;
+                          final showTimings =
+                              useObserved && !isNakshatraObserved;
                           final displayTithiNum =
                               ref.watch(tithiDisplayModeProvider) ==
                                   TithiDisplayMode.continuous30
@@ -379,7 +340,8 @@ class EventDetailSheet extends ConsumerWidget {
                               _buildInfoRow(
                                 context,
                                 Icons.brightness_3,
-                                AppLocalizations.of(context)?.paksha ?? 'Paksha',
+                                AppLocalizations.of(context)?.paksha ??
+                                    'Paksha',
                                 '$observedPaksha (${observedPaksha == 'Shukla' ? (AppLocalizations.of(context)?.waxing ?? "Waxing") : (AppLocalizations.of(context)?.waning ?? "Waning")})',
                               ),
                               _buildInfoRow(
@@ -391,20 +353,20 @@ class EventDetailSheet extends ConsumerWidget {
                                 // T1-30 — of the observed (festival) tithi.
                                 '${PanchangData.tithiNameFor(observedNum, observedPaksha)} (T$displayTithiNum)',
                               ),
-                      // Masa (Hindu month) — converted for Purnimant display.
-                      // panchang.masa is always Amanta; Krishna days take the
-                      // next month's name in Purnimant (Shukla unchanged).
-                      if (panchang!.masa.isNotEmpty)
-                        _buildInfoRow(
-                          context,
-                          Icons.wb_sunny_outlined,
-                          'Masa',
-                          displayMasaName(
-                                panchang!.masa,
-                                panchang!.paksha,
-                                monthSystem,
-                              )
-                              .replaceAll('_', ' ')
+                              // Masa (Hindu month) — converted for Purnimant display.
+                              // panchang.masa is always Amanta; Krishna days take the
+                              // next month's name in Purnimant (Shukla unchanged).
+                              if (panchang!.masa.isNotEmpty)
+                                _buildInfoRow(
+                                  context,
+                                  Icons.wb_sunny_outlined,
+                                  'Masa',
+                                  displayMasaName(
+                                        panchang!.masa,
+                                        panchang!.paksha,
+                                        monthSystem,
+                                      )
+                                      .replaceAll('_', ' ')
                                       .split(' ')
                                       .map(
                                         (w) => w.isEmpty
@@ -416,7 +378,16 @@ class EventDetailSheet extends ConsumerWidget {
 
                               // Tithi Timings using user's location.
                               // Solar festivals (fixed Gregorian dates) have
-                              // no tithi span, so no timings are shown.
+                              // no tithi span, so no timings are shown. Same
+                              // for nakshatra-observed festivals.
+                              if (isNakshatraObserved)
+                                _buildInfoRow(
+                                  context,
+                                  Icons.star_outline,
+                                  'Nakshatra',
+                                  panchang!.nakshatra ??
+                                      festival.nakshatraCondition!,
+                                ),
                               if (showTimings)
                                 Consumer(
                                   builder: (context, ref, child) {
@@ -461,20 +432,18 @@ class EventDetailSheet extends ConsumerWidget {
                                               Icons.access_time,
                                               'Begins',
                                               startStr,
-                                              trailing:
-                                                  _buildTimingInfoButton(
-                                                    context,
-                                                  ),
+                                              trailing: _buildTimingInfoButton(
+                                                context,
+                                              ),
                                             ),
                                             _buildInfoRow(
                                               context,
                                               Icons.access_time_filled,
                                               'Ends',
                                               endStr,
-                                              trailing:
-                                                  _buildTimingInfoButton(
-                                                    context,
-                                                  ),
+                                              trailing: _buildTimingInfoButton(
+                                                context,
+                                              ),
                                             ),
                                           ],
                                         );
@@ -540,6 +509,15 @@ class EventDetailSheet extends ConsumerWidget {
                               )
                               .join(' '),
                         ),
+                      // Nakshatra from festival rules when tithi is
+                      // overridden by one (stored tithi is then ignored).
+                      if (festival.nakshatraCondition != null)
+                        _buildInfoRow(
+                          context,
+                          Icons.star_outline,
+                          'Nakshatra',
+                          festival.nakshatraCondition!,
+                        ),
                     ],
                     _buildInfoRow(
                       context,
@@ -549,6 +527,39 @@ class EventDetailSheet extends ConsumerWidget {
                           ? (AppLocalizations.of(context)?.general ?? 'General')
                           : festival.category.toUpperCase(),
                     ),
+
+                    // Fasting / Vrat info (below Panchang Details)
+                    if (hasFasting) ...[
+                      const SizedBox(height: 24),
+                      _buildSectionHeader(
+                        context,
+                        icon: Icons.self_improvement,
+                        label: 'Fasting / Vrat',
+                        color: themeColor,
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: AppTheme.glassmorphism(
+                          context: context,
+                          ref: ref,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                festival.rituals.fasting!,
+                                style: context.textTheme.bodyMedium?.copyWith(
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
 
                     // Rituals
                     if (festival.rituals.steps.isNotEmpty) ...[
@@ -687,12 +698,12 @@ class EventDetailSheet extends ConsumerWidget {
 
                     const SizedBox(height: 32),
                   ],
-                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -833,9 +844,6 @@ class EventDetailSheet extends ConsumerWidget {
       );
     }
 
-    return Text.rich(
-      TextSpan(children: spans),
-      style: baseStyle,
-    );
+    return Text.rich(TextSpan(children: spans), style: baseStyle);
   }
 }

@@ -9,26 +9,48 @@ class ShlokaService {
   ShlokaService._internal();
 
   List<Shloka> _shlokas = [];
-  bool _isInitialized = false;
 
-  /// Load shlokas from JSON asset
-  Future<void> init() async {
-    if (_isInitialized) return;
+  /// Single-flight init memo: concurrent callers share one asset load, and
+  /// a failed load settles (to an empty list) instead of retrying the
+  /// asset read + full parse on every provider rebuild.
+  Future<void>? _initFuture;
 
+  /// Load shlokas from the JSON asset. Never throws: a missing or corrupt
+  /// asset yields an empty list (callers treat null/empty as "no verse").
+  Future<void> init() => _initFuture ??= _load();
+
+  Future<void> _load() async {
     try {
       final String response = await rootBundle.loadString(
         'assets/data/shlokas.json',
       );
-      final List<dynamic> data = json.decode(response);
-      _shlokas = data.map((e) => Shloka.fromJson(e)).toList();
-      _isInitialized = true;
+      _shlokas = parseShlokas(json.decode(response));
     } catch (e) {
-      // Handle error or fallback
       if (kDebugMode) {
-        print('Error loading shlokas: $e');
+        debugPrint('Error loading shlokas: $e');
       }
       _shlokas = [];
     }
+  }
+
+  /// Parses decoded JSON into verses, skipping corrupt entries instead of
+  /// dropping the whole list when a single entry has the wrong shape.
+  /// Returns an empty list when the root is not a JSON array.
+  static List<Shloka> parseShlokas(Object? decoded) {
+    if (decoded is! List) return const [];
+    final shlokas = <Shloka>[];
+    for (final entry in decoded) {
+      try {
+        if (entry is Map<String, dynamic>) {
+          shlokas.add(Shloka.fromJson(entry));
+        } else if (entry is Map) {
+          shlokas.add(Shloka.fromJson(Map<String, dynamic>.from(entry)));
+        }
+      } catch (_) {
+        continue;
+      }
+    }
+    return shlokas;
   }
 
   /// Get a consistent shloka for a given date.

@@ -1,7 +1,7 @@
 name: tithi
 description: "A new Flutter project."
 publish_to: "none"
-version: 0.1.0+12
+version: 0.1.0+15
 environment:
   sdk: ^3.10.4
 
@@ -67,6 +67,7 @@ flutter:
     - assets/ephe/
     - assets/festivals.json
     - assets/data/shlokas.json
+    - assets/data/in_city.json
     - assets/images/
     - assets/icons/
     - assets/map_data/

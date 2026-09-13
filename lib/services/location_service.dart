@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:nominatim_geocoding/nominatim_geocoding.dart';
@@ -32,6 +36,33 @@ class LocationData {
       'LocationData($latitude, $longitude, $cityName, $timestamp)';
 }
 
+/// Offline city entry for reverse-geocoding fallback (no network needed).
+class _OfflineCity {
+  const _OfflineCity({
+    required this.city,
+    required this.admin,
+    required this.latitude,
+    required this.longitude,
+    required this.population,
+  });
+
+  final String city;
+  final String admin;
+  final double latitude;
+  final double longitude;
+  final int population;
+
+  factory _OfflineCity.fromJson(Map<String, dynamic> json) {
+    return _OfflineCity(
+      city: json['city'] as String,
+      admin: (json['admin'] as String?) ?? '',
+      latitude: (json['lat'] as num).toDouble(),
+      longitude: (json['lng'] as num).toDouble(),
+      population: (json['pop'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 /// FOSS-compatible location service
 /// Uses native Android LocationManager (not Google Play Services)
 /// Uses OpenStreetMap Nominatim for reverse geocoding
@@ -52,6 +83,7 @@ class LocationService {
 
   Box? _box;
   bool _isInitialized = false;
+  List<_OfflineCity> _offlineCities = [];
 
   // In-memory cache for request deduplication and short-term caching
   Future<LocationData?>? _pendingLocationRequest;
@@ -70,6 +102,10 @@ class LocationService {
 
       // Initialize Nominatim geocoding with cache
       await NominatimGeocoding.init(reqCacheNum: 50);
+
+      // Load offline city index (best-effort: offline labels still work
+      // even if Nominatim is unreachable).
+      await _loadOfflineCities();
 
       _isInitialized = true;
 
@@ -233,8 +269,10 @@ class LocationService {
               ),
       );
 
-      // Get city name via reverse geocoding
-      final cityName = await getCityName(position.latitude, position.longitude);
+      // Get city name via reverse geocoding (online-first, offline fallback)
+      var cityName = await getCityName(position.latitude, position.longitude);
+      // Preserve last known label when both lookups fail.
+      cityName ??= (await _getCachedLocation())?.cityName;
 
       // Cache the location
       await _cacheLocation(position.latitude, position.longitude, cityName);
@@ -261,14 +299,17 @@ class LocationService {
     _isInitialized = false;
   }
 
-  /// Reverse geocode coordinates to city name using OpenStreetMap Nominatim
+  /// Reverse geocode coordinates to city name.
+  /// Online-first: tries OpenStreetMap Nominatim, falls back to the bundled
+  /// offline city index when offline or when Nominatim returns nothing.
   Future<String?> getCityName(double latitude, double longitude) async {
+    // 1. Online (preferred when available).
     try {
       final coordinate = Coordinate(latitude: latitude, longitude: longitude);
 
-      final geocoding = await NominatimGeocoding.to.reverseGeoCoding(
-        coordinate,
-      );
+      final geocoding = await NominatimGeocoding.to
+          .reverseGeoCoding(coordinate)
+          .timeout(const Duration(seconds: 5));
 
       // Try to get city from the address (use available properties)
       final address = geocoding.address;
@@ -283,18 +324,111 @@ class LocationService {
         city = address.state;
       }
 
-      if (kDebugMode) {
-        print('Reverse geocoded: $latitude, $longitude -> $city');
+      if (city != null && city.isNotEmpty) {
+        if (kDebugMode) {
+          print('Reverse geocoded: $latitude, $longitude -> $city');
+        }
+        return city;
       }
-
-      return city;
     } catch (e) {
       if (kDebugMode) {
-        print('Error reverse geocoding: $e');
+        print('Online reverse geocoding unavailable, using offline index: $e');
       }
-      return null;
+    }
+
+    // 2. Offline fallback (bundled city index, no network).
+    try {
+      final offline = findNearestOfflineCity(latitude, longitude);
+      if (offline != null) {
+        if (kDebugMode) {
+          print('Offline reverse geocoded: $latitude, $longitude -> $offline');
+        }
+        return offline;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in offline reverse geocoding: $e');
+      }
+    }
+    return null;
+  }
+
+  /// Load bundled city index for offline reverse geocoding.
+  /// Best-effort: failures leave [_offlineCities] empty (callers fall back
+  /// to cached/default labels).
+  Future<void> _loadOfflineCities() async {
+    try {
+      final raw = await rootBundle.loadString('assets/data/in_city.json');
+      final List<dynamic> decoded = json.decode(raw) as List<dynamic>;
+      final cities = <_OfflineCity>[];
+      for (final entry in decoded) {
+        try {
+          if (entry is Map<String, dynamic>) {
+            final city = _OfflineCity.fromJson(entry);
+            if (city.city.isNotEmpty) {
+              cities.add(city);
+            }
+          }
+        } catch (_) {
+          // Skip malformed entries.
+          continue;
+        }
+      }
+      _offlineCities = cities;
+      if (kDebugMode) {
+        print('Loaded ${_offlineCities.length} offline cities');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading offline cities: $e');
+      }
+      _offlineCities = [];
     }
   }
+
+  /// Find nearest bundled city name using haversine distance.
+  /// Returns null when the offline index is empty. Synchronous and cheap
+  /// (linear scan over a few hundred entries). Ties prefer larger cities.
+  String? findNearestOfflineCity(double latitude, double longitude) {
+    if (_offlineCities.isEmpty) return null;
+    _OfflineCity? best;
+    var bestDist = double.infinity;
+    for (final city in _offlineCities) {
+      final d = _haversineKm(
+        latitude,
+        longitude,
+        city.latitude,
+        city.longitude,
+      );
+      if (d < bestDist - 1e-9 ||
+          ((d - bestDist).abs() <= 1e-9 &&
+              city.population > (best?.population ?? 0))) {
+        bestDist = d;
+        best = city;
+      }
+    }
+    return best?.city;
+  }
+
+  static double _haversineKm(
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    const earthRadiusKm = 6371.0;
+    final dLat = _toRadians(lat2 - lat1);
+    final dLon = _toRadians(lon2 - lon1);
+    final a =
+        sin(dLat / 2) * sin(dLat / 2) +
+        cos(_toRadians(lat1)) *
+            cos(_toRadians(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
+    return 2 * earthRadiusKm * asin(sqrt(a));
+  }
+
+  static double _toRadians(double degrees) => degrees * pi / 180;
 
   /// Get cached location if available
   Future<LocationData?> _getCachedLocation() async {

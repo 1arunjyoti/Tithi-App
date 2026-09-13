@@ -47,7 +47,8 @@ import 'sunrise_calculator.dart';
 ///   Shaka = VS - 135); the selected `yearEra` is recorded in the header.
 /// - `tithiBegins`/`tithiEnds` belong to the festival's OBSERVED tithi
 ///   (timingOverride-aware). They are null for Solar festivals (fixed
-///   Gregorian dates, no tithi span) and for Kshaya tithis.
+///   Gregorian dates, no tithi span), for nakshatra-observed festivals
+///   (their stored tithi is documentation only), and for Kshaya tithis.
 /// - All instants are local wall-clock ISO-8601; see `location` in the
 ///   document header for the coordinates they were computed for.
 class FestivalExportService {
@@ -153,17 +154,30 @@ class FestivalExportService {
       latitude: latitude,
       longitude: longitude,
     );
+    // Nakshatra at sunrise for the occurrence record (null on web).
+    final nakshatraAtSunrise = festival.nakshatraCondition != null
+        ? await service.calculateNakshatra(
+            sunrise,
+            latitude: latitude,
+            longitude: longitude,
+          )
+        : null;
     final panchang = PanchangData.fromRawTithi(
       date: occurrence,
       rawTithi: rawTithi,
       masa: masa,
       sunrise: sunrise,
       sunset: sunset,
+      nakshatraAtSunrise: nakshatraAtSunrise,
     );
 
     DateTime? begins;
     DateTime? ends;
-    if (festival.conditions != 'Solar' && festival.tithi >= 1) {
+    // No tithi span for Solar festivals — or for nakshatra-observed ones
+    // (their stored tithi is documentation only; a tithi span would mislead).
+    if (festival.conditions != 'Solar' &&
+        festival.tithi >= 1 &&
+        festival.nakshatraCondition == null) {
       final observedIndex = festival.resolveTithiIndex(panchang.paksha);
       begins = await service.calculateTithiStartTime(
         occurrence,
@@ -186,10 +200,17 @@ class FestivalExportService {
       }
     }
 
-    final observedIndex = festival.conditions != 'Solar' && festival.tithi >= 1
+    final isNakshatraObserved = festival.nakshatraCondition != null;
+    final observedIndex =
+        !isNakshatraObserved &&
+            festival.conditions != 'Solar' &&
+            festival.tithi >= 1
         ? festival.resolveTithiIndex(panchang.paksha)
         : panchang.tithiIndex;
-    final observedPaksha = festival.conditions != 'Solar' && festival.tithi >= 1
+    final observedPaksha =
+        !isNakshatraObserved &&
+            festival.conditions != 'Solar' &&
+            festival.tithi >= 1
         ? festival.resolvePaksha(panchang.paksha)
         : panchang.paksha;
     final observedNum =

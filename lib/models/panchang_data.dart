@@ -13,6 +13,11 @@ class PanchangData {
   final DateTime? sunrise;
   final DateTime? sunset;
 
+  /// Nakshatra prevailing at sunrise (canonical name, e.g. 'Mula'), when
+  /// computed. Null on the web fallback (no ephemeris) and in unit tests
+  /// that build days without it — nakshatra festivals then don't match.
+  final String? nakshatra;
+
   /// Instant the sunrise tithi ends (first tithi boundary after sunrise),
   /// when it falls before the next sunrise. Null when the sunrise tithi
   /// still prevails at the next sunrise (no daytime transition).
@@ -39,6 +44,7 @@ class PanchangData {
     this.festivals = const [],
     this.sunrise,
     this.sunset,
+    this.nakshatra,
     this.tithiTransitionTime,
     this.transitionTithiIndex,
   });
@@ -114,6 +120,8 @@ class PanchangData {
     double? rawTithiNishita,
     double? rawTithiNextSunrise,
     String masaNextSunrise = '',
+    String? nakshatraAtSunrise,
+    double? rawTithiDominant,
     DateTime? tithiTransitionTime,
     int? transitionTithiIndex,
   }) {
@@ -142,6 +150,20 @@ class PanchangData {
         return f.panchangRules.solarDate == dateStr;
       }
 
+      // Nakshatra override (e.g. Saraswati Avahan on Mula): masa + paksha +
+      // prevailing nakshatra at sunrise; the stored tithi is ignored and
+      // there is no Kshaya fallback (a nakshatra always owns a sunrise).
+      if (f.nakshatraCondition != null) {
+        return matchesFestivalOnDay(
+          festival: f,
+          paksha: paksha,
+          tithiNumber: tithiNumber,
+          masa: masa,
+          nakshatra: nakshatraAtSunrise,
+          date: date,
+        );
+      }
+
       // SMELL-05: Select the appropriate timing checkpoint generically via
       // timingOverride instead of hard-coding festival IDs.
       // BUG-04: pass `date` so weekday constraints are evaluated.
@@ -166,6 +188,39 @@ class PanchangData {
         HinduMonthSystem.amanta,
         date,
       );
+
+      // Dominant-tithi grace (Drik convention): a festival with no
+      // timingOverride additionally matches when its tithi begins within
+      // ~60 min after sunrise (sampled as `rawTithiDominant` by callers).
+      // Additive only — sunrise matches above are never removed, so the
+      // Bisuddha two-day Shashthi (Oct 16+17 2026) survives while Saptami
+      // extends onto the 17th. Override festivals keep their own
+      // checkpoint; nakshatra/Solar festivals returned earlier.
+      if (!isMatch && rawTithiDominant != null) {
+        const sunriseOverrides = {'madhyahna', 'aparahna', 'nishita'};
+        if (f.panchangRules.timingOverride == null ||
+            !sunriseOverrides.contains(f.panchangRules.timingOverride)) {
+          final domIndex = rawTithiDominant.floor().clamp(1, 30);
+          if (domIndex != targetIndex) {
+            final domPaksha = domIndex <= 15 ? 'Shukla' : 'Krishna';
+            final domNum = domIndex <= 15 ? domIndex : domIndex - 15;
+            // New-moon wrap inside the grace window starts a new lunation.
+            var domMasa = masa;
+            if (tithiIndex == 30 &&
+                domIndex == 1 &&
+                masaNextSunrise.isNotEmpty) {
+              domMasa = masaNextSunrise;
+            }
+            isMatch = f.matchesTithi(
+              domPaksha,
+              domNum,
+              domMasa,
+              HinduMonthSystem.amanta,
+              date,
+            );
+          }
+        }
+      }
 
       // Fallback for Kshaya Tithi: if the required tithi falls entirely
       // between this sunrise and the next, count it as matching today.
@@ -221,6 +276,10 @@ class PanchangData {
       return isMatch;
     }).toList();
 
+    // Optional same-day ordering: stable sort by displayPriority. No-op
+    // unless 2+ matches carry a rank, so missing == current behaviour.
+    sortFestivalsByDisplayPriority(matchingFestivals);
+
     return PanchangData(
       date: date,
       rawTithi: rawTithi,
@@ -231,8 +290,42 @@ class PanchangData {
       festivals: matchingFestivals,
       sunrise: sunrise,
       sunset: sunset,
+      nakshatra: nakshatraAtSunrise,
       tithiTransitionTime: tithiTransitionTime,
       transitionTithiIndex: transitionTithiIndex,
+    );
+  }
+
+  /// Copy with replaced festival list and/or transition fields.
+  ///
+  /// Used by the shared festival-matching pipeline (vriddhi filtering) and
+  /// by the single-day provider when reusing the month-map entry: the month
+  /// batch skips the daytime transition search, so the single-day path
+  /// resolves it separately and attaches it here without re-matching.
+  PanchangData copyWith({
+    List<Festival>? festivals,
+    String? nakshatra,
+    DateTime? tithiTransitionTime,
+    int? transitionTithiIndex,
+    bool clearTransition = false,
+  }) {
+    return PanchangData(
+      date: date,
+      rawTithi: rawTithi,
+      tithiNumber: tithiNumber,
+      tithiName: tithiName,
+      paksha: paksha,
+      masa: masa,
+      festivals: festivals ?? this.festivals,
+      sunrise: sunrise,
+      sunset: sunset,
+      nakshatra: nakshatra ?? this.nakshatra,
+      tithiTransitionTime: clearTransition
+          ? null
+          : (tithiTransitionTime ?? this.tithiTransitionTime),
+      transitionTithiIndex: clearTransition
+          ? null
+          : (transitionTithiIndex ?? this.transitionTithiIndex),
     );
   }
 

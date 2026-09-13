@@ -12,6 +12,7 @@ import '../models/festival.dart';
 import '../models/sankalpa.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
+import 'festival_matching_pipeline.dart';
 import 'panchang_service.dart';
 import 'storage_service.dart';
 import 'sunrise_calculator.dart';
@@ -633,14 +634,17 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    for (int i = 0; i < _festivalWindowDays; i++) {
+    // Collect the window (padded ±2 days for Vriddhi edge runs), then
+    // filter once through the shared pipeline before scheduling.
+    final window = <DateTime, PanchangData>{};
+    for (int i = -2; i < _festivalWindowDays + 2; i++) {
       final date = today.add(Duration(days: i));
       final sunrise = SunriseCalculator.calculateSunriseIST(
         date: date,
         latitude: latitude,
         longitude: longitude,
       );
-      final panchang = await _computePanchangForDate(
+      window[date] = await _computePanchangForDate(
         date: date,
         service: service,
         latitude: latitude,
@@ -649,11 +653,19 @@ class NotificationService {
         monthSystem: monthSystem,
         sunriseTime: sunrise,
       );
-      if (!panchang.hasFestivals) continue;
-      // Major festivals first so the title names the most significant one.
-      final festival = panchang.majorFestivals.isNotEmpty
-          ? panchang.majorFestivals.first
-          : panchang.festivals.first;
+    }
+    // Shared pipeline: same Vriddhi trimming as the UI grid, so reminders
+    // never fire for a day the app hides (e.g. Oct 17 Navratri-Shashthi).
+    // Padded ±2 days so runs straddling the window edge resolve correctly;
+    // only in-window days are scheduled below.
+    final filtered = applyVriddhiFilter(window);
+
+    for (int i = 0; i < _festivalWindowDays; i++) {
+      final date = today.add(Duration(days: i));
+      final panchang = filtered[date];
+      if (panchang == null || !panchang.hasFestivals) continue;
+      // Ranked festivals win; otherwise legacy major-first behaviour.
+      final festival = primaryFestival(panchang.festivals);
 
       final displayMasa = displayMasaName(
         panchang.masa,
@@ -1012,6 +1024,22 @@ class NotificationService {
       latitude: latitude,
       longitude: longitude,
     );
+    // Dominant-tithi grace checkpoint (same Drik rule as the UI batch).
+    final rawTithiDominant = await service.calculateTithi(
+      sunriseTime.add(kDominantTithiGrace),
+      latitude: latitude,
+      longitude: longitude,
+    );
+    // Nakshatra at sunrise for nakshatra-conditioned festivals (Mula
+    // Avahan). Gated so days without such festivals skip the extra call.
+    final needsNakshatra = festivals.any((f) => f.nakshatraCondition != null);
+    final nakshatraAtSunrise = needsNakshatra
+        ? await service.calculateNakshatra(
+            sunriseTime,
+            latitude: latitude,
+            longitude: longitude,
+          )
+        : null;
 
     return PanchangData.fromRawTithi(
       date: date,
@@ -1026,6 +1054,8 @@ class NotificationService {
       rawTithiNishita: rawTithiNishita,
       rawTithiNextSunrise: rawTithiNextSunrise,
       masaNextSunrise: masaNextSunrise,
+      nakshatraAtSunrise: nakshatraAtSunrise,
+      rawTithiDominant: rawTithiDominant,
     );
   }
 
@@ -1059,21 +1089,30 @@ class NotificationService {
       final today = DateTime.now();
       final date = DateTime(today.year, today.month, today.day);
 
-      final sunriseTime = SunriseCalculator.calculateSunriseIST(
-        date: date,
-        latitude: latitude,
-        longitude: longitude,
-      );
-
-      final panchang = await _computePanchangForDate(
-        date: date,
-        service: service,
-        latitude: latitude,
-        longitude: longitude,
-        festivals: await _loadFestivalsForNotification(),
-        monthSystem: monthSystem,
-        sunriseTime: sunriseTime,
-      );
+      final festivals = await _loadFestivalsForNotification();
+      // 3-day context so the shared Vriddhi filter can trim today correctly
+      // (same result as the UI grid: e.g. no Navratri-Shashthi on the
+      // second day of a Shashthi run).
+      final contextDays = <DateTime, PanchangData>{};
+      for (int i = -1; i <= 1; i++) {
+        final day = date.add(Duration(days: i));
+        final daySunrise = SunriseCalculator.calculateSunriseIST(
+          date: day,
+          latitude: latitude,
+          longitude: longitude,
+        );
+        contextDays[day] = await _computePanchangForDate(
+          date: day,
+          service: service,
+          latitude: latitude,
+          longitude: longitude,
+          festivals: festivals,
+          monthSystem: monthSystem,
+          sunriseTime: daySunrise,
+        );
+      }
+      final panchang =
+          applyVriddhiFilter(contextDays)[date] ?? contextDays[date]!;
       // Display the masa in the user's selected month system (Purnimant
       // Krishna days carry the next month's name; Shukla is identical).
       final displayMasa = displayMasaName(
@@ -1111,15 +1150,13 @@ class NotificationService {
         hinduDay: hinduDay,
       );
 
-      // First line is the festival name when one falls today (major
-      // preferred, else first), matching the home screen. Otherwise the
-      // tithi identity.
+      // First line is the festival name when one falls today (ranked
+      // preferred, else major preferred, else first), matching the home
+      // screen. Otherwise the tithi identity.
       final tithiIdentity =
           '${panchang.paksha} ${panchang.tithiName} – $displayMasa';
       if (panchang.hasFestivals) {
-        final festival = panchang.majorFestivals.isNotEmpty
-            ? panchang.majorFestivals.first
-            : panchang.festivals.first;
+        final festival = primaryFestival(panchang.festivals);
         final dateLines = secondaryLine == null
             ? gregorianLine
             : '$gregorianLine\n$secondaryLine';
