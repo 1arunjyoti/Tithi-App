@@ -6,21 +6,23 @@ Calendars supported: Hindu lunisolar (Amanta and Purnimant month systems, Shaka 
 
 ## 📱 Screenshots
 
-<div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
-  <img src="assets/screenshots/Home_Screen.png" alt="Home Screen" height="560">
-  <img src="assets/screenshots/Home_Screen_Extend.png" alt="Home Screen Extend" height="560">
-  <img src="assets/screenshots/Paksha_Details.png" alt="Paksha Details" height="560">
-  <img src="assets/screenshots/Festival_Details.png" alt="Festival Details" height="560">
-  <img src="assets/screenshots/App_Sidebar.png" alt="App Sidebar" height="560">
-  <img src="assets/screenshots/Settings_Screen.png" alt="Settings Screen" height="560">
-  <img src="assets/screenshots/Settings_Screen2.png" alt="Settings Screen" height="560">
-  <img src="assets/screenshots/Settings_Screen3.png" alt="Settings Screen" height="560">
-  <img src="assets/screenshots/Calenders_Selection.png" alt="Calendars Selection" height="560">
-  <img src="assets/screenshots/Festival_Countdown_Screen.png" alt="Festival Countdown Screen" height="560">
-  <img src="assets/screenshots/Moon_Phases_Screen.png" alt="Moon Phases Screen" height="560">
-  <img src="assets/screenshots/Eclipses_Screen.png" alt="Eclipses Screen" height="560">
-  <img src="assets/screenshots/About_Screen.png" alt="About Screen" height="560">
-</div>
+<table>
+  <tr>
+    <td><img src="assets/screenshots/Home_Screen.png" alt="Home Screen" height="560"></td>
+    <td><img src="assets/screenshots/Home_Screen_Extend.png" alt="Home Screen Extend" height="560"></td>
+    <td><img src="assets/screenshots/Paksha_Details.png" alt="Paksha Details" height="560"></td>
+    <td><img src="assets/screenshots/Festival_Details.png" alt="Festival Details" height="560"></td>
+    <td><img src="assets/screenshots/App_Sidebar.png" alt="App Sidebar" height="560"></td>
+    <td><img src="assets/screenshots/Settings_Screen.png" alt="Settings Screen" height="560"></td>
+    <td><img src="assets/screenshots/Settings_Screen2.png" alt="Settings Screen 2" height="560"></td>
+    <td><img src="assets/screenshots/Settings_Screen3.png" alt="Settings Screen 3" height="560"></td>
+    <td><img src="assets/screenshots/Calenders_Selection.png" alt="Calendars Selection" height="560"></td>
+    <td><img src="assets/screenshots/Festival_Countdowns_Screen.png" alt="Festival Countdowns Screen" height="560"></td>
+    <td><img src="assets/screenshots/Moon_Phases_Screen.png" alt="Moon Phases Screen" height="560"></td>
+    <td><img src="assets/screenshots/Eclipses_Screen.png" alt="Eclipses Screen" height="560"></td>
+    <td><img src="assets/screenshots/About_Screen.png" alt="About Screen" height="560"></td>
+  </tr>
+</table>
 
 ## 🌟 Key Features
 
