@@ -6,21 +6,29 @@ Calendars supported: Hindu lunisolar (Amanta and Purnimant month systems, Shaka 
 
 ## 📱 Screenshots
 
+<p align="center"><strong>A glimpse of Tithi's Panchang, calendar, festival, and settings screens.</strong></p>
+
 <table>
   <tr>
-    <td><img src="assets/screenshots/Home_Screen.png" alt="Home Screen" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Home_Screen_Extend.png" alt="Home Screen Extend" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Paksha_Details.png" alt="Paksha Details" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Festival_Details.png" alt="Festival Details" width="252" height="560"></td>
-    <td><img src="assets/screenshots/App_Sidebar.png" alt="App Sidebar" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Settings_Screen.png" alt="Settings Screen" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Settings_Screen2.png" alt="Settings Screen 2" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Settings_Screen3.png" alt="Settings Screen 3" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Calenders_Selection.png" alt="Calendars Selection" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Festival_Countdowns_Screen.png" alt="Festival Countdowns Screen" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Moon_Phases_Screen.png" alt="Moon Phases Screen" width="252" height="560"></td>
-    <td><img src="assets/screenshots/Eclipses_Screen.png" alt="Eclipses Screen" width="252" height="560"></td>
-    <td><img src="assets/screenshots/About_Screen.png" alt="About Screen" width="252" height="560"></td>
+    <td align="center"><a href="assets/screenshots/Home_Screen.png"><img src="assets/screenshots/Home_Screen.png" alt="Home screen" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Home_Screen_Extend.png"><img src="assets/screenshots/Home_Screen_Extend.png" alt="Extended home screen" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Paksha_Details.png"><img src="assets/screenshots/Paksha_Details.png" alt="Paksha details" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Festival_Details.png"><img src="assets/screenshots/Festival_Details.png" alt="Festival details" width="180"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="assets/screenshots/App_Sidebar.png"><img src="assets/screenshots/App_Sidebar.png" alt="App sidebar" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Settings_Screen.png"><img src="assets/screenshots/Settings_Screen.png" alt="Settings screen" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Settings_Screen2.png"><img src="assets/screenshots/Settings_Screen2.png" alt="Additional settings" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Settings_Screen3.png"><img src="assets/screenshots/Settings_Screen3.png" alt="More settings" width="180"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="assets/screenshots/Calenders_Selection.png"><img src="assets/screenshots/Calenders_Selection.png" alt="Calendar selection" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Festival_Countdowns_Screen.png"><img src="assets/screenshots/Festival_Countdowns_Screen.png" alt="Festival countdowns" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Moon_Phases_Screen.png"><img src="assets/screenshots/Moon_Phases_Screen.png" alt="Moon phases" width="180"></a></td>
+    <td align="center"><a href="assets/screenshots/Eclipses_Screen.png"><img src="assets/screenshots/Eclipses_Screen.png" alt="Eclipses screen" width="180"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="assets/screenshots/About_Screen.png"><img src="assets/screenshots/About_Screen.png" alt="About screen" width="180"></a></td>
   </tr>
 </table>
 
