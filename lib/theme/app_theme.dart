@@ -12,6 +12,290 @@ class AppTheme {
     borderRadius: BorderRadius.circular(24),
   );
 
+  // ---------------------------------------------------------------------------
+  // Centralized semantic & illustration palette.
+  //
+  // Rule: no widget/screen/painter may hardcode these hex values or
+  // `Colors.orange/amber/indigo/...` shades directly. Reference the constants
+  // or the brightness-aware helpers below so light/dark/high-contrast stay
+  // consistent from this single file.
+  // ---------------------------------------------------------------------------
+
+  // Warning / error-display palette (replaces hardcoded Colors.orange shades).
+  static const Color warning = Color(0xFFFF9800);
+  static const Color warningLightContainer = Color(
+    0xFFFFF3E0,
+  ); // orange.shade50
+  static const Color warningDarkContainer = Color(
+    0xFFE65100,
+  ); // orange.shade900
+  static const Color warningIconLight = Color(0xFFFB8C00); // orange.shade600
+  static const Color warningIconDark = Color(0xFFFFCC80); // orange.shade200
+  static const Color warningTextLight = Color(0xFFEF6C00); // orange.shade800
+  static const Color warningTextDark = Color(0xFFFFCC80); // orange.shade200
+  static const Color warningStrong = Color(0xFFF57C00); // orange.shade700
+
+  static Color warningBackground(bool isDark) => isDark
+      ? warningDarkContainer.withValues(alpha: 0.3)
+      : warningLightContainer;
+  static Color warningBorderColor() => warning.withValues(alpha: 0.3);
+  static Color warningSoftBackground() => warning.withValues(alpha: 0.1);
+  static Color warningIconColor(bool isDark) =>
+      isDark ? warningIconDark : warningIconLight;
+  static Color warningTextColor(bool isDark) =>
+      isDark ? warningTextDark : warningTextLight;
+
+  // Moon countdown / moon animation palette (replaces hardcoded
+  // indigo/deepPurple/amber/orange/grey shades).
+  static const Color moonLit = Color(0xFFFFE082); // amber.shade200
+  static const Color moonShadow = Color(0xFF1A1A2E); // deep dark blue/black
+  static const Color moonGradientDarkA = Color(0xFF1A237E); // indigo.shade900
+  static const Color moonGradientDarkB = Color(
+    0xFF311B92,
+  ); // deepPurple.shade900
+  static const Color moonGradientLightA = Color(0xFFFFECB3); // amber.shade100
+  static const Color moonGradientLightB = Color(0xFFFFF3E0); // orange.shade50
+  static const Color moonDiscDarkA = Color(0xFFE0E0E0); // grey.shade300
+  static const Color moonDiscDarkB = Color(0xFF757575); // grey.shade600
+  static const Color moonDiscLightA = Color(0xFFFFE082); // amber.shade200
+  static const Color moonDiscLightB = Color(0xFFFFB74D); // orange.shade300
+  static const Color moonGlowDark = Color(0xFF3F51B5); // indigo
+  static const Color moonGlowLight = Color(0xFFFFC107); // amber
+  static const Color moonIconDark = Color(0xFF1A237E); // indigo.shade900
+  static const Color moonIconLight = Color(0xFFEF6C00); // orange.shade800
+  static const Color purnimaIconDark = Color(0xFFFFC107); // amber
+  static const Color purnimaIconLight = Color(0xFFFB8C00); // orange.shade600
+  static const Color amavasyaIconDark = Color(0xFFBDBDBD); // grey.shade400
+  static const Color amavasyaIconLight = Color(0xFF616161); // grey.shade700
+
+  static List<Color> moonCountdownGradient(bool isDark) => isDark
+      ? [
+          moonGradientDarkA.withValues(alpha: 0.6),
+          moonGradientDarkB.withValues(alpha: 0.4),
+        ]
+      : [
+          moonGradientLightA.withValues(alpha: 0.8),
+          moonGradientLightB.withValues(alpha: 0.6),
+        ];
+  static Color moonCountdownBorder(bool isDark) => isDark
+      ? Colors.white.withValues(alpha: 0.1)
+      : moonLit.withValues(alpha: 0.5);
+  static Color moonCountdownShadow(bool isDark) => isDark
+      ? Colors.black.withValues(alpha: 0.3)
+      : moonGlowLight.withValues(alpha: 0.2);
+  static List<Color> moonDiscGradient(bool isDark) => isDark
+      ? [moonDiscDarkA, moonDiscDarkB]
+      : [moonDiscLightA, moonDiscLightB];
+  static Color moonGlowColor(bool isDark) =>
+      (isDark ? moonGlowDark : moonGlowLight).withValues(alpha: 0.5);
+  static Color moonIconColor(bool isDark) =>
+      isDark ? moonIconDark : moonIconLight;
+  static Color purnimaIconColor(bool isDark) =>
+      isDark ? purnimaIconDark : purnimaIconLight;
+  static Color amavasyaIconColor(bool isDark) =>
+      isDark ? amavasyaIconDark : amavasyaIconLight;
+
+  // Space / solar-system illustration palette (fixed illustration colors that
+  // must not shift with the app theme, but still centralized here).
+  static const Color spaceDarkTop = Color(0xFF0F0F1A);
+  static const Color spaceDarkBottom = Color(0xFF050508);
+  static const Color spaceLightTop = Color(0xFF1A1A2E);
+  static const Color spaceLightBottom = Color(0xFF0F0F1A);
+  static const Color sunInner = Color(0xFFFFFFE0);
+  static const Color sunMid = Color(0xFFFFD700);
+  static const Color sunOuter = Color(0xFFFF8C00);
+  static const Color earthLight = Color(0xFF87CEEB);
+  static const Color earthMid = Color(0xFF4A90D9);
+  static const Color earthDeep = Color(0xFF2E5090);
+  static const Color earthGlowGreen = Color(0xFF2E8B57);
+  static const Color spaceStar = Colors.white;
+  static const Color spaceLabel = Colors.white;
+  static const Color retrogradeIndicator = Color(0xFFE53935);
+
+  static List<Color> spaceBackgroundGradient(bool isDark) => isDark
+      ? [spaceDarkTop, spaceDarkBottom]
+      : [spaceLightTop, spaceLightBottom];
+
+  // Planet visualization palette (single source; PlanetaryViewService delegates).
+  static const int planetSun = 0xFFFFD700; // Gold
+  static const int planetMoon = 0xFFC0C0C0; // Silver
+  static const int planetMercury = 0xFF00BFFF; // Deep sky blue
+  static const int planetVenus = 0xFFFF69B4; // Hot pink
+  static const int planetMars = 0xFFFF4500; // Red-orange
+  static const int planetJupiter = 0xFFFFB347; // Light orange
+  static const int planetSaturn = 0xFFFFFACD; // Lemon chiffon
+  static const int planetUranus = 0xFF40E0D0; // Turquoise
+  static const int planetNeptune = 0xFF4169E1; // Royal blue
+
+  // Sunrise / sunset icon accents (replaces orange.shade300 / indigo.shade300).
+  static const Color sunrise = Color(0xFFFFB74D); // orange.shade300
+  static const Color sunset = Color(0xFF7986CB); // indigo.shade300
+
+  // Success / visibility accent (replaces hardcoded Colors.green).
+  static const Color successLight = Color(0xFF2E7D32); // green.shade800
+  static const Color successDark = Color(0xFF81C784); // green.shade300
+  static Color success(bool isDark) => isDark ? successDark : successLight;
+
+  // Map boundary stroke (replaces hardcoded Colors.orange on map layers).
+  // Fixed illustration color so maps look identical in light/dark.
+  static const Color mapBoundary = Color(0xFFFF9800);
+
+  // Location prompt accent (replaces hardcoded Colors.amber pin).
+  static const Color locationAccent = Color(0xFFFFC107); // amber
+
+  // ---------------------------------------------------------------------------
+  // Hero (paksha indicator) palette — faithful mirror of
+  // assets/redesign assets/tithi-redesign-v3-faithful.html theme vars.
+  // Shukla: orange gradient / Krishna: purple gradient / PureDark: flat dark.
+  // Resolve via isDark + isPureDark (scaffold == black) so all three
+  // ThemeData variants + high-contrast stay correct from one place.
+  // ---------------------------------------------------------------------------
+  // Shukla stops are deepened (bright #FF9F1C left white text at ~2:1
+  // contrast) so white copy stays legible while keeping the warm identity.
+  static const Color heroShukla1 = Color(0xFFE65100);
+  static const Color heroShukla2 = Color(0xFFBF3600);
+  static const Color heroKrishna1 = Color(0xFF9D4EDD);
+  static const Color heroKrishna2 = Color(0xFF7B2CBF);
+  static const Color heroDark1 = Color(0xFF1E1E1E);
+  static const Color heroDark2 = Color(0xFF050505);
+  static const Color heroInk = Colors.white;
+  static const Color heroMoonFillShukla = Color(0xFFFFE082); // moonLit
+  static const Color heroMoonFillKrishna = Color(0xFF4CC9F0); // tertiary neon
+  static const Color heroMoonFillDark = Color(0xFFFFE082); // moonLit
+
+  static bool isPureDarkTheme(BuildContext context) =>
+      Theme.of(context).scaffoldBackgroundColor == Colors.black;
+
+  static List<Color> heroGradient(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return [heroShukla1, heroShukla2];
+    if (isPureDarkTheme(context)) return [heroDark1, heroDark2];
+    return [heroKrishna1, heroKrishna2];
+  }
+
+  static Color heroGlow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroShukla1.withValues(alpha: 0.32);
+    if (isPureDarkTheme(context)) {
+      return const Color(0xFFFFA000).withValues(alpha: 0.25);
+    }
+    return heroKrishna1.withValues(alpha: 0.4);
+  }
+
+  static Color heroSubtle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return Colors.white.withValues(alpha: 0.88);
+    if (isPureDarkTheme(context)) {
+      return Colors.white.withValues(alpha: 0.7);
+    }
+    return Colors.white.withValues(alpha: 0.82);
+  }
+
+  static Color heroChipBackground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Shukla uses a dark glass so white-bold chip text stays legible on the
+    // orange gradient (a white veil would wash it out).
+    if (!isDark) return Colors.black.withValues(alpha: 0.22);
+    if (isPureDarkTheme(context)) {
+      return Colors.white.withValues(alpha: 0.08);
+    }
+    return Colors.white.withValues(alpha: 0.12);
+  }
+
+  static Color heroChipBorder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return Colors.white.withValues(alpha: 0.3);
+    if (isPureDarkTheme(context)) {
+      return const Color(0xFFFFB74D).withValues(alpha: 0.3);
+    }
+    return heroKrishna1.withValues(alpha: 0.4);
+  }
+
+  static Color heroMoonFill(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroMoonFillShukla;
+    if (isPureDarkTheme(context)) return heroMoonFillDark;
+    return heroMoonFillKrishna;
+  }
+
+  /// Hero card decoration: radial glow + linear gradient, white ink.
+  /// Pure Dark gets a flat bordered card per the redesign.
+  static BoxDecoration heroDecoration(BuildContext context) {
+    final glow = heroGlow(context);
+    final gradient = heroGradient(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPureDark = isPureDarkTheme(context);
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: gradient,
+      ),
+      border: isPureDark
+          ? Border.all(color: Colors.white.withValues(alpha: 0.1))
+          : null,
+      boxShadow: [
+        // Softened so less color flows outside the card's bottom edge.
+        BoxShadow(
+          color: glow,
+          blurRadius: isDark && !isPureDark ? 16 : 20,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    );
+  }
+
+  static BoxDecoration heroGlowBackdrop(BuildContext context) {
+    // Radial highlight at top-right, mirroring `.hero` background layer.
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: RadialGradient(
+        center: const Alignment(0.85, -0.4),
+        radius: 1.4,
+        colors: [heroGlow(context), Colors.transparent],
+        stops: const [0.0, 0.55],
+      ),
+    );
+  }
+
+  /// Sheet header block: same hero gradient/ink treatment as [heroDecoration]
+  /// but flush with the sheet — rounded top (32, matching the bottom-sheet
+  /// shape), straight bottom edge into the body, no outer shadow (the modal
+  /// supplies elevation). High contrast falls back to a solid surface.
+  /// Pass the resolved flag (OS MediaQuery and/or app accessibility setting,
+  /// same as the hero card) — a static cannot read providers itself.
+  static BoxDecoration heroSheetHeaderDecoration(
+    BuildContext context, {
+    required bool highContrast,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrast) {
+      return BoxDecoration(
+        color: isDark ? Colors.black : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(
+          bottom: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withValues(
+              alpha: 0.15,
+            ),
+          ),
+        ),
+      );
+    }
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: heroGradient(context),
+      ),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      border: isPureDarkTheme(context)
+          ? Border.all(color: Colors.white.withValues(alpha: 0.1))
+          : null,
+    );
+  }
+
   /// OPT-3: static final fields so ThemeData + GoogleFonts text-theme objects
   /// are constructed exactly once (on first class access) rather than on every
   /// widget rebuild that calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
@@ -33,12 +317,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
-        onSecondary: Colors.brown.shade900,
-        onSurface: const Color(0xFF2D3436),
+        onSecondary: Color(0xFF3E2723), // brown.shade900
+        onSurface: Color(0xFF2D3436),
       ),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
@@ -400,9 +684,7 @@ class AppTheme {
       return BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       );
     }
 

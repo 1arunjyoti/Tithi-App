@@ -259,7 +259,7 @@ class ThemeOptionButton extends ConsumerWidget {
             Icon(
               icon,
               color: isSelected
-                  ? Colors.white
+                  ? context.colors.onPrimary
                   : context.colors.onSurface.withValues(alpha: 0.6),
             ),
             const SizedBox(height: 4),
@@ -268,7 +268,7 @@ class ThemeOptionButton extends ConsumerWidget {
               style: context.textTheme.labelSmall?.copyWith(
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isSelected
-                    ? Colors.white
+                    ? context.colors.onPrimary
                     : context.colors.onSurface.withValues(alpha: 0.6),
               ),
             ),

@@ -69,6 +69,7 @@ flutter:
     - assets/data/shlokas.json
     - assets/data/in_city.json
     - assets/images/
+    - assets/images/festival/
     - assets/icons/
     - assets/map_data/
 

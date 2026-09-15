@@ -182,14 +182,14 @@ class FestivalSearchDelegate extends SearchDelegate {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isMajor
-                    ? Colors.orange.withValues(alpha: 0.2)
-                    : Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(
+                  alpha: isMajor ? 0.2 : 0.1,
+                ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 isMajor ? Icons.celebration : Icons.event,
-                color: isMajor ? Colors.orange : Theme.of(context).primaryColor,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(width: 16),

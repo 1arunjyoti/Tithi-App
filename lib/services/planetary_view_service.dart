@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
+import '../theme/app_theme.dart';
 
 /// View mode for solar system visualization
 enum SolarSystemViewMode {
@@ -337,18 +338,19 @@ class PlanetaryViewService {
         : (namesEn[planet] ?? planet.displayName);
   }
 
-  /// Get planet color for visualization
+  /// Get planet color for visualization.
+  /// Delegates to [AppTheme] so the palette lives in a single place.
   static int getPlanetColor(Planet planet) {
     const colors = {
-      Planet.sun: 0xFFFFD700, // Gold
-      Planet.moon: 0xFFC0C0C0, // Silver
-      Planet.mercury: 0xFF00BFFF, // Deep sky blue
-      Planet.venus: 0xFFFF69B4, // Hot pink
-      Planet.mars: 0xFFFF4500, // Red-orange
-      Planet.jupiter: 0xFFFFB347, // Light orange
-      Planet.saturn: 0xFFFFFACD, // Lemon chiffon
-      Planet.uranus: 0xFF40E0D0, // Turquoise
-      Planet.neptune: 0xFF4169E1, // Royal blue
+      Planet.sun: AppTheme.planetSun,
+      Planet.moon: AppTheme.planetMoon,
+      Planet.mercury: AppTheme.planetMercury,
+      Planet.venus: AppTheme.planetVenus,
+      Planet.mars: AppTheme.planetMars,
+      Planet.jupiter: AppTheme.planetJupiter,
+      Planet.saturn: AppTheme.planetSaturn,
+      Planet.uranus: AppTheme.planetUranus,
+      Planet.neptune: AppTheme.planetNeptune,
     };
     return colors[planet] ?? 0xFFFFFFFF;
   }

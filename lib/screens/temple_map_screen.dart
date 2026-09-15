@@ -216,7 +216,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               GeoJsonLayer.asset(
                 'assets/map_data/india_boundary.geojson',
                 styleDefaults: const GeoJsonStyleDefaults(
-                  strokeColor: Colors.orange,
+                  strokeColor: AppTheme.mapBoundary,
                   strokeWidth: 1.5,
                   fillColor: Colors.transparent,
                   fillOpacity: 0.0,
