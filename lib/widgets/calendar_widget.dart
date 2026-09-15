@@ -54,8 +54,7 @@ final Set<String> _precachedMonthKeys = {};
 // dots are missing during the swipe animation and pop in after landing.
 // This cache is populated from every loaded month (current + precached
 // neighbors) so the next month can show stale dots instantly.
-final Map<DateTime, ({bool hasFestivals, bool isMajor})>
-    _festivalDotCache = {};
+final Map<DateTime, ({bool hasFestivals, bool isMajor})> _festivalDotCache = {};
 const int _festivalDotCacheMax = 600;
 final Set<String> _precachedFestivalMonthKeys = {};
 
@@ -300,8 +299,7 @@ void _storeFestivalDotsSync(Map<DateTime, PanchangData> monthData) {
 }
 
 ({bool hasFestivals, bool isMajor})? _cachedFestivalDotSync(DateTime date) {
-  return _festivalDotCache[
-      DateTime(date.year, date.month, date.day)];
+  return _festivalDotCache[DateTime(date.year, date.month, date.day)];
 }
 
 void _storeAdaptiveDotsSync(Map<DateTime, _CalendarCellData> cellData) {
@@ -436,10 +434,16 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
 
   // Shared inputs for the festival-flag fast path below, hoisted out of the
   // per-cell closure so providers are read once per month, not ~42×.
-  final flagService = includeFestivals ? ref.read(panchangServiceProvider) : null;
+  final flagService = includeFestivals
+      ? ref.read(panchangServiceProvider)
+      : null;
   final flagFestivals = includeFestivals ? ref.read(festivalProvider) : null;
-  final flagMonthSystem = includeFestivals ? ref.watch(cp.hinduMonthSystemProvider) : null;
-  final flagCoords = includeFestivals ? ref.watch(resolvedCoordinatesProvider) : null;
+  final flagMonthSystem = includeFestivals
+      ? ref.watch(cp.hinduMonthSystemProvider)
+      : null;
+  final flagCoords = includeFestivals
+      ? ref.watch(resolvedCoordinatesProvider)
+      : null;
   final flagCacheBox = includeFestivals
       ? await preparePanchangCacheBox(
           flagCoords!.latitude,
@@ -503,7 +507,9 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
     filteredFlags = applyVriddhiFilter(flagData);
   }
 
-  Future<MapEntry<DateTime, _CalendarCellData>> computeCell(DateTime date) async {
+  Future<MapEntry<DateTime, _CalendarCellData>> computeCell(
+    DateTime date,
+  ) async {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final pDate = await _calendarDateForSystem(
       ref,
@@ -547,8 +553,7 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
   }
 
   for (var i = 0; i < dates.length; i += batchSize) {
-    final end =
-        (i + batchSize) > dates.length ? dates.length : i + batchSize;
+    final end = (i + batchSize) > dates.length ? dates.length : i + batchSize;
     final batch = dates.sublist(i, end);
     final entries = await Future.wait(batch.map(computeCell));
     for (final entry in entries) {
@@ -562,8 +567,8 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
 // autoDispose: instances are per-month and the sync LRU
 // (_secondaryDayCache) already preserves labels across disposal, so the
 // next visit re-renders instantly while fresh data resolves behind it.
-final gregorianCalendarCellDataProvider =
-    FutureProvider.autoDispose.family<
+final gregorianCalendarCellDataProvider = FutureProvider.autoDispose
+    .family<
       Map<DateTime, _CalendarCellData>,
       ({
         DateTime focusedMonth,
@@ -618,8 +623,8 @@ final gregorianCalendarCellDataProvider =
 // swiping back/forth between the same lunar months stays warm for instant
 // landing instead of recomputing. Each entry holds ~42 tiny cell records,
 // so idle months are still released rather than retained for the session.
-final adaptiveCalendarDataProvider =
-    FutureProvider.autoDispose.family<
+final adaptiveCalendarDataProvider = FutureProvider.autoDispose
+    .family<
       _AdaptiveCalendarData,
       ({
         DateTime focusedMonth,
@@ -807,8 +812,7 @@ Future<void> _precacheGregorianNeighbors(
     _normalizeMonthKey(DateTime(focusedMonth.year, focusedMonth.month + 1)),
     _normalizeMonthKey(DateTime(focusedMonth.year, focusedMonth.month - 1)),
   ];
-  final needsSecondaryLabels =
-      secondarySystem != cp.AppCalendarSystem.none;
+  final needsSecondaryLabels = secondarySystem != cp.AppCalendarSystem.none;
   for (final month in neighbors) {
     if (isStale()) return;
     // Festival dots: always needed, independent of secondary labels.
@@ -817,9 +821,7 @@ Future<void> _precacheGregorianNeighbors(
     final festivalKey = _festivalMonthPrecacheKey(month);
     if (_addBoundedPrecacheKey(_precachedFestivalMonthKeys, festivalKey)) {
       try {
-        final monthData = await ref.read(
-          monthlyPanchangProvider(month).future,
-        );
+        final monthData = await ref.read(monthlyPanchangProvider(month).future);
         _storeFestivalDotsSync(monthData);
       } catch (e) {
         _precachedFestivalMonthKeys.remove(festivalKey);
@@ -1026,7 +1028,8 @@ class CalendarWidget extends ConsumerWidget {
         _lastAdaptiveData != null &&
         _lastAdaptiveSystemIndex == primarySystem.index &&
         _lastAdaptiveModeIndex == displayMode.index;
-    final adaptiveDisplay = adaptiveFresh ?? (reuseStale ? _lastAdaptiveData : null);
+    final adaptiveDisplay =
+        adaptiveFresh ?? (reuseStale ? _lastAdaptiveData : null);
     final adaptiveSettled = adaptiveFresh != null;
     // While the new month loads, keep the stale grid under its OLD key so
     // the AnimatedSwitcher holds it static (no transition). Only fresh data
@@ -1105,10 +1108,7 @@ class CalendarWidget extends ConsumerWidget {
                     // Gregorian TableCalendar page turn without overlap.
                     final slide =
                         Tween<Offset>(
-                          begin: Offset(
-                            0.35 * _adaptiveSlideDirection,
-                            0,
-                          ),
+                          begin: Offset(0.35 * _adaptiveSlideDirection, 0),
                           end: Offset.zero,
                         ).animate(
                           CurvedAnimation(
@@ -1116,10 +1116,7 @@ class CalendarWidget extends ConsumerWidget {
                             curve: Curves.easeOutCubic,
                           ),
                         );
-                    return SlideTransition(
-                      position: slide,
-                      child: child,
-                    );
+                    return SlideTransition(position: slide, child: child);
                   },
                   child: adaptiveDisplay != null
                       ? _buildAdaptiveGrid(
@@ -1204,8 +1201,7 @@ class CalendarWidget extends ConsumerWidget {
                       .setFocusedMonth(focusedDay);
                   // Swiping months ends the explicit tile-tap state: the
                   // secondary header returns to its default two-month range.
-                  ref.read(cp.tappedCalendarDateProvider.notifier).state =
-                      null;
+                  ref.read(cp.tappedCalendarDateProvider.notifier).state = null;
                   // Deferred: heavy FFI follows after the page animation
                   // settles, so it never blocks settle frames.
                   ref
@@ -1310,8 +1306,8 @@ class CalendarWidget extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                ),
               ),
+            ),
         ],
       ),
     );
@@ -1426,9 +1422,8 @@ class CalendarWidget extends ConsumerWidget {
                 : null;
             final hasFestivals =
                 cellData?.hasFestivals ?? staleDot?.hasFestivals ?? false;
-            final hasMajorFestival = cellData?.hasMajorFestival ??
-                staleDot?.isMajor ??
-                false;
+            final hasMajorFestival =
+                cellData?.hasMajorFestival ?? staleDot?.isMajor ?? false;
 
             return GestureDetector(
               onTap: () {
@@ -1517,7 +1512,7 @@ class CalendarWidget extends ConsumerWidget {
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
               primary: context.colors.primary,
-              onPrimary: Colors.white,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
               surface: Theme.of(context).scaffoldBackgroundColor,
             ),
           ),
@@ -1527,10 +1522,7 @@ class CalendarWidget extends ConsumerWidget {
     );
 
     if (selectedDate != null) {
-      cp.setCalendarMonth(
-        ref,
-        DateTime(selectedDate.year, focusedMonth.month),
-      );
+      cp.setCalendarMonth(ref, DateTime(selectedDate.year, focusedMonth.month));
     }
   }
 
@@ -1992,7 +1984,9 @@ class CalendarWidget extends ConsumerWidget {
     // Load persisted nav targets before the cache-hit lookup below, so the
     // first swipe after a restart can already move instantly.
     _ensureAdaptiveCacheLoaded();
-    _logCalNav('nav prev intent: focused=${_ymd(focusedMonth)} system=$primarySystem');
+    _logCalNav(
+      'nav prev intent: focused=${_ymd(focusedMonth)} system=$primarySystem',
+    );
     try {
       // Buzz here only for Hindu/Bengali (no page view, no onPageChanged).
       // Gregorian chevrons buzz via onPageChanged's page-turn animation.
@@ -2064,7 +2058,9 @@ class CalendarWidget extends ConsumerWidget {
     // Load persisted nav targets before the cache-hit lookup below, so the
     // first swipe after a restart can already move instantly.
     _ensureAdaptiveCacheLoaded();
-    _logCalNav('nav next intent: focused=${_ymd(focusedMonth)} system=$primarySystem');
+    _logCalNav(
+      'nav next intent: focused=${_ymd(focusedMonth)} system=$primarySystem',
+    );
     try {
       // Same split as _navigateToPreviousMonth: Gregorian buzzes once via
       // onPageChanged; Hindu/Bengali buzz here.
@@ -2206,8 +2202,14 @@ _HeaderData? _cachedHeaderSync(
   HinduMonthSystem monthSystem, [
   DateTime? selectedDate,
 ]) {
-  return _headerDataCache[
-      _headerCacheKey(date, primary, secondary, yearEra, monthSystem, selectedDate)];
+  return _headerDataCache[_headerCacheKey(
+    date,
+    primary,
+    secondary,
+    yearEra,
+    monthSystem,
+    selectedDate,
+  )];
 }
 
 void _storeHeaderSync(
@@ -2220,28 +2222,30 @@ void _storeHeaderSync(
   DateTime? selectedDate,
 ]) {
   if (_headerDataCache.length >= _headerDataCacheMax) {
-    final toRemove =
-        _headerDataCache.keys.take(_headerDataCacheMax ~/ 5).toList();
+    final toRemove = _headerDataCache.keys
+        .take(_headerDataCacheMax ~/ 5)
+        .toList();
     for (final k in toRemove) {
       _headerDataCache.remove(k);
     }
   }
-  _headerDataCache[
-      _headerCacheKey(
+  _headerDataCache[_headerCacheKey(
         date,
         primary,
         secondary,
         yearEra,
         monthSystem,
         selectedDate,
-      )] = value;
+      )] =
+      value;
 }
 
 // autoDispose: one tiny _HeaderData per visited month; the sync LRU
 // (_headerDataCache) preserves headers across disposal, so the next visit
 // renders stale text instantly while fresh data resolves behind it.
-final calendarHeaderDataProvider =
-    FutureProvider.autoDispose<_HeaderData>((ref) async {
+final calendarHeaderDataProvider = FutureProvider.autoDispose<_HeaderData>((
+  ref,
+) async {
   final date = ref.watch(cp.focusedMonthProvider);
   final primary = ref.watch(cp.primaryCalendarSystemProvider);
   final secondary = ref.watch(cp.secondaryCalendarSystemProvider);
@@ -2734,13 +2738,13 @@ class _CalendarCell extends StatelessWidget {
         : primaryText;
 
     final textColor = isSelected
-        ? Colors.white
+        ? context.colors.onPrimary
         : isToday
         ? context.colors.primary
         : context.colors.onSurface;
 
     final secondaryColor = isSelected
-        ? Colors.white.withValues(alpha: 0.7)
+        ? context.colors.onPrimary.withValues(alpha: 0.7)
         : isToday
         ? context.colors.primary.withValues(alpha: 0.7)
         : context.colors.onSurface.withValues(alpha: 0.5);

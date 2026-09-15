@@ -207,7 +207,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.amber.withValues(
+                            color: AppTheme.moonGlowLight.withValues(
                               alpha: 0.10 + 0.40 * illumination01,
                             ),
                             blurRadius: 24 + 36 * illumination01,
@@ -296,7 +296,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                   subtitle: l10n.fullMoon,
                   targetDate: data.nextPurnima,
                   icon: Icons.circle,
-                  color: isDark ? Colors.amber : Colors.orange.shade600,
+                  color: AppTheme.purnimaIconColor(isDark),
                   isDark: isDark,
                 ),
               ),
@@ -307,7 +307,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                   subtitle: l10n.newMoon,
                   targetDate: data.nextAmavasya,
                   icon: Icons.circle_outlined,
-                  color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                  color: AppTheme.amavasyaIconColor(isDark),
                   isDark: isDark,
                 ),
               ),
@@ -410,19 +410,15 @@ class _CountdownCardState extends State<_CountdownCard> {
           end: Alignment.bottomRight,
           colors: widget.isDark
               ? [
-                  Colors.white.withValues(alpha: 0.1),
-                  Colors.white.withValues(alpha: 0.05),
+                  AppTheme.spaceStar.withValues(alpha: 0.1),
+                  AppTheme.spaceStar.withValues(alpha: 0.05),
                 ]
               : [
-                  Colors.white.withValues(alpha: 0.8),
-                  Colors.white.withValues(alpha: 0.5),
+                  AppTheme.spaceStar.withValues(alpha: 0.8),
+                  AppTheme.spaceStar.withValues(alpha: 0.5),
                 ],
         ),
-        border: Border.all(
-          color: widget.isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.amber.shade200,
-        ),
+        border: Border.all(color: AppTheme.moonCountdownBorder(widget.isDark)),
       ),
       child: Column(
         children: [
@@ -559,8 +555,8 @@ class _UpcomingDatesTab extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.white.withValues(alpha: 0.6),
+                    ? AppTheme.spaceStar.withValues(alpha: 0.05)
+                    : AppTheme.spaceStar.withValues(alpha: 0.6),
               ),
               child: Row(
                 children: [
@@ -592,9 +588,10 @@ class _UpcomingDatesTab extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: isDark
-                          ? Colors.indigo.withValues(alpha: 0.3)
-                          : Colors.amber.withValues(alpha: 0.3),
+                      color: (isDark
+                              ? AppTheme.moonGlowDark
+                              : AppTheme.moonGlowLight)
+                          .withValues(alpha: 0.3),
                     ),
                     child: Text(
                       daysUntil == 0

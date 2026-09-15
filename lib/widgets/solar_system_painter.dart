@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:jyotish/jyotish.dart';
 import '../services/planetary_view_service.dart';
+import '../theme/app_theme.dart';
 
 /// CustomPainter for rendering a 2D solar system visualization
 class SolarSystemPainter extends CustomPainter {
@@ -64,8 +65,8 @@ class SolarSystemPainter extends CustomPainter {
   void _drawCenterGuides(Canvas canvas, Offset center, double maxRadius) {
     final guidePaint = Paint()
       ..color = isDark
-          ? Colors.white.withValues(alpha: 0.08)
-          : Colors.white.withValues(alpha: 0.12)
+          ? AppTheme.spaceStar.withValues(alpha: 0.08)
+          : AppTheme.spaceStar.withValues(alpha: 0.12)
       ..strokeWidth = 1.0;
 
     for (int i = 0; i < 12; i++) {
@@ -84,21 +85,11 @@ class SolarSystemPainter extends CustomPainter {
     Offset center,
     double maxRadius,
   ) {
-    // Deep space background
+    // Deep space background (centralized illustration palette)
     final bgRect = Rect.fromLTWH(0, 0, size.width, size.height);
     final bgPaint = Paint()
       ..shader = RadialGradient(
-        colors: isDark
-            ? [
-                const Color(0xFF0F0F1A), // Very dark blue/black
-                const Color(0xFF050508), // Almost black
-              ]
-            : [
-                const Color(
-                  0xFF1A1A2E,
-                ), // Dark blue even in light mode for space
-                const Color(0xFF0F0F1A),
-              ],
+        colors: AppTheme.spaceBackgroundGradient(isDark),
         radius: 1.5,
       ).createShader(bgRect);
     canvas.drawRect(bgRect, bgPaint);
@@ -106,7 +97,7 @@ class SolarSystemPainter extends CustomPainter {
     // Draw stars
     // We use a deterministic random seed so stars don't flicker on repaint
     final random = math.Random(42);
-    final starPaint = Paint()..color = Colors.white.withValues(alpha: 0.8);
+    final starPaint = Paint()..color = AppTheme.spaceStar.withValues(alpha: 0.8);
 
     // Draw about 100 random stars
     for (int i = 0; i < 100; i++) {
@@ -122,7 +113,7 @@ class SolarSystemPainter extends CustomPainter {
       // Twinkle effect (based on time would be better, but static is fine for now)
       final alpha = 0.3 + random.nextDouble() * 0.7;
 
-      starPaint.color = Colors.white.withValues(alpha: alpha);
+      starPaint.color = AppTheme.spaceStar.withValues(alpha: alpha);
       canvas.drawCircle(Offset(x, y), starSize, starPaint);
     }
   }
@@ -134,8 +125,8 @@ class SolarSystemPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0
       ..color = isDark
-          ? Colors.white.withValues(alpha: 0.15)
-          : Colors.white.withValues(alpha: 0.2);
+          ? AppTheme.spaceStar.withValues(alpha: 0.15)
+          : AppTheme.spaceStar.withValues(alpha: 0.2);
 
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
@@ -178,8 +169,8 @@ class SolarSystemPainter extends CustomPainter {
         text: label,
         style: TextStyle(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.6),
+              ? AppTheme.spaceStar.withValues(alpha: 0.5)
+              : AppTheme.spaceStar.withValues(alpha: 0.6),
           fontSize: 10,
           fontWeight: FontWeight.w500,
         ),
@@ -203,8 +194,8 @@ class SolarSystemPainter extends CustomPainter {
         text: '$degree°',
         style: TextStyle(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.45)
-              : Colors.white.withValues(alpha: 0.55),
+              ? AppTheme.spaceStar.withValues(alpha: 0.45)
+              : AppTheme.spaceStar.withValues(alpha: 0.55),
           fontSize: 9,
           fontWeight: FontWeight.w500,
         ),
@@ -224,8 +215,8 @@ class SolarSystemPainter extends CustomPainter {
   void _drawOrbits(Canvas canvas, Offset center, double maxRadius) {
     final orbitPaint = Paint()
       ..color = isDark
-          ? Colors.white.withValues(alpha: 0.1)
-          : Colors.white.withValues(
+          ? AppTheme.spaceStar.withValues(alpha: 0.1)
+          : AppTheme.spaceStar.withValues(
               alpha: 0.15,
             ) // Lighter visibility on dark space bg
       ..style = PaintingStyle.stroke
@@ -249,8 +240,8 @@ class SolarSystemPainter extends CustomPainter {
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFFFFD700).withValues(alpha: 0.8),
-          const Color(0xFFFF8C00).withValues(alpha: 0.4),
+          AppTheme.sunMid.withValues(alpha: 0.8),
+          AppTheme.sunOuter.withValues(alpha: 0.4),
           Colors.transparent,
         ],
         stops: const [0.0, 0.5, 1.0],
@@ -261,7 +252,7 @@ class SolarSystemPainter extends CustomPainter {
     // Draw sun core
     final sunPaint = Paint()
       ..shader = const RadialGradient(
-        colors: [Color(0xFFFFFFE0), Color(0xFFFFD700), Color(0xFFFF8C00)],
+        colors: [AppTheme.sunInner, AppTheme.sunMid, AppTheme.sunOuter],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
     canvas.drawCircle(center, 18, sunPaint);
@@ -272,8 +263,8 @@ class SolarSystemPainter extends CustomPainter {
     final glowPaint = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFF4A90D9).withValues(alpha: 0.8),
-          const Color(0xFF2E8B57).withValues(alpha: 0.4),
+          AppTheme.earthMid.withValues(alpha: 0.8),
+          AppTheme.earthGlowGreen.withValues(alpha: 0.4),
           Colors.transparent,
         ],
         stops: const [0.0, 0.5, 1.0],
@@ -285,9 +276,9 @@ class SolarSystemPainter extends CustomPainter {
     final earthPaint = Paint()
       ..shader = const RadialGradient(
         colors: [
-          Color(0xFF87CEEB), // Light sky blue
-          Color(0xFF4A90D9), // Medium blue
-          Color(0xFF2E5090), // Deep blue
+          AppTheme.earthLight,
+          AppTheme.earthMid,
+          AppTheme.earthDeep,
         ],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
@@ -350,7 +341,7 @@ class SolarSystemPainter extends CustomPainter {
       // Draw retrograde indicator
       if (planet.isRetrograde) {
         final retrogradePaint = Paint()
-          ..color = Colors.red.withValues(alpha: 0.6)
+          ..color = AppTheme.retrogradeIndicator.withValues(alpha: 0.6)
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5;
 
@@ -437,7 +428,7 @@ class SolarSystemPainter extends CustomPainter {
     double radius,
     bool isSelected,
   ) {
-    const textColor = Colors.white; // Always white on space background
+    const textColor = AppTheme.spaceStar; // Always white on space background
 
     final textPainter = TextPainter(
       text: TextSpan(

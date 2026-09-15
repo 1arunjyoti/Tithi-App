@@ -1,26 +1,17 @@
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
-import '../models/festival.dart';
-import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
-import '../providers/location_provider.dart';
-import '../providers/panchang_provider.dart';
-import '../providers/accessibility_provider.dart';
 import '../providers/view_mode_provider.dart';
-import '../services/moon_phase_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/calendar_widget.dart';
 import '../widgets/event_list_widget.dart';
 import '../widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
-import '../widgets/moon_animation_widget.dart';
 import '../widgets/daily_quote_widget.dart';
 import '../widgets/festival_countdown_card.dart';
 import '../widgets/festival_search_delegate.dart';
-import '../widgets/weather_sheet.dart';
+import '../widgets/paksha_hero_card.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/home_widget_card.dart';
 import '../providers/home_widget_provider.dart';
@@ -226,6 +217,11 @@ class _HomeBody extends ConsumerWidget {
                     child: RepaintBoundary(
                       child: Column(
                         children: [
+                          // Paksha hero (redesign v3 faithful) — above calendar
+                          PakshaHeroCard(),
+
+                          SizedBox(height: 14),
+
                           // Calendar
                           CalendarWidget(),
 
@@ -236,11 +232,6 @@ class _HomeBody extends ConsumerWidget {
                             padding: EdgeInsets.symmetric(horizontal: 16),
                             child: EventListWidget(),
                           ),
-
-                          SizedBox(height: 2),
-
-                          // Paksha indicator
-                          _PakshaIndicator(),
 
                           SizedBox(height: 16),
 
@@ -271,276 +262,6 @@ class _HomeBody extends ConsumerWidget {
                   ),
                 ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PakshaIndicator extends ConsumerWidget {
-  const _PakshaIndicator();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedDate = ref.watch(selectedDateProvider);
-    final selectedPanchang = ref.watch(panchangForDateProvider(selectedDate));
-    final cityName = ref.watch(cityNameProvider);
-    // Cold taps: month batch already holds this date when visible.
-    final monthlyHit =
-        ref
-            .watch(
-              monthlyPanchangProvider(
-                DateTime(selectedDate.year, selectedDate.month),
-              ),
-            )
-            .valueOrNull?[DateTime(
-          selectedDate.year,
-          selectedDate.month,
-          selectedDate.day,
-        )];
-
-    Widget staleOrSkeleton() {
-      // Month data first, then last-visited stale. True-cold keeps a
-      // content-height skeleton so the layout doesn't collapse/flash.
-      final fallback = monthlyHit ?? cachedPanchangUiSync(selectedDate);
-      if (fallback != null) {
-        return _buildIndicatorContent(
-          context,
-          ref,
-          fallback,
-          cityName.valueOrNull,
-        );
-      }
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-        height: 76,
-        decoration: BoxDecoration(
-          color: context.colors.onSurface.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(24),
-        ),
-      );
-    }
-
-    return selectedPanchang.when(
-      data: (panchang) => _buildIndicatorContent(
-        context,
-        ref,
-        panchang,
-        cityName.when(
-          data: (city) => city,
-          loading: () => null,
-          error: (_, _) => null,
-        ),
-      ),
-      loading: () => staleOrSkeleton(),
-      error: (_, _) => staleOrSkeleton(),
-    );
-  }
-
-  Widget _buildIndicatorContent(
-    BuildContext context,
-    WidgetRef ref,
-    PanchangData panchang,
-    String? cityName,
-  ) {
-    final primaryView = ref.watch(primaryEventViewProvider);
-    final isShukla = panchang.paksha == 'Shukla';
-    final l10n = AppLocalizations.of(context);
-    final selectedDate = ref.watch(selectedDateProvider);
-    final now = DateTime.now();
-    final isToday =
-        selectedDate.year == now.year &&
-        selectedDate.month == now.month &&
-        selectedDate.day == now.day;
-
-    // Determine what to show based on preference
-    String title;
-    String subtitle;
-    switch (primaryView) {
-      case PrimaryEventView.festival:
-        if (panchang.festivals.isNotEmpty) {
-          // Ranked festivals win; otherwise legacy major-first behaviour.
-          final festival = primaryFestival(panchang.festivals);
-          title = festival.name;
-          subtitle = isToday
-              ? (l10n?.todaysFestival ?? 'Today\'s Festival')
-              : (l10n?.festival ?? 'Festival');
-        } else {
-          title = panchang.tithiName;
-          subtitle = isToday
-              ? (l10n?.noFestivalsToday ?? 'Tithi • No Festivals Today')
-              : (l10n?.noFestivalsOnThisDay ?? 'Tithi • No Festivals');
-        }
-        break;
-
-      case PrimaryEventView.tithi:
-        title = panchang.tithiName;
-        subtitle =
-            l10n?.pakshaWithName(panchang.paksha) ??
-            '${panchang.paksha} Paksha';
-        break;
-
-      case PrimaryEventView.moonPhase:
-        title =
-            l10n?.pakshaWithName(panchang.paksha) ??
-            '${panchang.paksha} Paksha';
-        subtitle = isShukla
-            ? (l10n?.waxingMoonPhase ?? 'Waxing Moon Phase')
-            : (l10n?.waningMoonPhase ?? 'Waning Moon Phase');
-        break;
-    }
-
-    return GestureDetector(
-      onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        showModalBottomSheet(
-          context: context,
-          sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => const WeatherSheet(),
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-        decoration: AppTheme.glassmorphism(context: context, ref: ref),
-        child: Column(
-          children: [
-            // Top Row: Moon, Title, and Sun/Moon Time
-            Row(
-              children: [
-                MoonAnimationWidget(
-                  phase: MoonPhaseService.illuminationFractionForDay(
-                    tithiNumber: panchang.tithiNumber,
-                    isShukla: panchang.paksha == 'Shukla',
-                    rawTithi: panchang.rawTithi,
-                  ),
-                  isWaxing: panchang.paksha == 'Shukla',
-                  size: 40,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: context.colors.onSurface,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                          fontSize: 12,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Sun Time in Top Row if available
-                if (panchang.sunrise != null && panchang.sunset != null) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    height: 32,
-                    width: 1,
-                    color: context.colors.onSurface.withValues(alpha: 0.1),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _buildSunTime(
-                        context,
-                        Icons.wb_sunny_rounded,
-                        panchang.sunrise!,
-                        Colors.orange.shade300,
-                      ),
-                      const SizedBox(height: 4),
-                      _buildSunTime(
-                        context,
-                        Icons.nightlight_round,
-                        panchang.sunset!,
-                        Colors.indigo.shade300,
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-
-            // Bottom Row: Location Info (if available)
-            if (cityName != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                //width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: context.colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.location_on_rounded,
-                      size: 14,
-                      color: context.colors.primary,
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        cityName,
-                        style: TextStyle(
-                          color: context.colors.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSunTime(
-    BuildContext context,
-    IconData icon,
-    DateTime time,
-    Color color,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
-        Text(
-          DateFormat.jm().format(time),
-          style: TextStyle(
-            fontSize: 11,
-            color: context.colors.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500,
           ),
         ),
       ],

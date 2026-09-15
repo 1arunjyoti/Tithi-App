@@ -1379,7 +1379,9 @@ class _ResetSettingsTile extends ConsumerWidget {
                 onPressed: () => Navigator.pop(c, true),
                 child: Text(
                   l10n?.reset ?? 'Reset',
-                  style: const TextStyle(color: Colors.red),
+                  style: TextStyle(
+                    color: Theme.of(c).colorScheme.error,
+                  ),
                 ),
               ),
             ],

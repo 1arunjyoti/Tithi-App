@@ -331,7 +331,7 @@ class _LocationPermissionWrapperState
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.location_on, color: Colors.amber),
+            const Icon(Icons.location_on, color: AppTheme.locationAccent),
             const SizedBox(width: 8),
             Text(l10n?.locationAccess ?? 'Location Access'),
           ],
@@ -351,7 +351,12 @@ class _LocationPermissionWrapperState
                   '• More accurate tithi calculations\n'
                       '• Location-specific moonrise/sunset times\n'
                       '• Your location data stays on your device',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
             ),
           ],
         ),
@@ -427,7 +432,9 @@ class _LocationPermissionWrapperState
             content: Text(
               l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success(
+              Theme.of(context).brightness == Brightness.dark,
+            ),
           ),
         );
       }
@@ -445,25 +452,7 @@ class _LocationPermissionWrapperState
     // Only show loading screen while waiting for location service init
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: Theme.of(context).scaffoldBackgroundColor == Colors.black
-                ? [Colors.black, Colors.black, Colors.black]
-                : Theme.of(context).brightness == Brightness.dark
-                ? [
-                    const Color(0xFF10002B),
-                    const Color(0xFF240046),
-                    const Color(0xFF10002B),
-                  ]
-                : [
-                    const Color(0xFFFFFDF7),
-                    const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                    const Color(0xFFFFFDF7),
-                  ],
-          ),
-        ),
+        decoration: AppTheme.backgroundDecoration(context),
         child: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

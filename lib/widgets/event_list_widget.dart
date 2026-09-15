@@ -10,7 +10,6 @@ import '../providers/panchang_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../theme/app_theme.dart';
 import 'event_detail_sheet.dart';
-import 'tithi_detail_sheet.dart';
 
 /// Widget showing events/festivals for the selected date or date range
 class EventListWidget extends ConsumerStatefulWidget {
@@ -82,10 +81,6 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Panchang summary card
-        _buildPanchangCard(context, panchang),
-        const SizedBox(height: 16),
-
         // Festivals section header with date range button
         _buildFestivalsHeader(context),
         const SizedBox(height: 12),
@@ -323,7 +318,7 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
               primary: context.colors.primary,
-              onPrimary: Colors.white,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
               surface: Theme.of(context).scaffoldBackgroundColor,
             ),
           ),
@@ -384,107 +379,6 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
     }
 
     return results;
-  }
-
-  Widget _buildPanchangCard(BuildContext context, PanchangData panchang) {
-    final isShukla = panchang.isShukla;
-    final moonIcon = isShukla ? Icons.brightness_3 : Icons.brightness_2;
-
-    // Tapping opens the tithi detail sheet (start/end/transition times).
-    // AnimatedSize smooths the month-preview → resolved swap: the preview
-    // lacks the transition line, so without this the card visibly jumps
-    // when transition data lands a beat after a date tap.
-    return GestureDetector(
-      onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        _showTithiDetail(context, panchang);
-      },
-      child: AnimatedSize(
-        duration: AppTheme.animationDuration(
-          context,
-          const Duration(milliseconds: 200),
-        ),
-        curve: Curves.easeOut,
-        alignment: Alignment.topCenter,
-        child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: AppTheme.glassmorphism(context: context, ref: ref),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(moonIcon, color: context.colors.primary, size: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(
-                              context,
-                            )?.pakshaWithName(panchang.paksha) ??
-                            '${panchang.paksha} Paksha',
-                        style: context.textTheme.headlineMedium?.copyWith(
-                          fontSize: 20,
-                          color: context.colors.primary,
-                        ),
-                      ),
-                      Text(
-                        panchang.tithiName,
-                        style: context.textTheme.bodyLarge?.copyWith(
-                          fontSize: 16,
-                        ),
-                      ),
-                      // Two-tithi display for squeeze cases: when the sunrise
-                      // tithi ends before the next sunrise, the incoming tithi
-                      // (e.g. a short Navami touching no sunrise) is shown with
-                      // its transition time so no tithi is skipped over.
-                      if (panchang.hasTithiTransition)
-                        Text(
-                          '→ ${panchang.transitionTithiName} · ${DateFormat('h:mm a').format(panchang.tithiTransitionTime!)}',
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
-                            color: context.colors.primary,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.colors.primary.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    // Respect the Settings tithi display mode (1-15 paksha
-                    // based vs 1-30 continuous).
-                    '${ref.watch(tithiDisplayModeProvider) == TithiDisplayMode.continuous30 ? panchang.tithiIndex : panchang.tithiNumber}',
-                    style: TextStyle(
-                      color: context.colors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: context.colors.onSurface.withValues(alpha: 0.4),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-      ),
-    );
   }
 
   Widget _buildFestivalCard(
@@ -700,16 +594,6 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
       backgroundColor: Colors.transparent,
       builder: (context) =>
           EventDetailSheet(festival: festival, panchang: panchang),
-    );
-  }
-
-  void _showTithiDetail(BuildContext context, PanchangData panchang) {
-    showModalBottomSheet(
-      context: context,
-      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => TithiDetailSheet(panchang: panchang),
     );
   }
 }

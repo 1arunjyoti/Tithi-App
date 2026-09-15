@@ -33,12 +33,10 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
-    // Use solid color instead of expensive transparency
-    final backgroundColor = isDark
-        ? const Color(0xFF121212) // Dark theme: near-black
-        : const Color(0xFFFAFAFA); // Light theme: off-white
+    // Use theme scaffold color so drawer always matches AppTheme
+    // (shukla / krishna / pureDark + high-contrast variants).
+    final backgroundColor = theme.scaffoldBackgroundColor;
 
     final content = RepaintBoundary(
       child: Column(

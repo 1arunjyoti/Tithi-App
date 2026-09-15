@@ -697,16 +697,18 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.2),
+                    color: AppTheme.retrogradeIndicator.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.5),
+                      color: AppTheme.retrogradeIndicator.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
                   child: Text(
                     l10n.retrograde,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.red,
+                      color: AppTheme.retrogradeIndicator,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

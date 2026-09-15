@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 /// A user-friendly error display widget that replaces the default red error screen.
 /// Used both as a global ErrorWidget.builder replacement and for local error states.
 class ErrorDisplayWidget extends StatelessWidget {
@@ -28,18 +30,16 @@ class ErrorDisplayWidget extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.orange.shade900.withValues(alpha: 0.3)
-              : Colors.orange.shade50,
+          color: AppTheme.warningBackground(isDark),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+          border: Border.all(color: AppTheme.warningBorderColor()),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.warning_amber_rounded,
-              color: Colors.orange.shade700,
+              color: AppTheme.warningStrong,
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -47,9 +47,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               child: Text(
                 message ?? 'Something went wrong',
                 style: TextStyle(
-                  color: isDark
-                      ? Colors.orange.shade200
-                      : Colors.orange.shade800,
+                  color: AppTheme.warningTextColor(isDark),
                   fontSize: 13,
                 ),
               ),
@@ -85,13 +83,13 @@ class ErrorDisplayWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: AppTheme.warningSoftBackground(),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.error_outline_rounded,
                   size: 56,
-                  color: Colors.orange.shade600,
+                  color: AppTheme.warningIconColor(isDark),
                 ),
               ),
               const SizedBox(height: 24),

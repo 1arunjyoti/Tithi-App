@@ -132,6 +132,16 @@ String bengaliSeasonForMonthIndex(int monthIndex) {
   return kBengaliSeasons[(monthIndex ~/ 2) % 6];
 }
 
+/// Bengali-script digits (০১২৩৪৫৬৭৮৯) for calendar display, e.g. the hero
+/// header's `৩০ ভাদ্র ১৩৩৩`. Non-digit characters pass through unchanged.
+String toBengaliDigits(int value) {
+  const digits = '০১২৩৪৫৬৭৮৯';
+  return value.toString().split('').map((c) {
+    final d = int.tryParse(c);
+    return d == null ? c : digits[d];
+  }).join();
+}
+
 /// Lowercase lookup covering guide spellings plus legacy/app variants
 /// ('Jyoishtho', 'Ashar', 'Srabon', 'Ashwin', 'Agrahayan', 'Chaitra') and
 /// Sanskrit names, so persisted/older strings still resolve. Returns -1
