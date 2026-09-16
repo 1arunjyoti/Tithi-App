@@ -144,21 +144,193 @@ class AppTheme {
   static const Color locationAccent = Color(0xFFFFC107); // amber
 
   // ---------------------------------------------------------------------------
+  // Calendar card palette — faithful mirror of
+  // assets/redesign assets/calendar-redesign.html theme vars.
+  // ---------------------------------------------------------------------------
+  static const Color calendarSelectedTopShukla = Color(0xFFD84315);
+  static const Color calendarSelectedBottomShukla = Color(0xFFBF360C);
+  static const Color calendarSelectedTopKrishna = Color(0xFF9D4EDD);
+  static const Color calendarSelectedBottomKrishna = Color(0xFF7B2CBF);
+  static const Color calendarSelectedTopDark = Color(0xFFFFA000);
+  static const Color calendarSelectedBottomDark = Color(0xFFE65100);
+  static const Color calendarSelectedInkDark = Color(0xFF1A1200);
+  static const Color calendarTodayInkKrishna = Color(0xFFC9B5FF);
+  static const Color calendarDotShukla = Color(0xFFFF9F1C);
+  static const Color calendarDotKrishna = Color(0xFF4CC9F0);
+  static const Color calendarDotDark = Color(0xFFFFA000);
+
+  static bool _isKrishnaTheme(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark &&
+      !isPureDarkTheme(context);
+
+  /// Selected-day gradient (spec `--todayGrad`). High contrast uses the
+  /// solid primary so the text-on-gradient pairing never degrades.
+  /// Explicit stops keep the gradient faithful even if the ColorScheme
+  /// drifts from the spec palette.
+  static List<Color> calendarSelectedGradient(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrastOf(context)) {
+      final primary = Theme.of(context).colorScheme.primary;
+      return [primary, primary];
+    }
+    if (!isDark) {
+      return [calendarSelectedTopShukla, calendarSelectedBottomShukla];
+    }
+    if (isPureDarkTheme(context)) {
+      return [calendarSelectedTopDark, calendarSelectedBottomDark];
+    }
+    return [calendarSelectedTopKrishna, calendarSelectedBottomKrishna];
+  }
+
+  /// Selected-day text color (spec `.d.sel`: white, except pure-dark which
+  /// uses `--selInk` near-black on the gold gradient).
+  static Color calendarSelectedForeground(BuildContext context) {
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.onPrimary;
+    }
+    if (isPureDarkTheme(context)) return calendarSelectedInkDark;
+    return Colors.white;
+  }
+
+  /// Today (unselected) tile background (spec `--selBg`).
+  static Color calendarTodayBackground(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrastOf(context)) {
+      return scheme.primary.withValues(alpha: 0.25);
+    }
+    if (!isDark) return warningLightContainer;
+    // Krishna tints with the bright secondary (#9D4EDD at 18%); pure-dark
+    // uses the gold primary at 14% — both per the spec vars.
+    if (isPureDarkTheme(context)) {
+      return scheme.primary.withValues(alpha: 0.14);
+    }
+    return scheme.secondary.withValues(alpha: 0.18);
+  }
+
+  /// Today (unselected) tile text.
+  static Color calendarTodayForeground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.onSurface;
+    }
+    if (!isDark) return warningDarkContainer;
+    if (isPureDarkTheme(context)) return moonDiscLightB;
+    return calendarTodayInkKrishna;
+  }
+
+  /// Today (unselected) tile ring.
+  static Color calendarTodayRing(BuildContext context) {
+    if (_isKrishnaTheme(context) && !highContrastOf(context)) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    return warningDarkContainer;
+  }
+
+  /// Festival pill-bar color (minor festivals render at reduced alpha).
+  static Color calendarFestivalBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return calendarDotShukla;
+    if (isPureDarkTheme(context)) return calendarDotDark;
+    return calendarDotKrishna;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Festivals & Events palette — gold accents from the home-card redesign
+  // mock (gold glyph/text on a soft gold tile, both themes).
+  // ---------------------------------------------------------------------------
+
+  /// Bright purple for festival accents on the Krishna theme (same value the
+  /// high-contrast treatment uses to lift the deep-purple primary). Stays
+  /// legible at small sizes on dark violet surfaces (~5.5:1).
+  static const Color festivalAccentKrishna = Color(0xFFC77DFF);
+
+  /// Accent for festival rows, wisdom and countdowns: deep orange in light,
+  /// moon-gold in pure-dark — but the Krishna theme keeps its purple
+  /// identity (brighter secondary for legibility on dark violet) instead of
+  /// gold. Solid primary in high contrast.
+  static Color festivalAccent(BuildContext context) {
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return warningDarkContainer;
+    }
+    if (isPureDarkTheme(context)) return moonDiscLightB;
+    return festivalAccentKrishna;
+  }
+
+  /// Soft gold tile behind the festival glyph.
+  static Color festivalTileBackground(BuildContext context) {
+    return festivalAccent(
+      context,
+    ).withValues(alpha: highContrastOf(context) ? 0.12 : 0.14);
+  }
+
+  /// Subtle row surface shared by the Festivals & Events rows and the
+  /// embedded countdown rows on home: faint surface tint + hairline border
+  /// (NOT glass, so rows stay defined on the base card in every theme,
+  /// including pure-dark's flat surfaces). High contrast steps both up.
+  static BoxDecoration festivalRowDecoration(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final highContrast = highContrastOf(context);
+    return BoxDecoration(
+      color: scheme.onSurface.withValues(alpha: highContrast ? 0.08 : 0.05),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: scheme.onSurface.withValues(alpha: highContrast ? 0.25 : 0.1),
+      ),
+    );
+  }
+
+  /// Ink for filled festival-accent surfaces (status pills, reset buttons):
+  /// white in light, near-black on dark (gold or purple alike, mirroring the
+  /// calendar's selected-day foreground). In high contrast the accent IS
+  /// scheme primary, so onPrimary pairs correctly there.
+  static Color onFestivalAccent(BuildContext context) {
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.onPrimary;
+    }
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return calendarSelectedInkDark;
+    }
+    return Colors.white;
+  }
+
+  /// Weekend column striping tint.
+  static Color calendarWeekendStripe(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return calendarDotShukla.withValues(alpha: 0.06);
+    if (isPureDarkTheme(context)) {
+      return calendarDotDark.withValues(alpha: 0.05);
+    }
+    return scheme.secondary.withValues(alpha: 0.08);
+  }
+
+  // ---------------------------------------------------------------------------
   // Hero (paksha indicator) palette — faithful mirror of
   // assets/redesign assets/tithi-redesign-v3-faithful.html theme vars.
   // Shukla: orange gradient / Krishna: purple gradient / PureDark: flat dark.
   // Resolve via isDark + isPureDark (scaffold == black) so all three
   // ThemeData variants + high-contrast stay correct from one place.
   // ---------------------------------------------------------------------------
-  // Shukla stops are deepened (bright #FF9F1C left white text at ~2:1
-  // contrast) so white copy stays legible while keeping the warm identity.
-  static const Color heroShukla1 = Color(0xFFE65100);
-  static const Color heroShukla2 = Color(0xFFBF3600);
-  static const Color heroKrishna1 = Color(0xFF9D4EDD);
-  static const Color heroKrishna2 = Color(0xFF7B2CBF);
+  // Shukla hero is a soft peach card blending with the creamy scaffold;
+  // Krishna hero is a muted dark plum blending with the dark void (same
+  // subtle philosophy — low contrast with its scaffold, not a bright pop).
+  // PureDark keeps its flat dark card. All dark cards use white ink.
+  static const Color heroShukla1 = Color(0xFFFFF3E0); // orange.shade50
+  static const Color heroShukla2 = Color(0xFFFFE0B2); // orange.shade100
+  static const Color heroKrishna1 = Color(0xFF2D1B4E); // muted dark plum
+  static const Color heroKrishna2 = Color(0xFF1F123E); // deeper plum
   static const Color heroDark1 = Color(0xFF1E1E1E);
   static const Color heroDark2 = Color(0xFF050505);
   static const Color heroInk = Colors.white;
+  static const Color heroInkShukla = Color(0xFF4E342E); // brown.shade800
+  static const Color heroAccentShukla = Color(0xFFBF360C); // burnt orange
   static const Color heroMoonFillShukla = Color(0xFFFFE082); // moonLit
   static const Color heroMoonFillKrishna = Color(0xFF4CC9F0); // tertiary neon
   static const Color heroMoonFillDark = Color(0xFFFFE082); // moonLit
@@ -173,18 +345,37 @@ class AppTheme {
     return [heroKrishna1, heroKrishna2];
   }
 
+  /// Main copy color on the hero: warm brown on the light Shukla card,
+  /// white on the dark Krishna / PureDark cards.
+  static Color heroForeground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroInkShukla;
+    return heroInk;
+  }
+
+  /// Accent color on the hero (italic title span, dot, chip highlight,
+  /// number badge): burnt orange on Shukla peach, moon-fill neon/gold on
+  /// the dark cards. Kept separate from [heroMoonFill] so the calendar's
+  /// selected-day bars can stay light-on-saturated.
+  static Color heroAccent(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroAccentShukla;
+    return heroMoonFill(context);
+  }
+
   static Color heroGlow(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (!isDark) return heroShukla1.withValues(alpha: 0.32);
+    if (!isDark) return heroAccentShukla.withValues(alpha: 0.14);
     if (isPureDarkTheme(context)) {
       return const Color(0xFFFFA000).withValues(alpha: 0.25);
     }
-    return heroKrishna1.withValues(alpha: 0.4);
+    // Muted plum glow — softer than the old saturated 0.4 halo.
+    return const Color(0xFF7B2CBF).withValues(alpha: 0.22);
   }
 
   static Color heroSubtle(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (!isDark) return Colors.white.withValues(alpha: 0.88);
+    if (!isDark) return heroInkShukla.withValues(alpha: 0.72);
     if (isPureDarkTheme(context)) {
       return Colors.white.withValues(alpha: 0.7);
     }
@@ -193,9 +384,9 @@ class AppTheme {
 
   static Color heroChipBackground(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Shukla uses a dark glass so white-bold chip text stays legible on the
-    // orange gradient (a white veil would wash it out).
-    if (!isDark) return Colors.black.withValues(alpha: 0.22);
+    // Light Shukla card uses a soft white veil; dark cards keep their
+    // translucent white glass.
+    if (!isDark) return Colors.white.withValues(alpha: 0.6);
     if (isPureDarkTheme(context)) {
       return Colors.white.withValues(alpha: 0.08);
     }
@@ -204,11 +395,11 @@ class AppTheme {
 
   static Color heroChipBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (!isDark) return Colors.white.withValues(alpha: 0.3);
+    if (!isDark) return heroAccentShukla.withValues(alpha: 0.18);
     if (isPureDarkTheme(context)) {
       return const Color(0xFFFFB74D).withValues(alpha: 0.3);
     }
-    return heroKrishna1.withValues(alpha: 0.4);
+    return Colors.white.withValues(alpha: 0.16);
   }
 
   static Color heroMoonFill(BuildContext context) {
@@ -218,8 +409,11 @@ class AppTheme {
     return heroMoonFillKrishna;
   }
 
-  /// Hero card decoration: radial glow + linear gradient, white ink.
-  /// Pure Dark gets a flat bordered card per the redesign.
+  /// Hero card decoration: radial glow + linear gradient.
+  /// Shukla gets a hairline warm border so the peach card stays defined on
+  /// the creamy scaffold; Krishna gets a faint light hairline so the dark
+  /// plum card stays defined on the dark void; PureDark keeps its flat
+  /// bordered card.
   static BoxDecoration heroDecoration(BuildContext context) {
     final glow = heroGlow(context);
     final gradient = heroGradient(context);
@@ -234,7 +428,9 @@ class AppTheme {
       ),
       border: isPureDark
           ? Border.all(color: Colors.white.withValues(alpha: 0.1))
-          : null,
+          : !isDark
+          ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
+          : Border.all(color: Colors.white.withValues(alpha: 0.08)),
       boxShadow: [
         // Softened so less color flows outside the card's bottom edge.
         BoxShadow(
@@ -283,6 +479,7 @@ class AppTheme {
         ),
       );
     }
+    final isPureDark = isPureDarkTheme(context);
     return BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topLeft,
@@ -290,9 +487,11 @@ class AppTheme {
         colors: heroGradient(context),
       ),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-      border: isPureDarkTheme(context)
+      border: isPureDark
           ? Border.all(color: Colors.white.withValues(alpha: 0.1))
-          : null,
+          : !isDark
+          ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
+          : Border.all(color: Colors.white.withValues(alpha: 0.08)),
     );
   }
 
@@ -603,7 +802,7 @@ class AppTheme {
     // primary (Krishna #7B2CBF has ~1.5:1 on dark backgrounds).
     final basePrimary = base.colorScheme.primary;
     final brightPrimary = basePrimary == const Color(0xFF7B2CBF)
-        ? const Color(0xFFC77DFF)
+        ? festivalAccentKrishna
         : basePrimary;
     return base.copyWith(
       scaffoldBackgroundColor: Colors.black,
@@ -646,6 +845,12 @@ class AppTheme {
     if (identical(base, shuklaTheme)) return shuklaHighContrastTheme;
     return withHighContrast(base);
   }
+
+  /// Single source of truth for the home screen's card gutters: every home
+  /// card (hero, calendar, festivals, wisdom, countdowns, widget) insets
+  /// itself by exactly this on both sides, so left and right gaps can never
+  /// drift apart between widgets.
+  static const double homeCardGutter = 12.0;
 
   /// Glassmorphism decoration for cards and sheets
   static BoxDecoration glassmorphism({

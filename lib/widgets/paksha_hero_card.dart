@@ -20,6 +20,11 @@ import '../theme/app_theme.dart';
 import 'moon_animation_widget.dart';
 import 'tithi_detail_sheet.dart';
 
+/// True-cold placeholder height: reserves most of the hero's space up front
+/// (any remainder still glides via AnimatedSize) without leaving a cavernous
+/// block while the month batch computes.
+const double _trueColdSkeletonHeight = 220;
+
 /// Bengali date for the hero header. Only resolves when Bengali is the
 /// primary or secondary calendar system; null otherwise (and on failure),
 /// in which case the hero falls back to its Hindu/Gregorian rendering —
@@ -83,39 +88,101 @@ class PakshaHeroCard extends ConsumerWidget {
 
     final panchangAsync = ref.watch(panchangForDateProvider(day));
     final cityAsync = ref.watch(cityNameProvider);
-    final monthAsync = ref.watch(
-      monthlyPanchangProvider(DateTime(day.year, day.month)),
-    );
+    final primarySystem = ref.watch(primaryCalendarSystemProvider);
+    final adaptiveGridHasDay =
+        (primarySystem == AppCalendarSystem.hindu ||
+            primarySystem == AppCalendarSystem.bengali) &&
+        cachedPanchangUiSync(day) != null;
+    // The adaptive calendar has already resolved this date and its nearby
+    // event-list window. Do not launch a duplicate Gregorian-month batch
+    // merely to provide a fallback the shared cache can provide instantly.
+    final monthAsync = adaptiveGridHasDay
+        ? const AsyncValue<Map<DateTime, PanchangData>>.loading()
+        : ref.watch(monthlyPanchangProvider(DateTime(day.year, day.month)));
 
     Widget fallback() {
-      // Month data first, then last-visited stale. True-cold keeps a
-      // content-height skeleton so the layout doesn't collapse/flash.
+      // Month data first, then last-visited stale. True-cold (fresh restart:
+      // both caches empty) reserves roughly the hero's full height with a
+      // gradient-tinted placeholder instead of a 76px stub — so the cards
+      // below never move when the real hero resolves, and its arrival reads
+      // as loading → content (fade + size glide) rather than appearing from
+      // nowhere. Any residual height difference still glides via the
+      // AnimatedSize below.
       final cached = monthAsync.valueOrNull?[day] ?? cachedPanchangUiSync(day);
       if (cached != null) {
         return _HeroBody(
           panchang: cached,
           cityName: cityAsync.valueOrNull,
           isToday: isToday,
+          resolved: false,
         );
       }
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+      final highContrast = AppTheme.highContrastOf(context);
+      // Neutral block with festival-row-style placeholder bars (same look as
+      // the Festivals & Events loading skeleton) so a slow cold load reads
+      // as loading content rather than a spinner or a black hole.
+      Widget bar() => Container(
         height: 76,
         decoration: BoxDecoration(
           color: context.colors.onSurface.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(16),
+        ),
+      );
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
+        height: _trueColdSkeletonHeight,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.colors.onSurface.withValues(
+            alpha: highContrast ? 0.14 : 0.08,
+          ),
           borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [bar(), const SizedBox(height: 10), bar()],
         ),
       );
     }
 
-    return panchangAsync.when(
-      data: (panchang) => _HeroBody(
-        panchang: panchang,
-        cityName: cityAsync.valueOrNull,
-        isToday: isToday,
+    // Resize behavior on date taps: the swapped day can add/drop the
+    // artwork column and the chips row, so the card height changes. That
+    // change glides from a pinned top edge (AnimatedSize, slow-start curve
+    // so the bottom edge never kicks), while the incoming content fades in
+    // (keyed switcher, no stacking so the size glide stays in charge).
+    // Together this reads as one calm settle instead of a rapid expand
+    // flash with sliced text at the bottom edge.
+    return AnimatedSize(
+      alignment: Alignment.topCenter,
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 250),
       ),
-      loading: fallback,
-      error: (_, _) => fallback(),
+      curve: Curves.easeInOutCubic,
+      child: AnimatedSwitcher(
+        duration: AppTheme.animationDuration(
+          context,
+          const Duration(milliseconds: 180),
+        ),
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        layoutBuilder: (currentChild, _) => currentChild!,
+        // No key here: the shell (_HeroBody, gradient + ripple) stays
+        // mounted across date taps. Only the true-cold skeleton (a plain
+        // Container) cross-fades by type. Day text animates in the content
+        // switcher inside _HeroBody, so the background never flashes.
+        child: panchangAsync.when(
+          data: (panchang) => _HeroBody(
+            panchang: panchang,
+            cityName: cityAsync.valueOrNull,
+            isToday: isToday,
+            resolved: true,
+          ),
+          loading: fallback,
+          error: (_, _) => fallback(),
+        ),
+      ),
     );
   }
 }
@@ -128,11 +195,17 @@ class _HeroBody extends ConsumerWidget {
     required this.panchang,
     required this.cityName,
     required this.isToday,
+    required this.resolved,
   });
 
   final PanchangData panchang;
   final String? cityName;
   final bool isToday;
+
+  /// False while showing the cached fallback ahead of the fully resolved
+  /// day (daytime tithi transition). Part of the content fade key so the
+  /// second arrival animates instead of snapping text.
+  final bool resolved;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -155,8 +228,8 @@ class _HeroBody extends ConsumerWidget {
         ref.watch(glassmorphismConfigProvider).isHighContrast;
     final chipBg = AppTheme.heroChipBackground(context);
     final chipBd = AppTheme.heroChipBorder(context);
-    final moonFill = AppTheme.heroMoonFill(context);
-    const onHero = AppTheme.heroInk;
+    final heroAccent = AppTheme.heroAccent(context);
+    final onHero = AppTheme.heroForeground(context);
 
     // Calendar header combos (assets/redesign assets/calendar-header-combos):
     // tag row = primary compact, title = weekday + secondary full. Masa is
@@ -228,7 +301,7 @@ class _HeroBody extends ConsumerWidget {
     );
     final titleAccentStyle = titleBaseStyle.copyWith(
       fontStyle: FontStyle.italic,
-      color: highContrast ? context.colors.primary : moonFill,
+      color: highContrast ? context.colors.primary : heroAccent,
     );
     final bool isNoneSecondary = secondarySystem == AppCalendarSystem.none;
     TextSpan? secondarySpan;
@@ -295,7 +368,7 @@ class _HeroBody extends ConsumerWidget {
     return Semantics(
       button: true,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
+        margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
         child: Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
@@ -335,185 +408,204 @@ class _HeroBody extends ConsumerWidget {
                           76.0,
                           110.0,
                         );
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header: tag + day, full width. Text wraps instead of
-                            // eclipsing at any width.
-                            // Tag: dot + Today · 14 September 2026
-                            Row(
+                        // Content-only fade: the gradient shell, ripple and
+                        // glow above stay mounted while day text swaps.
+                        return AnimatedSwitcher(
+                          duration: AppTheme.animationDuration(
+                            context,
+                            const Duration(milliseconds: 180),
+                          ),
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(opacity: animation, child: child),
+                          layoutBuilder: (currentChild, _) => currentChild!,
+                          child: KeyedSubtree(
+                            key: ValueKey((panchang.date, resolved)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: highContrast
-                                        ? context.colors.primary
-                                        : moonFill,
-                                    boxShadow: highContrast
-                                        ? null
-                                        : [
-                                            BoxShadow(
-                                              color: moonFill,
-                                              blurRadius: 8,
-                                            ),
-                                          ],
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    tagLabel.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      letterSpacing: 2.2,
-                                      fontWeight: FontWeight.bold,
+                                // Header: tag + day, full width. Text wraps instead of
+                                // eclipsing at any width.
+                                // Tag: dot + Today · 14 September 2026
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: highContrast
+                                            ? context.colors.primary
+                                            : heroAccent,
+                                        boxShadow: highContrast
+                                            ? null
+                                            : [
+                                                BoxShadow(
+                                                  color: heroAccent,
+                                                  blurRadius: 8,
+                                                ),
+                                              ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        tagLabel.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          letterSpacing: 2.2,
+                                          fontWeight: FontWeight.bold,
+                                          color: highContrast
+                                              ? context.colors.onSurface
+                                                    .withValues(alpha: 0.7)
+                                              : onHero,
+                                        ),
+                                      ),
+                                    ),
+                                    // Capped so a long city name truncates inside
+                                    // the pill instead of squeezing the tag
+                                    // into a RenderFlex overflow.
+                                    if (locationChip != null) ...[
+                                      const SizedBox(width: 8),
+                                      ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: constraints.maxWidth * 0.38,
+                                        ),
+                                        child: locationChip,
+                                      ),
+                                    ],
+                                    // Header tap affordance: the card opens the
+                                    // detail sheet below.
+                                    const SizedBox(width: 2),
+                                    Icon(
+                                      Icons.expand_more,
+                                      size: 18,
                                       color: highContrast
                                           ? context.colors.onSurface.withValues(
                                               alpha: 0.7,
                                             )
                                           : onHero,
                                     ),
-                                  ),
+                                  ],
                                 ),
-                                // Capped so a long city name truncates inside
-                                // the pill instead of squeezing the tag
-                                // into a RenderFlex overflow.
-                                if (locationChip != null) ...[
-                                  const SizedBox(width: 8),
-                                  ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxWidth: constraints.maxWidth * 0.38,
-                                    ),
-                                    child: locationChip,
-                                  ),
-                                ],
-                                // Header tap affordance: the card opens the
-                                // detail sheet below.
-                                const SizedBox(width: 2),
-                                Icon(
-                                  Icons.expand_more,
-                                  size: 18,
-                                  color: highContrast
-                                      ? context.colors.onSurface.withValues(
-                                          alpha: 0.7,
-                                        )
-                                      : onHero,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            // Title = weekday + secondary calendar (spec).
-                            // Weekday stands alone while Bengali resolves.
-                            Text.rich(
-                              TextSpan(
-                                children: [
+                                const SizedBox(height: 6),
+                                // Title = weekday + secondary calendar (spec).
+                                // Weekday stands alone while Bengali resolves.
+                                Text.rich(
                                   TextSpan(
-                                    text:
-                                        secondarySpan == null || isNoneSecondary
-                                        ? weekday
-                                        : '$weekday, ',
-                                    style: titleBaseStyle,
-                                  ),
-                                  ?secondarySpan,
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            // Two columns below the header: moon text left, artwork
-                            // right. Row centers its children, so the shorter text
-                            // block sits balanced against the taller portrait
-                            // artwork instead of leaving all the slack below it.
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Row(
                                     children: [
-                                      Container(
-                                        width: 44,
-                                        height: 44,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            13,
-                                          ),
-                                          color: highContrast
-                                              ? context.colors.primary
-                                                    .withValues(alpha: 0.1)
-                                              : chipBg,
-                                          border: Border.all(
-                                            color: highContrast
-                                                ? context.colors.primary
-                                                      .withValues(alpha: 0.2)
-                                                : chipBd,
-                                          ),
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: MoonAnimationWidget(
-                                          phase: illumination,
-                                          isWaxing: isShukla,
-                                          size: 28,
-                                        ),
+                                      TextSpan(
+                                        text:
+                                            secondarySpan == null ||
+                                                isNoneSecondary
+                                            ? weekday
+                                            : '$weekday, ',
+                                        style: titleBaseStyle,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              title,
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
-                                                color: highContrast
-                                                    ? context.colors.onSurface
-                                                    : onHero,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text(
-                                              subLabel,
-                                              style: TextStyle(
-                                                fontSize: 12.5,
-                                                fontWeight: FontWeight.w500,
-                                                color: highContrast
-                                                    ? context.colors.onSurface
-                                                          .withValues(
-                                                            alpha: 0.7,
-                                                          )
-                                                    : onHero,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                      ?secondarySpan,
                                     ],
                                   ),
                                 ),
-                                // Artwork column on the right of the moon text;
-                                // absent without a picture (text-only layout kept).
-                                if (artwork != null) ...[
-                                  const SizedBox(width: 12),
-                                  _HeroFestivalImage(
-                                    source: artwork.source,
-                                    semanticsLabel: artwork.label,
-                                    highContrast: highContrast,
-                                    width: imageWidth,
+                                const SizedBox(height: 10),
+                                // Two columns below the header: moon text left, artwork
+                                // right. Row centers its children, so the shorter text
+                                // block sits balanced against the taller portrait
+                                // artwork instead of leaving all the slack below it.
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 44,
+                                            height: 44,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(13),
+                                              color: highContrast
+                                                  ? context.colors.primary
+                                                        .withValues(alpha: 0.1)
+                                                  : chipBg,
+                                              border: Border.all(
+                                                color: highContrast
+                                                    ? context.colors.primary
+                                                          .withValues(
+                                                            alpha: 0.2,
+                                                          )
+                                                    : chipBd,
+                                              ),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: MoonAnimationWidget(
+                                              phase: illumination,
+                                              isWaxing: isShukla,
+                                              size: 28,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  title,
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: highContrast
+                                                        ? context
+                                                              .colors
+                                                              .onSurface
+                                                        : onHero,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  subLabel,
+                                                  style: TextStyle(
+                                                    fontSize: 12.5,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: highContrast
+                                                        ? context
+                                                              .colors
+                                                              .onSurface
+                                                              .withValues(
+                                                                alpha: 0.7,
+                                                              )
+                                                        : onHero,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Artwork column on the right of the moon text;
+                                    // absent without a picture (text-only layout kept).
+                                    if (artwork != null) ...[
+                                      const SizedBox(width: 12),
+                                      _HeroFestivalImage(
+                                        source: artwork.source,
+                                        semanticsLabel: artwork.label,
+                                        highContrast: highContrast,
+                                        width: imageWidth,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                if (chips.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Wrap(
+                                      spacing: 8,
+                                      runSpacing: 6,
+                                      children: chips,
+                                    ),
                                   ),
-                                ],
                               ],
                             ),
-                            if (chips.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 10),
-                                child: Wrap(
-                                  spacing: 8,
-                                  runSpacing: 6,
-                                  children: chips,
-                                ),
-                              ),
-                          ],
+                          ),
                         );
                       },
                     ),
@@ -644,10 +736,10 @@ class _HeroFestivalImageState extends State<_HeroFestivalImage> {
 
 /// Pill chip shared by the hero's transition / sunrise / sunset / city rows.
 ///
-/// Solid white-bold on the gradient; theme primary on surface in
-/// high-contrast mode. [highlight] renders a middle segment (e.g. the next
-/// tithi name) in the themed accent color: moon-fill on the gradient,
-/// primary in high-contrast mode.
+/// Bold hero-foreground ink on the gradient (brown on light Shukla, white
+/// on dark); theme primary on surface in high-contrast mode. [highlight]
+/// renders a middle segment (e.g. the next tithi name) in the themed accent
+/// color: hero accent on the gradient, primary in high-contrast mode.
 class _HeroChip extends StatelessWidget {
   const _HeroChip({
     required this.icon,
@@ -681,11 +773,11 @@ class _HeroChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = highContrast
         ? context.colors.primary
-        : AppTheme.heroMoonFill(context);
+        : AppTheme.heroAccent(context);
     final baseColor = highContrast
         ? context.colors.onSurface
-        : AppTheme.heroInk;
-    final iconColor = highContrast ? accent : AppTheme.heroInk;
+        : AppTheme.heroForeground(context);
+    final iconColor = highContrast ? accent : AppTheme.heroForeground(context);
     final weight =
         fontWeight ?? (highContrast ? FontWeight.w500 : FontWeight.bold);
 

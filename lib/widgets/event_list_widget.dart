@@ -1,590 +1,217 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+
 import '../l10n/app_localizations.dart';
-import '../models/panchang_data.dart';
 import '../models/festival.dart';
-import '../providers/calendar_provider.dart';
-import '../providers/panchang_provider.dart';
+import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
+import '../providers/calendar_provider.dart';
+import '../providers/festival_provider.dart';
+import '../providers/panchang_provider.dart';
+import '../screens/all_festivals_screen.dart';
 import '../theme/app_theme.dart';
 import 'event_detail_sheet.dart';
+import 'festival_row_tile.dart';
 
-/// Widget showing events/festivals for the selected date or date range
-class EventListWidget extends ConsumerStatefulWidget {
-  const EventListWidget({super.key});
+/// One festival occurrence inside the home card's upcoming window.
+typedef UpcomingFestival = ({
+  DateTime date,
+  Festival festival,
+  PanchangData panchang,
+  int daysAway,
+});
 
-  @override
-  ConsumerState<EventListWidget> createState() => _EventListWidgetState();
-}
+/// Home card coverage: the selected day plus the next 3 days. The selected
+/// day's festivals come first; when it has none, the card simply starts with
+/// the upcoming ones.
+const int upcomingFestivalWindowDays = 4;
 
-class _EventListWidgetState extends ConsumerState<EventListWidget>
-    with SingleTickerProviderStateMixin {
-  DateTimeRange? _selectedRange;
-  Future<List<({DateTime date, Festival festival, PanchangData panchang})>>?
-  _rangeFestivalsFuture;
+/// Max rows on the home card; everything else lives behind "View all".
+const int upcomingFestivalMaxRows = 4;
 
-  @override
-  Widget build(BuildContext context) {
-    final selectedDate = ref.watch(selectedDateProvider);
-
-    // If range mode is active, show range festivals
-    if (_selectedRange != null) {
-      return _buildRangeEventList(context);
-    }
-
-    // Default: single date mode
-    final panchangAsync = ref.watch(panchangForDateProvider(selectedDate));
-    // Cold taps: the month batch already holds this date when it belongs to
-    // the loaded/precached month, so use it instantly instead of flashing.
-    final monthKey = DateTime(selectedDate.year, selectedDate.month);
-    final monthlyHit = ref
-        .watch(monthlyPanchangProvider(monthKey))
-        .valueOrNull?[DateTime(
-          selectedDate.year,
-          selectedDate.month,
-          selectedDate.day,
-        )];
-
-    return panchangAsync.when(
-      data: (panchang) => _buildEventList(context, panchang),
-      loading: () {
-        // Fresh month data first (cold but already loaded), then stale from
-        // a previous visit. Only true-cold dates reach the skeleton, which
-        // keeps the same card heights so the scroll extent doesn't jump.
-        if (monthlyHit != null) return _buildEventList(context, monthlyHit);
-        final stale = cachedPanchangUiSync(selectedDate);
-        if (stale != null) return _buildEventList(context, stale);
-        return _buildLoadingSkeleton(context);
-      },
-      error: (error, stack) {
-        if (monthlyHit != null) return _buildEventList(context, monthlyHit);
-        final stale = cachedPanchangUiSync(selectedDate);
-        if (stale != null) return _buildEventList(context, stale);
-        final l10n = AppLocalizations.of(context);
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              l10n?.errorLoadingPanchang(error.toString()) ??
-                  'Error loading panchang: $error',
-              style: TextStyle(color: context.colors.error),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildEventList(BuildContext context, PanchangData panchang) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Festivals section header with date range button
-        _buildFestivalsHeader(context),
-        const SizedBox(height: 12),
-
-        // Festivals list
-        if (panchang.hasFestivals)
-          ...panchang.festivals.map(
-            (festival) => _buildFestivalCard(context, festival, panchang),
-          )
-        else
-          _buildNoFestivalsCard(context),
-
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  /// Height-preserving placeholder for true-cold dates (not in month batch
-  /// and never visited). Mirrors the real card heights so the scroll extent
-  /// doesn't collapse to a spinner then jump when FFI resolves.
-  Widget _buildLoadingSkeleton(BuildContext context) {
-    final placeholder = context.colors.onSurface.withValues(alpha: 0.06);
-    Widget card({required double height, double radius = 24}) {
-      return Container(
-        width: double.infinity,
-        height: height,
-        decoration: BoxDecoration(
-          color: placeholder,
-          borderRadius: BorderRadius.circular(radius),
-        ),
+final upcomingFestivalsProvider =
+    FutureProvider.autoDispose<List<UpcomingFestival>>((ref) async {
+      final selected = ref.watch(selectedDateProvider);
+      final base = DateTime(selected.year, selected.month, selected.day);
+      final days = List.generate(
+        upcomingFestivalWindowDays,
+        (i) => base.add(Duration(days: i)),
       );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        card(height: 84),
-        const SizedBox(height: 16),
-        Container(
-          width: 180,
-          height: 20,
-          decoration: BoxDecoration(
-            color: placeholder,
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        const SizedBox(height: 12),
-        card(height: 76, radius: 16),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildRangeEventList(BuildContext context) {
-    final range = _selectedRange!;
-    final dayCount = range.end.difference(range.start).inDays + 1;
-    _rangeFestivalsFuture ??= _getFestivalsInRange(range);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Range header with clear button
-        _buildRangeHeader(context, range),
-        const SizedBox(height: 16),
-
-        // Festivals from all dates in range
-        FutureBuilder<
-          List<({DateTime date, Festival festival, PanchangData panchang})>
-        >(
-          future: _rangeFestivalsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(),
-                ),
-              );
-            }
-
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  'Error loading festivals: ${snapshot.error}',
-                  style: TextStyle(color: context.colors.error),
-                ),
-              );
-            }
-
-            final festivals = snapshot.data ?? [];
-
-            if (festivals.isEmpty) {
-              return _buildNoFestivalsInRangeCard(context, dayCount);
-            }
-
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${festivals.length} festival${festivals.length > 1 ? 's' : ''} found',
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: context.colors.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...festivals.map(
-                  (item) => _buildFestivalCardWithDate(
-                    context,
-                    item.festival,
-                    item.panchang,
-                    item.date,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-
-        const SizedBox(height: 24),
-      ],
-    );
-  }
-
-  Widget _buildFestivalsHeader(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          AppLocalizations.of(context)?.festivalsAndEvents ??
-              'Festivals & Events',
-          style: context.textTheme.headlineMedium?.copyWith(fontSize: 18),
-        ),
-        Tooltip(
-          message: 'View festivals in date range',
-          child: InkWell(
-            onTap: _showDateRangePicker,
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(
-                Icons.date_range,
-                size: 20,
-                color: context.colors.primary,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRangeHeader(BuildContext context, DateTimeRange range) {
-    final dateFormat = DateFormat('MMM d');
-    final startStr = dateFormat.format(range.start);
-    final endStr = dateFormat.format(range.end);
-    final yearStr = range.start.year != range.end.year
-        ? '${range.start.year} - ${range.end.year}'
-        : '${range.start.year}';
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.glassmorphism(
-        context: context,
-        opacity: 0.15,
-        ref: ref,
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.date_range, color: context.colors.primary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Festivals from $startStr to $endStr',
-                  style: context.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  yearStr,
-                  style: context.textTheme.bodyMedium?.copyWith(
-                    color: context.colors.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              if (ref.read(accessibilityProvider).hapticFeedback) {
-                HapticFeedback.lightImpact();
-              }
-              setState(() {
-                _selectedRange = null;
-                _rangeFestivalsFuture = null;
-              });
-            },
-            icon: Icon(
-              Icons.close,
-              color: context.colors.onSurface.withValues(alpha: 0.6),
-            ),
-            tooltip: 'Clear date range',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showDateRangePicker() async {
-    if (ref.read(accessibilityProvider).hapticFeedback) {
-      await HapticFeedback.lightImpact();
-    }
-    if (!mounted) return;
-
-    final selectedDate = ref.read(selectedDateProvider);
-    final initialRange = DateTimeRange(
-      start: selectedDate,
-      end: selectedDate.add(const Duration(days: 7)),
-    );
-
-    final range = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(1976),
-      lastDate: DateTime(2076, 12, 31),
-      initialDateRange: initialRange,
-      helpText: 'Select date range (Gregorian dates)',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: context.colors.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              surface: Theme.of(context).scaffoldBackgroundColor,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (!mounted) return;
-
-    if (range != null) {
-      setState(() {
-        _selectedRange = range;
-        _rangeFestivalsFuture = _getFestivalsInRange(range);
-      });
-    }
-  }
-
-  Future<List<({DateTime date, Festival festival, PanchangData panchang})>>
-  _getFestivalsInRange(DateTimeRange range) async {
-    final dayCount = range.end.difference(range.start).inDays + 1;
-    final dates = List<DateTime>.generate(
-      dayCount,
-      (index) => range.start.add(Duration(days: index)),
-    );
-
-    const batchSize = 8;
-    final results =
-        <({DateTime date, Festival festival, PanchangData panchang})>[];
-
-    for (int i = 0; i < dates.length; i += batchSize) {
-      final end = (i + batchSize) > dates.length ? dates.length : i + batchSize;
-      final batch = dates.sublist(i, end);
-
-      final batchPanchang = await Future.wait(
-        batch.map((date) async {
+      final panchangs = await Future.wait(
+        days.map((day) async {
+          // Hindu/Bengali adaptive grids already resolve this four-day
+          // window for their festival markers. Event rows need that filtered
+          // festival data, but not the hero-only intraday tithi transition;
+          // reuse it instead of starting four selected-date providers.
+          final cached = cachedPanchangUiSync(day);
+          if (cached != null) return cached;
           try {
-            final panchang = await ref.read(
-              panchangForDateProvider(date).future,
-            );
-            return (date: date, panchang: panchang);
+            return await ref.watch(panchangForDateProvider(day).future);
           } catch (_) {
             return null;
           }
         }),
       );
-
-      for (final entry in batchPanchang) {
-        if (entry == null) continue;
-        for (final festival in entry.panchang.festivals) {
-          results.add((
-            date: entry.date,
+      final out = <UpcomingFestival>[];
+      for (var i = 0; i < days.length; i++) {
+        final panchang = panchangs[i];
+        if (panchang == null) continue;
+        for (final festival in panchang.festivals) {
+          out.add((
+            date: days[i],
             festival: festival,
-            panchang: entry.panchang,
+            panchang: panchang,
+            daysAway: i,
           ));
         }
       }
+      return out;
+    });
+
+/// Home "Festivals & Events" card (redesign): one glass card holding the
+/// selected day + next 3 days' festivals — selected day first, upcoming
+/// after — with a "View all N festivals" button pushing [AllFestivalsScreen].
+class EventListWidget extends ConsumerWidget {
+  const EventListWidget({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final upcomingAsync = ref.watch(upcomingFestivalsProvider);
+    final totalCount = ref.watch(festivalProvider).length;
+
+    return AnimatedSize(
+      alignment: Alignment.topCenter,
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 250),
+      ),
+      curve: Curves.easeInOutCubic,
+      child: Container(
+        width: double.infinity,
+        // Tighter bottom edge: the "View all" button already carries 10px
+        // of vertical padding, so 6px here balances the 16px top padding
+        // instead of stacking dead space below the button.
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+        decoration: AppTheme.glassmorphism(context: context, ref: ref),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              AppLocalizations.of(context)?.festivalsAndEvents ??
+                  'Festivals & Events',
+              style: TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w700,
+                color: context.colors.onSurface,
+              ),
+            ),
+            const SizedBox(height: 12),
+            upcomingAsync.when(
+              // Date taps reload for the new window; the old rows stay put
+              // underneath instead of flashing a skeleton (same pattern as
+              // the countdown screen's skipLoadingOnReload).
+              skipLoadingOnReload: true,
+              data: (items) => _buildRows(context, ref, items),
+              loading: () => _buildLoadingSkeleton(context),
+              error: (error, _) => _buildErrorBody(context, error),
+            ),
+            const SizedBox(height: 4),
+            _ViewAllButton(totalCount: totalCount),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRows(
+    BuildContext context,
+    WidgetRef ref,
+    List<UpcomingFestival> items,
+  ) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              Icons.event_available_rounded,
+              size: 20,
+              color: context.colors.onSurface.withValues(alpha: 0.4),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'No festivals in the next 3 days',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    final shown = items.take(upcomingFestivalMaxRows).toList();
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < shown.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          FestivalRowTile(
+            festival: shown[i].festival,
+            date: shown[i].date,
+            panchang: shown[i].panchang,
+            daysAway: shown[i].daysAway,
+            onTap: () => _showFestivalDetail(
+              context,
+              ref,
+              shown[i].festival,
+              shown[i].panchang,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildLoadingSkeleton(BuildContext context) {
+    final placeholder = context.colors.onSurface.withValues(alpha: 0.06);
+    Widget row() {
+      return Container(
+        height: 76,
+        decoration: BoxDecoration(
+          color: placeholder,
+          borderRadius: BorderRadius.circular(16),
+        ),
+      );
     }
 
-    return results;
-  }
-
-  Widget _buildFestivalCard(
-    BuildContext context,
-    dynamic festival,
-    PanchangData panchang,
-  ) {
-    final isMajor = festival.category == 'major';
-
-    return GestureDetector(
-      onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        _showFestivalDetail(context, festival, panchang);
-      },
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: AppTheme.glassmorphism(
-          context: context,
-          opacity: isMajor ? 0.2 : 0.1,
-          ref: ref,
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isMajor ? Icons.celebration : Icons.event,
-                color: context.colors.primary,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    festival.name,
-                    style: context.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  if (festival.description.isNotEmpty)
-                    Text(
-                      festival.description,
-                      style: context.textTheme.bodyMedium?.copyWith(
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: context.colors.onSurface.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [row(), const SizedBox(height: 10), row()],
     );
   }
 
-  Widget _buildFestivalCardWithDate(
-    BuildContext context,
-    Festival festival,
-    PanchangData panchang,
-    DateTime date,
-  ) {
-    final isMajor = festival.category == 'major';
-    final dateFormat = DateFormat('EEE, MMM d');
-
-    return GestureDetector(
-      onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
-        _showFestivalDetail(context, festival, panchang);
-      },
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: AppTheme.glassmorphism(
-          context: context,
-          opacity: isMajor ? 0.2 : 0.1,
-          ref: ref,
+  Widget _buildErrorBody(BuildContext context, Object error) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Text(
+        'Could not load festivals: $error',
+        style: TextStyle(
+          fontSize: 13.5,
+          color: context.colors.onSurface.withValues(alpha: 0.6),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: context.colors.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isMajor ? Icons.celebration : Icons.event,
-                color: context.colors.primary,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    festival.name,
-                    style: context.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 12,
-                        color: context.colors.onSurface.withValues(alpha: 0.6),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        dateFormat.format(date),
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: context.colors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: context.colors.onSurface.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNoFestivalsCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
-      child: Column(
-        children: [
-          Icon(
-            Icons.event_available,
-            size: 48,
-            color: context.colors.onSurface.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            AppLocalizations.of(context)?.noFestivalsOnThisDay ??
-                'No festivals on this day',
-            style: context.textTheme.bodyLarge?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoFestivalsInRangeCard(BuildContext context, int dayCount) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
-      child: Column(
-        children: [
-          Icon(
-            Icons.event_busy,
-            size: 48,
-            color: context.colors.onSurface.withValues(alpha: 0.4),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'No festivals in the selected $dayCount-day range',
-            style: context.textTheme.bodyLarge?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.6),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }
 
   void _showFestivalDetail(
     BuildContext context,
-    dynamic festival,
+    WidgetRef ref,
+    Festival festival,
     PanchangData panchang,
   ) {
     showModalBottomSheet(
@@ -594,6 +221,60 @@ class _EventListWidgetState extends ConsumerState<EventListWidget>
       backgroundColor: Colors.transparent,
       builder: (context) =>
           EventDetailSheet(festival: festival, panchang: panchang),
+    );
+  }
+}
+
+/// Gold "View all N festivals ›" button pinning the card's bottom edge.
+/// Always visible — even with an empty window — since the full list lives
+/// behind it.
+class _ViewAllButton extends ConsumerWidget {
+  const _ViewAllButton({required this.totalCount});
+
+  final int totalCount;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final gold = AppTheme.festivalAccent(context);
+    final label = totalCount > 0
+        ? 'View all $totalCount festivals'
+        : 'View all festivals';
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            if (ref.read(accessibilityProvider).hapticFeedback) {
+              HapticFeedback.lightImpact();
+            }
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AllFestivalsScreen()),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: gold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.chevron_right_rounded, size: 20, color: gold),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

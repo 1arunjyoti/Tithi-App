@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/hindu_calendar_service.dart';
 import 'package:tithi/models/hindu_month_system.dart';
@@ -105,7 +108,12 @@ void main() {
   late ProviderContainer container;
   late HinduCalendarService service;
 
-  setUp(() {
+  setUp(() async {
+    // HinduCalendarService shares the Hive panchang cache with the monthly
+    // batch: opening Hive (temp dir, fresh per test) mirrors main() so the
+    // shared-cache path is exercised instead of throwing.
+    final tempDir = await Directory.systemTemp.createTemp('tithi_hindu_test');
+    Hive.init(tempDir.path);
     container = ProviderContainer(
       overrides: [
         panchangServiceProvider.overrideWithValue(
@@ -118,6 +126,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    addTearDown(() async => Hive.close());
     service = container.read(hinduCalendarServiceProvider);
   });
 

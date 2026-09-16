@@ -127,6 +127,40 @@ const List<String> kBengaliWeekdaysBn = [
   'শনিবার',
 ];
 
+/// Immutable Bengali calendar day returned by the calendar services.
+typedef BengaliCalendarDate = ({int day, String month, int year});
+
+/// Small insertion-ordered cache for resolved Bengali calendar days.
+///
+/// Solar-date resolution is deterministic for a normalized Gregorian day and
+/// location. Keeping this separate from the month-start cache avoids even the
+/// first Sun-longitude lookup when a user returns to a date.
+class BengaliCalendarDateCache {
+  BengaliCalendarDateCache({required this.maxEntries});
+
+  final int maxEntries;
+  final Map<String, BengaliCalendarDate> _entries = {};
+
+  BengaliCalendarDate? read(String key) => _entries[key];
+
+  void store(String key, BengaliCalendarDate value) {
+    if (!_entries.containsKey(key) && _entries.length >= maxEntries) {
+      _entries.remove(_entries.keys.first);
+    }
+    _entries[key] = value;
+  }
+}
+
+/// Stable key for a Bengali day at a specific calculation location.
+String bengaliCalendarDateCacheKey(
+  DateTime normalizedDate,
+  double latitude,
+  double longitude,
+) {
+  return '${normalizedDate.year}-${normalizedDate.month}-${normalizedDate.day}_'
+      '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+}
+
 /// Season (0-5 into [kBengaliSeasons]) for a 0-based month index.
 String bengaliSeasonForMonthIndex(int monthIndex) {
   return kBengaliSeasons[(monthIndex ~/ 2) % 6];
