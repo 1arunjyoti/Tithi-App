@@ -4,19 +4,72 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/home_widget_provider.dart';
+import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
+
+/// Whether the home promo card was dismissed (persisted in settings).
+/// Applies to home only — the countdown screen always shows the card so the
+/// feature stays discoverable where it matters.
+final homeWidgetPromoDismissedProvider =
+    NotifierProvider<HomeWidgetPromoDismissNotifier, bool>(
+      HomeWidgetPromoDismissNotifier.new,
+    );
+
+class HomeWidgetPromoDismissNotifier extends Notifier<bool> {
+  static const _key = 'home_widget_promo_dismissed';
+
+  @override
+  bool build() {
+    try {
+      return StorageService().getSettingsBox().get(_key, defaultValue: false)
+          as bool;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> dismiss() async {
+    state = true;
+    try {
+      await StorageService().getSettingsBox().put(_key, true);
+    } catch (_) {
+      // State already hides the card for this session.
+    }
+  }
+}
 
 /// Card that lets the user add the festival countdown widget to the Android
 /// home screen. Shown on the home screen below countdowns and in settings.
 /// On unsupported platforms the widget renders nothing.
 class HomeWidgetCard extends ConsumerWidget {
-  const HomeWidgetCard({super.key});
+  const HomeWidgetCard({super.key, this.showDismiss = false});
+
+  /// Shows a close button that hides the card (persisted). Enabled on home;
+  /// the countdown screen keeps the card permanently.
+  final bool showDismiss;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Keep widget in sync
     ref.watch(homeWidgetSyncProvider);
 
+    if (showDismiss && ref.watch(homeWidgetPromoDismissedProvider)) {
+      return const SizedBox.shrink();
+    }
+    // Dismissal and support-state swaps glide closed/open instead of popping
+    // the column below.
+    return AnimatedSize(
+      alignment: Alignment.topCenter,
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 250),
+      ),
+      curve: Curves.easeInOutCubic,
+      child: _supportedBody(context, ref),
+    );
+  }
+
+  Widget _supportedBody(BuildContext context, WidgetRef ref) {
     final supported = ref.watch(homeWidgetSupportedProvider);
     return supported.when(
       data: (isSupported) {
@@ -40,6 +93,7 @@ class HomeWidgetCard extends ConsumerWidget {
     bool isLoading = false,
   }) {
     final colors = context.colors;
+    final accent = AppTheme.festivalAccent(context);
     return Container(
       decoration: AppTheme.glassmorphism(context: context, ref: ref),
       padding: const EdgeInsets.all(16),
@@ -49,10 +103,10 @@ class HomeWidgetCard extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              color: AppTheme.festivalTileBackground(context),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(Icons.widgets_rounded, color: colors.primary),
+            child: Icon(Icons.widgets_rounded, color: accent),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -71,7 +125,9 @@ class HomeWidgetCard extends ConsumerWidget {
                       ? 'Add festival countdowns to your home screen'
                       : 'Long-press home screen → Widgets → Tithi',
                   style: context.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurface.withValues(alpha: 0.64),
+                    color: colors.onSurface.withValues(
+                      alpha: AppTheme.contrastAlpha(context, 0.64),
+                    ),
                   ),
                 ),
               ],
@@ -79,14 +135,21 @@ class HomeWidgetCard extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           if (isLoading)
-            const SizedBox(
+            SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: accent,
+              ),
             )
           else if (canPin)
             FilledButton(
               onPressed: () => _requestPin(context, ref),
+              style: FilledButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: AppTheme.onFestivalAccent(context),
+              ),
               child: const Text('Add'),
             )
           else
@@ -95,6 +158,23 @@ class HomeWidgetCard extends ConsumerWidget {
               onPressed: () => _showManualInstructions(context),
               icon: const Icon(Icons.info_outline_rounded),
             ),
+          if (showDismiss) ...[
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: 'Dismiss',
+              onPressed: () => ref
+                  .read(homeWidgetPromoDismissedProvider.notifier)
+                  .dismiss(),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              color: colors.onSurface.withValues(
+                alpha: AppTheme.contrastAlpha(context, 0.5),
+              ),
+              style: IconButton.styleFrom(
+                minimumSize: const Size(32, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
         ],
       ),
     );

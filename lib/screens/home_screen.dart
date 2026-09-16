@@ -220,7 +220,10 @@ class _HomeBody extends ConsumerWidget {
                           // Paksha hero (redesign v3 faithful) — above calendar
                           PakshaHeroCard(),
 
-                          SizedBox(height: 14),
+                          // Uniform 16px gaps between all home cards (the
+                          // cards themselves carry no vertical margin), with
+                          // a slightly larger 20px breath below the hero.
+                          SizedBox(height: 20),
 
                           // Calendar
                           CalendarWidget(),
@@ -229,7 +232,9 @@ class _HomeBody extends ConsumerWidget {
 
                           // Event list
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppTheme.homeCardGutter,
+                            ),
                             child: EventListWidget(),
                           ),
 
@@ -242,16 +247,20 @@ class _HomeBody extends ConsumerWidget {
 
                           // Featured festival countdown
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppTheme.homeCardGutter,
+                            ),
                             child: FestivalCountdownCard(),
                           ),
 
-                          SizedBox(height: 12),
+                          SizedBox(height: 16),
 
                           // Home screen widget affordance
                           Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: HomeWidgetCard(),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: AppTheme.homeCardGutter,
+                            ),
+                            child: HomeWidgetCard(showDismiss: true),
                           ),
 
                           // Bottom padding for FAB

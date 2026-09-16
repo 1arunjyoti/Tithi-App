@@ -80,6 +80,15 @@ void _logCalNav(String message) {
 
 String _ymd(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
+bool _isSameCalendarDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+// Yields one event-loop turn so gestures and frames interleave with long
+// FFI batches. Plain `await` chains on already-complete futures only hop
+// microtasks, which starve touch input for the whole burst — taps then land
+// seconds late or feel dropped while a Hindu/Bengali month computes.
+Future<void> _yieldToEventLoop() => Future<void>.delayed(Duration.zero);
+
 // Bounded dedupe for precache keys. The sync LRU maps above are capped,
 // but these Sets grew without bound (one entry per month × prefs combo
 // ever visited). Cap at 120; oldest half is dropped on overflow.
@@ -460,15 +469,17 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
 
   // Festival flags through the shared pipeline (NOT per-cell): compute the
   // padded range once, trim Vriddhi runs once, then read booleans per cell.
-  // Padding ±2 days keeps runs straddling the grid edge resolving correctly;
-  // only grid dates are looked up below. Same 5-point tithi/masa cache as
-  // the monthly batch, so warm months are ~zero FFI. Reading flags from an
-  // unfiltered per-cell compute instead would let dots disagree with the
-  // detail sheets on trimmed days.
+  // Padding ±4 days keeps Vriddhi runs straddling the grid edge correct and
+  // covers the selected day plus the next three dates used by EventList.
+  // That lets a Hindu/Bengali tile tap reuse these records rather than start
+  // an additional Gregorian-month batch. Only grid dates are displayed.
+  // Same 5-point tithi/masa cache as the monthly batch, so warm months are
+  // ~zero FFI. Reading flags from an unfiltered per-cell compute instead
+  // would let dots disagree with the detail sheets on trimmed days.
   Map<DateTime, PanchangData> filteredFlags = const {};
   if (includeFestivals && dates.isNotEmpty) {
-    final padStart = dates.first.subtract(const Duration(days: 2));
-    final padEnd = dates.last.add(const Duration(days: 2));
+    final padStart = dates.first.subtract(const Duration(days: 4));
+    final padEnd = dates.last.add(const Duration(days: 4));
     final padDates = <DateTime>[];
     for (
       var d = padStart;
@@ -503,8 +514,15 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
           ? padDates.length
           : i + batchSize;
       await Future.wait(padDates.sublist(i, end).map(computeFlag));
+      await _yieldToEventLoop();
     }
     filteredFlags = applyVriddhiFilter(flagData);
+    // Preserve the full day records, not only the dot booleans. The
+    // selected-date provider consumes this bridge to avoid recomputing a
+    // whole Gregorian month after a Hindu/Bengali date-cell tap.
+    for (final entry in filteredFlags.entries) {
+      storePanchangUiSync(entry.key, entry.value);
+    }
   }
 
   Future<MapEntry<DateTime, _CalendarCellData>> computeCell(
@@ -559,6 +577,7 @@ Future<Map<DateTime, _CalendarCellData>> _buildCalendarCellData(
     for (final entry in entries) {
       result[entry.key] = entry.value;
     }
+    await _yieldToEventLoop();
   }
 
   return result;
@@ -716,13 +735,13 @@ final adaptiveCalendarDataProvider = FutureProvider.autoDispose
 
 /// Pre-computes neighbor months so sliding feels instant. Covers both the
 /// secondary corner labels and (Gregorian path) the festival indicator dots
-/// from monthlyPanchangProvider. Delayed well past the page animation,
-/// sequential (next then previous) to avoid FFI bursts on the UI thread,
-/// stale-guarded so rapid swipes don't pile up obsolete work, and never
-/// throws into the UI.
+/// from monthlyPanchangProvider. It starts only after the calendar has been
+/// idle, is cancelled by a date tap, is sequential (next then previous) to
+/// avoid FFI bursts on the UI thread, and never throws into the UI.
 void _scheduleAdjacentPrecache(
   WidgetRef ref,
   DateTime focusedMonth,
+  DateTime selectedDate,
   cp.StartingDayOfWeek startOfWeek,
   cp.AppCalendarSystem primarySystem,
   cp.AppCalendarSystem secondarySystem,
@@ -733,12 +752,18 @@ void _scheduleAdjacentPrecache(
       primarySystem == cp.AppCalendarSystem.hindu;
   final scheduledYear = focusedMonth.year;
   final scheduledMonth = focusedMonth.month;
+  final scheduledSelectedDate = DateTime(
+    selectedDate.year,
+    selectedDate.month,
+    selectedDate.day,
+  );
 
   // Called from build on every rebuild: only queue one precache run per
-  // distinct month+prefs request instead of piling up a postFrame + delayed
-  // future per selection tap.
+  // distinct month+prefs+selection request instead of piling up a postFrame
+  // + delayed future per rebuild. A new selection gets its own idle timer;
+  // the earlier request observes the changed date and exits.
   final requestKey =
-      '$scheduledYear-$scheduledMonth-${startOfWeek.index}_${primarySystem.index}_${secondarySystem.index}_${displayMode.index}';
+      '$scheduledYear-$scheduledMonth-${_ymd(scheduledSelectedDate)}_${startOfWeek.index}_${primarySystem.index}_${secondarySystem.index}_${displayMode.index}';
   if (!_claimPrecacheRequest(requestKey)) return;
 
   bool isStale() {
@@ -748,6 +773,10 @@ void _scheduleAdjacentPrecache(
       final current = ref.read(cp.focusedMonthProvider);
       return current.year != scheduledYear ||
           current.month != scheduledMonth ||
+          !_isSameCalendarDay(
+            ref.read(cp.selectedDateProvider),
+            scheduledSelectedDate,
+          ) ||
           ref.read(cp.primaryCalendarSystemProvider) != primarySystem ||
           ref.read(cp.secondaryCalendarSystemProvider) != secondarySystem ||
           ref.read(cp.tithiDisplayModeProvider) != displayMode ||
@@ -759,10 +788,10 @@ void _scheduleAdjacentPrecache(
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
     unawaited(
-      // 300ms (was 800ms): starts right after the page animation settles
-      // so fast swipers still hit a warm cache. Heavy work stays sequential
-      // next-then-prev to avoid FFI bursts.
-      Future.delayed(const Duration(milliseconds: 300), () async {
+      // Give a newly selected date time to paint and resolve its lightweight
+      // details before yielding the native ephemeris thread to background
+      // neighbor work. A new tap invalidates this request through isStale.
+      Future.delayed(const Duration(milliseconds: 800), () async {
         try {
           if (isStale()) return;
           if (isAdaptive) {
@@ -1050,6 +1079,7 @@ class CalendarWidget extends ConsumerWidget {
       _scheduleAdjacentPrecache(
         ref,
         focusedMonth,
+        selectedDate,
         startOfWeek,
         primarySystem,
         secondarySystem,
@@ -1057,258 +1087,359 @@ class CalendarWidget extends ConsumerWidget {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.all(12),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
-      child: Column(
-        children: [
-          // Custom Header
-          _CalendarHeader(
-            focusedMonth: focusedMonth,
-            onLeftChevronTap: () =>
-                _navigateToPreviousMonth(ref, focusedMonth, primarySystem),
-            onRightChevronTap: () =>
-                _navigateToNextMonth(ref, focusedMonth, primarySystem),
-            onYearTap: () => _showYearPicker(context, ref, focusedMonth),
-          ),
+    // AnimatedSize: month turns can change the grid between 4–6 week rows
+    // (and the adaptive path swaps grids), which used to snap the card —
+    // and everything below it — in one frame. Top-aligned so the header
+    // stays pinned while the bottom edge glides. Slow-start curve so the
+    // edge never kicks on the first frames.
+    return AnimatedSize(
+      alignment: Alignment.topCenter,
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 250),
+      ),
+      curve: Curves.easeInOutCubic,
+      child: Container(
+        // Horizontal gutters only (shared AppTheme.homeCardGutter so left and
+        // right match every other home card): vertical spacing between home
+        // cards is owned by the home column's uniform SizedBox gaps, so a
+        // vertical margin here would double up around this card alone.
+        margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
+        decoration: AppTheme.glassmorphism(context: context, ref: ref),
+        // Card padding per the redesign (18 top, 14 sides/bottom) keeps the
+        // grid and stripes clear of the rounded card corners.
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+          child: Column(
+            children: [
+              // Custom Header
+              _CalendarHeader(
+                focusedMonth: focusedMonth,
+                onLeftChevronTap: () =>
+                    _navigateToPreviousMonth(ref, focusedMonth, primarySystem),
+                onRightChevronTap: () =>
+                    _navigateToNextMonth(ref, focusedMonth, primarySystem),
+                onYearTap: () => _showYearPicker(context, ref, focusedMonth),
+              ),
 
-          if (isAdaptive)
-            // Adaptive grid has no internal PageView, so swipe is handled here.
-            // Stale-first: the previous month stays mounted under its OLD key
-            // while fresh data resolves (no animation), then slides once to
-            // the new month — the same stale-then-single-transition pattern
-            // as the Gregorian path's sync stale-label caches. No skeleton
-            // flash by default.
-            GestureDetector(
-              onHorizontalDragEnd: (details) {
-                if (details.primaryVelocity != null) {
-                  if (details.primaryVelocity! < -300) {
-                    _navigateToNextMonth(ref, focusedMonth, primarySystem);
-                  } else if (details.primaryVelocity! > 300) {
-                    _navigateToPreviousMonth(ref, focusedMonth, primarySystem);
-                  }
-                }
-              },
-              child: RepaintBoundary(
-                child: AnimatedSwitcher(
-                  duration: AppTheme.animationDuration(
-                    context,
-                    const Duration(milliseconds: 250),
-                  ),
-                  // Outgoing drops instantly: AnimatedSwitcher reuses this
-                  // Tween reversed for the exit, which would slide the old
-                  // grid back over the incoming one (wrong side) while
-                  // keeping 84 cells + opacity mounted — the raster spike
-                  // (~20ms) and ghost flash seen in profile captures.
-                  reverseDuration: Duration.zero,
-                  transitionBuilder: (child, animation) {
-                    // Slide-only (no fade): fade forces an opacity +
-                    // glassmorphism blur recomposite every frame and ghosts
-                    // old cells over new ones. Slide-only mirrors the
-                    // Gregorian TableCalendar page turn without overlap.
-                    final slide =
-                        Tween<Offset>(
-                          begin: Offset(0.35 * _adaptiveSlideDirection, 0),
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeOutCubic,
-                          ),
-                        );
-                    return SlideTransition(position: slide, child: child);
-                  },
-                  child: adaptiveDisplay != null
-                      ? _buildAdaptiveGrid(
-                          context,
+              if (isAdaptive)
+                // Adaptive grid has no internal PageView, so swipe is handled here.
+                // Stale-first: the previous month stays mounted under its OLD key
+                // while fresh data resolves (no animation), then slides once to
+                // the new month — the same stale-then-single-transition pattern
+                // as the Gregorian path's sync stale-label caches. No skeleton
+                // flash by default.
+                GestureDetector(
+                  onHorizontalDragEnd: (details) {
+                    if (details.primaryVelocity != null) {
+                      if (details.primaryVelocity! < -300) {
+                        _navigateToNextMonth(ref, focusedMonth, primarySystem);
+                      } else if (details.primaryVelocity! > 300) {
+                        _navigateToPreviousMonth(
                           ref,
-                          startOfWeek,
-                          adaptiveDisplay,
-                          secondarySystem,
-                          displayMode,
-                          selectedDate,
-                          today,
-                          // Stale keeps the previous month's key (static hold,
-                          // no animation); fresh takes the new month's key so
-                          // the switcher slides exactly once old -> new.
-                          key: ValueKey(displayKey),
-                        )
-                      : adaptiveAsync.isLoading
-                      // Same 6-row skeleton height as the loaded grid: keeps
-                      // layout stable instead of swapping a 300px spinner
-                      // for a taller/shorter grid (the main "jump" culprit).
-                      // Only on cold start — never between months.
-                      ? _buildAdaptiveSkeleton(
-                          context,
-                          key: const ValueKey('adaptive_skeleton'),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ),
-            )
-          else
-            // Gregorian path: TableCalendar owns the horizontal swipe via its
-            // internal PageView. No outer GestureDetector here — a competing
-            // drag handler makes the page stick/jitter mid-swipe.
-            RepaintBoundary(
-              child: TableCalendar(
-                firstDay: DateTime(1976),
-                lastDay: DateTime(2076, 12, 31),
-                focusedDay: focusedMonth,
-                // Short, eased page animation: the default 300ms easeInOut
-                // feels sluggish while heavy providers resolve underneath.
-                // Reduce Motion jumps instantly between months.
-                pageAnimationDuration: AppTheme.animationDuration(
-                  context,
-                  const Duration(milliseconds: 250),
-                ),
-                pageAnimationCurve: Curves.easeOutCubic,
-                availableGestures: AvailableGestures.horizontalSwipe,
-                startingDayOfWeek: startOfWeek == cp.StartingDayOfWeek.sunday
-                    ? StartingDayOfWeek.sunday
-                    : StartingDayOfWeek.monday,
-                selectedDayPredicate: (day) => isSameDay(day, selectedDate),
-                onDaySelected: (selected, focused) {
-                  if (ref.read(accessibilityProvider).hapticFeedback) {
-                    HapticFeedback.lightImpact();
-                  }
-                  ref.read(cp.selectedDateProvider.notifier).setDate(selected);
-                  // Avoid notifying focusedMonth (and re-resolving all month
-                  // providers) when the tap didn't actually change months.
-                  final current = ref.read(cp.focusedMonthProvider);
-                  if (current.year != focused.year ||
-                      current.month != focused.month) {
-                    // Day taps have no page animation to protect: settle
-                    // heavy data immediately so dots/labels don't lag.
-                    cp.setCalendarMonth(ref, focused);
-                  }
-                  // Active tile tap (set after setCalendarMonth, which clears
-                  // tap state as month navigation): narrows the secondary
-                  // header to this date's single month.
-                  ref.read(cp.tappedCalendarDateProvider.notifier).state =
-                      DateTime(selected.year, selected.month, selected.day);
-                },
-                onPageChanged: (focusedDay) {
-                  // Single haptic for Gregorian page turns (swipe or
-                  // chevron-driven animation). Chevron taps don't buzz
-                  // separately on this path (see _navigateTo*Month).
-                  if (ref.read(accessibilityProvider).hapticFeedback) {
-                    HapticFeedback.lightImpact();
-                  }
-                  // Instant: header + page position flip at mid-screen cross.
-                  ref
-                      .read(cp.focusedMonthProvider.notifier)
-                      .setFocusedMonth(focusedDay);
-                  // Swiping months ends the explicit tile-tap state: the
-                  // secondary header returns to its default two-month range.
-                  ref.read(cp.tappedCalendarDateProvider.notifier).state = null;
-                  // Deferred: heavy FFI follows after the page animation
-                  // settles, so it never blocks settle frames.
-                  ref
-                      .read(cp.heavyFocusedMonthProvider.notifier)
-                      .scheduleDebounced(focusedDay);
-                },
-                headerVisible: false, // Hide default header
-                calendarBuilders: CalendarBuilders(
-                  defaultBuilder: (context, date, _) {
-                    final normalizedDate = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                    );
-                    final cellData = gregorianCellDataAsync.maybeWhen(
-                      data: (data) => data[normalizedDate],
-                      orElse: () => null,
-                    );
-                    return _CalendarCell(
-                      date: date,
-                      isSelected: false,
-                      isToday: false,
-                      primaryText: cellData?.primary ?? date.day.toString(),
-                      secondaryText:
-                          cellData?.secondary ??
-                          _cachedSecondarySync(
-                            normalizedDate,
-                            secondarySystem,
-                            displayMode,
-                          ),
-                    );
+                          focusedMonth,
+                          primarySystem,
+                        );
+                      }
+                    }
                   },
-                  selectedBuilder: (context, date, _) {
-                    final normalizedDate = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                    );
-                    final cellData = gregorianCellDataAsync.maybeWhen(
-                      data: (data) => data[normalizedDate],
-                      orElse: () => null,
-                    );
-                    return _CalendarCell(
-                      date: date,
-                      isSelected: true,
-                      isToday: isSameDay(date, today),
-                      primaryText: cellData?.primary ?? date.day.toString(),
-                      secondaryText:
-                          cellData?.secondary ??
-                          _cachedSecondarySync(
-                            normalizedDate,
-                            secondarySystem,
-                            displayMode,
-                          ),
-                    );
-                  },
-                  todayBuilder: (context, date, _) {
-                    final normalizedDate = DateTime(
-                      date.year,
-                      date.month,
-                      date.day,
-                    );
-                    final cellData = gregorianCellDataAsync.maybeWhen(
-                      data: (data) => data[normalizedDate],
-                      orElse: () => null,
-                    );
-                    return _CalendarCell(
-                      date: date,
-                      isSelected: false,
-                      isToday: true,
-                      primaryText: cellData?.primary ?? date.day.toString(),
-                      secondaryText:
-                          cellData?.secondary ??
-                          _cachedSecondarySync(
-                            normalizedDate,
-                            secondarySystem,
-                            displayMode,
-                          ),
-                    );
-                  },
-                  markerBuilder: (context, date, events) {
-                    return _buildFestivalMarkerFromCache(
-                      context,
-                      date,
-                      monthlyPanchang,
-                    );
-                  },
-                ),
-                calendarStyle: CalendarStyle(
-                  // Styles handled by custom builders, but keeping basics for fallback
-                  outsideTextStyle: TextStyle(
-                    color: context.colors.onSurface.withValues(alpha: 0.4),
+                  child: RepaintBoundary(
+                    child: AnimatedSwitcher(
+                      duration: AppTheme.animationDuration(
+                        context,
+                        const Duration(milliseconds: 250),
+                      ),
+                      // Outgoing drops instantly: AnimatedSwitcher reuses this
+                      // Tween reversed for the exit, which would slide the old
+                      // grid back over the incoming one (wrong side) while
+                      // keeping 84 cells + opacity mounted — the raster spike
+                      // (~20ms) and ghost flash seen in profile captures.
+                      reverseDuration: Duration.zero,
+                      transitionBuilder: (child, animation) {
+                        // Slide-only (no fade): fade forces an opacity +
+                        // glassmorphism blur recomposite every frame and ghosts
+                        // old cells over new ones. Slide-only mirrors the
+                        // Gregorian TableCalendar page turn without overlap.
+                        final slide =
+                            Tween<Offset>(
+                              begin: Offset(0.35 * _adaptiveSlideDirection, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutCubic,
+                              ),
+                            );
+                        return SlideTransition(position: slide, child: child);
+                      },
+                      child: adaptiveDisplay != null
+                          ? _buildAdaptiveGrid(
+                              context,
+                              ref,
+                              startOfWeek,
+                              adaptiveDisplay,
+                              secondarySystem,
+                              displayMode,
+                              selectedDate,
+                              today,
+                              // Stale keeps the previous month's key (static hold,
+                              // no animation); fresh takes the new month's key so
+                              // the switcher slides exactly once old -> new.
+                              key: ValueKey(displayKey),
+                            )
+                          : adaptiveAsync.isLoading
+                          // Same 6-row skeleton height as the loaded grid: keeps
+                          // layout stable instead of swapping a 300px spinner
+                          // for a taller/shorter grid (the main "jump" culprit).
+                          // Only on cold start — never between months.
+                          ? _buildAdaptiveSkeleton(
+                              context,
+                              startOfWeek,
+                              key: const ValueKey('adaptive_skeleton'),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
+                )
+              else
+                // Gregorian path: TableCalendar owns the horizontal swipe via its
+                // internal PageView. No outer GestureDetector here — a competing
+                // drag handler makes the page stick/jitter mid-swipe.
+                RepaintBoundary(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _WeekdayHeaderRow(startOfWeek: startOfWeek),
+                      const SizedBox(height: 4),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return _WeekendStripes(
+                            startOfWeek: startOfWeek,
+                            child: TableCalendar(
+                              // Square cells: row height matches the column width.
+                              rowHeight: constraints.maxWidth / 7,
+                              firstDay: DateTime(1976),
+                              lastDay: DateTime(2076, 12, 31),
+                              focusedDay: focusedMonth,
+                              // Short, eased page animation: the default 300ms easeInOut
+                              // feels sluggish while heavy providers resolve underneath.
+                              // Reduce Motion jumps instantly between months.
+                              pageAnimationDuration: AppTheme.animationDuration(
+                                context,
+                                const Duration(milliseconds: 250),
+                              ),
+                              pageAnimationCurve: Curves.easeOutCubic,
+                              availableGestures:
+                                  AvailableGestures.horizontalSwipe,
+                              startingDayOfWeek:
+                                  startOfWeek == cp.StartingDayOfWeek.sunday
+                                  ? StartingDayOfWeek.sunday
+                                  : StartingDayOfWeek.monday,
+                              selectedDayPredicate: (day) =>
+                                  isSameDay(day, selectedDate),
+                              onDaySelected: (selected, focused) {
+                                if (ref
+                                    .read(accessibilityProvider)
+                                    .hapticFeedback) {
+                                  HapticFeedback.lightImpact();
+                                }
+                                ref
+                                    .read(cp.selectedDateProvider.notifier)
+                                    .setDate(selected);
+                                // Avoid notifying focusedMonth (and re-resolving all month
+                                // providers) when the tap didn't actually change months.
+                                final current = ref.read(
+                                  cp.focusedMonthProvider,
+                                );
+                                if (current.year != focused.year ||
+                                    current.month != focused.month) {
+                                  // Day taps have no page animation to protect: settle
+                                  // heavy data immediately so dots/labels don't lag.
+                                  cp.setCalendarMonth(ref, focused);
+                                }
+                                // Active tile tap (set after setCalendarMonth, which clears
+                                // tap state as month navigation): narrows the secondary
+                                // header to this date's single month.
+                                ref
+                                    .read(
+                                      cp.tappedCalendarDateProvider.notifier,
+                                    )
+                                    .state = DateTime(
+                                  selected.year,
+                                  selected.month,
+                                  selected.day,
+                                );
+                              },
+                              onPageChanged: (focusedDay) {
+                                // Single haptic for Gregorian page turns (swipe or
+                                // chevron-driven animation). Chevron taps don't buzz
+                                // separately on this path (see _navigateTo*Month).
+                                if (ref
+                                    .read(accessibilityProvider)
+                                    .hapticFeedback) {
+                                  HapticFeedback.lightImpact();
+                                }
+                                // Instant: header + page position flip at mid-screen cross.
+                                ref
+                                    .read(cp.focusedMonthProvider.notifier)
+                                    .setFocusedMonth(focusedDay);
+                                // Swiping months ends the explicit tile-tap state: the
+                                // secondary header returns to its default two-month range.
+                                ref
+                                        .read(
+                                          cp
+                                              .tappedCalendarDateProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    null;
+                                // Deferred: heavy FFI follows after the page animation
+                                // settles, so it never blocks settle frames.
+                                ref
+                                    .read(cp.heavyFocusedMonthProvider.notifier)
+                                    .scheduleDebounced(focusedDay);
+                              },
+                              headerVisible: false, // Hide default header
+                              calendarBuilders: CalendarBuilders(
+                                defaultBuilder: (context, date, _) {
+                                  final normalizedDate = DateTime(
+                                    date.year,
+                                    date.month,
+                                    date.day,
+                                  );
+                                  final cellData = gregorianCellDataAsync
+                                      .maybeWhen(
+                                        data: (data) => data[normalizedDate],
+                                        orElse: () => null,
+                                      );
+                                  return _CalendarCell(
+                                    date: date,
+                                    isSelected: false,
+                                    isToday: false,
+                                    primaryText:
+                                        cellData?.primary ??
+                                        date.day.toString(),
+                                    secondaryText:
+                                        cellData?.secondary ??
+                                        _cachedSecondarySync(
+                                          normalizedDate,
+                                          secondarySystem,
+                                          displayMode,
+                                        ),
+                                  );
+                                },
+                                selectedBuilder: (context, date, _) {
+                                  final normalizedDate = DateTime(
+                                    date.year,
+                                    date.month,
+                                    date.day,
+                                  );
+                                  final cellData = gregorianCellDataAsync
+                                      .maybeWhen(
+                                        data: (data) => data[normalizedDate],
+                                        orElse: () => null,
+                                      );
+                                  return _CalendarCell(
+                                    date: date,
+                                    isSelected: true,
+                                    isToday: isSameDay(date, today),
+                                    primaryText:
+                                        cellData?.primary ??
+                                        date.day.toString(),
+                                    secondaryText:
+                                        cellData?.secondary ??
+                                        _cachedSecondarySync(
+                                          normalizedDate,
+                                          secondarySystem,
+                                          displayMode,
+                                        ),
+                                  );
+                                },
+                                todayBuilder: (context, date, _) {
+                                  final normalizedDate = DateTime(
+                                    date.year,
+                                    date.month,
+                                    date.day,
+                                  );
+                                  final cellData = gregorianCellDataAsync
+                                      .maybeWhen(
+                                        data: (data) => data[normalizedDate],
+                                        orElse: () => null,
+                                      );
+                                  return _CalendarCell(
+                                    date: date,
+                                    isSelected: false,
+                                    isToday: true,
+                                    primaryText:
+                                        cellData?.primary ??
+                                        date.day.toString(),
+                                    secondaryText:
+                                        cellData?.secondary ??
+                                        _cachedSecondarySync(
+                                          normalizedDate,
+                                          secondarySystem,
+                                          displayMode,
+                                        ),
+                                  );
+                                },
+                                outsideBuilder: (context, date, _) {
+                                  final normalizedDate = DateTime(
+                                    date.year,
+                                    date.month,
+                                    date.day,
+                                  );
+                                  final cellData = gregorianCellDataAsync
+                                      .maybeWhen(
+                                        data: (data) => data[normalizedDate],
+                                        orElse: () => null,
+                                      );
+                                  return _CalendarCell(
+                                    date: date,
+                                    isSelected: isSameDay(date, selectedDate),
+                                    isToday: isSameDay(date, today),
+                                    isOutside: true,
+                                    primaryText:
+                                        cellData?.primary ??
+                                        date.day.toString(),
+                                    secondaryText:
+                                        cellData?.secondary ??
+                                        _cachedSecondarySync(
+                                          normalizedDate,
+                                          secondarySystem,
+                                          displayMode,
+                                        ),
+                                  );
+                                },
+                                markerBuilder: (context, date, events) {
+                                  return _buildFestivalMarkerFromCache(
+                                    context,
+                                    date,
+                                    monthlyPanchang,
+                                    isSelected: isSameDay(date, selectedDate),
+                                    isToday: isSameDay(date, today),
+                                  );
+                                },
+                              ),
+                              calendarStyle: CalendarStyle(
+                                // Styles handled by custom builders, but keeping basics for fallback
+                                outsideTextStyle: TextStyle(
+                                  color: context.colors.onSurface.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                ),
+                              ),
+                              // Weekday labels render in the shared row above.
+                              daysOfWeekVisible: false,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-                daysOfWeekStyle: DaysOfWeekStyle(
-                  weekdayStyle: TextStyle(
-                    color: context.colors.onSurface.withValues(alpha: 0.7),
-                    fontWeight: FontWeight.w600,
-                  ),
-                  weekendStyle: TextStyle(
-                    color: context.colors.primary.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1316,28 +1447,16 @@ class CalendarWidget extends ConsumerWidget {
   /// 5-row skeleton for cold start (the most common lunar-month shape);
   /// month turns reuse the stale grid instead, and row counts of 4-6 settle
   /// naturally like the Gregorian path.
-  Widget _buildAdaptiveSkeleton(BuildContext context, {Key? key}) {
+  Widget _buildAdaptiveSkeleton(
+    BuildContext context,
+    cp.StartingDayOfWeek startOfWeek, {
+    Key? key,
+  }) {
     return Column(
       key: key,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            for (var i = 0; i < 7; i++)
-              Expanded(
-                child: Center(
-                  child: Text(
-                    _getWeekdayName(i, cp.StartingDayOfWeek.sunday),
-                    style: TextStyle(
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
+        _WeekdayHeaderRow(startOfWeek: startOfWeek),
+        const SizedBox(height: 4),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -1377,99 +1496,90 @@ class CalendarWidget extends ConsumerWidget {
     final days = adaptiveData.days;
     return Column(
       key: key,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Weekday Headers
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            for (var i = 0; i < 7; i++)
-              Expanded(
-                child: Center(
-                  child: Text(
-                    _getWeekdayName(i, startOfWeek),
-                    style: TextStyle(
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w600,
+        // Weekday Headers (shared styling with the Gregorian path).
+        _WeekdayHeaderRow(startOfWeek: startOfWeek),
+        const SizedBox(height: 4),
+        // Grid with weekend striping.
+        _WeekendStripes(
+          startOfWeek: startOfWeek,
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+            ),
+            itemCount: days.length,
+            itemBuilder: (context, index) {
+              final date = days[index];
+              if (date == null) return const SizedBox();
+
+              final isSelected = isSameDay(date, selectedDate);
+              final isToday = isSameDay(date, today);
+
+              final normalizedDate = DateTime(date.year, date.month, date.day);
+              final cellData = adaptiveData.cellData[normalizedDate];
+              // Festival info is embedded in cellData (from adaptive provider)
+              // which uses the correct lunar date range — no Gregorian mismatch.
+              // Fall back to stale dots while the next lunar month is loading.
+              final staleDot = cellData == null
+                  ? _cachedFestivalDotSync(normalizedDate)
+                  : null;
+              final hasFestivals =
+                  cellData?.hasFestivals ?? staleDot?.hasFestivals ?? false;
+              final hasMajorFestival =
+                  cellData?.hasMajorFestival ?? staleDot?.isMajor ?? false;
+
+              return GestureDetector(
+                // Unlike TableCalendar's Gregorian tiles, this custom grid
+                // has transparent cell backgrounds for most unselected days.
+                // The default `deferToChild` hit-testing then recognizes a
+                // tap only on the painted text/marker, making taps in the
+                // rest of the visible square feel intermittent. Claim the
+                // complete GridView slot so every date cell has the same
+                // target area and response as the Gregorian calendar.
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  if (ref.read(accessibilityProvider).hapticFeedback) {
+                    HapticFeedback.lightImpact();
+                  }
+                  ref.read(cp.selectedDateProvider.notifier).setDate(date);
+                  // Active tile tap: narrows the secondary header to this
+                  // date's single month with the year.
+                  ref.read(cp.tappedCalendarDateProvider.notifier).state =
+                      DateTime(date.year, date.month, date.day);
+                },
+                child: Stack(
+                  children: [
+                    _CalendarCell(
+                      date: date,
+                      isSelected: isSelected,
+                      isToday: isToday,
+                      primaryText: cellData?.primary ?? date.day.toString(),
+                      secondaryText:
+                          cellData?.secondary ??
+                          _cachedSecondarySync(
+                            normalizedDate,
+                            secondarySystem,
+                            displayMode,
+                          ),
                     ),
-                  ),
+                    if (hasFestivals)
+                      _buildFestivalBar(
+                        context,
+                        isMajor: hasMajorFestival,
+                        isSelected: isSelected,
+                        isToday: isToday,
+                      ),
+                  ],
                 ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Grid
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
+              );
+            },
           ),
-          itemCount: days.length,
-          itemBuilder: (context, index) {
-            final date = days[index];
-            if (date == null) return const SizedBox();
-
-            final isSelected = isSameDay(date, selectedDate);
-            final isToday = isSameDay(date, today);
-
-            final normalizedDate = DateTime(date.year, date.month, date.day);
-            final cellData = adaptiveData.cellData[normalizedDate];
-            // Festival info is embedded in cellData (from adaptive provider)
-            // which uses the correct lunar date range — no Gregorian mismatch.
-            // Fall back to stale dots while the next lunar month is loading.
-            final staleDot = cellData == null
-                ? _cachedFestivalDotSync(normalizedDate)
-                : null;
-            final hasFestivals =
-                cellData?.hasFestivals ?? staleDot?.hasFestivals ?? false;
-            final hasMajorFestival =
-                cellData?.hasMajorFestival ?? staleDot?.isMajor ?? false;
-
-            return GestureDetector(
-              onTap: () {
-                if (ref.read(accessibilityProvider).hapticFeedback) {
-                  HapticFeedback.lightImpact();
-                }
-                ref.read(cp.selectedDateProvider.notifier).setDate(date);
-                // Active tile tap: narrows the secondary header to this
-                // date's single month with the year.
-                ref.read(cp.tappedCalendarDateProvider.notifier).state =
-                    DateTime(date.year, date.month, date.day);
-              },
-              child: Stack(
-                children: [
-                  _CalendarCell(
-                    date: date,
-                    isSelected: isSelected,
-                    isToday: isToday,
-                    primaryText: cellData?.primary ?? date.day.toString(),
-                    secondaryText:
-                        cellData?.secondary ??
-                        _cachedSecondarySync(
-                          normalizedDate,
-                          secondarySystem,
-                          displayMode,
-                        ),
-                  ),
-                  if (hasFestivals)
-                    _buildFestivalDot(context, hasMajorFestival),
-                ],
-              ),
-            );
-          },
         ),
       ],
     );
-  }
-
-  String _getWeekdayName(int index, cp.StartingDayOfWeek startOfWeek) {
-    // 0 = Sun or Mon depending on start
-    final days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    if (startOfWeek == cp.StartingDayOfWeek.monday) {
-      final d = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      return d[index];
-    }
-    return days[index];
   }
 
   /// Show year picker dialog for quick navigation
@@ -2128,35 +2238,68 @@ class CalendarWidget extends ConsumerWidget {
   Widget? _buildFestivalMarkerFromCache(
     BuildContext context,
     DateTime date,
-    Map<DateTime, PanchangData> monthlyPanchang,
-  ) {
+    Map<DateTime, PanchangData> monthlyPanchang, {
+    required bool isSelected,
+    required bool isToday,
+  }) {
     final normalizedDate = DateTime(date.year, date.month, date.day);
     final panchang = monthlyPanchang[normalizedDate];
 
     if (panchang != null) {
       if (!panchang.hasFestivals) return null;
-      return _buildFestivalDot(context, panchang.majorFestivals.isNotEmpty);
+      return _buildFestivalBar(
+        context,
+        isMajor: panchang.majorFestivals.isNotEmpty,
+        isSelected: isSelected,
+        isToday: isToday,
+      );
     }
 
     final stale = _cachedFestivalDotSync(normalizedDate);
     if (stale == null || !stale.hasFestivals) return null;
-    return _buildFestivalDot(context, stale.isMajor);
+    return _buildFestivalBar(
+      context,
+      isMajor: stale.isMajor,
+      isSelected: isSelected,
+      isToday: isToday,
+    );
   }
 
-  /// Festival dot marker for use in the adaptive (Hindu/Bengali) grid.
-  /// Takes pre-resolved flags from cellData so no Gregorian date-range mismatch.
-  Widget _buildFestivalDot(BuildContext context, bool isMajor) {
+  /// Festival pill-bar marker (redesign): a 12x3 rounded bar instead of a
+  /// dot. Color follows tile state — moon-fill on selected, ring color on
+  /// today, accent bar otherwise (minor festivals dimmed). Takes pre-resolved
+  /// flags so callers never mismatch date ranges.
+  Widget _buildFestivalBar(
+    BuildContext context, {
+    required bool isMajor,
+    required bool isSelected,
+    required bool isToday,
+  }) {
+    final highContrast = AppTheme.highContrastOf(context);
+    Color color;
+    if (isSelected) {
+      color = highContrast
+          ? context.colors.onPrimary
+          : AppTheme.heroMoonFill(context);
+    } else if (isToday) {
+      color = highContrast
+          ? context.colors.primary
+          : AppTheme.calendarTodayRing(context);
+    } else {
+      color = AppTheme.calendarFestivalBar(context);
+      if (!isMajor) color = color.withValues(alpha: 0.45);
+    }
     return Positioned(
-      bottom: 1,
+      bottom: 5,
       left: 0,
       right: 0,
       child: Center(
         child: Container(
-          width: 6,
-          height: 6,
+          width: 12,
+          height: 3,
           decoration: BoxDecoration(
-            color: isMajor ? context.colors.primary : context.colors.secondary,
-            shape: BoxShape.circle,
+            color: color,
+            borderRadius: BorderRadius.circular(99),
           ),
         ),
       ),
@@ -2164,13 +2307,23 @@ class CalendarWidget extends ConsumerWidget {
   }
 }
 
-/// Data class to hold header information for the calendar
+/// Data class to hold header information for the calendar.
+/// The secondary line splits into an accent part (month range) and a dim
+/// part (year), mirroring the redesign's lunar line.
 class _HeaderData {
   final String primaryText;
-  final String? secondaryText;
+  final String? secondaryAccent;
+  final String? secondaryDim;
 
-  _HeaderData({required this.primaryText, this.secondaryText});
+  _HeaderData({
+    required this.primaryText,
+    this.secondaryAccent,
+    this.secondaryDim,
+  });
 }
+
+/// Month-range parts for the lunar line: accent (months) + dim (years).
+typedef _MonthRangeParts = ({String accent, String dim});
 
 // Sync LRU for calendar headers (Gregorian primary + Hindu/Bengali secondary
 // range needs 2 FFI calls). Without a stale fallback the header shows bare
@@ -2191,7 +2344,15 @@ String _headerCacheKey(
   final selectedKey = selectedDate == null
       ? 'range'
       : '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}';
-  return '${date.year}-${date.month}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}_$selectedKey';
+  // Lunar primaries are keyed by the exact focused day (the Hindu/Bengali
+  // month start): two lunar months can start in the same Gregorian month,
+  // so a year-month key would collide and serve the previous month's header
+  // (the "stuck Bengali month" bug). Gregorian stays month-normalized so
+  // TableCalendar's varying focusedDay still hits one entry per month.
+  final dateKey = primary == cp.AppCalendarSystem.gregorian
+      ? '${date.year}-${date.month}'
+      : '${date.year}-${date.month}-${date.day}';
+  return '${dateKey}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}_$selectedKey';
 }
 
 _HeaderData? _cachedHeaderSync(
@@ -2254,22 +2415,34 @@ final calendarHeaderDataProvider = FutureProvider.autoDispose<_HeaderData>((
   // Tapping a date tile narrows the secondary range label to that date's
   // single month; the tap state (not the default-selected today) drives a
   // header refresh, so the two-month range stays the default. Subscribed
-  // only when the secondary header actually is a traditional range —
-  // otherwise tile taps would pointlessly recompute this header (up to 2
-  // FFI calls for a Hindu/Bengali primary label).
+  // whenever the secondary header is a range — Gregorian primary with a
+  // traditional secondary, or a lunar (Hindu/Bengali) primary with any
+  // secondary (Gregorian range over the lunar span, or the other
+  // traditional system's range over the span). Otherwise tile taps would
+  // pointlessly recompute a single-month primary label.
   final tapNarrowsSecondary =
-      primary == cp.AppCalendarSystem.gregorian &&
-      (secondary == cp.AppCalendarSystem.hindu ||
-          secondary == cp.AppCalendarSystem.bengali);
+      (primary == cp.AppCalendarSystem.gregorian &&
+          (secondary == cp.AppCalendarSystem.hindu ||
+              secondary == cp.AppCalendarSystem.bengali)) ||
+      ((primary == cp.AppCalendarSystem.hindu ||
+              primary == cp.AppCalendarSystem.bengali) &&
+          secondary != cp.AppCalendarSystem.none &&
+          secondary != primary);
   final tappedDate = tapNarrowsSecondary
       ? ref.watch(cp.tappedCalendarDateProvider)
       : null;
-  final tappedInMonth =
-      tappedDate != null &&
-          tappedDate.year == date.year &&
-          tappedDate.month == date.month
-      ? DateTime(tappedDate.year, tappedDate.month, tappedDate.day)
-      : null;
+  // Gregorian months compare by year-month; lunar months span two Gregorian
+  // months, so a tapped date inside the viewed lunar span usually has a
+  // different Gregorian month than the focused start date. Pass it through
+  // and let the range builder validate containment (out-of-span taps fall
+  // back to the range).
+  final tappedInMonth = tappedDate == null
+      ? null
+      : (primary == cp.AppCalendarSystem.gregorian
+            ? (tappedDate.year == date.year && tappedDate.month == date.month
+                  ? DateTime(tappedDate.year, tappedDate.month, tappedDate.day)
+                  : null)
+            : DateTime(tappedDate.year, tappedDate.month, tappedDate.day));
 
   final data = await _buildCalendarHeaderData(
     ref,
@@ -2304,7 +2477,8 @@ Future<_HeaderData> _buildCalendarHeaderData(
   DateTime? selectedDate,
 }) async {
   String primaryText;
-  String? secondaryText;
+  String? secondaryAccent;
+  String? secondaryDim;
 
   primaryText = await _getSystemHeaderTextForCalendar(
     ref,
@@ -2324,7 +2498,8 @@ Future<_HeaderData> _buildCalendarHeaderData(
       selectedDate: selectedDate,
     );
     if (monthRange != null) {
-      secondaryText = monthRange;
+      secondaryAccent = monthRange.accent;
+      secondaryDim = monthRange.dim;
     }
   } else if ((primary == cp.AppCalendarSystem.hindu ||
           primary == cp.AppCalendarSystem.bengali) &&
@@ -2333,12 +2508,35 @@ Future<_HeaderData> _buildCalendarHeaderData(
       ref,
       date,
       primary,
+      selectedDate: selectedDate,
     );
     if (monthRange != null) {
-      secondaryText = monthRange;
+      secondaryAccent = monthRange.accent;
+      secondaryDim = monthRange.dim;
+    }
+  } else if ((primary == cp.AppCalendarSystem.hindu ||
+          primary == cp.AppCalendarSystem.bengali) &&
+      (secondary == cp.AppCalendarSystem.hindu ||
+          secondary == cp.AppCalendarSystem.bengali) &&
+      secondary != primary) {
+    // Hindu primary + Bengali secondary (and vice versa): the secondary
+    // line is the Bengali/Hindu month RANGE overlapping the viewed lunar
+    // month's span — never a single month of the focused start day.
+    final monthRange = await _getSecondaryTraditionalRangeForLunarPrimary(
+      ref,
+      date,
+      primary,
+      secondary,
+      hinduYearEra,
+      hinduMonthSystem,
+      selectedDate: selectedDate,
+    );
+    if (monthRange != null) {
+      secondaryAccent = monthRange.accent;
+      secondaryDim = monthRange.dim;
     }
   } else if (secondary != cp.AppCalendarSystem.none && secondary != primary) {
-    secondaryText = await _getSystemHeaderTextForCalendar(
+    secondaryAccent = await _getSystemHeaderTextForCalendar(
       ref,
       date,
       secondary,
@@ -2349,12 +2547,16 @@ Future<_HeaderData> _buildCalendarHeaderData(
 
   _logCalNav(
     'header date=${_ymd(date)} primary=$primary secondary=$secondary '
-    '-> "$primaryText" / "$secondaryText"',
+    '-> "$primaryText" / "$secondaryAccent $secondaryDim"',
   );
-  return _HeaderData(primaryText: primaryText, secondaryText: secondaryText);
+  return _HeaderData(
+    primaryText: primaryText,
+    secondaryAccent: secondaryAccent,
+    secondaryDim: secondaryDim,
+  );
 }
 
-Future<String?> _getTraditionalMonthRangeForCalendar(
+Future<_MonthRangeParts?> _getTraditionalMonthRangeForCalendar(
   Ref ref,
   DateTime date,
   cp.AppCalendarSystem system,
@@ -2376,7 +2578,7 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
         final service = ref.read(bengaliCalendarServiceProvider);
         await ref.read(panchangInitProvider.future);
         final selectedBDate = await service.calculateDate(selectedDate);
-        return '${selectedBDate.month} ${selectedBDate.year}';
+        return (accent: selectedBDate.month, dim: '${selectedBDate.year}');
       } else {
         final service = ref.read(hinduCalendarServiceProvider);
         await ref.read(panchangInitProvider.future);
@@ -2389,7 +2591,7 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
           selectedHDate.paksha,
           hinduMonthSystem,
         ).replaceAll('_', ' ');
-        return '$masa $year';
+        return (accent: masa, dim: '$year');
       }
     }
 
@@ -2414,11 +2616,14 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
       endYear = endBDate.year;
 
       if (startMonth == endMonth && startYear == endYear) {
-        return '$startMonth $startYear';
+        return (accent: startMonth, dim: '$startYear');
       } else if (startYear == endYear) {
-        return '$startMonth - $endMonth $startYear';
+        return (accent: '$startMonth - $endMonth', dim: '$startYear');
       } else {
-        return '$startMonth $startYear - $endMonth $endYear';
+        return (
+          accent: '$startMonth - $endMonth',
+          dim: '$startYear - $endYear',
+        );
       }
     } else {
       final service = ref.read(hinduCalendarServiceProvider);
@@ -2446,11 +2651,14 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
           : endHDate.shakaYear;
 
       if (startMonth == endMonth && startYear == endYear) {
-        return '$startMonth $startYear';
+        return (accent: startMonth, dim: '$startYear');
       } else if (startYear == endYear) {
-        return '$startMonth - $endMonth $startYear';
+        return (accent: '$startMonth - $endMonth', dim: '$startYear');
       } else {
-        return '$startMonth $startYear - $endMonth $endYear';
+        return (
+          accent: '$startMonth - $endMonth',
+          dim: '$startYear - $endYear',
+        );
       }
     }
   } catch (e) {
@@ -2459,11 +2667,12 @@ Future<String?> _getTraditionalMonthRangeForCalendar(
   }
 }
 
-Future<String?> _getGregorianMonthRangeForCalendar(
+Future<_MonthRangeParts?> _getGregorianMonthRangeForCalendar(
   Ref ref,
   DateTime date,
-  cp.AppCalendarSystem primarySystem,
-) async {
+  cp.AppCalendarSystem primarySystem, {
+  DateTime? selectedDate,
+}) async {
   if (primarySystem != cp.AppCalendarSystem.bengali &&
       primarySystem != cp.AppCalendarSystem.hindu) {
     return null;
@@ -2517,20 +2726,163 @@ Future<String?> _getGregorianMonthRangeForCalendar(
       endDate = endDate.subtract(const Duration(days: 1));
     }
 
+    // Tapped tile inside the viewed lunar span narrows to that date's
+    // single Gregorian month (mirrors the Gregorian-primary tap behavior).
+    if (selectedDate != null &&
+        !selectedDate.isBefore(startDate) &&
+        !selectedDate.isAfter(endDate)) {
+      final single = gregorianMonths[selectedDate.month - 1];
+      return (accent: single, dim: '${selectedDate.year}');
+    }
+
     final startMonth = gregorianMonths[startDate.month - 1];
     final endMonth = gregorianMonths[endDate.month - 1];
     final startYear = startDate.year;
     final endYear = endDate.year;
 
     if (startMonth == endMonth && startYear == endYear) {
-      return '$startMonth $startYear';
+      return (accent: startMonth, dim: '$startYear');
     } else if (startYear == endYear) {
-      return '$startMonth - $endMonth $startYear';
+      return (accent: '$startMonth - $endMonth', dim: '$startYear');
     } else {
-      return '$startMonth $startYear - $endMonth $endYear';
+      return (accent: '$startMonth - $endMonth', dim: '$startYear - $endYear');
     }
   } catch (e) {
     _logCalError('gregorian month range', e);
+    return null;
+  }
+}
+
+/// Secondary traditional range over a lunar primary month's span.
+///
+/// Hindu primary + Bengali secondary shows the Bengali months overlapping
+/// the viewed Hindu (lunar) month, e.g. "Shrabon - Bhadro 1432"; Bengali
+/// primary + Hindu secondary mirrors it. Previously this combination fell
+/// through to a single-month label of the focused start day and never
+/// updated on tile taps, which is the reported "stuck Bengali month" bug.
+Future<_MonthRangeParts?> _getSecondaryTraditionalRangeForLunarPrimary(
+  Ref ref,
+  DateTime date,
+  cp.AppCalendarSystem primarySystem,
+  cp.AppCalendarSystem secondarySystem,
+  HinduYearEra hinduYearEra,
+  HinduMonthSystem hinduMonthSystem, {
+  DateTime? selectedDate,
+}) async {
+  if ((primarySystem != cp.AppCalendarSystem.hindu &&
+          primarySystem != cp.AppCalendarSystem.bengali) ||
+      (secondarySystem != cp.AppCalendarSystem.hindu &&
+          secondarySystem != cp.AppCalendarSystem.bengali) ||
+      primarySystem == secondarySystem) {
+    return null;
+  }
+
+  try {
+    await ref.read(panchangInitProvider.future);
+
+    // 1. Resolve the viewed primary (lunar) month's Gregorian span.
+    late DateTime spanStart;
+    late DateTime spanEnd;
+    if (primarySystem == cp.AppCalendarSystem.hindu) {
+      final hinduService = ref.read(hinduCalendarServiceProvider);
+      spanStart = await hinduService.monthStartContaining(date);
+      final nextStart = await hinduService.nextMonthStartAfter(spanStart);
+      spanEnd = nextStart.subtract(const Duration(days: 1));
+    } else {
+      final bengaliService = ref.read(bengaliCalendarServiceProvider);
+      final bDate = await bengaliService.calculateDate(date);
+      final monthIndex = bengaliService.bengaliMonths.indexOf(bDate.month);
+      if (monthIndex < 0) return null;
+      spanStart = await bengaliService.getMonthStart(bDate.year, monthIndex);
+      var nextIndex = monthIndex + 1;
+      var nextYear = bDate.year;
+      if (nextIndex > 11) {
+        nextIndex = 0;
+        nextYear++;
+      }
+      final nextStart = await bengaliService.getMonthStart(
+        nextYear,
+        nextIndex,
+      );
+      spanEnd = nextStart.subtract(const Duration(days: 1));
+    }
+
+    // 2. Tapped tile inside the span narrows to that date's single
+    // secondary month (out-of-span taps fall back to the range).
+    if (selectedDate != null &&
+        !selectedDate.isBefore(spanStart) &&
+        !selectedDate.isAfter(spanEnd)) {
+      if (secondarySystem == cp.AppCalendarSystem.bengali) {
+        final service = ref.read(bengaliCalendarServiceProvider);
+        final selectedBDate = await service.calculateDate(selectedDate);
+        return (accent: selectedBDate.month, dim: '${selectedBDate.year}');
+      } else {
+        final service = ref.read(hinduCalendarServiceProvider);
+        final selectedHDate = await service.calculateDate(selectedDate);
+        final year = hinduYearEra == HinduYearEra.vikramSamvat
+            ? selectedHDate.vsYear
+            : selectedHDate.shakaYear;
+        final masa = displayMasaName(
+          selectedHDate.masa,
+          selectedHDate.paksha,
+          hinduMonthSystem,
+        ).replaceAll('_', ' ');
+        return (accent: masa, dim: '$year');
+      }
+    }
+
+    // 3. Range: secondary months at the span's start and end days.
+    if (secondarySystem == cp.AppCalendarSystem.bengali) {
+      final service = ref.read(bengaliCalendarServiceProvider);
+      final startBDate = await service.calculateDate(spanStart);
+      final endBDate = await service.calculateDate(spanEnd);
+      final startMonth = startBDate.month;
+      final endMonth = endBDate.month;
+      final startYear = startBDate.year;
+      final endYear = endBDate.year;
+      if (startMonth == endMonth && startYear == endYear) {
+        return (accent: startMonth, dim: '$startYear');
+      } else if (startYear == endYear) {
+        return (accent: '$startMonth - $endMonth', dim: '$startYear');
+      } else {
+        return (
+          accent: '$startMonth - $endMonth',
+          dim: '$startYear - $endYear',
+        );
+      }
+    } else {
+      final service = ref.read(hinduCalendarServiceProvider);
+      final startHDate = await service.calculateDate(spanStart);
+      final endHDate = await service.calculateDate(spanEnd);
+      final startMonth = displayMasaName(
+        startHDate.masa,
+        startHDate.paksha,
+        hinduMonthSystem,
+      ).replaceAll('_', ' ');
+      final endMonth = displayMasaName(
+        endHDate.masa,
+        endHDate.paksha,
+        hinduMonthSystem,
+      ).replaceAll('_', ' ');
+      final startYear = hinduYearEra == HinduYearEra.vikramSamvat
+          ? startHDate.vsYear
+          : startHDate.shakaYear;
+      final endYear = hinduYearEra == HinduYearEra.vikramSamvat
+          ? endHDate.vsYear
+          : endHDate.shakaYear;
+      if (startMonth == endMonth && startYear == endYear) {
+        return (accent: startMonth, dim: '$startYear');
+      } else if (startYear == endYear) {
+        return (accent: '$startMonth - $endMonth', dim: '$startYear');
+      } else {
+        return (
+          accent: '$startMonth - $endMonth',
+          dim: '$startYear - $endYear',
+        );
+      }
+    }
+  } catch (e) {
+    _logCalError('lunar primary secondary range', e);
     return null;
   }
 }
@@ -2616,21 +2968,35 @@ class _CalendarHeader extends ConsumerWidget {
     final secondary = ref.watch(cp.secondaryCalendarSystemProvider);
     final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
     final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
-    // Mirrors the provider's gating: subscribe to taps only when the
-    // secondary header has a tap-narrowed variant, so the key lookup stays
-    // meaningful and taps skip this widget otherwise.
-    final tappedDate =
-        primary == cp.AppCalendarSystem.gregorian &&
+    // Mirrors the provider's gating: subscribe to taps whenever the
+    // secondary header has a tap-narrowed (range -> single) variant, so the
+    // key lookup stays meaningful and taps skip this widget otherwise.
+    final tapNarrowsSecondary =
+        (primary == cp.AppCalendarSystem.gregorian &&
             (secondary == cp.AppCalendarSystem.hindu ||
-                secondary == cp.AppCalendarSystem.bengali)
+                secondary == cp.AppCalendarSystem.bengali)) ||
+        ((primary == cp.AppCalendarSystem.hindu ||
+                primary == cp.AppCalendarSystem.bengali) &&
+            secondary != cp.AppCalendarSystem.none &&
+            secondary != primary);
+    final tappedDate = tapNarrowsSecondary
         ? ref.watch(cp.tappedCalendarDateProvider)
         : null;
-    final tappedInMonth =
-        tappedDate != null &&
-            tappedDate.year == focusedMonth.year &&
-            tappedDate.month == focusedMonth.month
-        ? DateTime(tappedDate.year, tappedDate.month, tappedDate.day)
-        : null;
+    // Gregorian compares by year-month; lunar spans straddle Gregorian
+    // months, so pass the tap through and let the range builder validate
+    // containment (out-of-span taps show the range).
+    final tappedInMonth = tappedDate == null
+        ? null
+        : (primary == cp.AppCalendarSystem.gregorian
+              ? (tappedDate.year == focusedMonth.year &&
+                        tappedDate.month == focusedMonth.month
+                    ? DateTime(
+                        tappedDate.year,
+                        tappedDate.month,
+                        tappedDate.day,
+                      )
+                    : null)
+              : DateTime(tappedDate.year, tappedDate.month, tappedDate.day));
     final headerDataAsync = ref.watch(calendarHeaderDataProvider);
     // Stale header first so swipes never show bare Gregorian then flip;
     // fresh async data replaces it once FFI resolves. On a date tap the
@@ -2656,62 +3022,207 @@ class _CalendarHeader extends ConsumerWidget {
         _HeaderData(primaryText: _formatGregorianHeader(focusedMonth));
     final materialL10n = MaterialLocalizations.of(context);
 
+    final highContrast = AppTheme.highContrastOf(context);
+    final onSurface = context.colors.onSurface;
+    final dim = onSurface.withValues(alpha: 0.6);
+
+    Widget navButton({
+      required IconData icon,
+      required String tooltip,
+      required VoidCallback onTap,
+    }) {
+      // Haptics stay in the navigate methods (per-path: page-turn buzz on
+      // Gregorian, explicit buzz on Hindu/Bengali) — not here, to avoid
+      // double feedback.
+      return Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Tooltip(
+            message: tooltip,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: onSurface.withValues(alpha: highContrast ? 0.25 : 0.1),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 16, color: onSurface),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: Icon(Icons.chevron_left, color: context.colors.primary),
+          navButton(
+            icon: Icons.chevron_left,
             tooltip: materialL10n.previousPageTooltip,
-            onPressed: onLeftChevronTap,
+            onTap: onLeftChevronTap,
           ),
           Expanded(
             child: GestureDetector(
               onTap: onYearTap,
-              child: Row(
+              behavior: HitTestBehavior.opaque,
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Column(
+                  Row(
                     mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        headerData.primaryText,
-                        style: context.textTheme.headlineMedium!.copyWith(
-                          fontSize: 18,
+                      Flexible(
+                        child: Text(
+                          headerData.primaryText,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.2,
+                            color: onSurface,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (headerData.secondaryText != null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          headerData.secondaryText!,
-                          style: context.textTheme.bodySmall!.copyWith(
-                            color: context.colors.onSurface.withValues(
-                              alpha: 0.7,
-                            ),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                      const SizedBox(width: 4),
+                      Icon(Icons.expand_more, size: 14, color: dim),
                     ],
                   ),
-                  Icon(
-                    Icons.arrow_drop_down,
-                    size: 20,
-                    color: context.colors.primary,
-                  ),
+                  if (headerData.secondaryAccent != null) ...[
+                    const SizedBox(height: 1),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: headerData.secondaryAccent,
+                            style: TextStyle(
+                              fontSize: 11,
+                              letterSpacing: 0.2,
+                              fontWeight: FontWeight.w600,
+                              color: context.colors.primary,
+                            ),
+                          ),
+                          if (headerData.secondaryDim != null &&
+                              headerData.secondaryDim!.isNotEmpty)
+                            TextSpan(
+                              text: ' · ${headerData.secondaryDim}',
+                              style: TextStyle(fontSize: 11, color: dim),
+                            ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.chevron_right, color: context.colors.primary),
+          navButton(
+            icon: Icons.chevron_right,
             tooltip: materialL10n.nextPageTooltip,
-            onPressed: onRightChevronTap,
+            onTap: onRightChevronTap,
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Weekday header row shared by the Gregorian and adaptive grids: 3-letter
+/// uppercase labels with weekend columns in the accent color. Order follows
+/// [startOfWeek] to match the grid columns below.
+class _WeekdayHeaderRow extends StatelessWidget {
+  const _WeekdayHeaderRow({required this.startOfWeek});
+
+  final cp.StartingDayOfWeek startOfWeek;
+
+  static const _sundayFirst = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  static const _mondayFirst = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = startOfWeek == cp.StartingDayOfWeek.monday
+        ? _mondayFirst
+        : _sundayFirst;
+    // Weekend columns depend on the week start (Sun/Sat at 0+6 or 5+6).
+    bool isWeekend(int index) => startOfWeek == cp.StartingDayOfWeek.monday
+        ? index >= 5
+        : (index == 0 || index == 6);
+    return Row(
+      children: [
+        for (var i = 0; i < 7; i++)
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                labels[i],
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.6,
+                  color: isWeekend(i)
+                      ? context.colors.primary
+                      : context.colors.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Weekend column tint behind a 7-column grid (redesign weekend striping).
+/// Runs are contiguous weekend-column ranges so Monday-start weekends render
+/// as one stripe. Both children grids use equal full-width columns, so
+/// sevenths geometry always lines up.
+class _WeekendStripes extends StatelessWidget {
+  const _WeekendStripes({required this.startOfWeek, required this.child});
+
+  final cp.StartingDayOfWeek startOfWeek;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final runs = startOfWeek == cp.StartingDayOfWeek.monday
+        ? const [
+            [5, 6],
+          ]
+        : const [
+            [0, 0],
+            [6, 6],
+          ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final column = constraints.maxWidth / 7;
+        return Stack(
+          children: [
+            for (final run in runs)
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: column * run[0],
+                width: column * (run[1] - run[0] + 1),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: AppTheme.calendarWeekendStripe(context),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            child,
+          ],
+        );
+      },
     );
   }
 }
@@ -2722,6 +3233,7 @@ class _CalendarCell extends StatelessWidget {
   final bool isToday;
   final String primaryText;
   final String? secondaryText;
+  final bool isOutside;
 
   const _CalendarCell({
     required this.date,
@@ -2729,39 +3241,94 @@ class _CalendarCell extends StatelessWidget {
     required this.isToday,
     this.primaryText = '',
     this.secondaryText,
+    this.isOutside = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // The app propagates the accessibility high-contrast setting into
+    // MediaQuery, so no provider watch is needed here.
+    final highContrast = AppTheme.highContrastOf(context);
     final resolvedPrimary = primaryText.isEmpty
         ? date.day.toString()
         : primaryText;
 
-    final textColor = isSelected
-        ? context.colors.onPrimary
-        : isToday
-        ? context.colors.primary
-        : context.colors.onSurface;
+    final scheme = context.colors;
+    // Selected wins over today (spec .today.sel).
+    BoxDecoration? decoration;
+    Color textColor = scheme.onSurface;
+    FontWeight weight = FontWeight.w500;
+    Matrix4? transform;
+
+    if (isSelected) {
+      decoration = BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppTheme.calendarSelectedGradient(context),
+        ),
+        border: highContrast
+            ? Border.all(
+                color: scheme.onSurface.withValues(alpha: 0.6),
+                width: 1.5,
+              )
+            : null,
+        // Soft glow only: the previous hard spread-3 "card ring" used
+        // cardTheme.color, which mismatches the glassmorphism card behind
+        // the grid, so it read as a halo while the 1.08 scale still bled
+        // over neighbors. The tile margin below provides the real gutter.
+        boxShadow: highContrast
+            ? null
+            : [
+                BoxShadow(
+                  color: AppTheme.heroGlow(context),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+      );
+      textColor = AppTheme.calendarSelectedForeground(context);
+      weight = FontWeight.w600;
+      transform = Matrix4.identity()..scaleByDouble(1.08, 1.08, 1.0, 1.0);
+    } else if (isToday) {
+      decoration = BoxDecoration(
+        color: AppTheme.calendarTodayBackground(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppTheme.calendarTodayRing(context),
+          width: 1.5,
+        ),
+      );
+      textColor = AppTheme.calendarTodayForeground(context);
+      weight = FontWeight.w600;
+    }
+
+    // Outside-month days render muted (spec `.d.muted`: dim at 35%) unless
+    // they carry the selected/today emphasis.
+    if (isOutside && !isSelected && !isToday) {
+      textColor = scheme.onSurface.withValues(alpha: 0.35);
+    }
 
     final secondaryColor = isSelected
-        ? context.colors.onPrimary.withValues(alpha: 0.7)
+        ? AppTheme.calendarSelectedForeground(context).withValues(alpha: 0.7)
         : isToday
-        ? context.colors.primary.withValues(alpha: 0.7)
-        : context.colors.onSurface.withValues(alpha: 0.5);
+        ? AppTheme.calendarTodayForeground(context).withValues(alpha: 0.7)
+        : scheme.onSurface.withValues(alpha: isOutside ? 0.35 : 0.5);
 
-    final bgColor = isSelected
-        ? context.colors.primary
-        : isToday
-        ? context.colors.primary.withValues(alpha: 0.2)
-        : Colors.transparent;
-
+    // 2px gutter on every tile: adjacent squares no longer touch, so the
+    // selected tile's 1.08 scale (~2px overflow on a ~50px cell) just fills
+    // its own gutter instead of covering the neighbor's today-ring. The
+    // weekend stripe shows through the gutters, as in the spec grid.
     return Container(
-      margin: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: isSelected || isToday ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: isSelected || isToday ? null : BorderRadius.circular(8),
-      ),
+      margin: const EdgeInsets.all(2),
+      decoration: decoration,
+      transform: transform,
+      transformAlignment: Alignment.center,
+      // NOTE: no clipBehavior here — Container asserts
+      // (decoration != null || clipBehavior == Clip.none), and plain day
+      // tiles have no decoration. The children (centered number + corner
+      // label) never reach the rounded corners, so no clip is needed.
       child: Stack(
         children: [
           Center(
@@ -2769,10 +3336,8 @@ class _CalendarCell extends StatelessWidget {
               resolvedPrimary,
               style: TextStyle(
                 color: textColor,
-                fontSize: 16,
-                fontWeight: isSelected || isToday
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontSize: 14,
+                fontWeight: weight,
               ),
             ),
           ),

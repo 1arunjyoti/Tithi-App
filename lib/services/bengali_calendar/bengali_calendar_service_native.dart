@@ -57,6 +57,9 @@ class BengaliCalendarService {
   /// ~18-FFI sankranti resolution entirely.
   static final Map<String, DateTime> _monthStartCache = {};
   static const int _maxMonthStartCache = 24;
+  static final BengaliCalendarDateCache _dateCache = BengaliCalendarDateCache(
+    maxEntries: 600,
+  );
 
   static String _cacheKey(
     int monthIndex,
@@ -67,10 +70,7 @@ class BengaliCalendarService {
     return '${latitude.toStringAsFixed(1)}_${longitude.toStringAsFixed(1)}_${monthIndex}_$gregYear';
   }
 
-  static void _storeMonthStart(
-    String key,
-    DateTime monthStart,
-  ) {
+  static void _storeMonthStart(String key, DateTime monthStart) {
     if (_monthStartCache.length >= _maxMonthStartCache) {
       _monthStartCache.remove(_monthStartCache.keys.first);
     }
@@ -97,26 +97,17 @@ class BengaliCalendarService {
 
   /// Calculates the Bengali Date (West Bengal System) using Sun's position.
   /// Returns a record ({int day, String month, int year}).
-  Future<({int day, String month, int year})> calculateDate(
+  Future<BengaliCalendarDate> calculateDate(
     DateTime date, {
     double latitude = 22.5726, // Kolkata
     double longitude = 88.3639,
   }) async {
-    // Ensure core service is initialized
-    final _ = await _ref.read(panchangInitProvider.future);
-
-    final location = GeographicLocation(
-      latitude: latitude,
-      longitude: longitude,
-    );
-
     // Calendar-day normalization. The Bengali day runs sunrise->sunrise
     // (guide Sec 3.5): an intraday time before today's sunrise still belongs
     // to the previous Bengali day. Exact-midnight inputs (calendar cells)
     // are treated as that calendar date with no shift.
     var normalized = DateTime(date.year, date.month, date.day);
-    final hasTime =
-        date.hour != 0 || date.minute != 0 || date.second != 0;
+    final hasTime = date.hour != 0 || date.minute != 0 || date.second != 0;
     if (hasTime) {
       final sunrise = SunriseCalculator.calculateSunriseIST(
         date: normalized,
@@ -127,6 +118,22 @@ class BengaliCalendarService {
         normalized = normalized.subtract(const Duration(days: 1));
       }
     }
+
+    final dateCacheKey = bengaliCalendarDateCacheKey(
+      normalized,
+      latitude,
+      longitude,
+    );
+    final cached = _dateCache.read(dateCacheKey);
+    if (cached != null) return cached;
+
+    // Ensure core service is initialized only for a cache miss.
+    await _ref.read(panchangInitProvider.future);
+
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
 
     // Query at local noon for a stable rashi (midnight queries flip early
     // near a sankranti).
@@ -167,7 +174,13 @@ class BengaliCalendarService {
     // Magh..Choitro (9..11) -> start.year - 594.
     final int bengaliYear = monthStart.year - (monthIndex <= 8 ? 593 : 594);
 
-    return (day: day, month: bengaliMonths[monthIndex], year: bengaliYear);
+    final result = (
+      day: day,
+      month: bengaliMonths[monthIndex],
+      year: bengaliYear,
+    );
+    _dateCache.store(dateCacheKey, result);
+    return result;
   }
 
   /// Cached-or-resolved month start for [monthIndex] containing [noon].
@@ -214,10 +227,7 @@ class BengaliCalendarService {
       sunLngNow: sunLngNow,
       location: location,
     );
-    _storeMonthStart(
-      _cacheKey(monthIndex, resolved.year, lat, lon),
-      resolved,
-    );
+    _storeMonthStart(_cacheKey(monthIndex, resolved.year, lat, lon), resolved);
     return resolved;
   }
 
@@ -242,9 +252,7 @@ class BengaliCalendarService {
     final bool estimateValid = degInSign < 35;
     // Mean sun motion ~0.9856 deg/day.
     final estIngressNoon = estimateValid
-        ? noon.subtract(
-            Duration(minutes: (degInSign / 0.9856 * 1440).round()),
-          )
+        ? noon.subtract(Duration(minutes: (degInSign / 0.9856 * 1440).round()))
         : noon;
     final estNoon = DateTime(
       estIngressNoon.year,
@@ -290,6 +298,8 @@ class BengaliCalendarService {
             beforeNoon = cursor.subtract(const Duration(days: 1));
             break;
           }
+          // Let gestures/frames interleave during long FFI scans.
+          if (i % 8 == 0) await Future<void>.delayed(Duration.zero);
         }
       } else {
         for (int i = 0; i < 35; i++) {
@@ -304,6 +314,8 @@ class BengaliCalendarService {
             break;
           }
           cursor = prev;
+          // Let gestures/frames interleave during long FFI scans.
+          if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
         }
       }
     }
@@ -311,9 +323,7 @@ class BengaliCalendarService {
     if (beforeNoon == null || afterNoon == null) {
       // Last resort: historic approximation (Apr 14 anchor). Day numbers
       // may be off by ~1 but never 5..32.
-      final approx = noon.subtract(
-        Duration(days: degInSign ~/ 1),
-      );
+      final approx = noon.subtract(Duration(days: degInSign ~/ 1));
       return DateTime(approx.year, approx.month, approx.day);
     }
 
@@ -394,6 +404,8 @@ class BengaliCalendarService {
         // Best-effort sweep; keep looking.
       }
       search = search.add(const Duration(days: 1));
+      // Let gestures/frames interleave during long FFI scans.
+      if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
     }
 
     return estimate; // Fallback (bounded — keeps the grid sane).

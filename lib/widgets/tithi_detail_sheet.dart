@@ -209,13 +209,15 @@ class TithiDetailSheet extends ConsumerWidget {
     final dateBaseStyle = TextStyle(
       fontSize: 22,
       fontWeight: FontWeight.w600,
-      color: highContrast ? context.colors.onSurface : AppTheme.heroInk,
+      color: highContrast
+          ? context.colors.onSurface
+          : AppTheme.heroForeground(context),
     );
     final dateAccentStyle = dateBaseStyle.copyWith(
       fontStyle: FontStyle.italic,
       color: highContrast
           ? context.colors.primary
-          : AppTheme.heroMoonFill(context),
+          : AppTheme.heroAccent(context),
     );
     final dateSpans = <InlineSpan>[];
     switch (primarySystem) {
@@ -309,7 +311,9 @@ class TithiDetailSheet extends ConsumerWidget {
                                     ? context.colors.onSurface.withValues(
                                         alpha: 0.35,
                                       )
-                                    : Colors.white.withValues(alpha: 0.6),
+                                    : AppTheme.heroForeground(
+                                        context,
+                                      ).withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -372,7 +376,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                         fontWeight: FontWeight.w600,
                                         color: highContrast
                                             ? context.colors.onSurface
-                                            : AppTheme.heroInk,
+                                            : AppTheme.heroForeground(context),
                                       ),
                                     ),
                                     const SizedBox(height: 2),
@@ -384,7 +388,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                         color: highContrast
                                             ? context.colors.onSurface
                                                   .withValues(alpha: 0.7)
-                                            : AppTheme.heroInk,
+                                            : AppTheme.heroForeground(context),
                                       ),
                                     ),
                                   ],
@@ -404,7 +408,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                         ? context.colors.primary.withValues(
                                             alpha: 0.4,
                                           )
-                                        : AppTheme.heroMoonFill(
+                                        : AppTheme.heroAccent(
                                             context,
                                           ).withValues(alpha: 0.7),
                                   ),
@@ -414,7 +418,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                   style: TextStyle(
                                     color: highContrast
                                         ? context.colors.primary
-                                        : AppTheme.heroMoonFill(context),
+                                        : AppTheme.heroAccent(context),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
                                   ),
@@ -596,7 +600,8 @@ class TithiDetailSheet extends ConsumerWidget {
 }
 
 /// Hero-style sun pill for the sheet header (same treatment as the home
-/// hero chips: white-bold on the gradient, primary tint in high contrast).
+/// hero chips: hero-foreground ink on the gradient, primary tint in high
+/// contrast).
 class _SheetChip extends StatelessWidget {
   const _SheetChip({
     required this.icon,
@@ -629,7 +634,9 @@ class _SheetChip extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: highContrast ? context.colors.primary : AppTheme.heroInk,
+            color: highContrast
+                ? context.colors.primary
+                : AppTheme.heroForeground(context),
           ),
           const SizedBox(width: 6),
           Flexible(
@@ -639,7 +646,7 @@ class _SheetChip extends StatelessWidget {
                 fontSize: 12,
                 color: highContrast
                     ? context.colors.onSurface
-                    : AppTheme.heroInk,
+                    : AppTheme.heroForeground(context),
                 fontWeight: FontWeight.bold,
               ),
             ),

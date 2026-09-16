@@ -315,6 +315,76 @@ void main() {
       expect(find.textContaining('no secondary'), findsNothing);
     });
 
+    testWidgets('switching dates glides instead of flashing', (tester) async {
+      // Arrange: tall day (artwork + transition chip) settled on screen.
+      // Month cache serves both days, mirroring an on-device same-month tap
+      // (no skeleton in the middle).
+      final tall = heroData(image: 'assets/images/festival/shri_ganesh.jpeg');
+      final short = PanchangData(
+        date: DateTime(2026, 9, 16),
+        rawTithi: 8.5,
+        tithiNumber: 8,
+        tithiName: 'Ashtami',
+        paksha: 'Shukla',
+        masa: 'Bhadrapada',
+        sunrise: DateTime(2026, 9, 16, 5, 39),
+        sunset: DateTime(2026, 9, 16, 18, 12),
+      );
+      final dateNotifier = _FixedDateNotifier();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            selectedDateProvider.overrideWith(() => dateNotifier),
+            panchangForDateProvider.overrideWith(
+              (ref, date) =>
+                  Future.value(date.day == 14 ? tall : short),
+            ),
+            monthlyPanchangProvider.overrideWith(
+              (ref, month) => Future.value({
+                DateTime(2026, 9, 14): tall,
+                DateTime(2026, 9, 16): short,
+              }),
+            ),
+            cityNameProvider.overrideWithValue(
+              const AsyncValue.data('Kolkata'),
+            ),
+            accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(child: PakshaHeroCard()),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final tallHeight = tester.getSize(find.byType(PakshaHeroCard)).height;
+
+      // Act: tap over to the short day, stepping frame by frame.
+      dateNotifier.setDate(DateTime(2026, 9, 16));
+      final heights = <double>[];
+      for (var i = 0; i < 25; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+        heights.add(tester.getSize(find.byType(PakshaHeroCard)).height);
+      }
+      await tester.pumpAndSettle();
+      final shortHeight = tester.getSize(find.byType(PakshaHeroCard)).height;
+
+      // Assert: monotonic glide, no skeleton dip or overshoot spike, and a
+      // gentle start (no rapid-expand kick on the first frames).
+      expect(shortHeight, lessThan(tallHeight));
+      for (var i = 0; i < heights.length; i++) {
+        expect(heights[i], lessThanOrEqualTo(tallHeight));
+        expect(heights[i], greaterThanOrEqualTo(shortHeight - 0.5));
+        if (i > 0) expect(heights[i], lessThanOrEqualTo(heights[i - 1]));
+      }
+      expect(
+        tallHeight - heights[1],
+        lessThan((tallHeight - shortHeight) * 0.25),
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('header never overflows on narrow screens', (tester) async {
       // Arrange: 320pt-wide surface with artwork and a very long city name
       tester.view.physicalSize = const Size(320, 800);

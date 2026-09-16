@@ -17,10 +17,13 @@ import 'calendar_provider.dart';
 
 const _panchangLocationSignatureKey = '__location_signature__';
 
-// Sync in-memory stale cache for selected-date UI (EventList + Paksha).
-// panchangForDateProvider is an autoDispose family, so tapping another date
-// shows a loading spinner for a frame while FFI resolves — the flash below
-// the calendar. Stale content renders instantly; fresh data replaces it.
+// Sync in-memory cache for selected-date UI (EventList + Paksha).
+//
+// The adaptive Hindu/Bengali grid publishes its already-resolved, filtered
+// day records here. A date tap can then refine only that day's transition
+// instead of making panchangForDateProvider start a second, Gregorian-month
+// batch. The cache also remains the stale-content fallback while that small
+// refinement completes.
 final Map<DateTime, PanchangData> _panchangUiCache = {};
 const int _panchangUiCacheMax = 100;
 
@@ -32,6 +35,17 @@ PanchangData? cachedPanchangUiSync(DateTime date) {
 }
 
 void storePanchangUiSync(DateTime date, PanchangData data) {
+  final normalizedDate = _normalizeUiDate(date);
+  final existing = _panchangUiCache[normalizedDate];
+  // The adaptive month batch deliberately omits the expensive intraday
+  // transition search. Do not replace a previously refined result with that
+  // cheaper record when an adaptive grid rebuilds.
+  if (existing?.hasTithiTransition == true && !data.hasTithiTransition) {
+    data = data.copyWith(
+      tithiTransitionTime: existing!.tithiTransitionTime,
+      transitionTithiIndex: existing.transitionTithiIndex,
+    );
+  }
   if (_panchangUiCache.length >= _panchangUiCacheMax) {
     final toRemove =
         _panchangUiCache.keys.take(_panchangUiCacheMax ~/ 5).toList();
@@ -39,7 +53,7 @@ void storePanchangUiSync(DateTime date, PanchangData data) {
       _panchangUiCache.remove(k);
     }
   }
-  _panchangUiCache[_normalizeUiDate(date)] = data;
+  _panchangUiCache[normalizedDate] = data;
 }
 
 String _dateKey(DateTime date) => panchangDateKey(date);
@@ -100,6 +114,40 @@ Future<void> _storeCachedRawTithi(
   String suffix = '',
 }) async {
   await cacheBox.put(_cacheKey(date, latitude, longitude, suffix), rawTithi);
+}
+
+// ---------------------------------------------------------------------------
+// Shared Hive access for the Hindu/Bengali calendar services.
+// The monthly batch writes sunrise raw-tithi ('') and sunrise masa ('masa2')
+// per date+location; the lunar services read those same entries (and write
+// back their own FFI results) so Gregorian usage warms Hindu/Bengali month
+// grids and vice versa. Without this sharing, every cold lunar-month slice
+// redozens of sequential masa/tithi resolutions (~hundreds of blocking FFI
+// calls) while Gregorian month turns read straight from this box.
+// ---------------------------------------------------------------------------
+
+/// Suffix of the sunrise-masa entry (versioned: bump when masa attribution
+/// logic changes, in lockstep with the batch path's key above).
+const String panchangMasaCacheSuffix = 'masa2';
+
+/// Key builder identical to the batch path's (date + 4dp location + suffix).
+String panchangCacheKey(
+  DateTime date,
+  double latitude,
+  double longitude, [
+  String suffix = '',
+]) => _cacheKey(date, latitude, longitude, suffix);
+
+/// Null-safe reads (a wrong-typed entry degrades to a miss, never a throw).
+double? readPanchangCacheDouble(Box<dynamic> cacheBox, String key) {
+  final cached = cacheBox.get(key);
+  return cached is num ? cached.toDouble() : null;
+}
+
+/// Null-safe reads (a wrong-typed entry degrades to a miss, never a throw).
+String? readPanchangCacheString(Box<dynamic> cacheBox, String key) {
+  final cached = cacheBox.get(key);
+  return cached is String ? cached : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -504,18 +552,19 @@ final panchangInitProvider = FutureProvider<void>((ref) async {
 
 /// Provider for panchang data of a specific date.
 ///
-/// Single source of truth for festival matches: the Vriddhi-filtered month
-/// map ([monthlyPanchangProvider]). This provider reads the day's entry from
-/// there — never matching independently — and only resolves the daytime
-/// tithi transition on top (the month batch skips that search for speed).
+/// Single source of truth for festival matches: a Vriddhi-filtered month
+/// record. Gregorian views supply it through [monthlyPanchangProvider];
+/// Hindu/Bengali adaptive views publish their equivalent resolved record to
+/// the UI cache. This provider only resolves the daytime tithi transition on
+/// top (the month batches skip that search for speed).
 /// On cold start / deep-link the month batch loads first (~30 Hive-cached
 /// FFI reads); the direct-compute fallback below runs only if that fails.
 final panchangForDateProvider = FutureProvider.autoDispose
     .family<PanchangData, DateTime>((ref, date) async {
+      final normalized = DateTime(date.year, date.month, date.day);
+      final adaptiveGridEntry = cachedPanchangUiSync(normalized);
       // Ensure service is initialized
       await ref.watch(panchangInitProvider.future);
-      // Ensure festivals are loaded
-      await ref.watch(festivalInitProvider.future);
 
       final service = ref.read(panchangServiceProvider);
       final coords = ref.watch(resolvedCoordinatesProvider);
@@ -523,7 +572,47 @@ final panchangForDateProvider = FutureProvider.autoDispose
       final longitude = coords.longitude;
       final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
-      final normalized = DateTime(date.year, date.month, date.day);
+      // Hindu/Bengali adaptive grids have already computed this record,
+      // including its Vriddhi-filtered festivals. Reuse it and resolve only
+      // the optional intraday transition; requesting monthlyPanchangProvider
+      // here would redo an entire Gregorian month on every cold date tap.
+      if (adaptiveGridEntry != null) {
+        try {
+          final checkpoints = await resolveTithiCheckpoints(
+            normalizedDate: normalized,
+            service: service,
+            latitude: latitude,
+            longitude: longitude,
+            cacheBox: cacheBox,
+          );
+          final transition = await resolveDayTransition(
+            normalizedDate: normalized,
+            service: service,
+            latitude: latitude,
+            longitude: longitude,
+            cacheBox: cacheBox,
+            checkpoints: checkpoints,
+          );
+          final data = transition.at == null || transition.index == null
+              ? adaptiveGridEntry.copyWith(clearTransition: true)
+              : adaptiveGridEntry.copyWith(
+                  tithiTransitionTime: transition.at,
+                  transitionTithiIndex: transition.index,
+                );
+          storePanchangUiSync(normalized, data);
+          return data;
+        } catch (e) {
+          // The cached daily record is complete enough for the selected-date
+          // UI. A failed optional transition lookup must not fall through to
+          // an expensive duplicate month batch.
+          debugPrint('Cached single-day transition lookup skipped: $e');
+          return adaptiveGridEntry;
+        }
+      }
+
+      // Ensure festivals are loaded before the cold month/direct paths.
+      await ref.watch(festivalInitProvider.future);
+
       try {
         final monthData = await ref.watch(
           monthlyPanchangProvider(DateTime(normalized.year, normalized.month))
