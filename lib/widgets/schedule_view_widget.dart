@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../models/panchang_data.dart';
 import '../models/hindu_month_system.dart';
@@ -11,6 +10,7 @@ import '../providers/calendar_provider.dart' as cp;
 import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/tithi_localization.dart';
 import 'event_detail_sheet.dart';
 
 /// Data class for Hindu date with proper settings applied
@@ -68,11 +68,7 @@ final hinduDateForScheduleProvider = FutureProvider.autoDispose
             : hDate.tithi;
 
         // Apply month system conversion if needed
-        String masa = displayMasaName(
-          hDate.masa,
-          hDate.paksha,
-          monthSystem,
-        );
+        String masa = displayMasaName(hDate.masa, hDate.paksha, monthSystem);
         // Replace underscores with spaces for display (e.g. 'Adhika_Jyeshtha' -> 'Adhika Jyeshtha')
         masa = masa.replaceAll('_', ' ');
 
@@ -310,6 +306,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // Listen to selected date changes to trigger jumps
     ref.listen(cp.selectedDateProvider, (previous, next) {
       // Avoid jumping if the change is just within currently visible range
@@ -386,7 +383,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
           child: FloatingActionButton.small(
             heroTag: 'schedule_today_fab',
             onPressed: () => _scrollToToday(),
-            tooltip: 'Go to Today',
+            tooltip: l10n?.goToToday ?? 'Go to Today',
             child: const Icon(Icons.today_rounded),
           ),
         ),
@@ -403,7 +400,13 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
   }
 
   Widget _buildStickyMonthHeader(BuildContext context) {
-    final monthFormat = DateFormat('MMMM yyyy');
+    // Cached formatter (not a per-build DateFormat construction): this
+    // header rebuilds on every scroll offset change.
+    final monthLabel = formatLocalizedDate(
+      _currentVisibleMonth,
+      'MMMM yyyy',
+      Localizations.localeOf(context).languageCode,
+    );
 
     return GestureDetector(
       onTap: _pickDate,
@@ -425,7 +428,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              monthFormat.format(_currentVisibleMonth),
+              monthLabel,
               style: context.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: context.colors.onSurface.withValues(alpha: 0.8),
@@ -467,9 +470,13 @@ class _ScheduleDateItem extends ConsumerWidget {
     ScheduleDateData dateData,
   ) {
     final panchang = dateData.panchang;
-    final monthFormat = DateFormat('MMM');
-    final dayFormat = DateFormat('d');
-    final weekdayFormat = DateFormat('EEE');
+    // Cached formatters via the shared helper: constructing three
+    // DateFormats per row per build janks scrolling (dozens of rows), and
+    // the helper also honors the UI locale (these were English-only).
+    final locale = Localizations.localeOf(context).languageCode;
+    final gregorianMonth = formatLocalizedDate(date, 'MMM', locale);
+    final gregorianDay = formatLocalizedDate(date, 'd', locale);
+    final weekday = formatLocalizedDate(date, 'EEE', locale);
 
     final hasEvents = panchang.hasFestivals;
     final bengaliDate = dateData.bengaliDate;
@@ -494,9 +501,9 @@ class _ScheduleDateItem extends ConsumerWidget {
             _buildDateColumn(
               context,
               ref,
-              monthFormat.format(date).toUpperCase(),
-              dayFormat.format(date),
-              weekdayFormat.format(date),
+              gregorianMonth.toUpperCase(),
+              gregorianDay,
+              weekday,
               panchang,
               bengaliDate,
               hinduDate,
@@ -587,10 +594,7 @@ class _ScheduleDateItem extends ConsumerWidget {
                   .replaceAll('_', ' ')
                   .split(' ')
                   .last
-                  .substring(
-                    0,
-                    fallbackMasa.split('_').last.length.clamp(0, 4),
-                  )
+                  .substring(0, fallbackMasa.split('_').last.length.clamp(0, 4))
                   .toUpperCase()
             : gregorianMonth;
         primaryDay =
@@ -762,7 +766,7 @@ class _ScheduleDateItem extends ConsumerWidget {
   /// Builds sunrise/sunset time row
   Widget _buildSunTimesRow(BuildContext context, PanchangData panchang) {
     final l10n = AppLocalizations.of(context)!;
-    final timeFormat = DateFormat('h:mm a');
+    final locale = l10n.localeName;
 
     if (panchang.sunrise == null && panchang.sunset == null) {
       return const SizedBox.shrink();
@@ -783,7 +787,7 @@ class _ScheduleDateItem extends ConsumerWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              '${l10n.sunrise}: ${timeFormat.format(panchang.sunrise!)}',
+              '${l10n.sunrise}: ${formatLocalizedDate(panchang.sunrise!, 'h:mm a', locale)}',
               style: context.textTheme.labelSmall?.copyWith(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),
@@ -802,7 +806,7 @@ class _ScheduleDateItem extends ConsumerWidget {
             ),
             const SizedBox(width: 4),
             Text(
-              '${l10n.sunset}: ${timeFormat.format(panchang.sunset!)}',
+              '${l10n.sunset}: ${formatLocalizedDate(panchang.sunset!, 'h:mm a', locale)}',
               style: context.textTheme.labelSmall?.copyWith(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),

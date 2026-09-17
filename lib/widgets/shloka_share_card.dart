@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../l10n/app_localizations.dart';
 import '../models/shloka.dart';
 import '../theme/app_theme.dart';
 
@@ -29,6 +30,7 @@ class ShlokaShareCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final colors = context.colors;
     final textTheme = context.textTheme;
 
@@ -89,7 +91,7 @@ class ShlokaShareCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'DAILY WISDOM',
+                        l10n?.dailyWisdom ?? 'DAILY WISDOM',
                         style: textTheme.labelMedium?.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.bold,
@@ -173,7 +175,7 @@ class ShlokaShareCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'TITHI',
+                            l10n?.tithi ?? 'TITHI',
                             style: textTheme.titleMedium?.copyWith(
                               color: colors.primary,
                               fontWeight: FontWeight.bold,

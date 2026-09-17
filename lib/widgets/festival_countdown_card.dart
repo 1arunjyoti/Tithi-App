@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/tithi_localization.dart';
 import 'event_detail_sheet.dart';
 
 class FestivalCountdownCard extends ConsumerWidget {
@@ -39,7 +40,7 @@ class FestivalCountdownCard extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Festival Countdowns',
+                  AppLocalizations.of(context)?.countdownHeading ?? 'Festival Countdowns',
                   style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w700,
@@ -96,12 +97,16 @@ class FestivalCountdownTile extends ConsumerWidget {
     // Embedded rows (home base card) wear the festival-row surface; the
     // standalone countdown screen keeps the glass card.
     final embedded = !showTitle;
-    final dateLabel = DateFormat('EEE, MMM d').format(target.date);
+    final l10n = AppLocalizations.of(context);
+    final locale =
+        l10n?.localeName ?? Localizations.localeOf(context).languageCode;
+    final dateLabel = formatLocalizedDate(target.date, 'EEE, MMM d', locale);
     final statusLabel = target.isToday
-        ? 'Today'
+        ? l10n?.today ?? 'Today'
         : target.isTomorrow
-        ? 'Tomorrow'
-        : '${target.daysRemaining} days to go';
+        ? l10n?.tomorrow ?? 'Tomorrow'
+        : l10n?.daysRemaining(target.daysRemaining) ??
+              '${target.daysRemaining} days to go';
 
     return RepaintBoundary(
       child: Material(
@@ -141,7 +146,12 @@ class FestivalCountdownTile extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        target.isToday ? '0' : target.daysRemaining.toString(),
+                        target.isToday
+                            ? (l10n?.zeroDays ?? '0')
+                            : formatLocalizedNumber(
+                                target.daysRemaining,
+                                locale,
+                              ),
                         style: context.textTheme.headlineSmall?.copyWith(
                           color: accent,
                           fontWeight: FontWeight.w800,
@@ -149,7 +159,9 @@ class FestivalCountdownTile extends ConsumerWidget {
                         ),
                       ),
                       Text(
-                        target.isToday ? 'day' : 'days',
+                        target.isToday
+                            ? (l10n?.day ?? 'day')
+                            : (l10n?.days ?? 'days'),
                         style: context.textTheme.labelSmall?.copyWith(
                           color: accent,
                           fontWeight: FontWeight.w700,
@@ -165,7 +177,8 @@ class FestivalCountdownTile extends ConsumerWidget {
                     children: [
                       if (showTitle) ...[
                         Text(
-                          '${target.title} Countdown',
+                          l10n?.festivalCountdownTitle(target.title) ??
+                              '${target.title} Countdown',
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: context.textTheme.labelMedium?.copyWith(
@@ -310,9 +323,7 @@ class _CountdownActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Tooltip(
-          message: isPinnedToHome
-              ? 'Remove from home screen'
-              : 'Show on home screen',
+          message: AppLocalizations.of(context)?.removeFromHomeScreen ?? 'Remove from home screen',
           child: IconButton(
             onPressed: onToggleHome,
             icon: Icon(
@@ -333,7 +344,7 @@ class _CountdownActions extends StatelessWidget {
           ),
         ),
         Tooltip(
-          message: 'Remove countdown',
+          message: AppLocalizations.of(context)?.removeCountdown ?? 'Remove countdown',
           child: IconButton(
             onPressed: onRemove,
             icon: const Icon(Icons.delete_outline_rounded),

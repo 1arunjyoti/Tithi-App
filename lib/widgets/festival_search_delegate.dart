@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
@@ -223,13 +225,14 @@ class FestivalSearchDelegate extends SearchDelegate {
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.calendar_month_outlined),
-              tooltip: 'Go to next occurrence',
+              tooltip: AppLocalizations.of(context)?.goToNextOccurrence ?? 'Go to next occurrence',
               onPressed: () async {
                 // Show loading or feedback
+                final l10n = AppLocalizations.of(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Finding next occurrence...'),
-                    duration: Duration(seconds: 1),
+                  SnackBar(
+                    content: Text(l10n?.findingNextOccurrence ?? 'Finding next occurrence...'),
+                    duration: const Duration(seconds: 1),
                   ),
                 );
 
@@ -247,10 +250,8 @@ class FestivalSearchDelegate extends SearchDelegate {
                   close(context, null);
                 } else if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Could not find upcoming occurrence within a year.',
-                      ),
+                    SnackBar(
+                      content: Text(l10n?.couldNotFindUpcomingOccurrence ?? 'Could not find upcoming occurrence within a year.'),
                     ),
                   );
                 }

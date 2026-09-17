@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_en.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
@@ -17,6 +17,7 @@ import '../services/bengali_calendar/bengali_calendar_data.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/moon_phase_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/tithi_localization.dart';
 import 'moon_animation_widget.dart';
 import 'tithi_detail_sheet.dart';
 
@@ -69,12 +70,6 @@ final bengaliDateForHeroProvider = FutureProvider.autoDispose
 /// card keeps its current text-only layout.
 class PakshaHeroCard extends ConsumerWidget {
   const PakshaHeroCard({super.key});
-
-  // Cached formats: constructing DateFormat does locale lookup every time.
-  static final DateFormat _dayFormat = DateFormat('d MMMM y');
-  static final DateFormat _gregCompactFormat = DateFormat('d MMM y');
-  static final DateFormat _weekdayFormat = DateFormat.EEEE();
-  static final DateFormat _timeFormat = DateFormat.jm();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -209,7 +204,7 @@ class _HeroBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final isShukla = panchang.isShukla;
 
     final illumination = MoonPhaseService.illuminationFractionForDay(
@@ -247,6 +242,7 @@ class _HeroBody extends ConsumerWidget {
       panchang.paksha,
       ref.watch(hinduMonthSystemProvider),
     ).replaceAll('_', ' ');
+    final localizedMasa = localizedHinduMonthName(displayMasa, l10n);
     final bengali = ref
         .watch(bengaliDateForHeroProvider(panchang.date))
         .valueOrNull;
@@ -269,11 +265,22 @@ class _HeroBody extends ConsumerWidget {
       }
     }
 
-    final masaTithi = '$displayMasa ${panchang.tithiName}'.trim();
-    final gregFull = PakshaHeroCard._dayFormat.format(panchang.date);
-    final gregCompact = PakshaHeroCard._gregCompactFormat
-        .format(panchang.date)
-        .toUpperCase();
+    final displayTithiName = localizedTithiName(
+      panchang.tithiNumber,
+      panchang.paksha,
+      l10n,
+    );
+    final masaTithi = '$localizedMasa $displayTithiName'.trim();
+    final gregFull = formatLocalizedDate(
+      panchang.date,
+      'd MMMM y',
+      l10n.localeName,
+    );
+    final gregCompact = formatLocalizedDate(
+      panchang.date,
+      'd MMM y',
+      l10n.localeName,
+    ).toUpperCase();
 
     // Same system in both slots: title takes the full format, tag drops the
     // date to just Today/Selected (no duplication).
@@ -288,12 +295,12 @@ class _HeroBody extends ConsumerWidget {
             AppCalendarSystem.bengali => bnCompact,
             AppCalendarSystem.none => null,
           };
-    final tagPrefix = isToday ? (l10n?.today ?? 'Today') : 'Selected';
+    final tagPrefix = isToday ? l10n.today : l10n.selected;
     final tagLabel = tagDate == null ? tagPrefix : '$tagPrefix · $tagDate';
 
     // Title = weekday + secondary full. Bengali secondary waits for its
     // async date (weekday alone meanwhile); other slots are sync.
-    final weekday = PakshaHeroCard._weekdayFormat.format(panchang.date);
+    final weekday = formatLocalizedDate(panchang.date, 'EEEE', l10n.localeName);
     final titleBaseStyle = TextStyle(
       fontSize: 22,
       fontWeight: FontWeight.w600,
@@ -325,13 +332,10 @@ class _HeroBody extends ConsumerWidget {
         // Deliberately no label: title is just the weekday.
         break;
     }
-    final title =
-        '${l10n?.pakshaWithName(panchang.paksha) ?? '${panchang.paksha} Paksha'}'
-        ' · ${panchang.tithiName}';
-    final phaseWord = isShukla
-        ? (l10n?.waxing ?? 'Waxing')
-        : (l10n?.waning ?? 'Waning');
-    final subLabel = '$phaseWord · $illuminationPct% illuminated';
+    final pakshaName = panchang.isShukla ? l10n.themeShukla : l10n.themeKrishna;
+    final title = '${l10n.pakshaWithName(pakshaName)} · $displayTithiName';
+    final phaseWord = isShukla ? l10n.waxing : l10n.waning;
+    final subLabel = '$phaseWord · ${l10n.illuminatedPercent(illuminationPct)}';
     // Right-side artwork slot. Null until festival artwork lands, in which
     // case the moon row keeps its current text-only layout.
     final artwork = _heroArtwork(panchang);
@@ -340,13 +344,17 @@ class _HeroBody extends ConsumerWidget {
       if (panchang.hasTithiTransition && panchang.tithiTransitionTime != null)
         _HeroChip(
           icon: Icons.arrow_forward_rounded,
-          text: 'Next tithi ',
+          text: l10n.nextTithi,
           inlineIcon: true,
           fontWeight: FontWeight.w800,
           fontSize: 13,
-          highlight: panchang.transitionTithiName,
+          highlight: localizedTithiName(
+            panchang.transitionTithiNumber,
+            panchang.transitionPaksha,
+            l10n,
+          ),
           suffix:
-              ' at ${PakshaHeroCard._timeFormat.format(panchang.tithiTransitionTime!)}',
+              ' ${l10n.atTime(formatLocalizedDate(panchang.tithiTransitionTime!, 'jm', l10n.localeName))}',
           highContrast: highContrast,
         ),
     ];

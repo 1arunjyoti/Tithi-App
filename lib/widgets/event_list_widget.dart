@@ -143,7 +143,8 @@ class EventListWidget extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'No festivals in the next 3 days',
+                AppLocalizations.of(context)?.noFestivalsInNextThreeDays ??
+                    'No festivals in the next 3 days',
                 style: TextStyle(
                   fontSize: 13.5,
                   color: context.colors.onSurface.withValues(alpha: 0.6),
@@ -199,7 +200,10 @@ class EventListWidget extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
-        'Could not load festivals: $error',
+        AppLocalizations.of(context)?.couldNotLoadFestivalsWithError(
+              error.toString(),
+            ) ??
+            'Could not load festivals: $error',
         style: TextStyle(
           fontSize: 13.5,
           color: context.colors.onSurface.withValues(alpha: 0.6),
@@ -236,9 +240,10 @@ class _ViewAllButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gold = AppTheme.festivalAccent(context);
+    final l10n = AppLocalizations.of(context);
     final label = totalCount > 0
-        ? 'View all $totalCount festivals'
-        : 'View all festivals';
+        ? (l10n?.viewAllFestivalsCount(totalCount) ?? 'View all $totalCount festivals')
+        : (l10n?.viewAllFestivals ?? 'View all festivals');
     return Semantics(
       button: true,
       label: label,

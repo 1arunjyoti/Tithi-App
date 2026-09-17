@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_localizations.dart';
 import '../providers/home_widget_provider.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
@@ -94,6 +95,7 @@ class HomeWidgetCard extends ConsumerWidget {
   }) {
     final colors = context.colors;
     final accent = AppTheme.festivalAccent(context);
+    final l10n = AppLocalizations.of(context);
     return Container(
       decoration: AppTheme.glassmorphism(context: context, ref: ref),
       padding: const EdgeInsets.all(16),
@@ -114,7 +116,7 @@ class HomeWidgetCard extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Home Screen Widget',
+                  l10n?.homeScreenWidget ?? 'Home Screen Widget',
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -122,8 +124,10 @@ class HomeWidgetCard extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   canPin
-                      ? 'Add festival countdowns to your home screen'
-                      : 'Long-press home screen → Widgets → Tithi',
+                      ? l10n?.homeWidgetCountdownDescription ??
+                            'Add festival countdowns to your home screen'
+                      : l10n?.homeWidgetManualHint ??
+                            'Long-press home screen → Widgets → Tithi',
                   style: context.textTheme.bodySmall?.copyWith(
                     color: colors.onSurface.withValues(
                       alpha: AppTheme.contrastAlpha(context, 0.64),
@@ -138,10 +142,7 @@ class HomeWidgetCard extends ConsumerWidget {
             SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: accent,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2, color: accent),
             )
           else if (canPin)
             FilledButton(
@@ -150,21 +151,21 @@ class HomeWidgetCard extends ConsumerWidget {
                 backgroundColor: accent,
                 foregroundColor: AppTheme.onFestivalAccent(context),
               ),
-              child: const Text('Add'),
+              child: Text(AppLocalizations.of(context)?.add ?? 'Add'),
             )
           else
             IconButton(
-              tooltip: 'Info',
+              tooltip: AppLocalizations.of(context)?.infoTooltip ?? 'Info',
               onPressed: () => _showManualInstructions(context),
               icon: const Icon(Icons.info_outline_rounded),
             ),
           if (showDismiss) ...[
             const SizedBox(width: 4),
             IconButton(
-              tooltip: 'Dismiss',
-              onPressed: () => ref
-                  .read(homeWidgetPromoDismissedProvider.notifier)
-                  .dismiss(),
+              tooltip:
+                  AppLocalizations.of(context)?.dismissTooltip ?? 'Dismiss',
+              onPressed: () =>
+                  ref.read(homeWidgetPromoDismissedProvider.notifier).dismiss(),
               icon: const Icon(Icons.close_rounded, size: 18),
               color: colors.onSurface.withValues(
                 alpha: AppTheme.contrastAlpha(context, 0.5),
@@ -181,6 +182,7 @@ class HomeWidgetCard extends ConsumerWidget {
   }
 
   Future<void> _requestPin(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     final service = ref.read(homeWidgetServiceProvider);
     final success = await service.requestPinWidget();
     if (!context.mounted) return;
@@ -188,29 +190,33 @@ class HomeWidgetCard extends ConsumerWidget {
       SnackBar(
         content: Text(
           success
-              ? 'Widget pin requested — confirm on home screen'
-              : 'Could not pin widget. Try adding manually: long-press → Widgets → Tithi',
+              ? l10n?.widgetPinRequested ??
+                    'Widget pin requested — confirm on home screen'
+              : l10n?.couldNotPinWidget ??
+                    'Could not pin widget. Try adding manually: long-press → Widgets → Tithi',
         ),
       ),
     );
   }
 
   void _showManualInstructions(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     unawaited(
       showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Add Widget Manually'),
-          content: const Text(
-            '1. Long-press on your home screen\n'
-            '2. Tap "Widgets"\n'
-            '3. Find "Tithi" and drag "Festival Countdowns" to your home screen\n\n'
-            'The widget shows all festivals from your Countdowns page.',
+          title: Text(l10n?.addWidgetManually ?? 'Add Widget Manually'),
+          content: Text(
+            l10n?.homeWidgetManualInstructions ??
+                '1. Long-press on your home screen\n'
+                    '2. Tap "Widgets"\n'
+                    '3. Find "Tithi" and drag "Festival Countdowns" to your home screen\n\n'
+                    'The widget shows all festivals from your Countdowns page.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Got it'),
+              child: Text(l10n?.gotIt ?? 'Got it'),
             ),
           ],
         ),

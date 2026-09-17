@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/calendar_provider.dart';
@@ -194,13 +195,14 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final occurrencesAsync = ref.watch(allFestivalOccurrencesProvider);
     final today = _dateOnly(ref.watch(todayDateProvider));
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('All Festivals'),
+        title: Text(l10n?.allFestivals ?? 'All Festivals'),
         backgroundColor: Colors.transparent,
       ),
       body: Stack(
@@ -224,7 +226,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                       onChanged: _onSearchChanged,
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
-                        hintText: 'Search festivals',
+                        hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
                         prefixIcon: Icon(
                           Icons.search_rounded,
                           color: context.colors.onSurface.withValues(
@@ -255,7 +257,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                     data: (items) => _buildList(context, items, today),
                     loading: () => const _OccurrencesLoading(),
                     error: (error, _) => _OccurrencesError(
-                      message: 'Could not load festivals. Please try again.',
+                      message: l10n?.couldNotLoadFestivals ?? 'Could not load festivals. Please try again.',
                       onRetry: () =>
                           ref.invalidate(allFestivalOccurrencesProvider),
                     ),
@@ -324,7 +326,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'No festivals found',
+              AppLocalizations.of(context)?.noFestivalsFound ??
+                  'No festivals found',
               style: TextStyle(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),
@@ -422,7 +425,7 @@ class _OccurrencesError extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Retry'),
+              label: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
             ),
           ],
         ),

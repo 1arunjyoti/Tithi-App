@@ -12,6 +12,20 @@ class AppLocalizationsSa extends AppLocalizations {
   String get appTitle => 'तिथिः';
 
   @override
+  String get exportFestivalsJson => 'उत्सवान् निर्यातयतु (JSON)';
+
+  @override
+  String get exportFestivalsSubtitle =>
+      'सर्वान् उत्सवान् पञ्चाङ्गविवरणैः सह सञ्चिकायां संरक्षयतु';
+
+  @override
+  String get exportFestivals => 'उत्सवान् निर्यातयतु';
+
+  @override
+  String get exportFestivalsSubtitleYear =>
+      'चिते वर्षे प्रत्येकस्य उत्सवस्य प्रथमः आविर्भावः';
+
+  @override
   String get vedaCalendar => 'वैदिकं पञ्चाङ्गम्';
 
   @override
@@ -54,7 +68,7 @@ class AppLocalizationsSa extends AppLocalizations {
   String get notificationScheduled => 'दैनिकं निर्धारितम्';
 
   @override
-  String get getNotifiedTithiDaily => 'प्रतिदिनं तिथिसूचनां प्राप्नुवन्तु';
+  String get getNotifiedTithiDaily => 'प्रतिदिनं तिथिसूचनां लभध्वम्';
 
   @override
   String get notificationTime => 'सूचनासमयः';
@@ -117,6 +131,57 @@ class AppLocalizationsSa extends AppLocalizations {
   String get tithi => 'तिथिः';
 
   @override
+  String get tithiPratipada => 'प्रतिपदा';
+
+  @override
+  String get tithiDwitiya => 'द्वितीया';
+
+  @override
+  String get tithiTritiya => 'तृतीया';
+
+  @override
+  String get tithiChaturthi => 'चतुर्थी';
+
+  @override
+  String get tithiPanchami => 'पञ्चमी';
+
+  @override
+  String get tithiShashthi => 'षष्ठी';
+
+  @override
+  String get tithiSaptami => 'सप्तमी';
+
+  @override
+  String get tithiAshtami => 'अष्टमी';
+
+  @override
+  String get tithiNavami => 'नवमी';
+
+  @override
+  String get tithiDashami => 'दशमी';
+
+  @override
+  String get tithiEkadashi => 'एकादशी';
+
+  @override
+  String get tithiDwadashi => 'द्वादशी';
+
+  @override
+  String get tithiTrayodashi => 'त्रयोदशी';
+
+  @override
+  String get tithiChaturdashi => 'चतुर्दशी';
+
+  @override
+  String get tithiPurnima => 'पूर्णिमा';
+
+  @override
+  String get tithiAmavasya => 'अमावस्या';
+
+  @override
+  String get tithiUnknown => 'अज्ञातम्';
+
+  @override
   String get festival => 'उत्सवः';
 
   @override
@@ -129,10 +194,10 @@ class AppLocalizationsSa extends AppLocalizations {
   String get secondaryCalendar => 'द्वितीयपञ्चाङ्गम्';
 
   @override
-  String get selectPrimaryCalendar => 'प्राथमिकपञ्चाङ्गं चिनुत';
+  String get selectPrimaryCalendar => 'प्राथमिकपञ्चाङ्गं चिनुतु';
 
   @override
-  String get selectSecondaryCalendar => 'द्वितीयपञ्चाङ्गं चिनुत';
+  String get selectSecondaryCalendar => 'द्वितीयपञ्चाङ्गं चिनुतु';
 
   @override
   String get clearLocationCache => 'स्थानसंचयं शोधयतु';
@@ -151,7 +216,7 @@ class AppLocalizationsSa extends AppLocalizations {
       'एतेन सर्वाणि प्राधान्यानि दत्तांशाश्च मूलस्थितौ पुनःस्थाप्यन्ते। इदं पूर्ववत् कर्तुं न शक्यते।';
 
   @override
-  String get cancel => 'रद्दं कुरुत';
+  String get cancel => 'रद्दं करोतु';
 
   @override
   String get reset => 'पुनःस्थापयतु';
@@ -160,10 +225,10 @@ class AppLocalizationsSa extends AppLocalizations {
   String get appResetComplete => 'अनुप्रयोगपुनःस्थापनं सम्पूर्णम्';
 
   @override
-  String get reduceMotion => 'गतिं न्यूनीकुरुत';
+  String get reduceMotion => 'गतिं न्यूनीकरोतु';
 
   @override
-  String get disableAnimations => 'चलचित्राणि प्रभावाश्च निष्क्रियं कुरुत';
+  String get disableAnimations => 'चलच्चित्राणि प्रभावाश्च निष्क्रियाणि करोतु';
 
   @override
   String get hapticFeedback => 'स्पर्शप्रतिक्रिया';
@@ -178,16 +243,16 @@ class AppLocalizationsSa extends AppLocalizations {
   String get solidBackgrounds => 'उत्तमपठनीयतायै दृढपृष्ठभूमिः';
 
   @override
-  String get largeText => 'वृहत्पाठ्यम्';
+  String get largeText => 'बृहत्पाठ्यम्';
 
   @override
-  String get increaseTextSize => 'वैश्विकरूपेण पाठ्यमानं वर्धयतु';
+  String get increaseTextSize => 'पाठ्यस्य आकारं सर्वत्र वर्धयतु';
 
   @override
   String get language => 'भाषा';
 
   @override
-  String get selectLanguage => 'भाषां चिनुत';
+  String get selectLanguage => 'भाषां चिनुतु';
 
   @override
   String get systemDefault => 'यन्त्रमूलम्';
@@ -199,14 +264,14 @@ class AppLocalizationsSa extends AppLocalizations {
   String get madeWithLove => 'सनातनधर्माय ❤️ निर्मितम्';
 
   @override
-  String get shareApp => 'अनुप्रयोगं साझां कुरुत';
+  String get shareApp => 'अनुप्रयोगं सम्प्रेषयतु';
 
   @override
   String get shareAppMessage =>
-      'तिथिः पश्यतु - वैदिकं पञ्चाङ्गम्! अधुना अवतारयतु: https://example.com/tithi';
+      'तिथिः - वैदिकपञ्चाङ्गानुप्रयोगं पश्यन्तु! अधुना अवतारयतु: https://tithiapp.netlify.app/';
 
   @override
-  String get rateUs => 'मूल्याङ्कनं कुरुत';
+  String get rateUs => 'मूल्याङ्कनं करोतु';
 
   @override
   String get aboutApp => 'परिचयः';
@@ -215,13 +280,13 @@ class AppLocalizationsSa extends AppLocalizations {
   String get calendarView => 'पञ्चाङ्गदृश्यम्';
 
   @override
-  String get scheduleView => 'अनुसूचीदृश्यम्';
+  String get scheduleView => 'अनुसूचिदृश्यम्';
 
   @override
   String get switchToCalendar => 'मासिकपञ्चाङ्गं गच्छतु';
 
   @override
-  String get switchToSchedule => 'कार्यक्रमसूचीं गच्छतु';
+  String get switchToSchedule => 'कार्यक्रमसूचिं गच्छतु';
 
   @override
   String versionText(String version) {
@@ -235,7 +300,7 @@ class AppLocalizationsSa extends AppLocalizations {
   String get festivalsAndEvents => 'उत्सवाः कार्यक्रमाश्च';
 
   @override
-  String get noFestivalsOnThisDay => 'अद्य उत्सवो नास्ति';
+  String get noFestivalsOnThisDay => 'अस्मिन् दिने उत्सवो नास्ति';
 
   @override
   String get todaysFestival => 'अद्यतनोत्सवः';
@@ -284,7 +349,7 @@ class AppLocalizationsSa extends AppLocalizations {
   String get locationAccess => 'स्थानप्राप्तिः';
 
   @override
-  String get enableLocation => 'स्थानं सक्रियं कुरुत';
+  String get enableLocation => 'स्थानं सक्रियं करोतु';
 
   @override
   String get skip => 'त्यजतु';
@@ -302,17 +367,17 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get locationDisabledMessage =>
-      'स्थानं निष्क्रियम्। भवतः नगराधारितं अधिकसटीकपञ्चाङ्गगणनायै एनं सक्रियं कुरुत।';
+      'स्थानं निष्क्रियम्। भवतः नगराधारितं अधिकसटीकपञ्चाङ्गगणनायै एनं सक्रियं करोतु।';
 
   @override
   String get notNow => 'अधुना न';
 
   @override
-  String get enable => 'सक्रियं कुरुत';
+  String get enable => 'सक्रियं करोतु';
 
   @override
   String get pleaseEnableLocationServices =>
-      'कृपया भवतः यन्त्रे स्थानसेवाः सक्रियाः कुरुत';
+      'कृपया भवतः यन्त्रे स्थानसेवाः सक्रियाः करोतु';
 
   @override
   String get locationPermissionDenied =>
@@ -322,41 +387,41 @@ class AppLocalizationsSa extends AppLocalizations {
   String get locationEnabledSuccess => 'स्थानं सफलतया सक्रियम्!';
 
   @override
-  String get refreshLocation => 'स्थानं नवीकुरुत';
+  String get refreshLocation => 'स्थानं नवीकरोतु';
 
   @override
   String get goToToday => 'अद्य गच्छतु';
 
   @override
-  String get initializing => 'प्रारम्भः...';
+  String get initializing => 'प्रारम्भ्यते...';
 
   @override
   String get privacyYourDataStays => 'भवतः दत्तांशः भवता सह तिष्ठति';
 
   @override
   String get privacyYourDataDesc =>
-      'तिथिः गोपनीयताप्रथम्, अनुसन्धानप्रथम् वास्तुकलया निर्मिता। सर्वाणि ज्योतिर्गणनानि, पञ्चाङ्गनिर्माणं, कार्यक्रमप्रक्रियाश्च साक्षात् भवतः यन्त्रे भवन्ति। वयं कस्मिन्नपि बाह्यसेवके भवतः व्यक्तिगतदत्तांशं न संगृह्णामः।';
+      'तिथिः गोपनीयताप्रथम-जालरहितप्रथम वास्तुकलया निर्मिता। सर्वाणि ज्योतिर्गणनानि, पञ्चाङ्गनिर्माणं, कार्यक्रमप्रक्रियाश्च साक्षात् भवतः यन्त्रे एव भवन्ति, तथा च अनुप्रयोगः जालं विना अपि कार्यं करोति। वयं भवतः व्यक्तिगतदत्तांशं कस्मिन्नपि बाह्यसेवके न संगृह्णीमः, न सञ्चयामः, न च प्रेषयामः।';
 
   @override
   String get privacyLocationUsage => 'स्थानोपयोगः';
 
   @override
   String get privacyLocationDesc =>
-      'वयं केवलं सटीकतिथि-नक्षत्र-सूर्योदयसूर्यास्तसमयगणनायै भवतः स्थानप्राप्त्यर्थं निवेदयामः।';
+      'वयं केवलं सटीकतिथि-नक्षत्र-सूर्योदयसूर्यास्तसमयगणनायै भवतः स्थानप्राप्तेः निवेदनं कुर्मः, या भवतः विशिष्टभौगोलिकनिर्देशाङ्केषु अवलम्बते। भवतः स्थानदत्तांशः अनुप्रयोगेण स्थानीयरूपेण एव संसाध्यते — तृतीयपक्षेभ्यः न प्रेष्यते, न च अस्माकं सेवकेषु सञ्चीयते।';
 
   @override
-  String get privacyOffline => 'अनुसन्धानकार्यक्षमता';
+  String get privacyOffline => 'जालरहितकार्यक्षमता';
 
   @override
   String get privacyOfflineDesc =>
-      'प्रारम्भिकावतारणानन्तरं अनुप्रयोगः पूर्णतया अनुसन्धाने कार्यं करोति।';
+      'अनुप्रयोगः पूर्णतया जालं विना अपि कार्यं करोति। उच्चसटीकग्रहगणनायै आवश्यकः स्विस्-एफेमेरिस्-दत्तांशः अनुप्रयोगे एव अन्तर्निहितः अस्ति।';
 
   @override
   String get privacyOpenSource => 'मुक्तस्रोतपारदर्शिता';
 
   @override
   String get privacyOpenSourceDesc =>
-      'तिथिः मुक्तस्रोतप्रकल्पः। अस्माकं कूटः परीक्षणाय सार्वजनिकरूपेण उपलब्धः।';
+      'तिथिः मुक्तस्रोतप्रकल्पः। अस्माकं कूटः परीक्षणाय सार्वजनिकरूपेण उपलब्धः, येन अस्माकं गोपनीयताप्रतिज्ञाः प्रमाणितपारदर्शितया पुष्टाः भवन्ति। यद् दृश्यते तदेव लभ्यते।';
 
   @override
   String get lastUpdated => 'अन्तिमं नवीकृतम्: दिसम्बर २०२५';
@@ -366,100 +431,116 @@ class AppLocalizationsSa extends AppLocalizations {
       '© २०२५ तिथिः प्रकल्पः\nसनातनधर्माय ❤️ निर्मितम्';
 
   @override
-  String get moonPhases => 'Moon Phases';
+  String get moonPhases => 'चन्द्रकलाः';
 
   @override
-  String get nextPurnima => 'Next Purnima';
+  String get nextPurnima => 'अग्रिमा पूर्णिमा';
 
   @override
-  String get nextAmavasya => 'Next Amavasya';
+  String get nextAmavasya => 'अग्रिमा अमावस्या';
 
   @override
-  String get purnima => 'Purnima';
+  String get purnima => 'पूर्णिमा';
 
   @override
-  String get amavasya => 'Amavasya';
+  String get amavasya => 'अमावस्या';
 
   @override
-  String get fullMoon => 'Full Moon';
+  String get fullMoon => 'पूर्णचन्द्रः';
 
   @override
-  String get newMoon => 'New Moon';
+  String get newMoon => 'नवचन्द्रः';
 
   @override
-  String get noUpcomingDates => 'No upcoming dates found';
+  String get noUpcomingDates => 'आगामिदिनाङ्काः न प्राप्ताः';
 
   @override
-  String get errorLoadingData => 'Error loading data';
+  String get errorLoadingData => 'दत्तांशप्रापणे त्रुटिः';
 
   @override
-  String get retry => 'Retry';
+  String get retry => 'पुनः प्रयततु';
 
   @override
-  String get astronomy => 'Astronomy';
+  String get astronomy => 'खगोलविज्ञानम्';
 
   @override
-  String get solarSystem => 'Solar System';
+  String get solarSystem => 'सौरमण्डलम्';
 
   @override
-  String get planetPositions => 'Planet Positions';
+  String get planetPositions => 'ग्रहस्थितयः';
 
   @override
-  String get selectDate => 'Select Date';
+  String get selectDate => 'दिनाङ्कं चिनुतु';
 
   @override
-  String get retrograde => 'Retrograde';
+  String get retrograde => 'वक्री';
 
   @override
-  String get zodiacSign => 'Sign';
+  String get zodiacSign => 'राशिः';
 
   @override
-  String get degree => 'Degree';
+  String get degree => 'अंशः';
 
   @override
-  String get longitude => 'Longitude';
+  String get longitude => 'रेखांशः';
 
   @override
-  String get eclipses => 'Eclipses';
+  String get eclipses => 'ग्रहणानि';
 
   @override
-  String get solarEclipses => 'Solar Eclipses';
+  String get solarEclipses => 'सूर्यग्रहणानि';
 
   @override
-  String get lunarEclipses => 'Lunar Eclipses';
+  String get lunarEclipses => 'चन्द्रग्रहणानि';
 
   @override
-  String get maxEclipse => 'Maximum Eclipse';
+  String get maxEclipse => 'परमग्रहणम्';
 
   @override
-  String get visibleFromYourLocation => 'Visible from your location';
+  String get visibleFromYourLocation => 'भवतः स्थानात् दृश्यम्';
 
   @override
-  String get notVisibleFromYourLocation => 'Not visible from your location';
+  String get notVisibleFromYourLocation => 'भवतः स्थानात् अदृश्यम्';
 
   @override
-  String get partialBegins => 'Partial phase begins';
+  String get partialBegins => 'आंशिकचरणम् आरभ्यते';
 
   @override
-  String get partialEnds => 'Partial phase ends';
+  String get partialEnds => 'आंशिकचरणम् समाप्यते';
 
   @override
-  String get totalityBegins => 'Totality begins';
+  String get totalityBegins => 'पूर्णताचरणम् आरभ्यते';
 
   @override
-  String get totalityEnds => 'Totality ends';
+  String get totalityEnds => 'पूर्णताचरणम् समाप्यते';
 
   @override
-  String get duration => 'Duration';
+  String get duration => 'अवधिः';
 
   @override
-  String get date => 'Date';
+  String get date => 'दिनाङ्कः';
 
   @override
-  String get days => 'days';
+  String get days => 'दिनानि';
 
   @override
   String get today => 'अद्य';
+
+  @override
+  String illuminatedPercent(String percent) {
+    return '$percent% प्रकाशितम्';
+  }
+
+  @override
+  String get nextTithi => 'अग्रिमा तिथिः';
+
+  @override
+  String atTime(String time) {
+    return '$time समये';
+  }
+
+  @override
+  String get yesterday => 'ह्यः';
 
   @override
   String get tomorrow => 'श्वः';
@@ -499,7 +580,7 @@ class AppLocalizationsSa extends AppLocalizations {
   String get nearby => 'समीपे';
 
   @override
-  String get getDirections => 'दिशानिर्देशं प्राप्नुत';
+  String get getDirections => 'दिशानिर्देशः प्राप्यताम्';
 
   @override
   String get couldNotOpenMaps => 'मानचित्रं न उद्घाटितम्';
@@ -557,7 +638,7 @@ class AppLocalizationsSa extends AppLocalizations {
   String get createSankalpa => 'सङ्कल्पं निर्मीयताम्';
 
   @override
-  String get save => 'सञ्चिनोतु';
+  String get save => 'संरक्षयतु';
 
   @override
   String get sankalpaCreatedSuccessfully => 'सङ्कल्पः सफलतया निर्मितः!';
@@ -574,11 +655,11 @@ class AppLocalizationsSa extends AppLocalizations {
   String get active => 'सक्रियः';
 
   @override
-  String get completed => 'समाप्तः';
+  String get completed => 'सम्पन्नः';
 
   @override
   String get noCompletedIntentionsYet =>
-      'अद्यावधि कश्चित् समाप्तसङ्कल्पः नास्ति';
+      'अद्यावधि कश्चित् सम्पन्नसङ्कल्पः नास्ति';
 
   @override
   String get startNewSpiritualJourney => 'नवाम् आध्यात्मिकयात्रां प्रारभध्वम्';
@@ -593,7 +674,7 @@ class AppLocalizationsSa extends AppLocalizations {
   String get delete => 'अपसारयतु';
 
   @override
-  String get markCompleteIncomplete => 'समाप्त/असमाप्त चिनोतु';
+  String get markCompleteIncomplete => 'सम्पन्न/असम्पन्न चिनुतु';
 
   @override
   String dayOf(int current, int total) {
@@ -601,10 +682,10 @@ class AppLocalizationsSa extends AppLocalizations {
   }
 
   @override
-  String get doneForToday => 'अद्य कृते';
+  String get doneForToday => 'अद्य कृतम्';
 
   @override
-  String get markTodayAsDone => 'अद्य समाप्तं चिनोतु';
+  String get markTodayAsDone => 'अद्य सम्पन्नं चिनुतु';
 
   @override
   String reminderAt(String time) {
@@ -613,7 +694,7 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String completedOn(String date) {
-    return 'समाप्तम्: $date';
+    return 'सम्पन्नम्: $date';
   }
 
   @override
@@ -628,7 +709,8 @@ class AppLocalizationsSa extends AppLocalizations {
   }
 
   @override
-  String get weatherDataByOpenMeteo => 'Open-Meteo प्रदत्तं वातावरणदत्तांशम्';
+  String get weatherDataByOpenMeteo =>
+      'Open-Meteo द्वारा प्रदत्तः वातावरणदत्तांशः';
 
   @override
   String weatherCondition(String condition) {
@@ -669,10 +751,10 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get locationPermissionPermanentlyDenied =>
-      'स्थान-अनुमतिः स्थायिरूपेण निषिद्धा। कृपया उपकरणस्य सेटिङ्ग्स् मध्ये ताम् सक्रियताम्।';
+      'स्थानानुमतिः स्थायिरूपेण निषिद्धा। कृपया तन्त्रसंस्थापनेषु तां समर्थयतु।';
 
   @override
-  String get openSettings => 'सेटिङ्ग्स् उद्घाटयतु';
+  String get openSettings => 'संस्थापनं उद्घाटयतु';
 
   @override
   String get selectMonth => 'मासः चयन्यताम्';
@@ -718,4 +800,670 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get orbit => 'कक्षा';
+
+  @override
+  String get festivalCountdowns => 'उत्सवकाउंटडाउन';
+
+  @override
+  String get addCountdown => 'काउंटडाउनं योजयतु';
+
+  @override
+  String get countdownHeading => 'उत्सवकाउंटडाउन';
+
+  @override
+  String get zeroDays => '०';
+
+  @override
+  String daysRemaining(Object days) {
+    return '$days दिनानि शेषाणि';
+  }
+
+  @override
+  String get removeFromHomeScreen => 'मुख्यपटलात् अपसारयतु';
+
+  @override
+  String get removeCountdown => 'काउंटडाउनं अपसारयतु';
+
+  @override
+  String get countdownRemoved => 'काउंटडाउनः अपसारितः';
+
+  @override
+  String get searchFestivalName => 'उत्सवनाम अन्विष्यताम्';
+
+  @override
+  String get noFestivalsFound => 'उत्सवाः न प्राप्ताः';
+
+  @override
+  String get noCountdownsYet => 'अद्यावधि काउंटडाउनः नास्ति';
+
+  @override
+  String get allFestivals => 'सर्वे उत्सवाः';
+
+  @override
+  String get searchFestivalsHint => 'उत्सवान् अन्विष्यताम्';
+
+  @override
+  String get couldNotLoadFestivals =>
+      'उत्सवाः न लब्धाः। कृपया पुनः प्रयतध्वम्।';
+
+  @override
+  String get oopsSomethingWentWrong => 'अरे! कश्चित् दोषः जातः';
+
+  @override
+  String get unexpectedErrorOccurred =>
+      'अप्रत्याशिता त्रुटिः जाता। कृपया पुनः प्रयतध्वम्।';
+
+  @override
+  String get somethingWentWrong => 'कश्चित् दोषः जातः';
+
+  @override
+  String get unableToOpenPrivacyPolicy =>
+      'गोपनीयतानीतेः वेबसाइट् उद्घाटयितुं न शक्यते।';
+
+  @override
+  String failedToShare(String error) {
+    return 'सम्प्रेषणे विफलम्: $error';
+  }
+
+  @override
+  String celebratingFestivalWithTithi(String festivalName) {
+    return 'तिथि-अनुप्रयोगेण सह $festivalName मनायताम्!';
+  }
+
+  @override
+  String get gotIt => 'अवगतम्';
+
+  @override
+  String get add => 'योजयतु';
+
+  @override
+  String get addWidgetManually => 'विजेटं स्वहस्तेन योजयतु';
+
+  @override
+  String get widgetPinRequested =>
+      'विजेट्पिनं निवेदितम् — मुख्यपटले पुष्टिं करोतु';
+
+  @override
+  String get couldNotPinWidget =>
+      'विजेटं पिनं कर्तुं न शक्यते। स्वहस्तेन योजयितुं प्रयतध्वम्: दीर्घस्पर्शः → विजेट्स् → तिथिः';
+
+  @override
+  String get infoTooltip => 'विवरणम्';
+
+  @override
+  String get dismissTooltip => 'उपेक्षतु';
+
+  @override
+  String get solarSystemNotAvailableOnWeb => 'सौरमण्डलं जाले उपलब्धं नास्ति';
+
+  @override
+  String get eclipseScreenNotAvailableOnWeb => 'ग्रहणपटलं जाले उपलब्धं नास्ति';
+
+  @override
+  String get findingNextOccurrence => 'अग्रिमा घटना अन्विष्यते...';
+
+  @override
+  String get goToNextOccurrence => 'अग्रिमां घटनां गच्छतु';
+
+  @override
+  String get couldNotFindUpcomingOccurrence =>
+      'वर्षाभ्यन्तरे आगामिकी घटना न प्राप्ता।';
+
+  @override
+  String get noFestivalsToExport => 'निर्यातयितुं कश्चित् उत्सवः नास्ति';
+
+  @override
+  String exportingYear(String year) {
+    return '$year निर्यात्यते';
+  }
+
+  @override
+  String festivalsExportedProgress(int done, int total) {
+    return '$done / $total उत्सवाः';
+  }
+
+  @override
+  String get exportCancelled => 'निर्यातः निरस्तः';
+
+  @override
+  String get downloadStarted => 'अवतारणम् आरब्धम्';
+
+  @override
+  String get couldNotSaveExportFile => 'निर्यातसञ्चिकां संरक्षयितुं न शक्यते';
+
+  @override
+  String get saved => 'संरक्षितम्';
+
+  @override
+  String festivalsExportedForYear(int count, String year) {
+    return '$year कृते $count उत्सवाः निर्यातिताः।';
+  }
+
+  @override
+  String get done => 'सम्पन्नम्';
+
+  @override
+  String get share => 'सम्प्रेषयतु';
+
+  @override
+  String exportFailed(String error) {
+    return 'निर्याते विफलम्: $error';
+  }
+
+  @override
+  String saveFestivalsYear(String year) {
+    return 'उत्सवान् संरक्षयतु $year';
+  }
+
+  @override
+  String get aboutBuiltForDailyPractice => 'दैनिकसाधनायै निर्मितम्';
+
+  @override
+  String get aboutDailyPracticeDescription =>
+      'तिथिः पारम्परिकपञ्चाङ्गज्ञानं आधुनिकस्पष्टतया सह मिश्रयति, येन भवतः अनुष्ठानानि व्रतानि च समये सुकराणि तिष्ठन्ति।';
+
+  @override
+  String get aboutWhatsInside => 'अस्मिन् किमस्ति';
+
+  @override
+  String get aboutFeaturesDescription =>
+      'शुद्धा तिथिनक्षत्रगणना, उत्सवकाउंटडाउनम्, स्थानीयः सूर्योदयः सूर्यास्तः च, शान्ता दैनिकी प्रेरणा च।';
+
+  @override
+  String get detailedPrivacyPolicy => 'विस्तृता गोपनीयतानीतिः';
+
+  @override
+  String get readFullPrivacyPolicy =>
+      'सम्पूर्णां नीतिम् अस्माकं जालस्थले पठध्वम्';
+
+  @override
+  String get aboutTagline => 'आधुनिकजीवनाय वैदिकं पञ्चाङ्गम्';
+
+  @override
+  String get themePurple => 'नीललोहितः';
+
+  @override
+  String get notificationPermissionDenied =>
+      'सूचनानुमतिः निषिद्धा। कृपया तां तन्त्रसंस्थापनेषु समर्थयतु।';
+
+  @override
+  String notificationToggleFailed(String state, String error) {
+    String _temp0 = intl.Intl.selectLogic(state, {
+      'on': 'प्रचालिताः',
+      'other': 'निष्क्रियाः',
+    });
+    return 'सूचनाः $_temp0 कर्तुं न शक्यन्ते ($error)। कृपया पुनः प्रयतध्वम्।';
+  }
+
+  @override
+  String get dailyShloka => 'दैनिकः श्लोकः';
+
+  @override
+  String get dailyShlokaSubtitle =>
+      'प्रतिदिनम् एकः आध्यात्मिकः श्लोकः लभ्यताम्';
+
+  @override
+  String dailyShlokaToggleFailed(String state, String error) {
+    String _temp0 = intl.Intl.selectLogic(state, {
+      'on': 'प्रचालितः',
+      'other': 'निष्क्रियः',
+    });
+    return 'दैनिकश्लोकः $_temp0 कर्तुं न शक्यते ($error)। कृपया पुनः प्रयतध्वम्।';
+  }
+
+  @override
+  String get festivalReminders => 'उत्सवस्मारकाः';
+
+  @override
+  String get festivalRemindersSubtitle =>
+      'केवलम् उत्सवेभ्यः सूचनाः, तस्मिन् दिने अथवा पूर्वम्';
+
+  @override
+  String festivalRemindersToggleFailed(String state, String error) {
+    String _temp0 = intl.Intl.selectLogic(state, {
+      'on': 'प्रचालिताः',
+      'other': 'निष्क्रियाः',
+    });
+    return 'उत्सवस्मारकाः $_temp0 कर्तुं न शक्यन्ते ($error)। कृपया पुनः प्रयतध्वम्।';
+  }
+
+  @override
+  String get festivalReminderTime => 'उत्सवस्मारकसमयः';
+
+  @override
+  String notificationTimeUpdateFailed(String error) {
+    return 'सूचनासमयः न परिवर्तितः ($error)। कृपया पुनः प्रयतध्वम्।';
+  }
+
+  @override
+  String get festivalReminderDayBefore => 'एकदिनपूर्वम्';
+
+  @override
+  String get festivalReminderBoth => 'उभौ';
+
+  @override
+  String get festivalReminderOnDay => 'तस्मिन् दिने';
+
+  @override
+  String reminderTimeUpdateFailed(String error) {
+    return 'स्मारकसमयः न परिवर्तितः ($error)। कृपया पुनः प्रयतध्वम्।';
+  }
+
+  @override
+  String get hinduMonthSystem => 'हिन्दूमासप्रणालिः';
+
+  @override
+  String get hinduMonthSystemSubtitle =>
+      'कृष्णपक्षे मासानां नामकरणं कथं भवेत् तत् चिनुतु';
+
+  @override
+  String get hinduYearEra => 'हिन्दूवर्षसंवत्';
+
+  @override
+  String get hinduYearEraSubtitle => 'वर्षप्रदर्शनाय पञ्चाङ्गसंवत् चिनुतु';
+
+  @override
+  String get tithiDisplay => 'तिथिप्रदर्शनम्';
+
+  @override
+  String get tithiDisplayPakshaRange => 'पक्षः (१-१५)';
+
+  @override
+  String get tithiDisplaySubtitle => 'पञ्चाङ्गे तिथयः कथं गण्यन्ते तत् चिनुतु';
+
+  @override
+  String get tithiDisplayPakshaBased => 'पक्षाधारितम्';
+
+  @override
+  String get tithiDisplayPakshaDescription =>
+      'प्रत्येकस्मै पक्षाय पृथक् १-१५ दर्शयतु';
+
+  @override
+  String get tithiDisplayContinuousDescription => 'अविच्छिन्नम् १-३० दर्शयतु';
+
+  @override
+  String festivalExportShareSubject(String year) {
+    return 'तिथिः उत्सवाः $year';
+  }
+
+  @override
+  String festivalExportShareText(String year) {
+    return 'पञ्चाङ्गविवरणैः सह तिथिः उत्सवाः $year (JSON)';
+  }
+
+  @override
+  String countdownAddedForFestival(String festivalName) {
+    return '$festivalName इत्यस्य कृते काउंटडाउनं योजितम्';
+  }
+
+  @override
+  String festivalAlreadyInCountdowns(String festivalName) {
+    return '$festivalName पूर्वमेव भवतः काउंटडाउने अस्ति';
+  }
+
+  @override
+  String get openStreetMapAttribution => 'OpenStreetMap योगदानकर्तारः';
+
+  @override
+  String get moonScrubHint => 'अन्वेषणाय कर्षयतु • द्विस्पर्शेन पुनःस्थाप्यते';
+
+  @override
+  String moonIllumination(String percentage) {
+    return 'प्रकाशनम्: $percentage%';
+  }
+
+  @override
+  String get dayUnitShort => 'दि';
+
+  @override
+  String get hourUnitShort => 'घं';
+
+  @override
+  String get minuteUnitShort => 'मि';
+
+  @override
+  String durationHoursMinutesShort(int hours, int minutes) {
+    return '$hoursघं $minutesमि';
+  }
+
+  @override
+  String durationMinutesShort(int minutes) {
+    return '$minutesमि';
+  }
+
+  @override
+  String distanceAstronomicalUnits(String distance) {
+    return '$distance AU';
+  }
+
+  @override
+  String orbitalPeriodDaysShort(String days) {
+    return '$daysदि';
+  }
+
+  @override
+  String orbitalPeriodYearsShort(String years) {
+    return '$yearsव';
+  }
+
+  @override
+  String get vikramSamvat => 'विक्रमसंवत्';
+
+  @override
+  String get shakaEra => 'शकसंवत्';
+
+  @override
+  String get bengaliEra => 'बङ्गसंवत्';
+
+  @override
+  String get selectYear => 'वर्षं चिनुतु';
+
+  @override
+  String bengaliEraYear(int year) {
+    return '$year बङ्गाब्दः';
+  }
+
+  @override
+  String get monthJanuary => 'जनवरी';
+
+  @override
+  String get monthFebruary => 'फरवरी';
+
+  @override
+  String get monthMarch => 'मार्च';
+
+  @override
+  String get monthApril => 'अप्रैल';
+
+  @override
+  String get monthMay => 'मई';
+
+  @override
+  String get monthJune => 'जून';
+
+  @override
+  String get monthJuly => 'जुलाई';
+
+  @override
+  String get monthAugust => 'अगस्त';
+
+  @override
+  String get monthSeptember => 'सितम्बर';
+
+  @override
+  String get monthOctober => 'अक्टोबर';
+
+  @override
+  String get monthNovember => 'नवम्बर';
+
+  @override
+  String get monthDecember => 'दिसम्बर';
+
+  @override
+  String get weekdaySundayShort => 'रविः';
+
+  @override
+  String get weekdayMondayShort => 'सोमः';
+
+  @override
+  String get weekdayTuesdayShort => 'मङ्गलः';
+
+  @override
+  String get weekdayWednesdayShort => 'बुधः';
+
+  @override
+  String get weekdayThursdayShort => 'गुरुः';
+
+  @override
+  String get weekdayFridayShort => 'शुक्रः';
+
+  @override
+  String get weekdaySaturdayShort => 'शनिः';
+
+  @override
+  String get sharedViaTithiApp => 'तिथि-एप् माध्यमेन सम्प्रेषितम्';
+
+  @override
+  String get dailyWisdomShareMessage => 'दैनिकं ज्ञानम् — तिथि-एप्';
+
+  @override
+  String get shareAsImage => 'चित्ररूपेण सम्प्रेषयतु';
+
+  @override
+  String get verseCardPicture => 'श्लोकपत्रकस्य चित्रम्';
+
+  @override
+  String get shareAsText => 'पाठरूपेण सम्प्रेषयतु';
+
+  @override
+  String get verseWithTranslation => 'अनुवादेन सह श्लोकः';
+
+  @override
+  String get copyText => 'पाठं प्रतिलिख्यताम्';
+
+  @override
+  String get copyVerseToClipboard => 'श्लोकं क्लिप्बोर्डे प्रतिलिख्यताम्';
+
+  @override
+  String get couldNotCopyVerse => 'श्लोकः प्रतिलिखितुं न शक्यते';
+
+  @override
+  String get verseCopied => 'श्लोकः प्रतिलिखितः';
+
+  @override
+  String chosenForFestival(String festivalName) {
+    return '$festivalName इत्यस्मै चितः';
+  }
+
+  @override
+  String get showLess => 'अल्पं दर्शयतु';
+
+  @override
+  String get showMoreTranslations => 'अधिकान् अनुवादान् दर्शयतु';
+
+  @override
+  String get hideTranslation => 'अनुवादं गोपयतु';
+
+  @override
+  String get showTranslation => 'अनुवादं दर्शयतु';
+
+  @override
+  String get showLessTitleCase => 'अल्पं दर्शयतु';
+
+  @override
+  String get readMore => 'अधिकं पठतु';
+
+  @override
+  String tithiNameWithNumber(String tithiName, int number) {
+    return '$tithiName (ति$number)';
+  }
+
+  @override
+  String get masa => 'मासः';
+
+  @override
+  String get nakshatra => 'नक्षत्रम्';
+
+  @override
+  String get begins => 'आरम्भः';
+
+  @override
+  String get ends => 'समाप्तिः';
+
+  @override
+  String tithiWithNumber(int number) {
+    return 'तिथिः $number';
+  }
+
+  @override
+  String get fastingVrat => 'उपवासः / व्रतम्';
+
+  @override
+  String get mantra => 'मन्त्रः';
+
+  @override
+  String get timingNote => 'समयविषयका टिप्पणिः';
+
+  @override
+  String get timingNoteDescription =>
+      'समयाः निर्देशाङ्काधारेण खगोलगणनया निर्धार्यन्ते, वायुमण्डलीयवक्रत्वेन, उन्नततया, गणनापद्धतिभिश्च कारणेन स्थानीयदेवालयपञ्चाङ्गेन सह कतिपयमिनट्पर्यन्तं भेदः भवेत्।';
+
+  @override
+  String get noFestivalsInNextThreeDays =>
+      'उपागतेषु त्रीसु दिनेषु उत्सवः नास्ति';
+
+  @override
+  String couldNotLoadFestivalsWithError(String error) {
+    return 'उत्सवाः न लब्धाः: $error';
+  }
+
+  @override
+  String viewAllFestivalsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'सर्वान् $count उत्सवान् पश्यतु',
+      one: 'सर्वान् $count उत्सवान् पश्यतु',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get viewAllFestivals => 'सर्वान् उत्सवान् पश्यतु';
+
+  @override
+  String get day => 'दिनम्';
+
+  @override
+  String festivalCountdownTitle(String title) {
+    return '$title काउंटडाउनः';
+  }
+
+  @override
+  String festivalInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days दिनेषु',
+      one: 'एकदिने',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchFestivalsVratsAndEvents =>
+      'उत्सवाः व्रतानि कार्यक्रमाः च अन्विष्यन्ताम्';
+
+  @override
+  String get homeScreenWidget => 'मुख्यपटलविजेट्';
+
+  @override
+  String get homeWidgetCountdownDescription =>
+      'मुख्यपटले उत्सवकाउंटडाउनं योजयतु';
+
+  @override
+  String get homeWidgetManualHint =>
+      'मुख्यपटले दीर्घस्पर्शं करोतु → विजेट् → तिथिः';
+
+  @override
+  String get homeWidgetManualInstructions =>
+      '१. मुख्यपटले दीर्घस्पर्शं करोतु\n२. \"विजेट्\" इत्यत्र ताड़यतु\n३. \"तिथिः\" इति अन्विष्य \"उत्सवकाउंटडाउन\" मुख्यपटलं प्रति कर्षयतु\n\nविजेट् भवतः काउंटडाउनपृष्ठस्य सर्वान् उत्सवान् दर्शयति।';
+
+  @override
+  String get unableToLoadMoonPhaseData => 'चन्द्रकलाविषयकं दत्तं न लब्धम्';
+
+  @override
+  String get countdownNow => 'अधुना';
+
+  @override
+  String countdownDaysHours(int days, int hours) {
+    return '$daysदि $hoursघं';
+  }
+
+  @override
+  String get selected => 'चितः';
+
+  @override
+  String moonPhaseIlluminated(String phase, String percentage) {
+    return '$phase · $percentage% प्रकाशितम्';
+  }
+
+  @override
+  String nextTithiAt(String tithiName, String time) {
+    return 'अग्रिमा तिथिः $tithiName, समये $time';
+  }
+
+  @override
+  String tithiBeginsAt(String tithiName, String time) {
+    return '$tithiName आरभ्यते $time समये';
+  }
+
+  @override
+  String tithiEndsAtDateTime(String tithiName, String dateTime) {
+    return '$tithiName समाप्यते $dateTime';
+  }
+
+  @override
+  String get udayaTithiExplanation =>
+      'उदयतिथिः: सूर्योदयसमये प्रचलति तिथिः। एका लघ्वी तिथिः द्वयोः सूर्योदययोः मध्ये आरभ्य समाप्य च भवितुमर्हति — काचित् तिथिः अवमिता न स्यात् इत्यर्थं उभे तिथी उपरि दर्शिते स्तः।';
+
+  @override
+  String get beginsUppercase => 'आरम्भः';
+
+  @override
+  String get endsUppercase => 'समाप्तिः';
+
+  @override
+  String get transition => 'सङ्क्रमणम्';
+
+  @override
+  String get shuklaPakshaInitial => 'शु';
+
+  @override
+  String get krishnaPakshaInitial => 'कृ';
+
+  @override
+  String windSpeedKph(double speed) {
+    return '$speed कि.मी./घण्टा';
+  }
+
+  @override
+  String get tithiDisplayThirtyDays => '३० दिनानि';
+
+  @override
+  String get couldNotCreateImage => 'चित्रं निर्मातुं न शक्यते';
+
+  @override
+  String get shareVerse => 'श्लोकं सम्प्रेषयतु';
+
+  @override
+  String get previousDaysVerse => 'पूर्वदिनस्य श्लोकः';
+
+  @override
+  String get nextDaysVerse => 'आगामिदिनस्य श्लोकः';
+
+  @override
+  String get shareCard => 'पत्रकं सम्प्रेषयतु';
+
+  @override
+  String get homeWidgetCanPin => 'मुख्यपटले उत्सवकाउंटडाउनं योजयतु';
+
+  @override
+  String get dailyWisdom => 'दैनिकं ज्ञानम्';
+
+  @override
+  String get tithiTimings => 'तिथिसमयाः';
+
+  @override
+  String get tithiBegins => 'आरम्भः';
+
+  @override
+  String get tithiEnds => 'समाप्तिः';
+
+  @override
+  String get tithiTransition => 'सङ्क्रमणम्';
+
+  @override
+  String get udayaTithiExplainer =>
+      'उदयतिथिः: सूर्योदयसमये प्रचलति तिथिः। एका लघ्वी तिथिः द्वयोः सूर्योदययोः मध्ये आरभ्य समाप्य च भवितुमर्हति — काचित् तिथिः अवमिता न स्यात् इत्यर्थं उभे तिथी उपरि दर्शिते स्तः।';
 }

@@ -16,8 +16,6 @@ class SankalpaAdapter extends TypeAdapter<Sankalpa> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    // Field 5 (endDate) is read for backward compat but ignored;
-    // endDate is now a derived getter on Sankalpa.
     return Sankalpa(
       id: fields[0] as String?,
       title: fields[1] as String,
@@ -34,7 +32,7 @@ class SankalpaAdapter extends TypeAdapter<Sankalpa> {
   @override
   void write(BinaryWriter writer, Sankalpa obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -45,8 +43,6 @@ class SankalpaAdapter extends TypeAdapter<Sankalpa> {
       ..write(obj.startDate)
       ..writeByte(4)
       ..write(obj.durationDays)
-      ..writeByte(5)
-      ..write(obj.endDate)
       ..writeByte(6)
       ..write(obj.reminderHour)
       ..writeByte(7)
