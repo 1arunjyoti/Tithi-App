@@ -7,7 +7,7 @@ import '../providers/panchang_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../services/weather_service.dart';
 import '../l10n/app_localizations.dart';
-import 'package:intl/intl.dart';
+import '../utils/tithi_localization.dart';
 
 class WeatherSheet extends ConsumerWidget {
   const WeatherSheet({super.key});
@@ -221,7 +221,11 @@ class WeatherSheet extends ConsumerWidget {
                       child: Column(
                         children: [
                           Text(
-                            DateFormat('EEE').format(f.date),
+                            formatLocalizedDate(
+                              f.date,
+                              'EEE',
+                              l10n.localeName,
+                            ),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),

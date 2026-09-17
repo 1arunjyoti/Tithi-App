@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/shloka.dart';
 import '../providers/panchang_provider.dart';
 import '../services/share_file/share_file.dart';
@@ -68,10 +70,10 @@ final dailyShlokaProvider = FutureProvider.autoDispose<DailyWisdom?>((
 });
 
 /// Short day label for the card header: Today / Yesterday / Tomorrow / Mar 5.
-String quoteDayLabel(DateTime date, int dayOffset) {
-  if (dayOffset == 0) return 'Today';
-  if (dayOffset == -1) return 'Yesterday';
-  if (dayOffset == 1) return 'Tomorrow';
+String quoteDayLabel(DateTime date, int dayOffset, [AppLocalizations? l10n]) {
+  if (dayOffset == 0) return l10n?.today ?? 'Today';
+  if (dayOffset == -1) return l10n?.yesterday ?? 'Yesterday';
+  if (dayOffset == 1) return l10n?.tomorrow ?? 'Tomorrow';
   return DateFormat.MMMd().format(date);
 }
 
@@ -100,12 +102,15 @@ final quoteShowAllTranslationsProvider = StateProvider.autoDispose<bool>(
 ///
 /// Collapsed shares the always-visible fields (Sanskrit + transliteration +
 /// source); expanded also includes translation(s): just the locale-appropriate
-/// one, or every available translation when [showAll] is true.
+/// one, or every available translation when [showAll] is true. Pass [l10n] so
+/// the attribution line is localized; it falls back to English when null
+/// (e.g. in unit tests with no BuildContext).
 String buildShlokaShareText(
   Shloka shloka, {
   required bool expanded,
   bool hindiFirst = false,
   bool showAll = false,
+  AppLocalizations? l10n,
 }) {
   final parts = <String>[shloka.text];
   if (shloka.transliteration.isNotEmpty) {
@@ -128,7 +133,7 @@ String buildShlokaShareText(
   if (shloka.themes.isNotEmpty) {
     parts.add(shloka.themes.map((t) => '#$t').join(' '));
   }
-  parts.add('Shared via Tithi App');
+  parts.add(l10n?.sharedViaTithiApp ?? 'Shared via Tithi App');
   return parts.join('\n\n');
 }
 
@@ -175,6 +180,7 @@ Future<void> shareWisdomAsImage(
   required bool hindiFirst,
   required bool showAll,
 }) async {
+  final l10n = AppLocalizations.of(context);
   Future<void> shareTextFallback() {
     return SharePlus.instance.share(
       ShareParams(
@@ -183,8 +189,9 @@ Future<void> shareWisdomAsImage(
           expanded: true,
           hindiFirst: hindiFirst,
           showAll: showAll,
+          l10n: l10n,
         ),
-        subject: 'Daily Wisdom',
+        subject: l10n?.dailyWisdom ?? 'Daily Wisdom',
       ),
     );
   }
@@ -231,7 +238,7 @@ Future<void> shareWisdomAsImage(
     }
     await SharePlus.instance.share(
       ShareParams(
-        text: 'Daily Wisdom — Tithi App',
+        text: l10n?.dailyWisdomShareMessage ?? 'Daily Wisdom — Tithi App',
         files: [XFile(imagePath, mimeType: 'image/png')],
       ),
     );
@@ -239,7 +246,7 @@ Future<void> shareWisdomAsImage(
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Could not create image')));
+    ).showSnackBar(SnackBar(content: Text(l10n?.couldNotCreateImage ?? 'Could not create image')));
   }
 }
 
@@ -253,6 +260,7 @@ void _showShareOptions(
   required bool hindiFirst,
   required bool showAll,
 }) {
+  final l10n = AppLocalizations.of(context);
   final accent = AppTheme.festivalAccent(context);
   showModalBottomSheet(
     context: context,
@@ -291,11 +299,7 @@ void _showShareOptions(
                     borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(
-                    Icons.share_rounded,
-                    color: accent,
-                    size: 22,
-                  ),
+                  child: Icon(Icons.share_rounded, color: accent, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -304,7 +308,7 @@ void _showShareOptions(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'Share verse',
+                        l10n?.shareVerse ?? 'Share verse',
                         style: context.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: context.colors.onSurface,
@@ -329,8 +333,8 @@ void _showShareOptions(
             const SizedBox(height: 16),
             _ShareOption(
               icon: Icons.image_outlined,
-              title: 'Share as image',
-              subtitle: 'Verse card picture',
+              title: l10n?.shareAsImage ?? 'Share as image',
+              subtitle: l10n?.verseCardPicture ?? 'Verse card picture',
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 shareWisdomAsImage(
@@ -344,8 +348,8 @@ void _showShareOptions(
             const SizedBox(height: 8),
             _ShareOption(
               icon: Icons.short_text_rounded,
-              title: 'Share as text',
-              subtitle: 'Verse with translation',
+              title: l10n?.shareAsText ?? 'Share as text',
+              subtitle: l10n?.verseWithTranslation ?? 'Verse with translation',
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 SharePlus.instance.share(
@@ -355,8 +359,9 @@ void _showShareOptions(
                       expanded: expanded,
                       hindiFirst: hindiFirst,
                       showAll: showAll,
+                      l10n: l10n,
                     ),
-                    subject: 'Daily Wisdom',
+                    subject: l10n?.dailyWisdom ?? 'Daily Wisdom',
                   ),
                 );
               },
@@ -364,8 +369,8 @@ void _showShareOptions(
             const SizedBox(height: 8),
             _ShareOption(
               icon: Icons.copy_rounded,
-              title: 'Copy text',
-              subtitle: 'Copy verse to clipboard',
+              title: l10n?.copyText ?? 'Copy text',
+              subtitle: l10n?.copyVerseToClipboard ?? 'Copy verse to clipboard',
               onTap: () async {
                 Navigator.of(sheetContext).pop();
                 String? copyError;
@@ -377,16 +382,17 @@ void _showShareOptions(
                         expanded: expanded,
                         hindiFirst: hindiFirst,
                         showAll: showAll,
+                        l10n: l10n,
                       ),
                     ),
                   );
                 } catch (_) {
-                  copyError = 'Could not copy verse';
+                  copyError = l10n?.couldNotCopyVerse ?? 'Could not copy verse';
                 }
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(copyError ?? 'Verse copied'),
+                      content: Text(copyError ?? (l10n?.verseCopied ?? 'Verse copied')),
                       duration: const Duration(seconds: 2),
                     ),
                   );
@@ -486,6 +492,7 @@ class DailyQuoteWidget extends ConsumerWidget {
   const DailyQuoteWidget({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final shlokaAsync = ref.watch(dailyShlokaProvider);
     // Hindi UI shows the Hindi translation, all other locales (en/bn/sa)
     // show English — same convention as EclipseScreen.
@@ -519,7 +526,13 @@ class DailyQuoteWidget extends ConsumerWidget {
           child: shlokaAsync.when(
             data: (wisdom) {
               if (wisdom == null) return const SizedBox.shrink();
-              return _buildCard(context, ref, wisdom, hindiFirst: hindiFirst);
+              return _buildCard(
+                context,
+                ref,
+                wisdom,
+                hindiFirst: hindiFirst,
+                l10n: l10n,
+              );
             },
             // Keep the previous verse mounted while another day loads (or
             // when a reload fails) so browsing days doesn't flash the card
@@ -532,6 +545,7 @@ class DailyQuoteWidget extends ConsumerWidget {
                 ref,
                 previous,
                 hindiFirst: hindiFirst,
+                l10n: l10n,
               );
             },
             error: (_, _) {
@@ -542,6 +556,7 @@ class DailyQuoteWidget extends ConsumerWidget {
                 ref,
                 previous,
                 hindiFirst: hindiFirst,
+                l10n: l10n,
               );
             },
           ),
@@ -555,6 +570,7 @@ class DailyQuoteWidget extends ConsumerWidget {
     WidgetRef ref,
     DailyWisdom wisdom, {
     required bool hindiFirst,
+    required AppLocalizations? l10n,
   }) {
     final shloka = wisdom.shloka;
     final isExpanded = ref.watch(quoteExpandedProvider);
@@ -579,7 +595,7 @@ class DailyQuoteWidget extends ConsumerWidget {
     // Label comes from the loaded verse, not the live offset: during reload
     // the offset already points at the next day while this stale verse is
     // still shown, which would flash a wrong label.
-    final dayLabel = quoteDayLabel(wisdom.date, wisdom.dayOffset);
+    final dayLabel = quoteDayLabel(wisdom.date, wisdom.dayOffset, l10n);
 
     void jumpToToday() {
       ref.read(quoteShowAllTranslationsProvider.notifier).state = false;
@@ -597,9 +613,7 @@ class DailyQuoteWidget extends ConsumerWidget {
     return Container(
       key: ValueKey('daily-quote-${shloka.id}-${wisdom.dayOffset}'),
       // Shared home gutter (matches CalendarWidget exactly).
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppTheme.homeCardGutter,
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
       decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -615,6 +629,7 @@ class DailyQuoteWidget extends ConsumerWidget {
               hindiFirst: hindiFirst,
               showAll: showAll,
             ),
+            l10n: l10n,
           ),
 
           // Festival caption, shown when the verse was picked for a festival.
@@ -677,13 +692,11 @@ class DailyQuoteWidget extends ConsumerWidget {
                       secondaryTranslation: secondaryTranslation,
                       showingSecondaryHindi: showingSecondaryHindi,
                       showAll: showAll,
-                      hindiFirst: hindiFirst,
+                      l10n: l10n,
                       themes: shloka.themes,
                       onToggleShowAll: () {
                         ref
-                                .read(
-                                  quoteShowAllTranslationsProvider.notifier,
-                                )
+                                .read(quoteShowAllTranslationsProvider.notifier)
                                 .state =
                             !showAll;
                       },
@@ -712,7 +725,6 @@ class DailyQuoteWidget extends ConsumerWidget {
               atPastBound: atPastBound,
               atToday: atToday,
               isExpanded: isExpanded,
-              hindiFirst: hindiFirst,
               onPrevious: () => stepQuoteDay(ref, offset, -1),
               onNext: () => stepQuoteDay(ref, offset, 1),
               onToggleExpanded: toggleExpanded,
@@ -733,12 +745,14 @@ class _WisdomHeader extends StatelessWidget {
     required this.showTodayReset,
     required this.onJumpToToday,
     required this.onShare,
+    required this.l10n,
   });
 
   final String dayLabel;
   final bool showTodayReset;
   final VoidCallback onJumpToToday;
   final VoidCallback onShare;
+  final AppLocalizations? l10n;
 
   @override
   Widget build(BuildContext context) {
@@ -758,11 +772,7 @@ class _WisdomHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             alignment: Alignment.center,
-            child: Icon(
-              Icons.auto_stories_rounded,
-              size: 22,
-              color: accent,
-            ),
+            child: Icon(Icons.auto_stories_rounded, size: 22, color: accent),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -771,7 +781,7 @@ class _WisdomHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Daily Wisdom',
+                  l10n?.dailyWisdom ?? 'Daily Wisdom',
                   style: context.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: context.colors.onSurface,
@@ -816,13 +826,13 @@ class _WisdomHeader extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              child: const Text('Today'),
+              child: Text(l10n?.today ?? 'Today'),
             ),
             const SizedBox(width: 8),
           ],
           IconButton(
             onPressed: onShare,
-            tooltip: 'Share',
+            tooltip: l10n?.share ?? 'Share',
             icon: const Icon(Icons.share_rounded, size: 18),
             color: context.colors.onSurface.withValues(
               alpha: AppTheme.contrastAlpha(context, 0.7),
@@ -847,6 +857,7 @@ class _FestivalChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accent = AppTheme.festivalAccent(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -862,7 +873,7 @@ class _FestivalChip extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              'Chosen for $name',
+              l10n?.chosenForFestival(name) ?? 'Chosen for $name',
               overflow: TextOverflow.ellipsis,
               style: context.textTheme.labelSmall?.copyWith(
                 color: accent,
@@ -886,7 +897,7 @@ class _TranslationPanel extends StatelessWidget {
     required this.secondaryTranslation,
     required this.showingSecondaryHindi,
     required this.showAll,
-    required this.hindiFirst,
+    required this.l10n,
     required this.themes,
     required this.onToggleShowAll,
   });
@@ -896,7 +907,7 @@ class _TranslationPanel extends StatelessWidget {
   final String? secondaryTranslation;
   final bool showingSecondaryHindi;
   final bool showAll;
-  final bool hindiFirst;
+  final AppLocalizations? l10n;
   final List<String> themes;
   final VoidCallback onToggleShowAll;
 
@@ -938,8 +949,8 @@ class _TranslationPanel extends StatelessWidget {
               ),
               child: Text(
                 showAll
-                    ? (hindiFirst ? 'कम देखें' : 'Show less')
-                    : (hindiFirst ? 'और अनुवाद देखें' : 'Show more translations'),
+                    ? (l10n?.showLess ?? 'Show less')
+                    : (l10n?.showMoreTranslations ?? 'Show more translations'),
               ),
             ),
           ],
@@ -1001,7 +1012,6 @@ class _ControlBar extends StatelessWidget {
     required this.atPastBound,
     required this.atToday,
     required this.isExpanded,
-    required this.hindiFirst,
     required this.onPrevious,
     required this.onNext,
     required this.onToggleExpanded,
@@ -1010,13 +1020,13 @@ class _ControlBar extends StatelessWidget {
   final bool atPastBound;
   final bool atToday;
   final bool isExpanded;
-  final bool hindiFirst;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
   final VoidCallback onToggleExpanded;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final accent = AppTheme.festivalAccent(context);
     final onSurface = context.colors.onSurface;
     final highContrast = AppTheme.highContrastOf(context);
@@ -1034,7 +1044,7 @@ class _ControlBar extends StatelessWidget {
         children: [
           IconButton(
             icon: const Icon(Icons.chevron_left_rounded),
-            tooltip: "Previous day's verse",
+            tooltip: l10n?.previousDaysVerse ?? "Previous day's verse",
             onPressed: atPastBound ? null : onPrevious,
             color: accent.withValues(alpha: atPastBound ? 0.25 : 0.75),
             style: IconButton.styleFrom(
@@ -1053,8 +1063,8 @@ class _ControlBar extends StatelessWidget {
             ),
             label: Text(
               isExpanded
-                  ? (hindiFirst ? 'अनुवाद छिपाएँ' : 'Hide translation')
-                  : (hindiFirst ? 'अनुवाद देखें' : 'Show translation'),
+                  ? (l10n?.hideTranslation ?? 'Hide translation')
+                  : (l10n?.showTranslation ?? 'Show translation'),
               style: context.textTheme.labelLarge?.copyWith(
                 color: accent,
                 fontWeight: FontWeight.w700,
@@ -1069,7 +1079,7 @@ class _ControlBar extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right_rounded),
-            tooltip: "Next day's verse",
+            tooltip: l10n?.nextDaysVerse ?? "Next day's verse",
             onPressed: atToday ? null : onNext,
             color: accent.withValues(alpha: atToday ? 0.25 : 0.75),
             style: IconButton.styleFrom(

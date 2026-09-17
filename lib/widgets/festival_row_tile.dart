@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_en.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/tithi_localization.dart';
 
 /// Best-effort glyph per festival category (the bundle ships no per-festival
 /// icon metadata). Major festivals get the gold sun from the redesign mock,
@@ -43,32 +44,34 @@ class FestivalRowTile extends ConsumerWidget {
   final int? daysAway;
   final VoidCallback? onTap;
 
-  static final DateFormat _dateFormat = DateFormat('EEE, d MMM');
 
   String? _goldLine(BuildContext context) {
+    final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final day = date;
     if (day != null) {
       final now = DateTime.now();
       final isToday =
           day.year == now.year && day.month == now.month && day.day == now.day;
-      final todayLabel = AppLocalizations.of(context)?.today ?? 'Today';
       final parts = <String>[
-        isToday ? todayLabel : _dateFormat.format(day),
+        isToday
+            ? l10n.today
+            : formatLocalizedDate(day, 'EEE, d MMM', l10n.localeName),
       ];
       // The tithi half needs the day's panchang, which the home card already
       // holds; the all-festivals list passes date-only rows (no extra fetch).
       final p = panchang;
-      if (p != null) parts.add('${p.paksha} ${p.tithiName}');
+      if (p != null) {
+        parts.add(
+          '${p.isShukla ? l10n.waxing : l10n.waning} '
+          '${localizedTithiName(p.tithiNumber, p.paksha, l10n)}',
+        );
+      }
       final away = daysAway ?? 0;
       // No countdown suffix on today's row: the date is already "Today", so
       // an "in N days" suffix (counted from the selected day on the home
       // card) would contradict it.
-      if (!isToday) {
-        if (away == 1) {
-          parts.add('in 1 day');
-        } else if (away > 1) {
-          parts.add('in $away days');
-        }
+      if (!isToday && away > 0) {
+        parts.add(l10n.festivalInDays(away));
       }
       return parts.join(' · ');
     }

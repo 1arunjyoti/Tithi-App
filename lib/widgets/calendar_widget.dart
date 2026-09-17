@@ -11,6 +11,7 @@ import '../providers/calendar_provider.dart' as cp;
 import '../providers/panchang_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/accessibility_provider.dart';
+import '../providers/locale_provider.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/festival_matching_pipeline.dart';
 import '../services/hindu_calendar_service.dart';
@@ -18,6 +19,7 @@ import '../services/storage_service.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
+import '../utils/tithi_localization.dart';
 
 class _CalendarCellData {
   final String primary;
@@ -68,6 +70,21 @@ String _festivalMonthPrecacheKey(DateTime month) =>
 // (stale cache / day number) so one bad FFI date never breaks the grid.
 void _logCalError(String where, Object e) {
   if (kDebugMode) debugPrint('[calendar] $where: $e');
+}
+
+// Provider-side localizations: calendar header/range builders run without a
+// BuildContext, so they resolve AppLocalizations through the same
+// localeProvider-then-system rule the app shell uses (cf.
+// hinduInstantLabelProvider in tithi_detail_sheet.dart).
+Future<AppLocalizations> _calendarL10n(Ref ref) async {
+  final locale =
+      ref.read(localeProvider) ??
+      WidgetsBinding.instance.platformDispatcher.locale;
+  try {
+    return await AppLocalizations.delegate.load(locale);
+  } catch (_) {
+    return await AppLocalizations.delegate.load(const Locale('en'));
+  }
 }
 
 // Verbose navigation diagnostics (debug builds only): one line per month
@@ -1660,17 +1677,17 @@ class CalendarWidget extends ConsumerWidget {
     int maxYear;
     String eraName;
 
+    if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context);
     if (yearEra == HinduYearEra.vikramSamvat) {
       minYear = 1976 + 57; // 2033 VS
       maxYear = 2076 + 57; // 2133 VS
-      eraName = 'Vikram Samvat';
+      eraName = l10n?.vikramSamvat ?? 'Vikram Samvat';
     } else {
       minYear = 1976 - 78; // 1898 Shaka
       maxYear = 2076 - 78; // 1998 Shaka
-      eraName = 'Shaka Era';
+      eraName = l10n?.shakaEra ?? 'Shaka Era';
     }
-
-    if (!context.mounted) return;
 
     // Step 1: Select Year
     final selectedYear = await _showCustomYearPickerDialog(
@@ -1737,17 +1754,20 @@ class CalendarWidget extends ConsumerWidget {
       currentYear,
       minYear,
       maxYear,
-      'Bengali Era',
+      AppLocalizations.of(context)?.bengaliEra ?? 'Bengali Era',
     );
 
     if (selectedYear == null) return;
     if (!context.mounted) return;
 
-    // Step 2: Select Month
+    // Step 2: Select Month (Bengali script names for the Bengali UI locale,
+    // transliterated names otherwise — same rule as the header labels).
+    final useBnMonths =
+        Localizations.localeOf(context).languageCode == 'bn';
     final selectedMonthIndex = await _showBengaliMonthPickerDialog(
       context,
       ref,
-      service.bengaliMonths,
+      useBnMonths ? service.bengaliMonthsBn : service.bengaliMonths,
       selectedYear == currentYear ? currentMonthIndex : 0,
       selectedYear,
     );
@@ -1784,6 +1804,7 @@ class CalendarWidget extends ConsumerWidget {
       return await showDialog<int>(
         context: context,
         builder: (dialogContext) {
+          final materialL10n = MaterialLocalizations.of(context);
           return Dialog(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(28),
@@ -1801,7 +1822,8 @@ class CalendarWidget extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Select year',
+                          AppLocalizations.of(context)?.selectYear ??
+                              'Select year',
                           style: Theme.of(context).textTheme.labelMedium
                               ?.copyWith(
                                 color: context.colors.onSurface.withValues(
@@ -1866,7 +1888,12 @@ class CalendarWidget extends ConsumerWidget {
                                         ),
                                 ),
                                 child: Text(
-                                  '$year',
+                                  localizeDigits(
+                                    '$year',
+                                    Localizations.localeOf(
+                                      context,
+                                    ).languageCode,
+                                  ),
                                   style: TextStyle(
                                     color: isSelected
                                         ? context.colors.onPrimary
@@ -1893,7 +1920,7 @@ class CalendarWidget extends ConsumerWidget {
                         TextButton(
                           onPressed: () => Navigator.of(dialogContext).pop(),
                           child: Text(
-                            'Cancel',
+                            materialL10n.cancelButtonLabel,
                             style: TextStyle(color: context.colors.primary),
                           ),
                         ),
@@ -1925,7 +1952,7 @@ class CalendarWidget extends ConsumerWidget {
       ref,
       months,
       currentMonthIndex,
-      '$selectedYear $eraName',
+      '${localizeDigits('$selectedYear', Localizations.localeOf(context).languageCode)} $eraName',
     );
   }
 
@@ -1937,12 +1964,17 @@ class CalendarWidget extends ConsumerWidget {
     int currentMonthIndex,
     int selectedYear,
   ) async {
+    final l10n = AppLocalizations.of(context);
+    final localeCode = Localizations.localeOf(context).languageCode;
     return _showAdaptiveMonthPickerDialog(
       context,
       ref,
       months,
       currentMonthIndex,
-      '$selectedYear বঙ্গাব্দ',
+      localizeDigits(
+        l10n?.bengaliEraYear(selectedYear) ?? '$selectedYear বঙ্গাব্দ',
+        localeCode,
+      ),
     );
   }
 
@@ -2338,9 +2370,10 @@ String _headerCacheKey(
   cp.AppCalendarSystem primary,
   cp.AppCalendarSystem secondary,
   HinduYearEra yearEra,
-  HinduMonthSystem monthSystem, [
+  HinduMonthSystem monthSystem, {
+  required String locale,
   DateTime? selectedDate,
-]) {
+}) {
   final selectedKey = selectedDate == null
       ? 'range'
       : '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}';
@@ -2352,7 +2385,7 @@ String _headerCacheKey(
   final dateKey = primary == cp.AppCalendarSystem.gregorian
       ? '${date.year}-${date.month}'
       : '${date.year}-${date.month}-${date.day}';
-  return '${dateKey}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}_$selectedKey';
+  return '${locale}_${dateKey}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}_$selectedKey';
 }
 
 _HeaderData? _cachedHeaderSync(
@@ -2360,16 +2393,18 @@ _HeaderData? _cachedHeaderSync(
   cp.AppCalendarSystem primary,
   cp.AppCalendarSystem secondary,
   HinduYearEra yearEra,
-  HinduMonthSystem monthSystem, [
+  HinduMonthSystem monthSystem, {
+  required String locale,
   DateTime? selectedDate,
-]) {
+}) {
   return _headerDataCache[_headerCacheKey(
     date,
     primary,
     secondary,
     yearEra,
     monthSystem,
-    selectedDate,
+    locale: locale,
+    selectedDate: selectedDate,
   )];
 }
 
@@ -2379,9 +2414,10 @@ void _storeHeaderSync(
   cp.AppCalendarSystem secondary,
   HinduYearEra yearEra,
   HinduMonthSystem monthSystem,
-  _HeaderData value, [
+  _HeaderData value, {
+  required String locale,
   DateTime? selectedDate,
-]) {
+}) {
   if (_headerDataCache.length >= _headerDataCacheMax) {
     final toRemove = _headerDataCache.keys
         .take(_headerDataCacheMax ~/ 5)
@@ -2396,7 +2432,8 @@ void _storeHeaderSync(
         secondary,
         yearEra,
         monthSystem,
-        selectedDate,
+        locale: locale,
+        selectedDate: selectedDate,
       )] =
       value;
 }
@@ -2412,6 +2449,12 @@ final calendarHeaderDataProvider = FutureProvider.autoDispose<_HeaderData>((
   final secondary = ref.watch(cp.secondaryCalendarSystemProvider);
   final hinduYearEra = ref.watch(cp.hinduYearEraProvider);
   final hinduMonthSystem = ref.watch(cp.hinduMonthSystemProvider);
+  // Re-resolve when the app language changes: Gregorian month names (and the
+  // header cache key below) are locale-dependent.
+  final appLocale =
+      ref.watch(localeProvider) ??
+      WidgetsBinding.instance.platformDispatcher.locale;
+  final localeCode = appLocale.languageCode;
   // Tapping a date tile narrows the secondary range label to that date's
   // single month; the tap state (not the default-selected today) drives a
   // header refresh, so the two-month range stays the default. Subscribed
@@ -2462,7 +2505,8 @@ final calendarHeaderDataProvider = FutureProvider.autoDispose<_HeaderData>((
     hinduYearEra,
     hinduMonthSystem,
     data,
-    tappedInMonth,
+    locale: localeCode,
+    selectedDate: tappedInMonth,
   );
   return data;
 });
@@ -2480,8 +2524,13 @@ Future<_HeaderData> _buildCalendarHeaderData(
   String? secondaryAccent;
   String? secondaryDim;
 
+  // Single locale resolution for the whole header: month names, digits and
+  // (for bn) masa script all follow the UI language.
+  final l10n = await _calendarL10n(ref);
+
   primaryText = await _getSystemHeaderTextForCalendar(
     ref,
+    l10n,
     date,
     primary,
     hinduYearEra,
@@ -2506,6 +2555,7 @@ Future<_HeaderData> _buildCalendarHeaderData(
       secondary == cp.AppCalendarSystem.gregorian) {
     final monthRange = await _getGregorianMonthRangeForCalendar(
       ref,
+      l10n,
       date,
       primary,
       selectedDate: selectedDate,
@@ -2538,6 +2588,7 @@ Future<_HeaderData> _buildCalendarHeaderData(
   } else if (secondary != cp.AppCalendarSystem.none && secondary != primary) {
     secondaryAccent = await _getSystemHeaderTextForCalendar(
       ref,
+      l10n,
       date,
       secondary,
       hinduYearEra,
@@ -2549,10 +2600,20 @@ Future<_HeaderData> _buildCalendarHeaderData(
     'header date=${_ymd(date)} primary=$primary secondary=$secondary '
     '-> "$primaryText" / "$secondaryAccent $secondaryDim"',
   );
+  // UI-language finish: Bengali script for Hindu masa names under the bn
+  // locale, locale digits for all years. The stale-header LRU is keyed by
+  // locale, so cached entries stay consistent across language switches.
+  final locale = l10n.localeName;
+  String localizeHeaderPart(String text) =>
+      localizeDigits(localizeMasaName(text, locale), locale);
   return _HeaderData(
-    primaryText: primaryText,
-    secondaryAccent: secondaryAccent,
-    secondaryDim: secondaryDim,
+    primaryText: localizeHeaderPart(primaryText),
+    secondaryAccent: secondaryAccent == null
+        ? null
+        : localizeHeaderPart(secondaryAccent),
+    secondaryDim: secondaryDim == null
+        ? null
+        : localizeDigits(secondaryDim, locale),
   );
 }
 
@@ -2669,6 +2730,7 @@ Future<_MonthRangeParts?> _getTraditionalMonthRangeForCalendar(
 
 Future<_MonthRangeParts?> _getGregorianMonthRangeForCalendar(
   Ref ref,
+  AppLocalizations l10n,
   DateTime date,
   cp.AppCalendarSystem primarySystem, {
   DateTime? selectedDate,
@@ -2679,19 +2741,19 @@ Future<_MonthRangeParts?> _getGregorianMonthRangeForCalendar(
   }
 
   try {
-    const gregorianMonths = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+    final gregorianMonths = [
+      l10n.monthJanuary,
+      l10n.monthFebruary,
+      l10n.monthMarch,
+      l10n.monthApril,
+      l10n.monthMay,
+      l10n.monthJune,
+      l10n.monthJuly,
+      l10n.monthAugust,
+      l10n.monthSeptember,
+      l10n.monthOctober,
+      l10n.monthNovember,
+      l10n.monthDecember,
     ];
 
     DateTime startDate;
@@ -2889,6 +2951,7 @@ Future<_MonthRangeParts?> _getSecondaryTraditionalRangeForLunarPrimary(
 
 Future<String> _getSystemHeaderTextForCalendar(
   Ref ref,
+  AppLocalizations l10n,
   DateTime date,
   cp.AppCalendarSystem system,
   HinduYearEra hinduYearEra,
@@ -2903,7 +2966,7 @@ Future<String> _getSystemHeaderTextForCalendar(
         return '${bDate.month} ${bDate.year}';
       } catch (e) {
         _logCalError('bengali header', e);
-        return _formatGregorianHeader(date);
+        return _formatGregorianHeader(date, l10n);
       }
 
     case cp.AppCalendarSystem.hindu:
@@ -2922,31 +2985,34 @@ Future<String> _getSystemHeaderTextForCalendar(
         return '$displayMasa $displayYear';
       } catch (e) {
         _logCalError('hindu header', e);
-        return _formatGregorianHeader(date);
+        return _formatGregorianHeader(date, l10n);
       }
 
     case cp.AppCalendarSystem.gregorian:
     default:
-      return _formatGregorianHeader(date);
+      return _formatGregorianHeader(date, l10n);
   }
 }
 
-String _formatGregorianHeader(DateTime date) {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  return '${months[date.month - 1]} ${date.year}';
+String _formatGregorianHeader(DateTime date, [AppLocalizations? l10n]) {
+  if (l10n == null) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[date.month - 1]} ${date.year}';
+  }
+  return '${gregorianMonthName(date.month, l10n)} ${date.year}';
 }
 
 class _CalendarHeader extends ConsumerWidget {
@@ -2998,6 +3064,7 @@ class _CalendarHeader extends ConsumerWidget {
                     : null)
               : DateTime(tappedDate.year, tappedDate.month, tappedDate.day));
     final headerDataAsync = ref.watch(calendarHeaderDataProvider);
+    final localeCode = Localizations.localeOf(context).languageCode;
     // Stale header first so swipes never show bare Gregorian then flip;
     // fresh async data replaces it once FFI resolves. On a date tap the
     // tap-keyed entry misses until fresh data lands, so fall back to
@@ -3010,7 +3077,8 @@ class _CalendarHeader extends ConsumerWidget {
           secondary,
           hinduYearEra,
           hinduMonthSystem,
-          tappedInMonth,
+          locale: localeCode,
+          selectedDate: tappedInMonth,
         ) ??
         _cachedHeaderSync(
           focusedMonth,
@@ -3018,9 +3086,17 @@ class _CalendarHeader extends ConsumerWidget {
           secondary,
           hinduYearEra,
           hinduMonthSystem,
+          locale: localeCode,
         ) ??
-        _HeaderData(primaryText: _formatGregorianHeader(focusedMonth));
-    final materialL10n = MaterialLocalizations.of(context);
+        _HeaderData(
+          primaryText: localizeDigits(
+            _formatGregorianHeader(
+              focusedMonth,
+              AppLocalizations.of(context),
+            ),
+            localeCode,
+          ),
+        );    final materialL10n = MaterialLocalizations.of(context);
 
     final highContrast = AppTheme.highContrastOf(context);
     final onSurface = context.colors.onSurface;
@@ -3138,20 +3214,32 @@ class _CalendarHeader extends ConsumerWidget {
 
 /// Weekday header row shared by the Gregorian and adaptive grids: 3-letter
 /// uppercase labels with weekend columns in the accent color. Order follows
-/// [startOfWeek] to match the grid columns below.
+/// [startOfWeek] to match the grid columns below. Labels come from
+/// AppLocalizations so Hindi/Bengali/Sanskrit show their own weekday names.
 class _WeekdayHeaderRow extends StatelessWidget {
   const _WeekdayHeaderRow({required this.startOfWeek});
 
   final cp.StartingDayOfWeek startOfWeek;
 
-  static const _sundayFirst = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  static const _mondayFirst = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-
   @override
   Widget build(BuildContext context) {
-    final labels = startOfWeek == cp.StartingDayOfWeek.monday
-        ? _mondayFirst
-        : _sundayFirst;
+    final l10n = AppLocalizations.of(context);
+    // Sunday-first and Monday-first orders of the localized short names
+    // (English fallbacks for contexts without localizations, e.g. tests).
+    List<String> ordered(bool mondayFirst) {
+      final days = [
+        l10n?.weekdaySundayShort ?? 'SUN',
+        l10n?.weekdayMondayShort ?? 'MON',
+        l10n?.weekdayTuesdayShort ?? 'TUE',
+        l10n?.weekdayWednesdayShort ?? 'WED',
+        l10n?.weekdayThursdayShort ?? 'THU',
+        l10n?.weekdayFridayShort ?? 'FRI',
+        l10n?.weekdaySaturdayShort ?? 'SAT',
+      ];
+      return mondayFirst ? [...days.sublist(1), days[0]] : days;
+    }
+
+    final labels = ordered(startOfWeek == cp.StartingDayOfWeek.monday);
     // Weekend columns depend on the week start (Sun/Sat at 0+6 or 5+6).
     bool isWeekend(int index) => startOfWeek == cp.StartingDayOfWeek.monday
         ? index >= 5
@@ -3249,9 +3337,14 @@ class _CalendarCell extends StatelessWidget {
     // The app propagates the accessibility high-contrast setting into
     // MediaQuery, so no provider watch is needed here.
     final highContrast = AppTheme.highContrastOf(context);
-    final resolvedPrimary = primaryText.isEmpty
-        ? date.day.toString()
-        : primaryText;
+    // Locale digits for the day/tithi numbers: Latin in every locale stays
+    // Latin, Bengali renders Bengali digits. Applied at render time (not in
+    // the providers) so the sync label caches stay locale-independent.
+    final locale = Localizations.localeOf(context).languageCode;
+    final resolvedPrimary = localizeDigits(
+      primaryText.isEmpty ? date.day.toString() : primaryText,
+      locale,
+    );
 
     final scheme = context.colors;
     // Selected wins over today (spec .today.sel).
@@ -3346,7 +3439,7 @@ class _CalendarCell extends StatelessWidget {
               top: 4,
               left: 6,
               child: Text(
-                secondaryText!,
+                localizeDigits(secondaryText!, locale),
                 style: TextStyle(
                   color: secondaryColor,
                   fontSize: 10,

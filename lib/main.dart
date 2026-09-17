@@ -25,6 +25,7 @@ import 'models/festival.dart';
 import 'models/sankalpa.dart';
 import 'services/notification_service.dart';
 import 'services/storage_service.dart';
+import 'utils/tithi_localization.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -33,6 +34,7 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      await initializeLocalizedDateFormatting();
 
       // Set default status bar style for Shukla (light) theme
       SystemChrome.setSystemUIOverlayStyle(

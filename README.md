@@ -129,11 +129,13 @@ flutter analyze                        # static analysis (see analysis_options.y
 flutter test                           # full host-side suite
 flutter test test/festival_data_test.dart          # one file
 flutter test test/display_priority_test.dart       # same-day ordering + dataset ranks
+flutter gen-l10n                              # generate localization code from lib/l10n/*.arb
 flutter pub run build_runner build --delete-conflicting-outputs  # regen Hive adapters after model changes
 ```
 
 Notes:
 
+- Localization settings are defined in `l10n.yaml`, using `lib/l10n/app_en.arb` as the template. Run `flutter gen-l10n` after editing an ARB file.
 - `test/festivals_rule_test.dart` is device-only (initializes the real `PanchangService`; fails on host with `MissingPluginException`) and is intentionally excluded from host runs.
 - Host-side tests cover matching logic with synthetic checkpoints, never real sky positions — true ephemeris behavior needs a device build.
 

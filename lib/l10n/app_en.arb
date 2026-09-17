@@ -4,6 +4,22 @@
   "@appTitle": {
     "description": "The name of the application"
   },
+  "exportFestivalsJson": "Export Festivals (JSON)",
+  "@exportFestivalsJson": {
+    "description": "Settings tile title for exporting festivals"
+  },
+  "exportFestivalsSubtitle": "Save all festivals with Panchang details to a file",
+  "@exportFestivalsSubtitle": {
+    "description": "Settings tile subtitle for exporting festivals"
+  },
+  "exportFestivals": "Export Festivals",
+  "@exportFestivals": {
+    "description": "Title for export festivals bottom sheet"
+  },
+  "exportFestivalsSubtitleYear": "First occurrence of each festival in the chosen year",
+  "@exportFestivalsSubtitleYear": {
+    "description": "Subtitle for export festivals bottom sheet"
+  },
   "vedaCalendar": "Vedic Calendar",
   "@vedaCalendar": {
     "description": "Subtitle describing the app as a Vedic Calendar"
@@ -153,6 +169,74 @@
   "tithi": "Tithi",
   "@tithi": {
     "description": "Tithi view option - shows lunar day"
+  },
+  "tithiPratipada": "Pratipada",
+  "@tithiPratipada": {
+    "description": "Name of the first lunar day"
+  },
+  "tithiDwitiya": "Dwitiya",
+  "@tithiDwitiya": {
+    "description": "Name of the second lunar day"
+  },
+  "tithiTritiya": "Tritiya",
+  "@tithiTritiya": {
+    "description": "Name of the third lunar day"
+  },
+  "tithiChaturthi": "Chaturthi",
+  "@tithiChaturthi": {
+    "description": "Name of the fourth lunar day"
+  },
+  "tithiPanchami": "Panchami",
+  "@tithiPanchami": {
+    "description": "Name of the fifth lunar day"
+  },
+  "tithiShashthi": "Shashthi",
+  "@tithiShashthi": {
+    "description": "Name of the sixth lunar day"
+  },
+  "tithiSaptami": "Saptami",
+  "@tithiSaptami": {
+    "description": "Name of the seventh lunar day"
+  },
+  "tithiAshtami": "Ashtami",
+  "@tithiAshtami": {
+    "description": "Name of the eighth lunar day"
+  },
+  "tithiNavami": "Navami",
+  "@tithiNavami": {
+    "description": "Name of the ninth lunar day"
+  },
+  "tithiDashami": "Dashami",
+  "@tithiDashami": {
+    "description": "Name of the tenth lunar day"
+  },
+  "tithiEkadashi": "Ekadashi",
+  "@tithiEkadashi": {
+    "description": "Name of the eleventh lunar day"
+  },
+  "tithiDwadashi": "Dwadashi",
+  "@tithiDwadashi": {
+    "description": "Name of the twelfth lunar day"
+  },
+  "tithiTrayodashi": "Trayodashi",
+  "@tithiTrayodashi": {
+    "description": "Name of the thirteenth lunar day"
+  },
+  "tithiChaturdashi": "Chaturdashi",
+  "@tithiChaturdashi": {
+    "description": "Name of the fourteenth lunar day"
+  },
+  "tithiPurnima": "Purnima",
+  "@tithiPurnima": {
+    "description": "Name of the fifteenth waxing lunar day"
+  },
+  "tithiAmavasya": "Amavasya",
+  "@tithiAmavasya": {
+    "description": "Name of the fifteenth waning lunar day"
+  },
+  "tithiUnknown": "Unknown",
+  "@tithiUnknown": {
+    "description": "Fallback name for an invalid lunar day"
   },
   "festival": "Festival",
   "@festival": {
@@ -610,6 +694,34 @@
   "@today": {
     "description": "Label for today"
   },
+  "illuminatedPercent": "{percent}% illuminated",
+  "@illuminatedPercent": {
+    "description": "Moon illumination percentage label",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "72.5"
+      }
+    }
+  },
+  "nextTithi": "Next tithi",
+  "@nextTithi": {
+    "description": "Label for the next tithi transition"
+  },
+  "atTime": "at {time}",
+  "@atTime": {
+    "description": "Time of a tithi transition",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "6:30 PM"
+      }
+    }
+  },
+  "yesterday": "Yesterday",
+  "@yesterday": {
+    "description": "Label for yesterday"
+  },
   "tomorrow": "Tomorrow",
   "@tomorrow": {
     "description": "Label for tomorrow"
@@ -995,5 +1107,745 @@
   "orbit": "Orbit",
   "@orbit": {
     "description": "Label for orbital period value"
-  }
+  },
+  "festivalCountdowns": "Festival Countdowns",
+  "@festivalCountdowns": {
+    "description": "Title for festival countdowns screen"
+  },
+  "addCountdown": "Add countdown",
+  "countdownHeading": "Festival Countdowns",
+  "@countdownHeading": {
+    "description": "Heading for countdown card screen"
+  },
+  "zeroDays": "0",
+  "@zeroDays": {
+    "description": "Zero days display in countdown"
+  },
+  "daysRemaining": "{days} days to go",
+  "@daysRemaining": {
+    "description": "Days remaining label in countdown",
+    "placeholders": {
+      "days": {}
+    }
+  },
+  "removeFromHomeScreen": "Remove from home screen",
+  "@removeFromHomeScreen": {
+    "description": "Tooltip for removing countdown from home screen"
+  },
+  "removeCountdown": "Remove countdown",
+  "@removeCountdown": {
+    "description": "Tooltip for removing countdown"
+  },
+  "@addCountdown": {
+    "description": "Tooltip for add countdown button"
+  },
+  "countdownRemoved": "Countdown removed",
+  "@countdownRemoved": {
+    "description": "Snackbar message when a countdown is removed"
+  },
+  "searchFestivalName": "Search festival name",
+  "@searchFestivalName": {
+    "description": "Hint text for festival search field"
+  },
+  "noFestivalsFound": "No festivals found",
+  "@noFestivalsFound": {
+    "description": "Empty state when no festivals match search"
+  },
+  "noCountdownsYet": "No countdowns yet",
+  "@noCountdownsYet": {
+    "description": "Empty state when user has no countdowns"
+  },
+  "allFestivals": "All Festivals",
+  "@allFestivals": {
+    "description": "Title for all festivals screen"
+  },
+  "searchFestivalsHint": "Search festivals",
+  "@searchFestivalsHint": {
+    "description": "Hint text for festival search field"
+  },
+  "couldNotLoadFestivals": "Could not load festivals. Please try again.",
+  "@couldNotLoadFestivals": {
+    "description": "Error message when festivals fail to load"
+  },
+  "oopsSomethingWentWrong": "Oops! Something went wrong",
+  "@oopsSomethingWentWrong": {
+    "description": "Error title in error display widget"
+  },
+  "unexpectedErrorOccurred": "An unexpected error occurred. Please try again.",
+  "@unexpectedErrorOccurred": {
+    "description": "Generic error message in error display widget"
+  },
+  "somethingWentWrong": "Something went wrong",
+  "@somethingWentWrong": {
+    "description": "Short error message for compact error display"
+  },
+  "unableToOpenPrivacyPolicy": "Unable to open the privacy policy website.",
+  "@unableToOpenPrivacyPolicy": {
+    "description": "Snackbar message when privacy policy URL cannot be opened"
+  },
+  "failedToShare": "Failed to share: {error}",
+  "@failedToShare": {
+    "description": "Snackbar message when sharing fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
+  "celebratingFestivalWithTithi": "Celebrating {festivalName} with Tithi App!",
+  "@celebratingFestivalWithTithi": {
+    "description": "Text shared when sharing a festival",
+    "placeholders": {
+      "festivalName": {
+        "type": "String",
+        "example": "Diwali"
+      }
+    }
+  },
+  "gotIt": "Got it",
+  "@gotIt": {
+    "description": "Button text to dismiss dialog"
+  },
+  "add": "Add",
+  "@add": {
+    "description": "Button text to add widget"
+  },
+  "addWidgetManually": "Add Widget Manually",
+  "@addWidgetManually": {
+    "description": "Dialog title for manual widget instructions"
+  },
+  "widgetPinRequested": "Widget pin requested \u2014 confirm on home screen",
+  "@widgetPinRequested": {
+    "description": "Snackbar message when widget pin is requested"
+  },
+  "couldNotPinWidget": "Could not pin widget. Try adding manually: long-press \u2192 Widgets \u2192 Tithi",
+  "@couldNotPinWidget": {
+    "description": "Snackbar message when widget pin fails"
+  },
+  "infoTooltip": "Info",
+  "@infoTooltip": {
+    "description": "Tooltip for info button"
+  },
+  "dismissTooltip": "Dismiss",
+  "@dismissTooltip": {
+    "description": "Tooltip for dismiss button"
+  },
+  "solarSystemNotAvailableOnWeb": "Solar System is not available on web",
+  "@solarSystemNotAvailableOnWeb": {
+    "description": "Message shown when Solar System screen accessed on web"
+  },
+  "eclipseScreenNotAvailableOnWeb": "Eclipse screen is not available on web",
+  "@eclipseScreenNotAvailableOnWeb": {
+    "description": "Message shown when Eclipse screen accessed on web"
+  },
+  "findingNextOccurrence": "Finding next occurrence...",
+  "@findingNextOccurrence": {
+    "description": "Snackbar message while finding next festival occurrence"
+  },
+  "goToNextOccurrence": "Go to next occurrence",
+  "@goToNextOccurrence": {
+    "description": "Tooltip for navigating to next festival occurrence"
+  },
+  "couldNotFindUpcomingOccurrence": "Could not find upcoming occurrence within a year.",
+  "@couldNotFindUpcomingOccurrence": {
+    "description": "Snackbar message when no upcoming festival occurrence found"
+  },
+  "noFestivalsToExport": "No festivals to export",
+  "@noFestivalsToExport": {
+    "description": "Snackbar message when there are no festivals to export"
+  },
+  "exportingYear": "Exporting {year}",
+  "@exportingYear": {
+    "description": "Dialog title while exporting festivals for a year",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "festivalsExportedProgress": "{done} / {total} festivals",
+  "@festivalsExportedProgress": {
+    "description": "Progress text during festival export",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "5"
+      },
+      "total": {
+        "type": "int",
+        "example": "50"
+      }
+    }
+  },
+  "exportCancelled": "Export cancelled",
+  "@exportCancelled": {
+    "description": "Snackbar message when export is cancelled"
+  },
+  "downloadStarted": "Download started",
+  "@downloadStarted": {
+    "description": "Snackbar message when download starts on web"
+  },
+  "couldNotSaveExportFile": "Could not save export file",
+  "@couldNotSaveExportFile": {
+    "description": "Snackbar message when export file cannot be saved"
+  },
+  "saved": "Saved",
+  "@saved": {
+    "description": "Dialog title when export is saved successfully"
+  },
+  "festivalsExportedForYear": "{count} festivals exported for {year}.",
+  "@festivalsExportedForYear": {
+    "description": "Confirmation message after successful export",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "50"
+      },
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "done": "Done",
+  "@done": {
+    "description": "Button text to dismiss success dialog"
+  },
+  "share": "Share",
+  "@share": {
+    "description": "Button text to share exported file"
+  },
+  "exportFailed": "Export failed: {error}",
+  "@exportFailed": {
+    "description": "Snackbar message when export fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Permission denied"
+      }
+    }
+  },
+  "saveFestivalsYear": "Save festivals {year}",
+  "@saveFestivalsYear": {
+    "description": "File picker dialog title for saving festivals",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "aboutBuiltForDailyPractice": "Built for daily practice",
+  "@aboutBuiltForDailyPractice": {
+    "description": "About screen introduction heading"
+  },
+  "aboutDailyPracticeDescription": "Tithi blends traditional Panchang wisdom with modern clarity, so your rituals and observances stay on time and effortless.",
+  "@aboutDailyPracticeDescription": {
+    "description": "About screen introduction"
+  },
+  "aboutWhatsInside": "What's inside",
+  "@aboutWhatsInside": {
+    "description": "About screen features heading"
+  },
+  "aboutFeaturesDescription": "Accurate tithi and nakshatra tracking, festival countdowns, local sunrise and sunset, and calm daily inspiration.",
+  "@aboutFeaturesDescription": {
+    "description": "About screen feature summary"
+  },
+  "detailedPrivacyPolicy": "Detailed privacy policy",
+  "@detailedPrivacyPolicy": {
+    "description": "About screen privacy policy link title"
+  },
+  "readFullPrivacyPolicy": "Read the full policy on our website",
+  "@readFullPrivacyPolicy": {
+    "description": "About screen privacy policy link subtitle"
+  },
+  "aboutTagline": "Vedic calendar for modern life",
+  "@aboutTagline": {
+    "description": "Tagline below the app name on the About screen"
+  },
+  "themePurple": "Purple",
+  "@themePurple": {
+    "description": "Purple theme option in settings"
+  },
+  "notificationPermissionDenied": "Notification permission denied. Please enable it in system settings.",
+  "@notificationPermissionDenied": {
+    "description": "Snackbar when notification permission is denied"
+  },
+  "notificationToggleFailed": "Could not turn notifications {state, select, on{on} other{off}} ({error}). Please try again.",
+  "@notificationToggleFailed": {
+    "description": "Notification toggle failure; state is on or off",
+    "placeholders": {
+      "state": { "type": "String", "example": "on" },
+      "error": { "type": "String", "example": "Permission denied" }
+    }
+  },
+  "dailyShloka": "Daily Shloka",
+  "@dailyShloka": {
+    "description": "Daily verse notification setting title"
+  },
+  "dailyShlokaSubtitle": "Get a daily spiritual verse",
+  "@dailyShlokaSubtitle": {
+    "description": "Daily verse notification setting subtitle"
+  },
+  "dailyShlokaToggleFailed": "Could not turn Daily Shloka {state, select, on{on} other{off}} ({error}). Please try again.",
+  "@dailyShlokaToggleFailed": {
+    "description": "Daily Shloka toggle failure; state is on or off",
+    "placeholders": {
+      "state": { "type": "String", "example": "on" },
+      "error": { "type": "String", "example": "Permission denied" }
+    }
+  },
+  "festivalReminders": "Festival Reminders",
+  "@festivalReminders": {
+    "description": "Festival reminder notification setting title"
+  },
+  "festivalRemindersSubtitle": "Notify only for festivals, on the day or before",
+  "@festivalRemindersSubtitle": {
+    "description": "Festival reminder notification setting subtitle"
+  },
+  "festivalRemindersToggleFailed": "Could not turn Festival Reminders {state, select, on{on} other{off}} ({error}). Please try again.",
+  "@festivalRemindersToggleFailed": {
+    "description": "Festival reminder toggle failure; state is on or off",
+    "placeholders": {
+      "state": { "type": "String", "example": "on" },
+      "error": { "type": "String", "example": "Permission denied" }
+    }
+  },
+  "festivalReminderTime": "Festival Reminder Time",
+  "@festivalReminderTime": {
+    "description": "Festival reminder time setting and picker title"
+  },
+  "notificationTimeUpdateFailed": "Could not update notification time ({error}). Please try again.",
+  "@notificationTimeUpdateFailed": {
+    "description": "Snackbar when saving the notification time fails",
+    "placeholders": {
+      "error": { "type": "String", "example": "Scheduling failed" }
+    }
+  },
+  "festivalReminderDayBefore": "Day before",
+  "@festivalReminderDayBefore": {
+    "description": "Festival reminder timing option for the previous day"
+  },
+  "festivalReminderBoth": "Both",
+  "@festivalReminderBoth": {
+    "description": "Festival reminder timing option for both the day before and the festival day"
+  },
+  "festivalReminderOnDay": "On the day",
+  "@festivalReminderOnDay": {
+    "description": "Festival reminder timing option for the festival day"
+  },
+  "reminderTimeUpdateFailed": "Could not update reminder time ({error}). Please try again.",
+  "@reminderTimeUpdateFailed": {
+    "description": "Snackbar when saving the festival reminder time fails",
+    "placeholders": {
+      "error": { "type": "String", "example": "Scheduling failed" }
+    }
+  },
+  "hinduMonthSystem": "Hindu Month System",
+  "@hinduMonthSystem": {
+    "description": "Hindu month system setting and selection sheet title"
+  },
+  "hinduMonthSystemSubtitle": "Choose how months are named during Krishna Paksha",
+  "@hinduMonthSystemSubtitle": {
+    "description": "Hindu month system selection explanation"
+  },
+  "hinduYearEra": "Hindu Year Era",
+  "@hinduYearEra": {
+    "description": "Hindu year era setting and selection sheet title"
+  },
+  "hinduYearEraSubtitle": "Choose the calendar era for year display",
+  "@hinduYearEraSubtitle": {
+    "description": "Hindu year era selection explanation"
+  },
+  "tithiDisplay": "Tithi Display",
+  "@tithiDisplay": {
+    "description": "Tithi numbering setting and selection sheet title"
+  },
+  "tithiDisplayPakshaRange": "Paksha (1-15)",
+  "@tithiDisplayPakshaRange": {
+    "description": "Summary of the paksha-based tithi numbering option"
+  },
+  "tithiDisplaySubtitle": "Choose how tithis are numbered in the calendar",
+  "@tithiDisplaySubtitle": {
+    "description": "Tithi numbering selection explanation"
+  },
+  "tithiDisplayPakshaBased": "Paksha Based",
+  "@tithiDisplayPakshaBased": {
+    "description": "Paksha-based tithi numbering option title"
+  },
+  "tithiDisplayPakshaDescription": "Show 1-15 for each paksha separately",
+  "@tithiDisplayPakshaDescription": {
+    "description": "Paksha-based tithi numbering option explanation"
+  },
+  "tithiDisplayContinuousDescription": "Show 1-30 continuously",
+  "@tithiDisplayContinuousDescription": {
+    "description": "Continuous tithi numbering option explanation"
+  },
+  "festivalExportShareSubject": "Tithi festivals {year}",
+  "@festivalExportShareSubject": {
+    "description": "Subject when sharing exported festival JSON",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalExportShareText": "Tithi festivals {year} with Panchang details (JSON)",
+  "@festivalExportShareText": {
+    "description": "Message when sharing exported festival JSON",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "countdownAddedForFestival": "Countdown added for {festivalName}",
+  "@countdownAddedForFestival": {
+    "description": "Snackbar after adding a festival countdown",
+    "placeholders": {
+      "festivalName": { "type": "String", "example": "Diwali" }
+    }
+  },
+  "festivalAlreadyInCountdowns": "{festivalName} is already in your countdowns",
+  "@festivalAlreadyInCountdowns": {
+    "description": "Snackbar when a festival countdown already exists",
+    "placeholders": {
+      "festivalName": { "type": "String", "example": "Diwali" }
+    }
+  },
+  "openStreetMapAttribution": "OpenStreetMap contributors",
+  "@openStreetMapAttribution": {
+    "description": "Map data attribution; preserve the OpenStreetMap brand name"
+  },
+  "moonScrubHint": "Drag to explore • Double-tap resets",
+  "@moonScrubHint": {
+    "description": "Gesture hint below the interactive moon visualization"
+  },
+  "moonIllumination": "Illumination: {percentage}%",
+  "@moonIllumination": {
+    "description": "Moon illumination percentage, formatted to one decimal place",
+    "placeholders": {
+      "percentage": { "type": "String", "example": "52.4" }
+    }
+  },
+  "dayUnitShort": "d",
+  "@dayUnitShort": {
+    "description": "Compact day unit in the moon phase countdown"
+  },
+  "hourUnitShort": "h",
+  "@hourUnitShort": {
+    "description": "Compact hour unit in the moon phase countdown"
+  },
+  "minuteUnitShort": "m",
+  "@minuteUnitShort": {
+    "description": "Compact minute unit in the moon phase countdown"
+  },
+  "durationHoursMinutesShort": "{hours}h {minutes}m",
+  "@durationHoursMinutesShort": {
+    "description": "Compact duration for eclipse timings and moon countdowns",
+    "placeholders": {
+      "hours": { "type": "int", "example": "2" },
+      "minutes": { "type": "int", "example": "30" }
+    }
+  },
+  "durationMinutesShort": "{minutes}m",
+  "@durationMinutesShort": {
+    "description": "Compact eclipse duration under one hour",
+    "placeholders": {
+      "minutes": { "type": "int", "example": "45" }
+    }
+  },
+  "distanceAstronomicalUnits": "{distance} AU",
+  "@distanceAstronomicalUnits": {
+    "description": "Planet distance in astronomical units, formatted to two decimal places",
+    "placeholders": {
+      "distance": { "type": "String", "example": "1.52" }
+    }
+  },
+  "orbitalPeriodDaysShort": "{days}d",
+  "@orbitalPeriodDaysShort": {
+    "description": "Planet orbital period rounded to whole days",
+    "placeholders": {
+      "days": { "type": "String", "example": "88" }
+    }
+  },
+  "orbitalPeriodYearsShort": "{years}y",
+  "@orbitalPeriodYearsShort": {
+    "description": "Planet orbital period in years, formatted to one decimal place",
+    "placeholders": {
+      "years": { "type": "String", "example": "11.9" }
+    }
+  },
+  "vikramSamvat": "Vikram Samvat",
+  "@vikramSamvat": {
+    "description": "Vikram calendar era label in the calendar year selector"
+  },
+  "shakaEra": "Shaka Era",
+  "@shakaEra": {
+    "description": "Shaka calendar era label in the calendar year selector"
+  },
+  "bengaliEra": "Bengali Era",
+  "@bengaliEra": {
+    "description": "Bengali calendar era label in the calendar year selector"
+  },
+  "selectYear": "Select year",
+  "@selectYear": {
+    "description": "Title of the calendar year selection dialog"
+  },
+  "bengaliEraYear": "{year} Bangabda",
+  "@bengaliEraYear": {
+    "description": "Bengali year with its era name in the year selector",
+    "placeholders": {
+      "year": { "type": "int", "example": "1433" }
+    }
+  },
+  "monthJanuary": "January",
+  "@monthJanuary": { "description": "Gregorian month name in calendar headers" },
+  "monthFebruary": "February",
+  "@monthFebruary": { "description": "Gregorian month name in calendar headers" },
+  "monthMarch": "March",
+  "@monthMarch": { "description": "Gregorian month name in calendar headers" },
+  "monthApril": "April",
+  "@monthApril": { "description": "Gregorian month name in calendar headers" },
+  "monthMay": "May",
+  "@monthMay": { "description": "Gregorian month name in calendar headers" },
+  "monthJune": "June",
+  "@monthJune": { "description": "Gregorian month name in calendar headers" },
+  "monthJuly": "July",
+  "@monthJuly": { "description": "Gregorian month name in calendar headers" },
+  "monthAugust": "August",
+  "@monthAugust": { "description": "Gregorian month name in calendar headers" },
+  "monthSeptember": "September",
+  "@monthSeptember": { "description": "Gregorian month name in calendar headers" },
+  "monthOctober": "October",
+  "@monthOctober": { "description": "Gregorian month name in calendar headers" },
+  "monthNovember": "November",
+  "@monthNovember": { "description": "Gregorian month name in calendar headers" },
+  "monthDecember": "December",
+  "@monthDecember": { "description": "Gregorian month name in calendar headers" },
+  "weekdaySundayShort": "SUN",
+  "@weekdaySundayShort": { "description": "Abbreviated Sunday label in the calendar weekday row" },
+  "weekdayMondayShort": "MON",
+  "@weekdayMondayShort": { "description": "Abbreviated Monday label in the calendar weekday row" },
+  "weekdayTuesdayShort": "TUE",
+  "@weekdayTuesdayShort": { "description": "Abbreviated Tuesday label in the calendar weekday row" },
+  "weekdayWednesdayShort": "WED",
+  "@weekdayWednesdayShort": { "description": "Abbreviated Wednesday label in the calendar weekday row" },
+  "weekdayThursdayShort": "THU",
+  "@weekdayThursdayShort": { "description": "Abbreviated Thursday label in the calendar weekday row" },
+  "weekdayFridayShort": "FRI",
+  "@weekdayFridayShort": { "description": "Abbreviated Friday label in the calendar weekday row" },
+  "weekdaySaturdayShort": "SAT",
+  "@weekdaySaturdayShort": { "description": "Abbreviated Saturday label in the calendar weekday row" },
+  "sharedViaTithiApp": "Shared via Tithi App",
+  "@sharedViaTithiApp": {
+    "description": "Attribution appended to shared verse text"
+  },
+  "dailyWisdomShareMessage": "Daily Wisdom — Tithi App",
+  "@dailyWisdomShareMessage": {
+    "description": "Message accompanying a shared verse image"
+  },
+  "shareAsImage": "Share as image",
+  "@shareAsImage": { "description": "Verse sharing option title" },
+  "verseCardPicture": "Verse card picture",
+  "@verseCardPicture": { "description": "Verse image sharing option subtitle" },
+  "shareAsText": "Share as text",
+  "@shareAsText": { "description": "Verse text sharing option title" },
+  "verseWithTranslation": "Verse with translation",
+  "@verseWithTranslation": { "description": "Verse text sharing option subtitle" },
+  "copyText": "Copy text",
+  "@copyText": { "description": "Copy verse option title" },
+  "copyVerseToClipboard": "Copy verse to clipboard",
+  "@copyVerseToClipboard": { "description": "Copy verse option subtitle" },
+  "couldNotCopyVerse": "Could not copy verse",
+  "@couldNotCopyVerse": { "description": "Snackbar when copying a verse fails" },
+  "verseCopied": "Verse copied",
+  "@verseCopied": { "description": "Snackbar after copying a verse" },
+  "chosenForFestival": "Chosen for {festivalName}",
+  "@chosenForFestival": {
+    "description": "Explains why a verse was chosen for a festival",
+    "placeholders": {
+      "festivalName": { "type": "String", "example": "Diwali" }
+    }
+  },
+  "showLess": "Show less",
+  "@showLess": { "description": "Collapse additional verse translations" },
+  "showMoreTranslations": "Show more translations",
+  "@showMoreTranslations": { "description": "Expand additional verse translations" },
+  "hideTranslation": "Hide translation",
+  "@hideTranslation": { "description": "Hide the verse translation" },
+  "showTranslation": "Show translation",
+  "@showTranslation": { "description": "Show the verse translation" },
+  "showLessTitleCase": "Show Less",
+  "@showLessTitleCase": { "description": "Collapse a festival description; title case" },
+  "readMore": "Read More",
+  "@readMore": { "description": "Expand a festival description" },
+  "tithiNameWithNumber": "{tithiName} (T{number})",
+  "@tithiNameWithNumber": {
+    "description": "Named tithi with its numeric identifier in festival details",
+    "placeholders": {
+      "tithiName": { "type": "String", "example": "Ekadashi" },
+      "number": { "type": "int", "example": "11" }
+    }
+  },
+  "masa": "Masa",
+  "@masa": { "description": "Lunar month label in festival details" },
+  "nakshatra": "Nakshatra",
+  "@nakshatra": { "description": "Lunar mansion label in festival details" },
+  "begins": "Begins",
+  "@begins": { "description": "Beginning time label in festival details" },
+  "ends": "Ends",
+  "@ends": { "description": "Ending time label in festival details" },
+  "tithiWithNumber": "Tithi {number}",
+  "@tithiWithNumber": {
+    "description": "Numeric tithi label when a tithi name is unavailable",
+    "placeholders": {
+      "number": { "type": "int", "example": "11" }
+    }
+  },
+  "fastingVrat": "Fasting / Vrat",
+  "@fastingVrat": { "description": "Fasting rule label in festival details" },
+  "mantra": "Mantra",
+  "@mantra": { "description": "Mantra heading in festival details" },
+  "timingNote": "Timing Note",
+  "@timingNote": { "description": "Astronomical timing information dialog title" },
+  "timingNoteDescription": "Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.",
+  "@timingNoteDescription": {
+    "description": "Explains possible differences from local temple timings"
+  },
+  "noFestivalsInNextThreeDays": "No festivals in the next 3 days",
+  "@noFestivalsInNextThreeDays": { "description": "Empty state for the home screen festival list" },
+  "couldNotLoadFestivalsWithError": "Could not load festivals: {error}",
+  "@couldNotLoadFestivalsWithError": {
+    "description": "Festival list loading error with details",
+    "placeholders": {
+      "error": { "type": "String", "example": "Network error" }
+    }
+  },
+  "viewAllFestivalsCount": "{count, plural, one{View all {count} festival} other{View all {count} festivals}}",
+  "@viewAllFestivalsCount": {
+    "description": "Button and accessibility label to view all festivals with a count",
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  },
+  "viewAllFestivals": "View all festivals",
+  "@viewAllFestivals": { "description": "Button and accessibility label to view all festivals without a count" },
+  "day": "day",
+  "@day": { "description": "Singular day unit in a festival countdown" },
+  "festivalCountdownTitle": "{title} Countdown",
+  "@festivalCountdownTitle": {
+    "description": "Festival countdown card title",
+    "placeholders": {
+      "title": { "type": "String", "example": "Diwali" }
+    }
+  },
+  "festivalInDays": "{days, plural, one{in 1 day} other{in {days} days}}",
+  "@festivalInDays": {
+    "description": "Relative time until a festival in a festival row",
+    "placeholders": {
+      "days": { "type": "int", "example": "3" }
+    }
+  },
+  "searchFestivalsVratsAndEvents": "Search for festivals, vrats, and events",
+  "@searchFestivalsVratsAndEvents": { "description": "Festival search empty query hint" },
+  "homeScreenWidget": "Home Screen Widget",
+  "@homeScreenWidget": { "description": "Title of the home screen widget promotion card" },
+  "homeWidgetCountdownDescription": "Add festival countdowns to your home screen",
+  "@homeWidgetCountdownDescription": { "description": "Subtitle when home screen widget pinning is available" },
+  "homeWidgetManualHint": "Long-press home screen → Widgets → Tithi",
+  "@homeWidgetManualHint": { "description": "Short manual home screen widget installation hint" },
+  "homeWidgetManualInstructions": "1. Long-press on your home screen\n2. Tap \"Widgets\"\n3. Find \"Tithi\" and drag \"Festival Countdowns\" to your home screen\n\nThe widget shows all festivals from your Countdowns page.",
+  "@homeWidgetManualInstructions": { "description": "Full manual home screen widget installation instructions" },
+  "unableToLoadMoonPhaseData": "Unable to load moon phase data",
+  "@unableToLoadMoonPhaseData": { "description": "Moon countdown loading error" },
+  "countdownNow": "Now",
+  "@countdownNow": { "description": "Compact label for a moon countdown that has reached its target" },
+  "countdownDaysHours": "{days}d {hours}h",
+  "@countdownDaysHours": {
+    "description": "Compact moon countdown in days and hours",
+    "placeholders": {
+      "days": { "type": "int", "example": "3" },
+      "hours": { "type": "int", "example": "5" }
+    }
+  },
+  "selected": "Selected",
+  "@selected": { "description": "Hero card label for the selected day rather than today" },
+  "moonPhaseIlluminated": "{phase} · {percentage}% illuminated",
+  "@moonPhaseIlluminated": {
+    "description": "Moon phase and illumination in the hero card and tithi details",
+    "placeholders": {
+      "phase": { "type": "String", "example": "Waxing Gibbous" },
+      "percentage": { "type": "String", "example": "75.0" }
+    }
+  },
+  "nextTithiAt": "Next tithi {tithiName} at {time}",
+  "@nextTithiAt": {
+    "description": "Upcoming tithi transition in the hero card",
+    "placeholders": {
+      "tithiName": { "type": "String", "example": "Navami" },
+      "time": { "type": "String", "example": "5:53 AM" }
+    }
+  },
+  "tithiBeginsAt": "{tithiName} begins at {time}",
+  "@tithiBeginsAt": {
+    "description": "Transition text showing when the next tithi begins",
+    "placeholders": {
+      "tithiName": { "type": "String", "example": "Navami" },
+      "time": { "type": "String", "example": "5:53 AM" }
+    }
+  },
+  "tithiEndsAtDateTime": "{tithiName} ends {dateTime}",
+  "@tithiEndsAtDateTime": {
+    "description": "Transition text showing when the next tithi ends; dateTime follows the selected calendar",
+    "placeholders": {
+      "tithiName": { "type": "String", "example": "Navami" },
+      "dateTime": { "type": "String", "example": "4:20 AM, Oct 5" }
+    }
+  },
+  "udayaTithiExplanation": "Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.",
+  "@udayaTithiExplanation": { "description": "Explains sunrise tithi and short tithis in the tithi detail sheet" },
+  "beginsUppercase": "BEGINS",
+  "@beginsUppercase": { "description": "Uppercase beginning time label in tithi details" },
+  "endsUppercase": "ENDS",
+  "@endsUppercase": { "description": "Uppercase ending time label in tithi details" },
+  "transition": "TRANSITION",
+  "@transition": { "description": "Uppercase transition section label in tithi details" },
+  "shuklaPakshaInitial": "S",
+  "@shuklaPakshaInitial": { "description": "Single-letter Shukla Paksha marker in the schedule view" },
+  "krishnaPakshaInitial": "K",
+  "@krishnaPakshaInitial": { "description": "Single-letter Krishna Paksha marker in the schedule view" },
+  "windSpeedKph": "{speed} kph",
+  "@windSpeedKph": {
+    "description": "Wind speed in kilometers per hour in the weather sheet",
+    "placeholders": {
+      "speed": { "type": "double", "example": "12.5" }
+    }
+  },
+  "tithiDisplayThirtyDays": "30 Days",
+  "@tithiDisplayThirtyDays": {
+    "description": "Continuous 30-day tithi display mode label"
+  },
+  "couldNotCreateImage": "Could not create image",
+  "@couldNotCreateImage": { "description": "Snackbar shown when sharing as image fails" },
+  "shareVerse": "Share verse",
+  "@shareVerse": { "description": "Title of the share verse bottom sheet" },
+  "previousDaysVerse": "Previous day's verse",
+  "@previousDaysVerse": { "description": "Tooltip for the left arrow to navigate to yesterday's verse" },
+  "nextDaysVerse": "Next day's verse",
+  "@nextDaysVerse": { "description": "Tooltip for the right arrow to navigate to tomorrow's verse" },
+  "shareCard": "Share Card",
+  "@shareCard": { "description": "Tooltip for the share icon in the festival detail sheet" },
+  "homeWidgetCanPin": "Add festival countdowns to your home screen",
+  "@homeWidgetCanPin": { "description": "Subtitle of the home widget promo card when widget can be pinned" },
+  "dailyWisdom": "DAILY WISDOM",
+  "@dailyWisdom": { "description": "Brand label on the shloka share card image" },
+  "tithiTimings": "TITHI TIMINGS",
+  "@tithiTimings": { "description": "Section header label for tithi timings in the detail sheet" },
+  "tithiBegins": "BEGINS",
+  "@tithiBegins": { "description": "Label for the tithi start time cell" },
+  "tithiEnds": "ENDS",
+  "@tithiEnds": { "description": "Label for the tithi end time cell" },
+  "tithiTransition": "TRANSITION",
+  "@tithiTransition": { "description": "Label shown on the transition card in the tithi detail sheet" },
+  "udayaTithiExplainer": "Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.",
+  "@udayaTithiExplainer": { "description": "Explainer text about udaya tithi in the tithi detail sheet" }
 }

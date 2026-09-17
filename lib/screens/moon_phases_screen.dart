@@ -276,7 +276,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
         const SizedBox(height: 12),
         // Precise illumination percentage
         Text(
-          'Illumination: ${(illumination01 * 100).toStringAsFixed(1)}%',
+          l10n.moonIllumination((illumination01 * 100).toStringAsFixed(1)),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: Theme.of(
               context,

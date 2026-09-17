@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 
 /// A user-friendly error display widget that replaces the default red error screen.
@@ -23,6 +24,7 @@ class ErrorDisplayWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -45,7 +47,7 @@ class ErrorDisplayWidget extends StatelessWidget {
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                message ?? 'Something went wrong',
+                message ?? l10n?.somethingWentWrong ?? 'Something went wrong',
                 style: TextStyle(
                   color: AppTheme.warningTextColor(isDark),
                   fontSize: 13,
@@ -64,7 +66,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Retry'),
+                child: Text(l10n?.retry ?? 'Retry'),
               ),
             ],
           ],
@@ -94,7 +96,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                'Oops! Something went wrong',
+                l10n?.oopsSomethingWentWrong ?? 'Oops! Something went wrong',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -102,7 +104,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                message ?? 'An unexpected error occurred. Please try again.',
+                message ?? l10n?.unexpectedErrorOccurred ?? 'An unexpected error occurred. Please try again.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
@@ -113,7 +115,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Try Again'),
+                  label: Text(l10n?.retry ?? 'Retry'),
                 ),
               ],
             ],

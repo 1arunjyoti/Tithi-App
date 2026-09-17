@@ -169,6 +169,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildThemeSection(BuildContext context) {
     return Consumer(
       builder: (context, ref, _) {
+        final l10n = AppLocalizations.of(context);
         final currentOverride = ref.watch(themeOverrideProvider);
         final autoMode = currentOverride == null;
 
@@ -194,14 +195,14 @@ class SettingsScreen extends ConsumerWidget {
             alignment: WrapAlignment.spaceEvenly,
             children: [
               ThemeOptionButton(
-                label: 'Auto',
+                label: l10n?.themeAuto ?? 'Auto',
                 icon: Icons.brightness_auto_rounded,
                 isSelected: autoMode,
                 onTap: () =>
                     ref.read(themeOverrideProvider.notifier).setOverride(null),
               ),
               ThemeOptionButton(
-                label: 'Shukla',
+                label: l10n?.themeShukla ?? 'Shukla',
                 icon: Icons.light_mode_rounded,
                 isSelected: currentOverride == 'Shukla',
                 onTap: () => ref
@@ -209,7 +210,7 @@ class SettingsScreen extends ConsumerWidget {
                     .setOverride('Shukla'),
               ),
               ThemeOptionButton(
-                label: 'Dark',
+                label: l10n?.themeDark ?? 'Dark',
                 icon: Icons.contrast,
                 isSelected: currentOverride == 'PureDark',
                 onTap: () => ref
@@ -217,7 +218,7 @@ class SettingsScreen extends ConsumerWidget {
                     .setOverride('PureDark'),
               ),
               ThemeOptionButton(
-                label: 'Purple',
+                label: l10n?.themePurple ?? 'Purple',
                 icon: Icons.bubble_chart,
                 isSelected: currentOverride == 'Krishna',
                 onTap: () => ref
@@ -263,11 +264,12 @@ class _NotificationSettings extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text(
-                        'Notification permission denied. Please enable it in system settings.',
+                      content: Text(
+                        l10n?.notificationPermissionDenied ??
+                            'Notification permission denied. Please enable it in system settings.',
                       ),
                       action: SnackBarAction(
-                        label: 'Open Settings',
+                        label: l10n?.openSettings ?? 'Open Settings',
                         onPressed: () {
                           Geolocator.openAppSettings();
                         },
@@ -291,13 +293,14 @@ class _NotificationSettings extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Could not turn notifications ${val ? 'on' : 'off'} ($e). Please try again.',
+                      l10n?.notificationToggleFailed(val ? 'on' : 'off', e.toString()) ??
+                          'Could not turn notifications ${val ? 'on' : 'off'} ($e). Please try again.',
                     ),
                     // Enable failures are commonly the OS-level gate
                     // (_assertSystemNotificationsAllowed), so offer the fix.
                     action: val
                         ? SnackBarAction(
-                            label: 'Open Settings',
+                            label: l10n?.openSettings ?? 'Open Settings',
                             onPressed: () {
                               Geolocator.openAppSettings();
                             },
@@ -316,8 +319,8 @@ class _NotificationSettings extends ConsumerWidget {
         // so users can opt into shloka-only notifications).
         SettingsSwitchTile(
           icon: Icons.menu_book_rounded,
-          title: 'Daily Shloka',
-          subtitle: 'Get a daily spiritual verse',
+          title: l10n?.dailyShloka ?? 'Daily Shloka',
+          subtitle: l10n?.dailyShlokaSubtitle ?? 'Get a daily spiritual verse',
           value: ref.watch(shlokaNotificationEnabledProvider),
           onChanged: (val) async {
             if (val) {
@@ -325,9 +328,10 @@ class _NotificationSettings extends ConsumerWidget {
               if (!granted) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text(
-                        'Notification permission denied. Please enable it in system settings.',
+                        l10n?.notificationPermissionDenied ??
+                            'Notification permission denied. Please enable it in system settings.',
                       ),
                     ),
                   );
@@ -349,7 +353,8 @@ class _NotificationSettings extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
+                      l10n?.dailyShlokaToggleFailed(val ? 'on' : 'off', e.toString()) ??
+                          'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
                     ),
                   ),
                 );
@@ -364,8 +369,9 @@ class _NotificationSettings extends ConsumerWidget {
         // so users can opt into festival-only notifications).
         SettingsSwitchTile(
           icon: Icons.celebration_rounded,
-          title: 'Festival Reminders',
-          subtitle: 'Notify only for festivals, on the day or before',
+          title: l10n?.festivalReminders ?? 'Festival Reminders',
+          subtitle: l10n?.festivalRemindersSubtitle ??
+              'Notify only for festivals, on the day or before',
           value: ref.watch(festivalNotificationEnabledProvider),
           onChanged: (val) async {
             if (val) {
@@ -373,9 +379,10 @@ class _NotificationSettings extends ConsumerWidget {
               if (!granted) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text(
-                        'Notification permission denied. Please enable it in system settings.',
+                        l10n?.notificationPermissionDenied ??
+                            'Notification permission denied. Please enable it in system settings.',
                       ),
                     ),
                   );
@@ -397,7 +404,8 @@ class _NotificationSettings extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Could not turn Festival Reminders ${val ? 'on' : 'off'} ($e). Please try again.',
+                      l10n?.festivalRemindersToggleFailed(val ? 'on' : 'off', e.toString()) ??
+                          'Could not turn Festival Reminders ${val ? 'on' : 'off'} ($e). Please try again.',
                     ),
                   ),
                 );
@@ -411,9 +419,9 @@ class _NotificationSettings extends ConsumerWidget {
           const SettingsDivider(),
           SettingsActionTile(
             icon: Icons.schedule_rounded,
-            title: 'Festival Reminder Time',
+            title: l10n?.festivalReminderTime ?? 'Festival Reminder Time',
             trailing: Text(
-              _festivalTimingLabel(ref.watch(festivalTimingProvider)),
+              _festivalTimingLabel(ref.watch(festivalTimingProvider), l10n),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.end,
@@ -480,7 +488,8 @@ class _NotificationSettings extends ConsumerWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'Could not update notification time ($e). Please try again.',
+                          l10n?.notificationTimeUpdateFailed(e.toString()) ??
+                              'Could not update notification time ($e). Please try again.',
                         ),
                       ),
                     );
@@ -496,28 +505,29 @@ class _NotificationSettings extends ConsumerWidget {
     );
   }
 
-  String _festivalTimingLabel(int timing) {
+  String _festivalTimingLabel(int timing, [AppLocalizations? l10n]) {
     if (timing == FestivalReminderTiming.dayBefore.index) {
-      return 'Day before';
+      return l10n?.festivalReminderDayBefore ?? 'Day before';
     }
     if (timing == FestivalReminderTiming.both.index) {
-      return 'Both';
+      return l10n?.festivalReminderBoth ?? 'Both';
     }
-    return 'On the day';
+    return l10n?.festivalReminderOnDay ?? 'On the day';
   }
 
   Future<void> _showFestivalTimingPicker(
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final current = ref.read(festivalTimingProvider);
     final notificationService = ref.read(notificationServiceProvider);
 
     await SettingsBottomSheet.show(
       context: context,
-      title: 'Festival Reminder Time',
+      title: l10n?.festivalReminderTime ?? 'Festival Reminder Time',
       children: FestivalReminderTiming.values.map((timing) {
-        final label = _festivalTimingLabel(timing.index);
+        final label = _festivalTimingLabel(timing.index, l10n);
         return SettingsPickerItem(
           title: label,
           isSelected: timing.index == current,
@@ -532,7 +542,8 @@ class _NotificationSettings extends ConsumerWidget {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                      'Could not update reminder time ($e). Please try again.',
+                      l10n?.reminderTimeUpdateFailed(e.toString()) ??
+                          'Could not update reminder time ($e). Please try again.',
                     ),
                   ),
                 );
@@ -861,9 +872,10 @@ class _HinduMonthSystemSetting extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final monthSystem = ref.watch(hinduMonthSystemProvider);
+    final l10n = AppLocalizations.of(context);
     return SettingsActionTile(
       icon: Icons.date_range_rounded,
-      title: 'Hindu Month System',
+      title: l10n?.hinduMonthSystem ?? 'Hindu Month System',
       trailing: Text(
         monthSystem.label,
         style: context.textTheme.bodyMedium?.copyWith(
@@ -879,12 +891,14 @@ class _HinduMonthSystemSetting extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final currentSystem = ref.read(hinduMonthSystemProvider);
 
     await SettingsBottomSheet.show(
       context: context,
-      title: 'Hindu Month System',
-      subtitle: 'Choose how months are named during Krishna Paksha',
+      title: l10n?.hinduMonthSystem ?? 'Hindu Month System',
+      subtitle: l10n?.hinduMonthSystemSubtitle ??
+          'Choose how months are named during Krishna Paksha',
       children: HinduMonthSystem.values.map((system) {
         return SettingsPickerItem(
           title: system.label,
@@ -908,9 +922,10 @@ class _HinduYearEraSetting extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final yearEra = ref.watch(hinduYearEraProvider);
+    final l10n = AppLocalizations.of(context);
     return SettingsActionTile(
       icon: Icons.calendar_month_rounded,
-      title: 'Hindu Year Era',
+      title: l10n?.hinduYearEra ?? 'Hindu Year Era',
       trailing: Text(
         yearEra.shortLabel,
         style: context.textTheme.bodyMedium?.copyWith(
@@ -926,12 +941,14 @@ class _HinduYearEraSetting extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final currentEra = ref.read(hinduYearEraProvider);
 
     await SettingsBottomSheet.show(
       context: context,
-      title: 'Hindu Year Era',
-      subtitle: 'Choose the calendar era for year display',
+      title: l10n?.hinduYearEra ?? 'Hindu Year Era',
+      subtitle: l10n?.hinduYearEraSubtitle ??
+          'Choose the calendar era for year display',
       children: HinduYearEra.values.map((era) {
         return SettingsPickerItem(
           title: era.label,
@@ -955,13 +972,14 @@ class _TithiDisplayModeSetting extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final displayMode = ref.watch(tithiDisplayModeProvider);
+    final l10n = AppLocalizations.of(context);
     return SettingsActionTile(
       icon: Icons.calendar_view_day_rounded,
-      title: 'Tithi Display',
+      title: l10n?.tithiDisplay ?? 'Tithi Display',
       trailing: Text(
         displayMode == TithiDisplayMode.pakshaBased
-            ? 'Paksha (1-15)'
-            : '30 Days',
+            ? (l10n?.tithiDisplayPakshaRange ?? 'Paksha (1-15)')
+            : (l10n?.tithiDisplayThirtyDays ?? '30 Days'),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
           fontWeight: FontWeight.bold,
@@ -975,20 +993,24 @@ class _TithiDisplayModeSetting extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final currentMode = ref.read(tithiDisplayModeProvider);
 
     await SettingsBottomSheet.show(
       context: context,
-      title: 'Tithi Display',
-      subtitle: 'Choose how tithis are numbered in the calendar',
+      title: l10n?.tithiDisplay ?? 'Tithi Display',
+      subtitle: l10n?.tithiDisplaySubtitle ??
+          'Choose how tithis are numbered in the calendar',
       children: TithiDisplayMode.values.map((mode) {
         return SettingsPickerItem(
           title: mode == TithiDisplayMode.pakshaBased
-              ? 'Paksha Based'
-              : '30 Days',
+              ? (l10n?.tithiDisplayPakshaBased ?? 'Paksha Based')
+              : (l10n?.tithiDisplayThirtyDays ?? '30 Days'),
           subtitle: mode == TithiDisplayMode.pakshaBased
-              ? 'Show 1-15 for each paksha separately'
-              : 'Show 1-30 continuously',
+              ? (l10n?.tithiDisplayPakshaDescription ??
+                  'Show 1-15 for each paksha separately')
+              : (l10n?.tithiDisplayContinuousDescription ??
+                  'Show 1-30 continuously'),
           isSelected: mode == currentMode,
           onTap: () async {
             await ref
@@ -1058,13 +1080,16 @@ Future<void> _showCalendarSystemPicker(
   WidgetRef ref, {
   required bool isPrimary,
 }) async {
+  final l10n = AppLocalizations.of(context);
   final currentSystem = isPrimary
       ? ref.read(primaryCalendarSystemProvider)
       : ref.read(secondaryCalendarSystemProvider);
 
   await SettingsBottomSheet.show(
     context: context,
-    title: isPrimary ? 'Select Primary Calendar' : 'Select Secondary Calendar',
+    title: isPrimary
+        ? (l10n?.selectPrimaryCalendar ?? 'Select Primary Calendar')
+        : (l10n?.selectSecondaryCalendar ?? 'Select Secondary Calendar'),
     children: AppCalendarSystem.values.map((system) {
       return SettingsPickerItem(
         title: system.label,
@@ -1119,22 +1144,24 @@ class _ExportFestivalsSetting extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return SettingsActionTile(
       icon: Icons.ios_share_rounded,
-      title: 'Export Festivals (JSON)',
-      subtitle: 'Save all festivals with Panchang details to a file',
+      title: l10n?.exportFestivalsJson ?? 'Export Festivals (JSON)',
+      subtitle: l10n?.exportFestivalsSubtitle ?? 'Save all festivals with Panchang details to a file',
       onTap: () => _showYearPicker(context, ref),
     );
   }
 
   Future<void> _showYearPicker(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
     final thisYear = DateTime.now().year;
     final years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
 
     await SettingsBottomSheet.show(
       context: context,
-      title: 'Export Festivals',
-      subtitle: 'First occurrence of each festival in the chosen year',
+      title: l10n?.exportFestivals ?? 'Export Festivals',
+      subtitle: l10n?.exportFestivalsSubtitleYear ?? 'First occurrence of each festival in the chosen year',
       children: years.map((year) {
         return SettingsPickerItem(
           title: year.toString(),
@@ -1153,6 +1180,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
     WidgetRef ref,
     int year,
   ) async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
 
     try {
@@ -1164,7 +1192,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
       final festivals = ref.read(festivalProvider);
       if (festivals.isEmpty) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('No festivals to export')),
+          SnackBar(content: Text(l10n?.noFestivalsToExport ?? 'No festivals to export')),
         );
         return;
       }
@@ -1186,7 +1214,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
           builder: (dialogContext) => PopScope(
             canPop: false,
             child: AlertDialog(
-              title: Text('Exporting $year'),
+              title: Text(l10n?.exportingYear(year.toString()) ?? 'Exporting $year'),
               content: ValueListenableBuilder<int>(
                 valueListenable: progress,
                 builder: (_, done, _) => Column(
@@ -1198,14 +1226,14 @@ class _ExportFestivalsSetting extends ConsumerWidget {
                           : done / festivals.length,
                     ),
                     const SizedBox(height: 12),
-                    Text('$done / ${festivals.length} festivals'),
+                    Text(l10n?.festivalsExportedProgress(done, festivals.length) ?? '$done / ${festivals.length} festivals'),
                   ],
                 ),
               ),
               actions: [
                 TextButton(
                   onPressed: () => cancelled = true,
-                  child: const Text('Cancel'),
+                  child: Text(l10n?.cancel ?? 'Cancel'),
                 ),
               ],
             ),
@@ -1236,7 +1264,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
 
       if (json == null) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Export cancelled')),
+          SnackBar(content: Text(l10n?.exportCancelled ?? 'Export cancelled')),
         );
         return;
       }
@@ -1251,7 +1279,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
       var pickerFailed = false;
       try {
         savedPath = await FilePicker.saveFile(
-          dialogTitle: 'Save festivals $year',
+          dialogTitle: l10n?.saveFestivalsYear(year.toString()) ?? 'Save festivals $year',
           fileName: filename,
           type: FileType.custom,
           allowedExtensions: ['json'],
@@ -1266,14 +1294,14 @@ class _ExportFestivalsSetting extends ConsumerWidget {
 
       if (savedPath == null && kIsWeb && !pickerFailed) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Download started')),
+          SnackBar(content: Text(l10n?.downloadStarted ?? 'Download started')),
         );
         return;
       }
 
       if (savedPath == null && !pickerFailed) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Export cancelled')),
+          SnackBar(content: Text(l10n?.exportCancelled ?? 'Export cancelled')),
         );
         return;
       }
@@ -1282,7 +1310,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
       savedPath ??= await saveTextToDocuments(json, filename);
       if (savedPath == null || !context.mounted) {
         messenger.showSnackBar(
-          const SnackBar(content: Text('Could not save export file')),
+          SnackBar(content: Text(l10n?.couldNotSaveExportFile ?? 'Could not save export file')),
         );
         return;
       }
@@ -1295,12 +1323,12 @@ class _ExportFestivalsSetting extends ConsumerWidget {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: const Text('Saved'),
+          title: Text(l10n?.saved ?? 'Saved'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${festivals.length} festivals exported for $year.'),
+              Text(l10n?.festivalsExportedForYear(festivals.length, year.toString()) ?? '${festivals.length} festivals exported for $year.'),
               const SizedBox(height: 8),
               Text(
                 filename,
@@ -1320,7 +1348,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Done'),
+              child: Text(l10n?.done ?? 'Done'),
             ),
             if (sharePath != null)
               TextButton(
@@ -1329,13 +1357,14 @@ class _ExportFestivalsSetting extends ConsumerWidget {
                   await SharePlus.instance.share(
                     ShareParams(
                       files: [XFile(sharePath, mimeType: 'application/json')],
-                      subject: 'Tithi festivals $year',
-                      text:
+                      subject: l10n?.festivalExportShareSubject(year.toString()) ??
+                          'Tithi festivals $year',
+                      text: l10n?.festivalExportShareText(year.toString()) ??
                           'Tithi festivals $year with Panchang details (JSON)',
                     ),
                   );
                 },
-                child: const Text('Share'),
+                child: Text(l10n?.share ?? 'Share'),
               ),
           ],
         ),
@@ -1343,7 +1372,7 @@ class _ExportFestivalsSetting extends ConsumerWidget {
     } catch (e) {
       debugPrint('Festival export failed: $e');
       messenger.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
+        SnackBar(content: Text(l10n?.exportFailed(e.toString()) ?? 'Export failed: $e')),
       );
     }
   }

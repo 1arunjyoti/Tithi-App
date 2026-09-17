@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_en.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
@@ -13,6 +13,7 @@ import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
 import '../services/moon_phase_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/tithi_localization.dart';
 import 'moon_animation_widget.dart';
 
 /// Bengali date for the sheet header. Only resolves when Bengali is the
@@ -46,15 +47,18 @@ final hinduInstantLabelProvider = FutureProvider.autoDispose
       try {
         final service = ref.read(hinduCalendarServiceProvider);
         final monthSystem = ref.watch(hinduMonthSystemProvider);
+        final locale =
+            ref.watch(localeProvider) ??
+            WidgetsBinding.instance.platformDispatcher.locale;
+        final l10n = await AppLocalizations.delegate.load(locale);
         final hDate = await service.calculateDate(arg.instant);
         final paksha = arg.tithiIndex <= 15 ? 'Shukla' : 'Krishna';
         final num = arg.tithiIndex <= 15 ? arg.tithiIndex : arg.tithiIndex - 15;
-        final masa = displayMasaName(
-          hDate.masa,
-          paksha,
-          monthSystem,
-        ).replaceAll('_', ' ');
-        return '$masa ${PanchangData.tithiNameFor(num, paksha)}';
+        final masa = localizedHinduMonthName(
+          displayMasaName(hDate.masa, paksha, monthSystem).replaceAll('_', ' '),
+          l10n,
+        );
+        return '$masa ${localizedTithiName(num, paksha, l10n)}';
       } catch (_) {
         return null;
       }
@@ -93,7 +97,12 @@ final bengaliInstantLabelProvider = FutureProvider.autoDispose
 /// Full timing value for an instant: clock time plus the primary-calendar
 /// date label, falling back to the Gregorian date while resolving (or when
 /// Gregorian is primary).
-String _instantValue(WidgetRef ref, DateTime instant, int tithiIndex) {
+String _instantValue(
+  WidgetRef ref,
+  DateTime instant,
+  int tithiIndex,
+  String locale,
+) {
   final label =
       ref
           .watch(
@@ -104,8 +113,8 @@ String _instantValue(WidgetRef ref, DateTime instant, int tithiIndex) {
           )
           .valueOrNull ??
       ref.watch(bengaliInstantLabelProvider(instant)).valueOrNull;
-  return '${TithiDetailSheet._timeFormat.format(instant)}, '
-      '${label ?? TithiDetailSheet._dateShortFormat.format(instant)}';
+  return '${formatLocalizedDate(instant, 'jm', locale)}, '
+      '${label ?? formatLocalizedDate(instant, 'MMM d', locale)}';
 }
 
 /// Hindu era year for the sheet's primary-calendar date line. Only resolves
@@ -148,14 +157,10 @@ class TithiDetailSheet extends ConsumerWidget {
 
   const TithiDetailSheet({super.key, required this.panchang});
 
-  static final DateFormat _timeFormat = DateFormat('h:mm a');
-  static final DateFormat _dateShortFormat = DateFormat('MMM d');
-  static final DateFormat _gregFullFormat = DateFormat('d MMMM y');
-  static final DateFormat _weekdayFormat = DateFormat.EEEE();
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
+    final locale = l10n.localeName;
     final coords = ref.watch(resolvedCoordinatesProvider);
     final timingsAsync = ref.watch(
       tithiTimingsProvider((
@@ -180,11 +185,19 @@ class TithiDetailSheet extends ConsumerWidget {
         (selectedLocale ?? WidgetsBinding.instance.platformDispatcher.locale)
             .languageCode ==
         'bn';
-    final displayMasa = displayMasaName(
-      panchang.masa,
+    final displayMasa = localizedHinduMonthName(
+      displayMasaName(
+        panchang.masa,
+        panchang.paksha,
+        ref.watch(hinduMonthSystemProvider),
+      ).replaceAll('_', ' '),
+      l10n,
+    );
+    final displayTithiName = localizedTithiName(
+      panchang.tithiNumber,
       panchang.paksha,
-      ref.watch(hinduMonthSystemProvider),
-    ).replaceAll('_', ' ');
+      l10n,
+    );
     final bengali = ref
         .watch(bengaliDateForSheetProvider(panchang.date))
         .valueOrNull;
@@ -198,14 +211,12 @@ class TithiDetailSheet extends ConsumerWidget {
       rawTithi: panchang.rawTithi,
     );
     final illuminationPct = (illumination * 100).toStringAsFixed(1);
-    final phaseWord = isShukla
-        ? (l10n?.waxing ?? 'Waxing')
-        : (l10n?.waning ?? 'Waning');
+    final phaseWord = isShukla ? l10n.waxing : l10n.waning;
 
     // Header date line follows the primary calendar (date, month, year) in
     // hero-title styling. Gregorian/Hindu slots are sync; the Hindu year and
     // Bengali date resolve async and join when ready (weekday alone meanwhile).
-    final weekday = _weekdayFormat.format(panchang.date);
+    final weekday = formatLocalizedDate(panchang.date, 'EEEE', locale);
     final dateBaseStyle = TextStyle(
       fontSize: 22,
       fontWeight: FontWeight.w600,
@@ -224,14 +235,14 @@ class TithiDetailSheet extends ConsumerWidget {
       case AppCalendarSystem.gregorian:
         dateSpans.add(
           TextSpan(
-            text: _gregFullFormat.format(panchang.date),
+            text: formatLocalizedDate(panchang.date, 'd MMMM y', locale),
             style: dateBaseStyle,
           ),
         );
       case AppCalendarSystem.hindu:
         dateSpans.add(
           TextSpan(
-            text: '$displayMasa ${panchang.tithiName}'.trim(),
+            text: '$displayMasa $displayTithiName'.trim(),
             style: dateAccentStyle,
           ),
         );
@@ -369,8 +380,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '${l10n?.pakshaWithName(panchang.paksha) ?? '${panchang.paksha} Paksha'}'
-                                      ' · ${panchang.tithiName}',
+                                      '${l10n.pakshaWithName(panchang.isShukla ? l10n.themeShukla : l10n.themeKrishna)} · $displayTithiName',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w600,
@@ -381,7 +391,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '$phaseWord · $illuminationPct% illuminated',
+                                      '$phaseWord · ${l10n.illuminatedPercent(illuminationPct)}',
                                       style: TextStyle(
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w500,
@@ -438,16 +448,16 @@ class TithiDetailSheet extends ConsumerWidget {
                                   _SheetChip(
                                     icon: Icons.wb_sunny_rounded,
                                     text:
-                                        '${l10n?.sunrise ?? 'Sunrise'} '
-                                        '${_timeFormat.format(panchang.sunrise!)}',
+                                        '${l10n.sunrise} '
+                                        '${formatLocalizedDate(panchang.sunrise!, 'jm', locale)}',
                                     highContrast: highContrast,
                                   ),
                                 if (panchang.sunset != null)
                                   _SheetChip(
                                     icon: Icons.nightlight_round,
                                     text:
-                                        '${l10n?.sunset ?? 'Sunset'} '
-                                        '${_timeFormat.format(panchang.sunset!)}',
+                                        '${l10n.sunset} '
+                                        '${formatLocalizedDate(panchang.sunset!, 'jm', locale)}',
                                     highContrast: highContrast,
                                   ),
                               ],
@@ -479,7 +489,7 @@ class TithiDetailSheet extends ConsumerWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'TITHI TIMINGS',
+                          l10n.tithiTimings,
                           style: TextStyle(
                             fontSize: 11,
                             letterSpacing: 1.5,
@@ -509,8 +519,14 @@ class TithiDetailSheet extends ConsumerWidget {
                             ref,
                             timings.start,
                             panchang.tithiIndex,
+                            locale,
                           ),
-                          ends: _instantValue(ref, end, panchang.tithiIndex),
+                          ends: _instantValue(
+                            ref,
+                            end,
+                            panchang.tithiIndex,
+                            locale,
+                          ),
                         );
                       },
                       loading: () => _TimingsCard(highContrast: highContrast),
@@ -536,12 +552,31 @@ class TithiDetailSheet extends ConsumerWidget {
                               }
                               return _TransitionCard(
                                 highContrast: highContrast,
-                                headline:
-                                    '${panchang.transitionTithiName} begins at '
-                                    '${_timeFormat.format(panchang.tithiTransitionTime!)}',
-                                subline:
-                                    '${panchang.transitionTithiName} ends '
-                                    '${_instantValue(ref, nextTimings.end, panchang.transitionTithiIndex!)}',
+                                headline: l10n.tithiBeginsAt(
+                                  localizedTithiName(
+                                    panchang.transitionTithiNumber,
+                                    panchang.transitionPaksha,
+                                    l10n,
+                                  ),
+                                  formatLocalizedDate(
+                                    panchang.tithiTransitionTime!,
+                                    'jm',
+                                    locale,
+                                  ),
+                                ),
+                                subline: l10n.tithiEndsAtDateTime(
+                                  localizedTithiName(
+                                    panchang.transitionTithiNumber,
+                                    panchang.transitionPaksha,
+                                    l10n,
+                                  ),
+                                  _instantValue(
+                                    ref,
+                                    nextTimings.end,
+                                    panchang.transitionTithiIndex!,
+                                    locale,
+                                  ),
+                                ),
                               );
                             },
                             loading: () =>
@@ -574,9 +609,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Udaya tithi: the tithi prevailing at sunrise. A short tithi '
-                              'can begin and end between two sunrises — both tithis are '
-                              'shown above so none is skipped.',
+                              l10n.udayaTithiExplanation,
                               style: TextStyle(
                                 fontSize: 12.5,
                                 color: context.colors.onSurface.withValues(
@@ -668,6 +701,7 @@ class _TimingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final border = context.colors.onSurface.withValues(
       alpha: highContrast ? 0.2 : 0.1,
     );
@@ -731,9 +765,17 @@ class _TimingsCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            cell(icon: Icons.access_time, label: 'BEGINS', value: begins),
+            cell(
+              icon: Icons.access_time,
+              label: l10n.beginsUppercase,
+              value: begins,
+            ),
             Container(width: 1, color: border),
-            cell(icon: Icons.access_time_filled, label: 'ENDS', value: ends),
+            cell(
+              icon: Icons.access_time_filled,
+              label: l10n.endsUppercase,
+              value: ends,
+            ),
           ],
         ),
       ),
@@ -756,6 +798,7 @@ class _TransitionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final primary = context.colors.primary;
     return Container(
       padding: const EdgeInsets.all(14),
@@ -780,7 +823,7 @@ class _TransitionCard extends StatelessWidget {
                     Icon(Icons.swap_horiz, size: 16, color: primary),
                     const SizedBox(width: 6),
                     Text(
-                      'TRANSITION',
+                      l10n.transition,
                       style: TextStyle(
                         fontSize: 11,
                         letterSpacing: 1.5,

@@ -12,6 +12,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Tithi';
 
   @override
+  String get exportFestivalsJson => 'Export Festivals (JSON)';
+
+  @override
+  String get exportFestivalsSubtitle =>
+      'Save all festivals with Panchang details to a file';
+
+  @override
+  String get exportFestivals => 'Export Festivals';
+
+  @override
+  String get exportFestivalsSubtitleYear =>
+      'First occurrence of each festival in the chosen year';
+
+  @override
   String get vedaCalendar => 'Vedic Calendar';
 
   @override
@@ -115,6 +129,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tithi => 'Tithi';
+
+  @override
+  String get tithiPratipada => 'Pratipada';
+
+  @override
+  String get tithiDwitiya => 'Dwitiya';
+
+  @override
+  String get tithiTritiya => 'Tritiya';
+
+  @override
+  String get tithiChaturthi => 'Chaturthi';
+
+  @override
+  String get tithiPanchami => 'Panchami';
+
+  @override
+  String get tithiShashthi => 'Shashthi';
+
+  @override
+  String get tithiSaptami => 'Saptami';
+
+  @override
+  String get tithiAshtami => 'Ashtami';
+
+  @override
+  String get tithiNavami => 'Navami';
+
+  @override
+  String get tithiDashami => 'Dashami';
+
+  @override
+  String get tithiEkadashi => 'Ekadashi';
+
+  @override
+  String get tithiDwadashi => 'Dwadashi';
+
+  @override
+  String get tithiTrayodashi => 'Trayodashi';
+
+  @override
+  String get tithiChaturdashi => 'Chaturdashi';
+
+  @override
+  String get tithiPurnima => 'Purnima';
+
+  @override
+  String get tithiAmavasya => 'Amavasya';
+
+  @override
+  String get tithiUnknown => 'Unknown';
 
   @override
   String get festival => 'Festival';
@@ -462,6 +527,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get today => 'Today';
 
   @override
+  String illuminatedPercent(String percent) {
+    return '$percent% illuminated';
+  }
+
+  @override
+  String get nextTithi => 'Next tithi';
+
+  @override
+  String atTime(String time) {
+    return 'at $time';
+  }
+
+  @override
+  String get yesterday => 'Yesterday';
+
+  @override
   String get tomorrow => 'Tomorrow';
 
   @override
@@ -718,4 +799,660 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get orbit => 'Orbit';
+
+  @override
+  String get festivalCountdowns => 'Festival Countdowns';
+
+  @override
+  String get addCountdown => 'Add countdown';
+
+  @override
+  String get countdownHeading => 'Festival Countdowns';
+
+  @override
+  String get zeroDays => '0';
+
+  @override
+  String daysRemaining(Object days) {
+    return '$days days to go';
+  }
+
+  @override
+  String get removeFromHomeScreen => 'Remove from home screen';
+
+  @override
+  String get removeCountdown => 'Remove countdown';
+
+  @override
+  String get countdownRemoved => 'Countdown removed';
+
+  @override
+  String get searchFestivalName => 'Search festival name';
+
+  @override
+  String get noFestivalsFound => 'No festivals found';
+
+  @override
+  String get noCountdownsYet => 'No countdowns yet';
+
+  @override
+  String get allFestivals => 'All Festivals';
+
+  @override
+  String get searchFestivalsHint => 'Search festivals';
+
+  @override
+  String get couldNotLoadFestivals =>
+      'Could not load festivals. Please try again.';
+
+  @override
+  String get oopsSomethingWentWrong => 'Oops! Something went wrong';
+
+  @override
+  String get unexpectedErrorOccurred =>
+      'An unexpected error occurred. Please try again.';
+
+  @override
+  String get somethingWentWrong => 'Something went wrong';
+
+  @override
+  String get unableToOpenPrivacyPolicy =>
+      'Unable to open the privacy policy website.';
+
+  @override
+  String failedToShare(String error) {
+    return 'Failed to share: $error';
+  }
+
+  @override
+  String celebratingFestivalWithTithi(String festivalName) {
+    return 'Celebrating $festivalName with Tithi App!';
+  }
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get addWidgetManually => 'Add Widget Manually';
+
+  @override
+  String get widgetPinRequested =>
+      'Widget pin requested — confirm on home screen';
+
+  @override
+  String get couldNotPinWidget =>
+      'Could not pin widget. Try adding manually: long-press → Widgets → Tithi';
+
+  @override
+  String get infoTooltip => 'Info';
+
+  @override
+  String get dismissTooltip => 'Dismiss';
+
+  @override
+  String get solarSystemNotAvailableOnWeb =>
+      'Solar System is not available on web';
+
+  @override
+  String get eclipseScreenNotAvailableOnWeb =>
+      'Eclipse screen is not available on web';
+
+  @override
+  String get findingNextOccurrence => 'Finding next occurrence...';
+
+  @override
+  String get goToNextOccurrence => 'Go to next occurrence';
+
+  @override
+  String get couldNotFindUpcomingOccurrence =>
+      'Could not find upcoming occurrence within a year.';
+
+  @override
+  String get noFestivalsToExport => 'No festivals to export';
+
+  @override
+  String exportingYear(String year) {
+    return 'Exporting $year';
+  }
+
+  @override
+  String festivalsExportedProgress(int done, int total) {
+    return '$done / $total festivals';
+  }
+
+  @override
+  String get exportCancelled => 'Export cancelled';
+
+  @override
+  String get downloadStarted => 'Download started';
+
+  @override
+  String get couldNotSaveExportFile => 'Could not save export file';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String festivalsExportedForYear(int count, String year) {
+    return '$count festivals exported for $year.';
+  }
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get share => 'Share';
+
+  @override
+  String exportFailed(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String saveFestivalsYear(String year) {
+    return 'Save festivals $year';
+  }
+
+  @override
+  String get aboutBuiltForDailyPractice => 'Built for daily practice';
+
+  @override
+  String get aboutDailyPracticeDescription =>
+      'Tithi blends traditional Panchang wisdom with modern clarity, so your rituals and observances stay on time and effortless.';
+
+  @override
+  String get aboutWhatsInside => 'What\'s inside';
+
+  @override
+  String get aboutFeaturesDescription =>
+      'Accurate tithi and nakshatra tracking, festival countdowns, local sunrise and sunset, and calm daily inspiration.';
+
+  @override
+  String get detailedPrivacyPolicy => 'Detailed privacy policy';
+
+  @override
+  String get readFullPrivacyPolicy => 'Read the full policy on our website';
+
+  @override
+  String get aboutTagline => 'Vedic calendar for modern life';
+
+  @override
+  String get themePurple => 'Purple';
+
+  @override
+  String get notificationPermissionDenied =>
+      'Notification permission denied. Please enable it in system settings.';
+
+  @override
+  String notificationToggleFailed(String state, String error) {
+    String _temp0 = intl.Intl.selectLogic(state, {'on': 'on', 'other': 'off'});
+    return 'Could not turn notifications $_temp0 ($error). Please try again.';
+  }
+
+  @override
+  String get dailyShloka => 'Daily Shloka';
+
+  @override
+  String get dailyShlokaSubtitle => 'Get a daily spiritual verse';
+
+  @override
+  String dailyShlokaToggleFailed(String state, String error) {
+    String _temp0 = intl.Intl.selectLogic(state, {'on': 'on', 'other': 'off'});
+    return 'Could not turn Daily Shloka $_temp0 ($error). Please try again.';
+  }
+
+  @override
+  String get festivalReminders => 'Festival Reminders';
+
+  @override
+  String get festivalRemindersSubtitle =>
+      'Notify only for festivals, on the day or before';
+
+  @override
+  String festivalRemindersToggleFailed(String state, String error) {
+    String _temp0 = intl.Intl.selectLogic(state, {'on': 'on', 'other': 'off'});
+    return 'Could not turn Festival Reminders $_temp0 ($error). Please try again.';
+  }
+
+  @override
+  String get festivalReminderTime => 'Festival Reminder Time';
+
+  @override
+  String notificationTimeUpdateFailed(String error) {
+    return 'Could not update notification time ($error). Please try again.';
+  }
+
+  @override
+  String get festivalReminderDayBefore => 'Day before';
+
+  @override
+  String get festivalReminderBoth => 'Both';
+
+  @override
+  String get festivalReminderOnDay => 'On the day';
+
+  @override
+  String reminderTimeUpdateFailed(String error) {
+    return 'Could not update reminder time ($error). Please try again.';
+  }
+
+  @override
+  String get hinduMonthSystem => 'Hindu Month System';
+
+  @override
+  String get hinduMonthSystemSubtitle =>
+      'Choose how months are named during Krishna Paksha';
+
+  @override
+  String get hinduYearEra => 'Hindu Year Era';
+
+  @override
+  String get hinduYearEraSubtitle => 'Choose the calendar era for year display';
+
+  @override
+  String get tithiDisplay => 'Tithi Display';
+
+  @override
+  String get tithiDisplayPakshaRange => 'Paksha (1-15)';
+
+  @override
+  String get tithiDisplaySubtitle =>
+      'Choose how tithis are numbered in the calendar';
+
+  @override
+  String get tithiDisplayPakshaBased => 'Paksha Based';
+
+  @override
+  String get tithiDisplayPakshaDescription =>
+      'Show 1-15 for each paksha separately';
+
+  @override
+  String get tithiDisplayContinuousDescription => 'Show 1-30 continuously';
+
+  @override
+  String festivalExportShareSubject(String year) {
+    return 'Tithi festivals $year';
+  }
+
+  @override
+  String festivalExportShareText(String year) {
+    return 'Tithi festivals $year with Panchang details (JSON)';
+  }
+
+  @override
+  String countdownAddedForFestival(String festivalName) {
+    return 'Countdown added for $festivalName';
+  }
+
+  @override
+  String festivalAlreadyInCountdowns(String festivalName) {
+    return '$festivalName is already in your countdowns';
+  }
+
+  @override
+  String get openStreetMapAttribution => 'OpenStreetMap contributors';
+
+  @override
+  String get moonScrubHint => 'Drag to explore • Double-tap resets';
+
+  @override
+  String moonIllumination(String percentage) {
+    return 'Illumination: $percentage%';
+  }
+
+  @override
+  String get dayUnitShort => 'd';
+
+  @override
+  String get hourUnitShort => 'h';
+
+  @override
+  String get minuteUnitShort => 'm';
+
+  @override
+  String durationHoursMinutesShort(int hours, int minutes) {
+    return '${hours}h ${minutes}m';
+  }
+
+  @override
+  String durationMinutesShort(int minutes) {
+    return '${minutes}m';
+  }
+
+  @override
+  String distanceAstronomicalUnits(String distance) {
+    return '$distance AU';
+  }
+
+  @override
+  String orbitalPeriodDaysShort(String days) {
+    return '${days}d';
+  }
+
+  @override
+  String orbitalPeriodYearsShort(String years) {
+    return '${years}y';
+  }
+
+  @override
+  String get vikramSamvat => 'Vikram Samvat';
+
+  @override
+  String get shakaEra => 'Shaka Era';
+
+  @override
+  String get bengaliEra => 'Bengali Era';
+
+  @override
+  String get selectYear => 'Select year';
+
+  @override
+  String bengaliEraYear(int year) {
+    return '$year Bangabda';
+  }
+
+  @override
+  String get monthJanuary => 'January';
+
+  @override
+  String get monthFebruary => 'February';
+
+  @override
+  String get monthMarch => 'March';
+
+  @override
+  String get monthApril => 'April';
+
+  @override
+  String get monthMay => 'May';
+
+  @override
+  String get monthJune => 'June';
+
+  @override
+  String get monthJuly => 'July';
+
+  @override
+  String get monthAugust => 'August';
+
+  @override
+  String get monthSeptember => 'September';
+
+  @override
+  String get monthOctober => 'October';
+
+  @override
+  String get monthNovember => 'November';
+
+  @override
+  String get monthDecember => 'December';
+
+  @override
+  String get weekdaySundayShort => 'SUN';
+
+  @override
+  String get weekdayMondayShort => 'MON';
+
+  @override
+  String get weekdayTuesdayShort => 'TUE';
+
+  @override
+  String get weekdayWednesdayShort => 'WED';
+
+  @override
+  String get weekdayThursdayShort => 'THU';
+
+  @override
+  String get weekdayFridayShort => 'FRI';
+
+  @override
+  String get weekdaySaturdayShort => 'SAT';
+
+  @override
+  String get sharedViaTithiApp => 'Shared via Tithi App';
+
+  @override
+  String get dailyWisdomShareMessage => 'Daily Wisdom — Tithi App';
+
+  @override
+  String get shareAsImage => 'Share as image';
+
+  @override
+  String get verseCardPicture => 'Verse card picture';
+
+  @override
+  String get shareAsText => 'Share as text';
+
+  @override
+  String get verseWithTranslation => 'Verse with translation';
+
+  @override
+  String get copyText => 'Copy text';
+
+  @override
+  String get copyVerseToClipboard => 'Copy verse to clipboard';
+
+  @override
+  String get couldNotCopyVerse => 'Could not copy verse';
+
+  @override
+  String get verseCopied => 'Verse copied';
+
+  @override
+  String chosenForFestival(String festivalName) {
+    return 'Chosen for $festivalName';
+  }
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
+  String get showMoreTranslations => 'Show more translations';
+
+  @override
+  String get hideTranslation => 'Hide translation';
+
+  @override
+  String get showTranslation => 'Show translation';
+
+  @override
+  String get showLessTitleCase => 'Show Less';
+
+  @override
+  String get readMore => 'Read More';
+
+  @override
+  String tithiNameWithNumber(String tithiName, int number) {
+    return '$tithiName (T$number)';
+  }
+
+  @override
+  String get masa => 'Masa';
+
+  @override
+  String get nakshatra => 'Nakshatra';
+
+  @override
+  String get begins => 'Begins';
+
+  @override
+  String get ends => 'Ends';
+
+  @override
+  String tithiWithNumber(int number) {
+    return 'Tithi $number';
+  }
+
+  @override
+  String get fastingVrat => 'Fasting / Vrat';
+
+  @override
+  String get mantra => 'Mantra';
+
+  @override
+  String get timingNote => 'Timing Note';
+
+  @override
+  String get timingNoteDescription =>
+      'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.';
+
+  @override
+  String get noFestivalsInNextThreeDays => 'No festivals in the next 3 days';
+
+  @override
+  String couldNotLoadFestivalsWithError(String error) {
+    return 'Could not load festivals: $error';
+  }
+
+  @override
+  String viewAllFestivalsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'View all $count festivals',
+      one: 'View all $count festival',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get viewAllFestivals => 'View all festivals';
+
+  @override
+  String get day => 'day';
+
+  @override
+  String festivalCountdownTitle(String title) {
+    return '$title Countdown';
+  }
+
+  @override
+  String festivalInDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'in $days days',
+      one: 'in 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchFestivalsVratsAndEvents =>
+      'Search for festivals, vrats, and events';
+
+  @override
+  String get homeScreenWidget => 'Home Screen Widget';
+
+  @override
+  String get homeWidgetCountdownDescription =>
+      'Add festival countdowns to your home screen';
+
+  @override
+  String get homeWidgetManualHint => 'Long-press home screen → Widgets → Tithi';
+
+  @override
+  String get homeWidgetManualInstructions =>
+      '1. Long-press on your home screen\n2. Tap \"Widgets\"\n3. Find \"Tithi\" and drag \"Festival Countdowns\" to your home screen\n\nThe widget shows all festivals from your Countdowns page.';
+
+  @override
+  String get unableToLoadMoonPhaseData => 'Unable to load moon phase data';
+
+  @override
+  String get countdownNow => 'Now';
+
+  @override
+  String countdownDaysHours(int days, int hours) {
+    return '${days}d ${hours}h';
+  }
+
+  @override
+  String get selected => 'Selected';
+
+  @override
+  String moonPhaseIlluminated(String phase, String percentage) {
+    return '$phase · $percentage% illuminated';
+  }
+
+  @override
+  String nextTithiAt(String tithiName, String time) {
+    return 'Next tithi $tithiName at $time';
+  }
+
+  @override
+  String tithiBeginsAt(String tithiName, String time) {
+    return '$tithiName begins at $time';
+  }
+
+  @override
+  String tithiEndsAtDateTime(String tithiName, String dateTime) {
+    return '$tithiName ends $dateTime';
+  }
+
+  @override
+  String get udayaTithiExplanation =>
+      'Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.';
+
+  @override
+  String get beginsUppercase => 'BEGINS';
+
+  @override
+  String get endsUppercase => 'ENDS';
+
+  @override
+  String get transition => 'TRANSITION';
+
+  @override
+  String get shuklaPakshaInitial => 'S';
+
+  @override
+  String get krishnaPakshaInitial => 'K';
+
+  @override
+  String windSpeedKph(double speed) {
+    return '$speed kph';
+  }
+
+  @override
+  String get tithiDisplayThirtyDays => '30 Days';
+
+  @override
+  String get couldNotCreateImage => 'Could not create image';
+
+  @override
+  String get shareVerse => 'Share verse';
+
+  @override
+  String get previousDaysVerse => 'Previous day\'s verse';
+
+  @override
+  String get nextDaysVerse => 'Next day\'s verse';
+
+  @override
+  String get shareCard => 'Share Card';
+
+  @override
+  String get homeWidgetCanPin => 'Add festival countdowns to your home screen';
+
+  @override
+  String get dailyWisdom => 'DAILY WISDOM';
+
+  @override
+  String get tithiTimings => 'TITHI TIMINGS';
+
+  @override
+  String get tithiBegins => 'BEGINS';
+
+  @override
+  String get tithiEnds => 'ENDS';
+
+  @override
+  String get tithiTransition => 'TRANSITION';
+
+  @override
+  String get udayaTithiExplainer =>
+      'Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.';
 }
