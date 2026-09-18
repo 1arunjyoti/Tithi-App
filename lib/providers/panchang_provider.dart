@@ -685,6 +685,161 @@ final currentPakshaProvider = Provider<AsyncValue<String>>((ref) {
   return ref.watch(todayPanchangProvider).whenData((data) => data.paksha);
 });
 
+bool _isSameDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+/// Current-time source for live-tithi evaluation. Defaults to the wall
+/// clock; tests override it with a fixed instant to simulate boundary
+/// crossings deterministically (widget-test pumps advance fake timers but
+/// not the wall clock, so time-travel assertions need this seam).
+final liveNowProvider = Provider<DateTime>((ref) => DateTime.now());
+
+/// Intraday tithi-change ticker for the live hero.
+///
+/// Watches today's single-day record and arms a single one-shot [Timer] for
+/// the next tithi boundary strictly in the future (transition instant, or —
+/// once flipped — the follow-on end of the incoming tithi on kshaya days,
+/// resolved through [tithiTimingsProvider] only then). Firing bumps the
+/// tick so [livePanchangProvider] relabels; the timer is cancelled and
+/// re-armed on every rebuild (date tap, midnight rollover, reload).
+/// Dormant while browsing non-today dates and on boundary-free (vriddhi)
+/// days. No polling, no FFI at fire time for the common single flip.
+class LiveTithiTickNotifier extends AutoDisposeNotifier<int> {
+  Timer? _timer;
+  int _tick = 0;
+
+  /// Grace after a boundary before flipping, mirroring the midnight
+  /// refresh's +1s: the stored instant is minute-precise, so firing
+  /// marginally late guarantees `now` compares past it.
+  static const _flipGrace = Duration(seconds: 1);
+
+  @override
+  int build() {
+    ref.onDispose(() {
+      _timer?.cancel();
+      _timer = null;
+    });
+    final selected = ref.watch(selectedDateProvider);
+    final today = ref.watch(todayDateProvider);
+    _timer?.cancel();
+    _timer = null;
+    if (!_isSameDay(selected, today)) return _tick;
+
+    final day = ref.watch(panchangForDateProvider(today)).valueOrNull;
+    if (day == null ||
+        !day.hasTithiTransition ||
+        day.tithiTransitionTime == null) {
+      return _tick;
+    }
+    final now = ref.watch(liveNowProvider);
+    final transitionTime = day.tithiTransitionTime!;
+    if (now.isBefore(transitionTime)) {
+      _arm(transitionTime, now);
+      return _tick;
+    }
+    // Already flipped: chain onto the incoming tithi's end when it is a
+    // second INTRADAY boundary (kshaya squeeze). A normal next-day end
+    // falls past tomorrow's sunrise and arms nothing — midnight rollover
+    // owns the date change.
+    final transitionIndex = day.transitionTithiIndex;
+    if (transitionIndex == null) return _tick;
+    final coords = ref.watch(resolvedCoordinatesProvider);
+    final followOnEnd = ref
+        .watch(
+          tithiTimingsProvider((
+            date: day.date,
+            tithiIndex: transitionIndex,
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          )),
+        )
+        .valueOrNull
+        ?.end;
+    if (followOnEnd == null) return _tick;
+    final nextSunrise = SunriseCalculator.calculateSunriseIST(
+      date: day.date.add(const Duration(days: 1)),
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+    );
+    if (followOnEnd.isAfter(transitionTime) &&
+        followOnEnd.isAfter(now) &&
+        followOnEnd.isBefore(nextSunrise)) {
+      _arm(followOnEnd, now);
+    }
+    return _tick;
+  }
+
+  void _arm(DateTime instant, DateTime now) {
+    final delay = instant.difference(now) + _flipGrace;
+    if (delay.isNegative) return;
+    _timer = Timer(delay, () {
+      _tick++;
+      state = _tick;
+    });
+  }
+}
+
+final liveTithiTickProvider =
+    NotifierProvider.autoDispose<LiveTithiTickNotifier, int>(
+      LiveTithiTickNotifier.new,
+    );
+
+/// Day record with the displayed label advanced to the tithi prevailing
+/// right now ([PanchangData.withLiveLabel]) — but only for today. Browsed
+/// dates stay frozen on their sunrise labels. Festivals, masa and the
+/// sunrise record are preserved untouched (sunrise pinning), so only the
+/// label — title, timings queries keyed by it, hero chip — goes live.
+///
+/// The kshaya follow-on boundary is resolved here (same [tithiTimingsProvider]
+/// instance the tick provider watches, so one lookup serves both) and only
+/// once flipped; pre-flip this costs zero extra FFI.
+final livePanchangProvider = FutureProvider.autoDispose
+    .family<PanchangData, DateTime>((ref, day) async {
+      ref.watch(liveTithiTickProvider);
+      final base = await ref.watch(panchangForDateProvider(day).future);
+      final today = ref.watch(todayDateProvider);
+      if (!_isSameDay(day, today)) return base;
+      final now = ref.watch(liveNowProvider);
+      DateTime? followOnTime;
+      int? followOnIndex;
+      if (base.hasTithiTransition &&
+          base.tithiTransitionTime != null &&
+          base.transitionTithiIndex != null &&
+          !now.isBefore(base.tithiTransitionTime!)) {
+        // Best-effort: a failing ephemeris lookup here must never take down
+        // the hero — the first flip needs zero FFI, so degrade to it.
+        try {
+          final coords = ref.watch(resolvedCoordinatesProvider);
+          final timings = await ref.watch(
+            tithiTimingsProvider((
+              date: base.date,
+              tithiIndex: base.transitionTithiIndex!,
+              latitude: coords.latitude,
+              longitude: coords.longitude,
+            )).future,
+          );
+          final nextSunrise = SunriseCalculator.calculateSunriseIST(
+            date: base.date.add(const Duration(days: 1)),
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          );
+          if (timings != null &&
+              timings.end.isAfter(base.tithiTransitionTime!) &&
+              timings.end.isBefore(nextSunrise)) {
+            followOnTime = timings.end;
+            followOnIndex = base.transitionTithiIndex! % 30 + 1;
+          }
+        } catch (_) {
+          // Follow-on stays unresolved: label holds the flipped-to tithi.
+        }
+      }
+      return base.withLiveLabel(
+        now,
+        followOnTime: followOnTime,
+        followOnIndex: followOnIndex,
+      );
+    });
+
 /// Batch provider for monthly panchang data
 /// Pre-loads entire month to eliminate N+1 query pattern in calendar.
 /// autoDispose with a 5-minute keepAlive: TableCalendar swipes back/forth

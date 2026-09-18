@@ -81,7 +81,10 @@ class PakshaHeroCard extends ConsumerWidget {
     final now = DateTime.now();
     final isToday = day == DateTime(now.year, now.month, now.day);
 
-    final panchangAsync = ref.watch(panchangForDateProvider(day));
+    // Live record: on today the displayed label advances intraday when a
+    // tithi boundary passes (see livePanchangProvider); browsed dates and
+    // the month-batch fallback below stay sunrise-pinned.
+    final panchangAsync = ref.watch(livePanchangProvider(day));
     final cityAsync = ref.watch(cityNameProvider);
     final primarySystem = ref.watch(primaryCalendarSystemProvider);
     final adaptiveGridHasDay =
@@ -340,23 +343,47 @@ class _HeroBody extends ConsumerWidget {
     // case the moon row keeps its current text-only layout.
     final artwork = _heroArtwork(panchang);
 
+    // Daytime-transition chip. When the transition exits the displayed
+    // label it is genuinely "next" ("Next tithi: Ashtami at 1:02 PM"). Once
+    // a live flip has made the transition's tithi current, calling it next
+    // would contradict the title — the chip instead states when it began.
     final chips = <Widget>[
       if (panchang.hasTithiTransition && panchang.tithiTransitionTime != null)
-        _HeroChip(
-          icon: Icons.arrow_forward_rounded,
-          text: l10n.nextTithi,
-          inlineIcon: true,
-          fontWeight: FontWeight.w800,
-          fontSize: 13,
-          highlight: localizedTithiName(
-            panchang.transitionTithiNumber,
-            panchang.transitionPaksha,
-            l10n,
+        if (panchang.transitionExitsLabel)
+          _HeroChip(
+            icon: Icons.arrow_forward_rounded,
+            text: l10n.nextTithi,
+            inlineIcon: true,
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            highlight: localizedTithiName(
+              panchang.transitionTithiNumber,
+              panchang.transitionPaksha,
+              l10n,
+            ),
+            suffix:
+                ' ${l10n.atTime(formatLocalizedDate(panchang.tithiTransitionTime!, 'jm', l10n.localeName))}',
+            highContrast: highContrast,
+          )
+        else
+          _HeroChip(
+            icon: Icons.arrow_forward_rounded,
+            text: l10n.tithiBeginsAt(
+              localizedTithiName(
+                panchang.transitionTithiNumber,
+                panchang.transitionPaksha,
+                l10n,
+              ),
+              formatLocalizedDate(
+                panchang.tithiTransitionTime!,
+                'jm',
+                l10n.localeName,
+              ),
+            ),
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
+            highContrast: highContrast,
           ),
-          suffix:
-              ' ${l10n.atTime(formatLocalizedDate(panchang.tithiTransitionTime!, 'jm', l10n.localeName))}',
-          highContrast: highContrast,
-        ),
     ];
 
     // Location pill lives in the header's top-right corner, not with the

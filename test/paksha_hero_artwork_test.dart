@@ -27,6 +27,15 @@ class _FixedDateNotifier extends SelectedDateNotifier {
   DateTime build() => DateTime(2026, 9, 14);
 }
 
+class _FixedDayNotifier extends SelectedDateNotifier {
+  _FixedDayNotifier(this.day);
+
+  final DateTime day;
+
+  @override
+  DateTime build() => day;
+}
+
 class _BengaliLocaleNotifier extends LocaleNotifier {
   @override
   Locale? build() => const Locale('bn');
@@ -89,12 +98,18 @@ void main() {
     String image = '',
     String city = 'Kolkata',
     PanchangData? data,
+    DateTime? selectedDay,
     List<Override> extraOverrides = const [],
   }) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          selectedDateProvider.overrideWith(_FixedDateNotifier.new),
+          if (selectedDay == null)
+            selectedDateProvider.overrideWith(_FixedDateNotifier.new)
+          else
+            selectedDateProvider.overrideWith(
+              () => _FixedDayNotifier(selectedDay),
+            ),
           panchangForDateProvider.overrideWith(
             (ref, date) => Future.value(data ?? heroData(image: image)),
           ),
@@ -137,7 +152,7 @@ void main() {
       // Arrange + Act (real bundled festival artwork path)
       await pumpHero(
         tester,
-        image: 'assets/images/festival/shri_ganesh.jpeg',
+        image: 'assets/images/festival/shri_ganesh.webp',
       );
 
       // Assert: text content intact and the picture slot is present
@@ -319,7 +334,7 @@ void main() {
       // Arrange: tall day (artwork + transition chip) settled on screen.
       // Month cache serves both days, mirroring an on-device same-month tap
       // (no skeleton in the middle).
-      final tall = heroData(image: 'assets/images/festival/shri_ganesh.jpeg');
+      final tall = heroData(image: 'assets/images/festival/shri_ganesh.webp');
       final short = PanchangData(
         date: DateTime(2026, 9, 16),
         rawTithi: 8.5,
@@ -385,6 +400,114 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('live flip shows the incoming tithi without Next wording', (
+      tester,
+    ) async {
+      // Arrange: Sep-18-like record already flipped (label Ashtami,
+      // transition into Ashtami at 1:02 PM), served as the live record.
+      final flipped = PanchangData.fromRawTithi(
+        date: DateTime(2026, 9, 14),
+        rawTithi: 7.2,
+        masa: 'Bhadrapada',
+        allFestivals: [],
+        sunrise: DateTime(2026, 9, 14, 6, 5),
+        sunset: DateTime(2026, 9, 14, 18, 20),
+        tithiTransitionTime: DateTime(2026, 9, 14, 13, 2),
+        transitionTithiIndex: 8,
+      ).withLiveLabel(DateTime(2026, 9, 14, 15));
+
+      // Act
+      await pumpHero(
+        tester,
+        data: heroData(),
+        extraOverrides: [
+          livePanchangProvider.overrideWith(
+            (ref, day) => Future.value(flipped),
+          ),
+        ],
+      );
+
+      // Assert: title names the flipped-to tithi; the chip states when it
+      // began instead of calling the current tithi "next".
+      expect(find.text('Shukla Paksha · Ashtami'), findsOneWidget);
+      expect(find.textContaining('Next tithi'), findsNothing);
+      expect(find.textContaining('Ashtami begins at'), findsOneWidget);
+    });
+
+    testWidgets('pre-flip live record keeps Next tithi wording', (
+      tester,
+    ) async {
+      // Arrange: same day before the boundary — live record is unflipped.
+      final base = PanchangData.fromRawTithi(
+        date: DateTime(2026, 9, 14),
+        rawTithi: 7.2,
+        masa: 'Bhadrapada',
+        allFestivals: [],
+        sunrise: DateTime(2026, 9, 14, 6, 5),
+        sunset: DateTime(2026, 9, 14, 18, 20),
+        tithiTransitionTime: DateTime(2026, 9, 14, 13, 2),
+        transitionTithiIndex: 8,
+      );
+
+      // Act
+      await pumpHero(
+        tester,
+        data: heroData(),
+        extraOverrides: [
+          livePanchangProvider.overrideWith(
+            (ref, day) => Future.value(base),
+          ),
+        ],
+      );
+
+      // Assert
+      expect(find.text('Shukla Paksha · Saptami'), findsOneWidget);
+      expect(find.textContaining('Next tithi'), findsOneWidget);
+    });
+
+    testWidgets('hero label follows the live clock past the boundary', (
+      tester,
+    ) async {
+      // Arrange: today, Saptami → Ashtami at 1:02 PM, live clock pinned at
+      // 3 PM (past the boundary). Widget-test pumps advance fake timers
+      // but not the wall clock that labels are evaluated against, so the
+      // flip is driven through the overridable liveNowProvider clock seam
+      // instead of time travel; timer firing itself is covered by the
+      // liveTithiTickProvider unit tests with real timers.
+      final now = DateTime.now();
+      final day = DateTime(now.year, now.month, now.day);
+      final transition = DateTime(day.year, day.month, day.day, 13, 2);
+      final record = PanchangData.fromRawTithi(
+        date: day,
+        rawTithi: 7.2,
+        masa: 'Bhadrapada',
+        allFestivals: [],
+        sunrise: DateTime(day.year, day.month, day.day, 6, 5),
+        sunset: DateTime(day.year, day.month, day.day, 18, 20),
+        tithiTransitionTime: transition,
+        transitionTithiIndex: 8,
+      );
+      await pumpHero(
+        tester,
+        data: record,
+        selectedDay: day,
+        extraOverrides: [
+          liveNowProvider.overrideWithValue(
+            DateTime(day.year, day.month, day.day, 15),
+          ),
+          resolvedCoordinatesProvider.overrideWithValue(
+            (latitude: 28.6139, longitude: 77.2090),
+          ),
+        ],
+      );
+
+      // Assert: hero relabeled from the tithi timings, chip follows.
+      expect(find.text('Shukla Paksha · Ashtami'), findsOneWidget);
+      expect(find.text('Shukla Paksha · Saptami'), findsNothing);
+      expect(find.textContaining('Next tithi'), findsNothing);
+      expect(find.textContaining('Ashtami begins at'), findsOneWidget);
+    });
+
     testWidgets('header never overflows on narrow screens', (tester) async {
       // Arrange: 320pt-wide surface with artwork and a very long city name
       tester.view.physicalSize = const Size(320, 800);
@@ -395,7 +518,7 @@ void main() {
       });
       await pumpHero(
         tester,
-        image: 'assets/images/festival/shri_ganesh.jpeg',
+        image: 'assets/images/festival/shri_ganesh.webp',
         city: 'A very long city name that keeps going',
       );
 
