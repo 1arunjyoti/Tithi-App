@@ -14,6 +14,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:jyotish/jyotish.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'providers/location_provider.dart';
+import 'providers/panchang_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
 import 'providers/calendar_provider.dart';
@@ -173,6 +174,12 @@ class _TithiAppState extends ConsumerState<TithiApp>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       unawaited(locationService.markAppBackgrounded());
+    }
+    if (state == AppLifecycleState.resumed) {
+      // A tithi boundary may have passed while suspended (OS-held timers
+      // are unreliable in the background): recompute the live tick so the
+      // hero corrects instantly instead of showing a stale label.
+      ref.invalidate(liveTithiTickProvider);
     }
   }
 

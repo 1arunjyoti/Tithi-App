@@ -508,11 +508,17 @@ class TithiDetailSheet extends ConsumerWidget {
                         if (timings == null) {
                           return const SizedBox.shrink();
                         }
-                        // Prefer the precomputed transition instant when the
-                        // tithi ends before the next sunrise; otherwise the
-                        // searched end (next boundary, usually tomorrow).
+                        // Prefer the precomputed transition instant when it ENDS
+                        // the displayed label (it exits into a later tithi
+                        // before the next sunrise); otherwise the searched
+                        // end (next boundary, usually tomorrow). After a
+                        // live flip the instant is the label's beginning —
+                        // using it as the end would collapse the span.
                         // Date fragments follow the primary calendar.
-                        final end = panchang.tithiTransitionTime ?? timings.end;
+                        final end = (panchang.transitionExitsLabel
+                                ? panchang.tithiTransitionTime
+                                : null) ??
+                            timings.end;
                         return _TimingsCard(
                           highContrast: highContrast,
                           begins: _instantValue(
@@ -532,7 +538,14 @@ class TithiDetailSheet extends ConsumerWidget {
                       loading: () => _TimingsCard(highContrast: highContrast),
                       error: (err, stack) => const SizedBox.shrink(),
                     ),
-                    // Transition into the next tithi (squeeze-case visibility).
+                    // Daytime-transition history (squeeze-case visibility).
+                    // Shown whenever a boundary falls inside the day — both
+                    // before the flip ("Ashtami begins at 1:02 PM" + its
+                    // end) and after it. Post-flip the subline keeps the
+                    // morning's context ("Saptami ends …") so a user opening
+                    // the sheet at 3 PM still learns what the day started
+                    // as; the incoming tithi's own end already stands in
+                    // the Begins/Ends card above.
                     if (panchang.hasTithiTransition) ...[
                       const SizedBox(height: 12),
                       Consumer(
@@ -564,19 +577,33 @@ class TithiDetailSheet extends ConsumerWidget {
                                     locale,
                                   ),
                                 ),
-                                subline: l10n.tithiEndsAtDateTime(
-                                  localizedTithiName(
-                                    panchang.transitionTithiNumber,
-                                    panchang.transitionPaksha,
-                                    l10n,
-                                  ),
-                                  _instantValue(
-                                    ref,
-                                    nextTimings.end,
-                                    panchang.transitionTithiIndex!,
-                                    locale,
-                                  ),
-                                ),
+                                subline: panchang.transitionExitsLabel
+                                    ? l10n.tithiEndsAtDateTime(
+                                        localizedTithiName(
+                                          panchang.transitionTithiNumber,
+                                          panchang.transitionPaksha,
+                                          l10n,
+                                        ),
+                                        _instantValue(
+                                          ref,
+                                          nextTimings.end,
+                                          panchang.transitionTithiIndex!,
+                                          locale,
+                                        ),
+                                      )
+                                    : l10n.tithiEndsAtDateTime(
+                                        localizedTithiName(
+                                          panchang.sunriseTithiNumber,
+                                          panchang.sunrisePaksha,
+                                          l10n,
+                                        ),
+                                        _instantValue(
+                                          ref,
+                                          panchang.tithiTransitionTime!,
+                                          panchang.sunriseTithiIndex,
+                                          locale,
+                                        ),
+                                      ),
                               );
                             },
                             loading: () =>

@@ -1608,7 +1608,7 @@
       "nameMalayalam": "ഗണേശ ചതുർത്ഥി"
     },
     "visuals": {
-      "image": "assets/images/festival/shri_ganesh.jpeg",
+      "image": "assets/images/festival/shri_ganesh.webp",
       "theme_color": "#FF8C00"
     },
     "purpose": {
@@ -2690,7 +2690,7 @@
       "nameMalayalam": "ദുർഗ്ഗാ പൂജ- ഷഷ്ടി"
     },
     "visuals": {
-      "image": "",
+      "image": "assets/images/festival/durga_puja.webp",
       "theme_color": ""
     },
     "purpose": {
@@ -2734,7 +2734,7 @@
       "nameMalayalam": "ദുർഗ്ഗാ പൂജ- സപ്തമി"
     },
     "visuals": {
-      "image": "",
+      "image": "assets/images/festival/durga_puja.webp",
       "theme_color": ""
     },
     "purpose": {
@@ -2779,7 +2779,7 @@
       "nameMalayalam": "ദുർഗ്ഗാ പൂജ- മഹാഷ്ടമി"
     },
     "visuals": {
-      "image": "",
+      "image": "assets/images/festival/durga_puja.webp",
       "theme_color": ""
     },
     "purpose": {
@@ -2865,7 +2865,7 @@
       "nameMalayalam": "ദുർഗ്ഗാ പൂജ- മഹാനവമി"
     },
     "visuals": {
-      "image": "",
+      "image": "assets/images/festival/durga_puja.webp",
       "theme_color": ""
     },
     "purpose": {
@@ -2909,7 +2909,7 @@
       "nameMalayalam": "ദുർഗ്ഗാ പൂജ- ദശമി"
     },
     "visuals": {
-      "image": "",
+      "image": "assets/images/festival/durga_puja.webp",
       "theme_color": ""
     },
     "purpose": {
