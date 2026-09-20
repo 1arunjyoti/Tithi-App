@@ -45,6 +45,108 @@ String nakshatraForLongitude(double longitude) {
   return hinduNakshatras[(lon / (360 / 27)).floor().clamp(0, 26)];
 }
 
+/// Vimshottari lords in nakshatra order: the 9-graha sequence
+/// (Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury) repeats
+/// three times across the 27 mansions.
+const List<String> nakshatraLords = [
+  'Ketu',
+  'Venus',
+  'Sun',
+  'Moon',
+  'Mars',
+  'Rahu',
+  'Jupiter',
+  'Saturn',
+  'Mercury',
+];
+
+/// Canonical Vimshottari lord for a Vedic-order nakshatra [index] (0-26).
+String nakshatraLordFor(int index) => nakshatraLords[index % 9];
+
+/// The 27 yogas in Vedic order (index 0 = Vishkambha).
+/// Canonical source for yoga-name lookup; kept here (not in the jyotish
+/// package) so the model and tests can use it without an FFI dependency.
+const List<String> yogaNames = [
+  'Vishkambha',
+  'Priti',
+  'Ayushman',
+  'Saubhagya',
+  'Shobhana',
+  'Atiganda',
+  'Sukarma',
+  'Dhriti',
+  'Shula',
+  'Ganda',
+  'Vriddhi',
+  'Dhruva',
+  'Vyaghata',
+  'Harshana',
+  'Vajra',
+  'Siddhi',
+  'Vyatipata',
+  'Variyana',
+  'Parigha',
+  'Shiva',
+  'Siddha',
+  'Sadhya',
+  'Shubha',
+  'Shukla',
+  'Brahma',
+  'Indra',
+  'Vaidhriti',
+];
+
+/// Normalizes an ecliptic angle into [0, 360).
+double _normalizeAngle(double degrees) {
+  var a = degrees % 360;
+  if (a < 0) a += 360;
+  return a;
+}
+
+/// Yoga index (0-26) for sidereal Sun/Moon longitudes in degrees.
+///
+/// Unlike tithi (a difference, where ayanamsa cancels), yoga uses the SUM,
+/// so the ayanamsa enters twice — callers must pass sidereal longitudes
+/// from a single consistent ayanamsa (Lahiri here).
+int yogaIndexFor(double sunLongitude, double moonLongitude) {
+  final s = _normalizeAngle(sunLongitude + moonLongitude);
+  return (s / (360 / 27)).floor().clamp(0, 26);
+}
+
+/// The 7 movable (repeating) karanas in order.
+const List<String> movableKaranas = [
+  'Bava',
+  'Balava',
+  'Kaulava',
+  'Taitila',
+  'Gara',
+  'Vanija',
+  'Vishti',
+];
+
+/// Karana index (0-59) for sidereal Sun/Moon longitudes: the elongation
+/// (Moon − Sun) divided into 60 segments of 6° (half a tithi).
+int karanaIndexFor(double sunLongitude, double moonLongitude) {
+  final elong = _normalizeAngle(moonLongitude - sunLongitude);
+  return (elong / 6).floor().clamp(0, 59);
+}
+
+/// Canonical karana name for a karana [index] (0-59).
+///
+/// The mapping is the subtle part: only index 0 (Kimstughna) and 57-59
+/// (Shakuni, Chatushpada, Naga — the fixed karanas) are special; indices
+/// 1-56 run the 7 movable karanas through exactly 8 full cycles, so a
+/// plain modulo applies. Sanity: 15 → Bava (Shukla Ashtami 2nd half),
+/// 16 → Balava (Navami 1st half).
+String karanaNameForIndex(int index) {
+  final idx = index % 60;
+  if (idx == 0) return 'Kimstughna';
+  if (idx <= 56) return movableKaranas[(idx - 1) % 7];
+  if (idx == 57) return 'Shakuni';
+  if (idx == 58) return 'Chatushpada';
+  return 'Naga';
+}
+
 /// Festival model matching festivals.json structure
 @HiveType(typeId: 0)
 class Festival {

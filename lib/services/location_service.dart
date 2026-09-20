@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -256,18 +257,7 @@ class LocationService {
 
       // If no last known position, get current position
       // Web uses standard LocationSettings, mobile uses AndroidSettings for FOSS
-      position ??= await Geolocator.getCurrentPosition(
-        locationSettings: kIsWeb
-            ? const LocationSettings(
-                accuracy: LocationAccuracy.medium,
-                timeLimit: Duration(seconds: 15),
-              )
-            : AndroidSettings(
-                accuracy: LocationAccuracy.medium,
-                forceLocationManager: true, // FOSS: Use native LocationManager
-                timeLimit: const Duration(seconds: 30),
-              ),
-      );
+      position ??= await _getPositionWithFallback();
 
       // Get city name via reverse geocoding (online-first, offline fallback)
       var cityName = await getCityName(position.latitude, position.longitude);
@@ -288,6 +278,45 @@ class LocationService {
         print('Error getting location: $e');
       }
       return await _getCachedLocation();
+    }
+  }
+
+  /// Resolves the current position, preferring the FOSS LocationManager
+  /// (no Google Play Services) and falling back to the fused provider only
+  /// when the GPS fix times out (indoors, emulators without mock location).
+  ///
+  /// The fallback keeps the FOSS-first behavior: outdoors/de-googled flows
+  /// are unchanged, and where Play Services is absent the fused call throws
+  /// immediately, degrading to the same cached fallback as before.
+  Future<Position> _getPositionWithFallback() async {
+    if (kIsWeb) {
+      return Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+    }
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.medium,
+          forceLocationManager: true, // FOSS: Use native LocationManager
+          timeLimit: const Duration(seconds: 30),
+        ),
+      );
+    } on TimeoutException {
+      if (kDebugMode) {
+        print('GPS fix timed out, falling back to fused provider');
+      }
+      // forceLocationManager defaults to false: fused provider
+      // (WiFi/cell), which fixes indoors where GPS cannot.
+      return Geolocator.getCurrentPosition(
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 20),
+        ),
+      );
     }
   }
 

@@ -115,6 +115,40 @@ class PanchangService {
     return tithi;
   }
 
+  /// Sidereal (Lahiri) ecliptic longitudes of the Sun and Moon in degrees.
+  ///
+  /// Powers the yoga (sum) and karana (difference) computations, which each
+  /// need both longitudes at the same instant. Returns null instead of
+  /// throwing when uninitialized or the ephemeris call fails, so callers
+  /// degrade to hiding rather than breaking the whole day.
+  Future<({double sun, double moon})?> calculateSunMoonLongitudes(
+    DateTime date, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    if (!_isInitialized) return null;
+    try {
+      // PERF-3: one parallel batch — the two FFI calls are independent.
+      final positions = await Jyotish().getMultiplePlanetPositions(
+        planets: [Planet.sun, Planet.moon],
+        dateTime: date,
+        location: GeographicLocation(
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+      final sun = positions[Planet.sun];
+      final moon = positions[Planet.moon];
+      if (sun == null || moon == null) return null;
+      return (sun: sun.longitude, moon: moon.longitude);
+    } catch (e) {
+      if (kDebugMode) {
+        print('calculateSunMoonLongitudes failed: $e');
+      }
+      return null;
+    }
+  }
+
   /// Nakshatra prevailing at [date] (canonical name, e.g. 'Mula').
   ///
   /// Derived from the sidereal Moon longitude — the same Lahiri frame

@@ -58,6 +58,7 @@ dev_dependencies:
   hive_generator: ^2.0.1
   build_runner: ^2.4.13
   dep_audit: ^0.1.9
+  plugin_platform_interface: ^2.1.8 # location fallback tests (platform fake)
 
 # The following section is specific to Flutter packages.
 flutter:
