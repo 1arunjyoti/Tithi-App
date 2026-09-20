@@ -12,6 +12,489 @@ class AppTheme {
     borderRadius: BorderRadius.circular(24),
   );
 
+  // ---------------------------------------------------------------------------
+  // Centralized semantic & illustration palette.
+  //
+  // Rule: no widget/screen/painter may hardcode these hex values or
+  // `Colors.orange/amber/indigo/...` shades directly. Reference the constants
+  // or the brightness-aware helpers below so light/dark/high-contrast stay
+  // consistent from this single file.
+  // ---------------------------------------------------------------------------
+
+  // Warning / error-display palette (replaces hardcoded Colors.orange shades).
+  static const Color warning = Color(0xFFFF9800);
+  static const Color warningLightContainer = Color(
+    0xFFFFF3E0,
+  ); // orange.shade50
+  static const Color warningDarkContainer = Color(
+    0xFFE65100,
+  ); // orange.shade900
+  static const Color warningIconLight = Color(0xFFFB8C00); // orange.shade600
+  static const Color warningIconDark = Color(0xFFFFCC80); // orange.shade200
+  static const Color warningTextLight = Color(0xFFEF6C00); // orange.shade800
+  static const Color warningTextDark = Color(0xFFFFCC80); // orange.shade200
+  static const Color warningStrong = Color(0xFFF57C00); // orange.shade700
+
+  static Color warningBackground(bool isDark) => isDark
+      ? warningDarkContainer.withValues(alpha: 0.3)
+      : warningLightContainer;
+  static Color warningBorderColor() => warning.withValues(alpha: 0.3);
+  static Color warningSoftBackground() => warning.withValues(alpha: 0.1);
+  static Color warningIconColor(bool isDark) =>
+      isDark ? warningIconDark : warningIconLight;
+  static Color warningTextColor(bool isDark) =>
+      isDark ? warningTextDark : warningTextLight;
+
+  // Moon countdown / moon animation palette (replaces hardcoded
+  // indigo/deepPurple/amber/orange/grey shades).
+  static const Color moonLit = Color(0xFFFFE082); // amber.shade200
+  static const Color moonShadow = Color(0xFF1A1A2E); // deep dark blue/black
+  static const Color moonGradientDarkA = Color(0xFF1A237E); // indigo.shade900
+  static const Color moonGradientDarkB = Color(
+    0xFF311B92,
+  ); // deepPurple.shade900
+  static const Color moonGradientLightA = Color(0xFFFFECB3); // amber.shade100
+  static const Color moonGradientLightB = Color(0xFFFFF3E0); // orange.shade50
+  static const Color moonDiscDarkA = Color(0xFFE0E0E0); // grey.shade300
+  static const Color moonDiscDarkB = Color(0xFF757575); // grey.shade600
+  static const Color moonDiscLightA = Color(0xFFFFE082); // amber.shade200
+  static const Color moonDiscLightB = Color(0xFFFFB74D); // orange.shade300
+  static const Color moonGlowDark = Color(0xFF3F51B5); // indigo
+  static const Color moonGlowLight = Color(0xFFFFC107); // amber
+  static const Color moonIconDark = Color(0xFF1A237E); // indigo.shade900
+  static const Color moonIconLight = Color(0xFFEF6C00); // orange.shade800
+  static const Color purnimaIconDark = Color(0xFFFFC107); // amber
+  static const Color purnimaIconLight = Color(0xFFFB8C00); // orange.shade600
+  static const Color amavasyaIconDark = Color(0xFFBDBDBD); // grey.shade400
+  static const Color amavasyaIconLight = Color(0xFF616161); // grey.shade700
+
+  static List<Color> moonCountdownGradient(bool isDark) => isDark
+      ? [
+          moonGradientDarkA.withValues(alpha: 0.6),
+          moonGradientDarkB.withValues(alpha: 0.4),
+        ]
+      : [
+          moonGradientLightA.withValues(alpha: 0.8),
+          moonGradientLightB.withValues(alpha: 0.6),
+        ];
+  static Color moonCountdownBorder(bool isDark) => isDark
+      ? Colors.white.withValues(alpha: 0.1)
+      : moonLit.withValues(alpha: 0.5);
+  static Color moonCountdownShadow(bool isDark) => isDark
+      ? Colors.black.withValues(alpha: 0.3)
+      : moonGlowLight.withValues(alpha: 0.2);
+  static List<Color> moonDiscGradient(bool isDark) => isDark
+      ? [moonDiscDarkA, moonDiscDarkB]
+      : [moonDiscLightA, moonDiscLightB];
+  static Color moonGlowColor(bool isDark) =>
+      (isDark ? moonGlowDark : moonGlowLight).withValues(alpha: 0.5);
+  static Color moonIconColor(bool isDark) =>
+      isDark ? moonIconDark : moonIconLight;
+  static Color purnimaIconColor(bool isDark) =>
+      isDark ? purnimaIconDark : purnimaIconLight;
+  static Color amavasyaIconColor(bool isDark) =>
+      isDark ? amavasyaIconDark : amavasyaIconLight;
+
+  // Space / solar-system illustration palette (fixed illustration colors that
+  // must not shift with the app theme, but still centralized here).
+  static const Color spaceDarkTop = Color(0xFF0F0F1A);
+  static const Color spaceDarkBottom = Color(0xFF050508);
+  static const Color spaceLightTop = Color(0xFF1A1A2E);
+  static const Color spaceLightBottom = Color(0xFF0F0F1A);
+  static const Color sunInner = Color(0xFFFFFFE0);
+  static const Color sunMid = Color(0xFFFFD700);
+  static const Color sunOuter = Color(0xFFFF8C00);
+  static const Color earthLight = Color(0xFF87CEEB);
+  static const Color earthMid = Color(0xFF4A90D9);
+  static const Color earthDeep = Color(0xFF2E5090);
+  static const Color earthGlowGreen = Color(0xFF2E8B57);
+  static const Color spaceStar = Colors.white;
+  static const Color spaceLabel = Colors.white;
+  static const Color retrogradeIndicator = Color(0xFFE53935);
+
+  static List<Color> spaceBackgroundGradient(bool isDark) => isDark
+      ? [spaceDarkTop, spaceDarkBottom]
+      : [spaceLightTop, spaceLightBottom];
+
+  // Planet visualization palette (single source; PlanetaryViewService delegates).
+  static const int planetSun = 0xFFFFD700; // Gold
+  static const int planetMoon = 0xFFC0C0C0; // Silver
+  static const int planetMercury = 0xFF00BFFF; // Deep sky blue
+  static const int planetVenus = 0xFFFF69B4; // Hot pink
+  static const int planetMars = 0xFFFF4500; // Red-orange
+  static const int planetJupiter = 0xFFFFB347; // Light orange
+  static const int planetSaturn = 0xFFFFFACD; // Lemon chiffon
+  static const int planetUranus = 0xFF40E0D0; // Turquoise
+  static const int planetNeptune = 0xFF4169E1; // Royal blue
+
+  // Sunrise / sunset icon accents (replaces orange.shade300 / indigo.shade300).
+  static const Color sunrise = Color(0xFFFFB74D); // orange.shade300
+  static const Color sunset = Color(0xFF7986CB); // indigo.shade300
+
+  // Success / visibility accent (replaces hardcoded Colors.green).
+  static const Color successLight = Color(0xFF2E7D32); // green.shade800
+  static const Color successDark = Color(0xFF81C784); // green.shade300
+  static Color success(bool isDark) => isDark ? successDark : successLight;
+
+  // Map boundary stroke (replaces hardcoded Colors.orange on map layers).
+  // Fixed illustration color so maps look identical in light/dark.
+  static const Color mapBoundary = Color(0xFFFF9800);
+
+  // Location prompt accent (replaces hardcoded Colors.amber pin).
+  static const Color locationAccent = Color(0xFFFFC107); // amber
+
+  // ---------------------------------------------------------------------------
+  // Calendar card palette — faithful mirror of
+  // assets/redesign assets/calendar-redesign.html theme vars.
+  // ---------------------------------------------------------------------------
+  static const Color calendarSelectedTopShukla = Color(0xFFD84315);
+  static const Color calendarSelectedBottomShukla = Color(0xFFBF360C);
+  static const Color calendarSelectedTopKrishna = Color(0xFF9D4EDD);
+  static const Color calendarSelectedBottomKrishna = Color(0xFF7B2CBF);
+  static const Color calendarSelectedTopDark = Color(0xFFFFA000);
+  static const Color calendarSelectedBottomDark = Color(0xFFE65100);
+  static const Color calendarSelectedInkDark = Color(0xFF1A1200);
+  static const Color calendarTodayInkKrishna = Color(0xFFC9B5FF);
+  static const Color calendarDotShukla = Color(0xFFFF9F1C);
+  static const Color calendarDotKrishna = Color(0xFF4CC9F0);
+  static const Color calendarDotDark = Color(0xFFFFA000);
+
+  static bool _isKrishnaTheme(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark &&
+      !isPureDarkTheme(context);
+
+  /// Selected-day gradient (spec `--todayGrad`). High contrast uses the
+  /// solid primary so the text-on-gradient pairing never degrades.
+  /// Explicit stops keep the gradient faithful even if the ColorScheme
+  /// drifts from the spec palette.
+  static List<Color> calendarSelectedGradient(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrastOf(context)) {
+      final primary = Theme.of(context).colorScheme.primary;
+      return [primary, primary];
+    }
+    if (!isDark) {
+      return [calendarSelectedTopShukla, calendarSelectedBottomShukla];
+    }
+    if (isPureDarkTheme(context)) {
+      return [calendarSelectedTopDark, calendarSelectedBottomDark];
+    }
+    return [calendarSelectedTopKrishna, calendarSelectedBottomKrishna];
+  }
+
+  /// Selected-day text color (spec `.d.sel`: white, except pure-dark which
+  /// uses `--selInk` near-black on the gold gradient).
+  static Color calendarSelectedForeground(BuildContext context) {
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.onPrimary;
+    }
+    if (isPureDarkTheme(context)) return calendarSelectedInkDark;
+    return Colors.white;
+  }
+
+  /// Today (unselected) tile background (spec `--selBg`).
+  static Color calendarTodayBackground(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrastOf(context)) {
+      return scheme.primary.withValues(alpha: 0.25);
+    }
+    if (!isDark) return warningLightContainer;
+    // Krishna tints with the bright secondary (#9D4EDD at 18%); pure-dark
+    // uses the gold primary at 14% — both per the spec vars.
+    if (isPureDarkTheme(context)) {
+      return scheme.primary.withValues(alpha: 0.14);
+    }
+    return scheme.secondary.withValues(alpha: 0.18);
+  }
+
+  /// Today (unselected) tile text.
+  static Color calendarTodayForeground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.onSurface;
+    }
+    if (!isDark) return warningDarkContainer;
+    if (isPureDarkTheme(context)) return moonDiscLightB;
+    return calendarTodayInkKrishna;
+  }
+
+  /// Today (unselected) tile ring.
+  static Color calendarTodayRing(BuildContext context) {
+    if (_isKrishnaTheme(context) && !highContrastOf(context)) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    return warningDarkContainer;
+  }
+
+  /// Festival pill-bar color (minor festivals render at reduced alpha).
+  static Color calendarFestivalBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return calendarDotShukla;
+    if (isPureDarkTheme(context)) return calendarDotDark;
+    return calendarDotKrishna;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Festivals & Events palette — gold accents from the home-card redesign
+  // mock (gold glyph/text on a soft gold tile, both themes).
+  // ---------------------------------------------------------------------------
+
+  /// Bright purple for festival accents on the Krishna theme (same value the
+  /// high-contrast treatment uses to lift the deep-purple primary). Stays
+  /// legible at small sizes on dark violet surfaces (~5.5:1).
+  static const Color festivalAccentKrishna = Color(0xFFC77DFF);
+
+  /// Accent for festival rows, wisdom and countdowns: deep orange in light,
+  /// moon-gold in pure-dark — but the Krishna theme keeps its purple
+  /// identity (brighter secondary for legibility on dark violet) instead of
+  /// gold. Solid primary in high contrast.
+  static Color festivalAccent(BuildContext context) {
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.primary;
+    }
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return warningDarkContainer;
+    }
+    if (isPureDarkTheme(context)) return moonDiscLightB;
+    return festivalAccentKrishna;
+  }
+
+  /// Soft gold tile behind the festival glyph.
+  static Color festivalTileBackground(BuildContext context) {
+    return festivalAccent(
+      context,
+    ).withValues(alpha: highContrastOf(context) ? 0.12 : 0.14);
+  }
+
+  /// Subtle row surface shared by the Festivals & Events rows and the
+  /// embedded countdown rows on home: faint surface tint + hairline border
+  /// (NOT glass, so rows stay defined on the base card in every theme,
+  /// including pure-dark's flat surfaces). High contrast steps both up.
+  static BoxDecoration festivalRowDecoration(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final highContrast = highContrastOf(context);
+    return BoxDecoration(
+      color: scheme.onSurface.withValues(alpha: highContrast ? 0.08 : 0.05),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: scheme.onSurface.withValues(alpha: highContrast ? 0.25 : 0.1),
+      ),
+    );
+  }
+
+  /// Ink for filled festival-accent surfaces (status pills, reset buttons):
+  /// white in light, near-black on dark (gold or purple alike, mirroring the
+  /// calendar's selected-day foreground). In high contrast the accent IS
+  /// scheme primary, so onPrimary pairs correctly there.
+  static Color onFestivalAccent(BuildContext context) {
+    if (highContrastOf(context)) {
+      return Theme.of(context).colorScheme.onPrimary;
+    }
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return calendarSelectedInkDark;
+    }
+    return Colors.white;
+  }
+
+  /// Weekend column striping tint.
+  static Color calendarWeekendStripe(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return calendarDotShukla.withValues(alpha: 0.06);
+    if (isPureDarkTheme(context)) {
+      return calendarDotDark.withValues(alpha: 0.05);
+    }
+    return scheme.secondary.withValues(alpha: 0.08);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Hero (paksha indicator) palette — faithful mirror of
+  // assets/redesign assets/tithi-redesign-v3-faithful.html theme vars.
+  // Shukla: orange gradient / Krishna: purple gradient / PureDark: flat dark.
+  // Resolve via isDark + isPureDark (scaffold == black) so all three
+  // ThemeData variants + high-contrast stay correct from one place.
+  // ---------------------------------------------------------------------------
+  // Shukla hero is a soft peach card blending with the creamy scaffold;
+  // Krishna hero is a muted dark plum blending with the dark void (same
+  // subtle philosophy — low contrast with its scaffold, not a bright pop).
+  // PureDark keeps its flat dark card. All dark cards use white ink.
+  static const Color heroShukla1 = Color(0xFFFFF3E0); // orange.shade50
+  static const Color heroShukla2 = Color(0xFFFFE0B2); // orange.shade100
+  static const Color heroKrishna1 = Color(0xFF2D1B4E); // muted dark plum
+  static const Color heroKrishna2 = Color(0xFF1F123E); // deeper plum
+  static const Color heroDark1 = Color(0xFF1E1E1E);
+  static const Color heroDark2 = Color(0xFF050505);
+  static const Color heroInk = Colors.white;
+  static const Color heroInkShukla = Color(0xFF4E342E); // brown.shade800
+  static const Color heroAccentShukla = Color(0xFFBF360C); // burnt orange
+  static const Color heroMoonFillShukla = Color(0xFFFFE082); // moonLit
+  static const Color heroMoonFillKrishna = Color(0xFF4CC9F0); // tertiary neon
+  static const Color heroMoonFillDark = Color(0xFFFFE082); // moonLit
+
+  static bool isPureDarkTheme(BuildContext context) =>
+      Theme.of(context).scaffoldBackgroundColor == Colors.black;
+
+  static List<Color> heroGradient(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return [heroShukla1, heroShukla2];
+    if (isPureDarkTheme(context)) return [heroDark1, heroDark2];
+    return [heroKrishna1, heroKrishna2];
+  }
+
+  /// Main copy color on the hero: warm brown on the light Shukla card,
+  /// white on the dark Krishna / PureDark cards.
+  static Color heroForeground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroInkShukla;
+    return heroInk;
+  }
+
+  /// Accent color on the hero (italic title span, dot, chip highlight,
+  /// number badge): burnt orange on Shukla peach, moon-fill neon/gold on
+  /// the dark cards. Kept separate from [heroMoonFill] so the calendar's
+  /// selected-day bars can stay light-on-saturated.
+  static Color heroAccent(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroAccentShukla;
+    return heroMoonFill(context);
+  }
+
+  static Color heroGlow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroAccentShukla.withValues(alpha: 0.14);
+    if (isPureDarkTheme(context)) {
+      return const Color(0xFFFFA000).withValues(alpha: 0.25);
+    }
+    // Muted plum glow — softer than the old saturated 0.4 halo.
+    return const Color(0xFF7B2CBF).withValues(alpha: 0.22);
+  }
+
+  static Color heroSubtle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroInkShukla.withValues(alpha: 0.72);
+    if (isPureDarkTheme(context)) {
+      return Colors.white.withValues(alpha: 0.7);
+    }
+    return Colors.white.withValues(alpha: 0.82);
+  }
+
+  static Color heroChipBackground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Light Shukla card uses a soft white veil; dark cards keep their
+    // translucent white glass.
+    if (!isDark) return Colors.white.withValues(alpha: 0.6);
+    if (isPureDarkTheme(context)) {
+      return Colors.white.withValues(alpha: 0.08);
+    }
+    return Colors.white.withValues(alpha: 0.12);
+  }
+
+  static Color heroChipBorder(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroAccentShukla.withValues(alpha: 0.18);
+    if (isPureDarkTheme(context)) {
+      return const Color(0xFFFFB74D).withValues(alpha: 0.3);
+    }
+    return Colors.white.withValues(alpha: 0.16);
+  }
+
+  static Color heroMoonFill(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) return heroMoonFillShukla;
+    if (isPureDarkTheme(context)) return heroMoonFillDark;
+    return heroMoonFillKrishna;
+  }
+
+  /// Hero card decoration: radial glow + linear gradient.
+  /// Shukla gets a hairline warm border so the peach card stays defined on
+  /// the creamy scaffold; Krishna gets a faint light hairline so the dark
+  /// plum card stays defined on the dark void; PureDark keeps its flat
+  /// bordered card.
+  static BoxDecoration heroDecoration(BuildContext context) {
+    final glow = heroGlow(context);
+    final gradient = heroGradient(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPureDark = isPureDarkTheme(context);
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: gradient,
+      ),
+      border: isPureDark
+          ? Border.all(color: Colors.white.withValues(alpha: 0.1))
+          : !isDark
+          ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
+          : Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      boxShadow: [
+        // Softened so less color flows outside the card's bottom edge.
+        BoxShadow(
+          color: glow,
+          blurRadius: isDark && !isPureDark ? 16 : 20,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    );
+  }
+
+  static BoxDecoration heroGlowBackdrop(BuildContext context) {
+    // Radial highlight at top-right, mirroring `.hero` background layer.
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: RadialGradient(
+        center: const Alignment(0.85, -0.4),
+        radius: 1.4,
+        colors: [heroGlow(context), Colors.transparent],
+        stops: const [0.0, 0.55],
+      ),
+    );
+  }
+
+  /// Sheet header block: same hero gradient/ink treatment as [heroDecoration]
+  /// but flush with the sheet — rounded top (32, matching the bottom-sheet
+  /// shape), straight bottom edge into the body, no outer shadow (the modal
+  /// supplies elevation). High contrast falls back to a solid surface.
+  /// Pass the resolved flag (OS MediaQuery and/or app accessibility setting,
+  /// same as the hero card) — a static cannot read providers itself.
+  static BoxDecoration heroSheetHeaderDecoration(
+    BuildContext context, {
+    required bool highContrast,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrast) {
+      return BoxDecoration(
+        color: isDark ? Colors.black : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(
+          bottom: BorderSide(
+            color: (isDark ? Colors.white : Colors.black).withValues(
+              alpha: 0.15,
+            ),
+          ),
+        ),
+      );
+    }
+    final isPureDark = isPureDarkTheme(context);
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: heroGradient(context),
+      ),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      border: isPureDark
+          ? Border.all(color: Colors.white.withValues(alpha: 0.1))
+          : !isDark
+          ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
+          : Border.all(color: Colors.white.withValues(alpha: 0.08)),
+    );
+  }
+
   /// OPT-3: static final fields so ThemeData + GoogleFonts text-theme objects
   /// are constructed exactly once (on first class access) rather than on every
   /// widget rebuild that calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
@@ -33,12 +516,12 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
         tertiary: accentColor,
-        onSecondary: Colors.brown.shade900,
-        onSurface: const Color(0xFF2D3436),
+        onSecondary: Color(0xFF3E2723), // brown.shade900
+        onSurface: Color(0xFF2D3436),
       ),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
@@ -319,7 +802,7 @@ class AppTheme {
     // primary (Krishna #7B2CBF has ~1.5:1 on dark backgrounds).
     final basePrimary = base.colorScheme.primary;
     final brightPrimary = basePrimary == const Color(0xFF7B2CBF)
-        ? const Color(0xFFC77DFF)
+        ? festivalAccentKrishna
         : basePrimary;
     return base.copyWith(
       scaffoldBackgroundColor: Colors.black,
@@ -363,6 +846,12 @@ class AppTheme {
     return withHighContrast(base);
   }
 
+  /// Single source of truth for the home screen's card gutters: every home
+  /// card (hero, calendar, festivals, wisdom, countdowns, widget) insets
+  /// itself by exactly this on both sides, so left and right gaps can never
+  /// drift apart between widgets.
+  static const double homeCardGutter = 12.0;
+
   /// Glassmorphism decoration for cards and sheets
   static BoxDecoration glassmorphism({
     required BuildContext context,
@@ -400,9 +889,7 @@ class AppTheme {
       return BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.1),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       );
     }
 

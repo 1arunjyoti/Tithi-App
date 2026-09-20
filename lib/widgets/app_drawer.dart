@@ -33,12 +33,10 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
-    // Use solid color instead of expensive transparency
-    final backgroundColor = isDark
-        ? const Color(0xFF121212) // Dark theme: near-black
-        : const Color(0xFFFAFAFA); // Light theme: off-white
+    // Use theme scaffold color so drawer always matches AppTheme
+    // (shukla / krishna / pureDark + high-contrast variants).
+    final backgroundColor = theme.scaffoldBackgroundColor;
 
     final content = RepaintBoundary(
       child: Column(
@@ -141,19 +139,19 @@ class _DrawerMenuList extends StatelessWidget {
 
         _DrawerMenuItem(
           icon: Icons.spa_rounded,
-          title: 'My Sankalpas',
+          title: l10n?.mySankalpas ?? 'My Sankalpas',
           onTap: () => _navigateTo(context, const SankalpaListScreen()),
         ),
 
         _DrawerMenuItem(
           icon: Icons.event_available_rounded,
-          title: 'Festival Countdowns',
+          title: l10n?.countdownHeading ?? 'Festival Countdowns',
           onTap: () => _navigateTo(context, const FestivalCountdownScreen()),
         ),
 
         _DrawerMenuItem(
           icon: Icons.temple_buddhist,
-          title: 'Nearby Temples',
+          title: l10n?.nearbyTemples ?? 'Nearby Temples',
           onTap: () => _navigateTo(context, const TempleMapScreen()),
         ),
 
@@ -382,14 +380,18 @@ class _DrawerFooter extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final versionAsync = ref.watch(versionStringProvider);
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    final versionStr =
+        versionAsync.when(data: (v) => v, loading: () => '...', error: (e, s) => '?');
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Text(
-        'Version ${versionAsync.when(data: (v) => v, loading: () => '...', error: (e, s) => '?')}',
+        l10n?.versionText(versionStr) ?? 'Version $versionStr',
         style: textTheme.labelSmall?.copyWith(
           color: colors.onSurface.withValues(alpha: 0.4),
         ),

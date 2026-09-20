@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
+
 /// A user-friendly error display widget that replaces the default red error screen.
 /// Used both as a global ErrorWidget.builder replacement and for local error states.
 class ErrorDisplayWidget extends StatelessWidget {
@@ -21,6 +24,7 @@ class ErrorDisplayWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -28,28 +32,24 @@ class ErrorDisplayWidget extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.orange.shade900.withValues(alpha: 0.3)
-              : Colors.orange.shade50,
+          color: AppTheme.warningBackground(isDark),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+          border: Border.all(color: AppTheme.warningBorderColor()),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
+            const Icon(
               Icons.warning_amber_rounded,
-              color: Colors.orange.shade700,
+              color: AppTheme.warningStrong,
               size: 20,
             ),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                message ?? 'Something went wrong',
+                message ?? l10n?.somethingWentWrong ?? 'Something went wrong',
                 style: TextStyle(
-                  color: isDark
-                      ? Colors.orange.shade200
-                      : Colors.orange.shade800,
+                  color: AppTheme.warningTextColor(isDark),
                   fontSize: 13,
                 ),
               ),
@@ -66,7 +66,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                child: const Text('Retry'),
+                child: Text(l10n?.retry ?? 'Retry'),
               ),
             ],
           ],
@@ -85,18 +85,18 @@ class ErrorDisplayWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: AppTheme.warningSoftBackground(),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.error_outline_rounded,
                   size: 56,
-                  color: Colors.orange.shade600,
+                  color: AppTheme.warningIconColor(isDark),
                 ),
               ),
               const SizedBox(height: 24),
               Text(
-                'Oops! Something went wrong',
+                l10n?.oopsSomethingWentWrong ?? 'Oops! Something went wrong',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -104,7 +104,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                message ?? 'An unexpected error occurred. Please try again.',
+                message ?? l10n?.unexpectedErrorOccurred ?? 'An unexpected error occurred. Please try again.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),
@@ -115,7 +115,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Try Again'),
+                  label: Text(l10n?.retry ?? 'Retry'),
                 ),
               ],
             ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
@@ -9,6 +8,7 @@ import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/share_service.dart';
+import '../utils/tithi_localization.dart';
 
 final _descExpandedProvider = StateProvider.autoDispose<bool>((ref) => false);
 
@@ -131,7 +131,9 @@ class EventDetailSheet extends ConsumerWidget {
                               ShareService().shareFestival(context, festival),
                           icon: const Icon(Icons.share_outlined),
                           color: themeColor,
-                          tooltip: 'Share Card',
+                          tooltip:
+                              AppLocalizations.of(context)?.shareCard ??
+                              'Share Card',
                         ),
                       ],
                     ),
@@ -223,8 +225,14 @@ class EventDetailSheet extends ConsumerWidget {
                                       children: [
                                         Text(
                                           ref.watch(_descExpandedProvider)
-                                              ? 'Show Less'
-                                              : 'Read More',
+                                              ? (AppLocalizations.of(
+                                                      context,
+                                                    )?.showLessTitleCase ??
+                                                    'Show Less')
+                                              : (AppLocalizations.of(
+                                                      context,
+                                                    )?.readMore ??
+                                                    'Read More'),
                                           style: context.textTheme.labelLarge
                                               ?.copyWith(
                                                 color: themeColor,
@@ -306,6 +314,7 @@ class EventDetailSheet extends ConsumerWidget {
                       // timings are shown.
                       Builder(
                         builder: (context) {
+                          final l10n = AppLocalizations.of(context);
                           // Nakshatra-observed festivals (e.g. Saraswati
                           // Avahan on Mula): the stored tithi is
                           // documentation only. Paksha/Tithi/Masa rows stay
@@ -351,7 +360,19 @@ class EventDetailSheet extends ConsumerWidget {
                                 // Respect the Settings tithi display mode:
                                 // paksha-based shows T1-15, continuous shows
                                 // T1-30 — of the observed (festival) tithi.
-                                '${PanchangData.tithiNameFor(observedNum, observedPaksha)} (T$displayTithiNum)',
+                                l10n == null
+                                    ? '${PanchangData.tithiNameFor(observedNum, observedPaksha)} (T$displayTithiNum)'
+                                    : localizeDigits(
+                                        l10n.tithiNameWithNumber(
+                                          localizedTithiName(
+                                            observedNum,
+                                            observedPaksha,
+                                            l10n,
+                                          ),
+                                          displayTithiNum,
+                                        ),
+                                        l10n.localeName,
+                                      ),
                               ),
                               // Masa (Hindu month) — converted for Purnimant display.
                               // panchang.masa is always Amanta; Krishna days take the
@@ -360,20 +381,23 @@ class EventDetailSheet extends ConsumerWidget {
                                 _buildInfoRow(
                                   context,
                                   Icons.wb_sunny_outlined,
-                                  'Masa',
-                                  displayMasaName(
-                                        panchang!.masa,
-                                        panchang!.paksha,
-                                        monthSystem,
-                                      )
-                                      .replaceAll('_', ' ')
-                                      .split(' ')
-                                      .map(
-                                        (w) => w.isEmpty
-                                            ? w
-                                            : '${w[0].toUpperCase()}${w.substring(1)}',
-                                      )
-                                      .join(' '),
+                                  l10n?.masa ?? 'Masa',
+                                  localizeMasaName(
+                                    displayMasaName(
+                                          panchang!.masa,
+                                          panchang!.paksha,
+                                          monthSystem,
+                                        )
+                                        .replaceAll('_', ' ')
+                                        .split(' ')
+                                        .map(
+                                          (w) => w.isEmpty
+                                              ? w
+                                              : '${w[0].toUpperCase()}${w.substring(1)}',
+                                        )
+                                        .join(' '),
+                                    l10n?.localeName ?? 'en',
+                                  ),
                                 ),
 
                               // Tithi Timings using user's location.
@@ -384,7 +408,7 @@ class EventDetailSheet extends ConsumerWidget {
                                 _buildInfoRow(
                                   context,
                                   Icons.star_outline,
-                                  'Nakshatra',
+                                  l10n?.nakshatra ?? 'Nakshatra',
                                   panchang!.nakshatra ??
                                       festival.nakshatraCondition!,
                                 ),
@@ -415,14 +439,19 @@ class EventDetailSheet extends ConsumerWidget {
                                         if (timings == null) {
                                           return const SizedBox.shrink();
                                         }
-                                        final dateFormat = DateFormat(
-                                          'h:mm a, MMM d',
-                                        );
-                                        final startStr = dateFormat.format(
+                                        final startStr = formatLocalizedDate(
                                           timings.start,
+                                          'h:mm a, MMM d',
+                                          Localizations.localeOf(
+                                            context,
+                                          ).languageCode,
                                         );
-                                        final endStr = dateFormat.format(
+                                        final endStr = formatLocalizedDate(
                                           timings.end,
+                                          'h:mm a, MMM d',
+                                          Localizations.localeOf(
+                                            context,
+                                          ).languageCode,
                                         );
 
                                         return Column(
@@ -430,7 +459,10 @@ class EventDetailSheet extends ConsumerWidget {
                                             _buildInfoRow(
                                               context,
                                               Icons.access_time,
-                                              'Begins',
+                                              AppLocalizations.of(
+                                                    context,
+                                                  )?.begins ??
+                                                  'Begins',
                                               startStr,
                                               trailing: _buildTimingInfoButton(
                                                 context,
@@ -439,7 +471,10 @@ class EventDetailSheet extends ConsumerWidget {
                                             _buildInfoRow(
                                               context,
                                               Icons.access_time_filled,
-                                              'Ends',
+                                              AppLocalizations.of(
+                                                    context,
+                                                  )?.ends ??
+                                                  'Ends',
                                               endStr,
                                               trailing: _buildTimingInfoButton(
                                                 context,
@@ -486,7 +521,20 @@ class EventDetailSheet extends ConsumerWidget {
                         // Respect the Settings tithi display mode here too:
                         // festival rules store paksha-based 1-15, so map
                         // Krishna tithis to 16-30 in continuous mode.
-                        'Tithi ${ref.watch(tithiDisplayModeProvider) == TithiDisplayMode.continuous30 && festival.paksha == 'Krishna' ? festival.tithi + 15 : festival.tithi}',
+                        () {
+                          final l10n = AppLocalizations.of(context);
+                          final num =
+                              ref.watch(tithiDisplayModeProvider) ==
+                                      TithiDisplayMode.continuous30 &&
+                                  festival.paksha == 'Krishna'
+                              ? festival.tithi + 15
+                              : festival.tithi;
+                          if (l10n == null) return 'Tithi $num';
+                          return localizeDigits(
+                            l10n.tithiWithNumber(num),
+                            l10n.localeName,
+                          );
+                        }(),
                       ),
                       // Masa from festival rules (stored Amanta) — converted
                       // for Purnimant display using the rule's own paksha.
@@ -494,20 +542,23 @@ class EventDetailSheet extends ConsumerWidget {
                         _buildInfoRow(
                           context,
                           Icons.wb_sunny_outlined,
-                          'Masa',
-                          displayMasaName(
-                                festival.masa,
-                                festival.paksha,
-                                monthSystem,
-                              )
-                              .replaceAll('_', ' ')
-                              .split(' ')
-                              .map(
-                                (w) => w.isEmpty
-                                    ? w
-                                    : '${w[0].toUpperCase()}${w.substring(1)}',
-                              )
-                              .join(' '),
+                          AppLocalizations.of(context)?.masa ?? 'Masa',
+                          localizeMasaName(
+                            displayMasaName(
+                                  festival.masa,
+                                  festival.paksha,
+                                  monthSystem,
+                                )
+                                .replaceAll('_', ' ')
+                                .split(' ')
+                                .map(
+                                  (w) => w.isEmpty
+                                      ? w
+                                      : '${w[0].toUpperCase()}${w.substring(1)}',
+                                )
+                                .join(' '),
+                            AppLocalizations.of(context)?.localeName ?? 'en',
+                          ),
                         ),
                       // Nakshatra from festival rules when tithi is
                       // overridden by one (stored tithi is then ignored).
@@ -515,7 +566,8 @@ class EventDetailSheet extends ConsumerWidget {
                         _buildInfoRow(
                           context,
                           Icons.star_outline,
-                          'Nakshatra',
+                          AppLocalizations.of(context)?.nakshatra ??
+                              'Nakshatra',
                           festival.nakshatraCondition!,
                         ),
                     ],
@@ -534,7 +586,9 @@ class EventDetailSheet extends ConsumerWidget {
                       _buildSectionHeader(
                         context,
                         icon: Icons.self_improvement,
-                        label: 'Fasting / Vrat',
+                        label:
+                            AppLocalizations.of(context)?.fastingVrat ??
+                            'Fasting / Vrat',
                         color: themeColor,
                       ),
                       const SizedBox(height: 12),
@@ -667,7 +721,7 @@ class EventDetailSheet extends ConsumerWidget {
                       _buildSectionHeader(
                         context,
                         icon: Icons.record_voice_over_outlined,
-                        label: 'Mantra',
+                        label: AppLocalizations.of(context)?.mantra ?? 'Mantra',
                         color: themeColor,
                       ),
                       const SizedBox(height: 12),
@@ -799,7 +853,7 @@ class EventDetailSheet extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'Timing Note',
+                AppLocalizations.of(context)?.timingNote ?? 'Timing Note',
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -807,7 +861,8 @@ class EventDetailSheet extends ConsumerWidget {
             ],
           ),
           content: Text(
-            'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.',
+            AppLocalizations.of(context)?.timingNoteDescription ??
+                'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(height: 1.35, fontSize: 14),
@@ -815,7 +870,7 @@ class EventDetailSheet extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Got it'),
+              child: Text(AppLocalizations.of(context)?.gotIt ?? 'Got it'),
             ),
           ],
         );

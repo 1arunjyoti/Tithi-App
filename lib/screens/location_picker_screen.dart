@@ -213,7 +213,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               GeoJsonLayer.asset(
                 'assets/map_data/india_boundary.geojson',
                 styleDefaults: const GeoJsonStyleDefaults(
-                  strokeColor: Colors.orange,
+                  strokeColor: AppTheme.mapBoundary,
                   strokeWidth: 1.5,
                   fillColor: Colors.transparent,
                   fillOpacity: 0.0,
@@ -232,7 +232,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
           Center(
             child: Semantics(
               label: l10n?.mapPinLocation ?? 'Map pin location',
-              child: const Icon(Icons.location_on, color: Colors.red, size: 48),
+              child: Icon(
+                Icons.location_on,
+                color: Theme.of(context).colorScheme.error,
+                size: 48,
+              ),
             ),
           ),
 
@@ -295,19 +299,19 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                       onPressed: _isLoading ? null : _onSelectLocation,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colors.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: context.colors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: context.colors.onPrimary,
                               ),
                             )
                           : Text(

@@ -11,6 +11,10 @@ final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
 class BengaliCalendarService {
   final Ref _ref;
 
+  static final BengaliCalendarDateCache _dateCache = BengaliCalendarDateCache(
+    maxEntries: 600,
+  );
+
   BengaliCalendarService(this._ref);
 
   /// Bengali solar month names, Boishakh-first (guide Sec 3.1).
@@ -46,42 +50,52 @@ class BengaliCalendarService {
 
   /// Calculates the Bengali Date using simplified approximation for web.
   /// Returns a record ({int day, String month, int year}).
-  Future<({int day, String month, int year})> calculateDate(
+  Future<BengaliCalendarDate> calculateDate(
     DateTime date, {
     double latitude = 22.5726, // Kolkata
     double longitude = 88.3639,
   }) async {
-    // Ensure panchang is initialized
-    await _ref.read(panchangInitProvider.future);
-
     // Simplified Bengali calendar calculation for web
     // Bengali calendar year starts on April 14/15 (Pohela Boishakh)
 
+    final normalized = DateTime(date.year, date.month, date.day);
+    final dateCacheKey = bengaliCalendarDateCacheKey(
+      normalized,
+      latitude,
+      longitude,
+    );
+    final cached = _dateCache.read(dateCacheKey);
+    if (cached != null) return cached;
+
+    // Ensure panchang is initialized only for a cache miss.
+    await _ref.read(panchangInitProvider.future);
+
     // Approximate Bengali year
-    int bengaliYear = date.year - 593;
-    if (date.month < 4 || (date.month == 4 && date.day < 14)) {
+    int bengaliYear = normalized.year - 593;
+    if (normalized.month < 4 ||
+        (normalized.month == 4 && normalized.day < 14)) {
       bengaliYear--;
     }
 
     // Calculate approximate month and day based on solar calendar
     // Each month is approximately 30-31 days
-    final monthStartDates = _getMonthStartDates(date.year);
+    final monthStartDates = _getMonthStartDates(normalized.year);
 
     int monthIndex = 0;
     int day = 1;
 
     for (int i = 0; i < monthStartDates.length; i++) {
-      if (date.isBefore(monthStartDates[i])) {
+      if (normalized.isBefore(monthStartDates[i])) {
         monthIndex = i == 0 ? 11 : i - 1;
         final prevStart = i == 0
-            ? _getMonthStartDates(date.year - 1)[11]
+            ? _getMonthStartDates(normalized.year - 1)[11]
             : monthStartDates[i - 1];
-        day = date.difference(prevStart).inDays + 1;
+        day = normalized.difference(prevStart).inDays + 1;
         break;
       }
       if (i == monthStartDates.length - 1) {
         monthIndex = 11;
-        day = date.difference(monthStartDates[11]).inDays + 1;
+        day = normalized.difference(monthStartDates[11]).inDays + 1;
       }
     }
 
@@ -89,7 +103,13 @@ class BengaliCalendarService {
     if (day < 1) day = 1;
     if (day > 32) day = 1;
 
-    return (day: day, month: bengaliMonths[monthIndex], year: bengaliYear);
+    final result = (
+      day: day,
+      month: bengaliMonths[monthIndex],
+      year: bengaliYear,
+    );
+    _dateCache.store(dateCacheKey, result);
+    return result;
   }
 
   /// Returns approximate Gregorian start dates for Bengali months.

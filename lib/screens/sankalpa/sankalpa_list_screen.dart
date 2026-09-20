@@ -196,7 +196,9 @@ class _SankalpaCard extends ConsumerWidget {
                         value: 'delete',
                         child: Text(
                           l10n.delete,
-                          style: const TextStyle(color: Colors.red),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     ],
@@ -269,7 +271,11 @@ class _SankalpaCard extends ConsumerWidget {
                 l10n.completedOn(
                   DateFormat.yMMMd().format(sankalpa.endDate),
                 ),
-                style: const TextStyle(color: Colors.green),
+                style: TextStyle(
+                  color: AppTheme.success(
+                    Theme.of(context).brightness == Brightness.dark,
+                  ),
+                ),
               ),
             ],
           ],

@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
+
 class MoonAnimationWidget extends StatelessWidget {
   final double phase;
   final bool isWaxing;
@@ -22,8 +24,8 @@ class MoonAnimationWidget extends StatelessWidget {
         painter: MoonPhasePainter(
           phase: phase,
           isWaxing: isWaxing,
-          color: Colors.amber.shade200,
-          shadowColor: const Color(0xFF1A1A2E), // Deep dark blue/black
+          color: AppTheme.moonLit,
+          shadowColor: AppTheme.moonShadow,
         ),
       ),
     );

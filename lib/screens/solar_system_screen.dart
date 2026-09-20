@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/tithi_localization.dart';
 import '../providers/planetary_view_provider.dart';
 import '../services/planetary_view_service.dart';
 import '../widgets/solar_system_painter.dart';
@@ -233,7 +233,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      DateFormat('MMM d, y').format(viewDate),
+                      formatLocalizedDate(
+                        viewDate,
+                        'MMM d, y',
+                        l10n.localeName,
+                      ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -448,7 +452,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  DateFormat('MMM y').format(minDate),
+                  formatLocalizedDate(minDate, 'MMM y', l10n.localeName),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
@@ -461,7 +465,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   ),
                 ),
                 Text(
-                  DateFormat('MMM y').format(maxDate),
+                  formatLocalizedDate(maxDate, 'MMM y', l10n.localeName),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
@@ -697,16 +701,18 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.2),
+                    color: AppTheme.retrogradeIndicator.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.5),
+                      color: AppTheme.retrogradeIndicator.withValues(
+                        alpha: 0.5,
+                      ),
                     ),
                   ),
                   child: Text(
                     l10n.retrograde,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: Colors.red,
+                      color: AppTheme.retrogradeIndicator,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

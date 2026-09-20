@@ -55,23 +55,59 @@ class PanchangData {
   /// Check if this is Krishna Paksha (waning moon)
   bool get isKrishna => paksha == 'Krishna';
 
-  /// Full tithi index in the 1-30 cycle (rawTithi.floor()).
+  /// Full tithi index in the 1-30 cycle, derived from the DISPLAYED label
+  /// ([paksha]/[tithiNumber]).
   /// Unlike [tithiNumber] (1-15 within a paksha), this uniquely identifies
   /// the tithi: 1-15 = Shukla, 16-30 = Krishna.
   /// Use this when querying exact tithi start/end times.
-  int get tithiIndex => rawTithi.floor().clamp(1, 30);
+  /// Derived from the label (not [rawTithi]) so a live-flipped record stays
+  /// self-consistent: after the flip to Ashtami, timings queries keyed by
+  /// this resolve Ashtami's span. Identical to `rawTithi.floor()` whenever
+  /// the label is the sunrise tithi (all non-live records).
+  int get tithiIndex =>
+      (paksha == 'Shukla' ? tithiNumber : tithiNumber + 15).clamp(1, 30);
 
   /// Check if there are any festivals on this day
   bool get hasFestivals => festivals.isNotEmpty;
 
   /// Whether a tithi transition occurs between this sunrise and the next,
   /// i.e. the day should show two tithis ("Ashtami → Navami").
+  /// Compared against the SUNRISE tithi ([rawTithi]), not the displayed
+  /// label: once a live hero flips to the incoming tithi, the boundary
+  /// that got it there must stay visible as the day's history.
   bool get hasTithiTransition =>
       tithiTransitionTime != null &&
       transitionTithiIndex != null &&
       transitionTithiIndex! >= 1 &&
       transitionTithiIndex! <= 30 &&
-      transitionTithiIndex != tithiIndex;
+      transitionTithiIndex != rawTithi.floor().clamp(1, 30);
+
+  /// Whether the daytime transition EXITS the currently displayed label
+  /// ([tithiIndex]) into a later tithi (e.g. label Saptami → Ashtami).
+  /// False when the transition ENTERS the displayed label — i.e. after a
+  /// live flip, or on squeeze days whose label already is the incoming
+  /// tithi: the [tithiTransitionTime] is then the label's beginning, not
+  /// its end, and "next tithi" wording must not name the current tithi.
+  bool get transitionExitsLabel =>
+      hasTithiTransition && transitionTithiIndex != tithiIndex;
+
+  /// 1-30 index of the SUNRISE tithi. Unlike [tithiIndex] (the displayed
+  /// label, which a live hero may advance intraday), this never moves: it
+  /// names the tithi the day started with, for history lines ("Saptami
+  /// till 1:02 PM") and sunrise-pinned festival context.
+  int get sunriseTithiIndex => rawTithi.floor().clamp(1, 30);
+
+  /// Paksha of the sunrise tithi.
+  String get sunrisePaksha => sunriseTithiIndex <= 15 ? 'Shukla' : 'Krishna';
+
+  /// Paksha-relative (1-15) number of the sunrise tithi.
+  int get sunriseTithiNumber => sunriseTithiIndex <= 15
+      ? sunriseTithiIndex
+      : sunriseTithiIndex - 15;
+
+  /// Name of the sunrise tithi.
+  String get sunriseTithiName =>
+      tithiNameFor(sunriseTithiNumber, sunrisePaksha);
 
   /// Paksha of the tithi taking over at [tithiTransitionTime].
   String get transitionPaksha =>
@@ -302,19 +338,25 @@ class PanchangData {
   /// by the single-day provider when reusing the month-map entry: the month
   /// batch skips the daytime transition search, so the single-day path
   /// resolves it separately and attaches it here without re-matching.
+  /// The [tithiNumber]/[tithiName]/[paksha] overrides serve the live hero:
+  /// intraday the displayed label advances while festivals, masa and the
+  /// sunrise record stay pinned.
   PanchangData copyWith({
     List<Festival>? festivals,
     String? nakshatra,
     DateTime? tithiTransitionTime,
     int? transitionTithiIndex,
     bool clearTransition = false,
+    int? tithiNumber,
+    String? tithiName,
+    String? paksha,
   }) {
     return PanchangData(
       date: date,
       rawTithi: rawTithi,
-      tithiNumber: tithiNumber,
-      tithiName: tithiName,
-      paksha: paksha,
+      tithiNumber: tithiNumber ?? this.tithiNumber,
+      tithiName: tithiName ?? this.tithiName,
+      paksha: paksha ?? this.paksha,
       masa: masa,
       festivals: festivals ?? this.festivals,
       sunrise: sunrise,
@@ -326,6 +368,67 @@ class PanchangData {
       transitionTithiIndex: clearTransition
           ? null
           : (transitionTithiIndex ?? this.transitionTithiIndex),
+    );
+  }
+
+  /// Displayed label (paksha-relative number, paksha, name, 1-30 index) in
+  /// effect at [now].
+  ///
+  /// Before [tithiTransitionTime] (or when there is none) this is the day's
+  /// sunrise label. From the transition instant on, it is the incoming
+  /// tithi; on rare kshaya days a located second boundary ([followOnTime] /
+  /// [followOnIndex], resolved by the live-tick provider via the tithi
+  /// timings search) advances it once more. Pure — the hero's liveness is a
+  /// view over this, and unit tests pin the sequencing without timers.
+  ({int number, String paksha, String name, int index}) liveLabelAt(
+    DateTime now, {
+    DateTime? followOnTime,
+    int? followOnIndex,
+  }) {
+    int index = tithiIndex;
+    if (hasTithiTransition &&
+        !now.isBefore(tithiTransitionTime!) &&
+        transitionTithiIndex != null) {
+      index = transitionTithiIndex!.clamp(1, 30);
+    }
+    if (followOnTime != null &&
+        followOnIndex != null &&
+        followOnIndex >= 1 &&
+        followOnIndex <= 30 &&
+        !now.isBefore(followOnTime)) {
+      index = followOnIndex;
+    }
+    final labelPaksha = index <= 15 ? 'Shukla' : 'Krishna';
+    final labelNumber = index <= 15 ? index : index - 15;
+    return (
+      number: labelNumber,
+      paksha: labelPaksha,
+      name: tithiNameFor(labelNumber, labelPaksha),
+      index: index,
+    );
+  }
+
+  /// Copy with the displayed label advanced to the tithi prevailing at
+  /// [now] (see [liveLabelAt]). Everything else — festivals, masa,
+  /// sunrise record, transition history — is preserved, so a flipped hero
+  /// still opens a sheet that knows the day started as the sunrise tithi.
+  /// Returns `this` when the label is unchanged (identity preserves the
+  /// hero's content-fade key and avoids pointless rebuilds).
+  PanchangData withLiveLabel(
+    DateTime now, {
+    DateTime? followOnTime,
+    int? followOnIndex,
+  }) {
+    final live = liveLabelAt(
+      now,
+      followOnTime: followOnTime,
+      followOnIndex: followOnIndex,
+    );
+    if (live.number == tithiNumber && live.paksha == paksha) return this;
+    return copyWith(
+      tithiNumber: live.number,
+      tithiName: live.name,
+      paksha: live.paksha,
     );
   }
 

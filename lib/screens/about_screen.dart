@@ -54,17 +54,21 @@ class AboutScreen extends ConsumerWidget {
                   children: [
                     _AboutHeroCard(versionAsync: versionAsync),
                     const SizedBox(height: 20),
-                    const _AboutSectionCard(
+                    _AboutSectionCard(
                       icon: Icons.auto_awesome_rounded,
-                      title: 'Built for daily practice',
+                      title:
+                          l10n?.aboutBuiltForDailyPractice ??
+                          'Built for daily practice',
                       description:
+                          l10n?.aboutDailyPracticeDescription ??
                           'Tithi blends traditional Panchang wisdom with modern clarity, so your rituals and observances stay on time and effortless.',
                     ),
                     const SizedBox(height: 16),
-                    const _AboutSectionCard(
+                    _AboutSectionCard(
                       icon: Icons.explore_rounded,
-                      title: 'What\'s inside',
+                      title: l10n?.aboutWhatsInside ?? 'What\'s inside',
                       description:
+                          l10n?.aboutFeaturesDescription ??
                           'Accurate tithi and nakshatra tracking, festival countdowns, local sunrise and sunset, and calm daily inspiration.',
                     ),
                     const SizedBox(height: 16),
@@ -129,14 +133,16 @@ class AboutScreen extends ConsumerWidget {
                             ),
                           ),
                           title: Text(
-                            'Detailed privacy policy',
+                            l10n?.detailedPrivacyPolicy ??
+                                'Detailed privacy policy',
                             style: context.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: context.colors.onSurface,
                             ),
                           ),
                           subtitle: Text(
-                            'Read the full policy on our website',
+                            l10n?.readFullPrivacyPolicy ??
+                                'Read the full policy on our website',
                             style: context.textTheme.bodySmall?.copyWith(
                               color: context.colors.onSurface.withValues(
                                 alpha: 0.7,
@@ -177,14 +183,15 @@ class AboutScreen extends ConsumerWidget {
   }
 
   Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
     if (await canLaunchUrl(_privacyPolicyUrl)) {
       await launchUrl(_privacyPolicyUrl, mode: LaunchMode.externalApplication);
       return;
     }
     messenger.showSnackBar(
-      const SnackBar(
-        content: Text('Unable to open the privacy policy website.'),
+      SnackBar(
+        content: Text(l10n?.unableToOpenPrivacyPolicy ?? 'Unable to open the privacy policy website.'),
       ),
     );
   }
@@ -197,6 +204,7 @@ class _AboutHeroCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: AppTheme.glassmorphism(context: context, ref: ref),
@@ -216,7 +224,7 @@ class _AboutHeroCard extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Tithi',
+            l10n?.tithi ?? 'Tithi',
             style: context.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: context.colors.onSurface,
@@ -224,7 +232,7 @@ class _AboutHeroCard extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Vedic calendar for modern life',
+            l10n?.aboutTagline ?? 'Vedic calendar for modern life',
             style: context.textTheme.bodyMedium?.copyWith(
               color: context.colors.onSurface.withValues(alpha: 0.7),
             ),
@@ -244,6 +252,7 @@ class _VersionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return versionAsync.when(
       data: (info) {
         final versionLabel = '${info.version} (${info.buildNumber})';
@@ -254,7 +263,7 @@ class _VersionChip extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
-            'Version $versionLabel',
+            l10n?.versionText(versionLabel) ?? 'Version $versionLabel',
             style: context.textTheme.labelMedium?.copyWith(
               color: context.colors.onSurface.withValues(alpha: 0.7),
             ),
@@ -268,7 +277,7 @@ class _VersionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
-          'Version ...',
+          l10n?.versionText('...') ?? 'Version ...',
           style: context.textTheme.labelMedium?.copyWith(
             color: context.colors.onSurface.withValues(alpha: 0.7),
           ),
@@ -281,7 +290,7 @@ class _VersionChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
-          'Version ?',
+          l10n?.versionText('?') ?? 'Version ?',
           style: context.textTheme.labelMedium?.copyWith(
             color: context.colors.onSurface.withValues(alpha: 0.7),
           ),

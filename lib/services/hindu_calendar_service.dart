@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive/hive.dart';
 import '../providers/panchang_provider.dart';
 import 'sunrise_calculator.dart';
 
@@ -67,13 +68,52 @@ class HinduCalendarService {
       longitude: coords.longitude,
     );
 
+    // Shared Hive entries with the monthly batch (same sunrise instant, same
+    // keys): on a warm device month slices skip FFI entirely, and cold
+    // results are written back so the Gregorian batch benefits in turn.
+    // Degrades to pure FFI when the box is unavailable (unit tests).
+    Box<dynamic>? cacheBox;
+    try {
+      cacheBox = await preparePanchangCacheBox(
+        coords.latitude,
+        coords.longitude,
+      );
+    } catch (_) {
+      // Unavailable (e.g. unit tests without Hive): pure FFI below.
+      // NOTE: must stay silent — Hive.openBox without Hive.init also
+      // reports a stray async error that test runners attribute to the
+      // running test, so tests init Hive (see hindu_adhika_month_test).
+      cacheBox = null;
+    }
+    final tithiKey = panchangCacheKey(
+      normalized,
+      coords.latitude,
+      coords.longitude,
+    );
+    final masaKey = panchangCacheKey(
+      normalized,
+      coords.latitude,
+      coords.longitude,
+      panchangMasaCacheSuffix,
+    );
+
     // 1. Calculate Tithi at sunrise (udaya tithi, 1-based 1..30:
     // 1-15 Shukla with 15 = Purnima, 16-30 Krishna).
-    final rawTithi = await service.calculateTithi(
-      sunrise,
-      latitude: coords.latitude,
-      longitude: coords.longitude,
-    );
+    double? rawTithi = cacheBox == null
+        ? null
+        : readPanchangCacheDouble(cacheBox, tithiKey);
+    if (rawTithi == null) {
+      rawTithi = await service.calculateTithi(
+        sunrise,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      );
+      try {
+        await cacheBox?.put(tithiKey, rawTithi);
+      } catch (_) {
+        // Cache write-through is best-effort only.
+      }
+    }
 
     int tithi = rawTithi.floor().clamp(1, 30);
 
@@ -88,12 +128,22 @@ class HinduCalendarService {
     }
 
     // 2. Calculate Masa at sunrise, matching the tithi instant.
-    String masa = await service.calculateMasa(
+    String? masa = cacheBox == null
+        ? null
+        : readPanchangCacheString(cacheBox, masaKey);
+    masa ??= await service.calculateMasa(
       sunrise,
       rawTithi,
       latitude: coords.latitude,
       longitude: coords.longitude,
     );
+    if (cacheBox != null) {
+      try {
+        await cacheBox.put(masaKey, masa);
+      } catch (_) {
+        // Cache write-through is best-effort only.
+      }
+    }
 
     // 3. Calculate Year (Vikram Samvat)
     // VS = Gregorian + 57 on/after Chaitra Shukla Pratipada (New Year),
@@ -207,6 +257,9 @@ class HinduCalendarService {
         return search;
       }
       search = search.add(const Duration(days: 1));
+      // Let gestures/frames interleave: sequential FFI scans otherwise hold
+      // the UI thread for the whole sweep and date taps go unanswered.
+      if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
     }
 
     // Fallback: If not found (rare, maybe skipped tithi), return estimate
@@ -230,6 +283,7 @@ class HinduCalendarService {
         return day.add(const Duration(days: 1));
       }
       day = day.subtract(const Duration(days: 1));
+      if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
     }
     return DateTime(date.year, date.month, date.day - 29);
   }
@@ -252,6 +306,7 @@ class HinduCalendarService {
         return day;
       }
       day = day.add(const Duration(days: 1));
+      if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
     }
     return DateTime(
       monthStart.year,
@@ -284,6 +339,7 @@ class HinduCalendarService {
         return day;
       }
       day = day.add(const Duration(days: 1));
+      if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
     }
     return DateTime(date.year, date.month, date.day + 30);
   }
