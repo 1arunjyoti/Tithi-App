@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/moon_phase_provider.dart';
 import '../screens/moon_phases_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 /// Compact widget showing countdown to next Amavasya and Purnima
 /// Designed for integration into the home screen
@@ -31,26 +32,12 @@ class MoonCountdownWidget extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    Colors.indigo.shade900.withValues(alpha: 0.6),
-                    Colors.deepPurple.shade900.withValues(alpha: 0.4),
-                  ]
-                : [
-                    Colors.amber.shade100.withValues(alpha: 0.8),
-                    Colors.orange.shade50.withValues(alpha: 0.6),
-                  ],
+            colors: AppTheme.moonCountdownGradient(isDark),
           ),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.amber.shade200.withValues(alpha: 0.5),
-          ),
+          border: Border.all(color: AppTheme.moonCountdownBorder(isDark)),
           boxShadow: [
             BoxShadow(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.3)
-                  : Colors.amber.withValues(alpha: 0.2),
+              color: AppTheme.moonCountdownShadow(isDark),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -92,15 +79,11 @@ class MoonCountdownWidget extends ConsumerWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
-              colors: isDark
-                  ? [Colors.grey.shade300, Colors.grey.shade600]
-                  : [Colors.amber.shade200, Colors.orange.shade300],
+              colors: AppTheme.moonDiscGradient(isDark),
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark
-                    ? Colors.indigo.withValues(alpha: 0.5)
-                    : Colors.amber.withValues(alpha: 0.5),
+                color: AppTheme.moonGlowColor(isDark),
                 blurRadius: 16,
                 spreadRadius: 2,
               ),
@@ -110,7 +93,7 @@ class MoonCountdownWidget extends ConsumerWidget {
             tag: 'moon_icon',
             child: Icon(
               data.isShukla ? Icons.brightness_3 : Icons.brightness_2,
-              color: isDark ? Colors.indigo.shade900 : Colors.orange.shade800,
+              color: AppTheme.moonIconColor(isDark),
               size: 32,
             ),
           ),
@@ -127,7 +110,7 @@ class MoonCountdownWidget extends ConsumerWidget {
                 label: l10n.nextPurnima,
                 countdown: data.purnimaCountdown,
                 icon: Icons.circle,
-                iconColor: isDark ? Colors.amber : Colors.orange.shade600,
+                iconColor: AppTheme.purnimaIconColor(isDark),
               ),
               const SizedBox(height: 8),
               // Next Amavasya
@@ -135,7 +118,7 @@ class MoonCountdownWidget extends ConsumerWidget {
                 label: l10n.nextAmavasya,
                 countdown: data.amavasyaCountdown,
                 icon: Icons.circle_outlined,
-                iconColor: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                iconColor: AppTheme.amavasyaIconColor(isDark),
               ),
             ],
           ),

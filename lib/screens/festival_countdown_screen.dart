@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
@@ -16,6 +17,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     // Keep widget in sync
     ref.watch(homeWidgetSyncProvider);
     final countdowns = ref.watch(allFestivalCountdownTargetsProvider);
@@ -24,12 +26,12 @@ class FestivalCountdownScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Festival Countdowns'),
+        title: Text(l10n?.festivalCountdowns ?? 'Festival Countdowns'),
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded),
-            tooltip: 'Add countdown',
+            tooltip: l10n?.addCountdown ?? 'Add countdown',
             onPressed: () => _addCountdown(context, ref),
           ),
           const SizedBox(width: 8),
@@ -122,13 +124,15 @@ class FestivalCountdownScreen extends ConsumerWidget {
         .read(festivalCountdownPreferencesProvider.notifier)
         .addFestival(festival.id);
     if (!context.mounted) return;
-
+    final l10n = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           added
-              ? 'Countdown added for ${festival.name}'
-              : '${festival.name} is already in your countdowns',
+              ? (l10n?.countdownAddedForFestival(festival.name) ??
+                  'Countdown added for ${festival.name}')
+              : (l10n?.festivalAlreadyInCountdowns(festival.name) ??
+                  '${festival.name} is already in your countdowns'),
         ),
       ),
     );
@@ -139,6 +143,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
     WidgetRef ref,
     String festivalId,
   ) async {
+    final l10n = AppLocalizations.of(context);
     await ref
         .read(festivalCountdownPreferencesProvider.notifier)
         .removeFestival(festivalId);
@@ -146,7 +151,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Countdown removed')));
+    ).showSnackBar(SnackBar(content: Text(l10n?.countdownRemoved ?? 'Countdown removed')));
   }
 }
 
@@ -156,7 +161,7 @@ class CountdownFestivalSearchDelegate extends SearchDelegate<Festival?> {
   final WidgetRef ref;
 
   @override
-  String? get searchFieldLabel => 'Search festival name';
+  String? get searchFieldLabel => AppLocalizations.of(ref.context)?.searchFestivalName ?? 'Search festival name';
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -210,7 +215,8 @@ class CountdownFestivalSearchDelegate extends SearchDelegate<Festival?> {
     }
 
     if (results.isEmpty) {
-      return const Center(child: Text('No festivals found'));
+      final l10n = AppLocalizations.of(context);
+      return Center(child: Text(l10n?.noFestivalsFound ?? 'No festivals found'));
     }
 
     return ListView.builder(
@@ -332,6 +338,7 @@ class _EmptyCountdowns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -343,7 +350,7 @@ class _EmptyCountdowns extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'No countdowns yet',
+            l10n?.noCountdownsYet ?? 'No countdowns yet',
             style: context.textTheme.titleMedium?.copyWith(
               color: context.colors.onSurface.withValues(alpha: 0.7),
               fontWeight: FontWeight.w700,

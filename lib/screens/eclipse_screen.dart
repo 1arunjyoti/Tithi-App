@@ -248,16 +248,20 @@ class EclipseScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.visibility,
                         size: 16,
-                        color: Colors.green,
+                        color: AppTheme.success(
+                          theme.brightness == Brightness.dark,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         l10n.visibleFromYourLocation,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: Colors.green,
+                          color: AppTheme.success(
+                            theme.brightness == Brightness.dark,
+                          ),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -266,7 +270,9 @@ class EclipseScreen extends ConsumerWidget {
                         Text(
                           '(${(eclipse.localMagnitude! * 100).toStringAsFixed(0)}%)',
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
+                            color: AppTheme.success(
+                              theme.brightness == Brightness.dark,
+                            ),
                           ),
                         ),
                       ],
@@ -412,7 +418,9 @@ class EclipseScreen extends ConsumerWidget {
                   eclipse.visibleAtLocation
                       ? Icons.visibility
                       : Icons.visibility_off,
-                  color: eclipse.visibleAtLocation ? Colors.green : Colors.grey,
+                  color: eclipse.visibleAtLocation
+                      ? AppTheme.success(theme.brightness == Brightness.dark)
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -422,8 +430,10 @@ class EclipseScreen extends ConsumerWidget {
                         : l10n.notVisibleFromYourLocation,
                     style: theme.textTheme.bodyLarge?.copyWith(
                       color: eclipse.visibleAtLocation
-                          ? Colors.green
-                          : Colors.grey,
+                          ? AppTheme.success(
+                              theme.brightness == Brightness.dark,
+                            )
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w500,
                     ),
                   ),

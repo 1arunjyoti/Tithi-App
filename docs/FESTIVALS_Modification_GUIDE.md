@@ -192,13 +192,22 @@ external reference.
 4. **Spelling traps that fail silently:** `"nishita"` (not
    `nishitha`/`nisitha`) for `timingOverride`; Amanta (not Purnimanta)
    month names — both fall back to sunrise/offset behavior with no error.
-5. **`visuals` are parsed but currently unconsumed:** `image` is `""`
-   in all 108 entries and read nowhere in `lib/` — leave it `""`
-   (reserved for future surfaces). `theme_color` is ignored by the event
-   sheet (always app primary, per the comment in
-   `lib/widgets/event_detail_sheet.dart`); the 12 entries carrying hex
-   values are inert documentation for future surfaces — leave new entries
-   `""`.
+5. **Festival artwork budget (`visuals.image`):** `image` is consumed by
+    the home hero card (`_HeroFestivalImage` in
+    `lib/widgets/paksha_hero_card.dart`, ~96px slot, `BoxFit.cover`) —
+    keep it `""` unless the festival really needs artwork. When adding
+    one, drop the source into `assets/images/festival/` and run
+    `python scripts/compress_festival_images.py` from the repo root: it
+    downsizes to **<=800px** longest side, converts to **WebP (q80)**,
+    guarantees **<=200 KB** (stepping quality down, then size, until it
+    fits), updates the `visuals.image` path in `assets/festivals.json`,
+    and removes the original. `test/festival_image_assets_test.dart`
+    fails on non-WebP, oversized, or unreferenced files, so CI catches
+    what the script wasn't run on. `theme_color` is ignored by the event
+    sheet (always app primary, per the comment in
+    `lib/widgets/event_detail_sheet.dart`); the entries carrying hex
+    values are inert documentation for future surfaces — leave new
+    entries `""`.
 6. **Empty sections are data, not bugs:** fasting/rituals/mantra blocks
    render only when their fields are non-empty.
 

@@ -108,6 +108,30 @@ abstract class AppLocalizations {
   /// **'Tithi'**
   String get appTitle;
 
+  /// Settings tile title for exporting festivals
+  ///
+  /// In en, this message translates to:
+  /// **'Export Festivals (JSON)'**
+  String get exportFestivalsJson;
+
+  /// Settings tile subtitle for exporting festivals
+  ///
+  /// In en, this message translates to:
+  /// **'Save all festivals with Panchang details to a file'**
+  String get exportFestivalsSubtitle;
+
+  /// Title for export festivals bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Export Festivals'**
+  String get exportFestivals;
+
+  /// Subtitle for export festivals bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'First occurrence of each festival in the chosen year'**
+  String get exportFestivalsSubtitleYear;
+
   /// Subtitle describing the app as a Vedic Calendar
   ///
   /// In en, this message translates to:
@@ -305,6 +329,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tithi'**
   String get tithi;
+
+  /// Name of the first lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Pratipada'**
+  String get tithiPratipada;
+
+  /// Name of the second lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Dwitiya'**
+  String get tithiDwitiya;
+
+  /// Name of the third lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Tritiya'**
+  String get tithiTritiya;
+
+  /// Name of the fourth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Chaturthi'**
+  String get tithiChaturthi;
+
+  /// Name of the fifth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Panchami'**
+  String get tithiPanchami;
+
+  /// Name of the sixth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Shashthi'**
+  String get tithiShashthi;
+
+  /// Name of the seventh lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Saptami'**
+  String get tithiSaptami;
+
+  /// Name of the eighth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Ashtami'**
+  String get tithiAshtami;
+
+  /// Name of the ninth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Navami'**
+  String get tithiNavami;
+
+  /// Name of the tenth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Dashami'**
+  String get tithiDashami;
+
+  /// Name of the eleventh lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Ekadashi'**
+  String get tithiEkadashi;
+
+  /// Name of the twelfth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Dwadashi'**
+  String get tithiDwadashi;
+
+  /// Name of the thirteenth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Trayodashi'**
+  String get tithiTrayodashi;
+
+  /// Name of the fourteenth lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Chaturdashi'**
+  String get tithiChaturdashi;
+
+  /// Name of the fifteenth waxing lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Purnima'**
+  String get tithiPurnima;
+
+  /// Name of the fifteenth waning lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Amavasya'**
+  String get tithiAmavasya;
+
+  /// Fallback name for an invalid lunar day
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown'**
+  String get tithiUnknown;
 
   /// Festival view option - shows festivals
   ///
@@ -960,6 +1086,30 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get today;
 
+  /// Moon illumination percentage label
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% illuminated'**
+  String illuminatedPercent(String percent);
+
+  /// Label for the next tithi transition
+  ///
+  /// In en, this message translates to:
+  /// **'Next tithi'**
+  String get nextTithi;
+
+  /// Time of a tithi transition
+  ///
+  /// In en, this message translates to:
+  /// **'at {time}'**
+  String atTime(String time);
+
+  /// Label for yesterday
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterday;
+
   /// Label for tomorrow
   ///
   /// In en, this message translates to:
@@ -1278,6 +1428,18 @@ abstract class AppLocalizations {
   /// **'Sunset'**
   String get sunset;
 
+  /// Label for moonrise time
+  ///
+  /// In en, this message translates to:
+  /// **'Moonrise'**
+  String get moonrise;
+
+  /// Label for moonset time
+  ///
+  /// In en, this message translates to:
+  /// **'Moonset'**
+  String get moonset;
+
   /// Weather metric label
   ///
   /// In en, this message translates to:
@@ -1427,6 +1589,1290 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Orbit'**
   String get orbit;
+
+  /// Title for festival countdowns screen
+  ///
+  /// In en, this message translates to:
+  /// **'Festival Countdowns'**
+  String get festivalCountdowns;
+
+  /// Tooltip for add countdown button
+  ///
+  /// In en, this message translates to:
+  /// **'Add countdown'**
+  String get addCountdown;
+
+  /// Heading for countdown card screen
+  ///
+  /// In en, this message translates to:
+  /// **'Festival Countdowns'**
+  String get countdownHeading;
+
+  /// Zero days display in countdown
+  ///
+  /// In en, this message translates to:
+  /// **'0'**
+  String get zeroDays;
+
+  /// Days remaining label in countdown
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days to go'**
+  String daysRemaining(Object days);
+
+  /// Tooltip for removing countdown from home screen
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from home screen'**
+  String get removeFromHomeScreen;
+
+  /// Tooltip for removing countdown
+  ///
+  /// In en, this message translates to:
+  /// **'Remove countdown'**
+  String get removeCountdown;
+
+  /// Snackbar message when a countdown is removed
+  ///
+  /// In en, this message translates to:
+  /// **'Countdown removed'**
+  String get countdownRemoved;
+
+  /// Hint text for festival search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search festival name'**
+  String get searchFestivalName;
+
+  /// Empty state when no festivals match search
+  ///
+  /// In en, this message translates to:
+  /// **'No festivals found'**
+  String get noFestivalsFound;
+
+  /// Empty state when user has no countdowns
+  ///
+  /// In en, this message translates to:
+  /// **'No countdowns yet'**
+  String get noCountdownsYet;
+
+  /// Title for all festivals screen
+  ///
+  /// In en, this message translates to:
+  /// **'All Festivals'**
+  String get allFestivals;
+
+  /// Hint text for festival search field
+  ///
+  /// In en, this message translates to:
+  /// **'Search festivals'**
+  String get searchFestivalsHint;
+
+  /// Error message when festivals fail to load
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load festivals. Please try again.'**
+  String get couldNotLoadFestivals;
+
+  /// Error title in error display widget
+  ///
+  /// In en, this message translates to:
+  /// **'Oops! Something went wrong'**
+  String get oopsSomethingWentWrong;
+
+  /// Generic error message in error display widget
+  ///
+  /// In en, this message translates to:
+  /// **'An unexpected error occurred. Please try again.'**
+  String get unexpectedErrorOccurred;
+
+  /// Short error message for compact error display
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get somethingWentWrong;
+
+  /// Snackbar message when privacy policy URL cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to open the privacy policy website.'**
+  String get unableToOpenPrivacyPolicy;
+
+  /// Snackbar message when sharing fails
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share: {error}'**
+  String failedToShare(String error);
+
+  /// Text shared when sharing a festival
+  ///
+  /// In en, this message translates to:
+  /// **'Celebrating {festivalName} with Tithi App!'**
+  String celebratingFestivalWithTithi(String festivalName);
+
+  /// Button text to dismiss dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// Button text to add widget
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// Dialog title for manual widget instructions
+  ///
+  /// In en, this message translates to:
+  /// **'Add Widget Manually'**
+  String get addWidgetManually;
+
+  /// Snackbar message when widget pin is requested
+  ///
+  /// In en, this message translates to:
+  /// **'Widget pin requested — confirm on home screen'**
+  String get widgetPinRequested;
+
+  /// Snackbar message when widget pin fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not pin widget. Try adding manually: long-press → Widgets → Tithi'**
+  String get couldNotPinWidget;
+
+  /// Tooltip for info button
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get infoTooltip;
+
+  /// Tooltip for dismiss button
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get dismissTooltip;
+
+  /// Message shown when Solar System screen accessed on web
+  ///
+  /// In en, this message translates to:
+  /// **'Solar System is not available on web'**
+  String get solarSystemNotAvailableOnWeb;
+
+  /// Message shown when Eclipse screen accessed on web
+  ///
+  /// In en, this message translates to:
+  /// **'Eclipse screen is not available on web'**
+  String get eclipseScreenNotAvailableOnWeb;
+
+  /// Snackbar message while finding next festival occurrence
+  ///
+  /// In en, this message translates to:
+  /// **'Finding next occurrence...'**
+  String get findingNextOccurrence;
+
+  /// Tooltip for navigating to next festival occurrence
+  ///
+  /// In en, this message translates to:
+  /// **'Go to next occurrence'**
+  String get goToNextOccurrence;
+
+  /// Snackbar message when no upcoming festival occurrence found
+  ///
+  /// In en, this message translates to:
+  /// **'Could not find upcoming occurrence within a year.'**
+  String get couldNotFindUpcomingOccurrence;
+
+  /// Snackbar message when there are no festivals to export
+  ///
+  /// In en, this message translates to:
+  /// **'No festivals to export'**
+  String get noFestivalsToExport;
+
+  /// Dialog title while exporting festivals for a year
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting {year}'**
+  String exportingYear(String year);
+
+  /// Progress text during festival export
+  ///
+  /// In en, this message translates to:
+  /// **'{done} / {total} festivals'**
+  String festivalsExportedProgress(int done, int total);
+
+  /// Snackbar message when export is cancelled
+  ///
+  /// In en, this message translates to:
+  /// **'Export cancelled'**
+  String get exportCancelled;
+
+  /// Snackbar message when download starts on web
+  ///
+  /// In en, this message translates to:
+  /// **'Download started'**
+  String get downloadStarted;
+
+  /// Snackbar message when export file cannot be saved
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save export file'**
+  String get couldNotSaveExportFile;
+
+  /// Dialog title when export is saved successfully
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
+  /// Confirmation message after successful export
+  ///
+  /// In en, this message translates to:
+  /// **'{count} festivals exported for {year}.'**
+  String festivalsExportedForYear(int count, String year);
+
+  /// Button text to dismiss success dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// Button text to share exported file
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// Snackbar message when export fails
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String exportFailed(String error);
+
+  /// File picker dialog title for saving festivals
+  ///
+  /// In en, this message translates to:
+  /// **'Save festivals {year}'**
+  String saveFestivalsYear(String year);
+
+  /// About screen introduction heading
+  ///
+  /// In en, this message translates to:
+  /// **'Built for daily practice'**
+  String get aboutBuiltForDailyPractice;
+
+  /// About screen introduction
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi blends traditional Panchang wisdom with modern clarity, so your rituals and observances stay on time and effortless.'**
+  String get aboutDailyPracticeDescription;
+
+  /// About screen features heading
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s inside'**
+  String get aboutWhatsInside;
+
+  /// About screen feature summary
+  ///
+  /// In en, this message translates to:
+  /// **'Accurate tithi and nakshatra tracking, festival countdowns, local sunrise and sunset, and calm daily inspiration.'**
+  String get aboutFeaturesDescription;
+
+  /// About screen privacy policy link title
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed privacy policy'**
+  String get detailedPrivacyPolicy;
+
+  /// About screen privacy policy link subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Read the full policy on our website'**
+  String get readFullPrivacyPolicy;
+
+  /// Tagline below the app name on the About screen
+  ///
+  /// In en, this message translates to:
+  /// **'Vedic calendar for modern life'**
+  String get aboutTagline;
+
+  /// Purple theme option in settings
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get themePurple;
+
+  /// Snackbar when notification permission is denied
+  ///
+  /// In en, this message translates to:
+  /// **'Notification permission denied. Please enable it in system settings.'**
+  String get notificationPermissionDenied;
+
+  /// Notification toggle failure; state is on or off
+  ///
+  /// In en, this message translates to:
+  /// **'Could not turn notifications {state, select, on{on} other{off}} ({error}). Please try again.'**
+  String notificationToggleFailed(String state, String error);
+
+  /// Daily verse notification setting title
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Shloka'**
+  String get dailyShloka;
+
+  /// Daily verse notification setting subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Get a daily spiritual verse'**
+  String get dailyShlokaSubtitle;
+
+  /// Daily Shloka toggle failure; state is on or off
+  ///
+  /// In en, this message translates to:
+  /// **'Could not turn Daily Shloka {state, select, on{on} other{off}} ({error}). Please try again.'**
+  String dailyShlokaToggleFailed(String state, String error);
+
+  /// Festival reminder notification setting title
+  ///
+  /// In en, this message translates to:
+  /// **'Festival Reminders'**
+  String get festivalReminders;
+
+  /// Festival reminder notification setting subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Notify only for festivals, on the day or before'**
+  String get festivalRemindersSubtitle;
+
+  /// Festival reminder toggle failure; state is on or off
+  ///
+  /// In en, this message translates to:
+  /// **'Could not turn Festival Reminders {state, select, on{on} other{off}} ({error}). Please try again.'**
+  String festivalRemindersToggleFailed(String state, String error);
+
+  /// Festival reminder time setting and picker title
+  ///
+  /// In en, this message translates to:
+  /// **'Festival Reminder Time'**
+  String get festivalReminderTime;
+
+  /// Snackbar when saving the notification time fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update notification time ({error}). Please try again.'**
+  String notificationTimeUpdateFailed(String error);
+
+  /// Festival reminder timing option for the previous day
+  ///
+  /// In en, this message translates to:
+  /// **'Day before'**
+  String get festivalReminderDayBefore;
+
+  /// Festival reminder timing option for both the day before and the festival day
+  ///
+  /// In en, this message translates to:
+  /// **'Both'**
+  String get festivalReminderBoth;
+
+  /// Festival reminder timing option for the festival day
+  ///
+  /// In en, this message translates to:
+  /// **'On the day'**
+  String get festivalReminderOnDay;
+
+  /// Snackbar when saving the festival reminder time fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update reminder time ({error}). Please try again.'**
+  String reminderTimeUpdateFailed(String error);
+
+  /// Hindu month system setting and selection sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Hindu Month System'**
+  String get hinduMonthSystem;
+
+  /// Hindu month system selection explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how months are named during Krishna Paksha'**
+  String get hinduMonthSystemSubtitle;
+
+  /// Hindu year era setting and selection sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Hindu Year Era'**
+  String get hinduYearEra;
+
+  /// Hindu year era selection explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the calendar era for year display'**
+  String get hinduYearEraSubtitle;
+
+  /// Tithi numbering setting and selection sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi Display'**
+  String get tithiDisplay;
+
+  /// Summary of the paksha-based tithi numbering option
+  ///
+  /// In en, this message translates to:
+  /// **'Paksha (1-15)'**
+  String get tithiDisplayPakshaRange;
+
+  /// Tithi numbering selection explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how tithis are numbered in the calendar'**
+  String get tithiDisplaySubtitle;
+
+  /// Paksha-based tithi numbering option title
+  ///
+  /// In en, this message translates to:
+  /// **'Paksha Based'**
+  String get tithiDisplayPakshaBased;
+
+  /// Paksha-based tithi numbering option explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Show 1-15 for each paksha separately'**
+  String get tithiDisplayPakshaDescription;
+
+  /// Continuous tithi numbering option explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Show 1-30 continuously'**
+  String get tithiDisplayContinuousDescription;
+
+  /// Subject when sharing exported festival JSON
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi festivals {year}'**
+  String festivalExportShareSubject(String year);
+
+  /// Message when sharing exported festival JSON
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi festivals {year} with Panchang details (JSON)'**
+  String festivalExportShareText(String year);
+
+  /// Snackbar after adding a festival countdown
+  ///
+  /// In en, this message translates to:
+  /// **'Countdown added for {festivalName}'**
+  String countdownAddedForFestival(String festivalName);
+
+  /// Snackbar when a festival countdown already exists
+  ///
+  /// In en, this message translates to:
+  /// **'{festivalName} is already in your countdowns'**
+  String festivalAlreadyInCountdowns(String festivalName);
+
+  /// Map data attribution; preserve the OpenStreetMap brand name
+  ///
+  /// In en, this message translates to:
+  /// **'OpenStreetMap contributors'**
+  String get openStreetMapAttribution;
+
+  /// Gesture hint below the interactive moon visualization
+  ///
+  /// In en, this message translates to:
+  /// **'Drag to explore • Double-tap resets'**
+  String get moonScrubHint;
+
+  /// Moon illumination percentage, formatted to one decimal place
+  ///
+  /// In en, this message translates to:
+  /// **'Illumination: {percentage}%'**
+  String moonIllumination(String percentage);
+
+  /// Compact day unit in the moon phase countdown
+  ///
+  /// In en, this message translates to:
+  /// **'d'**
+  String get dayUnitShort;
+
+  /// Compact hour unit in the moon phase countdown
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get hourUnitShort;
+
+  /// Compact minute unit in the moon phase countdown
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get minuteUnitShort;
+
+  /// Compact duration for eclipse timings and moon countdowns
+  ///
+  /// In en, this message translates to:
+  /// **'{hours}h {minutes}m'**
+  String durationHoursMinutesShort(int hours, int minutes);
+
+  /// Compact eclipse duration under one hour
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes}m'**
+  String durationMinutesShort(int minutes);
+
+  /// Planet distance in astronomical units, formatted to two decimal places
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} AU'**
+  String distanceAstronomicalUnits(String distance);
+
+  /// Planet orbital period rounded to whole days
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d'**
+  String orbitalPeriodDaysShort(String days);
+
+  /// Planet orbital period in years, formatted to one decimal place
+  ///
+  /// In en, this message translates to:
+  /// **'{years}y'**
+  String orbitalPeriodYearsShort(String years);
+
+  /// Vikram calendar era label in the calendar year selector
+  ///
+  /// In en, this message translates to:
+  /// **'Vikram Samvat'**
+  String get vikramSamvat;
+
+  /// Shaka calendar era label in the calendar year selector
+  ///
+  /// In en, this message translates to:
+  /// **'Shaka Era'**
+  String get shakaEra;
+
+  /// Bengali calendar era label in the calendar year selector
+  ///
+  /// In en, this message translates to:
+  /// **'Bengali Era'**
+  String get bengaliEra;
+
+  /// Title of the calendar year selection dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Select year'**
+  String get selectYear;
+
+  /// Bengali year with its era name in the year selector
+  ///
+  /// In en, this message translates to:
+  /// **'{year} Bangabda'**
+  String bengaliEraYear(int year);
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'January'**
+  String get monthJanuary;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'February'**
+  String get monthFebruary;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'March'**
+  String get monthMarch;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'April'**
+  String get monthApril;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'May'**
+  String get monthMay;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'June'**
+  String get monthJune;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'July'**
+  String get monthJuly;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'August'**
+  String get monthAugust;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'September'**
+  String get monthSeptember;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'October'**
+  String get monthOctober;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'November'**
+  String get monthNovember;
+
+  /// Gregorian month name in calendar headers
+  ///
+  /// In en, this message translates to:
+  /// **'December'**
+  String get monthDecember;
+
+  /// Abbreviated Sunday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'SUN'**
+  String get weekdaySundayShort;
+
+  /// Abbreviated Monday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'MON'**
+  String get weekdayMondayShort;
+
+  /// Abbreviated Tuesday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'TUE'**
+  String get weekdayTuesdayShort;
+
+  /// Abbreviated Wednesday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'WED'**
+  String get weekdayWednesdayShort;
+
+  /// Abbreviated Thursday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'THU'**
+  String get weekdayThursdayShort;
+
+  /// Abbreviated Friday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'FRI'**
+  String get weekdayFridayShort;
+
+  /// Abbreviated Saturday label in the calendar weekday row
+  ///
+  /// In en, this message translates to:
+  /// **'SAT'**
+  String get weekdaySaturdayShort;
+
+  /// Attribution appended to shared verse text
+  ///
+  /// In en, this message translates to:
+  /// **'Shared via Tithi App'**
+  String get sharedViaTithiApp;
+
+  /// Message accompanying a shared verse image
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Wisdom — Tithi App'**
+  String get dailyWisdomShareMessage;
+
+  /// Verse sharing option title
+  ///
+  /// In en, this message translates to:
+  /// **'Share as image'**
+  String get shareAsImage;
+
+  /// Verse image sharing option subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Verse card picture'**
+  String get verseCardPicture;
+
+  /// Verse text sharing option title
+  ///
+  /// In en, this message translates to:
+  /// **'Share as text'**
+  String get shareAsText;
+
+  /// Verse text sharing option subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Verse with translation'**
+  String get verseWithTranslation;
+
+  /// Copy verse option title
+  ///
+  /// In en, this message translates to:
+  /// **'Copy text'**
+  String get copyText;
+
+  /// Copy verse option subtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Copy verse to clipboard'**
+  String get copyVerseToClipboard;
+
+  /// Snackbar when copying a verse fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not copy verse'**
+  String get couldNotCopyVerse;
+
+  /// Snackbar after copying a verse
+  ///
+  /// In en, this message translates to:
+  /// **'Verse copied'**
+  String get verseCopied;
+
+  /// Explains why a verse was chosen for a festival
+  ///
+  /// In en, this message translates to:
+  /// **'Chosen for {festivalName}'**
+  String chosenForFestival(String festivalName);
+
+  /// Collapse additional verse translations
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
+  /// Expand additional verse translations
+  ///
+  /// In en, this message translates to:
+  /// **'Show more translations'**
+  String get showMoreTranslations;
+
+  /// Hide the verse translation
+  ///
+  /// In en, this message translates to:
+  /// **'Hide translation'**
+  String get hideTranslation;
+
+  /// Show the verse translation
+  ///
+  /// In en, this message translates to:
+  /// **'Show translation'**
+  String get showTranslation;
+
+  /// Collapse a festival description; title case
+  ///
+  /// In en, this message translates to:
+  /// **'Show Less'**
+  String get showLessTitleCase;
+
+  /// Expand a festival description
+  ///
+  /// In en, this message translates to:
+  /// **'Read More'**
+  String get readMore;
+
+  /// Named tithi with its numeric identifier in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'{tithiName} (T{number})'**
+  String tithiNameWithNumber(String tithiName, int number);
+
+  /// Lunar month label in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'Masa'**
+  String get masa;
+
+  /// Lunar mansion label in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'Nakshatra'**
+  String get nakshatra;
+
+  /// Beginning time label in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'Begins'**
+  String get begins;
+
+  /// Ending time label in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'Ends'**
+  String get ends;
+
+  /// Numeric tithi label when a tithi name is unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi {number}'**
+  String tithiWithNumber(int number);
+
+  /// Fasting rule label in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'Fasting / Vrat'**
+  String get fastingVrat;
+
+  /// Mantra heading in festival details
+  ///
+  /// In en, this message translates to:
+  /// **'Mantra'**
+  String get mantra;
+
+  /// Astronomical timing information dialog title
+  ///
+  /// In en, this message translates to:
+  /// **'Timing Note'**
+  String get timingNote;
+
+  /// Explains possible differences from local temple timings
+  ///
+  /// In en, this message translates to:
+  /// **'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.'**
+  String get timingNoteDescription;
+
+  /// Empty state for the home screen festival list
+  ///
+  /// In en, this message translates to:
+  /// **'No festivals in the next 3 days'**
+  String get noFestivalsInNextThreeDays;
+
+  /// Festival list loading error with details
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load festivals: {error}'**
+  String couldNotLoadFestivalsWithError(String error);
+
+  /// Button and accessibility label to view all festivals with a count
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, one{View all {count} festival} other{View all {count} festivals}}'**
+  String viewAllFestivalsCount(int count);
+
+  /// Button and accessibility label to view all festivals without a count
+  ///
+  /// In en, this message translates to:
+  /// **'View all festivals'**
+  String get viewAllFestivals;
+
+  /// Singular day unit in a festival countdown
+  ///
+  /// In en, this message translates to:
+  /// **'day'**
+  String get day;
+
+  /// Festival countdown card title
+  ///
+  /// In en, this message translates to:
+  /// **'{title} Countdown'**
+  String festivalCountdownTitle(String title);
+
+  /// Relative time until a festival in a festival row
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, one{in 1 day} other{in {days} days}}'**
+  String festivalInDays(int days);
+
+  /// Festival search empty query hint
+  ///
+  /// In en, this message translates to:
+  /// **'Search for festivals, vrats, and events'**
+  String get searchFestivalsVratsAndEvents;
+
+  /// Title of the home screen widget promotion card
+  ///
+  /// In en, this message translates to:
+  /// **'Home Screen Widget'**
+  String get homeScreenWidget;
+
+  /// Subtitle when home screen widget pinning is available
+  ///
+  /// In en, this message translates to:
+  /// **'Add festival countdowns to your home screen'**
+  String get homeWidgetCountdownDescription;
+
+  /// Short manual home screen widget installation hint
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press home screen → Widgets → Tithi'**
+  String get homeWidgetManualHint;
+
+  /// Full manual home screen widget installation instructions
+  ///
+  /// In en, this message translates to:
+  /// **'1. Long-press on your home screen\n2. Tap \"Widgets\"\n3. Find \"Tithi\" and drag \"Festival Countdowns\" to your home screen\n\nThe widget shows all festivals from your Countdowns page.'**
+  String get homeWidgetManualInstructions;
+
+  /// Moon countdown loading error
+  ///
+  /// In en, this message translates to:
+  /// **'Unable to load moon phase data'**
+  String get unableToLoadMoonPhaseData;
+
+  /// Compact label for a moon countdown that has reached its target
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get countdownNow;
+
+  /// Compact moon countdown in days and hours
+  ///
+  /// In en, this message translates to:
+  /// **'{days}d {hours}h'**
+  String countdownDaysHours(int days, int hours);
+
+  /// Hero card label for the selected day rather than today
+  ///
+  /// In en, this message translates to:
+  /// **'Selected'**
+  String get selected;
+
+  /// Moon phase and illumination in the hero card and tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'{phase} · {percentage}% illuminated'**
+  String moonPhaseIlluminated(String phase, String percentage);
+
+  /// Upcoming tithi transition in the hero card
+  ///
+  /// In en, this message translates to:
+  /// **'Next tithi {tithiName} at {time}'**
+  String nextTithiAt(String tithiName, String time);
+
+  /// Transition text showing when the next tithi begins
+  ///
+  /// In en, this message translates to:
+  /// **'{tithiName} begins at {time}'**
+  String tithiBeginsAt(String tithiName, String time);
+
+  /// Transition text showing when the next tithi ends; dateTime follows the selected calendar
+  ///
+  /// In en, this message translates to:
+  /// **'{tithiName} ends {dateTime}'**
+  String tithiEndsAtDateTime(String tithiName, String dateTime);
+
+  /// Explains sunrise tithi and short tithis in the tithi detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.'**
+  String get udayaTithiExplanation;
+
+  /// Uppercase beginning time label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'BEGINS'**
+  String get beginsUppercase;
+
+  /// Uppercase ending time label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'ENDS'**
+  String get endsUppercase;
+
+  /// Uppercase transition section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'TRANSITION'**
+  String get transition;
+
+  /// Single-letter Shukla Paksha marker in the schedule view
+  ///
+  /// In en, this message translates to:
+  /// **'S'**
+  String get shuklaPakshaInitial;
+
+  /// Single-letter Krishna Paksha marker in the schedule view
+  ///
+  /// In en, this message translates to:
+  /// **'K'**
+  String get krishnaPakshaInitial;
+
+  /// Wind speed in kilometers per hour in the weather sheet
+  ///
+  /// In en, this message translates to:
+  /// **'{speed} kph'**
+  String windSpeedKph(double speed);
+
+  /// Continuous 30-day tithi display mode label
+  ///
+  /// In en, this message translates to:
+  /// **'30 Days'**
+  String get tithiDisplayThirtyDays;
+
+  /// Snackbar shown when sharing as image fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create image'**
+  String get couldNotCreateImage;
+
+  /// Title of the share verse bottom sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Share verse'**
+  String get shareVerse;
+
+  /// Tooltip for the left arrow to navigate to yesterday's verse
+  ///
+  /// In en, this message translates to:
+  /// **'Previous day\'s verse'**
+  String get previousDaysVerse;
+
+  /// Tooltip for the right arrow to navigate to tomorrow's verse
+  ///
+  /// In en, this message translates to:
+  /// **'Next day\'s verse'**
+  String get nextDaysVerse;
+
+  /// Tooltip for the share icon in the festival detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Share Card'**
+  String get shareCard;
+
+  /// Subtitle of the home widget promo card when widget can be pinned
+  ///
+  /// In en, this message translates to:
+  /// **'Add festival countdowns to your home screen'**
+  String get homeWidgetCanPin;
+
+  /// Brand label on the shloka share card image
+  ///
+  /// In en, this message translates to:
+  /// **'DAILY WISDOM'**
+  String get dailyWisdom;
+
+  /// Section header label for tithi timings in the detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'TITHI TIMINGS'**
+  String get tithiTimings;
+
+  /// Label for the tithi start time cell
+  ///
+  /// In en, this message translates to:
+  /// **'BEGINS'**
+  String get tithiBegins;
+
+  /// Label for the tithi end time cell
+  ///
+  /// In en, this message translates to:
+  /// **'ENDS'**
+  String get tithiEnds;
+
+  /// Label shown on the transition card in the tithi detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'TRANSITION'**
+  String get tithiTransition;
+
+  /// Explainer text about udaya tithi in the tithi detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.'**
+  String get udayaTithiExplainer;
+
+  /// Uppercase nakshatra section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'NAKSHATRA'**
+  String get nakshatraTimings;
+
+  /// Nakshatra card headline showing when the sunrise nakshatra ends
+  ///
+  /// In en, this message translates to:
+  /// **'{nakshatra} until {time}'**
+  String nakshatraUntil(String nakshatra, String time);
+
+  /// Nakshatra card subline showing the Vimshottari lord
+  ///
+  /// In en, this message translates to:
+  /// **'Lord: {lord}'**
+  String nakshatraLord(String lord);
+
+  /// Nakshatra card subline showing how much of the span has elapsed
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% elapsed'**
+  String nakshatraElapsed(String percent);
+
+  /// Nakshatra card line showing the upcoming nakshatra below the progress bar
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {nakshatra} at {time}'**
+  String nakshatraNext(String nakshatra, String time);
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Ketu'**
+  String get lordKetu;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Venus'**
+  String get lordVenus;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get lordSun;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Moon'**
+  String get lordMoon;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Mars'**
+  String get lordMars;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Rahu'**
+  String get lordRahu;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Jupiter'**
+  String get lordJupiter;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Saturn'**
+  String get lordSaturn;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Mercury'**
+  String get lordMercury;
+
+  /// Uppercase yoga/karana section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'YOGA & KARANA'**
+  String get yogaKaranaTimings;
+
+  /// Cell label for yoga in the yoga/karana card
+  ///
+  /// In en, this message translates to:
+  /// **'YOGA'**
+  String get yogaLabel;
+
+  /// Cell label for karana in the yoga/karana card
+  ///
+  /// In en, this message translates to:
+  /// **'KARANA'**
+  String get karanaLabel;
+
+  /// Yoga/karana span line showing when the current span ends and what follows
+  ///
+  /// In en, this message translates to:
+  /// **'until {time}, then {next}'**
+  String untilThen(String time, String next);
+
+  /// Uppercase inauspicious-timings section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'INAUSPICIOUS TIMINGS'**
+  String get inauspiciousTimings;
+
+  /// Row name for Rahu Kalam in the day windows card
+  ///
+  /// In en, this message translates to:
+  /// **'Rahu Kalam'**
+  String get rahuKalam;
+
+  /// Row name for Yamaganda in the day windows card
+  ///
+  /// In en, this message translates to:
+  /// **'Yamaganda'**
+  String get yamaganda;
+
+  /// Row name for Gulika Kalam in the day windows card
+  ///
+  /// In en, this message translates to:
+  /// **'Gulika Kalam'**
+  String get gulikaKalam;
+
+  /// Uppercase auspicious-timings section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'AUSPICIOUS TIMINGS'**
+  String get auspiciousTimings;
+
+  /// Row name for Abhijit muhurta
+  ///
+  /// In en, this message translates to:
+  /// **'Abhijit'**
+  String get abhijit;
+
+  /// Row name for Brahma Muhurta
+  ///
+  /// In en, this message translates to:
+  /// **'Brahma Muhurta'**
+  String get brahmaMuhurta;
+
+  /// Row name for Madhyahna
+  ///
+  /// In en, this message translates to:
+  /// **'Madhyahna'**
+  String get madhyahna;
+
+  /// Row name for Nishita
+  ///
+  /// In en, this message translates to:
+  /// **'Nishita'**
+  String get nishita;
+
+  /// Row name for Godhuli
+  ///
+  /// In en, this message translates to:
+  /// **'Godhuli'**
+  String get godhuli;
+
+  /// Row name for Pradosha
+  ///
+  /// In en, this message translates to:
+  /// **'Pradosha'**
+  String get pradosha;
+
+  /// Abhijit subnote shown on Wednesdays
+  ///
+  /// In en, this message translates to:
+  /// **'Avoided on Wednesday'**
+  String get abhijitAvoided;
+
+  /// Abhijit subnote shown on Tue/Thu/Sat
+  ///
+  /// In en, this message translates to:
+  /// **'Especially auspicious today'**
+  String get abhijitAuspicious;
+
+  /// Madhyahna subnote showing the midpoint instant
+  ///
+  /// In en, this message translates to:
+  /// **'midpoint {time}'**
+  String midpointAt(String time);
 }
 
 class _AppLocalizationsDelegate

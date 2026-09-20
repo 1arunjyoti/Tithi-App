@@ -43,6 +43,26 @@ void main() {
     });
   });
 
+  group('Nakshatra lords', () {
+    test('9-graha Vimshottari sequence repeats three times', () {
+      expect(nakshatraLords, hasLength(9));
+      for (var i = 0; i < 27; i++) {
+        expect(
+          nakshatraLordFor(i),
+          equals(nakshatraLords[i % 9]),
+          reason: 'index $i (${hinduNakshatras[i]})',
+        );
+      }
+    });
+
+    test('spot-check Ashwini, Rohini, Mula, Revati lords', () {
+      expect(nakshatraLordFor(0), equals('Ketu')); // Ashwini
+      expect(nakshatraLordFor(3), equals('Moon')); // Rohini
+      expect(nakshatraLordFor(18), equals('Ketu')); // Mula
+      expect(nakshatraLordFor(26), equals('Mercury')); // Revati
+    });
+  });
+
   group('nakshatraCondition parsing', () {
     test('Mula Nakshatra (any case) resolves to canonical Mula', () {
       expect(mulaFestival().nakshatraCondition, equals('Mula'));

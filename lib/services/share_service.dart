@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../widgets/festival_share_card.dart';
 
@@ -25,11 +27,12 @@ class ShareService {
     try {
       // On web, use text-only sharing
       if (kIsWeb) {
+        final l10n = AppLocalizations.of(context);
         await SharePlus.instance.share(
           ShareParams(
             subject: festival.name,
             text:
-                'Celebrating ${festival.name} with Tithi App!\n\n'
+                '${l10n?.celebratingFestivalWithTithi(festival.name) ?? 'Celebrating ${festival.name} with Tithi App!'}\n\n'
                 'Check out this festival on Tithi - your Hindu Panchang Calendar.',
           ),
         );
@@ -58,20 +61,22 @@ class ShareService {
       }
 
       // 4. Share the file
+      final l10n = AppLocalizations.of(context);
       final xFile = XFile(imagePath);
       await SharePlus.instance.share(
         ShareParams(
           subject: festival.name,
-          text: 'Celebrating ${festival.name} with Tithi App!',
+          text: l10n?.celebratingFestivalWithTithi(festival.name) ?? 'Celebrating ${festival.name} with Tithi App!',
           files: [xFile],
         ),
       );
     } catch (e) {
       debugPrint("Error sharing festival: $e");
       if (context.mounted) {
+        final errorL10n = AppLocalizations.of(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Failed to share: $e')));
+        ).showSnackBar(SnackBar(content: Text(errorL10n?.failedToShare(e.toString()) ?? 'Failed to share: $e')));
       }
     }
   }

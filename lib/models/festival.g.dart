@@ -26,8 +26,6 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       panchangRules: fields[6] as PanchangRules,
       rituals: fields[7] as Rituals,
       media: fields[8] as Media,
-      // HiveField(9) added for displayPriority; old boxes lack it → null
-      // (no override, current order preserved).
       displayPriority: fields[9] as int?,
     );
   }
@@ -218,8 +216,7 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       weekday: fields[6] as String?,
       endTithi: fields[7] as int?,
       timingOverride: fields[8] as String?,
-      // HiveField(9) added for vriddhi; old boxes lack it → default 'both'.
-      vriddhi: fields[9] as String? ?? 'both',
+      vriddhi: fields[9] as String,
     );
   }
 

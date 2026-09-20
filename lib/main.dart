@@ -14,6 +14,7 @@ import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:jyotish/jyotish.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'providers/location_provider.dart';
+import 'providers/panchang_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
 import 'providers/calendar_provider.dart';
@@ -25,6 +26,7 @@ import 'models/festival.dart';
 import 'models/sankalpa.dart';
 import 'services/notification_service.dart';
 import 'services/storage_service.dart';
+import 'utils/tithi_localization.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -33,6 +35,7 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      await initializeLocalizedDateFormatting();
 
       // Set default status bar style for Shukla (light) theme
       SystemChrome.setSystemUIOverlayStyle(
@@ -171,6 +174,12 @@ class _TithiAppState extends ConsumerState<TithiApp>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       unawaited(locationService.markAppBackgrounded());
+    }
+    if (state == AppLifecycleState.resumed) {
+      // A tithi boundary may have passed while suspended (OS-held timers
+      // are unreliable in the background): recompute the live tick so the
+      // hero corrects instantly instead of showing a stale label.
+      ref.invalidate(liveTithiTickProvider);
     }
   }
 
@@ -331,7 +340,7 @@ class _LocationPermissionWrapperState
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.location_on, color: Colors.amber),
+            const Icon(Icons.location_on, color: AppTheme.locationAccent),
             const SizedBox(width: 8),
             Text(l10n?.locationAccess ?? 'Location Access'),
           ],
@@ -351,7 +360,12 @@ class _LocationPermissionWrapperState
                   '• More accurate tithi calculations\n'
                       '• Location-specific moonrise/sunset times\n'
                       '• Your location data stays on your device',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
             ),
           ],
         ),
@@ -427,7 +441,9 @@ class _LocationPermissionWrapperState
             content: Text(
               l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.success(
+              Theme.of(context).brightness == Brightness.dark,
+            ),
           ),
         );
       }
@@ -445,25 +461,7 @@ class _LocationPermissionWrapperState
     // Only show loading screen while waiting for location service init
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: Theme.of(context).scaffoldBackgroundColor == Colors.black
-                ? [Colors.black, Colors.black, Colors.black]
-                : Theme.of(context).brightness == Brightness.dark
-                ? [
-                    const Color(0xFF10002B),
-                    const Color(0xFF240046),
-                    const Color(0xFF10002B),
-                  ]
-                : [
-                    const Color(0xFFFFFDF7),
-                    const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                    const Color(0xFFFFFDF7),
-                  ],
-          ),
-        ),
+        decoration: AppTheme.backgroundDecoration(context),
         child: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
