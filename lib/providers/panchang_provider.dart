@@ -995,3 +995,263 @@ final tithiTimingsProvider =
 
       return (start: startTime, end: endTime);
     });
+
+/// Bisects a nakshatra edge bracketed by [lo]/[hi] to ~1-minute precision.
+///
+/// When [findStart] the bracket runs outside→inside and the result is the
+/// first inside instant (span start); otherwise inside→outside and the
+/// result is the first outside instant (span end). Returns null when a
+/// probe fails (ephemeris unavailable mid-search).
+Future<DateTime?> _bisectNakshatraEdge({
+  required DateTime lo,
+  required DateTime hi,
+  required int sunriseIndex,
+  required bool findStart,
+  required Future<int?> Function(DateTime time) indexAt,
+}) async {
+  var guard = 0;
+  while (hi.difference(lo).inMinutes > 1 && guard++ < 60) {
+    final mid = lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
+    final idx = await indexAt(mid);
+    if (idx == null) return null;
+    if (findStart ? idx == sunriseIndex : idx != sunriseIndex) {
+      hi = mid;
+    } else {
+      lo = mid;
+    }
+  }
+  return hi;
+}
+
+/// Provider for the sunrise nakshatra's span on a specific date.
+///
+/// Resolves the nakshatra prevailing at sunrise through [PanchangService]
+/// (Lahiri-sidereal Moon longitude folded into 27 segments of 13°20′) and
+/// bisects both its start (backward) and end (forward) to ~1-minute
+/// precision, so the sheet can show "Rohini until 3:42 PM" with elapsed
+/// progress.
+///
+/// Returns null when the nakshatra can't be resolved (the web fallback has
+/// no ephemeris) or a boundary search fails: callers hide the card instead
+/// of showing a wrong span — same hide-on-null contract as
+/// [tithiTimingsProvider].
+final nakshatraTimingsProvider = FutureProvider.family<
+  ({int index, String nakshatra, DateTime start, DateTime end})?,
+  ({DateTime date, double latitude, double longitude})
+>((ref, params) async {
+  final service = ref.read(panchangServiceProvider);
+  if (!service.isInitialized) {
+    await service.init();
+  }
+
+  final normalized = DateTime(
+    params.date.year,
+    params.date.month,
+    params.date.day,
+  );
+  final sunrise = SunriseCalculator.calculateSunriseIST(
+    date: normalized,
+    latitude: params.latitude,
+    longitude: params.longitude,
+  );
+
+  Future<int?> indexAt(DateTime time) async {
+    final name = await service.calculateNakshatra(
+      time,
+      latitude: params.latitude,
+      longitude: params.longitude,
+    );
+    if (name == null) return null;
+    final idx = hinduNakshatras.indexOf(name);
+    return idx >= 0 ? idx : null;
+  }
+
+  final sunriseIndex = await indexAt(sunrise);
+  if (sunriseIndex == null) return null;
+
+  // Bracket both edges in 2h steps (a nakshatra lasts ~19-26h, so the
+  // first bracket closes within ~13 probes; 48h caps runaway searches).
+  const step = Duration(hours: 2);
+  const cap = Duration(hours: 48);
+  Future<({DateTime inner, DateTime outer})?> bracket(int sign) async {
+    DateTime inner = sunrise;
+    DateTime outer = sunrise.add(step * sign);
+    for (var i = 0; i < 24; i++) {
+      final idx = await indexAt(outer);
+      if (idx == null) return null;
+      if (idx != sunriseIndex) return (inner: inner, outer: outer);
+      inner = outer;
+      outer = outer.add(step * sign);
+      if ((outer.difference(sunrise).inHours).abs() >= cap.inHours) break;
+    }
+    return null;
+  }
+
+  // The two edges are independent (all state is immutable or scoped to
+  // the stateless [indexAt] closure), so bracket and bisect them
+  // concurrently to halve the cold-open probe latency.
+  final brackets = await Future.wait([bracket(1), bracket(-1)]);
+  final endBracket = brackets[0];
+  final startBracket = brackets[1];
+  if (endBracket == null || startBracket == null) return null;
+
+  final edges = await Future.wait([
+    _bisectNakshatraEdge(
+      lo: endBracket.inner,
+      hi: endBracket.outer,
+      sunriseIndex: sunriseIndex,
+      findStart: false,
+      indexAt: indexAt,
+    ),
+    _bisectNakshatraEdge(
+      lo: startBracket.outer,
+      hi: startBracket.inner,
+      sunriseIndex: sunriseIndex,
+      findStart: true,
+      indexAt: indexAt,
+    ),
+  ]);
+  final end = edges[0];
+  final start = edges[1];
+  if (end == null || start == null) return null;
+
+  // Guard: a span reaching absurdly far from the day is a failed search,
+  // not a real nakshatra (same 2-day rule as the tithi timings).
+  if (start.difference(normalized).inDays.abs() > 2 ||
+      end.difference(normalized).inDays.abs() > 2) {
+    return null;
+  }
+
+  return (
+    index: sunriseIndex,
+    nakshatra: hinduNakshatras[sunriseIndex],
+    start: start,
+    end: end,
+  );
+});
+
+/// Provider for the sunrise yoga's and karana's end times on a date.
+///
+/// Yoga uses the SUM of the sidereal longitudes (ayanamsa enters twice —
+/// the most ayanamsa-sensitive panchanga element) and karana the halved
+/// elongation; both indices come from a single Sun+Moon probe per instant
+/// via [PanchangService.calculateSunMoonLongitudes], and each end is
+/// bisected to ~1-minute precision (yoga spans ~24h like nakshatras,
+/// karanas ~12h, so the bracket steps differ).
+///
+/// Returns null when longitudes are unavailable (web fallback) or a search
+/// fails: callers hide the card instead of showing a wrong span — same
+/// hide-on-null contract as [tithiTimingsProvider].
+final yogaKaranaTimingsProvider = FutureProvider.family<
+  ({
+    int yogaIndex,
+    String yoga,
+    DateTime yogaEnd,
+    int karanaIndex,
+    String karana,
+    DateTime karanaEnd,
+  })?,
+  ({DateTime date, double latitude, double longitude})
+>((ref, params) async {
+  final service = ref.read(panchangServiceProvider);
+  if (!service.isInitialized) {
+    await service.init();
+  }
+
+  final normalized = DateTime(
+    params.date.year,
+    params.date.month,
+    params.date.day,
+  );
+  final sunrise = SunriseCalculator.calculateSunriseIST(
+    date: normalized,
+    latitude: params.latitude,
+    longitude: params.longitude,
+  );
+
+  Future<({int yoga, int karana})?> indexesAt(DateTime time) async {
+    final longs = await service.calculateSunMoonLongitudes(
+      time,
+      latitude: params.latitude,
+      longitude: params.longitude,
+    );
+    if (longs == null) return null;
+    return (
+      yoga: yogaIndexFor(longs.sun, longs.moon),
+      karana: karanaIndexFor(longs.sun, longs.moon),
+    );
+  }
+
+  /// First instant after [sunrise] where [select] leaves [target]:
+  /// bracket in [step] increments (capped at 48h), then bisect to 1 min.
+  Future<DateTime?> spanEnd({
+    required int Function(({int yoga, int karana}) idx) select,
+    required int target,
+    required Duration step,
+  }) async {
+    DateTime inner = sunrise;
+    DateTime outer = sunrise.add(step);
+    var bracketed = false;
+    for (var i = 0; i < 48; i++) {
+      final idx = await indexesAt(outer);
+      if (idx == null) return null;
+      if (select(idx) != target) {
+        bracketed = true;
+        break;
+      }
+      inner = outer;
+      outer = outer.add(step);
+      if (outer.difference(sunrise).abs() >= const Duration(hours: 48)) break;
+    }
+    if (!bracketed) return null;
+    var guard = 0;
+    while (outer.difference(inner).inMinutes > 1 && guard++ < 60) {
+      final mid =
+          inner.add(Duration(minutes: outer.difference(inner).inMinutes ~/ 2));
+      final idx = await indexesAt(mid);
+      if (idx == null) return null;
+      if (select(idx) == target) {
+        inner = mid;
+      } else {
+        outer = mid;
+      }
+    }
+    return outer;
+  }
+
+  final atSunrise = await indexesAt(sunrise);
+  if (atSunrise == null) return null;
+
+  // Independent searches over the same stateless probe: run together.
+  final ends = await Future.wait([
+    spanEnd(
+      select: (idx) => idx.yoga,
+      target: atSunrise.yoga,
+      step: const Duration(hours: 2),
+    ),
+    spanEnd(
+      select: (idx) => idx.karana,
+      target: atSunrise.karana,
+      step: const Duration(hours: 1),
+    ),
+  ]);
+  final yogaEnd = ends[0];
+  final karanaEnd = ends[1];
+  if (yogaEnd == null || karanaEnd == null) return null;
+
+  // Guard: spans reaching absurdly far are failed searches (same 2-day
+  // rule as the tithi/nakshatra timings).
+  if (yogaEnd.difference(normalized).inDays.abs() > 2 ||
+      karanaEnd.difference(normalized).inDays.abs() > 2) {
+    return null;
+  }
+
+  return (
+    yogaIndex: atSunrise.yoga,
+    yoga: yogaNames[atSunrise.yoga],
+    yogaEnd: yogaEnd,
+    karanaIndex: atSunrise.karana,
+    karana: karanaNameForIndex(atSunrise.karana),
+    karanaEnd: karanaEnd,
+  );
+});

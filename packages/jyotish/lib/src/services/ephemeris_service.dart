@@ -79,9 +79,13 @@ class EphemerisService {
       throw CalculationException('EphemerisService is not initialized');
     }
 
-    // Generate cache key
+    // Generate cache key. Includes the tropical/sidereal intent: cached
+    // positions are stored POST-ayanamsa-subtraction, so a tropical lookup
+    // (solar-system view) must never hit a sidereal entry or vice versa
+    // (~24° error). The swe flag bits alone don't capture this (sidereal
+    // conversion is applied manually, see below).
     final julianDay = _dateTimeToJulianDay(dateTime);
-    final cacheKey = '${planet.swissEphId}_${julianDay.toStringAsFixed(6)}_${location.latitude.toStringAsFixed(4)}_${location.longitude.toStringAsFixed(4)}_${flags.toSwissEphFlag()}';
+    final cacheKey = '${planet.swissEphId}_${julianDay.toStringAsFixed(6)}_${location.latitude.toStringAsFixed(4)}_${location.longitude.toStringAsFixed(4)}_${flags.toSwissEphFlag()}_${flags.useTropical}_${flags.siderealModeConstant}';
     
     // Check cache first
     if (_positionCache.containsKey(cacheKey)) {

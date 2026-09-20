@@ -64,6 +64,17 @@ class PanchangService {
     return tithi > 30 ? tithi - 30 : tithi;
   }
 
+  /// Sun+Moon longitudes are unsupported without an ephemeris (web
+  /// fallback): always null, so the yoga/karana card hides on web.
+  /// Documented limitation, not silent drift.
+  Future<({double sun, double moon})?> calculateSunMoonLongitudes(
+    DateTime date, {
+    double latitude = 28.6139,
+    double longitude = 77.2090,
+  }) async {
+    return null;
+  }
+
   /// Nakshatra is unsupported without an ephemeris (web fallback): always
   /// null, so nakshatra-conditioned festivals (e.g. Saraswati Avahan on
   /// Mula) don't match on web. Documented limitation, not silent drift.

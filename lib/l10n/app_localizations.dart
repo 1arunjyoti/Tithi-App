@@ -1428,6 +1428,18 @@ abstract class AppLocalizations {
   /// **'Sunset'**
   String get sunset;
 
+  /// Label for moonrise time
+  ///
+  /// In en, this message translates to:
+  /// **'Moonrise'**
+  String get moonrise;
+
+  /// Label for moonset time
+  ///
+  /// In en, this message translates to:
+  /// **'Moonset'**
+  String get moonset;
+
   /// Weather metric label
   ///
   /// In en, this message translates to:
@@ -2669,6 +2681,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.'**
   String get udayaTithiExplainer;
+
+  /// Uppercase nakshatra section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'NAKSHATRA'**
+  String get nakshatraTimings;
+
+  /// Nakshatra card headline showing when the sunrise nakshatra ends
+  ///
+  /// In en, this message translates to:
+  /// **'{nakshatra} until {time}'**
+  String nakshatraUntil(String nakshatra, String time);
+
+  /// Nakshatra card subline showing the Vimshottari lord
+  ///
+  /// In en, this message translates to:
+  /// **'Lord: {lord}'**
+  String nakshatraLord(String lord);
+
+  /// Nakshatra card subline showing how much of the span has elapsed
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% elapsed'**
+  String nakshatraElapsed(String percent);
+
+  /// Nakshatra card line showing the upcoming nakshatra below the progress bar
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {nakshatra} at {time}'**
+  String nakshatraNext(String nakshatra, String time);
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Ketu'**
+  String get lordKetu;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Venus'**
+  String get lordVenus;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get lordSun;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Moon'**
+  String get lordMoon;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Mars'**
+  String get lordMars;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Rahu'**
+  String get lordRahu;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Jupiter'**
+  String get lordJupiter;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Saturn'**
+  String get lordSaturn;
+
+  /// Vimshottari lord name
+  ///
+  /// In en, this message translates to:
+  /// **'Mercury'**
+  String get lordMercury;
+
+  /// Uppercase yoga/karana section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'YOGA & KARANA'**
+  String get yogaKaranaTimings;
+
+  /// Cell label for yoga in the yoga/karana card
+  ///
+  /// In en, this message translates to:
+  /// **'YOGA'**
+  String get yogaLabel;
+
+  /// Cell label for karana in the yoga/karana card
+  ///
+  /// In en, this message translates to:
+  /// **'KARANA'**
+  String get karanaLabel;
+
+  /// Yoga/karana span line showing when the current span ends and what follows
+  ///
+  /// In en, this message translates to:
+  /// **'until {time}, then {next}'**
+  String untilThen(String time, String next);
+
+  /// Uppercase inauspicious-timings section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'INAUSPICIOUS TIMINGS'**
+  String get inauspiciousTimings;
+
+  /// Row name for Rahu Kalam in the day windows card
+  ///
+  /// In en, this message translates to:
+  /// **'Rahu Kalam'**
+  String get rahuKalam;
+
+  /// Row name for Yamaganda in the day windows card
+  ///
+  /// In en, this message translates to:
+  /// **'Yamaganda'**
+  String get yamaganda;
+
+  /// Row name for Gulika Kalam in the day windows card
+  ///
+  /// In en, this message translates to:
+  /// **'Gulika Kalam'**
+  String get gulikaKalam;
+
+  /// Uppercase auspicious-timings section label in tithi details
+  ///
+  /// In en, this message translates to:
+  /// **'AUSPICIOUS TIMINGS'**
+  String get auspiciousTimings;
+
+  /// Row name for Abhijit muhurta
+  ///
+  /// In en, this message translates to:
+  /// **'Abhijit'**
+  String get abhijit;
+
+  /// Row name for Brahma Muhurta
+  ///
+  /// In en, this message translates to:
+  /// **'Brahma Muhurta'**
+  String get brahmaMuhurta;
+
+  /// Row name for Madhyahna
+  ///
+  /// In en, this message translates to:
+  /// **'Madhyahna'**
+  String get madhyahna;
+
+  /// Row name for Nishita
+  ///
+  /// In en, this message translates to:
+  /// **'Nishita'**
+  String get nishita;
+
+  /// Row name for Godhuli
+  ///
+  /// In en, this message translates to:
+  /// **'Godhuli'**
+  String get godhuli;
+
+  /// Row name for Pradosha
+  ///
+  /// In en, this message translates to:
+  /// **'Pradosha'**
+  String get pradosha;
+
+  /// Abhijit subnote shown on Wednesdays
+  ///
+  /// In en, this message translates to:
+  /// **'Avoided on Wednesday'**
+  String get abhijitAvoided;
+
+  /// Abhijit subnote shown on Tue/Thu/Sat
+  ///
+  /// In en, this message translates to:
+  /// **'Especially auspicious today'**
+  String get abhijitAuspicious;
+
+  /// Madhyahna subnote showing the midpoint instant
+  ///
+  /// In en, this message translates to:
+  /// **'midpoint {time}'**
+  String midpointAt(String time);
 }
 
 class _AppLocalizationsDelegate

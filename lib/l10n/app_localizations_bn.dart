@@ -724,6 +724,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get sunset => 'সূর্যাস্ত';
 
   @override
+  String get moonrise => 'চন্দ্রোদয়';
+
+  @override
+  String get moonset => 'চন্দ্রাস্ত';
+
+  @override
   String get humidity => 'আর্দ্রতা';
 
   @override
@@ -1463,4 +1469,112 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get udayaTithiExplainer =>
       'উদয় তিথি: সূর্যোদয়ের সময় প্রচলিত তিথি। একটি হ্রস্ব তিথি দুটি সূর্যোদয়ের মধ্যে শুরু ও শেষ হতে পারে — কোনো তিথি বাদ না পড়ে সেজন্য উপরে দুটি তিথিই দেখানো হয়েছে।';
+
+  @override
+  String get nakshatraTimings => 'নক্ষত্র';
+
+  @override
+  String nakshatraUntil(String nakshatra, String time) {
+    return '$nakshatra $time পর্যন্ত';
+  }
+
+  @override
+  String nakshatraLord(String lord) {
+    return 'অধিপতি: $lord';
+  }
+
+  @override
+  String nakshatraElapsed(String percent) {
+    return '$percent% অতিবাহিত';
+  }
+
+  @override
+  String nakshatraNext(String nakshatra, String time) {
+    return 'পরবর্তী: $nakshatra, $time-এ';
+  }
+
+  @override
+  String get lordKetu => 'কেতু';
+
+  @override
+  String get lordVenus => 'শুক্র';
+
+  @override
+  String get lordSun => 'সূর্য';
+
+  @override
+  String get lordMoon => 'চন্দ্র';
+
+  @override
+  String get lordMars => 'মঙ্গল';
+
+  @override
+  String get lordRahu => 'রাহু';
+
+  @override
+  String get lordJupiter => 'বৃহস্পতি';
+
+  @override
+  String get lordSaturn => 'শনি';
+
+  @override
+  String get lordMercury => 'বুধ';
+
+  @override
+  String get yogaKaranaTimings => 'যোগ ও করণ';
+
+  @override
+  String get yogaLabel => 'যোগ';
+
+  @override
+  String get karanaLabel => 'করণ';
+
+  @override
+  String untilThen(String time, String next) {
+    return '$time পর্যন্ত, তারপর $next';
+  }
+
+  @override
+  String get inauspiciousTimings => 'অশুভ সময়';
+
+  @override
+  String get rahuKalam => 'রাহুকাল';
+
+  @override
+  String get yamaganda => 'যমগণ্ড';
+
+  @override
+  String get gulikaKalam => 'গুলিকাকাল';
+
+  @override
+  String get auspiciousTimings => 'শুভ সময়';
+
+  @override
+  String get abhijit => 'অভিজিৎ';
+
+  @override
+  String get brahmaMuhurta => 'ব্রাহ্মমুহূর্ত';
+
+  @override
+  String get madhyahna => 'মধ্যাহ্ন';
+
+  @override
+  String get nishita => 'নিশিতা';
+
+  @override
+  String get godhuli => 'গোধূলি';
+
+  @override
+  String get pradosha => 'প্রদোষ';
+
+  @override
+  String get abhijitAvoided => 'বুধবারে পরিহৃত';
+
+  @override
+  String get abhijitAuspicious => 'আজ বিশেষভাবে শুভ';
+
+  @override
+  String midpointAt(String time) {
+    return 'মধ্যবিন্দু $time';
+  }
 }

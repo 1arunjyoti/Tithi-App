@@ -998,6 +998,14 @@
   "@sunset": {
     "description": "Label for sunset time"
   },
+  "moonrise": "Moonrise",
+  "@moonrise": {
+    "description": "Label for moonrise time"
+  },
+  "moonset": "Moonset",
+  "@moonset": {
+    "description": "Label for moonset time"
+  },
   "humidity": "Humidity",
   "@humidity": {
     "description": "Weather metric label"
@@ -1847,5 +1855,102 @@
   "tithiTransition": "TRANSITION",
   "@tithiTransition": { "description": "Label shown on the transition card in the tithi detail sheet" },
   "udayaTithiExplainer": "Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.",
-  "@udayaTithiExplainer": { "description": "Explainer text about udaya tithi in the tithi detail sheet" }
+  "@udayaTithiExplainer": { "description": "Explainer text about udaya tithi in the tithi detail sheet" },
+  "nakshatraTimings": "NAKSHATRA",
+  "@nakshatraTimings": { "description": "Uppercase nakshatra section label in tithi details" },
+  "nakshatraUntil": "{nakshatra} until {time}",
+  "@nakshatraUntil": {
+    "description": "Nakshatra card headline showing when the sunrise nakshatra ends",
+    "placeholders": {
+      "nakshatra": { "type": "String", "example": "Rohini" },
+      "time": { "type": "String", "example": "3:42 PM" }
+    }
+  },
+  "nakshatraLord": "Lord: {lord}",
+  "@nakshatraLord": {
+    "description": "Nakshatra card subline showing the Vimshottari lord",
+    "placeholders": {
+      "lord": { "type": "String", "example": "Moon" }
+    }
+  },
+  "nakshatraElapsed": "{percent}% elapsed",
+  "@nakshatraElapsed": {
+    "description": "Nakshatra card subline showing how much of the span has elapsed",
+    "placeholders": {
+      "percent": { "type": "String", "example": "45" }
+    }
+  },
+  "nakshatraNext": "Next: {nakshatra} at {time}",
+  "@nakshatraNext": {
+    "description": "Nakshatra card line showing the upcoming nakshatra below the progress bar",
+    "placeholders": {
+      "nakshatra": { "type": "String", "example": "Mrigashira" },
+      "time": { "type": "String", "example": "3:42 PM" }
+    }
+  },
+  "lordKetu": "Ketu",
+  "@lordKetu": { "description": "Vimshottari lord name" },
+  "lordVenus": "Venus",
+  "@lordVenus": { "description": "Vimshottari lord name" },
+  "lordSun": "Sun",
+  "@lordSun": { "description": "Vimshottari lord name" },
+  "lordMoon": "Moon",
+  "@lordMoon": { "description": "Vimshottari lord name" },
+  "lordMars": "Mars",
+  "@lordMars": { "description": "Vimshottari lord name" },
+  "lordRahu": "Rahu",
+  "@lordRahu": { "description": "Vimshottari lord name" },
+  "lordJupiter": "Jupiter",
+  "@lordJupiter": { "description": "Vimshottari lord name" },
+  "lordSaturn": "Saturn",
+  "@lordSaturn": { "description": "Vimshottari lord name" },
+  "lordMercury": "Mercury",
+  "@lordMercury": { "description": "Vimshottari lord name" },
+  "yogaKaranaTimings": "YOGA & KARANA",
+  "@yogaKaranaTimings": { "description": "Uppercase yoga/karana section label in tithi details" },
+  "yogaLabel": "YOGA",
+  "@yogaLabel": { "description": "Cell label for yoga in the yoga/karana card" },
+  "karanaLabel": "KARANA",
+  "@karanaLabel": { "description": "Cell label for karana in the yoga/karana card" },
+  "untilThen": "until {time}, then {next}",
+  "@untilThen": {
+    "description": "Yoga/karana span line showing when the current span ends and what follows",
+    "placeholders": {
+      "time": { "type": "String", "example": "3:28 PM" },
+      "next": { "type": "String", "example": "Balava" }
+    }
+  },
+  "inauspiciousTimings": "INAUSPICIOUS TIMINGS",
+  "@inauspiciousTimings": { "description": "Uppercase inauspicious-timings section label in tithi details" },
+  "rahuKalam": "Rahu Kalam",
+  "@rahuKalam": { "description": "Row name for Rahu Kalam in the day windows card" },
+  "yamaganda": "Yamaganda",
+  "@yamaganda": { "description": "Row name for Yamaganda in the day windows card" },
+  "gulikaKalam": "Gulika Kalam",
+  "@gulikaKalam": { "description": "Row name for Gulika Kalam in the day windows card" },
+  "auspiciousTimings": "AUSPICIOUS TIMINGS",
+  "@auspiciousTimings": { "description": "Uppercase auspicious-timings section label in tithi details" },
+  "abhijit": "Abhijit",
+  "@abhijit": { "description": "Row name for Abhijit muhurta" },
+  "brahmaMuhurta": "Brahma Muhurta",
+  "@brahmaMuhurta": { "description": "Row name for Brahma Muhurta" },
+  "madhyahna": "Madhyahna",
+  "@madhyahna": { "description": "Row name for Madhyahna" },
+  "nishita": "Nishita",
+  "@nishita": { "description": "Row name for Nishita" },
+  "godhuli": "Godhuli",
+  "@godhuli": { "description": "Row name for Godhuli" },
+  "pradosha": "Pradosha",
+  "@pradosha": { "description": "Row name for Pradosha" },
+  "abhijitAvoided": "Avoided on Wednesday",
+  "@abhijitAvoided": { "description": "Abhijit subnote shown on Wednesdays" },
+  "abhijitAuspicious": "Especially auspicious today",
+  "@abhijitAuspicious": { "description": "Abhijit subnote shown on Tue/Thu/Sat" },
+  "midpointAt": "midpoint {time}",
+  "@midpointAt": {
+    "description": "Madhyahna subnote showing the midpoint instant",
+    "placeholders": {
+      "time": { "type": "String", "example": "12:16 PM" }
+    }
+  }
 }

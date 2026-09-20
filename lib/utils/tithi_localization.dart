@@ -142,6 +142,23 @@ String localizedTithiName(
   };
 }
 
+/// Vimshottari lord name for a Vedic-order nakshatra index (0-26) in the UI
+/// language. The 9-graha sequence repeats three times, so only the
+/// index-mod-9 lord matters.
+String localizedNakshatraLord(int nakshatraIndex, AppLocalizations l10n) {
+  return switch (nakshatraIndex % 9) {
+    0 => l10n.lordKetu,
+    1 => l10n.lordVenus,
+    2 => l10n.lordSun,
+    3 => l10n.lordMoon,
+    4 => l10n.lordMars,
+    5 => l10n.lordRahu,
+    6 => l10n.lordJupiter,
+    7 => l10n.lordSaturn,
+    _ => l10n.lordMercury,
+  };
+}
+
 /// Hindu lunar masa name in the UI script: Bengali script for bn,
 /// Devanagari for hi/sa, transliterated otherwise. Delegates to
 /// [localizeMasaName], which also handles Adhika_/Nija_ prefixes (the old

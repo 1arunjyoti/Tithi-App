@@ -723,6 +723,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sunset => 'Sunset';
 
   @override
+  String get moonrise => 'Moonrise';
+
+  @override
+  String get moonset => 'Moonset';
+
+  @override
   String get humidity => 'Humidity';
 
   @override
@@ -1455,4 +1461,112 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get udayaTithiExplainer =>
       'Udaya tithi: the tithi prevailing at sunrise. A short tithi can begin and end between two sunrises — both tithis are shown above so none is skipped.';
+
+  @override
+  String get nakshatraTimings => 'NAKSHATRA';
+
+  @override
+  String nakshatraUntil(String nakshatra, String time) {
+    return '$nakshatra until $time';
+  }
+
+  @override
+  String nakshatraLord(String lord) {
+    return 'Lord: $lord';
+  }
+
+  @override
+  String nakshatraElapsed(String percent) {
+    return '$percent% elapsed';
+  }
+
+  @override
+  String nakshatraNext(String nakshatra, String time) {
+    return 'Next: $nakshatra at $time';
+  }
+
+  @override
+  String get lordKetu => 'Ketu';
+
+  @override
+  String get lordVenus => 'Venus';
+
+  @override
+  String get lordSun => 'Sun';
+
+  @override
+  String get lordMoon => 'Moon';
+
+  @override
+  String get lordMars => 'Mars';
+
+  @override
+  String get lordRahu => 'Rahu';
+
+  @override
+  String get lordJupiter => 'Jupiter';
+
+  @override
+  String get lordSaturn => 'Saturn';
+
+  @override
+  String get lordMercury => 'Mercury';
+
+  @override
+  String get yogaKaranaTimings => 'YOGA & KARANA';
+
+  @override
+  String get yogaLabel => 'YOGA';
+
+  @override
+  String get karanaLabel => 'KARANA';
+
+  @override
+  String untilThen(String time, String next) {
+    return 'until $time, then $next';
+  }
+
+  @override
+  String get inauspiciousTimings => 'INAUSPICIOUS TIMINGS';
+
+  @override
+  String get rahuKalam => 'Rahu Kalam';
+
+  @override
+  String get yamaganda => 'Yamaganda';
+
+  @override
+  String get gulikaKalam => 'Gulika Kalam';
+
+  @override
+  String get auspiciousTimings => 'AUSPICIOUS TIMINGS';
+
+  @override
+  String get abhijit => 'Abhijit';
+
+  @override
+  String get brahmaMuhurta => 'Brahma Muhurta';
+
+  @override
+  String get madhyahna => 'Madhyahna';
+
+  @override
+  String get nishita => 'Nishita';
+
+  @override
+  String get godhuli => 'Godhuli';
+
+  @override
+  String get pradosha => 'Pradosha';
+
+  @override
+  String get abhijitAvoided => 'Avoided on Wednesday';
+
+  @override
+  String get abhijitAuspicious => 'Especially auspicious today';
+
+  @override
+  String midpointAt(String time) {
+    return 'midpoint $time';
+  }
 }
