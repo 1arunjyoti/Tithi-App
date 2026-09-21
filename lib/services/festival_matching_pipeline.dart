@@ -1,5 +1,6 @@
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
+import '../core/format/date_only.dart';
 
 export '../models/festival.dart'
     show matchesFestivalOnDay, hinduNakshatras, nakshatraForLongitude;
@@ -47,8 +48,6 @@ String normalizeVriddhiPreference(String? raw) {
   }
 }
 
-DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
-
 /// Trims duplicate festival matches across consecutive-day runs.
 ///
 /// For every festival with a `first`/`second` preference, groups the days it
@@ -72,7 +71,7 @@ Map<DateTime, PanchangData> applyVriddhiFilter(
   final preferenceOf = <String, String>{};
 
   for (final entry in days.entries) {
-    final day = _dateOnly(entry.key);
+    final day = dateOnly(entry.key);
     originalKeyOf.putIfAbsent(day, () => entry.key);
     for (final festival in entry.value.festivals) {
       final pref = normalizeVriddhiPreference(
@@ -157,8 +156,8 @@ resolveVriddhiCandidate({
   required Future<bool> Function(DateTime day) matchesDay,
   int maxRunScan = 4,
 }) async {
-  final base = _dateOnly(baseDate);
-  var cand = _dateOnly(candidate);
+  final base = dateOnly(baseDate);
+  var cand = dateOnly(candidate);
   final pref = normalizeVriddhiPreference(festival.panchangRules.vriddhi);
 
   if (pref == 'both' ||
@@ -170,7 +169,7 @@ resolveVriddhiCandidate({
   if (pref == 'second') {
     var last = cand;
     for (var i = 0; i < maxRunScan; i++) {
-      final next = _dateOnly(last.add(const Duration(days: 1)));
+      final next = dateOnly(last.add(const Duration(days: 1)));
       if (await matchesDay(next)) {
         last = next;
       } else {
@@ -183,7 +182,7 @@ resolveVriddhiCandidate({
   // 'first': find the run boundaries around the candidate.
   var runStart = cand;
   for (var i = 0; i < maxRunScan; i++) {
-    final prev = _dateOnly(runStart.subtract(const Duration(days: 1)));
+    final prev = dateOnly(runStart.subtract(const Duration(days: 1)));
     if (await matchesDay(prev)) {
       runStart = prev;
     } else {
@@ -194,7 +193,7 @@ resolveVriddhiCandidate({
     // Observance already passed: skip the whole run.
     var runEnd = cand;
     for (var i = 0; i < maxRunScan; i++) {
-      final next = _dateOnly(runEnd.add(const Duration(days: 1)));
+      final next = dateOnly(runEnd.add(const Duration(days: 1)));
       if (await matchesDay(next)) {
         runEnd = next;
       } else {
@@ -203,7 +202,7 @@ resolveVriddhiCandidate({
     }
     return (
       occurrence: null,
-      resumeFrom: _dateOnly(runEnd.add(const Duration(days: 1))),
+      resumeFrom: dateOnly(runEnd.add(const Duration(days: 1))),
     );
   }
   return (occurrence: runStart, resumeFrom: runStart);

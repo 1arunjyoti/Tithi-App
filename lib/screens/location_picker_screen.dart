@@ -11,6 +11,7 @@ import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../providers/location_provider.dart';
+import '../core/location/location_defaults.dart';
 
 class LocationPickerScreen extends ConsumerStatefulWidget {
   const LocationPickerScreen({super.key});
@@ -28,7 +29,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   );
   StreamSubscription<Position>? _positionSubscription;
   bool _autoCenterEnabled = true;
-  LatLng _center = const LatLng(28.6139, 77.2090); // Default Delhi
+  LatLng _center = const LatLng(kDefaultLatitude, kDefaultLongitude); // Default Delhi
   bool _isLoading = false;
 
   @override

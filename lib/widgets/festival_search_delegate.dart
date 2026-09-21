@@ -10,6 +10,7 @@ import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
+import '../features/countdown/domain/target_resolution.dart';
 
 import 'event_detail_sheet.dart';
 
@@ -141,8 +142,14 @@ class FestivalSearchDelegate extends SearchDelegate {
         }
         // Try to find the next occurrence date so we can pass panchang context
         final panchangService = ref.read(panchangServiceProvider);
-        final nextDate = await panchangService.findNextFestivalOccurrence(
-          festival,
+        final coords = ref.read(resolvedCoordinatesProvider);
+        final nextDate = await resolveOccurrenceDate(
+          service: panchangService,
+          festival: festival,
+          baseDate: DateTime.now(),
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          monthSystem: ref.read(hinduMonthSystemProvider),
         );
 
         // Fetch panchang for that date if found
@@ -236,10 +243,17 @@ class FestivalSearchDelegate extends SearchDelegate {
                   ),
                 );
 
-                // Find next date
+                // Find next date (cached; resolved location, not Delhi).
                 final panchangService = ref.read(panchangServiceProvider);
-                final nextDate = await panchangService
-                    .findNextFestivalOccurrence(festival);
+                final coords = ref.read(resolvedCoordinatesProvider);
+                final nextDate = await resolveOccurrenceDate(
+                  service: panchangService,
+                  festival: festival,
+                  baseDate: DateTime.now(),
+                  latitude: coords.latitude,
+                  longitude: coords.longitude,
+                  monthSystem: ref.read(hinduMonthSystemProvider),
+                );
 
                 if (nextDate != null && context.mounted) {
                   // Navigate

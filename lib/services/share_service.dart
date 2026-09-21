@@ -45,6 +45,13 @@ class ShareService {
         child: FestivalShareCard(festival: festival),
       );
 
+      // Resolve locale-dependent strings before any await: the sheet may
+      // close while capturing/sharing, unmounting [context].
+      final l10n = AppLocalizations.of(context);
+      final shareText =
+          l10n?.celebratingFestivalWithTithi(festival.name) ??
+          'Celebrating ${festival.name} with Tithi App!';
+
       // 2. Capture the widget
       final Uint8List imageBytes = await _screenshotController
           .captureFromWidget(
@@ -61,14 +68,9 @@ class ShareService {
       }
 
       // 4. Share the file
-      final l10n = AppLocalizations.of(context);
       final xFile = XFile(imagePath);
       await SharePlus.instance.share(
-        ShareParams(
-          subject: festival.name,
-          text: l10n?.celebratingFestivalWithTithi(festival.name) ?? 'Celebrating ${festival.name} with Tithi App!',
-          files: [xFile],
-        ),
+        ShareParams(subject: festival.name, text: shareText, files: [xFile]),
       );
     } catch (e) {
       debugPrint("Error sharing festival: $e");

@@ -619,19 +619,36 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                 ref.read(selectedPlanetProvider.notifier).setPlanet(null);
               }
             },
-            // RepaintBoundary isolates the expensive CustomPaint from other UI
-            child: RepaintBoundary(
-              child: CustomPaint(
-                size: size,
-                painter: SolarSystemPainter(
-                  solarSystemData: data,
-                  selectedPlanetIndex: selectedIndex,
-                  isDark: isDark,
-                  zoomLevel: zoomLevel,
-                  showZodiac: showZodiac,
-                  panOffset: _panOffset,
+            // Two cached layers (Phase 6a): the static background paints
+            // once per configuration change; only the planet layer
+            // repaints every data frame during animation.
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                RepaintBoundary(
+                  child: CustomPaint(
+                    size: size,
+                    painter: SolarSystemStaticPainter(
+                      viewMode: data.viewMode,
+                      isDark: isDark,
+                      zoomLevel: zoomLevel,
+                      showZodiac: showZodiac,
+                      panOffset: _panOffset,
+                    ),
+                  ),
                 ),
-              ),
+                RepaintBoundary(
+                  child: CustomPaint(
+                    size: size,
+                    painter: SolarSystemPainter(
+                      solarSystemData: data,
+                      selectedPlanetIndex: selectedIndex,
+                      zoomLevel: zoomLevel,
+                      panOffset: _panOffset,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );

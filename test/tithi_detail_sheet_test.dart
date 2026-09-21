@@ -746,8 +746,9 @@ void main() {
         find.byWidgetPredicate(
           (w) =>
               w is CustomPaint &&
-              w.painter.runtimeType.toString() ==
-                  '_DiagonalStripesPainter',
+              // Public since the sheet-cards extraction
+              // (features/tithi_sheet/widgets).
+              w.painter.runtimeType.toString() == 'DiagonalStripesPainter',
         ),
         findsOneWidget,
       );

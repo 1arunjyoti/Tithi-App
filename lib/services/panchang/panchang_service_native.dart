@@ -6,6 +6,7 @@ import '../../models/hindu_month_system.dart';
 import '../festival_matching_pipeline.dart';
 import '../panchang_init/panchang_init.dart';
 import '../sunrise_calculator.dart';
+import '../../core/location/location_defaults.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
 /// Uses FFI-based Swiss Ephemeris for accurate calculations
@@ -58,8 +59,8 @@ class PanchangService {
 
   Future<double> calculateTithi(
     DateTime date, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     if (!_isInitialized) {
       throw Exception("PanchangService not initialized.");
@@ -123,8 +124,8 @@ class PanchangService {
   /// degrade to hiding rather than breaking the whole day.
   Future<({double sun, double moon})?> calculateSunMoonLongitudes(
     DateTime date, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     if (!_isInitialized) return null;
     try {
@@ -158,8 +159,8 @@ class PanchangService {
   /// match today" rather than breaking the whole day.
   Future<String?> calculateNakshatra(
     DateTime date, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     if (!_isInitialized) return null;
     try {
@@ -183,8 +184,8 @@ class PanchangService {
   Future<String> calculateMasa(
     DateTime date,
     double rawTithi, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     if (!_isInitialized) {
       throw Exception("PanchangService not initialized.");
@@ -366,8 +367,8 @@ class PanchangService {
   Future<DateTime?> findNextFestivalOccurrence(
     Festival festival, {
     DateTime? startDate,
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     final baseDate = startDate ?? DateTime.now();
 
@@ -601,8 +602,8 @@ class PanchangService {
   Future<DateTime> calculateTithiStartTime(
     DateTime approxDate,
     int targetTithiNum, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     assert(
       targetTithiNum >= 1 && targetTithiNum <= 30,
@@ -677,8 +678,8 @@ class PanchangService {
   Future<DateTime> calculateTithiEndTime(
     DateTime approxDate,
     int targetTithiNum, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     assert(
       targetTithiNum >= 1 && targetTithiNum <= 30,

@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../core/storage/box_names.dart';
 import '../models/festival.dart';
 import '../models/sankalpa.dart';
 
@@ -10,14 +11,17 @@ class StorageService {
   const StorageService._();
   static const StorageService _instance = StorageService._();
   factory StorageService() => _instance;
-  static const String settingsBoxName = 'settings';
-  static const String locationSettingsBoxName = 'location_settings';
-  static const String notificationSettingsBoxName = 'notification_settings';
-  static const String ritualCompletionBoxName = 'ritual_completion';
-  static const String sankalpasBoxName = 'sankalpas';
-  static const String festivalSettingsBoxName = 'festival_settings';
-  static const String festivalsBoxName = 'festivals';
-  static const String panchangCacheBoxName = 'panchang_cache';
+  // Canonical names live in core/storage/box_names.dart (Phase 1).
+  // Kept here as aliases so existing call-sites keep compiling.
+  static const String settingsBoxName = BoxNames.settings;
+  static const String locationSettingsBoxName = BoxNames.locationSettings;
+  static const String notificationSettingsBoxName =
+      BoxNames.notificationSettings;
+  static const String ritualCompletionBoxName = BoxNames.ritualCompletion;
+  static const String sankalpasBoxName = BoxNames.sankalpas;
+  static const String festivalSettingsBoxName = BoxNames.festivalSettings;
+  static const String festivalsBoxName = BoxNames.festivals;
+  static const String panchangCacheBoxName = BoxNames.panchangCache;
 
   /// Opens all known boxes used by app features.
   Future<void> init() async {

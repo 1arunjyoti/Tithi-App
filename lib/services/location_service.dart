@@ -9,6 +9,7 @@ import 'package:hive/hive.dart';
 import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
 import 'storage_service.dart';
+import '../core/location/location_defaults.dart';
 
 /// Location data model
 class LocationData {
@@ -26,8 +27,8 @@ class LocationData {
 
   /// Default location (Delhi, India) when location is not available
   static LocationData get defaultLocation => LocationData(
-    latitude: 28.6139,
-    longitude: 77.2090,
+    latitude: kDefaultLatitude,
+    longitude: kDefaultLongitude,
     cityName: 'Delhi',
     timestamp: DateTime.now(),
   );
