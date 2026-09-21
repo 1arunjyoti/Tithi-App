@@ -5,39 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../providers/home_widget_provider.dart';
-import '../services/storage_service.dart';
+import '../features/home_widget/providers/home_widget_promo_providers.dart';
 import '../theme/app_theme.dart';
 
-/// Whether the home promo card was dismissed (persisted in settings).
-/// Applies to home only — the countdown screen always shows the card so the
-/// feature stays discoverable where it matters.
-final homeWidgetPromoDismissedProvider =
-    NotifierProvider<HomeWidgetPromoDismissNotifier, bool>(
-      HomeWidgetPromoDismissNotifier.new,
-    );
-
-class HomeWidgetPromoDismissNotifier extends Notifier<bool> {
-  static const _key = 'home_widget_promo_dismissed';
-
-  @override
-  bool build() {
-    try {
-      return StorageService().getSettingsBox().get(_key, defaultValue: false)
-          as bool;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<void> dismiss() async {
-    state = true;
-    try {
-      await StorageService().getSettingsBox().put(_key, true);
-    } catch (_) {
-      // State already hides the card for this session.
-    }
-  }
-}
+export '../features/home_widget/providers/home_widget_promo_providers.dart'
+    show homeWidgetPromoDismissedProvider, HomeWidgetPromoDismissNotifier;
 
 /// Card that lets the user add the festival countdown widget to the Android
 /// home screen. Shown on the home screen below countdowns and in settings.

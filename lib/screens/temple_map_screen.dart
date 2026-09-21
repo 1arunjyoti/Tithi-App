@@ -5,13 +5,14 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_geojson2/flutter_map_geojson2.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:latlong2/latlong.dart';
+import '../features/temple/providers/temple_providers.dart';
 import '../models/temple.dart';
-import '../services/temple_service.dart';
 import '../theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart'; // Added
 
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Added
+import '../app/bootstrap.dart';
 import '../providers/location_provider.dart'; // Added
 import '../widgets/responsive_layout.dart';
 
@@ -24,21 +25,12 @@ class TempleMapScreen extends ConsumerStatefulWidget {
 
 class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   final MapController _mapController = MapController();
-  final TempleService _templeService = TempleService();
   final FMTCTileProvider _tileProvider = FMTCTileProvider(
     stores: const {'osm_tiles': BrowseStoreStrategy.readUpdateCreate},
     cachedValidDuration: const Duration(days: 30),
   );
 
-  List<Temple> _temples = [];
-  bool _isLoading = false;
   LatLng? _userLocation;
-  int _currentPage = 0;
-  bool _hasMoreTemples = true;
-  int _requestGeneration = 0;
-  String? _inFlightQueryKey;
-  String? _lastCompletedQueryKey;
-  static const int _pageSize = 80;
 
   // Default center (India)
   LatLng _center = const LatLng(20.5937, 78.9629);
@@ -46,8 +38,6 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
 
   @override
   void dispose() {
-    _requestGeneration++;
-    _templeService.close();
     unawaited(_tileProvider.dispose());
     _mapController.dispose();
     super.dispose();
@@ -60,10 +50,13 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   }
 
   Future<void> _initLocation() async {
-    setState(() => _isLoading = true);
+    // Tile store initializes post-first-frame: gate on it before tiles
+    // render (GPS fix below usually takes longer, so rarely any wait).
+    final pendingTiles = AppBootstrap.tileCacheReady;
     try {
       final locationService = ref.read(locationServiceProvider);
       final locData = await locationService.getCurrentLocation();
+      await pendingTiles;
       if (locData != null) {
         if (mounted) {
           setState(() {
@@ -74,97 +67,30 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
           await _fetchTemples(center: _userLocation!, zoom: _zoom, force: true);
         }
       }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    } catch (_) {
+      // No location: the map stays on the default India viewport.
     }
   }
 
+  /// Fetches a page around the camera (or explicit [center]/[zoom]).
+  /// State (list, loading, pagination, errors) lives in
+  /// [templeListProvider]; this only resolves the viewport inputs.
   Future<void> _fetchTemples({
     bool reset = true,
     bool force = false,
     LatLng? center,
     double? zoom,
-  }) async {
-    if (_isLoading && !force) return;
-
-    if (reset) {
-      _currentPage = 0;
-      _hasMoreTemples = true;
-    } else if (!_hasMoreTemples) {
-      return;
-    }
-
+  }) {
     final requestCenter = center ?? _mapController.camera.center;
     final requestZoom = zoom ?? _mapController.camera.zoom;
-    final radius = _radiusFromZoom(requestZoom);
-    final page = _currentPage;
-    final queryKey = _templeQueryKey(requestCenter, radius, page);
-
-    if (_inFlightQueryKey == queryKey) {
-      return;
-    }
-    if (!force && reset && _lastCompletedQueryKey == queryKey) {
-      return;
-    }
-
-    final requestGeneration = ++_requestGeneration;
-    _inFlightQueryKey = queryKey;
-    setState(() => _isLoading = true);
-    try {
-      final temples = await _templeService.fetchNearbyTemples(
-        requestCenter.latitude,
-        requestCenter.longitude,
-        radius: radius,
-        page: page,
-      );
-
-      if (mounted && requestGeneration == _requestGeneration) {
-        setState(() {
-          if (reset) {
-            _temples = temples;
-          } else {
-            final existingIds = _temples.map((t) => t.id).toSet();
-            _temples.addAll(
-              temples.where((temple) => !existingIds.contains(temple.id)),
-            );
-          }
-          _hasMoreTemples = temples.length == _pageSize;
-          if (temples.isNotEmpty) {
-            _currentPage++;
-          }
-        });
-        _lastCompletedQueryKey = queryKey;
-      }
-    } catch (_) {
-      if (mounted && requestGeneration == _requestGeneration) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.templeSearchFailed)));
-      }
-    } finally {
-      if (_inFlightQueryKey == queryKey) {
-        _inFlightQueryKey = null;
-      }
-      if (mounted && requestGeneration == _requestGeneration) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  String _templeQueryKey(LatLng center, double radius, int page) {
-    final lat = center.latitude.toStringAsFixed(4);
-    final lon = center.longitude.toStringAsFixed(4);
-    return '$lat,$lon:${radius.round()}:$page';
-  }
-
-  double _radiusFromZoom(double zoom) {
-    if (zoom >= 15) return 2500;
-    if (zoom >= 13) return 5000;
-    if (zoom >= 11) return 9000;
-    return 15000;
+    return ref
+        .read(templeListProvider.notifier)
+        .fetch(
+          center: requestCenter,
+          radius: templeRadiusFromZoom(requestZoom),
+          reset: reset,
+          force: force,
+        );
   }
 
   void _onMapReady() {
@@ -176,6 +102,21 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // Search state (list, loading, pagination) comes from the provider;
+    // failures surface as the same snackbar the setState version showed.
+    final templeState = ref.watch(templeListProvider);
+    final temples = templeState.temples;
+    final isLoading = templeState.isLoading;
+    ref.listen<Object?>(
+      templeListProvider.select((s) => s.error),
+      (_, error) {
+        if (error == null || !mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.templeSearchFailed)));
+        ref.read(templeListProvider.notifier).clearError();
+      },
+    );
     final rightOffset = ResponsiveLayout.value(
       context,
       mobile: 16.0,
@@ -186,7 +127,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
       appBar: AppBar(
         title: Text(l10n.nearbyTemples),
         actions: [
-          if (_isLoading)
+          if (isLoading)
             const Padding(
               padding: EdgeInsets.only(right: 16.0),
               child: SizedBox(
@@ -234,7 +175,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                     ),
 
                   // Temple Markers
-                  ..._temples.map(
+                  ...temples.map(
                     (temple) => Marker(
                       point: LatLng(temple.latitude, temple.longitude),
                       width: 40,
@@ -268,7 +209,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
                 button: true,
                 label: l10n.searchHere,
                 child: FloatingActionButton.extended(
-                  onPressed: _isLoading
+                  onPressed: isLoading
                       ? null
                       : () => _fetchTemples(),
                   icon: const Icon(Icons.search),
@@ -290,7 +231,7 @@ class _TempleMapScreenState extends ConsumerState<TempleMapScreen> {
               child: FloatingActionButton(
                 heroTag: 'recenter',
                 mini: true,
-                onPressed: _isLoading
+                onPressed: isLoading
                     ? null
                     : () {
                         if (_userLocation != null) {

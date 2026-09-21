@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/location_service.dart';
+import '../core/location/location_defaults.dart';
 
 /// Provider for LocationService instance
 final locationServiceProvider = Provider<LocationService>((ref) {
@@ -67,8 +68,8 @@ final coordinatesProvider =
           .watch(currentLocationProvider)
           .whenData(
             (location) => (
-              latitude: location?.latitude ?? 28.6139,
-              longitude: location?.longitude ?? 77.2090,
+              latitude: location?.latitude ?? kDefaultLatitude,
+              longitude: location?.longitude ?? kDefaultLongitude,
             ),
           );
     });

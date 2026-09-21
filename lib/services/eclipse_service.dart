@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
 import '../models/eclipse.dart';
+import '../core/location/location_defaults.dart';
 
 /// Provider for EclipseService
 final eclipseServiceProvider = Provider<EclipseService>((ref) {
@@ -22,8 +23,8 @@ class EclipseService {
   /// Returns eclipses sorted by date
   Future<List<Eclipse>> getUpcomingEclipses({
     int count = 10,
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     final eclipses = <Eclipse>[];
 
