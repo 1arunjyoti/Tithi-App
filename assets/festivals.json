@@ -859,7 +859,8 @@
       "masa": "Chaitra",
       "paksha": "Krishna",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -1023,7 +1024,8 @@
       "masa": "Jyeshtha",
       "paksha": "Shukla",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -1188,7 +1190,8 @@
       "masa": "Ashadha",
       "paksha": "Shukla",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -1399,7 +1402,9 @@
       "paksha": "Krishna",
       "tithi": 8,
       "conditions": "Ashtami",
-      "timingOverride": "nishita"
+      "timingOverride": "nishita",
+      "pujaKala": "nishita",
+      "paranRule": "after_puja_kala"
     },
     "rituals": {
       "steps": [
@@ -1444,7 +1449,8 @@
       "masa": "Ashadha",
       "paksha": "Krishna",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -1486,7 +1492,8 @@
       "masa": "Shravana",
       "paksha": "Shukla",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -1620,7 +1627,8 @@
       "paksha": "Shukla",
       "tithi": 4,
       "conditions": "Chaturthi",
-      "timingOverride": "madhyahna"
+      "timingOverride": "madhyahna",
+      "puja_kala": "madhyahna"
     },
     "rituals": {
       "steps": [
@@ -3090,7 +3098,9 @@
       "masa": "Ashwin",
       "paksha": "Krishna",
       "tithi": 4,
-      "conditions": "Chaturthi"
+      "conditions": "Chaturthi",
+      "pujaKala": "moonrise",
+      "paranRule": "moonrise"
     },
     "rituals": {
       "steps": [
@@ -3213,7 +3223,8 @@
       "masa": "Ashwin",
       "paksha": "Krishna",
       "tithi": 15,
-      "conditions": "Amavasya"
+      "conditions": "Amavasya",
+      "pujaKala": "pradosha"
     },
     "rituals": {
       "steps": [
@@ -3505,7 +3516,8 @@
       "masa": "Kartika",
       "paksha": "Shukla",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -3959,7 +3971,8 @@
       "masa": "Pausha",
       "paksha": "Shukla",
       "tithi": 11,
-      "conditions": "Ekadashi"
+      "conditions": "Ekadashi",
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -4207,7 +4220,8 @@
       "paksha": "Krishna",
       "tithi": 14,
       "conditions": "Chaturdashi",
-      "timingOverride": "nishita"
+      "timingOverride": "nishita",
+      "pujaKala": "nishita"
     },
     "rituals": {
       "steps": [
@@ -4370,7 +4384,8 @@
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
-      "recurring": true
+      "recurring": true,
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
@@ -4414,7 +4429,8 @@
       "paksha": "Krishna",
       "tithi": 11,
       "conditions": "Ekadashi",
-      "recurring": true
+      "recurring": true,
+      "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [

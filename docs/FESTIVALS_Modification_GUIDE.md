@@ -38,8 +38,11 @@ This guide explains how to add or edit festivals in `festivals.json`.
     "solarDate": "MM-DD",
     "weekday": "Monday",
     "endTithi": 15,
-    "timingOverride": "madhyahna|aparahna|nishita",
-    "vriddhi": "first|second|both"
+    "timingOverride": "madhyahna|aparahna|nishita|pradosha",
+    "vriddhi": "first|second|both",
+    "pujaKala": "madhyahna|nishita|pradosha|moonrise|sunrise|sunset|sandhi_junction",
+    "paranRule": "moonrise|next_sunrise|after_puja_kala|dwadashi_window",
+    "clipToTithi": false
   },
   "rituals": {
     "steps": ["Step one", "Step two"],
@@ -514,8 +517,12 @@ Rules:
 | `solarDate` | string | — | Exact zero-padded `"MM-DD"` for `Solar` festivals; missing/other shapes never match |
 | `weekday` | string | — | Full `"Monday"`…`"Sunday"` (case-sensitive; unknown = ignored); 0 shipped entries use it |
 | `endTithi` | int | — | Inclusive tithi *range* (`tithi`…`endTithi`); 0 shipped entries use it |
-| `timingOverride` | string | sunrise | `madhyahna` / `aparahna` / `nishita` checkpoint |
+| `timingOverride` | string | sunrise | `madhyahna` / `aparahna` / `nishita` / `pradosha` (dusk-window midpoint) checkpoint |
 | `vriddhi` | string | `"both"` | `first` / `second` / `both` run trimming |
+| `pujaKala` | string | — (null = no Puja Samay card) | Ritual window: `madhyahna` / `nishita` / `pradosha` (day-view windows), `moonrise` (48-min grace from the rise), `sandhi_junction` (48-min span centered on the festival tithi's end), or exact instants `sunrise` / `sunset` (Chhath arghya). Unknown values hide the card. |
+| `paranRule` | string | — (null = no fast, or breaking isn't critical) | Fast-breaking range shown under Fasting / Vrat: `moonrise` (+48 min) / `next_sunrise` (+2 h) / `after_puja_kala` (~puja end) / `dwadashi_window` ([next sunrise + D/4, Dwadashi end]). Unknown values hide the line. |
+| `clipToTithi` | bool | `false` | Non-nullable: absent == `false`. When `true`, the puja window end cuts at the festival tithi's end. Set only on Pradosh Vrata (kalam must stay inside Trayodashi). |
+| `puja_kala` / `paran_rule` / `clip_to_tithi` | same | same | Snake_case twins of the three rows above — both spellings parse (camelCase first). Precedent: `additional_description` / `addtional_description`. Shipped data already uses `puja_kala` on Ganesh Chaturthi. |
 
 Top-level (outside `panchang_rules`):
 

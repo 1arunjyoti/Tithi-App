@@ -23,12 +23,13 @@ import '../features/tithi_sheet/widgets/nakshatra_card.dart';
 import '../features/tithi_sheet/widgets/timings_cards.dart';
 import '../features/tithi_sheet/widgets/yoga_karana_card.dart';
 import '../features/sheets/domain/sheet_labels.dart';
-import '../features/sheets/widgets/edge_dismiss.dart';
 import '../features/sheets/widgets/section_header.dart';
 import '../features/sheets/widgets/sheet_chip.dart';
-import '../features/sheets/widgets/sheet_drag_handle.dart';
+import '../features/sheets/widgets/sheet_explainer_card.dart';
+import '../features/sheets/widgets/sheet_hero_tile.dart';
+import '../features/sheets/widgets/sheet_scaffold.dart';
+import '../features/sheets/widgets/sheet_time_format.dart';
 import 'moon_animation_widget.dart';
-import '../core/format/date_only.dart';
 
 export '../features/tithi_sheet/providers/sheet_providers.dart'
     show
@@ -37,39 +38,12 @@ export '../features/tithi_sheet/providers/sheet_providers.dart'
         bengaliInstantLabelProvider,
         hinduYearForSheetProvider;
 
-/// Time range with a shared day period ("8:27 – 9:59 AM"): the start drops
-/// its own period, matching almanac convention. When the ends fall in
-/// different halves (Nishita spans midnight), both periods are shown
-/// ("11:26 PM – 12:16 AM"). Either end outside the sheet's civil [day]
-/// gains a short date of its own ("11:26 PM, Oct 3 – 12:16 AM, Oct 4"),
-/// so previous/next-day spans stay unambiguous; same-day pairs render
-/// exactly as before.
-String _timeRange(DateTime start, DateTime end, DateTime day, String locale) {
-  String stamp(DateTime t, {required bool withPeriod}) {
-    final time = withPeriod
-        ? formatLocalizedDate(t, 'jm', locale)
-        : formatLocalizedDate(t, 'h:mm', locale);
-    return isSameDay(t, day)
-        ? time
-        : '$time, ${formatLocalizedDate(t, 'MMM d', locale)}';
-  }
-
-  final sharedPeriod =
-      formatLocalizedDate(start, 'a', locale) ==
-      formatLocalizedDate(end, 'a', locale);
-  // The shortened start applies only when it carries no date of its own;
-  // an off-day start keeps its full stamp (and date) instead.
-  if (sharedPeriod && isSameDay(start, day)) {
-    return '${stamp(start, withPeriod: false)} – '
-        '${stamp(end, withPeriod: true)}';
-  }
-  return '${stamp(start, withPeriod: true)} – '
-      '${stamp(end, withPeriod: true)}';
-}
-
 /// Moon chip text: clock time, plus the short Gregorian date when the event
 /// falls on a neighbouring day (prevailing-event fallback), e.g.
 /// "11:27 PM, Oct 3". Same-day events stay short, like the sun chips.
+/// (Timing ranges/values live in the shared sheet kit: [sheetTimeRange] and
+/// [sheetInstantValue], reused by the festival event sheet for the same
+/// observed-tithi span.)
 String _moonChipText(DateTime event, DateTime day, String label, String locale) {
   final time = formatLocalizedDate(event, 'jm', locale);
   final sameDay =
@@ -78,26 +52,6 @@ String _moonChipText(DateTime event, DateTime day, String label, String locale) 
       event.day == day.day;
   if (sameDay) return '$label $time';
   return '$label $time, ${formatLocalizedDate(event, 'MMM d', locale)}';
-}
-
-/// Full timing value for an instant: clock time plus the primary-calendar
-/// date label, falling back to the Gregorian date while resolving (or when
-/// Gregorian is primary). Single watch per call site via
-/// [instantPrimaryLabelProvider] (was two); Riverpod memoizes repeat
-/// instants across the sheet's ~6 call sites.
-String _instantValue(
-  WidgetRef ref,
-  DateTime instant,
-  int tithiIndex,
-  String locale,
-) {
-  final label = ref
-      .watch(
-        instantPrimaryLabelProvider((instant: instant, tithiIndex: tithiIndex)),
-      )
-      .valueOrNull;
-  return '${formatLocalizedDate(instant, 'jm', locale)}, '
-      '${label ?? formatLocalizedDate(instant, 'MMM d', locale)}';
 }
 
 /// Bottom sheet with full tithi timing details for a day.
@@ -303,50 +257,16 @@ class TithiDetailSheet extends ConsumerWidget {
         break;
     }
 
-    // Cap the sheet at 85% of the screen height: the card stack keeps
-    // growing (timings, transition, nakshatra, yoga/karana, explainer),
-    // so beyond the cap the existing SingleChildScrollView takes over and
-    // the contents scroll instead of pushing the sheet taller. Below the
-    // cap the column still shrink-wraps (min height is unconstrained).
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Container(
-        decoration: BoxDecoration(
-          color: context.theme.scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-          child: SafeArea(
-            child: EdgeDismiss(
-              child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Hero header: tag + title + moon row + sun chips.
-              Container(
-                decoration: AppTheme.heroSheetHeaderDecoration(
-                  context,
-                  highContrast: highContrast,
-                ),
-                child: Stack(
-                  children: [
-                    if (!highContrast)
-                      Positioned.fill(
-                        child: Container(
-                          decoration: AppTheme.heroGlowBackdrop(context),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Drag handle (shared kit; a downward drag here
-                          // overscrolls the scroll view at offset zero and
-                          // dismisses the sheet via EdgeDismiss above).
-                          SheetDragHandle(highContrast: highContrast),
+    // Shared sheet scaffold (85% cap + gradient hero header + scroll
+    // body, same kit as the festival event sheet): the card stack keeps
+    // growing, so beyond the cap the scroll view takes over instead of
+    // pushing the sheet taller. Below the cap the column shrink-wraps.
+    return SheetScaffold(
+      highContrast: highContrast,
+      hero: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
                           // Header date: primary calendar date, month, year.
                           Text.rich(
                             TextSpan(
@@ -366,25 +286,8 @@ class TithiDetailSheet extends ConsumerWidget {
                           // number badge.
                           Row(
                             children: [
-                              Container(
-                                width: 46,
-                                height: 46,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  color: highContrast
-                                      ? context.colors.primary.withValues(
-                                          alpha: 0.1,
-                                        )
-                                      : AppTheme.heroChipBackground(context),
-                                  border: Border.all(
-                                    color: highContrast
-                                        ? context.colors.primary.withValues(
-                                            alpha: 0.2,
-                                          )
-                                        : AppTheme.heroChipBorder(context),
-                                  ),
-                                ),
-                                alignment: Alignment.center,
+                              SheetHeroTile(
+                                highContrast: highContrast,
                                 child: MoonAnimationWidget(
                                   phase: illumination,
                                   isWaxing: isShukla,
@@ -510,17 +413,10 @@ class TithiDetailSheet extends ConsumerWidget {
                           ],
                         ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              // Body.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+      body: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
                     // Dotted section label.
                     SectionHeader(text: l10n.tithiTimings),
                     const SizedBox(height: 10),
@@ -545,13 +441,13 @@ class TithiDetailSheet extends ConsumerWidget {
                             timings.end;
                         return TimingsCard(
                           highContrast: highContrast,
-                          begins: _instantValue(
+                          begins: sheetInstantValue(
                             ref,
                             timings.start,
                             panchang.tithiIndex,
                             locale,
                           ),
-                          ends: _instantValue(
+                          ends: sheetInstantValue(
                             ref,
                             end,
                             panchang.tithiIndex,
@@ -608,7 +504,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                           panchang.transitionPaksha,
                                           l10n,
                                         ),
-                                        _instantValue(
+                                        sheetInstantValue(
                                           ref,
                                           nextTimings.end,
                                           panchang.transitionTithiIndex!,
@@ -621,7 +517,7 @@ class TithiDetailSheet extends ConsumerWidget {
                                           panchang.sunrisePaksha,
                                           l10n,
                                         ),
-                                        _instantValue(
+                                        sheetInstantValue(
                                           ref,
                                           panchang.tithiTransitionTime!,
                                           panchang.sunriseTithiIndex,
@@ -786,7 +682,7 @@ class TithiDetailSheet extends ConsumerWidget {
                         rows: [
                           (
                             name: l10n.abhijit,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               auspicious.abhijit.start,
                               auspicious.abhijit.end,
                               panchang.date,
@@ -807,7 +703,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           ),
                           (
                             name: l10n.brahmaMuhurta,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               auspicious.brahmaMuhurta.start,
                               auspicious.brahmaMuhurta.end,
                               panchang.date,
@@ -818,7 +714,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           ),
                           (
                             name: l10n.madhyahna,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               auspicious.madhyahnaWindow.start,
                               auspicious.madhyahnaWindow.end,
                               panchang.date,
@@ -835,7 +731,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           ),
                           (
                             name: l10n.nishita,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               auspicious.nishita.start,
                               auspicious.nishita.end,
                               panchang.date,
@@ -846,7 +742,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           ),
                           (
                             name: l10n.godhuli,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               auspicious.godhuli.start,
                               auspicious.godhuli.end,
                               panchang.date,
@@ -857,7 +753,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           ),
                           (
                             name: l10n.pradosha,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               auspicious.pradosha.start,
                               auspicious.pradosha.end,
                               panchang.date,
@@ -908,7 +804,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           (
                             kind: WindowKind.rahu,
                             name: l10n.rahuKalam,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               inauspicious.rahu.start,
                               inauspicious.rahu.end,
                               panchang.date,
@@ -918,7 +814,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           (
                             kind: WindowKind.yamaganda,
                             name: l10n.yamaganda,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               inauspicious.yamaganda.start,
                               inauspicious.yamaganda.end,
                               panchang.date,
@@ -928,7 +824,7 @@ class TithiDetailSheet extends ConsumerWidget {
                           (
                             kind: WindowKind.gulika,
                             name: l10n.gulikaKalam,
-                            time: _timeRange(
+                            time: sheetTimeRange(
                               inauspicious.gulika.start,
                               inauspicious.gulika.end,
                               panchang.date,
@@ -939,49 +835,10 @@ class TithiDetailSheet extends ConsumerWidget {
                       ),
                     ],
                     const SizedBox(height: 12),
-                    // Explainer card.
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: context.colors.onSurface.withValues(
-                          alpha: highContrast ? 0.1 : 0.05,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 18,
-                            color: context.colors.onSurface.withValues(
-                              alpha: 0.5,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l10n.udayaTithiExplanation,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                color: context.colors.onSurface.withValues(
-                                  alpha: 0.65,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-          ),
+                    // Explainer card (shared kit with the event sheet).
+                    SheetExplainerCard(text: l10n.udayaTithiExplanation),
+        ],
       ),
-    ),
     );
   }
 }

@@ -1412,6 +1412,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transition => 'TRANSITION';
 
   @override
+  String get observanceRuleUdaya => 'the tithi prevailing at sunrise';
+
+  @override
+  String get observanceRuleMadhyahna =>
+      'the tithi prevailing at Madhyahna (midday)';
+
+  @override
+  String get observanceRuleAparahna =>
+      'the tithi prevailing at Aparahna (afternoon)';
+
+  @override
+  String get observanceRuleNishita =>
+      'the tithi prevailing at Nishita (midnight)';
+
+  @override
+  String get observanceRulePradosha =>
+      'the tithi prevailing at Pradosha (dusk)';
+
+  @override
+  String get observanceRuleMoonrise => 'the tithi prevailing at moonrise';
+
+  @override
+  String observedOnTheDay(String rule) {
+    return 'Observed on the day $rule';
+  }
+
+  @override
+  String get pujaSamay => 'Puja Samay';
+
+  @override
+  String get sandhiJunction => 'Sandhi';
+
+  @override
+  String get pujaWindow => 'PUJA WINDOW';
+
+  @override
+  String pujaWindowDuration(int count, String kala) {
+    return '$count ghatikas around $kala';
+  }
+
+  @override
+  String get paranLabel => 'Paran (breaking the fast):';
+
+  @override
+  String get paranReasonMoonrise => 'after moonrise';
+
+  @override
+  String get paranReasonSunrise => 'after sunrise';
+
+  @override
+  String paranReasonPujaKala(String kala) {
+    return 'after the $kala puja';
+  }
+
+  @override
+  String get paranReasonDwadashi => 'in the Dwadashi window';
+
+  @override
   String get shuklaPakshaInitial => 'S';
 
   @override

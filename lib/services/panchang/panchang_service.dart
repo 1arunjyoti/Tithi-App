@@ -237,9 +237,10 @@ class PanchangService {
         );
         if (probeMatch) return true;
         // Dominant-tithi grace (Drik rule, same as the UI batch).
-        const sunriseOverrides = {'madhyahna', 'aparahna', 'nishita'};
         final usesSunrise = festival.panchangRules.timingOverride == null ||
-            !sunriseOverrides.contains(festival.panchangRules.timingOverride);
+            !timingOverrideCheckpoints.contains(
+              festival.panchangRules.timingOverride,
+            );
         if (usesSunrise && festival.nakshatraCondition == null) {
           final daySunrise = SunriseCalculator.calculateSunriseIST(
             date: DateTime(day.year, day.month, day.day),
