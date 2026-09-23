@@ -2586,6 +2586,102 @@ abstract class AppLocalizations {
   /// **'TRANSITION'**
   String get transition;
 
+  /// Observance rule fragment for the default sunrise checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at sunrise'**
+  String get observanceRuleUdaya;
+
+  /// Observance rule fragment for the madhyahna checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Madhyahna (midday)'**
+  String get observanceRuleMadhyahna;
+
+  /// Observance rule fragment for the aparahna checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Aparahna (afternoon)'**
+  String get observanceRuleAparahna;
+
+  /// Observance rule fragment for the nishita checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Nishita (midnight)'**
+  String get observanceRuleNishita;
+
+  /// Observance rule fragment for the pradosha checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Pradosha (dusk)'**
+  String get observanceRulePradosha;
+
+  /// Observance rule fragment for the moonrise checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at moonrise'**
+  String get observanceRuleMoonrise;
+
+  /// Observance banner sentence naming the tithi checkpoint that fixes the festival date
+  ///
+  /// In en, this message translates to:
+  /// **'Observed on the day {rule}'**
+  String observedOnTheDay(String rule);
+
+  /// Puja Samay section header in the festival sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Puja Samay'**
+  String get pujaSamay;
+
+  /// Short label for the tithi-sandhi puja kala
+  ///
+  /// In en, this message translates to:
+  /// **'Sandhi'**
+  String get sandhiJunction;
+
+  /// Right-cell label of the two-cell Puja Samay card
+  ///
+  /// In en, this message translates to:
+  /// **'PUJA WINDOW'**
+  String get pujaWindow;
+
+  /// Puja window length note under the range
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ghatikas around {kala}'**
+  String pujaWindowDuration(int count, String kala);
+
+  /// Red paran caption in the fasting card
+  ///
+  /// In en, this message translates to:
+  /// **'Paran (breaking the fast):'**
+  String get paranLabel;
+
+  /// Paran reason when the fast breaks at moonrise
+  ///
+  /// In en, this message translates to:
+  /// **'after moonrise'**
+  String get paranReasonMoonrise;
+
+  /// Paran reason when the fast breaks at sunrise
+  ///
+  /// In en, this message translates to:
+  /// **'after sunrise'**
+  String get paranReasonSunrise;
+
+  /// Paran reason when the fast breaks after the puja kala
+  ///
+  /// In en, this message translates to:
+  /// **'after the {kala} puja'**
+  String paranReasonPujaKala(String kala);
+
+  /// Paran reason for Ekadashi paran inside Dwadashi
+  ///
+  /// In en, this message translates to:
+  /// **'in the Dwadashi window'**
+  String get paranReasonDwadashi;
+
   /// Single-letter Shukla Paksha marker in the schedule view
   ///
   /// In en, this message translates to:

@@ -1817,6 +1817,54 @@
   "@endsUppercase": { "description": "Uppercase ending time label in tithi details" },
   "transition": "TRANSITION",
   "@transition": { "description": "Uppercase transition section label in tithi details" },
+  "observanceRuleUdaya": "the tithi prevailing at sunrise",
+  "@observanceRuleUdaya": { "description": "Observance rule fragment for the default sunrise checkpoint" },
+  "observanceRuleMadhyahna": "the tithi prevailing at Madhyahna (midday)",
+  "@observanceRuleMadhyahna": { "description": "Observance rule fragment for the madhyahna checkpoint" },
+  "observanceRuleAparahna": "the tithi prevailing at Aparahna (afternoon)",
+  "@observanceRuleAparahna": { "description": "Observance rule fragment for the aparahna checkpoint" },
+  "observanceRuleNishita": "the tithi prevailing at Nishita (midnight)",
+  "@observanceRuleNishita": { "description": "Observance rule fragment for the nishita checkpoint" },
+  "observanceRulePradosha": "the tithi prevailing at Pradosha (dusk)",
+  "@observanceRulePradosha": { "description": "Observance rule fragment for the pradosha checkpoint" },
+  "observanceRuleMoonrise": "the tithi prevailing at moonrise",
+  "@observanceRuleMoonrise": { "description": "Observance rule fragment for the moonrise checkpoint" },
+  "observedOnTheDay": "Observed on the day {rule}",
+  "@observedOnTheDay": {
+    "description": "Observance banner sentence naming the tithi checkpoint that fixes the festival date",
+    "placeholders": {
+      "rule": { "type": "String", "example": "the tithi prevailing at sunrise" }
+    }
+  },
+  "pujaSamay": "Puja Samay",
+  "@pujaSamay": { "description": "Puja Samay section header in the festival sheet" },
+  "sandhiJunction": "Sandhi",
+  "@sandhiJunction": { "description": "Short label for the tithi-sandhi puja kala" },
+  "pujaWindow": "PUJA WINDOW",
+  "@pujaWindow": { "description": "Right-cell label of the two-cell Puja Samay card" },
+  "pujaWindowDuration": "{count} ghatikas around {kala}",
+  "@pujaWindowDuration": {
+    "description": "Puja window length note under the range",
+    "placeholders": {
+      "count": { "type": "int", "example": "6" },
+      "kala": { "type": "String", "example": "Madhyahna" }
+    }
+  },
+  "paranLabel": "Paran (breaking the fast):",
+  "@paranLabel": { "description": "Red paran caption in the fasting card" },
+  "paranReasonMoonrise": "after moonrise",
+  "@paranReasonMoonrise": { "description": "Paran reason when the fast breaks at moonrise" },
+  "paranReasonSunrise": "after sunrise",
+  "@paranReasonSunrise": { "description": "Paran reason when the fast breaks at sunrise" },
+  "paranReasonPujaKala": "after the {kala} puja",
+  "@paranReasonPujaKala": {
+    "description": "Paran reason when the fast breaks after the puja kala",
+    "placeholders": {
+      "kala": { "type": "String", "example": "Nishita" }
+    }
+  },
+  "paranReasonDwadashi": "in the Dwadashi window",
+  "@paranReasonDwadashi": { "description": "Paran reason for Ekadashi paran inside Dwadashi" },
   "shuklaPakshaInitial": "S",
   "@shuklaPakshaInitial": { "description": "Single-letter Shukla Paksha marker in the schedule view" },
   "krishnaPakshaInitial": "K",

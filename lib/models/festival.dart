@@ -223,6 +223,13 @@ class Festival {
 
   // Backward compatibility getters
   String? get nameHindi => nameRegional.nameHindi;
+
+  /// Sanskrit name, treating the dataset's empty strings as absent (many
+  /// entries store "" rather than omitting the key).
+  String? get nameSanskrit {
+    final s = nameRegional.nameSanskrith;
+    return (s == null || s.isEmpty) ? null : s;
+  }
   String get description => purpose.description;
   String get masa => panchangRules.masa;
   String get paksha => panchangRules.paksha;
@@ -524,6 +531,18 @@ class Purpose {
   }
 }
 
+/// timingOverride values resolved at their own intraday checkpoint instead
+/// of sunrise (madhyahna, aparahna, nishita, pradosha). Shared by the UI
+/// batch (panchang_data), the matching pipeline, and the notification
+/// scheduler so all three agree on which festivals skip sunrise matching
+/// and the dominant-tithi grace.
+const timingOverrideCheckpoints = {
+  'madhyahna',
+  'aparahna',
+  'nishita',
+  'pradosha',
+};
+
 @HiveType(typeId: 4)
 class PanchangRules {
   @HiveField(0)
@@ -552,7 +571,7 @@ class PanchangRules {
 
   /// SMELL-05: Which timing checkpoint to use when evaluating this festival.
   /// Replaces the hardcoded switch on festival ID in PanchangData.fromRawTithi.
-  /// Valid values: 'madhyahna', 'aparahna', 'nishita'.
+  /// Valid values: 'madhyahna', 'aparahna', 'nishita', 'pradosha'.
   /// Null (default) = use sunrise tithi.
   @HiveField(8)
   final String? timingOverride;
@@ -567,6 +586,29 @@ class PanchangRules {
   @HiveField(9)
   final String vriddhi;
 
+  /// Puja kala (optional string enum): the ritual time window shown in the
+  /// Puja Samay card — e.g. 'madhyahna' for Ganesh Chaturthi, 'nishita' for
+  /// Janmashtami, 'moonrise' for Karva Chauth.
+  /// Valid values: 'madhyahna', 'nishita', 'pradosha', 'moonrise',
+  /// 'sunrise', 'sunset', 'sandhi_junction' (the festival tithi's end).
+  /// Null (default) = no Puja Samay card.
+  @HiveField(10)
+  final String? pujaKala;
+
+  /// Paran rule (optional string enum): when/how the fast is broken — e.g.
+  /// 'moonrise' for Karva Chauth, 'dwadashi_window' for Ekadashi.
+  /// Valid values: 'moonrise', 'next_sunrise', 'after_puja_kala',
+  /// 'dwadashi_window'. Null (default) = no fast, or the breaking time
+  /// isn't critical.
+  @HiveField(11)
+  final String? paranRule;
+
+  /// Clip the puja window at the festival tithi's end. Non-nullable, default
+  /// false: absent and false mean the same thing. Set only on Pradosh Vrata,
+  /// where the kalam must stay inside Trayodashi.
+  @HiveField(12)
+  final bool clipToTithi;
+
   const PanchangRules({
     required this.masa,
     required this.paksha,
@@ -578,6 +620,9 @@ class PanchangRules {
     this.endTithi,
     this.timingOverride,
     this.vriddhi = 'both',
+    this.pujaKala,
+    this.paranRule,
+    this.clipToTithi = false,
   });
 
   factory PanchangRules.fromJson(Map<String, dynamic> json) {
@@ -592,6 +637,13 @@ class PanchangRules {
       endTithi: json['endTithi'],
       timingOverride: json['timingOverride'],
       vriddhi: json['vriddhi'] ?? 'both',
+      // Accept both spellings: shipped data uses snake_case (puja_kala),
+      // the field spec uses camelCase — same dual-spelling precedent as
+      // additional_description/addtional_description above.
+      pujaKala: json['pujaKala'] ?? json['puja_kala'],
+      paranRule: json['paranRule'] ?? json['paran_rule'],
+      clipToTithi:
+          json['clipToTithi'] ?? json['clip_to_tithi'] ?? false,
     );
   }
 }

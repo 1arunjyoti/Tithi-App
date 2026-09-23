@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tithi/features/event_detail/domain/puja_samay.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/hindu_month_system.dart';
 import 'package:tithi/models/panchang_data.dart';
@@ -149,6 +150,81 @@ void main() {
       // Assert
       expect(onDay.festivals.map((f) => f.id), contains('pongal'));
       expect(offDay.festivals.map((f) => f.id), isNot(contains('pongal')));
+    });
+  });
+
+  group('Puja Samay dataset wiring', () {
+    // The Puja Samay card and the paran line render only when the entry's
+    // data carries pujaKala / paranRule. Ganesh Chaturthi once shipped the
+    // snake_case twin (puja_kala) while the sheet read camelCase, so the
+    // card silently hid — these guards pin the full chain (JSON spelling →
+    // parser → normalizer) on the real file.
+    Festival loaded(String id) {
+      final entry = _loadFestivalJson().firstWhere(
+        (f) => f['id'] == id,
+        orElse: () => throw StateError('festival $id not found in dataset'),
+      );
+      return Festival.fromJson(entry);
+    }
+
+    test('Ganesh Chaturthi snake_case kala resolves (both spellings)', () {
+      // Arrange + Act
+      final ganesh = loaded('ganesh_chaturthi');
+
+      // Assert
+      expect(ganesh.panchangRules.pujaKala, equals('madhyahna'));
+      expect(normalizedPujaKala(ganesh), equals('madhyahna'));
+    });
+
+    test('Janmashtami pairs nishita kala with after-puja paran', () {
+      // Arrange + Act
+      final janmashtami = loaded('janmashtami');
+
+      // Assert
+      expect(normalizedPujaKala(janmashtami), equals('nishita'));
+      expect(normalizedParanRule(janmashtami), equals('after_puja_kala'));
+    });
+
+    test('Karva Chauth pairs moonrise kala with moonrise paran', () {
+      // Arrange + Act
+      final karva = loaded('karva_chauth');
+
+      // Assert
+      expect(normalizedPujaKala(karva), equals('moonrise'));
+      expect(normalizedParanRule(karva), equals('moonrise'));
+    });
+
+    test('Shivaratri and Lakshmi Puja carry night kalas', () {
+      // Arrange + Act + Assert
+      expect(
+        normalizedPujaKala(loaded('maha_shivaratri')),
+        equals('nishita'),
+      );
+      expect(normalizedPujaKala(loaded('lakshmi_puja')), equals('pradosha'));
+    });
+
+    test('every Ekadashi entry breaks in the Dwadashi window', () {
+      // Arrange + Act
+      const ids = [
+        'varuthini_ekadashi',
+        'nirjala_ekadashi',
+        'devshayani_ekadashi',
+        'kamika_ekadashi',
+        'pavitra_ekadashi',
+        'devutthani_ekadashi',
+        'pausha_putrada_ekadashi',
+        'ekadashi_shukla',
+        'ekadashi_krishna',
+      ];
+
+      // Assert
+      for (final id in ids) {
+        expect(
+          normalizedParanRule(loaded(id)),
+          equals('dwadashi_window'),
+          reason: '$id must carry the Dwadashi paran rule',
+        );
+      }
     });
   });
 }

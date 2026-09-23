@@ -491,7 +491,7 @@ class NotificationScheduler {
       longitude: longitude,
     );
     // Intraday checkpoints so timingOverride festivals (madhyahna,
-    // aparahna, nishita) and Kshaya tithis match the app UI.
+    // aparahna, nishita, pradosha) and Kshaya tithis match the app UI.
     final rawTithiMadhyahna = await service.calculateTithi(
       sunriseTime.add(
         Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
@@ -512,6 +512,15 @@ class NotificationScheduler {
       sunsetTime.add(
         Duration(
           minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
+        ),
+      ),
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final rawTithiPradosha = await service.calculateTithi(
+      sunsetTime.add(
+        Duration(
+          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 10,
         ),
       ),
       latitude: latitude,
@@ -556,6 +565,7 @@ class NotificationScheduler {
       rawTithiMadhyahna: rawTithiMadhyahna,
       rawTithiAparahna: rawTithiAparahna,
       rawTithiNishita: rawTithiNishita,
+      rawTithiPradosha: rawTithiPradosha,
       rawTithiNextSunrise: rawTithiNextSunrise,
       masaNextSunrise: masaNextSunrise,
       nakshatraAtSunrise: nakshatraAtSunrise,

@@ -6,7 +6,15 @@ import '../../../models/panchang_data.dart';
 import '../../../utils/tithi_localization.dart';
 
 export '../../../core/format/festival_labels.dart'
-    show regionalNamesOf, capitalizedMasaLabel, localizedMasaLabel;
+    show
+        regionalNamesOf,
+        festivalDisplayName,
+        heroLanguageChips,
+        observanceRuleKey,
+        observanceRuleLabel,
+        showsObservanceBanner,
+        capitalizedMasaLabel,
+        localizedMasaLabel;
 
 // Event-sheet view-model extracted from widgets/event_detail_sheet.dart.
 // Pure data derived from (festival, panchang?, month system, display mode):

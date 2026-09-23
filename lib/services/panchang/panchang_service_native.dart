@@ -450,9 +450,10 @@ class PanchangService {
         // beginning within kDominantTithiGrace after TRUE sunrise counts
         // for this day. Override festivals keep their own checkpoint, and
         // nakshatra festivals returned above.
-        const sunriseOverrides = {'madhyahna', 'aparahna', 'nishita'};
         final usesSunrise = festival.panchangRules.timingOverride == null ||
-            !sunriseOverrides.contains(festival.panchangRules.timingOverride);
+            !timingOverrideCheckpoints.contains(
+              festival.panchangRules.timingOverride,
+            );
         if (usesSunrise && festival.nakshatraCondition == null) {
           final daySunrise = SunriseCalculator.calculateSunriseIST(
             date: DateTime(day.year, day.month, day.day),

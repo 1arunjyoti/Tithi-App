@@ -1422,6 +1422,61 @@ class AppLocalizationsHi extends AppLocalizations {
   String get transition => 'संक्रमण';
 
   @override
+  String get observanceRuleUdaya => 'सूर्योदय के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleMadhyahna => 'मध्याह्न (दोपहर) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleAparahna =>
+      'अपराह्ण (दोपहर बाद) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleNishita => 'निशिता (मध्यरात्रि) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRulePradosha => 'प्रदोष (संध्याकाल) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleMoonrise => 'चंद्रोदय के समय प्रचलित तिथि';
+
+  @override
+  String observedOnTheDay(String rule) {
+    return 'पर्व उसी दिन मनाया जाता है जिस दिन $rule हो';
+  }
+
+  @override
+  String get pujaSamay => 'पूजा समय';
+
+  @override
+  String get sandhiJunction => 'संधि';
+
+  @override
+  String get pujaWindow => 'पूजा विंडो';
+
+  @override
+  String pujaWindowDuration(int count, String kala) {
+    return '$kala के आसपास $count घटिका';
+  }
+
+  @override
+  String get paranLabel => 'पारण (उपवास समाप्ति):';
+
+  @override
+  String get paranReasonMoonrise => 'चंद्रोदय के बाद';
+
+  @override
+  String get paranReasonSunrise => 'सूर्योदय के बाद';
+
+  @override
+  String paranReasonPujaKala(String kala) {
+    return '$kala पूजा के बाद';
+  }
+
+  @override
+  String get paranReasonDwadashi => 'द्वादशी काल में';
+
+  @override
   String get shuklaPakshaInitial => 'शु';
 
   @override

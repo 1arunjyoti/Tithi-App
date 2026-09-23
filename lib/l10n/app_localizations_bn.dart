@@ -1420,6 +1420,60 @@ class AppLocalizationsBn extends AppLocalizations {
   String get transition => 'পরিবর্তন';
 
   @override
+  String get observanceRuleUdaya => 'সূর্যোদয়ের সময় প্রচলিত তিথি';
+
+  @override
+  String get observanceRuleMadhyahna => 'মধ্যাহ্নে (দুপুরে) প্রচলিত তিথি';
+
+  @override
+  String get observanceRuleAparahna => 'অপরাহ্ণে (বিকেলে) প্রচলিত তিথি';
+
+  @override
+  String get observanceRuleNishita => 'নিশিতায় (মধ্যরাতে) প্রচলিত তিথি';
+
+  @override
+  String get observanceRulePradosha => 'প্রদোষে (সন্ধ্যায়) প্রচলিত তিথি';
+
+  @override
+  String get observanceRuleMoonrise => 'চন্দ্রোদয়ের সময় প্রচলিত তিথি';
+
+  @override
+  String observedOnTheDay(String rule) {
+    return 'উৎসব সেই দিন পালিত হয় যেদিন $rule হয়';
+  }
+
+  @override
+  String get pujaSamay => 'পূজার সময়';
+
+  @override
+  String get sandhiJunction => 'সন্ধি';
+
+  @override
+  String get pujaWindow => 'পূজা উইন্ডো';
+
+  @override
+  String pujaWindowDuration(int count, String kala) {
+    return '$kala-এর আশেপাশে $count ঘটিকা';
+  }
+
+  @override
+  String get paranLabel => 'পারণ (উপবাস সমাপ্তি):';
+
+  @override
+  String get paranReasonMoonrise => 'চন্দ্রোদয়ের পর';
+
+  @override
+  String get paranReasonSunrise => 'সূর্যোদয়ের পর';
+
+  @override
+  String paranReasonPujaKala(String kala) {
+    return '$kala পূজার পর';
+  }
+
+  @override
+  String get paranReasonDwadashi => 'দ্বাদশী কালে';
+
+  @override
   String get shuklaPakshaInitial => 'শু';
 
   @override

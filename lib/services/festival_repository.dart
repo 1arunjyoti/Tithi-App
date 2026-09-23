@@ -43,14 +43,25 @@ class FestivalRepository {
       await _seedData(box, jsonString);
       // Update stored version
       await settingsBox.put('version', festivalsVersion);
+      // Cache the list after init (unmodifiable to avoid accidental mutation)
+      _cachedFestivals = List<Festival>.unmodifiable(box.values);
     } else {
-      debugPrint(
-        'Loaded ${box.length} festivals from Hive cache (version $storedVersion)',
-      );
+      try {
+        _cachedFestivals = List<Festival>.unmodifiable(box.values);
+        debugPrint(
+          'Loaded ${box.length} festivals from Hive cache (version $storedVersion)',
+        );
+      } catch (e) {
+        // The cached box was written by an older adapter (e.g. before a new
+        // non-nullable HiveField landed) and can no longer be read. Wipe and
+        // re-seed from the asset JSON rather than crashing on upgrade.
+        debugPrint('Festival cache unreadable ($e); re-seeding from JSON...');
+        await box.clear();
+        await _seedData(box, jsonString);
+        await settingsBox.put('version', festivalsVersion);
+        _cachedFestivals = List<Festival>.unmodifiable(box.values);
+      }
     }
-
-    // Cache the list after init (unmodifiable to avoid accidental mutation)
-    _cachedFestivals = List<Festival>.unmodifiable(box.values);
   }
 
   /// Get all festivals from the box (cached).

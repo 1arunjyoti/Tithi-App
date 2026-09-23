@@ -471,7 +471,10 @@ class _HeroTitle extends StatelessWidget {
                 : '${content.weekday}, ',
             style: baseStyle,
           ),
-          ?secondarySpan,
+          // build_runner's analyzer predates null-aware elements
+          // (hive_generator pins analyzer <7): keep the collection-if.
+          // ignore: use_null_aware_elements
+          if (secondarySpan != null) secondarySpan,
         ],
       ),
     );
