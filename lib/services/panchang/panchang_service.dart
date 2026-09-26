@@ -3,6 +3,7 @@ import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
 import '../festival_matching_pipeline.dart';
 import '../sunrise_calculator.dart';
+import '../../core/location/location_defaults.dart';
 
 /// Web implementation of PanchangService
 /// Uses simplified calculations since FFI-based Swiss Ephemeris is not available on web
@@ -30,8 +31,8 @@ class PanchangService {
   /// This is less accurate than the Swiss Ephemeris but works on web
   Future<double> calculateTithi(
     DateTime date, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     if (!_isInitialized) {
       throw Exception("PanchangService not initialized.");
@@ -69,8 +70,8 @@ class PanchangService {
   /// Documented limitation, not silent drift.
   Future<({double sun, double moon})?> calculateSunMoonLongitudes(
     DateTime date, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     return null;
   }
@@ -80,8 +81,8 @@ class PanchangService {
   /// Mula) don't match on web. Documented limitation, not silent drift.
   Future<String?> calculateNakshatra(
     DateTime date, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     return null;
   }
@@ -89,8 +90,8 @@ class PanchangService {
   Future<String> calculateMasa(
     DateTime date,
     double rawTithi, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     if (!_isInitialized) {
       throw Exception("PanchangService not initialized.");
@@ -159,8 +160,8 @@ class PanchangService {
   Future<DateTime?> findNextFestivalOccurrence(
     Festival festival, {
     DateTime? startDate,
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     final baseDate = startDate ?? DateTime.now();
 
@@ -236,9 +237,10 @@ class PanchangService {
         );
         if (probeMatch) return true;
         // Dominant-tithi grace (Drik rule, same as the UI batch).
-        const sunriseOverrides = {'madhyahna', 'aparahna', 'nishita'};
         final usesSunrise = festival.panchangRules.timingOverride == null ||
-            !sunriseOverrides.contains(festival.panchangRules.timingOverride);
+            !timingOverrideCheckpoints.contains(
+              festival.panchangRules.timingOverride,
+            );
         if (usesSunrise && festival.nakshatraCondition == null) {
           final daySunrise = SunriseCalculator.calculateSunriseIST(
             date: DateTime(day.year, day.month, day.day),
@@ -347,8 +349,8 @@ class PanchangService {
   Future<DateTime> calculateTithiStartTime(
     DateTime approxDate,
     int targetTithiNum, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     // Web does not have FFI Swiss Ephemeris.
     // Return approximate date to satisfy compilation.
@@ -359,8 +361,8 @@ class PanchangService {
   Future<DateTime> calculateTithiEndTime(
     DateTime approxDate,
     int targetTithiNum, {
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     // Web does not have FFI Swiss Ephemeris.
     // Return approximate date to satisfy compilation.

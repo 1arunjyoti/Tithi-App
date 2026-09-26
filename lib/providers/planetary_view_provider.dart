@@ -2,6 +2,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
 import '../services/planetary_view_service.dart';
 import 'location_provider.dart';
+import '../core/location/location_defaults.dart';
+
+/// Provider for PlanetaryViewService (moved here in Phase 6a: service
+/// files must not own Riverpod providers).
+final planetaryViewServiceProvider = Provider<PlanetaryViewService>((ref) {
+  return PlanetaryViewService();
+});
+
+/// Provider for current view mode (moved here in Phase 6a, same reason).
+class SolarSystemViewModeNotifier extends Notifier<SolarSystemViewMode> {
+  @override
+  SolarSystemViewMode build() => SolarSystemViewMode.heliocentric;
+
+  void setViewMode(SolarSystemViewMode viewMode) {
+    state = viewMode;
+  }
+}
+
+final solarSystemViewModeProvider =
+    NotifierProvider<SolarSystemViewModeNotifier, SolarSystemViewMode>(
+      SolarSystemViewModeNotifier.new,
+    );
 
 /// Provider for the selected date for planetary view
 /// Defaults to current date/time
@@ -19,22 +41,27 @@ final planetaryViewDateProvider =
       PlanetaryViewDateNotifier.new,
     );
 
-/// Provider for solar system data at the selected date
+/// Provider for solar system data at the selected date.
+///
+/// The date is day-normalized: the 30fps animation timer advances by
+/// microseconds, and positions move negligibly within a day — without this,
+/// every frame would miss the solar cache and redo the batched FFI call.
 final solarSystemDataProvider = FutureProvider<SolarSystemData>((ref) async {
   final service = ref.watch(planetaryViewServiceProvider);
   final viewDate = ref.watch(planetaryViewDateProvider);
+  final day = DateTime(viewDate.year, viewDate.month, viewDate.day);
   final viewMode = ref.watch(solarSystemViewModeProvider);
   final locationData = ref.watch(currentLocationProvider);
 
   return locationData.maybeWhen(
     data: (location) => service.getSolarSystemData(
-      dateTime: viewDate,
-      latitude: location?.latitude ?? 28.6139,
-      longitude: location?.longitude ?? 77.2090,
+      dateTime: day,
+      latitude: location?.latitude ?? kDefaultLatitude,
+      longitude: location?.longitude ?? kDefaultLongitude,
       viewMode: viewMode,
     ),
     orElse: () =>
-        service.getSolarSystemData(dateTime: viewDate, viewMode: viewMode),
+        service.getSolarSystemData(dateTime: day, viewMode: viewMode),
   );
 });
 

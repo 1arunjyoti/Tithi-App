@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'panchang_service.dart';
 import '../providers/panchang_provider.dart';
+import '../core/location/location_defaults.dart';
 
 /// Provider for MoonPhaseService
 final moonPhaseServiceProvider = Provider<MoonPhaseService>((ref) {
@@ -41,8 +42,8 @@ class MoonPhaseService {
 
   /// Gets current moon phase data including next Amavasya and Purnima dates
   Future<MoonPhaseData> getMoonPhaseData({
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     // Ensure PanchangService is initialized before use
     await _panchangService.init();
@@ -85,8 +86,8 @@ class MoonPhaseService {
   Future<DateTime> _findNextMoonPhase({
     required int targetTithi,
     required DateTime startDate,
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     // Get current tithi to estimate days until target
     final currentTithi = await _panchangService.calculateTithi(
@@ -165,8 +166,8 @@ class MoonPhaseService {
   Future<DateTime> _refineExactTime({
     required int targetTithi,
     required DateTime approximateDate,
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     // Search within 96 hours window to ensure we encompass the exact peak
     var startTime = approximateDate.subtract(const Duration(hours: 48));
@@ -210,8 +211,8 @@ class MoonPhaseService {
   /// Gets a list of upcoming Amavasya dates
   Future<List<DateTime>> getUpcomingAmavasyas({
     int count = 15, // 15 phases guarantees > 12 months coverage
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     final dates = <DateTime>[];
     var searchFrom = DateTime.now();
@@ -233,8 +234,8 @@ class MoonPhaseService {
   /// Gets a list of upcoming Purnima dates
   Future<List<DateTime>> getUpcomingPurnimas({
     int count = 15, // 15 phases guarantees > 12 months coverage
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
   }) async {
     final dates = <DateTime>[];
     var searchFrom = DateTime.now();

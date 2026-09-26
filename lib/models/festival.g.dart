@@ -217,13 +217,16 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       endTithi: fields[7] as int?,
       timingOverride: fields[8] as String?,
       vriddhi: fields[9] as String,
+      pujaKala: fields[10] as String?,
+      paranRule: fields[11] as String?,
+      clipToTithi: fields[12] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, PanchangRules obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(13)
       ..writeByte(0)
       ..write(obj.masa)
       ..writeByte(1)
@@ -243,7 +246,13 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       ..writeByte(8)
       ..write(obj.timingOverride)
       ..writeByte(9)
-      ..write(obj.vriddhi);
+      ..write(obj.vriddhi)
+      ..writeByte(10)
+      ..write(obj.pujaKala)
+      ..writeByte(11)
+      ..write(obj.paranRule)
+      ..writeByte(12)
+      ..write(obj.clipToTithi);
   }
 
   @override

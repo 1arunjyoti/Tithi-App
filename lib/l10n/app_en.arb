@@ -1817,6 +1817,54 @@
   "@endsUppercase": { "description": "Uppercase ending time label in tithi details" },
   "transition": "TRANSITION",
   "@transition": { "description": "Uppercase transition section label in tithi details" },
+  "observanceRuleUdaya": "the tithi prevailing at sunrise",
+  "@observanceRuleUdaya": { "description": "Observance rule fragment for the default sunrise checkpoint" },
+  "observanceRuleMadhyahna": "the tithi prevailing at Madhyahna (midday)",
+  "@observanceRuleMadhyahna": { "description": "Observance rule fragment for the madhyahna checkpoint" },
+  "observanceRuleAparahna": "the tithi prevailing at Aparahna (afternoon)",
+  "@observanceRuleAparahna": { "description": "Observance rule fragment for the aparahna checkpoint" },
+  "observanceRuleNishita": "the tithi prevailing at Nishita (midnight)",
+  "@observanceRuleNishita": { "description": "Observance rule fragment for the nishita checkpoint" },
+  "observanceRulePradosha": "the tithi prevailing at Pradosha (dusk)",
+  "@observanceRulePradosha": { "description": "Observance rule fragment for the pradosha checkpoint" },
+  "observanceRuleMoonrise": "the tithi prevailing at moonrise",
+  "@observanceRuleMoonrise": { "description": "Observance rule fragment for the moonrise checkpoint" },
+  "observedOnTheDay": "Observed on the day {rule}",
+  "@observedOnTheDay": {
+    "description": "Observance banner sentence naming the tithi checkpoint that fixes the festival date",
+    "placeholders": {
+      "rule": { "type": "String", "example": "the tithi prevailing at sunrise" }
+    }
+  },
+  "pujaSamay": "Puja Samay",
+  "@pujaSamay": { "description": "Puja Samay section header in the festival sheet" },
+  "sandhiJunction": "Sandhi",
+  "@sandhiJunction": { "description": "Short label for the tithi-sandhi puja kala" },
+  "pujaWindow": "PUJA WINDOW",
+  "@pujaWindow": { "description": "Right-cell label of the two-cell Puja Samay card" },
+  "pujaWindowDuration": "{count} ghatikas around {kala}",
+  "@pujaWindowDuration": {
+    "description": "Puja window length note under the range",
+    "placeholders": {
+      "count": { "type": "int", "example": "6" },
+      "kala": { "type": "String", "example": "Madhyahna" }
+    }
+  },
+  "paranLabel": "Paran (breaking the fast):",
+  "@paranLabel": { "description": "Red paran caption in the fasting card" },
+  "paranReasonMoonrise": "after moonrise",
+  "@paranReasonMoonrise": { "description": "Paran reason when the fast breaks at moonrise" },
+  "paranReasonSunrise": "after sunrise",
+  "@paranReasonSunrise": { "description": "Paran reason when the fast breaks at sunrise" },
+  "paranReasonPujaKala": "after the {kala} puja",
+  "@paranReasonPujaKala": {
+    "description": "Paran reason when the fast breaks after the puja kala",
+    "placeholders": {
+      "kala": { "type": "String", "example": "Nishita" }
+    }
+  },
+  "paranReasonDwadashi": "in the Dwadashi window",
+  "@paranReasonDwadashi": { "description": "Paran reason for Ekadashi paran inside Dwadashi" },
   "shuklaPakshaInitial": "S",
   "@shuklaPakshaInitial": { "description": "Single-letter Shukla Paksha marker in the schedule view" },
   "krishnaPakshaInitial": "K",
@@ -1952,5 +2000,83 @@
     "placeholders": {
       "time": { "type": "String", "example": "12:16 PM" }
     }
+  },
+  "checkForUpdates": "Check for updates",
+  "@checkForUpdates": {
+    "description": "Action to check GitHub releases for a newer app version"
+  },
+  "checkingForUpdates": "Checking for updates…",
+  "@checkingForUpdates": {
+    "description": "Status shown while contacting GitHub releases"
+  },
+  "appUpToDate": "You're up to date",
+  "@appUpToDate": {
+    "description": "Status shown when no newer release exists"
+  },
+  "updateAvailable": "Update available",
+  "@updateAvailable": {
+    "description": "Status shown when a newer release exists"
+  },
+  "updateAvailableVersion": "Version {version} is available",
+  "@updateAvailableVersion": {
+    "description": "Subtitle announcing the available release version",
+    "placeholders": {
+      "version": { "type": "String", "example": "0.6.0" }
+    }
+  },
+  "youHaveLatestVersion": "You have the latest version",
+  "@youHaveLatestVersion": {
+    "description": "Message shown when the installed version is current"
+  },
+  "noReleasesPublished": "No releases published yet",
+  "@noReleasesPublished": {
+    "description": "Message shown when GitHub has no releases"
+  },
+  "downloadUpdate": "Download update",
+  "@downloadUpdate": {
+    "description": "Button to download the release APK"
+  },
+  "downloadingUpdate": "Downloading update…",
+  "@downloadingUpdate": {
+    "description": "Status shown while the release APK downloads"
+  },
+  "downloadProgressPercent": "{percent}% downloaded",
+  "@downloadProgressPercent": {
+    "description": "Download progress text",
+    "placeholders": {
+      "percent": { "type": "String", "example": "42" }
+    }
+  },
+  "installUpdate": "Install update",
+  "@installUpdate": {
+    "description": "Button to launch the Android installer for the downloaded APK"
+  },
+  "installingUpdate": "Opening installer…",
+  "@installingUpdate": {
+    "description": "Status shown while handing the APK to the system installer"
+  },
+  "cancellingUpdate": "Cancelling…",
+  "@cancellingUpdate": {
+    "description": "Status shown while an update download is being cancelled"
+  },
+  "updateDownloaded": "Update downloaded",
+  "@updateDownloaded": {
+    "description": "Status shown when the release APK is ready to install"
+  },
+  "updateCheckFailed": "Couldn't check for updates",
+  "@updateCheckFailed": {
+    "description": "Title shown when the update check fails"
+  },
+  "viewReleasesOnGitHub": "View releases on GitHub",
+  "@viewReleasesOnGitHub": {
+    "description": "Link that opens the GitHub releases page"
+  },
+  "releaseNotes": "What's new",
+  "@releaseNotes": {
+    "description": "Heading for the release changelog"
+  },
+  "allowInstallPermissionNote": "Allow installs from Tithi in system settings, then tap Install again.",
+  "@allowInstallPermissionNote": {
+    "description": "Guidance shown when the unknown-apps install permission is missing"
   }
 }

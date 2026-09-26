@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
+import '../providers/location_provider.dart';
 import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
-import '../screens/temple_map_screen.dart';
 import '../screens/moon_phases_screen.dart';
 import '../screens/about_screen.dart';
 import '../providers/version_provider.dart';
@@ -121,14 +122,57 @@ class _DrawerHeader extends StatelessWidget {
   }
 }
 
+/// Opens nearby Hindu temples in the device's map app, replacing the former
+/// in-app Overpass temple finder (server coverage gaps, rate limits, and a
+/// native database for two screens of browse caching).
+///
+/// FOSS-friendly: a generic geo: URI opens the user's default map app
+/// (Google Maps, OsmAnd, ...), not Google specifically. Coordinates ride
+/// along only when already resolved — never fetched here, so tapping never
+/// blocks on GPS; otherwise the query carries "near me". Falls back to
+/// Google Maps in the browser; a snackbar only if nothing handles either.
+Future<void> _openTemplesInMaps(BuildContext context, WidgetRef ref) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  if (!ResponsiveLayout.isTabletOrLarger(context)) {
+    Navigator.of(context).pop();
+  }
+  final loc = ref.read(currentLocationProvider).valueOrNull;
+  final query = loc != null
+      ? 'hindu temple near ${loc.latitude},${loc.longitude}'
+      : 'hindu temples near me';
+  final encoded = Uri.encodeComponent(query);
+  final geoUri = loc != null
+      ? Uri.parse('geo:${loc.latitude},${loc.longitude}?q=$encoded')
+      : Uri.parse('geo:0,0?q=$encoded');
+  try {
+    if (await canLaunchUrl(geoUri)) {
+      await launchUrl(geoUri);
+      return;
+    }
+    final webUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=$encoded',
+    );
+    if (await canLaunchUrl(webUri)) {
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
+      return;
+    }
+  } catch (_) {
+    // Fall through to the snackbar below.
+  }
+  messenger.showSnackBar(
+    SnackBar(content: Text(l10n?.couldNotOpenMaps ?? 'Could not open maps')),
+  );
+}
+
 /// Menu list with all drawer items
-class _DrawerMenuList extends StatelessWidget {
+class _DrawerMenuList extends ConsumerWidget {
   const _DrawerMenuList({required this.colors});
 
   final ColorScheme colors;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
     return ListView(
@@ -152,7 +196,7 @@ class _DrawerMenuList extends StatelessWidget {
         _DrawerMenuItem(
           icon: Icons.temple_buddhist,
           title: l10n?.nearbyTemples ?? 'Nearby Temples',
-          onTap: () => _navigateTo(context, const TempleMapScreen()),
+          onTap: () => _openTemplesInMaps(context, ref),
         ),
 
         _DrawerMenuItem(

@@ -9,24 +9,17 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/fallback_localization_delegates.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:jyotish/jyotish.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'app/bootstrap.dart';
+import 'core/storage/hive_adapters.dart';
 import 'providers/location_provider.dart';
 import 'providers/panchang_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/locale_provider.dart';
-import 'providers/version_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
-import 'models/festival.dart';
-import 'models/sankalpa.dart';
-import 'services/notification_service.dart';
-import 'services/storage_service.dart';
-import 'utils/tithi_localization.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -35,16 +28,8 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      await initializeLocalizedDateFormatting();
-
-      // Set default status bar style for Shukla (light) theme
-      SystemChrome.setSystemUIOverlayStyle(
-        const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-        ),
-      );
+      const bootstrap = AppBootstrap();
+      await bootstrap.initSystem();
 
       // Set custom error widget to replace the red error screen
       ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -71,42 +56,26 @@ void main() {
         await initPlatformFeatures();
       }
 
-      // Preload package/version metadata before first drawer animation.
-      await warmVersionInfo();
-
-      // Initialize Hive for offline storage
-      await Hive.initFlutter();
-
-      if (!kIsWeb) {
-        await FMTCObjectBoxBackend().initialise(
-          maxDatabaseSize: 256 * 1024 * 1024,
-        );
-        const tileStore = FMTCStore('osm_tiles');
-        if (!await tileStore.manage.ready) {
-          await tileStore.manage.create(maxLength: 8000);
-        }
-      }
-
-      // Register Adapters
-      Hive.registerAdapter(FestivalAdapter());
-      Hive.registerAdapter(NameRegionalAdapter());
-      Hive.registerAdapter(VisualsAdapter());
-      Hive.registerAdapter(PurposeAdapter());
-      Hive.registerAdapter(PanchangRulesAdapter());
-      Hive.registerAdapter(RitualsAdapter());
-      Hive.registerAdapter(MediaAdapter());
-      Hive.registerAdapter(SankalpaAdapter()); // Type ID 10
-
-      final storageService = StorageService();
-      await storageService.init();
+      // Independent warm-ups run concurrently: version metadata, Hive +
+      // adapters + core boxes, and font preloads (bounded internally).
+      registerHiveAdapters();
+      await Future.wait([
+        bootstrap.warmVersionInfo(),
+        bootstrap.initStorage(),
+        bootstrap.warmFonts(),
+      ]);
 
       // Initialize timezone for notifications
-      tz_data.initializeTimeZones();
-
-      // Initialize WorkManager for background notifications
-      await NotificationService().initWorkManager();
+      bootstrap.initTimezones();
 
       runApp(const ProviderScope(child: TithiApp()));
+
+      // Post-first-frame: tile cache + Workmanager must never block it.
+      // The temple map awaits AppBootstrap.tileCacheReady before tiles.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        unawaited(bootstrap.initTileCache());
+        unawaited(bootstrap.initBackgroundWork());
+      });
     },
     (error, stackTrace) {
       // Handle uncaught async Dart errors
@@ -310,24 +279,38 @@ class _LocationPermissionWrapperState
   }
 
   Future<void> _initLocationFlow() async {
-    // Wait for location service to initialize
-    await ref.read(locationInitProvider.future);
+    try {
+      // Wait for location service to initialize
+      await ref.read(locationInitProvider.future);
 
-    if (mounted && !_showHomeScreen) {
-      setState(() {
-        _showHomeScreen = true;
-      });
-    }
+      if (mounted && !_showHomeScreen) {
+        setState(() {
+          _showHomeScreen = true;
+        });
+      }
 
-    final locationService = ref.read(locationServiceProvider);
-    final isFirstLaunch = await locationService.isFirstLaunch();
+      final locationService = ref.read(locationServiceProvider);
+      final isFirstLaunch = await locationService.isFirstLaunch();
 
-    if (isFirstLaunch && !_permissionRequested) {
-      _permissionRequested = true;
-      // Show dialog after first frame so UI is already visible
-      if (mounted) {
-        await _showFirstLaunchDialog();
-        await locationService.markFirstLaunchComplete();
+      if (isFirstLaunch && !_permissionRequested) {
+        _permissionRequested = true;
+        // Show dialog after first frame so UI is already visible
+        if (mounted) {
+          await _showFirstLaunchDialog();
+          await locationService.markFirstLaunchComplete();
+        }
+      }
+    } finally {
+      // Unblock background festival seeding now that the location decision
+      // is final (granted → device coordinates; denied/skipped/failed →
+      // default location). Runs on every path — including later launches,
+      // where it completes immediately — so seeding can never deadlock.
+      // Guarded: the wrapper outlives the flow, but never crash teardown.
+      try {
+        final gate = ref.read(locationPermissionGateProvider);
+        if (!gate.isCompleted) gate.complete();
+      } catch (_) {
+        // Seeding stays gated only if the scope itself is gone (app exit).
       }
     }
   }

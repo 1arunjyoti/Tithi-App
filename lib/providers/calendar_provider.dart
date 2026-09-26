@@ -275,11 +275,13 @@ final calendarPreferencesProvider =
     );
 
 final startOfWeekProvider = Provider<StartingDayOfWeek>((ref) {
-  return ref.watch(calendarPreferencesProvider).startOfWeek;
+  return ref.watch(calendarPreferencesProvider.select((p) => p.startOfWeek));
 });
 
 final primaryEventViewProvider = Provider<PrimaryEventView>((ref) {
-  return ref.watch(calendarPreferencesProvider).primaryEventView;
+  return ref.watch(
+    calendarPreferencesProvider.select((p) => p.primaryEventView),
+  );
 });
 
 enum AppCalendarSystem { none, gregorian, hindu, bengali }
@@ -300,23 +302,29 @@ extension AppCalendarSystemExt on AppCalendarSystem {
 }
 
 final primaryCalendarSystemProvider = Provider<AppCalendarSystem>((ref) {
-  return ref.watch(calendarPreferencesProvider).primaryCalendarSystem;
+  return ref.watch(
+    calendarPreferencesProvider.select((p) => p.primaryCalendarSystem),
+  );
 });
 
 final secondaryCalendarSystemProvider = Provider<AppCalendarSystem>((ref) {
-  return ref.watch(calendarPreferencesProvider).secondaryCalendarSystem;
+  return ref.watch(
+    calendarPreferencesProvider.select((p) => p.secondaryCalendarSystem),
+  );
 });
 
 // --- Hindu Month System (Amanta/Purnimant) ---
 
 final hinduMonthSystemProvider = Provider<HinduMonthSystem>((ref) {
-  return ref.watch(calendarPreferencesProvider).hinduMonthSystem;
+  return ref.watch(
+    calendarPreferencesProvider.select((p) => p.hinduMonthSystem),
+  );
 });
 
 // --- Hindu Year Era (Vikram/Shaka Samvat) ---
 
 final hinduYearEraProvider = Provider<HinduYearEra>((ref) {
-  return ref.watch(calendarPreferencesProvider).hinduYearEra;
+  return ref.watch(calendarPreferencesProvider.select((p) => p.hinduYearEra));
 });
 
 // --- Tithi Display Mode (Paksha-based vs Continuous) ---
@@ -324,5 +332,7 @@ final hinduYearEraProvider = Provider<HinduYearEra>((ref) {
 enum TithiDisplayMode { pakshaBased, continuous30 }
 
 final tithiDisplayModeProvider = Provider<TithiDisplayMode>((ref) {
-  return ref.watch(calendarPreferencesProvider).tithiDisplayMode;
+  return ref.watch(
+    calendarPreferencesProvider.select((p) => p.tithiDisplayMode),
+  );
 });

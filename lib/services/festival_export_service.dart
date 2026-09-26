@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import '../features/countdown/domain/target_resolution.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
@@ -116,11 +117,13 @@ class FestivalExportService {
   ) async {
     DateTime? occurrence;
     try {
-      final found = await service.findNextFestivalOccurrence(
-        festival,
-        startDate: startOfYear,
+      final found = await resolveOccurrenceDate(
+        service: service,
+        festival: festival,
+        baseDate: startOfYear,
         latitude: latitude,
         longitude: longitude,
+        monthSystem: monthSystem,
       );
       if (found != null && found.year == year) {
         occurrence = DateTime(found.year, found.month, found.day);

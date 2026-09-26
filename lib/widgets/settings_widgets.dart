@@ -110,7 +110,10 @@ class SettingsActionTile extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ?trailing,
+            // build_runner's analyzer predates null-aware elements
+            // (hive_generator pins analyzer <7): keep the collection-if.
+            // ignore: use_null_aware_elements
+            if (trailing != null) trailing!,
             const SizedBox(width: 8),
             Icon(
               Icons.chevron_right_rounded,

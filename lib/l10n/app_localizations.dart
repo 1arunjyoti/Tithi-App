@@ -2586,6 +2586,102 @@ abstract class AppLocalizations {
   /// **'TRANSITION'**
   String get transition;
 
+  /// Observance rule fragment for the default sunrise checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at sunrise'**
+  String get observanceRuleUdaya;
+
+  /// Observance rule fragment for the madhyahna checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Madhyahna (midday)'**
+  String get observanceRuleMadhyahna;
+
+  /// Observance rule fragment for the aparahna checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Aparahna (afternoon)'**
+  String get observanceRuleAparahna;
+
+  /// Observance rule fragment for the nishita checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Nishita (midnight)'**
+  String get observanceRuleNishita;
+
+  /// Observance rule fragment for the pradosha checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at Pradosha (dusk)'**
+  String get observanceRulePradosha;
+
+  /// Observance rule fragment for the moonrise checkpoint
+  ///
+  /// In en, this message translates to:
+  /// **'the tithi prevailing at moonrise'**
+  String get observanceRuleMoonrise;
+
+  /// Observance banner sentence naming the tithi checkpoint that fixes the festival date
+  ///
+  /// In en, this message translates to:
+  /// **'Observed on the day {rule}'**
+  String observedOnTheDay(String rule);
+
+  /// Puja Samay section header in the festival sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Puja Samay'**
+  String get pujaSamay;
+
+  /// Short label for the tithi-sandhi puja kala
+  ///
+  /// In en, this message translates to:
+  /// **'Sandhi'**
+  String get sandhiJunction;
+
+  /// Right-cell label of the two-cell Puja Samay card
+  ///
+  /// In en, this message translates to:
+  /// **'PUJA WINDOW'**
+  String get pujaWindow;
+
+  /// Puja window length note under the range
+  ///
+  /// In en, this message translates to:
+  /// **'{count} ghatikas around {kala}'**
+  String pujaWindowDuration(int count, String kala);
+
+  /// Red paran caption in the fasting card
+  ///
+  /// In en, this message translates to:
+  /// **'Paran (breaking the fast):'**
+  String get paranLabel;
+
+  /// Paran reason when the fast breaks at moonrise
+  ///
+  /// In en, this message translates to:
+  /// **'after moonrise'**
+  String get paranReasonMoonrise;
+
+  /// Paran reason when the fast breaks at sunrise
+  ///
+  /// In en, this message translates to:
+  /// **'after sunrise'**
+  String get paranReasonSunrise;
+
+  /// Paran reason when the fast breaks after the puja kala
+  ///
+  /// In en, this message translates to:
+  /// **'after the {kala} puja'**
+  String paranReasonPujaKala(String kala);
+
+  /// Paran reason for Ekadashi paran inside Dwadashi
+  ///
+  /// In en, this message translates to:
+  /// **'in the Dwadashi window'**
+  String get paranReasonDwadashi;
+
   /// Single-letter Shukla Paksha marker in the schedule view
   ///
   /// In en, this message translates to:
@@ -2873,6 +2969,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'midpoint {time}'**
   String midpointAt(String time);
+
+  /// Action to check GitHub releases for a newer app version
+  ///
+  /// In en, this message translates to:
+  /// **'Check for updates'**
+  String get checkForUpdates;
+
+  /// Status shown while contacting GitHub releases
+  ///
+  /// In en, this message translates to:
+  /// **'Checking for updates…'**
+  String get checkingForUpdates;
+
+  /// Status shown when no newer release exists
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re up to date'**
+  String get appUpToDate;
+
+  /// Status shown when a newer release exists
+  ///
+  /// In en, this message translates to:
+  /// **'Update available'**
+  String get updateAvailable;
+
+  /// Subtitle announcing the available release version
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version} is available'**
+  String updateAvailableVersion(String version);
+
+  /// Message shown when the installed version is current
+  ///
+  /// In en, this message translates to:
+  /// **'You have the latest version'**
+  String get youHaveLatestVersion;
+
+  /// Message shown when GitHub has no releases
+  ///
+  /// In en, this message translates to:
+  /// **'No releases published yet'**
+  String get noReleasesPublished;
+
+  /// Button to download the release APK
+  ///
+  /// In en, this message translates to:
+  /// **'Download update'**
+  String get downloadUpdate;
+
+  /// Status shown while the release APK downloads
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading update…'**
+  String get downloadingUpdate;
+
+  /// Download progress text
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% downloaded'**
+  String downloadProgressPercent(String percent);
+
+  /// Button to launch the Android installer for the downloaded APK
+  ///
+  /// In en, this message translates to:
+  /// **'Install update'**
+  String get installUpdate;
+
+  /// Status shown while handing the APK to the system installer
+  ///
+  /// In en, this message translates to:
+  /// **'Opening installer…'**
+  String get installingUpdate;
+
+  /// Status shown while an update download is being cancelled
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling…'**
+  String get cancellingUpdate;
+
+  /// Status shown when the release APK is ready to install
+  ///
+  /// In en, this message translates to:
+  /// **'Update downloaded'**
+  String get updateDownloaded;
+
+  /// Title shown when the update check fails
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t check for updates'**
+  String get updateCheckFailed;
+
+  /// Link that opens the GitHub releases page
+  ///
+  /// In en, this message translates to:
+  /// **'View releases on GitHub'**
+  String get viewReleasesOnGitHub;
+
+  /// Heading for the release changelog
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s new'**
+  String get releaseNotes;
+
+  /// Guidance shown when the unknown-apps install permission is missing
+  ///
+  /// In en, this message translates to:
+  /// **'Allow installs from Tithi in system settings, then tap Install again.'**
+  String get allowInstallPermissionNote;
 }
 
 class _AppLocalizationsDelegate

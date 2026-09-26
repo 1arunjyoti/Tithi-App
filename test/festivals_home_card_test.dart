@@ -137,8 +137,10 @@ void main() {
 
       // Assert: order + gold date lines. Rows dated today show the "Today"
       // label (no date, no countdown suffix); other rows keep the formatted
-      // date. Fixture dates are fixed, so resolve against the real today to
-      // stay hermetic whatever day the suite runs.
+      // date. The tithi half uses the waxing/waning word + localized tithi
+      // name (matching FestivalRowTile), not the paksha name. Fixture dates
+      // are fixed, so resolve against the real today to stay hermetic
+      // whatever day the suite runs.
       final now = DateTime.now();
       bool isRealToday(DateTime d) =>
           d.year == now.year && d.month == now.month && d.day == now.day;
@@ -148,16 +150,16 @@ void main() {
       expect(
         find.text(
           isRealToday(DateTime(2026, 9, 14))
-              ? 'Today · Shukla Chaturthi'
-              : 'Mon, 14 Sep · Shukla Chaturthi',
+              ? 'Today · Waxing Chaturthi'
+              : 'Mon, 14 Sep · Waxing Chaturthi',
         ),
         findsOneWidget,
       );
       expect(
         find.text(
           isRealToday(DateTime(2026, 9, 16))
-              ? 'Today · Shukla Shashthi'
-              : 'Wed, 16 Sep · Shukla Shashthi · in 2 days',
+              ? 'Today · Waxing Shashthi'
+              : 'Wed, 16 Sep · Waxing Shashthi · in 2 days',
         ),
         findsOneWidget,
       );
