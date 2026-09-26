@@ -494,5 +494,6 @@
   "updateCheckFailed": "नवीकरणानि परीक्षितुं न शक्यते",
   "viewReleasesOnGitHub": "GitHub इत्यत्र प्रकाशनानि पश्यतु",
   "releaseNotes": "नवीनं किमस्ति",
-  "allowInstallPermissionNote": "तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।"
+  "allowInstallPermissionNote": "तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।",
+  "cancellingUpdate": "निरस्यते..."
 }

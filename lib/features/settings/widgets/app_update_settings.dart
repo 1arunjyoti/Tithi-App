@@ -60,7 +60,7 @@ class CheckForUpdatesTile extends ConsumerWidget {
       case AppUpdateStatus.idle:
       case AppUpdateStatus.upToDate:
       case AppUpdateStatus.error:
-        await notifier.checkForUpdates();
+        await notifier.checkForUpdates(force: true);
         if (!context.mounted) return;
         final next = ref.read(appUpdateProvider);
         if (next.status == AppUpdateStatus.available) {
@@ -72,6 +72,7 @@ class CheckForUpdatesTile extends ConsumerWidget {
         }
       case AppUpdateStatus.checking:
       case AppUpdateStatus.downloading:
+      case AppUpdateStatus.cancelling:
       case AppUpdateStatus.installing:
         break;
     }
@@ -135,6 +136,7 @@ class AppUpdateCard extends ConsumerWidget {
                   ],
                 ),
               ),
+              _RefreshButton(status: state.status),
             ],
           ),
           if (state.release != null && _showsReleaseDetails(state.status)) ...[
@@ -161,6 +163,13 @@ class AppUpdateCard extends ConsumerWidget {
             runSpacing: 8,
             children: [
               _PrimaryActionButton(state: state),
+              if (state.status == AppUpdateStatus.downloading)
+                TextButton.icon(
+                  onPressed: () =>
+                      ref.read(appUpdateProvider.notifier).cancelDownload(),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: Text(l10n?.cancel ?? 'Cancel'),
+                ),
               TextButton.icon(
                 onPressed: () async {
                   await ref.read(appUpdateProvider.notifier).openReleasesPage();
@@ -178,6 +187,58 @@ class AppUpdateCard extends ConsumerWidget {
   }
 }
 
+/// Re-runs the update check from the card header.
+///
+/// Only shown while an update is in view: when the card merely reports
+/// "you're up to date", the primary button below already offers
+/// "Check for updates" and a second refresh control would be noise.
+/// Always forces the request, so an explicit refresh is never swallowed
+/// by the guard that protects accidental repeat taps.
+class _RefreshButton extends ConsumerWidget {
+  const _RefreshButton({required this.status});
+
+  final AppUpdateStatus status;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final busy = status == AppUpdateStatus.downloading ||
+        status == AppUpdateStatus.cancelling ||
+        status == AppUpdateStatus.installing;
+
+    if (status == AppUpdateStatus.checking) {
+      return const Padding(
+        padding: EdgeInsets.all(12),
+        child: SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    final showRefresh = status == AppUpdateStatus.available ||
+        status == AppUpdateStatus.readyToInstall;
+    if (!showRefresh) return const SizedBox.shrink();
+
+    return IconButton(
+      key: const Key('app-update-refresh'),
+      onPressed: busy
+          ? null
+          : () => ref
+                .read(appUpdateProvider.notifier)
+                .checkForUpdates(force: true),
+      tooltip: l10n?.checkForUpdates ?? 'Check for updates',
+      icon: Icon(
+        Icons.refresh_rounded,
+        color: busy
+            ? context.colors.onSurface.withValues(alpha: 0.3)
+            : context.colors.primary,
+      ),
+    );
+  }
+}
+
 class _PrimaryActionButton extends ConsumerWidget {
   const _PrimaryActionButton({required this.state});
 
@@ -189,7 +250,7 @@ class _PrimaryActionButton extends ConsumerWidget {
     final notifier = ref.read(appUpdateProvider.notifier);
 
     Future<void> check() async {
-      await notifier.checkForUpdates();
+      await notifier.checkForUpdates(force: true);
       if (context.mounted) await _reportError(context, ref);
     }
 
@@ -203,6 +264,11 @@ class _PrimaryActionButton extends ConsumerWidget {
         return FilledButton.tonal(
           onPressed: null,
           child: Text(l10n?.downloadingUpdate ?? 'Downloading update…'),
+        );
+      case AppUpdateStatus.cancelling:
+        return FilledButton.tonal(
+          onPressed: null,
+          child: Text(l10n?.cancellingUpdate ?? 'Cancelling…'),
         );
       case AppUpdateStatus.installing:
         return FilledButton.tonal(
@@ -397,6 +463,11 @@ class UpdateAvailableDialog extends ConsumerWidget {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n?.cancel ?? 'Cancel'),
         ),
+        if (state.status == AppUpdateStatus.downloading)
+          TextButton(
+            onPressed: () => notifier.cancelDownload(),
+            child: Text(l10n?.cancel ?? 'Cancel'),
+          ),
         if (state.status == AppUpdateStatus.available &&
             AppUpdateService.supportsInAppInstall)
           FilledButton.icon(
@@ -445,6 +516,7 @@ bool _showsReleaseDetails(AppUpdateStatus status) {
   switch (status) {
     case AppUpdateStatus.available:
     case AppUpdateStatus.downloading:
+    case AppUpdateStatus.cancelling:
     case AppUpdateStatus.readyToInstall:
     case AppUpdateStatus.installing:
       return true;
@@ -456,6 +528,14 @@ bool _showsReleaseDetails(AppUpdateStatus status) {
   }
 }
 
+/// Display form of a `major.minor.patch+build` version.
+///
+/// Keeps the build visible (`0.5.0+3` -> `0.5.0 (3)`): a same-name
+/// rebuild is a legitimate update, so announcing only "0.5.0" would
+/// claim a version the user is already running.
+String _displayName(String version) =>
+    AppUpdateService.displayVersion(version);
+
 String _subtitle(
   AppLocalizations? l10n,
   AppUpdateState state,
@@ -463,7 +543,8 @@ String _subtitle(
 ) {
   final versionLabel = installed == null
       ? ''
-      : l10n?.versionText(installed) ?? 'Version $installed';
+      : l10n?.versionText(_displayName(installed)) ??
+            'Version ${_displayName(installed)}';
   switch (state.status) {
     case AppUpdateStatus.checking:
       return l10n?.checkingForUpdates ?? 'Checking for updates…';
@@ -475,11 +556,13 @@ String _subtitle(
       return l10n?.downloadingUpdate ?? 'Downloading update…';
     case AppUpdateStatus.installing:
       return l10n?.installingUpdate ?? 'Opening installer…';
+    case AppUpdateStatus.cancelling:
+      return l10n?.cancellingUpdate ?? 'Cancelling…';
     case AppUpdateStatus.available:
       final release = state.release;
       if (release == null) return l10n?.updateAvailable ?? 'Update available';
-      return l10n?.updateAvailableVersion(release.version) ??
-          'Version ${release.version} is available';
+      final name = _displayName(release.version);
+      return l10n?.updateAvailableVersion(name) ?? 'Version $name is available';
     case AppUpdateStatus.upToDate:
       return versionLabel.isEmpty
           ? l10n?.appUpToDate ?? "You're up to date"

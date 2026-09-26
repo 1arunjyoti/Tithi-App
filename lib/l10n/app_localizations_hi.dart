@@ -1676,6 +1676,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get installingUpdate => 'इंस्टॉलर खोला जा रहा है...';
 
   @override
+  String get cancellingUpdate => 'रद्द किया जा रहा है...';
+
+  @override
   String get updateDownloaded => 'अपडेट डाउनलोड हो गया';
 
   @override

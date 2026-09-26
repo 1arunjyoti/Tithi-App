@@ -1673,6 +1673,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get installingUpdate => 'ইনস্টলার খোলা হচ্ছে...';
 
   @override
+  String get cancellingUpdate => 'বাতিল করা হচ্ছে...';
+
+  @override
   String get updateDownloaded => 'আপডেট ডাউনলোড করা হয়েছে';
 
   @override

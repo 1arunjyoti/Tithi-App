@@ -2055,6 +2055,10 @@
   "@installingUpdate": {
     "description": "Status shown while handing the APK to the system installer"
   },
+  "cancellingUpdate": "Cancelling…",
+  "@cancellingUpdate": {
+    "description": "Status shown while an update download is being cancelled"
+  },
   "updateDownloaded": "Update downloaded",
   "@updateDownloaded": {
     "description": "Status shown when the release APK is ready to install"
