@@ -1631,4 +1631,60 @@ class AppLocalizationsBn extends AppLocalizations {
   String midpointAt(String time) {
     return 'মধ্যবিন্দু $time';
   }
+
+  @override
+  String get checkForUpdates => 'আপডেট পরীক্ষা করুন';
+
+  @override
+  String get checkingForUpdates => 'আপডেট পরীক্ষা করা হচ্ছে...';
+
+  @override
+  String get appUpToDate => 'আপনি সর্বশেষ সংস্করণে আছেন';
+
+  @override
+  String get updateAvailable => 'আপডেট উপলব্ধ';
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'সংস্করণ $version উপলব্ধ';
+  }
+
+  @override
+  String get youHaveLatestVersion => 'আপনার কাছে সর্বশেষ সংস্করণ আছে';
+
+  @override
+  String get noReleasesPublished => 'এখনও কোনো রিলিজ প্রকাশিত হয়নি';
+
+  @override
+  String get downloadUpdate => 'আপডেট ডাউনলোড করুন';
+
+  @override
+  String get downloadingUpdate => 'আপডেট ডাউনলোড হচ্ছে...';
+
+  @override
+  String downloadProgressPercent(String percent) {
+    return '$percent% ডাউনলোড হয়েছে';
+  }
+
+  @override
+  String get installUpdate => 'আপডেট ইনস্টল করুন';
+
+  @override
+  String get installingUpdate => 'ইনস্টলার খোলা হচ্ছে...';
+
+  @override
+  String get updateDownloaded => 'আপডেট ডাউনলোড করা হয়েছে';
+
+  @override
+  String get updateCheckFailed => 'আপডেট পরীক্ষা করা যায়নি';
+
+  @override
+  String get viewReleasesOnGitHub => 'GitHub-এ রিলিজ দেখুন';
+
+  @override
+  String get releaseNotes => 'নতুন কী আছে';
+
+  @override
+  String get allowInstallPermissionNote =>
+      'সিস্টেম সেটিংসে Tithi-র ইনস্টলের অনুমতি দিন, তারপর আবার ইনস্টল করুন।';
 }

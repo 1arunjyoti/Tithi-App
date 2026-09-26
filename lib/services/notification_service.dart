@@ -43,6 +43,14 @@ class NotificationService {
   Box? _box;
   bool _isInitialized = false;
 
+  /// Legacy IANA aliases some devices/ROMs still report. Dart's timezone
+  /// database only knows canonical names, so without this map Indian ROMs
+  /// reporting Asia/Calcutta (renamed Asia/Kolkata in 2001) would trip the
+  /// unknown-zone fallback below.
+  static const Map<String, String> _legacyTimezoneAliases = {
+    'Asia/Calcutta': 'Asia/Kolkata',
+  };
+
   // Phase 6b: scheduling engine lives in core/notifications/scheduler.dart
   // as [NotificationScheduler], driven by this explicit seam (plugin + box).
   // Delegates below preserve the public API and the lifecycle guards.
@@ -121,8 +129,13 @@ class NotificationService {
       // BUG-07: Use flutter_timezone for reliable IANA timezone identification
       // instead of the manual UTC-offset table which breaks under DST.
       final deviceTimeZone = await _getDeviceTimezone();
+      // Normalize legacy aliases first: tz.getLocation only knows canonical
+      // names, so devices reporting pre-rename zones (Indian ROMs commonly
+      // report Asia/Calcutta) would otherwise fall into the catch-all below.
+      final canonicalZone =
+          _legacyTimezoneAliases[deviceTimeZone] ?? deviceTimeZone;
       try {
-        tz.setLocalLocation(tz.getLocation(deviceTimeZone));
+        tz.setLocalLocation(tz.getLocation(canonicalZone));
       } catch (e) {
         // Some devices/ROMs report non-IANA names (e.g. abbreviations or
         // UTC offsets) which make tz.getLocation throw. Fall back to

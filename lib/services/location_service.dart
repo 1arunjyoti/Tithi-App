@@ -389,7 +389,11 @@ class LocationService {
   Future<void> _loadOfflineCities() async {
     try {
       final raw = await rootBundle.loadString('assets/data/in_city.json');
-      final List<dynamic> decoded = json.decode(raw) as List<dynamic>;
+      // Decode off the main thread: like the festival catalog, parsing the
+      // whole index inline drops frames during startup (this runs inside
+      // LocationService.init, which blocks the home screen).
+      final List<dynamic> decoded =
+          await compute(jsonDecode, raw) as List<dynamic>;
       final cities = <_OfflineCity>[];
       for (final entry in decoded) {
         try {

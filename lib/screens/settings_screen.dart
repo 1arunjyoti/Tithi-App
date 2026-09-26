@@ -11,6 +11,7 @@ import '../features/settings/widgets/location_settings.dart';
 import '../features/settings/widgets/language_display_settings.dart';
 import '../features/settings/widgets/calendar_settings.dart';
 import '../features/settings/widgets/accessibility_settings.dart';
+import '../features/settings/widgets/app_update_settings.dart';
 import '../features/settings/widgets/data_settings.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -130,6 +131,12 @@ class SettingsScreen extends ConsumerWidget {
                           SettingsDivider(),
                           ResetSettingsTile(),
                         ],
+                      ),
+                      const SizedBox(height: 32),
+
+                      SettingsSectionHeader(l10n?.about ?? 'ABOUT'),
+                      const SettingsGroupCard(
+                        children: [CheckForUpdatesTile()],
                       ),
                       const SizedBox(height: 32),
                       Center(

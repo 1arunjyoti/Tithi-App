@@ -279,24 +279,38 @@ class _LocationPermissionWrapperState
   }
 
   Future<void> _initLocationFlow() async {
-    // Wait for location service to initialize
-    await ref.read(locationInitProvider.future);
+    try {
+      // Wait for location service to initialize
+      await ref.read(locationInitProvider.future);
 
-    if (mounted && !_showHomeScreen) {
-      setState(() {
-        _showHomeScreen = true;
-      });
-    }
+      if (mounted && !_showHomeScreen) {
+        setState(() {
+          _showHomeScreen = true;
+        });
+      }
 
-    final locationService = ref.read(locationServiceProvider);
-    final isFirstLaunch = await locationService.isFirstLaunch();
+      final locationService = ref.read(locationServiceProvider);
+      final isFirstLaunch = await locationService.isFirstLaunch();
 
-    if (isFirstLaunch && !_permissionRequested) {
-      _permissionRequested = true;
-      // Show dialog after first frame so UI is already visible
-      if (mounted) {
-        await _showFirstLaunchDialog();
-        await locationService.markFirstLaunchComplete();
+      if (isFirstLaunch && !_permissionRequested) {
+        _permissionRequested = true;
+        // Show dialog after first frame so UI is already visible
+        if (mounted) {
+          await _showFirstLaunchDialog();
+          await locationService.markFirstLaunchComplete();
+        }
+      }
+    } finally {
+      // Unblock background festival seeding now that the location decision
+      // is final (granted → device coordinates; denied/skipped/failed →
+      // default location). Runs on every path — including later launches,
+      // where it completes immediately — so seeding can never deadlock.
+      // Guarded: the wrapper outlives the flow, but never crash teardown.
+      try {
+        final gate = ref.read(locationPermissionGateProvider);
+        if (!gate.isCompleted) gate.complete();
+      } catch (_) {
+        // Seeding stays gated only if the scope itself is gone (app exit).
       }
     }
   }

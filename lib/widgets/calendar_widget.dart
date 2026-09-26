@@ -7,6 +7,8 @@ import 'package:table_calendar/table_calendar.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart' as cp;
 import '../providers/panchang_provider.dart';
+import '../providers/festival_provider.dart';
+import '../providers/location_provider.dart';
 import '../providers/accessibility_provider.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
@@ -36,6 +38,30 @@ export '../features/calendar/domain/header_builders.dart'
 
 // Adapter: the shared dot cache stores plain records; the grid works with
 // CalendarCellData.
+
+/// Reads a precache provider's future, retrying once if the instance was
+/// disposed mid-load.
+///
+/// `ref.read(p.future)` alone subscribes to nothing, so a neighbor-month
+/// instance nobody watches can be dropped while loading (`Bad state: ...
+/// was disposed during loading state` — seen on first launch when the
+/// location grant flips coordinates mid-precache). The retry rebuilds the
+/// instance fresh; anything else rethrows immediately so real failures keep
+/// the existing log-and-retry-later behavior at the call sites. Retries are
+/// rare (normal precaches never hit this) and bounded to one, so an
+/// expensive month batch can never spin.
+Future<T> _readWarmed<T>(
+  WidgetRef ref,
+  ProviderListenable<Future<T>> providerFuture,
+) async {
+  try {
+    return await ref.read(providerFuture);
+  } on StateError catch (e) {
+    if (!e.message.contains('disposed during loading')) rethrow;
+    return await ref.read(providerFuture);
+  }
+}
+
 void _storeAdaptiveDotsSync(Map<DateTime, CalendarCellData> cellData) {
   storeAdaptiveDotsSync(
     cellData.map(
@@ -194,6 +220,18 @@ Future<void> _precacheGregorianNeighbors(
   cp.TithiDisplayMode displayMode,
   bool Function() isStale,
 ) async {
+  // Settle the inputs whose mid-load flip drops the warmed instance
+  // (the first-launch location grant flips coordinates): warm against
+  // stable deps instead of racing them. All resolved post-launch, so this
+  // is instant in steady state; a failure here just skips the best-effort
+  // pass — the visible month's own load surfaces real errors.
+  try {
+    await ref.read(panchangInitProvider.future);
+    await ref.read(festivalInitProvider.future);
+    await ref.read(currentLocationProvider.future);
+  } catch (_) {
+    return;
+  }
   // Next month first (more likely swipe direction), then previous.
   // Keys are month-normalized (day=1) so they hit the same provider
   // instance the calendar watches after onPageChanged, regardless of which
@@ -211,7 +249,10 @@ Future<void> _precacheGregorianNeighbors(
     final festivalKey = festivalMonthPrecacheKey(month);
     if (addBoundedPrecacheKey(precachedFestivalMonthKeys, festivalKey)) {
       try {
-        final monthData = await ref.read(monthlyPanchangProvider(month).future);
+        final monthData = await _readWarmed(
+          ref,
+          monthlyPanchangProvider(month).future,
+        );
         storeFestivalDotsSync(monthData);
       } catch (e) {
         precachedFestivalMonthKeys.remove(festivalKey);
@@ -230,7 +271,8 @@ Future<void> _precacheGregorianNeighbors(
     );
     if (!addBoundedPrecacheKey(precachedMonthKeys, key)) continue;
     try {
-      await ref.read(
+      await _readWarmed(
+        ref,
         gregorianCalendarCellDataProvider((
           focusedMonth: month,
           startOfWeek: startOfWeek,
@@ -258,6 +300,14 @@ Future<void> _precacheAdaptiveNeighbors(
   bool Function() isStale,
 ) async {
   await ref.read(panchangInitProvider.future);
+  // Same settle-first contract as the Gregorian path above: don't warm
+  // neighbor grids while init/location can still flip underneath them.
+  try {
+    await ref.read(festivalInitProvider.future);
+    await ref.read(currentLocationProvider.future);
+  } catch (_) {
+    return;
+  }
 
   final targets = <DateTime>[];
   try {
@@ -310,7 +360,8 @@ Future<void> _precacheAdaptiveNeighbors(
     );
     if (!addBoundedPrecacheKey(precachedMonthKeys, key)) continue;
     try {
-      await ref.read(
+      await _readWarmed(
+        ref,
         adaptiveCalendarDataProvider((
           focusedMonth: target,
           startOfWeek: startOfWeek,

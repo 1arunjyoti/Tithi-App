@@ -64,13 +64,24 @@ class FestivalRepository {
     }
   }
 
+  /// In-memory list without touching Hive (and without caching): the safe
+  /// read while [init] is still seeding on a fresh install.
+  List<Festival> peekCached() => _cachedFestivals ?? const [];
+
   /// Get all festivals from the box (cached).
   /// PERF-4: Returns an unmodifiable view to avoid unnecessary list copies.
+  ///
+  /// Never caches an empty box: on a fresh install the box is open but
+  /// empty until [init] finishes seeding, and caching that transient []
+  /// would stick (see [festivalProvider]).
   List<Festival> getAll() {
     if (_cachedFestivals != null) {
       return _cachedFestivals!;
     }
     final box = StorageService().getFestivalsBox();
+    if (box.isEmpty) {
+      return const [];
+    }
     _cachedFestivals = List<Festival>.unmodifiable(box.values);
     return _cachedFestivals!;
   }
@@ -79,7 +90,15 @@ class FestivalRepository {
   Future<void> _seedData(Box<Festival> box, String jsonString) async {
     debugPrint('Seeding festivals from JSON to Hive...');
     try {
-      final List<dynamic> jsonList = json.decode(jsonString);
+      // Decode the whole catalog on a background isolate: on the main
+      // thread this parse drops several frames on first launch (see the
+      // "Skipped N frames" bursts). jsonDecode is a top-level function so
+      // it qualifies as a compute callback; the small per-item fromJson
+      // mapping + the single batched putAll stay on the main isolate
+      // (Hive boxes live there). No worse on web, where compute runs
+      // inline just like before.
+      final List<dynamic> jsonList =
+          await compute(jsonDecode, jsonString) as List<dynamic>;
       final festivals = jsonList.map((j) => Festival.fromJson(j)).toList();
 
       // Use festival ID as key for O(1) lookup

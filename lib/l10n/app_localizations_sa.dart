@@ -1634,4 +1634,60 @@ class AppLocalizationsSa extends AppLocalizations {
   String midpointAt(String time) {
     return 'मध्यबिन्दुः $time';
   }
+
+  @override
+  String get checkForUpdates => 'नवीकरणानि परीक्षतु';
+
+  @override
+  String get checkingForUpdates => 'नवीकरणानि परीक्ष्यन्ते...';
+
+  @override
+  String get appUpToDate => 'भवान् नवीनतमे संस्करणे वर्तते';
+
+  @override
+  String get updateAvailable => 'नवीकरणम् उपलब्धम्';
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'संस्करणम् $version उपलब्धम् अस्ति';
+  }
+
+  @override
+  String get youHaveLatestVersion => 'भवतः समीपे नवीनतमं संस्करणम् अस्ति';
+
+  @override
+  String get noReleasesPublished => 'अद्यावधि किमपि प्रकाशनं न प्रकाशितम्';
+
+  @override
+  String get downloadUpdate => 'नवीकरणम् अवतारयतु';
+
+  @override
+  String get downloadingUpdate => 'नवीकरणम् अवतर्यते...';
+
+  @override
+  String downloadProgressPercent(String percent) {
+    return '$percent% अवतीर्णम्';
+  }
+
+  @override
+  String get installUpdate => 'नवीकरणं संस्थापयतु';
+
+  @override
+  String get installingUpdate => 'संस्थापकं उद्घाट्यते...';
+
+  @override
+  String get updateDownloaded => 'नवीकरणस्य अवतारणं सम्पन्नम्';
+
+  @override
+  String get updateCheckFailed => 'नवीकरणानि परीक्षितुं न शक्यते';
+
+  @override
+  String get viewReleasesOnGitHub => 'GitHub इत्यत्र प्रकाशनानि पश्यतु';
+
+  @override
+  String get releaseNotes => 'नवीनं किमस्ति';
+
+  @override
+  String get allowInstallPermissionNote =>
+      'तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।';
 }
