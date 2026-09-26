@@ -4,6 +4,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/version_provider.dart';
+import '../features/settings/widgets/app_update_settings.dart';
 import '../theme/app_theme.dart';
 
 class AboutScreen extends ConsumerWidget {
@@ -53,6 +54,8 @@ class AboutScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(24),
                   children: [
                     _AboutHeroCard(versionAsync: versionAsync),
+                    const SizedBox(height: 20),
+                    const AppUpdateCard(),
                     const SizedBox(height: 20),
                     _AboutSectionCard(
                       icon: Icons.auto_awesome_rounded,

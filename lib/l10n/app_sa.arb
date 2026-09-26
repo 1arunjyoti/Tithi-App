@@ -477,5 +477,22 @@
   "pradosha": "प्रदोषः",
   "abhijitAvoided": "बुधवासरे परिहृतम्",
   "abhijitAuspicious": "अद्य विशेषतः शुभम्",
-  "midpointAt": "मध्यबिन्दुः {time}"
+  "midpointAt": "मध्यबिन्दुः {time}",
+    "checkForUpdates": "नवीकरणानि परीक्षतु",
+  "checkingForUpdates": "नवीकरणानि परीक्ष्यन्ते...",
+  "appUpToDate": "भवान् नवीनतमे संस्करणे वर्तते",
+  "updateAvailable": "नवीकरणम् उपलब्धम्",
+  "updateAvailableVersion": "संस्करणम् {version} उपलब्धम् अस्ति",
+  "youHaveLatestVersion": "भवतः समीपे नवीनतमं संस्करणम् अस्ति",
+  "noReleasesPublished": "अद्यावधि किमपि प्रकाशनं न प्रकाशितम्",
+  "downloadUpdate": "नवीकरणम् अवतारयतु",
+  "downloadingUpdate": "नवीकरणम् अवतर्यते...",
+  "downloadProgressPercent": "{percent}% अवतीर्णम्",
+  "installUpdate": "नवीकरणं संस्थापयतु",
+  "installingUpdate": "संस्थापकं उद्घाट्यते...",
+  "updateDownloaded": "नवीकरणस्य अवतारणं सम्पन्नम्",
+  "updateCheckFailed": "नवीकरणानि परीक्षितुं न शक्यते",
+  "viewReleasesOnGitHub": "GitHub इत्यत्र प्रकाशनानि पश्यतु",
+  "releaseNotes": "नवीनं किमस्ति",
+  "allowInstallPermissionNote": "तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।"
 }

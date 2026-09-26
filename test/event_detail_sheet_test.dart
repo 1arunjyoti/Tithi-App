@@ -109,6 +109,116 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  group('EventDetailSheet hero language chips', () {
+    Festival multiRegional() {
+      return const Festival(
+        id: 'f2',
+        name: 'Test Festival',
+        nameRegional: NameRegional(
+          nameEnglish: 'Test Festival',
+          nameHindi: 'परीक्षा उत्सव हिंदी में',
+          nameBengali: 'বাংলায় পরীক্ষা উৎসব',
+          nameTelugu: 'తెలుగులో పరీక్ష పండుగ',
+          nameKannada: 'ಕನ್ನಡದಲ್ಲಿ ಪರೀಕ್ಷಾ ಹಬ್ಬ',
+          nameTamil: 'தமிழில் சோதனை திருவிழா',
+          nameMalayalam: 'മലയാളത്തിൽ പരീക്ഷാ ഉത്സവം',
+        ),
+        visuals: Visuals(),
+        purpose: Purpose(description: 'A test festival.'),
+        panchangRules: PanchangRules(
+          masa: 'Shravana',
+          paksha: 'Shukla',
+          tithi: 4,
+          conditions: 'Lunar',
+        ),
+        rituals: Rituals(steps: ['Light a lamp']),
+        media: Media(),
+      );
+    }
+
+    Future<void> pumpPhoneSheet(
+      WidgetTester tester,
+      Festival f,
+      PanchangData? panchang,
+    ) async {
+      // Phone-width surface so six regional names always wrap past the
+      // first row (the default 800px test surface could fit them in one).
+      tester.view.physicalSize = const Size(390 * 3, 844 * 3);
+      tester.view.devicePixelRatio = 3.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      await pumpSheet(tester, f, panchang);
+    }
+
+    testWidgets('collapses to the first row with a trailing arrow', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpPhoneSheet(tester, multiRegional(), day());
+
+      // Assert: collapsed by default — expand arrow visible (clipped chips
+      // stay in the tree, so assert on the arrow, not on hidden chip text).
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_up), findsNothing);
+    });
+
+    testWidgets('arrow reveals all chips and collapses back', (
+      tester,
+    ) async {
+      // Arrange
+      await pumpPhoneSheet(tester, multiRegional(), day());
+
+      // Act: expand.
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_down));
+      await tester.pumpAndSettle();
+
+      // Assert: collapse arrow replaces the expand one.
+      expect(find.byIcon(Icons.keyboard_arrow_up), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+
+      // Act: collapse again.
+      await tester.tap(find.byIcon(Icons.keyboard_arrow_up));
+      await tester.pumpAndSettle();
+
+      // Assert: back to the collapsed arrow.
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_up), findsNothing);
+    });
+
+    testWidgets('single-row names render with no toggle', (tester) async {
+      // Arrange + Act: one regional name always fits a single row.
+      await pumpSheet(
+        tester,
+        const Festival(
+          id: 'f3',
+          name: 'Test Festival',
+          nameRegional: NameRegional(
+            nameEnglish: 'Test Festival',
+            nameHindi: 'परीक्षा',
+          ),
+          visuals: Visuals(),
+          purpose: Purpose(description: 'A test festival.'),
+          panchangRules: PanchangRules(
+            masa: 'Shravana',
+            paksha: 'Shukla',
+            tithi: 4,
+            conditions: 'Lunar',
+          ),
+          rituals: Rituals(steps: ['Light a lamp']),
+          media: Media(),
+        ),
+        day(),
+      );
+
+      // Assert
+      expect(find.text('परीक्षा'), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down), findsNothing);
+      expect(find.byIcon(Icons.keyboard_arrow_up), findsNothing);
+    });
+  });
+
   group('EventDetailSheet puja cards', () {
     testWidgets('shows the Puja Samay card once pujaKala is set', (
       tester,

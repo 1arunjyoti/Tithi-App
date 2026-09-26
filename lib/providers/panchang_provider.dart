@@ -57,7 +57,14 @@ final resolvedCoordinatesProvider =
     });
 
 /// Provider that tracks if the panchang service is initialized
+///
+/// Holds the native ephemeris setup (asset file copy + Jyotish init — the
+/// first launch's biggest main-thread stall) until the location permission
+/// flow resolves, same as [festivalInitProvider]: the month batch awaits
+/// both inits anyway, so nothing downstream is delayed beyond the gate,
+/// and the copy no longer contends with the permission dialog.
 final panchangInitProvider = FutureProvider<void>((ref) async {
+  await ref.watch(locationPermissionGateProvider).future;
   final service = ref.read(panchangServiceProvider);
   await service.init();
 });

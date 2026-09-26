@@ -477,5 +477,22 @@
   "pradosha": "প্রদোষ",
   "abhijitAvoided": "বুধবারে পরিহৃত",
   "abhijitAuspicious": "আজ বিশেষভাবে শুভ",
-  "midpointAt": "মধ্যবিন্দু {time}"
+  "midpointAt": "মধ্যবিন্দু {time}",
+    "checkForUpdates": "আপডেট পরীক্ষা করুন",
+  "checkingForUpdates": "আপডেট পরীক্ষা করা হচ্ছে...",
+  "appUpToDate": "আপনি সর্বশেষ সংস্করণে আছেন",
+  "updateAvailable": "আপডেট উপলব্ধ",
+  "updateAvailableVersion": "সংস্করণ {version} উপলব্ধ",
+  "youHaveLatestVersion": "আপনার কাছে সর্বশেষ সংস্করণ আছে",
+  "noReleasesPublished": "এখনও কোনো রিলিজ প্রকাশিত হয়নি",
+  "downloadUpdate": "আপডেট ডাউনলোড করুন",
+  "downloadingUpdate": "আপডেট ডাউনলোড হচ্ছে...",
+  "downloadProgressPercent": "{percent}% ডাউনলোড হয়েছে",
+  "installUpdate": "আপডেট ইনস্টল করুন",
+  "installingUpdate": "ইনস্টলার খোলা হচ্ছে...",
+  "updateDownloaded": "আপডেট ডাউনলোড করা হয়েছে",
+  "updateCheckFailed": "আপডেট পরীক্ষা করা যায়নি",
+  "viewReleasesOnGitHub": "GitHub-এ রিলিজ দেখুন",
+  "releaseNotes": "নতুন কী আছে",
+  "allowInstallPermissionNote": "সিস্টেম সেটিংসে Tithi-র ইনস্টলের অনুমতি দিন, তারপর আবার ইনস্টল করুন।"
 }

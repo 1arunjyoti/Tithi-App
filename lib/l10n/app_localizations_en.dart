@@ -1627,4 +1627,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String midpointAt(String time) {
     return 'midpoint $time';
   }
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates…';
+
+  @override
+  String get appUpToDate => 'You\'re up to date';
+
+  @override
+  String get updateAvailable => 'Update available';
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'Version $version is available';
+  }
+
+  @override
+  String get youHaveLatestVersion => 'You have the latest version';
+
+  @override
+  String get noReleasesPublished => 'No releases published yet';
+
+  @override
+  String get downloadUpdate => 'Download update';
+
+  @override
+  String get downloadingUpdate => 'Downloading update…';
+
+  @override
+  String downloadProgressPercent(String percent) {
+    return '$percent% downloaded';
+  }
+
+  @override
+  String get installUpdate => 'Install update';
+
+  @override
+  String get installingUpdate => 'Opening installer…';
+
+  @override
+  String get updateDownloaded => 'Update downloaded';
+
+  @override
+  String get updateCheckFailed => 'Couldn\'t check for updates';
+
+  @override
+  String get viewReleasesOnGitHub => 'View releases on GitHub';
+
+  @override
+  String get releaseNotes => 'What\'s new';
+
+  @override
+  String get allowInstallPermissionNote =>
+      'Allow installs from Tithi in system settings, then tap Install again.';
 }

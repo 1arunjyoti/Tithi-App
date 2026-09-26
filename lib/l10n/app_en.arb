@@ -2000,5 +2000,79 @@
     "placeholders": {
       "time": { "type": "String", "example": "12:16 PM" }
     }
+  },
+  "checkForUpdates": "Check for updates",
+  "@checkForUpdates": {
+    "description": "Action to check GitHub releases for a newer app version"
+  },
+  "checkingForUpdates": "Checking for updates…",
+  "@checkingForUpdates": {
+    "description": "Status shown while contacting GitHub releases"
+  },
+  "appUpToDate": "You're up to date",
+  "@appUpToDate": {
+    "description": "Status shown when no newer release exists"
+  },
+  "updateAvailable": "Update available",
+  "@updateAvailable": {
+    "description": "Status shown when a newer release exists"
+  },
+  "updateAvailableVersion": "Version {version} is available",
+  "@updateAvailableVersion": {
+    "description": "Subtitle announcing the available release version",
+    "placeholders": {
+      "version": { "type": "String", "example": "0.6.0" }
+    }
+  },
+  "youHaveLatestVersion": "You have the latest version",
+  "@youHaveLatestVersion": {
+    "description": "Message shown when the installed version is current"
+  },
+  "noReleasesPublished": "No releases published yet",
+  "@noReleasesPublished": {
+    "description": "Message shown when GitHub has no releases"
+  },
+  "downloadUpdate": "Download update",
+  "@downloadUpdate": {
+    "description": "Button to download the release APK"
+  },
+  "downloadingUpdate": "Downloading update…",
+  "@downloadingUpdate": {
+    "description": "Status shown while the release APK downloads"
+  },
+  "downloadProgressPercent": "{percent}% downloaded",
+  "@downloadProgressPercent": {
+    "description": "Download progress text",
+    "placeholders": {
+      "percent": { "type": "String", "example": "42" }
+    }
+  },
+  "installUpdate": "Install update",
+  "@installUpdate": {
+    "description": "Button to launch the Android installer for the downloaded APK"
+  },
+  "installingUpdate": "Opening installer…",
+  "@installingUpdate": {
+    "description": "Status shown while handing the APK to the system installer"
+  },
+  "updateDownloaded": "Update downloaded",
+  "@updateDownloaded": {
+    "description": "Status shown when the release APK is ready to install"
+  },
+  "updateCheckFailed": "Couldn't check for updates",
+  "@updateCheckFailed": {
+    "description": "Title shown when the update check fails"
+  },
+  "viewReleasesOnGitHub": "View releases on GitHub",
+  "@viewReleasesOnGitHub": {
+    "description": "Link that opens the GitHub releases page"
+  },
+  "releaseNotes": "What's new",
+  "@releaseNotes": {
+    "description": "Heading for the release changelog"
+  },
+  "allowInstallPermissionNote": "Allow installs from Tithi in system settings, then tap Install again.",
+  "@allowInstallPermissionNote": {
+    "description": "Guidance shown when the unknown-apps install permission is missing"
   }
 }
