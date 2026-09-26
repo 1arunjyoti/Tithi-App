@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_geojson2/flutter_map_geojson2.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../app/bootstrap.dart';
 import '../providers/location_provider.dart';
 import '../core/location/location_defaults.dart';
 
@@ -23,13 +24,26 @@ class LocationPickerScreen extends ConsumerStatefulWidget {
 
 class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   final MapController _mapController = MapController();
-  final FMTCTileProvider _tileProvider = FMTCTileProvider(
-    stores: const {'osm_tiles': BrowseStoreStrategy.readUpdateCreate},
-    cachedValidDuration: const Duration(days: 30),
+  // Built-in file cache with the shared app config; the singleton is
+  // created on first use, so no init ordering needed. The explicit
+  // User-Agent satisfies the OSM tile usage policy (names the app and
+  // gives a contact point instead of a library default or placeholder).
+  // NOTE: headers must stay a MUTABLE map literal — flutter_map calls
+  // putIfAbsent on it to backfill its default User-Agent (a const map
+  // throws "Cannot modify unmodifiable map"). Ours already defines the
+  // key, so the backfill is a no-op and our contactable UA always wins.
+  final TileProvider _tileProvider = NetworkTileProvider(
+    cachingProvider: AppBootstrap.appTileCaching(),
+    headers: {
+      'User-Agent': 'Tithi (app.tithi.pro; +https://tithiapp.netlify.app)',
+    },
   );
   StreamSubscription<Position>? _positionSubscription;
   bool _autoCenterEnabled = true;
-  LatLng _center = const LatLng(kDefaultLatitude, kDefaultLongitude); // Default Delhi
+  LatLng _center = const LatLng(
+    kDefaultLatitude,
+    kDefaultLongitude,
+  ); // Default Delhi
   bool _isLoading = false;
 
   @override
@@ -171,13 +185,45 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     _mapController.move(nextCenter, _mapController.camera.zoom);
   }
 
+  /// Opens the OSM copyright page from the attribution credit.
+  /// Best-effort: a failed launch stays silent rather than noising a
+  /// credit tap with a snackbar.
+  Future<void> _openOsmCopyright() async {
+    final url = Uri.parse('https://www.openstreetmap.org/copyright');
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {
+      // Ignore: attribution stays put.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(l10n?.setHomeLocation ?? 'Set Home Location'),
+        // The bar floats transparent over light map tiles, so the title
+        // carries its own scrim pill (explicit onSurface ink — the theme
+        // foreground is white in dark mode and washes out over tiles).
+        // Same surface treatment as the back-button circle below.
+        title: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.colors.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            l10n?.setHomeLocation ?? 'Set Home Location',
+            style: TextStyle(
+              color: context.colors.onSurface,
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -208,7 +254,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.tithi',
+                // Real application ID (flutter_map falls back to it only
+                // when the provider defines no User-Agent of its own).
+                userAgentPackageName: 'app.tithi.pro',
                 tileProvider: _tileProvider,
               ),
               GeoJsonLayer.asset(
@@ -219,12 +267,6 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                   fillColor: Colors.transparent,
                   fillOpacity: 0.0,
                 ),
-              ),
-              // Simple Credits overlay
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('OpenStreetMap contributors'),
-                ],
               ),
             ],
           ),
@@ -271,7 +313,11 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             ),
           ),
 
-          // Bottom Action Card
+          // Bottom Action Card. The OSM credit lives as a quiet line at
+          // the card's foot: the map's own bottom-right corner (where the
+          // Rich credit would sit) is covered by this full-width card, so
+          // this is what keeps the attribution always visible, as the tile
+          // usage policy requires.
           Positioned(
             bottom: 24,
             left: 16,
@@ -322,6 +368,23 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _openOsmCopyright,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Text(
+                        '© OpenStreetMap contributors',
+                        textAlign: TextAlign.center,
+                        style: context.textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.55,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],

@@ -2,15 +2,13 @@ group 'com.rajsanjib.jyotish'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '2.2.20'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.11.1'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.android.tools.build:gradle:9.0.1'
     }
 }
 
@@ -21,12 +19,15 @@ allprojects {
     }
 }
 
+// AGP 9 provides built-in Kotlin: applying 'kotlin-android' is a hard
+// error (and the KGP classpath with it), so both are gone. The kotlin {}
+// compilerOptions block went with them (that extension belongs to KGP);
+// built-in Kotlin follows the Java 17 compileOptions below.
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 
 android {
     namespace 'com.rajsanjib.jyotish'
-    compileSdkVersion 33
+    compileSdk flutter.compileSdkVersion
     ndkVersion "28.2.13676358"
 
     compileOptions {
@@ -39,8 +40,8 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 21
-        
+        minSdk 21
+
         // Configure CMake for native build
         externalNativeBuild {
             cmake {
@@ -66,11 +67,5 @@ android {
 
     dependencies {
         testImplementation 'junit:junit:4.13.2'
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }

@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+
+import 'tile_orphan.dart';
 
 import '../core/storage/hive_adapters.dart';
 import '../providers/version_provider.dart' as version_warmup;
@@ -68,6 +70,21 @@ class AppBootstrap {
     }
   }
 
+  /// Shared tile cache: flutter_map's built-in file cache (replaces
+  /// FMTC/ObjectBox, removed for its AGP-9-blocking native module and
+  /// GPL-3.0 license). `getOrCreateInstance` honors the FIRST call's
+  /// config, so every call site passes identical args — creation order
+  /// between the warm-up below and the map screens doesn't matter.
+  ///
+  /// No freshness override: the OSM tile usage policy requires honouring
+  /// server caching headers (with conditional revalidation), so the cache
+  /// follows them instead of forcing 30 days. The byte cap (~old
+  /// 8000-tile FMTC cap) keeps repeat views from re-downloading.
+  static MapCachingProvider appTileCaching() =>
+      BuiltInMapCachingProvider.getOrCreateInstance(
+        maxCacheSize: 250 * 1024 * 1024,
+      );
+
   static Future<void>? _tileCacheInit;
 
   /// Map tile cache readiness (memoized). Kick off post-first-frame via
@@ -77,13 +94,11 @@ class AppBootstrap {
 
   static Future<void> _initTileCacheStatic() async {
     if (kIsWeb) return;
-    await FMTCObjectBoxBackend().initialise(
-      maxDatabaseSize: 256 * 1024 * 1024,
-    );
-    const tileStore = FMTCStore('osm_tiles');
-    if (!await tileStore.manage.ready) {
-      await tileStore.manage.create(maxLength: 8000);
-    }
+    // Warm the singleton with the app's config (no-op if a map screen won
+    // the race — args are identical everywhere) and drop FMTC's orphaned
+    // ObjectBox database once. Both best-effort; tiles work regardless.
+    appTileCaching();
+    await deleteFmtcOrphan();
   }
 
   /// Starts tile-cache init without awaiting (post-first-frame entry).
