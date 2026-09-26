@@ -459,10 +459,12 @@ class NotificationService {
 
   /// BUG-07: Returns the device's IANA timezone name using flutter_timezone.
   /// Falls back to 'Asia/Kolkata' (app's primary audience) if unavailable.
+  /// flutter_timezone 5.x returns TimezoneInfo objects (name + localized
+  /// name) instead of a plain string.
   Future<String> _getDeviceTimezone() async {
     try {
       final timezoneInfo = await FlutterTimezone.getLocalTimezone();
-      if (timezoneInfo.isNotEmpty) return timezoneInfo;
+      if (timezoneInfo.identifier.isNotEmpty) return timezoneInfo.identifier;
       debugPrint('flutter_timezone returned empty name, using Asia/Kolkata');
     } catch (e) {
       debugPrint(

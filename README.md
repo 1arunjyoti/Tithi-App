@@ -63,15 +63,18 @@ Accurate daily Panchang, moon phases, and festival data — powered entirely by 
 ## 🌟 Key Features
 
 ### 📅 Accurate Panchang
+
 - Daily **Tithi, Nakshatra, Yoga, and Karana** derived from the Swiss Ephemeris (Drik-equivalent)
-- Tithi transition timings and sunrise/sunset-aware checkpoints (*madhyahna, aparahna, nishita*)
+- Tithi transition timings and sunrise/sunset-aware checkpoints (_madhyahna, aparahna, nishita_)
 
 ### 🗓️ Dual Calendar Systems
+
 - **Hindu lunisolar**: Amanta & Purnimant month systems, Shaka & Vikram Samvat eras, Adhika intercalary months
 - **Bengali**: Bisuddha Siddhanta
 - High-performance month-grid swiping between both, side by side
 
 ### 🎉 Festival Engine
+
 > 108 festivals defined in [`assets/festivals.json`](assets/festivals.json)
 
 - Countdown screen, in-app search, and event detail sheets with tithi Begins/Ends spans
@@ -81,34 +84,39 @@ Accurate daily Panchang, moon phases, and festival data — powered entirely by 
 - North-Indian and Bengali observances of the same tithi kept as intentional duplicates
 
 ### 🔭 Astronomical Visualization
-| Feature | Description |
-|---|---|
+
+| Feature          | Description                                                                |
+| ---------------- | -------------------------------------------------------------------------- |
 | **Solar System** | Interactive 3D-like view with real-time planetary positions (Graha Gochar) |
-| **Moon Phases** | Animated current moon phase, plus a detailed moon view |
-| **Eclipses** | Track upcoming Solar and Lunar eclipses |
+| **Moon Phases**  | Animated current moon phase, plus a detailed moon view                     |
+| **Eclipses**     | Track upcoming Solar and Lunar eclipses                                    |
 
 ### 🙏 Spiritual Tools
+
 - **Sankalpa** — create, track, and get reminders for your spiritual intentions and vows
 - **Daily Wisdom** — daily Shlokas and quotes with translations
 - **Temple Finder** — locate nearby temples with an interactive offline-friendly map
 
 ### 🧰 Everyday Utilities
-- Weather sheet
+
 - Home-screen widget
 - Screenshot/share cards for festivals and shlokas
 
 ### 🌐 Localization
+
 `English` · `हिन्दी (Hindi)` · `বাংলা (Bengali)` · `संस्कृतम् (Sanskrit)`
 
 ### 🎨 Theme Support
-| Theme | Style |
-|---|---|
-| **Auto** | Automatically switches between Day (Shukla) and Night (Pure Dark) modes |
-| **Shukla (Light)** | Vibrant orange and gold aesthetic representing the waxing moon |
-| **Pure Dark (Dark)** | OLED-black, gold accents — max readability and battery saving |
-| **Krishna (Cyber)** | Deep purple/neon aesthetic representing the waning moon |
+
+| Theme                | Style                                                                   |
+| -------------------- | ----------------------------------------------------------------------- |
+| **Auto**             | Automatically switches between Day (Shukla) and Night (Pure Dark) modes |
+| **Shukla (Light)**   | Vibrant orange and gold aesthetic representing the waxing moon          |
+| **Pure Dark (Dark)** | OLED-black, gold accents — max readability and battery saving           |
+| **Krishna (Cyber)**  | Deep purple/neon aesthetic representing the waning moon                 |
 
 ### 🔒 FOSS & Privacy First
+
 - ✅ **Offline First** — works completely offline using local Swiss Ephemeris data
 - ✅ **No GMS Dependency** — uses Android's native `LocationManager` and OpenStreetMap (Nominatim) for geolocation
 - ✅ **Notifications** — daily Tithi and Sankalpa reminders, scheduled locally, no server
@@ -118,18 +126,18 @@ Accurate daily Panchang, moon phases, and festival data — powered entirely by 
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | [Flutter](https://flutter.dev/) 3.x / Dart 3.10+ |
-| State Management | [Riverpod](https://riverpod.dev/) (`flutter_riverpod`) |
-| Local Storage | [Hive](https://pub.dev/packages/hive) + `hive_flutter` (codegen via `build_runner`) |
+| Layer            | Technology                                                                                                                                                                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Framework        | [Flutter](https://flutter.dev/) 3.x / Dart 3.10+                                                                                                                                          |
+| State Management | [Riverpod](https://riverpod.dev/) (`flutter_riverpod`)                                                                                                                                    |
+| Local Storage    | [Hive](https://pub.dev/packages/hive) + `hive_flutter` (codegen via `build_runner`)                                                                                                       |
 | Astronomy Engine | [Swiss Ephemeris](https://www.astro.com/swisseph/) via the `jyotish` package (`packages/jyotish`, Dart FFI + native Android bindings; a no-ephemeris web fallback ships limited matching) |
-| Calendars / UI | `table_calendar`, `flutter_map` (OpenStreetMap) + tile caching, `lottie`, `google_fonts` |
-| Geolocation | [geolocator](https://pub.dev/packages/geolocator) (device GPS) + [nominatim_geocoding](https://pub.dev/packages/nominatim_geocoding) (reverse geocoding) |
-| Notifications | [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) + `workmanager` (background reminders) |
-| Sharing / Export | [share_plus](https://pub.dev/packages/share_plus), `screenshot`, `file_picker` |
-| Home Widget | `home_widget` |
-| Linting | `flutter_lints` |
+| Calendars / UI   | `table_calendar`, `flutter_map` (OpenStreetMap) + tile caching, `lottie`, `google_fonts`                                                                                                  |
+| Geolocation      | [geolocator](https://pub.dev/packages/geolocator) (device GPS) + [nominatim_geocoding](https://pub.dev/packages/nominatim_geocoding) (reverse geocoding)                                  |
+| Notifications    | [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) + `workmanager` (background reminders)                                                                |
+| Sharing / Export | [share_plus](https://pub.dev/packages/share_plus), `screenshot`, `file_picker`                                                                                                            |
+| Home Widget      | `home_widget`                                                                                                                                                                             |
+| Linting          | `flutter_lints`                                                                                                                                                                           |
 
 ---
 
@@ -190,6 +198,7 @@ flutter pub run build_runner build --delete-conflicting-outputs    # regen Hive 
 ```
 
 > [!NOTE]
+>
 > - Localization settings are defined in `l10n.yaml`, using `lib/l10n/app_en.arb` as the template. Run `flutter gen-l10n` after editing an ARB file.
 > - `test/festivals_rule_test.dart` is **device-only** (initializes the real `PanchangService`; fails on host with `MissingPluginException`) and is intentionally excluded from host runs.
 > - Host-side tests cover matching logic with synthetic checkpoints, never real sky positions — true ephemeris behavior needs a device build.

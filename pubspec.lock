@@ -17,6 +17,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.4.1"
+  android_file_picker:
+    dependency: transitive
+    description:
+      name: android_file_picker
+      sha256: "14ab27769b54c48d5a8a71aa9858372b7a3ae77572ea0a8aee744643c5d8c53d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   ansicolor:
     dependency: transitive
     description:
@@ -281,6 +289,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.2.0"
+  ffi_leak_tracker:
+    dependency: transitive
+    description:
+      name: ffi_leak_tracker
+      sha256: "4093d4ef9ca06ffe2786e73bfb25e22aa92112b9bb4ec941f11e3e6b61489a97"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.2"
   file:
     dependency: transitive
     description:
@@ -293,10 +309,42 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: "29cc1fdb20613876cc7afc529738c1c0f11a9ca159b010edad0c566ac330847e"
+      sha256: "98c0b156b6380ba55bc767a14e2e6b3feb246e713ad40092424596fa79005bea"
       url: "https://pub.dev"
     source: hosted
-    version: "11.0.3"
+    version: "13.1.0"
+  file_picker_darwin:
+    dependency: transitive
+    description:
+      name: file_picker_darwin
+      sha256: "51aef9f4c80449c736e7cc02198675fda73689f0bd45a84da642cfeab0250d46"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.2"
+  file_picker_linux:
+    dependency: transitive
+    description:
+      name: file_picker_linux
+      sha256: e7db600f50672ce5ebbe422ac0906e0f3d2a476188cc93e7126afee12bf08063
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
+  file_picker_platform_interface:
+    dependency: transitive
+    description:
+      name: file_picker_platform_interface
+      sha256: bbdc085a6f168e63f147e9ce8988f79fa0800a58e7f25a48f762c60837107ba5
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
+  file_picker_web:
+    dependency: transitive
+    description:
+      name: file_picker_web
+      sha256: b3004268da0c1b52baa18df430e7ec4438194de855a807d26b447cbf07ef3496
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
   fixnum:
     dependency: transitive
     description:
@@ -305,14 +353,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
-  flat_buffers:
-    dependency: transitive
-    description:
-      name: flat_buffers
-      sha256: "380bdcba5664a718bfd4ea20a45d39e13684f5318fcd8883066a55e21f37f4c3"
-      url: "https://pub.dev"
-    source: hosted
-    version: "23.5.26"
   flutter:
     dependency: "direct main"
     description: flutter
@@ -400,14 +440,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
-  flutter_map_tile_caching:
-    dependency: "direct main"
-    description:
-      name: flutter_map_tile_caching
-      sha256: "90e097223d8ab74425cf15b449a03adfa4d4c28406dc757e1c396aff0f9beba7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "10.1.1"
   flutter_native_splash:
     dependency: "direct main"
     description:
@@ -416,14 +448,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.8"
-  flutter_plugin_android_lifecycle:
-    dependency: transitive
-    description:
-      name: flutter_plugin_android_lifecycle
-      sha256: "3854fe5e3bff0b113c658f260b90c95dea17c92db0f2addeac2e343dd9969785"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.35"
   flutter_riverpod:
     dependency: "direct main"
     description:
@@ -441,10 +465,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_timezone
-      sha256: ea53c61c9152f271a5e30624a624184804947b6a733ff2b64186bb2579446892
+      sha256: "869677426fde92dbe170fb7d2d4929f2a8343c2f5f62f08b0bb64f908630b073"
       url: "https://pub.dev"
     source: hosted
-    version: "3.0.1"
+    version: "5.1.0"
   flutter_web_plugins:
     dependency: transitive
     description: flutter
@@ -499,10 +523,10 @@ packages:
     dependency: transitive
     description:
       name: geolocator_linux
-      sha256: d64112a205931926f4363bb6bd48f14cb38e7326833041d170615586cd143797
+      sha256: "3da7420f11c3496511a5bd3c18fd67b88e5659f12e46b7ce00a788f6996e850a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.4"
+    version: "0.2.6"
   geolocator_platform_interface:
     dependency: transitive
     description:
@@ -835,22 +859,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.6"
-  objectbox:
-    dependency: transitive
-    description:
-      name: objectbox
-      sha256: "3cc186749178a3556e1020c9082d0897d0f9ecbdefcc27320e65c5bc650f0e57"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.3.1"
-  objectbox_flutter_libs:
-    dependency: transitive
-    description:
-      name: objectbox_flutter_libs
-      sha256: cd754766e04229a4f51250f121813d9a3c1a74fc21cd68e48b3c6085cbcd6c85
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.3.1"
   objective_c:
     dependency: transitive
     description:
@@ -871,18 +879,18 @@ packages:
     dependency: "direct main"
     description:
       name: package_info_plus
-      sha256: "468c26b4254ab01979fa5e4a98cb343ea3631b9acee6f21028997419a80e1a20"
+      sha256: "127e1751e37ffb2ff4658beeaca77bad0c27bf5f932bd3a501c2296926d4b481"
       url: "https://pub.dev"
     source: hosted
-    version: "9.0.1"
+    version: "10.2.1"
   package_info_plus_platform_interface:
     dependency: transitive
     description:
       name: package_info_plus_platform_interface
-      sha256: "202a487f08836a592a6bd4f901ac69b3a8f146af552bbd14407b6b41e1c3f086"
+      sha256: db762cb2f4f25ee60fb6359773861b0f199e00b90d237bd85a76a1e806b46ef4
       url: "https://pub.dev"
     source: hosted
-    version: "3.2.1"
+    version: "4.1.0"
   path:
     dependency: "direct main"
     description:
@@ -1047,18 +1055,18 @@ packages:
     dependency: "direct main"
     description:
       name: share_plus
-      sha256: "223873d106614442ea6f20db5a038685cc5b32a2fba81cdecaefbbae0523f7fa"
+      sha256: "34f00f9becd2743c1fb05363d624f9f70d37f7ccdcdda47450bc0b8c9d327b8c"
       url: "https://pub.dev"
     source: hosted
-    version: "12.0.2"
+    version: "13.3.0"
   share_plus_platform_interface:
     dependency: transitive
     description:
       name: share_plus_platform_interface
-      sha256: "88023e53a13429bd65d8e85e11a9b484f49d4c190abbd96c7932b74d6927cc9a"
+      sha256: "365ef7379fc22507256adda3385152942ffce08935452bc972c2e52a0bebae41"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.0"
+    version: "7.2.0"
   shelf:
     dependency: transitive
     description:
@@ -1364,10 +1372,18 @@ packages:
     dependency: transitive
     description:
       name: win32
-      sha256: d7cb55e04cd34096cd3a79b3330245f54cb96a370a1c27adb3c84b917de8b08e
+      sha256: a0b93865d5644f11cf6a8c3f6db909f1ec168958b5805f6cc684adea957cd63d
       url: "https://pub.dev"
     source: hosted
-    version: "5.15.0"
+    version: "6.4.0"
+  windows_file_picker:
+    dependency: transitive
+    description:
+      name: windows_file_picker
+      sha256: "9f3aa833068b09e380fdc59560ad260a4a14e9397173abb533699f967443602e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.0"
   wkt_parser:
     dependency: transitive
     description:
@@ -1380,34 +1396,50 @@ packages:
     dependency: "direct main"
     description:
       name: workmanager
-      sha256: "53c2ae5d54f46b2eefacf541446efe01039471b1f0a605d5bbf3c77690702448"
+      sha256: "96b09a4a852ec487d29371f27031dab80ce2e260911e2dbe0f904951e22a3956"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.3"
+    version: "0.10.10"
   workmanager_android:
     dependency: transitive
     description:
       name: workmanager_android
-      sha256: "757fd2ef0761a130c6f71cd46ea656b7ea393d813ace46c1ef4fc24a7136953d"
+      sha256: ffe8aa061885370c9363f7ae2d2196d31855217c58e7b15899d915d36c768c4a
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.3"
+    version: "0.10.9"
   workmanager_apple:
     dependency: transitive
     description:
       name: workmanager_apple
-      sha256: f960e829eea48859c7bdd730f59c4972f22259fb052416d611798e3976a3f4eb
+      sha256: "9e0ca0b857df986b37ca964ffa3b21990e1bc0f7935356a9706b47e5b71a7524"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.6"
+    version: "0.9.11"
+  workmanager_linux:
+    dependency: transitive
+    description:
+      name: workmanager_linux
+      sha256: "7d8520e1103b910a43d8bafe37ec2415f4c7c148afcb1eee0ec73ae67b4cdd22"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1+1"
   workmanager_platform_interface:
     dependency: transitive
     description:
       name: workmanager_platform_interface
-      sha256: "687ce0e27f2f7ce716d8e66143381e63312478ecc4aa0880e8064c7bf72e3e90"
+      sha256: a1022dca1284d64ba8bbe046edc9089cc5158b3d0e2cf9f68c7cde2fbf89746c
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.4"
+    version: "0.10.5"
+  workmanager_web:
+    dependency: transitive
+    description:
+      name: workmanager_web
+      sha256: "2ac481ade599bdd957ee2891be09a0c34be87923a2c3ca4dfe36add6fc735ffd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.0"
   xdg_directories:
     dependency: transitive
     description:

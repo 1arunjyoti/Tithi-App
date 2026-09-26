@@ -187,13 +187,20 @@ class ExportFestivalsSetting extends ConsumerWidget {
       String? savedPath;
       var pickerFailed = false;
       try {
-        savedPath = await FilePicker.saveFile(
+        // file_picker 13.x returns a Uri (was String?); keep the String
+        // path contract below, with the raw URI as display fallback.
+        final savedUri = await FilePicker.saveFile(
           dialogTitle: l10n?.saveFestivalsYear(year.toString()) ?? 'Save festivals $year',
           fileName: filename,
           type: FileType.custom,
           allowedExtensions: ['json'],
           bytes: Uint8List.fromList(utf8.encode(json)),
         );
+        try {
+          savedPath = savedUri?.toFilePath();
+        } catch (_) {
+          savedPath = savedUri?.toString();
+        }
       } catch (e) {
         debugPrint('Save picker unavailable, using app storage: $e');
         pickerFailed = true;
