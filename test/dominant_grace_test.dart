@@ -42,6 +42,7 @@ PanchangData graceDay(
   List<Festival> festivals, {
   String masa = 'Ashwin',
   String masaNext = '',
+  double? pradosha,
 }) {
   return PanchangData.fromRawTithi(
     date: date,
@@ -50,6 +51,7 @@ PanchangData graceDay(
     allFestivals: festivals,
     masaNextSunrise: masaNext,
     rawTithiDominant: dominant,
+    rawTithiPradosha: pradosha,
   );
 }
 
@@ -87,6 +89,54 @@ void main() {
       );
       // Dashami dominant, but no aparahna checkpoint provided.
       final day = graceDay(DateTime(2026, 10, 20), 9.9, 10.05, [dussehra]);
+      expect(day.festivals, isEmpty);
+    });
+
+    test('pradosha override matches on the dusk checkpoint', () {
+      final pradosh = graceFestival(
+        'pradosh',
+        tithi: 13,
+        conditions: 'Trayodashi',
+        timingOverride: 'pradosha',
+      );
+      // Dwadashi at sunrise, Trayodashi prevailing at pradosha.
+      final day = graceDay(
+        DateTime(2026, 10, 27),
+        12.5,
+        null,
+        [pradosh],
+        pradosha: 13.2,
+      );
+      expect(day.festivals.map((f) => f.id), equals(['pradosh']));
+    });
+
+    test('pradosha override falls back to sunrise without the checkpoint', () {
+      final pradosh = graceFestival(
+        'pradosh',
+        tithi: 13,
+        conditions: 'Trayodashi',
+        timingOverride: 'pradosha',
+      );
+      // No pradosha sample (older cache): sunrise Dwadashi, no match.
+      final day = graceDay(DateTime(2026, 10, 27), 12.5, null, [pradosh]);
+      expect(day.festivals, isEmpty);
+    });
+
+    test('pradosha festivals are exempt from grace', () {
+      final pradosh = graceFestival(
+        'pradosh',
+        tithi: 13,
+        conditions: 'Trayodashi',
+        timingOverride: 'pradosha',
+      );
+      // Trayodashi dominant, but Dwadashi still prevailing at pradosha.
+      final day = graceDay(
+        DateTime(2026, 10, 27),
+        12.9,
+        13.05,
+        [pradosh],
+        pradosha: 12.7,
+      );
       expect(day.festivals, isEmpty);
     });
 

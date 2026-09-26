@@ -1423,6 +1423,60 @@ class AppLocalizationsSa extends AppLocalizations {
   String get transition => 'सङ्क्रमणम्';
 
   @override
+  String get observanceRuleUdaya => 'सूर्योदयसमये प्रचलति तिथिः';
+
+  @override
+  String get observanceRuleMadhyahna => 'मध्याह्नसमये (मध्यदिने) प्रचलति तिथिः';
+
+  @override
+  String get observanceRuleAparahna => 'अपराह्णसमये प्रचलति तिथिः';
+
+  @override
+  String get observanceRuleNishita => 'निशितासमये (मध्यरात्रौ) प्रचलति तिथिः';
+
+  @override
+  String get observanceRulePradosha => 'प्रदोषसमये (सायंकाले) प्रचलति तिथिः';
+
+  @override
+  String get observanceRuleMoonrise => 'चन्द्रोदयसमये प्रचलति तिथिः';
+
+  @override
+  String observedOnTheDay(String rule) {
+    return '$rule इति नियमानुसारं तस्मिन् दिने पर्व';
+  }
+
+  @override
+  String get pujaSamay => 'पूजासमयः';
+
+  @override
+  String get sandhiJunction => 'सन्धिः';
+
+  @override
+  String get pujaWindow => 'पूजावेला';
+
+  @override
+  String pujaWindowDuration(int count, String kala) {
+    return '$kala · $count घटिका';
+  }
+
+  @override
+  String get paranLabel => 'पारणम् (उपवाससमाप्तिः):';
+
+  @override
+  String get paranReasonMoonrise => 'चन्द्रोदयानन्तरम्';
+
+  @override
+  String get paranReasonSunrise => 'सूर्योदयानन्तरम्';
+
+  @override
+  String paranReasonPujaKala(String kala) {
+    return '$kalaपूजानन्तरम्';
+  }
+
+  @override
+  String get paranReasonDwadashi => 'द्वादशीसमये';
+
+  @override
   String get shuklaPakshaInitial => 'शु';
 
   @override
@@ -1580,4 +1634,63 @@ class AppLocalizationsSa extends AppLocalizations {
   String midpointAt(String time) {
     return 'मध्यबिन्दुः $time';
   }
+
+  @override
+  String get checkForUpdates => 'नवीकरणानि परीक्षतु';
+
+  @override
+  String get checkingForUpdates => 'नवीकरणानि परीक्ष्यन्ते...';
+
+  @override
+  String get appUpToDate => 'भवान् नवीनतमे संस्करणे वर्तते';
+
+  @override
+  String get updateAvailable => 'नवीकरणम् उपलब्धम्';
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'संस्करणम् $version उपलब्धम् अस्ति';
+  }
+
+  @override
+  String get youHaveLatestVersion => 'भवतः समीपे नवीनतमं संस्करणम् अस्ति';
+
+  @override
+  String get noReleasesPublished => 'अद्यावधि किमपि प्रकाशनं न प्रकाशितम्';
+
+  @override
+  String get downloadUpdate => 'नवीकरणम् अवतारयतु';
+
+  @override
+  String get downloadingUpdate => 'नवीकरणम् अवतर्यते...';
+
+  @override
+  String downloadProgressPercent(String percent) {
+    return '$percent% अवतीर्णम्';
+  }
+
+  @override
+  String get installUpdate => 'नवीकरणं संस्थापयतु';
+
+  @override
+  String get installingUpdate => 'संस्थापकं उद्घाट्यते...';
+
+  @override
+  String get cancellingUpdate => 'निरस्यते...';
+
+  @override
+  String get updateDownloaded => 'नवीकरणस्य अवतारणं सम्पन्नम्';
+
+  @override
+  String get updateCheckFailed => 'नवीकरणानि परीक्षितुं न शक्यते';
+
+  @override
+  String get viewReleasesOnGitHub => 'GitHub इत्यत्र प्रकाशनानि पश्यतु';
+
+  @override
+  String get releaseNotes => 'नवीनं किमस्ति';
+
+  @override
+  String get allowInstallPermissionNote =>
+      'तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।';
 }

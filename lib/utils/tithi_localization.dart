@@ -1,9 +1,12 @@
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import '../core/format/bounded_cache.dart';
 import '../l10n/app_localizations.dart';
 
-final Map<String, DateFormat> _dateFormatters = <String, DateFormat>{};
+// Bounded (Phase 1): previously an unbounded global map.
+final BoundedCache<String, DateFormat> _dateFormatters =
+    BoundedCache<String, DateFormat>();
 
 Future<void> initializeLocalizedDateFormatting() async {
   await Future.wait([
@@ -22,16 +25,16 @@ String formatLocalizedDate(DateTime date, String pattern, String locale) {
     return _formatSanskritDate(date, pattern);
   }
   final key = '$locale|$pattern';
-  final cached = _dateFormatters[key];
+  final cached = _dateFormatters.get(key);
   if (cached != null) return cached.format(date);
 
   try {
     final formatter = DateFormat(pattern, locale);
-    _dateFormatters[key] = formatter;
+    _dateFormatters.set(key, formatter);
     return formatter.format(date);
   } catch (_) {
     final formatter = DateFormat(pattern);
-    _dateFormatters[key] = formatter;
+    _dateFormatters.set(key, formatter);
     return formatter.format(date);
   }
 }
@@ -99,18 +102,19 @@ String _formatSanskritDate(DateTime date, String pattern) {
   return out;
 }
 
-final Map<String, NumberFormat> _numberFormatters = <String, NumberFormat>{};
+final BoundedCache<String, NumberFormat> _numberFormatters =
+    BoundedCache<String, NumberFormat>(maxSize: 32);
 
 /// Formats a standalone integer (e.g. countdown day counts) with the
 /// locale's digits: Devanagari for hi/sa, Bengali for bn, Latin for en.
 /// Falls back to [value.toString] when the locale has no number symbols.
 String formatLocalizedNumber(int value, String locale) {
-  final cached = _numberFormatters[locale];
+  final cached = _numberFormatters.get(locale);
   if (cached != null) return cached.format(value);
 
   try {
     final formatter = NumberFormat.decimalPattern(locale);
-    _numberFormatters[locale] = formatter;
+    _numberFormatters.set(locale, formatter);
     return formatter.format(value);
   } catch (_) {
     return value.toString();

@@ -14,12 +14,12 @@ import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/event_detail_sheet.dart';
 import '../widgets/festival_row_tile.dart';
+import '../core/async/keep_alive.dart';
+import '../core/format/date_only.dart';
+import '../features/countdown/domain/target_resolution.dart';
 
-/// One festival with its next occurrence date (null when no occurrence
-/// resolves inside the forward window — those sort last, undated).
-typedef DatedFestival = ({Festival festival, DateTime? date});
-
-DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+export '../features/countdown/domain/target_resolution.dart'
+    show DatedFestival, sortDatedFestivals;
 
 /// All bundled festivals with this year's occurrence dates, ascending from
 /// January — past festivals first, then the current/upcoming ones (the screen
@@ -36,75 +36,35 @@ DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 /// location change invalidates via [resolvedCoordinatesProvider].
 final allFestivalOccurrencesProvider =
     FutureProvider.autoDispose<List<DatedFestival>>((ref) async {
-      final keepAliveLink = ref.keepAlive();
-      final releaseTimer = Timer(
-        const Duration(minutes: 5),
-        keepAliveLink.close,
-      );
-      ref.onDispose(releaseTimer.cancel);
+      ref.keepAliveFor(const Duration(minutes: 5));
 
       await ref.watch(panchangInitProvider.future);
       await ref.watch(festivalInitProvider.future);
 
       final festivals = ref.read(festivalProvider);
       if (festivals.isEmpty) return const [];
-      final today = _dateOnly(ref.watch(todayDateProvider));
+      final today = dateOnly(ref.watch(todayDateProvider));
       final yearStart = DateTime(today.year);
       final coords = ref.watch(resolvedCoordinatesProvider);
       final service = ref.read(panchangServiceProvider);
-
-      Future<DatedFestival> resolve(Festival festival) async {
-        try {
-          final next = await service.findNextFestivalOccurrence(
-            festival,
-            startDate: yearStart,
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-          );
-          return (
-            festival: festival,
-            date: next == null ? null : _dateOnly(next),
-          );
-        } catch (e) {
-          // One bad rule must not fail the whole screen; log and sort last.
-          debugPrint('Occurrence resolve failed for ${festival.id}: $e');
-          return (festival: festival, date: null);
-        }
-      }
+      final monthSystem = ref.watch(hinduMonthSystemProvider);
 
       try {
-        final out = <DatedFestival>[];
-        // Match the month batch size: enough parallelism for throughput,
-        // small enough to avoid FFI stampedes that jank the UI thread.
-        const batchSize = 8;
-        for (var i = 0; i < festivals.length; i += batchSize) {
-          final end = (i + batchSize).clamp(0, festivals.length);
-          final batch = festivals.sublist(i, end);
-          out.addAll(await Future.wait(batch.map(resolve)));
-        }
-        return sortDatedFestivals(out);
+        // Shared resolver (features/countdown/domain): batched cached
+        // scans — one bad rule resolves dateless instead of failing.
+        return await resolveDatedFestivals(
+          service: service,
+          festivals: festivals,
+          baseDate: yearStart,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          monthSystem: monthSystem,
+        );
       } catch (e, st) {
         debugPrint('allFestivalOccurrences failed: $e\n$st');
         rethrow;
       }
     });
-
-/// Chronological order for the all-festivals list: ascending next-occurrence
-/// date (name breaks ties), undatable entries last by name.
-List<DatedFestival> sortDatedFestivals(List<DatedFestival> items) {
-  final sorted = items.toList();
-  sorted.sort((a, b) {
-    if (a.date == null && b.date == null) {
-      return a.festival.name.compareTo(b.festival.name);
-    }
-    if (a.date == null) return 1;
-    if (b.date == null) return -1;
-    final byDate = a.date!.compareTo(b.date!);
-    if (byDate != 0) return byDate;
-    return a.festival.name.compareTo(b.festival.name);
-  });
-  return sorted;
-}
 
 /// Full browsable list behind the home card's "View all N festivals" button:
 /// every festival sorted by this year's occurrence date, January first, with
@@ -197,7 +157,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final occurrencesAsync = ref.watch(allFestivalOccurrencesProvider);
-    final today = _dateOnly(ref.watch(todayDateProvider));
+    final today = dateOnly(ref.watch(todayDateProvider));
 
     return Scaffold(
       extendBodyBehindAppBar: true,

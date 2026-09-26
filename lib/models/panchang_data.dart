@@ -154,6 +154,7 @@ class PanchangData {
     double? rawTithiMadhyahna,
     double? rawTithiAparahna,
     double? rawTithiNishita,
+    double? rawTithiPradosha,
     double? rawTithiNextSunrise,
     String masaNextSunrise = '',
     String? nakshatraAtSunrise,
@@ -207,6 +208,7 @@ class PanchangData {
         'madhyahna' => rawTithiMadhyahna ?? rawTithi,
         'aparahna' => rawTithiAparahna ?? rawTithi,
         'nishita' => rawTithiNishita ?? rawTithi,
+        'pradosha' => rawTithiPradosha ?? rawTithi,
         _ => rawTithi,
       };
 
@@ -233,9 +235,10 @@ class PanchangData {
       // extends onto the 17th. Override festivals keep their own
       // checkpoint; nakshatra/Solar festivals returned earlier.
       if (!isMatch && rawTithiDominant != null) {
-        const sunriseOverrides = {'madhyahna', 'aparahna', 'nishita'};
         if (f.panchangRules.timingOverride == null ||
-            !sunriseOverrides.contains(f.panchangRules.timingOverride)) {
+            !timingOverrideCheckpoints.contains(
+              f.panchangRules.timingOverride,
+            )) {
           final domIndex = rawTithiDominant.floor().clamp(1, 30);
           if (domIndex != targetIndex) {
             final domPaksha = domIndex <= 15 ? 'Shukla' : 'Krishna';

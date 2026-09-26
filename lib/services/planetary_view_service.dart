@@ -1,86 +1,15 @@
 import 'dart:math' as math;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
+import '../features/solar_system/data/solar_cache.dart';
+import '../features/solar_system/data/solar_models.dart';
 import '../theme/app_theme.dart';
+import '../core/location/location_defaults.dart';
 
-/// View mode for solar system visualization
-enum SolarSystemViewMode {
-  /// Sun at center, planets in heliocentric positions (astronomically accurate)
-  heliocentric,
-
-  /// Earth at center, planets in geocentric positions (astrologically relevant)
-  geocentric,
-}
-
-/// Provider for PlanetaryViewService
-final planetaryViewServiceProvider = Provider<PlanetaryViewService>((ref) {
-  return PlanetaryViewService();
-});
-
-/// Provider for current view mode
-class SolarSystemViewModeNotifier extends Notifier<SolarSystemViewMode> {
-  @override
-  SolarSystemViewMode build() => SolarSystemViewMode.heliocentric;
-
-  void setViewMode(SolarSystemViewMode viewMode) {
-    state = viewMode;
-  }
-}
-
-final solarSystemViewModeProvider =
-    NotifierProvider<SolarSystemViewModeNotifier, SolarSystemViewMode>(
-      SolarSystemViewModeNotifier.new,
-    );
-
-/// Data class representing a planet's visual position
-class PlanetVisualData {
-  const PlanetVisualData({
-    required this.planet,
-    required this.longitude,
-    required this.latitude,
-    required this.isRetrograde,
-    required this.zodiacSign,
-    required this.degree,
-    required this.visualX,
-    required this.visualY,
-    required this.orbitRadius,
-    this.distanceAU,
-    this.orbitalPeriodDays,
-  });
-
-  final Planet planet;
-  final double longitude; // Ecliptic longitude in degrees
-  final double latitude; // Ecliptic latitude in degrees
-  final bool isRetrograde;
-  final String zodiacSign;
-  final double degree; // Degree within the sign (0-30)
-  final double visualX; // X position for visualization (-1 to 1)
-  final double visualY; // Y position for visualization (-1 to 1)
-  final double orbitRadius; // Relative orbit radius for display
-  final double? distanceAU; // Distance from Sun in AU
-  final double? orbitalPeriodDays; // Orbital period in days
-}
-
-/// Complete solar system visualization data
-class SolarSystemData {
-  const SolarSystemData({
-    required this.dateTime,
-    required this.planets,
-    required this.viewMode,
-  });
-
-  final DateTime dateTime;
-  final List<PlanetVisualData> planets;
-  final SolarSystemViewMode viewMode;
-
-  PlanetVisualData? getPlanet(Planet planet) {
-    try {
-      return planets.firstWhere((p) => p.planet == planet);
-    } catch (_) {
-      return null;
-    }
-  }
-}
+// Phase 6a: models, orbit tables, and view-state providers live in
+// features/solar_system (data) and providers/planetary_view_provider.dart.
+// Re-exported here so existing screens/painters keep compiling.
+export '../features/solar_system/data/solar_models.dart'
+    show SolarSystemViewMode, PlanetVisualData, SolarSystemData;
 
 /// Service for calculating and preparing planetary visualization data
 class PlanetaryViewService {
@@ -114,33 +43,9 @@ class PlanetaryViewService {
     Planet.neptune: 60190.0,
   };
 
-  // Relative orbit radii for visualization (logarithmic scale for visibility)
-  // Heliocentric view - compressed for display
-  static const Map<Planet, double> _heliocentricOrbitRadii = {
-    Planet.sun: 0.0,
-    Planet.mercury: 0.12,
-    Planet.venus: 0.20,
-    Planet.earth: 0.28,
-    Planet.moon: 0.28, // Will be offset from Earth
-    Planet.mars: 0.38,
-    Planet.jupiter: 0.55,
-    Planet.saturn: 0.70,
-    Planet.uranus: 0.82,
-    Planet.neptune: 0.92,
-  };
-
-  // Geocentric view - Earth at center
-  static const Map<Planet, double> _geocentricOrbitRadii = {
-    Planet.sun: 0.28,
-    Planet.mercury: 0.18,
-    Planet.venus: 0.22,
-    Planet.moon: 0.12,
-    Planet.mars: 0.40,
-    Planet.jupiter: 0.55,
-    Planet.saturn: 0.70,
-    Planet.uranus: 0.82,
-    Planet.neptune: 0.92,
-  };
+  // Orbit radii tables live in features/solar_system/data/solar_models.dart
+  // (shared with the static background painter). Reference data below
+  // stays here: it annotates computed positions only.
 
   // Zodiac signs mapping
   static const List<String> _zodiacSigns = [
@@ -174,13 +79,21 @@ class PlanetaryViewService {
     'मीन',
   ];
 
-  /// Get solar system data for a given date
+  /// Get solar system data for a given date.
+  ///
+  /// Positions move negligibly within a day: results are cached by
+  /// day + view mode + rounded location (see solar_cache.dart), so date
+  /// scrubbing and animation replays skip the batched FFI call.
   Future<SolarSystemData> getSolarSystemData({
     required DateTime dateTime,
-    double latitude = 28.6139,
-    double longitude = 77.2090,
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
     SolarSystemViewMode viewMode = SolarSystemViewMode.heliocentric,
   }) async {
+    final cacheKey = solarCacheKey(dateTime, viewMode, latitude, longitude);
+    final cached = cachedSolarData(cacheKey);
+    if (cached != null) return cached;
+
     final location = GeographicLocation(
       latitude: latitude,
       longitude: longitude,
@@ -234,10 +147,9 @@ class PlanetaryViewService {
       earthPosition = positions[Planet.earth];
     }
 
-    // Select orbit radii based on view mode
-    final orbitRadii = viewMode == SolarSystemViewMode.heliocentric
-        ? _heliocentricOrbitRadii
-        : _geocentricOrbitRadii;
+    // Select orbit radii based on view mode (shared table; the static
+    // background painter reads the same source so rings always match).
+    final orbitRadii = orbitRadiiForViewMode(viewMode);
 
     for (final entry in positions.entries) {
       final planet = entry.key;
@@ -294,11 +206,13 @@ class PlanetaryViewService {
     // Sort by orbit radius for proper layering
     visualDataList.sort((a, b) => a.orbitRadius.compareTo(b.orbitRadius));
 
-    return SolarSystemData(
+    final data = SolarSystemData(
       dateTime: dateTime,
       planets: visualDataList,
       viewMode: viewMode,
     );
+    storeSolarData(cacheKey, data);
+    return data;
   }
 
   /// Get zodiac sign name (optionally in Hindi)

@@ -1412,6 +1412,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transition => 'TRANSITION';
 
   @override
+  String get observanceRuleUdaya => 'the tithi prevailing at sunrise';
+
+  @override
+  String get observanceRuleMadhyahna =>
+      'the tithi prevailing at Madhyahna (midday)';
+
+  @override
+  String get observanceRuleAparahna =>
+      'the tithi prevailing at Aparahna (afternoon)';
+
+  @override
+  String get observanceRuleNishita =>
+      'the tithi prevailing at Nishita (midnight)';
+
+  @override
+  String get observanceRulePradosha =>
+      'the tithi prevailing at Pradosha (dusk)';
+
+  @override
+  String get observanceRuleMoonrise => 'the tithi prevailing at moonrise';
+
+  @override
+  String observedOnTheDay(String rule) {
+    return 'Observed on the day $rule';
+  }
+
+  @override
+  String get pujaSamay => 'Puja Samay';
+
+  @override
+  String get sandhiJunction => 'Sandhi';
+
+  @override
+  String get pujaWindow => 'PUJA WINDOW';
+
+  @override
+  String pujaWindowDuration(int count, String kala) {
+    return '$count ghatikas around $kala';
+  }
+
+  @override
+  String get paranLabel => 'Paran (breaking the fast):';
+
+  @override
+  String get paranReasonMoonrise => 'after moonrise';
+
+  @override
+  String get paranReasonSunrise => 'after sunrise';
+
+  @override
+  String paranReasonPujaKala(String kala) {
+    return 'after the $kala puja';
+  }
+
+  @override
+  String get paranReasonDwadashi => 'in the Dwadashi window';
+
+  @override
   String get shuklaPakshaInitial => 'S';
 
   @override
@@ -1569,4 +1627,63 @@ class AppLocalizationsEn extends AppLocalizations {
   String midpointAt(String time) {
     return 'midpoint $time';
   }
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates…';
+
+  @override
+  String get appUpToDate => 'You\'re up to date';
+
+  @override
+  String get updateAvailable => 'Update available';
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'Version $version is available';
+  }
+
+  @override
+  String get youHaveLatestVersion => 'You have the latest version';
+
+  @override
+  String get noReleasesPublished => 'No releases published yet';
+
+  @override
+  String get downloadUpdate => 'Download update';
+
+  @override
+  String get downloadingUpdate => 'Downloading update…';
+
+  @override
+  String downloadProgressPercent(String percent) {
+    return '$percent% downloaded';
+  }
+
+  @override
+  String get installUpdate => 'Install update';
+
+  @override
+  String get installingUpdate => 'Opening installer…';
+
+  @override
+  String get cancellingUpdate => 'Cancelling…';
+
+  @override
+  String get updateDownloaded => 'Update downloaded';
+
+  @override
+  String get updateCheckFailed => 'Couldn\'t check for updates';
+
+  @override
+  String get viewReleasesOnGitHub => 'View releases on GitHub';
+
+  @override
+  String get releaseNotes => 'What\'s new';
+
+  @override
+  String get allowInstallPermissionNote =>
+      'Allow installs from Tithi in system settings, then tap Install again.';
 }

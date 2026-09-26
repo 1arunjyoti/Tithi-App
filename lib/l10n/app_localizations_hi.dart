@@ -1422,6 +1422,61 @@ class AppLocalizationsHi extends AppLocalizations {
   String get transition => 'संक्रमण';
 
   @override
+  String get observanceRuleUdaya => 'सूर्योदय के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleMadhyahna => 'मध्याह्न (दोपहर) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleAparahna =>
+      'अपराह्ण (दोपहर बाद) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleNishita => 'निशिता (मध्यरात्रि) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRulePradosha => 'प्रदोष (संध्याकाल) के समय प्रचलित तिथि';
+
+  @override
+  String get observanceRuleMoonrise => 'चंद्रोदय के समय प्रचलित तिथि';
+
+  @override
+  String observedOnTheDay(String rule) {
+    return 'पर्व उसी दिन मनाया जाता है जिस दिन $rule हो';
+  }
+
+  @override
+  String get pujaSamay => 'पूजा समय';
+
+  @override
+  String get sandhiJunction => 'संधि';
+
+  @override
+  String get pujaWindow => 'पूजा विंडो';
+
+  @override
+  String pujaWindowDuration(int count, String kala) {
+    return '$kala के आसपास $count घटिका';
+  }
+
+  @override
+  String get paranLabel => 'पारण (उपवास समाप्ति):';
+
+  @override
+  String get paranReasonMoonrise => 'चंद्रोदय के बाद';
+
+  @override
+  String get paranReasonSunrise => 'सूर्योदय के बाद';
+
+  @override
+  String paranReasonPujaKala(String kala) {
+    return '$kala पूजा के बाद';
+  }
+
+  @override
+  String get paranReasonDwadashi => 'द्वादशी काल में';
+
+  @override
   String get shuklaPakshaInitial => 'शु';
 
   @override
@@ -1579,4 +1634,63 @@ class AppLocalizationsHi extends AppLocalizations {
   String midpointAt(String time) {
     return 'मध्यबिन्दु $time';
   }
+
+  @override
+  String get checkForUpdates => 'अपडेट के लिए जाँच करें';
+
+  @override
+  String get checkingForUpdates => 'अपडेट के लिए जाँच हो रही है...';
+
+  @override
+  String get appUpToDate => 'आप नवीनतम संस्करण पर हैं';
+
+  @override
+  String get updateAvailable => 'अपडेट उपलब्ध';
+
+  @override
+  String updateAvailableVersion(String version) {
+    return 'संस्करण $version उपलब्ध है';
+  }
+
+  @override
+  String get youHaveLatestVersion => 'आपके पास नवीनतम संस्करण है';
+
+  @override
+  String get noReleasesPublished => 'अभी तक कोई रिलीज़ प्रकाशित नहीं';
+
+  @override
+  String get downloadUpdate => 'अपडेट डाउनलोड करें';
+
+  @override
+  String get downloadingUpdate => 'अपडेट डाउनलोड हो रहा है...';
+
+  @override
+  String downloadProgressPercent(String percent) {
+    return '$percent% डाउनलोड हुआ';
+  }
+
+  @override
+  String get installUpdate => 'अपडेट इंस्टॉल करें';
+
+  @override
+  String get installingUpdate => 'इंस्टॉलर खोला जा रहा है...';
+
+  @override
+  String get cancellingUpdate => 'रद्द किया जा रहा है...';
+
+  @override
+  String get updateDownloaded => 'अपडेट डाउनलोड हो गया';
+
+  @override
+  String get updateCheckFailed => 'अपडेट के लिए जाँच नहीं हो सकी';
+
+  @override
+  String get viewReleasesOnGitHub => 'GitHub पर रिलीज़ देखें';
+
+  @override
+  String get releaseNotes => 'नया क्या है';
+
+  @override
+  String get allowInstallPermissionNote =>
+      'सिस्टम सेटिंग्स में Tithi से इंस्टॉल की अनुमति दें, फिर इंस्टॉल पर दोबारा टैप करें।';
 }
