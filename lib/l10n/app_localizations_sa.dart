@@ -1676,6 +1676,9 @@ class AppLocalizationsSa extends AppLocalizations {
   String get installingUpdate => 'संस्थापकं उद्घाट्यते...';
 
   @override
+  String get cancellingUpdate => 'निरस्यते...';
+
+  @override
   String get updateDownloaded => 'नवीकरणस्य अवतारणं सम्पन्नम्';
 
   @override

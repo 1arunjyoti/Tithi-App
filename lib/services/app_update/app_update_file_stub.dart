@@ -10,6 +10,19 @@ Future<String> saveApkStream(Stream<List<int>> stream, String fileName) {
 
 Future<bool> apkFileExists(String path) async => false;
 
+/// Web stub: nothing is ever downloaded, so nothing is ever cached.
+Future<String?> findCachedApkPath(String version) async => null;
+
+/// Web stub: no file is ever cached, so there is nothing to inspect.
+Future<int?> apkFileSize(String path) async => null;
+
+Future<String?> apkFileDigest(String path) async => null;
+
+Future<void> deleteApkFile(String path) async {}
+
+/// Web stub: nothing is ever downloaded, so nothing to purge.
+Future<int> purgeOldUpdateApks({String? keepPath}) => Future.value(0);
+
 Future<void> installDownloadedApk(String path) {
   throw UnsupportedError('APK install is not supported on web.');
 }

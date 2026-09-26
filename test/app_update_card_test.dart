@@ -35,6 +35,7 @@ void main() {
       '/1arunjyoti/Tithi-App/releases/download/v0.1.7/app.apk',
     ),
     apkSizeBytes: 82100000,
+    apkDigest: null,
   );
 
   PackageInfo installedInfo() => PackageInfo(
@@ -44,7 +45,11 @@ void main() {
     buildNumber: '2',
   );
 
-  Future<void> pumpCard(WidgetTester tester, AppUpdateState state) async {
+  Future<void> pumpCard(
+    WidgetTester tester,
+    AppUpdateState state, {
+    bool settle = true,
+  }) async {
     // Arrange is done by the caller via the fixed state; pump the card
     // with all platform-dependent providers overridden.
     await tester.pumpWidget(
@@ -59,7 +64,13 @@ void main() {
         child: const MaterialApp(home: Scaffold(body: AppUpdateCard())),
       ),
     );
-    await tester.pumpAndSettle();
+    // An indeterminate progress indicator never settles, so callers
+    // that expect a spinner opt out.
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
   }
 
   group('AppUpdateCard release notes visibility', () {
@@ -96,6 +107,59 @@ void main() {
       // Assert
       expect(find.textContaining('Notes from the older'), findsOneWidget);
       expect(find.text('Download update'), findsOneWidget);
+    });
+
+    testWidgets('shows a single refresh control when an update is pending', (
+      tester,
+    ) async {
+      // Arrange
+      final state = AppUpdateState(
+        status: AppUpdateStatus.available,
+        currentVersion: '0.5.0+2',
+        release: releaseFixture(),
+      );
+
+      // Act
+      await pumpCard(tester, state);
+
+      // Assert: header refresh present, and the primary action is
+      // "Download update" rather than a duplicate check.
+      expect(find.byKey(const Key('app-update-refresh')), findsOneWidget);
+      expect(find.text('Download update'), findsOneWidget);
+    });
+
+    testWidgets('hides the header refresh when up to date', (tester) async {
+      // Arrange: the primary button already offers the check.
+      final state = AppUpdateState(
+        status: AppUpdateStatus.upToDate,
+        currentVersion: '0.5.0+2',
+        release: releaseFixture(),
+      );
+
+      // Act
+      await pumpCard(tester, state);
+
+      // Assert: no header refresh; the card title and the primary
+      // button both offer the check instead.
+      expect(find.byKey(const Key('app-update-refresh')), findsNothing);
+      expect(find.text('Check for updates'), findsWidgets);
+    });
+
+    testWidgets('replaces the refresh control with a spinner while checking', (
+      tester,
+    ) async {
+      // Arrange
+      const state = AppUpdateState(
+        status: AppUpdateStatus.checking,
+        currentVersion: '0.5.0+2',
+      );
+
+      // Act: no settle, the spinner animates forever.
+      await pumpCard(tester, state, settle: false);
+
+      // Assert
+      expect(find.byKey(const Key('app-update-refresh')), findsNothing);
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
     });
   });
 }

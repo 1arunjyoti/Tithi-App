@@ -3042,6 +3042,12 @@ abstract class AppLocalizations {
   /// **'Opening installer…'**
   String get installingUpdate;
 
+  /// Status shown while an update download is being cancelled
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling…'**
+  String get cancellingUpdate;
+
   /// Status shown when the release APK is ready to install
   ///
   /// In en, this message translates to:

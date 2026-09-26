@@ -494,5 +494,6 @@
   "updateCheckFailed": "আপডেট পরীক্ষা করা যায়নি",
   "viewReleasesOnGitHub": "GitHub-এ রিলিজ দেখুন",
   "releaseNotes": "নতুন কী আছে",
-  "allowInstallPermissionNote": "সিস্টেম সেটিংসে Tithi-র ইনস্টলের অনুমতি দিন, তারপর আবার ইনস্টল করুন।"
+  "allowInstallPermissionNote": "সিস্টেম সেটিংসে Tithi-র ইনস্টলের অনুমতি দিন, তারপর আবার ইনস্টল করুন।",
+  "cancellingUpdate": "বাতিল করা হচ্ছে..."
 }
