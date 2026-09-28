@@ -230,16 +230,16 @@ class _HeroBody extends ConsumerWidget {
     // trailing chevron as the visual cue, and a Material ripple clipped to
     // the card shape (Ink paints the gradient so the splash shows above it).
     //
-    // Two-layer shape discipline, because a transparent Material never clipped
-    // its children: the outer Container carries the drop shadow and stays
-    // unclipped so the glow can bleed past the corners, while the Material
-    // below clips (antiAlias) so the gradient, border, glow backdrop and
-    // ripple can never square off outside the 24px radius.
+    // A transparent Material never clipped its children, which is how the
+    // gradient used to paint square past the rounded corners. The Material
+    // now clips (antiAlias) so the gradient, border, glow backdrop and
+    // ripple all stay within the 24px radius. No drop shadow: the card sits
+    // flat like the other home cards, and a shadow painted inside this clip
+    // would be sliced off at the edge anyway.
     return Semantics(
       button: true,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
-        decoration: highContrast ? null : AppTheme.heroOuterGlow(context),
         child: Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
@@ -247,7 +247,7 @@ class _HeroBody extends ConsumerWidget {
           child: Ink(
             decoration: highContrast
                 ? AppTheme.glassmorphism(context: context, ref: ref)
-                : AppTheme.heroDecoration(context, includeShadow: false),
+                : AppTheme.heroDecoration(context),
             child: InkWell(
               borderRadius: BorderRadius.circular(24),
               onTap: () {

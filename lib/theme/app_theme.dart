@@ -409,20 +409,14 @@ class AppTheme {
     return heroMoonFillKrishna;
   }
 
-  /// Hero card decoration: radial glow + linear gradient.
-  /// Shukla gets a hairline warm border so the peach card stays defined on
-  /// the creamy scaffold; Krishna gets a faint light hairline so the dark
-  /// plum card stays defined on the dark void; PureDark keeps its flat
-  /// bordered card.
-  ///
-  /// Pass `includeShadow: false` when the card is clipped (e.g. the hero's
-  /// `Material(clipBehavior: Clip.antiAlias)`) — a `boxShadow` painted inside
-  /// a clip is cut off at the clip edge, so the outer glow belongs on a
-  /// separate unclipped layer. See [heroOuterGlow].
-  static BoxDecoration heroDecoration(
-    BuildContext context, {
-    bool includeShadow = true,
-  }) {
+  /// Hero card decoration: linear gradient plus a hairline border.
+  /// Shukla gets a warm hairline so the peach card stays defined on the
+  /// creamy scaffold; Krishna gets a faint light hairline so the dark plum
+  /// card stays defined on the dark void; PureDark keeps its flat bordered
+  /// card. No boxShadow: the hero card sits flat (see [glassmorphism], which
+  /// every other home card uses), and a shadow painted inside the card's
+  /// clip would be sliced off at the edge anyway.
+  static BoxDecoration heroDecoration(BuildContext context) {
     final gradient = heroGradient(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPureDark = isPureDarkTheme(context);
@@ -438,34 +432,6 @@ class AppTheme {
           : !isDark
           ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      boxShadow: includeShadow
-          ? [
-              // Centered (no offset) to match [glassmorphism], which every
-              // other home card uses — an offset here read as a directional
-              // drop shadow and made the hero look detached from its siblings.
-              BoxShadow(
-                color: heroGlow(context),
-                blurRadius: isDark && !isPureDark ? 16 : 20,
-              ),
-            ]
-          : null,
-    );
-  }
-
-  /// The hero card's drop shadow as a standalone layer: same radius, no
-  /// fill, no border. Wrap the clipped card in this so the glow still bleeds
-  /// past the corners while every painted pixel inside stays rounded.
-  static BoxDecoration heroOuterGlow(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isPureDark = isPureDarkTheme(context);
-    return BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [
-        BoxShadow(
-          color: heroGlow(context),
-          blurRadius: isDark && !isPureDark ? 16 : 20,
-        ),
-      ],
     );
   }
 
@@ -928,9 +894,17 @@ class AppTheme {
       border:
           border ??
           Border.all(
+            // Light mode previously used white @0.4, which is invisible
+            // against the cream scaffold — cards read as borderless blobs
+            // while the hero (a warm accent hairline) was the only outlined
+            // card. Derive the hairline from onSurface instead: dark ink on a
+            // light scaffold, white ink on a dark one, so every glass card
+            // carries the same visible edge in all themes.
             color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.white.withValues(alpha: 0.4),
+                ? Colors.white.withValues(alpha: 0.14)
+                : Theme.of(context).colorScheme.onSurface.withValues(
+                    alpha: 0.12,
+                  ),
             width: 1.5,
           ),
       boxShadow: [
