@@ -210,79 +210,87 @@ class _HomeBody extends ConsumerWidget {
                 // Schedule View
                 const Expanded(child: ScheduleViewWidget())
               else
-                // Calendar View — lazy slivers: offscreen cards neither
-                // build nor fetch until scrolled to, and each card paints
-                // behind its own RepaintBoundary (previously one coarse
-                // boundary repainted the whole column on any inner change).
-                const Expanded(
+                // Calendar View — genuinely lazy: SliverList.builder creates
+                // each card on demand as it approaches the viewport, so
+                // offscreen cards neither build nor trigger their
+                // provider/fetch work until scrolled to. Each card paints
+                // behind its own RepaintBoundary.
+                Expanded(
                   child: CustomScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
-                      // Paksha hero (redesign v3 faithful) — above calendar
-                      // (top 8px breath comes from the Column above).
-                      SliverToBoxAdapter(
-                        child: RepaintBoundary(child: PakshaHeroCard()),
+                      SliverList.builder(
+                        itemCount: 6,
+                        itemBuilder: (context, index) {
+                          switch (index) {
+                            case 0:
+                              // Paksha hero (redesign v3 faithful) — above
+                              // calendar (top 8px breath comes from the
+                              // Column above; 20px breath below).
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 20),
+                                child: RepaintBoundary(
+                                  child: PakshaHeroCard(),
+                                ),
+                              );
+                            case 1:
+                              // Calendar.
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 16),
+                                child: RepaintBoundary(
+                                  child: CalendarWidget(),
+                                ),
+                              );
+                            case 2:
+                              // Event list (uniform 16px gaps; cards carry
+                              // no vertical margin; gutter via theme).
+                              return const Padding(
+                                padding: EdgeInsets.only(
+                                  left: AppTheme.homeCardGutter,
+                                  right: AppTheme.homeCardGutter,
+                                  bottom: 16,
+                                ),
+                                child: RepaintBoundary(
+                                  child: EventListWidget(),
+                                ),
+                              );
+                            case 3:
+                              // Daily Shloka.
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 16),
+                                child: RepaintBoundary(
+                                  child: DailyQuoteWidget(),
+                                ),
+                              );
+                            case 4:
+                              // Featured festival countdown.
+                              return const Padding(
+                                padding: EdgeInsets.only(
+                                  left: AppTheme.homeCardGutter,
+                                  right: AppTheme.homeCardGutter,
+                                  bottom: 16,
+                                ),
+                                child: RepaintBoundary(
+                                  child: FestivalCountdownCard(),
+                                ),
+                              );
+                            default:
+                              // Home screen widget affordance.
+                              return const Padding(
+                                padding: EdgeInsets.only(
+                                  left: AppTheme.homeCardGutter,
+                                  right: AppTheme.homeCardGutter,
+                                ),
+                                child: RepaintBoundary(
+                                  child: HomeWidgetCard(showDismiss: true),
+                                ),
+                              );
+                          }
+                        },
                       ),
 
-                      // Uniform 16px gaps between all home cards (the
-                      // cards themselves carry no vertical margin), with
-                      // a slightly larger 20px breath below the hero.
-                      SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                      // Calendar
-                      SliverToBoxAdapter(
-                        child: RepaintBoundary(child: CalendarWidget()),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Event list
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppTheme.homeCardGutter,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: RepaintBoundary(child: EventListWidget()),
-                        ),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Daily Shloka
-                      SliverToBoxAdapter(
-                        child: RepaintBoundary(child: DailyQuoteWidget()),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Featured festival countdown
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppTheme.homeCardGutter,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: RepaintBoundary(
-                            child: FestivalCountdownCard(),
-                          ),
-                        ),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Home screen widget affordance
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppTheme.homeCardGutter,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: RepaintBoundary(
-                            child: HomeWidgetCard(showDismiss: true),
-                          ),
-                        ),
-                      ),
-
-                      // Bottom padding for FAB
-                      SliverToBoxAdapter(child: SizedBox(height: 40)),
+                      // Bottom padding for FAB.
+                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
                     ],
                   ),
                 ),

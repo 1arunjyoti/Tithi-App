@@ -42,6 +42,53 @@ class SunriseCalculator {
         isSunrise: false,
       );
 
+  /// Intraday instant for a timing-override checkpoint, mirroring
+  /// `resolveTithiCheckpoints` (madhyahna = midday, aparahna = 3/4 day,
+  /// nishita = night midpoint, pradosha = sunset + night/10). Null for
+  /// unknown overrides.
+  ///
+  /// Shared by the web and native forward-scan occurrence finders so both
+  /// agree with the UI batch (`PanchangData.fromRawTithi`) on which tithi
+  /// an override festival observes. Single copy — do not duplicate per
+  /// service.
+  static DateTime? checkpointTimeFor(
+    DateTime day,
+    String timingOverride,
+    double latitude,
+    double longitude,
+  ) {
+    final dateOnlyDay = DateTime(day.year, day.month, day.day);
+    final sunrise = calculateSunriseIST(
+      date: dateOnlyDay,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final sunset = calculateSunsetIST(
+      date: dateOnlyDay,
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final nextSunrise = calculateSunriseIST(
+      date: dateOnlyDay.add(const Duration(days: 1)),
+      latitude: latitude,
+      longitude: longitude,
+    );
+    final dayLength = sunset.difference(sunrise);
+    final nightLength = nextSunrise.difference(sunset);
+    switch (timingOverride) {
+      case 'madhyahna':
+        return sunrise.add(Duration(minutes: dayLength.inMinutes ~/ 2));
+      case 'aparahna':
+        return sunrise.add(Duration(minutes: dayLength.inMinutes * 3 ~/ 4));
+      case 'nishita':
+        return sunset.add(Duration(minutes: nightLength.inMinutes ~/ 2));
+      case 'pradosha':
+        return sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10));
+      default:
+        return null;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Shared solar-geometry engine (SMELL-4 refactor)
   // ---------------------------------------------------------------------------

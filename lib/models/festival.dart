@@ -583,7 +583,9 @@ class PanchangRules {
   /// Navratri sequence days); 'second' = only the last day.
   /// Used by the shared festival-matching pipeline to trim duplicate matches;
   /// see festival_matching_pipeline.dart.
-  @HiveField(9)
+  /// defaultValue keeps pre-existing Hive boxes (written before field 9)
+  /// readable after upgrades instead of throwing on a null cast.
+  @HiveField(9, defaultValue: 'both')
   final String vriddhi;
 
   /// Puja kala (optional string enum): the ritual time window shown in the
@@ -606,7 +608,9 @@ class PanchangRules {
   /// Clip the puja window at the festival tithi's end. Non-nullable, default
   /// false: absent and false mean the same thing. Set only on Pradosh Vrata,
   /// where the kalam must stay inside Trayodashi.
-  @HiveField(12)
+  /// defaultValue keeps pre-existing Hive boxes (written before field 12)
+  /// readable after upgrades instead of throwing on a null cast.
+  @HiveField(12, defaultValue: false)
   final bool clipToTithi;
 
   const PanchangRules({

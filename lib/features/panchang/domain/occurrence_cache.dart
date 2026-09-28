@@ -11,8 +11,11 @@ import '../data/panchang_cache.dart';
 // Each countdown ID, the all-festivals screen, search, and export run
 // independent up-to-380-day scans (2-3 FFI calls/day) over heavily
 // overlapping ranges. This memoizes ANSWERS keyed by
-// (festival, base-month, month system); location scope comes free because
-// [preparePanchangCacheBox] clears the box on location change.
+// (festival, base-month, month system, location); the location signature
+// is part of the key so results computed for one set of coordinates are
+// never reused after a location change. The Hive box is still cleared on
+// location change via [preparePanchangCacheBox] as a second layer, but the
+// in-memory map no longer depends on it (it is checked first).
 //
 // Validity: a stored occurrence O for base-month M stays correct for any
 // query base B with month(B) == M and B <= O — forward matches are
@@ -28,13 +31,21 @@ import '../data/panchang_cache.dart';
 // deserves its own design pass if profiles still hurt after this.
 
 // Bump when scan semantics change (stale generations then miss cleanly).
-const String _occPrefix = 'occ2';
+// occ3: location signature added to the key (occ2 omitted it, so a location
+// change reused the old location's in-memory occurrence).
+const String _occPrefix = 'occ3';
 const int _occMemoryMax = 200;
 
 final Map<String, int> _occMemory = {};
 
-String _occKey(String festivalId, DateTime month, int monthSystemIndex) =>
-    '${_occPrefix}_${festivalId}_${month.year}-${month.month}_$monthSystemIndex';
+String _occKey(
+  String festivalId,
+  DateTime month,
+  int monthSystemIndex,
+  double latitude,
+  double longitude,
+) =>
+    '${_occPrefix}_${festivalId}_${month.year}-${month.month}_${monthSystemIndex}_${locationSignature(latitude, longitude)}';
 
 void _storeOccMemory(String key, int millis) {
   if (_occMemory.length >= _occMemoryMax) {
@@ -44,6 +55,27 @@ void _storeOccMemory(String key, int millis) {
     }
   }
   _occMemory[key] = millis;
+}
+
+// One-time purge of the pre-location generation (occ2_*) so same-location
+// upgrades don't leave stale keys beside occ3 indefinitely. Runs once per
+// process on first box access; best-effort.
+bool _occOldGenerationPurged = false;
+
+Future<void> _purgeOldOccurrenceGenerations(Box<dynamic> box) async {
+  if (_occOldGenerationPurged) return;
+  _occOldGenerationPurged = true;
+  try {
+    final stale = box.keys
+        .whereType<String>()
+        .where((k) => k.startsWith('occ2_'))
+        .toList();
+    for (final k in stale) {
+      await box.delete(k);
+    }
+  } catch (_) {
+    // Caching is best-effort; stale keys simply miss and age out.
+  }
 }
 
 /// Cached wrapper for [PanchangService.findNextFestivalOccurrence].
@@ -58,13 +90,20 @@ Future<DateTime?> findNextFestivalOccurrenceCached({
   required HinduMonthSystem monthSystem,
 }) async {
   final day = dateOnly(startDate);
-  final key = _occKey(festival.id, day, monthSystem.index);
+  final key = _occKey(
+    festival.id,
+    day,
+    monthSystem.index,
+    latitude,
+    longitude,
+  );
 
   int? cachedMillis = _occMemory[key];
   Box<dynamic>? cacheBox;
   if (cachedMillis == null) {
     try {
       cacheBox = await preparePanchangCacheBox(latitude, longitude);
+      await _purgeOldOccurrenceGenerations(cacheBox);
       final stored = cacheBox.get(key);
       if (stored is int) {
         cachedMillis = stored;

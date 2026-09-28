@@ -301,11 +301,25 @@ class _LocationPermissionWrapperState
         }
       }
     } finally {
-      // Unblock background festival seeding now that the location decision
-      // is final (granted → device coordinates; denied/skipped/failed →
-      // default location). Runs on every path — including later launches,
-      // where it completes immediately — so seeding can never deadlock.
-      // Guarded: the wrapper outlives the flow, but never crash teardown.
+      // Wait for the device-location lookup to settle before unblocking
+      // background festival seeding. The granted path only invalidates
+      // `currentLocationProvider` without awaiting it, so without this the
+      // gate completes while `resolvedCoordinatesProvider` still holds the
+      // Delhi fallback — the month batch then computes once with fallback
+      // coordinates and again when GPS finishes. Awaiting here (with a
+      // timeout fallback) ensures seeding computes once with final
+      // coordinates (granted → device; denied/skipped/failed → default).
+      // Runs on every path — including later launches, where it completes
+      // immediately — so seeding can never deadlock. Guarded: the wrapper
+      // outlives the flow, but never crash teardown.
+      try {
+        await ref
+            .read(currentLocationProvider.future)
+            .timeout(const Duration(seconds: 10));
+      } catch (_) {
+        // GPS unavailable/timed out: fallback coordinates apply and
+        // seeding still proceeds.
+      }
       try {
         final gate = ref.read(locationPermissionGateProvider);
         if (!gate.isCompleted) gate.complete();
