@@ -17,15 +17,27 @@ class MoonAnimationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: MoonPhasePainter(
-          phase: phase,
-          isWaxing: isWaxing,
-          color: AppTheme.moonLit,
-          shadowColor: AppTheme.moonShadow,
+    // Implicitly animate phase changes (date taps, moon scrub) instead of
+    // jumping frame-to-frame. TweenAnimationBuilder keeps the current value
+    // and glides to the new `phase`; Reduce Motion collapses to 1ms via
+    // AppTheme.animationDuration so it jumps instantly when requested.
+    return TweenAnimationBuilder<double>(
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 350),
+      ),
+      curve: Curves.easeInOutCubic,
+      tween: Tween<double>(end: phase.clamp(0.0, 1.0)),
+      builder: (context, animatedPhase, _) => SizedBox(
+        width: size,
+        height: size,
+        child: CustomPaint(
+          painter: MoonPhasePainter(
+            phase: animatedPhase,
+            isWaxing: isWaxing,
+            color: AppTheme.moonLit,
+            shadowColor: AppTheme.moonShadow,
+          ),
         ),
       ),
     );

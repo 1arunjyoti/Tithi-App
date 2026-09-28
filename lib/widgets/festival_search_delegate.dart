@@ -9,6 +9,7 @@ import '../providers/accessibility_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
+import '../core/feedback/app_messages.dart';
 import '../theme/app_theme.dart';
 import '../features/countdown/domain/target_resolution.dart';
 
@@ -236,11 +237,10 @@ class FestivalSearchDelegate extends SearchDelegate {
               onPressed: () async {
                 // Show loading or feedback
                 final l10n = AppLocalizations.of(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n?.findingNextOccurrence ?? 'Finding next occurrence...'),
-                    duration: const Duration(seconds: 1),
-                  ),
+                showAppMessage(
+                  context,
+                  l10n?.findingNextOccurrence ?? 'Finding next occurrence...',
+                  duration: const Duration(seconds: 1),
                 );
 
                 // Find next date (cached; resolved location, not Delhi).
@@ -263,10 +263,10 @@ class FestivalSearchDelegate extends SearchDelegate {
                   // Close search
                   close(context, null);
                 } else if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n?.couldNotFindUpcomingOccurrence ?? 'Could not find upcoming occurrence within a year.'),
-                    ),
+                  showAppMessage(
+                    context,
+                    l10n?.couldNotFindUpcomingOccurrence ?? 'Could not find upcoming occurrence within a year.',
+                    kind: AppMessageKind.error,
                   );
                 }
               },

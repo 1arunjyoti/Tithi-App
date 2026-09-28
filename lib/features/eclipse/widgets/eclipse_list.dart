@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/eclipse.dart';
+import '../../../core/anim/stagger_entrance.dart';
 import '../../../widgets/responsive_layout.dart';
 import 'eclipse_card.dart';
 
@@ -23,6 +24,9 @@ class EclipseList extends StatelessWidget {
     final solarEclipses = eclipses.where((e) => e.type.isSolar).toList();
     final lunarEclipses = eclipses.where((e) => e.type.isLunar).toList();
 
+    // Running stagger index across sections so solar → lunar flows as one
+    // sequence. Few items total (eclipses are rare), so all animate.
+    var staggerIndex = 0;
     return CenteredContent(
       maxWidth: 900,
       child: ListView(
@@ -35,7 +39,11 @@ class EclipseList extends StatelessWidget {
               emoji: '☀️',
             ),
             const SizedBox(height: 12),
-            ...solarEclipses.map((e) => EclipseCard(eclipse: e)),
+            for (final e in solarEclipses)
+              StaggerEntrance(
+                index: staggerIndex++,
+                child: EclipseCard(eclipse: e),
+              ),
             const SizedBox(height: 24),
           ],
           if (lunarEclipses.isNotEmpty) ...[
@@ -44,7 +52,11 @@ class EclipseList extends StatelessWidget {
               emoji: '🌙',
             ),
             const SizedBox(height: 12),
-            ...lunarEclipses.map((e) => EclipseCard(eclipse: e)),
+            for (final e in lunarEclipses)
+              StaggerEntrance(
+                index: staggerIndex++,
+                child: EclipseCard(eclipse: e),
+              ),
           ],
         ],
       ),

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/anim/press_scale.dart';
+import '../core/feedback/app_messages.dart';
 import '../providers/home_widget_provider.dart';
 import '../features/home_widget/providers/home_widget_promo_providers.dart';
 import '../theme/app_theme.dart';
@@ -117,34 +119,41 @@ class HomeWidgetCard extends ConsumerWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: accent),
             )
           else if (canPin)
-            FilledButton(
-              onPressed: () => _requestPin(context, ref),
-              style: FilledButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: AppTheme.onFestivalAccent(context),
+            // Gated press haptic + scale live in PressScale.
+            PressScale(
+              child: FilledButton(
+                onPressed: () => _requestPin(context, ref),
+                style: FilledButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: AppTheme.onFestivalAccent(context),
+                ),
+                child: Text(AppLocalizations.of(context)?.add ?? 'Add'),
               ),
-              child: Text(AppLocalizations.of(context)?.add ?? 'Add'),
             )
           else
-            IconButton(
-              tooltip: AppLocalizations.of(context)?.infoTooltip ?? 'Info',
-              onPressed: () => _showManualInstructions(context),
-              icon: const Icon(Icons.info_outline_rounded),
+            PressScale(
+              child: IconButton(
+                tooltip: AppLocalizations.of(context)?.infoTooltip ?? 'Info',
+                onPressed: () => _showManualInstructions(context),
+                icon: const Icon(Icons.info_outline_rounded),
+              ),
             ),
           if (showDismiss) ...[
             const SizedBox(width: 4),
-            IconButton(
-              tooltip:
-                  AppLocalizations.of(context)?.dismissTooltip ?? 'Dismiss',
-              onPressed: () =>
-                  ref.read(homeWidgetPromoDismissedProvider.notifier).dismiss(),
-              icon: const Icon(Icons.close_rounded, size: 18),
-              color: colors.onSurface.withValues(
-                alpha: AppTheme.contrastAlpha(context, 0.5),
-              ),
-              style: IconButton.styleFrom(
-                minimumSize: const Size(32, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            PressScale(
+              child: IconButton(
+                tooltip:
+                    AppLocalizations.of(context)?.dismissTooltip ?? 'Dismiss',
+                onPressed: () =>
+                    ref.read(homeWidgetPromoDismissedProvider.notifier).dismiss(),
+                icon: const Icon(Icons.close_rounded, size: 18),
+                color: colors.onSurface.withValues(
+                  alpha: AppTheme.contrastAlpha(context, 0.5),
+                ),
+                style: IconButton.styleFrom(
+                  minimumSize: const Size(32, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
               ),
             ),
           ],
@@ -158,17 +167,21 @@ class HomeWidgetCard extends ConsumerWidget {
     final service = ref.read(homeWidgetServiceProvider);
     final success = await service.requestPinWidget();
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? l10n?.widgetPinRequested ??
-                    'Widget pin requested — confirm on home screen'
-              : l10n?.couldNotPinWidget ??
-                    'Could not pin widget. Try adding manually: long-press → Widgets → Tithi',
-        ),
-      ),
-    );
+    if (success) {
+      showAppMessage(
+        context,
+        l10n?.widgetPinRequested ??
+            'Widget pin requested — confirm on home screen',
+        kind: AppMessageKind.success,
+      );
+    } else {
+      showAppMessage(
+        context,
+        l10n?.couldNotPinWidget ??
+            'Could not pin widget. Try adding manually: long-press → Widgets → Tithi',
+        kind: AppMessageKind.error,
+      );
+    }
   }
 
   void _showManualInstructions(BuildContext context) {

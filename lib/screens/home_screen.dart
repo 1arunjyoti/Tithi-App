@@ -13,6 +13,8 @@ import '../widgets/festival_countdown_card.dart';
 import '../widgets/festival_search_delegate.dart';
 import '../widgets/paksha_hero_card.dart';
 import '../widgets/responsive_layout.dart';
+import '../core/anim/press_scale.dart';
+import '../core/anim/stagger_entrance.dart';
 import '../widgets/home_widget_card.dart';
 import '../providers/home_widget_provider.dart';
 
@@ -42,29 +44,49 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       },
       appBar: AppBar(
-        // Hide hamburger menu on wide screens
-        automaticallyImplyLeading: !isWideScreen,
+        // Explicit hamburger (not automaticallyImplyLeading): the
+        // framework-built one can't carry PressScale's gated haptic.
+        automaticallyImplyLeading: false,
+        leading: isWideScreen
+            ? null
+            : Builder(
+                builder: (innerContext) => PressScale(
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.menu_rounded,
+                      color: context.colors.onSurface,
+                    ),
+                    tooltip: MaterialLocalizations.of(
+                      innerContext,
+                    ).openAppDrawerTooltip,
+                    onPressed: () =>
+                        Scaffold.of(innerContext).openDrawer(),
+                  ),
+                ),
+              ),
         title: Text(l10n?.appTitle ?? 'Tithi'),
         backgroundColor: Colors.transparent,
         actions: [
-          // Search button
+          // Search button (press-scale owns the gated haptic + press feel)
           Consumer(
             builder: (context, ref, _) {
-              return IconButton(
-                icon: Icon(
-                  Icons.search_rounded,
-                  color: context.colors.onSurface,
+              return PressScale(
+                child: IconButton(
+                  icon: Icon(
+                    Icons.search_rounded,
+                    color: context.colors.onSurface,
+                  ),
+                  tooltip: l10n?.searchFestivals ?? 'Search Festivals',
+                  onPressed: () {
+                    showSearch(
+                      context: context,
+                      delegate: FestivalSearchDelegate(
+                        ref: ref,
+                        parentContext: context,
+                      ),
+                    );
+                  },
                 ),
-                tooltip: l10n?.searchFestivals ?? 'Search Festivals',
-                onPressed: () {
-                  showSearch(
-                    context: context,
-                    delegate: FestivalSearchDelegate(
-                      ref: ref,
-                      parentContext: context,
-                    ),
-                  );
-                },
               );
             },
           ),
@@ -162,18 +184,44 @@ class _JumpToTodayFab extends ConsumerWidget {
         selectedDate.day == now.day;
     final showJumpToToday = !isSameMonth || !isToday;
 
-    if (!showJumpToToday) return const SizedBox.shrink();
-
-    return FloatingActionButton(
-      onPressed: () {
-        final now = DateTime.now();
-        setCalendarMonth(ref, now);
-        ref.read(selectedDateProvider.notifier).setDate(now);
-      },
-      tooltip: l10n?.goToToday ?? 'Go to Today',
-      backgroundColor: context.colors.primary,
-      foregroundColor: context.colors.onPrimary,
-      child: const Icon(Icons.today_rounded),
+    // Scale + fade instead of popping between FAB and SizedBox.shrink:
+    // month browsing feels calm, and Reduce Motion collapses to 1ms.
+    return IgnorePointer(
+      ignoring: !showJumpToToday,
+      child: AnimatedScale(
+        scale: showJumpToToday ? 1.0 : 0.0,
+        duration: AppTheme.animationDuration(
+          context,
+          const Duration(milliseconds: 200),
+        ),
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: showJumpToToday ? 1.0 : 0.0,
+          duration: AppTheme.animationDuration(
+            context,
+            const Duration(milliseconds: 200),
+          ),
+          // Press-down microinteraction (scale + haptic live in
+          // PressScale); the outer AnimatedScale above owns show/hide.
+          // IgnorePointer above already blocks input while hidden,
+          // so PressScale stays enabled: no double-gating.
+          child: PressScale(
+            child: FloatingActionButton(
+              onPressed: showJumpToToday
+                  ? () {
+                      final now = DateTime.now();
+                      setCalendarMonth(ref, now);
+                      ref.read(selectedDateProvider.notifier).setDate(now);
+                    }
+                  : null,
+              tooltip: l10n?.goToToday ?? 'Go to Today',
+              backgroundColor: context.colors.primary,
+              foregroundColor: context.colors.onPrimary,
+              child: const Icon(Icons.today_rounded),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -210,79 +258,111 @@ class _HomeBody extends ConsumerWidget {
                 // Schedule View
                 const Expanded(child: ScheduleViewWidget())
               else
-                // Calendar View — lazy slivers: offscreen cards neither
-                // build nor fetch until scrolled to, and each card paints
-                // behind its own RepaintBoundary (previously one coarse
-                // boundary repainted the whole column on any inner change).
-                const Expanded(
+                // Calendar View — genuinely lazy: SliverList.builder creates
+                // each card on demand as it approaches the viewport, so
+                // offscreen cards neither build nor trigger their
+                // provider/fetch work until scrolled to. Each card paints
+                // behind its own RepaintBoundary.
+                Expanded(
                   child: CustomScrollView(
-                    physics: AlwaysScrollableScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
-                      // Paksha hero (redesign v3 faithful) — above calendar
-                      // (top 8px breath comes from the Column above).
-                      SliverToBoxAdapter(
-                        child: RepaintBoundary(child: PakshaHeroCard()),
+                      // Launch choreography: shell-level cascade (position
+                      // order, once per element) OUTSIDE each card. It plays
+                      // over the skeletons at launch while each card's own
+                      // skeleton → content fade resolves inside whenever its
+                      // data arrives — so fast cards never wait for slow
+                      // ones, and nothing replays on rebuilds/scrolls.
+                      SliverList.builder(
+                        itemCount: 6,
+                        itemBuilder: (context, index) {
+                          switch (index) {
+                            case 0:
+                              // Paksha hero (redesign v3 faithful) — above
+                              // calendar (top 8px breath comes from the
+                              // Column above; 20px breath below).
+                              return const StaggerEntrance(
+                                index: 0,
+                                child: Padding(
+                                  padding: EdgeInsets.only(bottom: 20),
+                                  child: RepaintBoundary(
+                                    child: PakshaHeroCard(),
+                                  ),
+                                ),
+                              );
+                            case 1:
+                              // Calendar.
+                              return const StaggerEntrance(
+                                index: 1,
+                                child: Padding(
+                                  padding: EdgeInsets.only(bottom: 16),
+                                  child: RepaintBoundary(
+                                    child: CalendarWidget(),
+                                  ),
+                                ),
+                              );
+                            case 2:
+                              // Event list (uniform 16px gaps; cards carry
+                              // no vertical margin; gutter via theme).
+                              return const StaggerEntrance(
+                                index: 2,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: AppTheme.homeCardGutter,
+                                    right: AppTheme.homeCardGutter,
+                                    bottom: 16,
+                                  ),
+                                  child: RepaintBoundary(
+                                    child: EventListWidget(),
+                                  ),
+                                ),
+                              );
+                            case 3:
+                              // Daily Shloka.
+                              return const StaggerEntrance(
+                                index: 3,
+                                child: Padding(
+                                  padding: EdgeInsets.only(bottom: 16),
+                                  child: RepaintBoundary(
+                                    child: DailyQuoteWidget(),
+                                  ),
+                                ),
+                              );
+                            case 4:
+                              // Featured festival countdown.
+                              return const StaggerEntrance(
+                                index: 4,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: AppTheme.homeCardGutter,
+                                    right: AppTheme.homeCardGutter,
+                                    bottom: 16,
+                                  ),
+                                  child: RepaintBoundary(
+                                    child: FestivalCountdownCard(),
+                                  ),
+                                ),
+                              );
+                            default:
+                              // Home screen widget affordance.
+                              return const StaggerEntrance(
+                                index: 5,
+                                child: Padding(
+                                  padding: EdgeInsets.only(
+                                    left: AppTheme.homeCardGutter,
+                                    right: AppTheme.homeCardGutter,
+                                  ),
+                                  child: RepaintBoundary(
+                                    child: HomeWidgetCard(showDismiss: true),
+                                  ),
+                                ),
+                              );
+                          }
+                        },
                       ),
 
-                      // Uniform 16px gaps between all home cards (the
-                      // cards themselves carry no vertical margin), with
-                      // a slightly larger 20px breath below the hero.
-                      SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                      // Calendar
-                      SliverToBoxAdapter(
-                        child: RepaintBoundary(child: CalendarWidget()),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Event list
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppTheme.homeCardGutter,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: RepaintBoundary(child: EventListWidget()),
-                        ),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Daily Shloka
-                      SliverToBoxAdapter(
-                        child: RepaintBoundary(child: DailyQuoteWidget()),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Featured festival countdown
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppTheme.homeCardGutter,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: RepaintBoundary(
-                            child: FestivalCountdownCard(),
-                          ),
-                        ),
-                      ),
-
-                      SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-                      // Home screen widget affordance
-                      SliverPadding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: AppTheme.homeCardGutter,
-                        ),
-                        sliver: SliverToBoxAdapter(
-                          child: RepaintBoundary(
-                            child: HomeWidgetCard(showDismiss: true),
-                          ),
-                        ),
-                      ),
-
-                      // Bottom padding for FAB
-                      SliverToBoxAdapter(child: SizedBox(height: 40)),
+                      // Bottom padding for FAB.
+                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
                     ],
                   ),
                 ),

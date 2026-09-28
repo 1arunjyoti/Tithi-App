@@ -9,6 +9,7 @@ import '../providers/panchang_provider.dart';
 import '../services/moon_phase_service.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/moon_animation_widget.dart';
+import '../core/navigation/haptic_back_button.dart';
 import '../theme/app_theme.dart';
 
 /// Scrub offset in days from today for the hero moon. 0 = today.
@@ -83,6 +84,8 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HapticBackButton(),
         title: Text(l10n.moonPhases),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -216,17 +219,13 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                       ),
                       child: Hero(
                         tag: 'moon_icon',
-                        child: TweenAnimationBuilder<double>(
-                          duration: AppTheme.animationDuration(
-                            context,
-                            const Duration(milliseconds: 350),
-                          ),
-                          tween: Tween<double>(end: targetPhase),
-                          builder: (context, phase, _) => MoonAnimationWidget(
-                            phase: phase,
-                            isWaxing: shownWaxing,
-                            size: 168,
-                          ),
+                        // MoonAnimationWidget tweens phase internally; no
+                        // outer TweenAnimationBuilder needed (it would
+                        // double-animate with the inner one on scrub).
+                        child: MoonAnimationWidget(
+                          phase: targetPhase,
+                          isWaxing: shownWaxing,
+                          size: 168,
                         ),
                       ),
                     ),

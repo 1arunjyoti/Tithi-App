@@ -9,6 +9,10 @@ import '../providers/festival_countdown_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/home_widget_provider.dart';
 import '../theme/app_theme.dart';
+import '../core/anim/press_scale.dart';
+import '../core/anim/stagger_entrance.dart';
+import '../core/navigation/haptic_back_button.dart';
+import '../core/feedback/app_messages.dart';
 import '../widgets/festival_countdown_card.dart';
 import '../widgets/home_widget_card.dart';
 
@@ -26,13 +30,18 @@ class FestivalCountdownScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HapticBackButton(),
         title: Text(l10n?.festivalCountdowns ?? 'Festival Countdowns'),
         backgroundColor: Colors.transparent,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_rounded),
-            tooltip: l10n?.addCountdown ?? 'Add countdown',
-            onPressed: () => _addCountdown(context, ref),
+          // Gated press haptic + scale live in PressScale.
+          PressScale(
+            child: IconButton(
+              icon: const Icon(Icons.add_rounded),
+              tooltip: l10n?.addCountdown ?? 'Add countdown',
+              onPressed: () => _addCountdown(context, ref),
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -75,26 +84,31 @@ class FestivalCountdownScreen extends ConsumerWidget {
                     }
                     final target = targets[index - 1];
                     final isPinned = preferences.isPinnedToHome(target.id);
-                    return FestivalCountdownTile(
-                      target: target,
-                      showActions: true,
-                      isPinnedToHome: isPinned,
-                      onToggleHome: () {
-                        if (ref.read(accessibilityProvider).hapticFeedback) {
-                          HapticFeedback.lightImpact();
-                        }
-                        ref
-                            .read(
-                              festivalCountdownPreferencesProvider.notifier,
-                            )
-                            .toggleHomePinned(target.id);
-                      },
-                      onRemove: () {
-                        if (ref.read(accessibilityProvider).hapticFeedback) {
-                          HapticFeedback.lightImpact();
-                        }
-                        _removeCountdown(context, ref, target.id);
-                      },
+                    // Header (index 0) stays static; tiles stagger once on
+                    // mount. Pin/remove rebuilds reuse positions instantly.
+                    return StaggerEntrance(
+                      index: index - 1,
+                      child: FestivalCountdownTile(
+                        target: target,
+                        showActions: true,
+                        isPinnedToHome: isPinned,
+                        onToggleHome: () {
+                          if (ref.read(accessibilityProvider).hapticFeedback) {
+                            HapticFeedback.lightImpact();
+                          }
+                          ref
+                              .read(
+                                festivalCountdownPreferencesProvider.notifier,
+                              )
+                              .toggleHomePinned(target.id);
+                        },
+                        onRemove: () {
+                          if (ref.read(accessibilityProvider).hapticFeedback) {
+                            HapticFeedback.lightImpact();
+                          }
+                          _removeCountdown(context, ref, target.id);
+                        },
+                      ),
                     );
                   },
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -125,17 +139,20 @@ class FestivalCountdownScreen extends ConsumerWidget {
         .addFestival(festival.id);
     if (!context.mounted) return;
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          added
-              ? (l10n?.countdownAddedForFestival(festival.name) ??
-                  'Countdown added for ${festival.name}')
-              : (l10n?.festivalAlreadyInCountdowns(festival.name) ??
-                  '${festival.name} is already in your countdowns'),
-        ),
-      ),
-    );
+    if (added) {
+      showAppMessage(
+        context,
+        l10n?.countdownAddedForFestival(festival.name) ??
+            'Countdown added for ${festival.name}',
+        kind: AppMessageKind.success,
+      );
+    } else {
+      showAppMessage(
+        context,
+        l10n?.festivalAlreadyInCountdowns(festival.name) ??
+            '${festival.name} is already in your countdowns',
+      );
+    }
   }
 
   Future<void> _removeCountdown(
@@ -149,9 +166,10 @@ class FestivalCountdownScreen extends ConsumerWidget {
         .removeFestival(festivalId);
     if (!context.mounted) return;
 
-    ScaffoldMessenger.of(
+    showAppMessage(
       context,
-    ).showSnackBar(SnackBar(content: Text(l10n?.countdownRemoved ?? 'Countdown removed')));
+      l10n?.countdownRemoved ?? 'Countdown removed',
+    );
   }
 }
 
@@ -182,18 +200,22 @@ class CountdownFestivalSearchDelegate extends SearchDelegate<Festival?> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       if (query.isNotEmpty)
-        IconButton(
-          icon: const Icon(Icons.clear_rounded),
-          onPressed: () => query = '',
+        PressScale(
+          child: IconButton(
+            icon: const Icon(Icons.clear_rounded),
+            onPressed: () => query = '',
+          ),
         ),
     ];
   }
 
   @override
   Widget buildLeading(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.arrow_back_rounded),
-      onPressed: () => close(context, null),
+    return PressScale(
+      child: IconButton(
+        icon: const Icon(Icons.arrow_back_rounded),
+        onPressed: () => close(context, null),
+      ),
     );
   }
 
@@ -280,38 +302,41 @@ class _FestivalSearchTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: Colors.transparent,
-        child: ListTile(
-          onTap: onTap,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          tileColor: colors.surfaceContainerHighest.withValues(alpha: 0.3),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: isMajor ? 0.18 : 0.1),
-              borderRadius: BorderRadius.circular(12),
+        // Stateless-safe gated haptic + scale.
+        child: PressScale(
+          child: ListTile(
+            onTap: onTap,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              isMajor ? Icons.celebration_rounded : Icons.event_rounded,
-              color: colors.primary,
+            tileColor: colors.surfaceContainerHighest.withValues(alpha: 0.3),
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: isMajor ? 0.18 : 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isMajor ? Icons.celebration_rounded : Icons.event_rounded,
+                color: colors.primary,
+              ),
             ),
+            title: Text(
+              festival.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: festival.nameHindi == null
+                ? null
+                : Text(
+                    festival.nameHindi!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+            trailing: const Icon(Icons.add_circle_outline_rounded),
           ),
-          title: Text(
-            festival.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: festival.nameHindi == null
-              ? null
-              : Text(
-                  festival.nameHindi!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-          trailing: const Icon(Icons.add_circle_outline_rounded),
         ),
       ),
     );

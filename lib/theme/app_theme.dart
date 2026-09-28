@@ -409,13 +409,14 @@ class AppTheme {
     return heroMoonFillKrishna;
   }
 
-  /// Hero card decoration: radial glow + linear gradient.
-  /// Shukla gets a hairline warm border so the peach card stays defined on
-  /// the creamy scaffold; Krishna gets a faint light hairline so the dark
-  /// plum card stays defined on the dark void; PureDark keeps its flat
-  /// bordered card.
+  /// Hero card decoration: linear gradient plus a hairline border.
+  /// Shukla gets a warm hairline so the peach card stays defined on the
+  /// creamy scaffold; Krishna gets a faint light hairline so the dark plum
+  /// card stays defined on the dark void; PureDark keeps its flat bordered
+  /// card. No boxShadow: the hero card sits flat (see [glassmorphism], which
+  /// every other home card uses), and a shadow painted inside the card's
+  /// clip would be sliced off at the edge anyway.
   static BoxDecoration heroDecoration(BuildContext context) {
-    final glow = heroGlow(context);
     final gradient = heroGradient(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPureDark = isPureDarkTheme(context);
@@ -431,14 +432,6 @@ class AppTheme {
           : !isDark
           ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
-      boxShadow: [
-        // Softened so less color flows outside the card's bottom edge.
-        BoxShadow(
-          color: glow,
-          blurRadius: isDark && !isPureDark ? 16 : 20,
-          offset: const Offset(0, 6),
-        ),
-      ],
     );
   }
 
@@ -901,9 +894,17 @@ class AppTheme {
       border:
           border ??
           Border.all(
+            // Light mode previously used white @0.4, which is invisible
+            // against the cream scaffold — cards read as borderless blobs
+            // while the hero (a warm accent hairline) was the only outlined
+            // card. Derive the hairline from onSurface instead: dark ink on a
+            // light scaffold, white ink on a dark one, so every glass card
+            // carries the same visible edge in all themes.
             color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.white.withValues(alpha: 0.4),
+                ? Colors.white.withValues(alpha: 0.14)
+                : Theme.of(context).colorScheme.onSurface.withValues(
+                    alpha: 0.12,
+                  ),
             width: 1.5,
           ),
       boxShadow: [
