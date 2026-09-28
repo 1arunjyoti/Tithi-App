@@ -29,6 +29,9 @@ class SankalpaListScreen extends ConsumerWidget {
           title: Text(l10n.mySankalpas),
           backgroundColor: Colors.transparent,
           bottom: TabBar(
+            // No hairline under the tab strip — the indicator carries the
+            // selection on its own (same treatment as the Moon Phases tabs).
+            dividerColor: Colors.transparent,
             tabs: [
               Tab(text: l10n.active),
               Tab(text: l10n.completed),
