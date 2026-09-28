@@ -76,9 +76,6 @@ String buildShlokaShareText(
     }
   }
   parts.add('— ${shloka.source}');
-  if (shloka.themes.isNotEmpty) {
-    parts.add(shloka.themes.map((t) => '#$t').join(' '));
-  }
   parts.add(l10n?.sharedViaTithiApp ?? 'Shared via Tithi App');
   return parts.join('\n\n');
 }
@@ -218,9 +215,6 @@ void _showShareOptions(
       decoration: BoxDecoration(
         color: context.colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top: BorderSide(color: accent.withValues(alpha: 0.3), width: 2),
-        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       child: SafeArea(
@@ -674,7 +668,6 @@ class DailyQuoteWidget extends ConsumerWidget {
                       showingSecondaryHindi: showingSecondaryHindi,
                       showAll: showAll,
                       l10n: l10n,
-                      themes: shloka.themes,
                       onToggleShowAll: () {
                         ref
                                 .read(quoteShowAllTranslationsProvider.notifier)
@@ -888,7 +881,6 @@ class _TranslationPanel extends StatelessWidget {
     required this.showingSecondaryHindi,
     required this.showAll,
     required this.l10n,
-    required this.themes,
     required this.onToggleShowAll,
   });
 
@@ -898,7 +890,6 @@ class _TranslationPanel extends StatelessWidget {
   final bool showingSecondaryHindi;
   final bool showAll;
   final AppLocalizations? l10n;
-  final List<String> themes;
   final VoidCallback onToggleShowAll;
 
   @override
@@ -945,11 +936,6 @@ class _TranslationPanel extends StatelessWidget {
                 ),
               ),
             ),
-          ],
-          // Theme chips (expanded only)
-          if (themes.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _ThemeChips(themes: themes, accent: accent),
           ],
         ],
       ),
@@ -1120,48 +1106,6 @@ class _TranslationText extends StatelessWidget {
               fontStyle: FontStyle.italic,
               height: 1.4,
             ),
-    );
-  }
-}
-
-/// Wraps theme tags as `#tag` stadium pills. Caps visible chips at 3 with a
-/// `+n` overflow indicator so long tag lists don't stretch the card.
-class _ThemeChips extends StatelessWidget {
-  const _ThemeChips({required this.themes, required this.accent});
-
-  final List<String> themes;
-  final Color accent;
-
-  static const int _maxVisible = 3;
-
-  @override
-  Widget build(BuildContext context) {
-    final visible = themes.take(_maxVisible).toList();
-    final overflow = themes.length - visible.length;
-    Widget chip(String label, {bool muted = false}) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: muted ? 0.06 : 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: accent,
-          fontSize: 11.5,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 6,
-      runSpacing: 6,
-      children: [
-        for (final theme in visible) chip('#$theme'),
-        if (overflow > 0) chip('+$overflow', muted: true),
-      ],
     );
   }
 }
