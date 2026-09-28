@@ -184,17 +184,19 @@ class _DrawerMenuList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
+    // Ordered by how often each destination is reached, most-used first:
+    // 1. the home calendar/schedule switch (acts on the current screen),
+    // 2. the two daily-practice features a returning user opens to add or
+    //    track something (countdowns, sankalpas),
+    // 3. reference layers consulted while reading the panchang (moon, temples),
+    // 4. the rare astronomical extras, which are also the heaviest screens
+    //    (FFI compute) and web-hidden,
+    // 5. settings, then the social/utility footer below the divider.
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       children: [
         // View Mode Toggle
         const _ViewModeToggleItem(),
-
-        _DrawerMenuItem(
-          icon: Icons.spa_rounded,
-          title: l10n?.mySankalpas ?? 'My Sankalpas',
-          onTap: () => _navigateTo(context, const SankalpaListScreen()),
-        ),
 
         _DrawerMenuItem(
           icon: Icons.event_available_rounded,
@@ -203,9 +205,9 @@ class _DrawerMenuList extends ConsumerWidget {
         ),
 
         _DrawerMenuItem(
-          icon: Icons.temple_buddhist,
-          title: l10n?.nearbyTemples ?? 'Nearby Temples',
-          onTap: () => _openTemplesInMaps(context, ref),
+          icon: Icons.spa_rounded,
+          title: l10n?.mySankalpas ?? 'My Sankalpas',
+          onTap: () => _navigateTo(context, const SankalpaListScreen()),
         ),
 
         _DrawerMenuItem(
@@ -214,18 +216,24 @@ class _DrawerMenuList extends ConsumerWidget {
           onTap: () => _navigateTo(context, const MoonPhasesScreen()),
         ),
 
+        _DrawerMenuItem(
+          icon: Icons.temple_buddhist,
+          title: l10n?.nearbyTemples ?? 'Nearby Temples',
+          onTap: () => _openTemplesInMaps(context, ref),
+        ),
+
         // FFI-dependent features - hide on web
         if (!kIsWeb) ...[
-          _DrawerMenuItem(
-            icon: Icons.public,
-            title: l10n?.solarSystem ?? 'Solar System',
-            onTap: () => _navigateTo(context, const SolarSystemScreen()),
-          ),
-
           _DrawerMenuItem(
             icon: Icons.brightness_3_rounded,
             title: l10n?.eclipses ?? 'Eclipses',
             onTap: () => _navigateTo(context, const EclipseScreen()),
+          ),
+
+          _DrawerMenuItem(
+            icon: Icons.public,
+            title: l10n?.solarSystem ?? 'Solar System',
+            onTap: () => _navigateTo(context, const SolarSystemScreen()),
           ),
         ],
 

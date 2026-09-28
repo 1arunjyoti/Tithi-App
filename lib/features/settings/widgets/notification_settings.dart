@@ -226,8 +226,12 @@ class NotificationSettings extends ConsumerWidget {
                     data: context.theme.copyWith(
                       timePickerTheme: TimePickerThemeData(
                         backgroundColor: context.colors.surface,
-                        hourMinuteTextColor: context.colors.primary,
-                        dayPeriodTextColor: context.colors.onSurface,
+                        // hourMinute{Color,TextColor} and dayPeriod* are all
+                        // left at their theme defaults on purpose: they are
+                        // a matched set (primary fill + onPrimary text, or a
+                        // transparent fill + onSurface text). Overriding one
+                        // side alone is what produced both the orange-on-
+                        // orange block and then the dark pill.
                         dialHandColor: context.colors.primary,
                         dialBackgroundColor: context.colors.onSurface
                             .withValues(alpha: 0.1),

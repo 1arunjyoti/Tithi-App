@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/version_provider.dart';
 import '../features/settings/widgets/app_update_settings.dart';
 import '../theme/app_theme.dart';
@@ -115,54 +117,92 @@ class AboutScreen extends ConsumerWidget {
                           'Tithi is an open-source project. Our code is publicly available for audit, ensuring that our privacy promises are backed by verifiable transparency. What you see is exactly what you get.',
                     ),
                     const SizedBox(height: 20),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: AppTheme.glassmorphism(
-                        context: context,
-                        ref: ref,
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: context.colors.primary.withValues(
-                                alpha: 0.1,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.language_rounded,
-                              color: context.colors.primary,
-                              size: 22,
+                    // Full-card tap target: Material wraps the whole card and
+                    // clips (antiAlias) to the glassmorphism radius, so the
+                    // splash covers every pixel of the card. Padding lives on
+                    // the InkWell's child, NOT on the Container — padding on
+                    // the Container sits outside the Material and would inset
+                    // the splash away from the card edges.
+                    //
+                    // Deliberately no PressScale here: it wraps the child in
+                    // an AnimatedScale, so the splash would render inside a
+                    // shrunken 0.94 box and pop inward instead of reading as a
+                    // full-card press.
+                    Material(
+                      color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(24),
+                      clipBehavior: Clip.antiAlias,
+                      child: Ink(
+                        decoration: AppTheme.glassmorphism(
+                          context: context,
+                          ref: ref,
+                        ),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(24),
+                          onTap: () {
+                            if (ref
+                                .read(accessibilityProvider)
+                                .hapticFeedback) {
+                              HapticFeedback.lightImpact();
+                            }
+                            _openPrivacyPolicy(context);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: context.colors.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(
+                                    Icons.language_rounded,
+                                    color: context.colors.primary,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        l10n?.detailedPrivacyPolicy ??
+                                            'Detailed privacy policy',
+                                        style: context.textTheme.titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: context.colors.onSurface,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        l10n?.readFullPrivacyPolicy ??
+                                            'Read the full policy on our website',
+                                        style: context.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: context.colors.onSurface
+                                                  .withValues(alpha: 0.7),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.open_in_new_rounded,
+                                  color: context.colors.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          title: Text(
-                            l10n?.detailedPrivacyPolicy ??
-                                'Detailed privacy policy',
-                            style: context.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: context.colors.onSurface,
-                            ),
-                          ),
-                          subtitle: Text(
-                            l10n?.readFullPrivacyPolicy ??
-                                'Read the full policy on our website',
-                            style: context.textTheme.bodySmall?.copyWith(
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.7,
-                              ),
-                            ),
-                          ),
-                          trailing: Icon(
-                            Icons.open_in_new_rounded,
-                            color: context.colors.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
-                          onTap: () => _openPrivacyPolicy(context),
                         ),
                       ),
                     ),

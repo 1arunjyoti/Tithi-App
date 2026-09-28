@@ -14,7 +14,6 @@ import '../widgets/festival_search_delegate.dart';
 import '../widgets/paksha_hero_card.dart';
 import '../widgets/responsive_layout.dart';
 import '../core/anim/press_scale.dart';
-import '../core/anim/stagger_entrance.dart';
 import '../widgets/home_widget_card.dart';
 import '../providers/home_widget_provider.dart';
 
@@ -267,12 +266,13 @@ class _HomeBody extends ConsumerWidget {
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
-                      // Launch choreography: shell-level cascade (position
-                      // order, once per element) OUTSIDE each card. It plays
-                      // over the skeletons at launch while each card's own
-                      // skeleton → content fade resolves inside whenever its
-                      // data arrives — so fast cards never wait for slow
-                      // ones, and nothing replays on rebuilds/scrolls.
+                      // No entrance animation here: this is a SliverList, so
+                      // every card that scrolls into view mid-session is a
+                      // fresh mount and would re-run the stagger, putting a
+                      // Timer + opacity layer on the critical path of a fling
+                      // (and delaying the cards' own content fade-ins). Each
+                      // card still cross-fades its own skeleton → content
+                      // internally, which is the feedback that matters.
                       SliverList.builder(
                         itemCount: 6,
                         itemBuilder: (context, index) {
@@ -281,80 +281,62 @@ class _HomeBody extends ConsumerWidget {
                               // Paksha hero (redesign v3 faithful) — above
                               // calendar (top 8px breath comes from the
                               // Column above; 20px breath below).
-                              return const StaggerEntrance(
-                                index: 0,
-                                child: Padding(
-                                  padding: EdgeInsets.only(bottom: 20),
-                                  child: RepaintBoundary(
-                                    child: PakshaHeroCard(),
-                                  ),
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 20),
+                                child: RepaintBoundary(
+                                  child: PakshaHeroCard(),
                                 ),
                               );
                             case 1:
                               // Calendar.
-                              return const StaggerEntrance(
-                                index: 1,
-                                child: Padding(
-                                  padding: EdgeInsets.only(bottom: 16),
-                                  child: RepaintBoundary(
-                                    child: CalendarWidget(),
-                                  ),
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 16),
+                                child: RepaintBoundary(
+                                  child: CalendarWidget(),
                                 ),
                               );
                             case 2:
                               // Event list (uniform 16px gaps; cards carry
                               // no vertical margin; gutter via theme).
-                              return const StaggerEntrance(
-                                index: 2,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    left: AppTheme.homeCardGutter,
-                                    right: AppTheme.homeCardGutter,
-                                    bottom: 16,
-                                  ),
-                                  child: RepaintBoundary(
-                                    child: EventListWidget(),
-                                  ),
+                              return const Padding(
+                                padding: EdgeInsets.only(
+                                  left: AppTheme.homeCardGutter,
+                                  right: AppTheme.homeCardGutter,
+                                  bottom: 16,
+                                ),
+                                child: RepaintBoundary(
+                                  child: EventListWidget(),
                                 ),
                               );
                             case 3:
                               // Daily Shloka.
-                              return const StaggerEntrance(
-                                index: 3,
-                                child: Padding(
-                                  padding: EdgeInsets.only(bottom: 16),
-                                  child: RepaintBoundary(
-                                    child: DailyQuoteWidget(),
-                                  ),
+                              return const Padding(
+                                padding: EdgeInsets.only(bottom: 16),
+                                child: RepaintBoundary(
+                                  child: DailyQuoteWidget(),
                                 ),
                               );
                             case 4:
                               // Featured festival countdown.
-                              return const StaggerEntrance(
-                                index: 4,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    left: AppTheme.homeCardGutter,
-                                    right: AppTheme.homeCardGutter,
-                                    bottom: 16,
-                                  ),
-                                  child: RepaintBoundary(
-                                    child: FestivalCountdownCard(),
-                                  ),
+                              return const Padding(
+                                padding: EdgeInsets.only(
+                                  left: AppTheme.homeCardGutter,
+                                  right: AppTheme.homeCardGutter,
+                                  bottom: 16,
+                                ),
+                                child: RepaintBoundary(
+                                  child: FestivalCountdownCard(),
                                 ),
                               );
                             default:
                               // Home screen widget affordance.
-                              return const StaggerEntrance(
-                                index: 5,
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                    left: AppTheme.homeCardGutter,
-                                    right: AppTheme.homeCardGutter,
-                                  ),
-                                  child: RepaintBoundary(
-                                    child: HomeWidgetCard(showDismiss: true),
-                                  ),
+                              return const Padding(
+                                padding: EdgeInsets.only(
+                                  left: AppTheme.homeCardGutter,
+                                  right: AppTheme.homeCardGutter,
+                                ),
+                                child: RepaintBoundary(
+                                  child: HomeWidgetCard(showDismiss: true),
                                 ),
                               );
                           }
