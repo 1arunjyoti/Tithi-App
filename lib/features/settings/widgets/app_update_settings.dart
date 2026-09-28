@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../core/feedback/app_messages.dart';
 import '../../../providers/app_update_provider.dart';
 import '../../../providers/version_provider.dart';
 import '../../../services/app_update_service.dart';
@@ -585,9 +586,11 @@ Future<void> _reportError(BuildContext context, WidgetRef ref) async {
   if (state.status == AppUpdateStatus.error &&
       state.errorMessage != null &&
       context.mounted) {
-    ScaffoldMessenger.of(
+    showAppMessage(
       context,
-    ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+      state.errorMessage!,
+      kind: AppMessageKind.error,
+    );
   }
 }
 
@@ -596,12 +599,10 @@ Future<void> _reportUpToDate(BuildContext context, WidgetRef ref) async {
   final l10n = AppLocalizations.of(context);
   final state = ref.read(appUpdateProvider);
   if (state.status == AppUpdateStatus.upToDate) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          l10n?.youHaveLatestVersion ?? 'You have the latest version',
-        ),
-      ),
+    showAppMessage(
+      context,
+      l10n?.youHaveLatestVersion ?? 'You have the latest version',
+      kind: AppMessageKind.success,
     );
   }
 }

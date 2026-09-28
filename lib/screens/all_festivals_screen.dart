@@ -14,6 +14,8 @@ import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/event_detail_sheet.dart';
 import '../widgets/festival_row_tile.dart';
+import '../core/anim/stagger_entrance.dart';
+import '../core/navigation/haptic_back_button.dart';
 import '../core/async/keep_alive.dart';
 import '../core/format/date_only.dart';
 import '../features/countdown/domain/target_resolution.dart';
@@ -162,6 +164,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HapticBackButton(),
         title: Text(l10n?.allFestivals ?? 'All Festivals'),
         backgroundColor: Colors.transparent,
       ),
@@ -306,13 +310,20 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         final daysAway = item.date?.difference(today).inDays;
         // Stable key keeps element diffing O(1) on filter changes;
         // RepaintBoundary confines each row's repaint during fast scrolls.
-        return RepaintBoundary(
-          child: FestivalRowTile(
-            key: ValueKey(item.festival.id),
-            festival: item.festival,
-            date: item.date,
-            daysAway: daysAway,
-            onTap: () => _showDetails(context, item.festival),
+        // StaggerEntrance is position-matched (no key): filter reorder
+        // reuses states and shows instantly; only fresh mounts animate.
+        // Transform-only, so the post-frame jumpTo target never shifts.
+        return StaggerEntrance(
+          index: index,
+          maxStaggered: 10,
+          child: RepaintBoundary(
+            child: FestivalRowTile(
+              key: ValueKey(item.festival.id),
+              festival: item.festival,
+              date: item.date,
+              daysAway: daysAway,
+              onTap: () => _showDetails(context, item.festival),
+            ),
           ),
         );
       },

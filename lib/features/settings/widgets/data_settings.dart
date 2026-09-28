@@ -15,6 +15,7 @@ import '../../../providers/storage_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/feedback/app_messages.dart';
 import '../../../providers/accessibility_provider.dart';
 import '../../../services/festival_export_service.dart';
 import '../../../services/share_file/share_file.dart';
@@ -30,15 +31,13 @@ class ClearCacheSetting extends ConsumerWidget {
       icon: Icons.cleaning_services_rounded,
       title: l10n?.clearLocationCache ?? 'Clear Location Cache',
       onTap: () async {
-        final scaffold = ScaffoldMessenger.of(context);
         await ref.read(locationServiceProvider).clearCache();
         ref.invalidate(currentLocationProvider);
-        scaffold.showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.locationCacheCleared ?? 'Location cache cleared',
-            ),
-          ),
+        if (!context.mounted) return;
+        showAppMessage(
+          context,
+          l10n?.locationCacheCleared ?? 'Location cache cleared',
+          kind: AppMessageKind.success,
         );
       },
     );
@@ -90,7 +89,6 @@ class ExportFestivalsSetting extends ConsumerWidget {
     int year,
   ) async {
     final l10n = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
 
     try {
       await ref.read(festivalInitProvider.future);
@@ -100,8 +98,11 @@ class ExportFestivalsSetting extends ConsumerWidget {
       }
       final festivals = ref.read(festivalProvider);
       if (festivals.isEmpty) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n?.noFestivalsToExport ?? 'No festivals to export')),
+        if (!context.mounted) return;
+        showAppMessage(
+          context,
+          l10n?.noFestivalsToExport ?? 'No festivals to export',
+          kind: AppMessageKind.error,
         );
         return;
       }
@@ -172,8 +173,10 @@ class ExportFestivalsSetting extends ConsumerWidget {
       }
 
       if (json == null) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n?.exportCancelled ?? 'Export cancelled')),
+        if (!context.mounted) return;
+        showAppMessage(
+          context,
+          l10n?.exportCancelled ?? 'Export cancelled',
         );
         return;
       }
@@ -209,24 +212,30 @@ class ExportFestivalsSetting extends ConsumerWidget {
       if (!context.mounted) return;
 
       if (savedPath == null && kIsWeb && !pickerFailed) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n?.downloadStarted ?? 'Download started')),
+        showAppMessage(
+          context,
+          l10n?.downloadStarted ?? 'Download started',
+          kind: AppMessageKind.success,
         );
         return;
       }
 
       if (savedPath == null && !pickerFailed) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n?.exportCancelled ?? 'Export cancelled')),
+        showAppMessage(
+          context,
+          l10n?.exportCancelled ?? 'Export cancelled',
         );
         return;
       }
 
       // Picker unavailable: persist in app-private documents instead.
       savedPath ??= await saveTextToDocuments(json, filename);
-      if (savedPath == null || !context.mounted) {
-        messenger.showSnackBar(
-          SnackBar(content: Text(l10n?.couldNotSaveExportFile ?? 'Could not save export file')),
+      if (!context.mounted) return;
+      if (savedPath == null) {
+        showAppMessage(
+          context,
+          l10n?.couldNotSaveExportFile ?? 'Could not save export file',
+          kind: AppMessageKind.error,
         );
         return;
       }
@@ -287,9 +296,13 @@ class ExportFestivalsSetting extends ConsumerWidget {
       );
     } catch (e) {
       debugPrint('Festival export failed: $e');
-      messenger.showSnackBar(
-        SnackBar(content: Text(l10n?.exportFailed(e.toString()) ?? 'Export failed: $e')),
-      );
+      if (context.mounted) {
+        showAppMessage(
+          context,
+          l10n?.exportFailed(e.toString()) ?? 'Export failed: $e',
+          kind: AppMessageKind.error,
+        );
+      }
     }
   }
 }
@@ -365,13 +378,10 @@ class ResetSettingsTile extends ConsumerWidget {
           ));
 
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  l10n?.appResetComplete ?? 'App reset complete',
-                  textScaler: MediaQuery.of(context).textScaler,
-                ),
-              ),
+            showAppMessage(
+              context,
+              l10n?.appResetComplete ?? 'App reset complete',
+              kind: AppMessageKind.success,
             );
           }
         }

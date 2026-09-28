@@ -229,17 +229,25 @@ class _HeroBody extends ConsumerWidget {
     // Tappable card done properly: button semantics for screen readers,
     // trailing chevron as the visual cue, and a Material ripple clipped to
     // the card shape (Ink paints the gradient so the splash shows above it).
+    //
+    // Two-layer shape discipline, because a transparent Material never clipped
+    // its children: the outer Container carries the drop shadow and stays
+    // unclipped so the glow can bleed past the corners, while the Material
+    // below clips (antiAlias) so the gradient, border, glow backdrop and
+    // ripple can never square off outside the 24px radius.
     return Semantics(
       button: true,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
+        decoration: highContrast ? null : AppTheme.heroOuterGlow(context),
         child: Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
+          clipBehavior: Clip.antiAlias,
           child: Ink(
             decoration: highContrast
                 ? AppTheme.glassmorphism(context: context, ref: ref)
-                : AppTheme.heroDecoration(context),
+                : AppTheme.heroDecoration(context, includeShadow: false),
             child: InkWell(
               borderRadius: BorderRadius.circular(24),
               onTap: () {
@@ -254,7 +262,15 @@ class _HeroBody extends ConsumerWidget {
                   builder: (context) => TithiDetailSheet(panchang: panchang),
                 );
               },
-              child: Stack(
+              child: ClipRRect(
+                // Material defaults to Clip.none, so nothing bounded the
+                // card's children to the rounded shape: the glow backdrop
+                // and any ripple could square off past the corners. Clips
+                // only the content subtree — the gradient + drop shadow
+                // live on Ink's decoration, above this, so they keep their
+                // soft outer edge.
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
                 children: [
                   if (!highContrast)
                     Positioned.fill(
@@ -325,6 +341,7 @@ class _HeroBody extends ConsumerWidget {
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ),

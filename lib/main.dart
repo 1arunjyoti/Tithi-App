@@ -11,6 +11,7 @@ import 'l10n/fallback_localization_delegates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:jyotish/jyotish.dart';
 import 'app/bootstrap.dart';
+import 'core/feedback/app_messages.dart';
 import 'core/storage/hive_adapters.dart';
 import 'providers/location_provider.dart';
 import 'providers/panchang_provider.dart';
@@ -396,13 +397,11 @@ class _LocationPermissionWrapperState
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.pleaseEnableLocationServices ??
-                  'Please enable location services on your device',
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.pleaseEnableLocationServices ??
+              'Please enable location services on your device',
+          kind: AppMessageKind.error,
         );
       }
       await locationService.setLocationEnabled(false);
@@ -419,13 +418,11 @@ class _LocationPermissionWrapperState
         permission == LocationPermission.deniedForever) {
       await locationService.setLocationEnabled(false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.locationPermissionDenied ??
-                  'Location permission denied. Using default location.',
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.locationPermissionDenied ??
+              'Location permission denied. Using default location.',
+          kind: AppMessageKind.error,
         );
       }
     } else {
@@ -433,15 +430,10 @@ class _LocationPermissionWrapperState
       // Trigger location fetch
       ref.invalidate(currentLocationProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
-            ),
-            backgroundColor: AppTheme.success(
-              Theme.of(context).brightness == Brightness.dark,
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
+          kind: AppMessageKind.success,
         );
       }
     }

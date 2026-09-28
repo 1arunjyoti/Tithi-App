@@ -414,8 +414,15 @@ class AppTheme {
   /// the creamy scaffold; Krishna gets a faint light hairline so the dark
   /// plum card stays defined on the dark void; PureDark keeps its flat
   /// bordered card.
-  static BoxDecoration heroDecoration(BuildContext context) {
-    final glow = heroGlow(context);
+  ///
+  /// Pass `includeShadow: false` when the card is clipped (e.g. the hero's
+  /// `Material(clipBehavior: Clip.antiAlias)`) — a `boxShadow` painted inside
+  /// a clip is cut off at the clip edge, so the outer glow belongs on a
+  /// separate unclipped layer. See [heroOuterGlow].
+  static BoxDecoration heroDecoration(
+    BuildContext context, {
+    bool includeShadow = true,
+  }) {
     final gradient = heroGradient(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPureDark = isPureDarkTheme(context);
@@ -431,12 +438,32 @@ class AppTheme {
           : !isDark
           ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      boxShadow: includeShadow
+          ? [
+              // Centered (no offset) to match [glassmorphism], which every
+              // other home card uses — an offset here read as a directional
+              // drop shadow and made the hero look detached from its siblings.
+              BoxShadow(
+                color: heroGlow(context),
+                blurRadius: isDark && !isPureDark ? 16 : 20,
+              ),
+            ]
+          : null,
+    );
+  }
+
+  /// The hero card's drop shadow as a standalone layer: same radius, no
+  /// fill, no border. Wrap the clipped card in this so the glow still bleeds
+  /// past the corners while every painted pixel inside stays rounded.
+  static BoxDecoration heroOuterGlow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isPureDark = isPureDarkTheme(context);
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
       boxShadow: [
-        // Softened so less color flows outside the card's bottom edge.
         BoxShadow(
-          color: glow,
+          color: heroGlow(context),
           blurRadius: isDark && !isPureDark ? 16 : 20,
-          offset: const Offset(0, 6),
         ),
       ],
     );

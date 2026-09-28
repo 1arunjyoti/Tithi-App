@@ -16,6 +16,7 @@ import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
+import '../core/anim/press_scale.dart';
 import '../features/calendar/data/calendar_caches.dart';
 import '../features/calendar/data/calendar_models.dart';
 import '../features/calendar/domain/month_navigation.dart';
@@ -667,11 +668,8 @@ class CalendarWidget extends ConsumerWidget {
                               selectedDayPredicate: (day) =>
                                   isSameDay(day, selectedDate),
                               onDaySelected: (selected, focused) {
-                                if (ref
-                                    .read(accessibilityProvider)
-                                    .hapticFeedback) {
-                                  HapticFeedback.lightImpact();
-                                }
+                                // Haptic + press scale owned by PressScale
+                                // inside _CalendarCell (no double-buzz).
                                 ref
                                     .read(cp.selectedDateProvider.notifier)
                                     .setDate(selected);
@@ -970,9 +968,8 @@ class CalendarWidget extends ConsumerWidget {
                 // target area and response as the Gregorian calendar.
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  if (ref.read(accessibilityProvider).hapticFeedback) {
-                    HapticFeedback.lightImpact();
-                  }
+                  // Haptic + press scale owned by PressScale inside
+                  // _CalendarCell (no double-buzz).
                   ref.read(cp.selectedDateProvider.notifier).setDate(date);
                   // Active tile tap: narrows the secondary header to this
                   // date's single month with the year.
@@ -2152,41 +2149,50 @@ class _CalendarCell extends StatelessWidget {
     // selected tile's 1.08 scale (~2px overflow on a ~50px cell) just fills
     // its own gutter instead of covering the neighbor's today-ring. The
     // weekend stripe shows through the gutters, as in the spec grid.
-    return Container(
-      margin: const EdgeInsets.all(2),
-      decoration: decoration,
-      transform: transform,
-      transformAlignment: Alignment.center,
-      // NOTE: no clipBehavior here — Container asserts
-      // (decoration != null || clipBehavior == Clip.none), and plain day
-      // tiles have no decoration. The children (centered number + corner
-      // label) never reach the rounded corners, so no clip is needed.
-      child: Stack(
-        children: [
-          Center(
-            child: Text(
-              resolvedPrimary,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 14,
-                fontWeight: weight,
-              ),
-            ),
-          ),
-          if (secondaryText != null)
-            Positioned(
-              top: 4,
-              left: 6,
+    // Press-down microinteraction + gated haptic live in PressScale, shared
+    // by the Gregorian builders and the adaptive grid (single wrap point).
+    // Callers' onTap/onDaySelected must NOT buzz separately (double-buzz).
+    // The fill matters here: most tiles are transparent, so scale alone
+    // wouldn't read as a hit — the tint briefly reveals the tap target.
+    return PressScale(
+      highlightColor: scheme.primary.withValues(alpha: 0.12),
+      highlightRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.all(2),
+        decoration: decoration,
+        transform: transform,
+        transformAlignment: Alignment.center,
+        // NOTE: no clipBehavior here — Container asserts
+        // (decoration != null || clipBehavior == Clip.none), and plain day
+        // tiles have no decoration. The children (centered number + corner
+        // label) never reach the rounded corners, so no clip is needed.
+        child: Stack(
+          children: [
+            Center(
               child: Text(
-                localizeDigits(secondaryText!, locale),
+                resolvedPrimary,
                 style: TextStyle(
-                  color: secondaryColor,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
+                  color: textColor,
+                  fontSize: 14,
+                  fontWeight: weight,
                 ),
               ),
             ),
-        ],
+            if (secondaryText != null)
+              Positioned(
+                top: 4,
+                left: 6,
+                child: Text(
+                  localizeDigits(secondaryText!, locale),
+                  style: TextStyle(
+                    color: secondaryColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
