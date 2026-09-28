@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
+import '../core/anim/press_scale.dart';
 import '../theme/app_theme.dart';
 
 class PrivacyPolicyScreen extends ConsumerWidget {
@@ -15,16 +16,18 @@ class PrivacyPolicyScreen extends ConsumerWidget {
         title: Text(l10n?.privacyPolicy ?? 'Privacy Policy'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: context.colors.surface.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+        leading: PressScale(
+          child: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: context.colors.surface.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back_rounded),
             ),
-            child: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.pop(context),
           ),
-          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Stack(

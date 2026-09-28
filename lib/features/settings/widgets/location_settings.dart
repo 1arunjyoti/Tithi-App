@@ -5,6 +5,8 @@ import '../../../providers/location_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../../../screens/location_picker_screen.dart';
+import '../../../core/feedback/app_messages.dart';
+import '../../../core/navigation/app_routes.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class LocationSettingsSection extends ConsumerWidget {
@@ -83,13 +85,11 @@ class LocationSettingsSection extends ConsumerWidget {
                       permission == LocationPermission.deniedForever) {
                     // Permission still denied, don't enable
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            l10n?.locationPermissionDenied ??
-                                'Location permission denied.',
-                          ),
-                        ),
+                      showAppMessage(
+                        context,
+                        l10n?.locationPermissionDenied ??
+                            'Location permission denied.',
+                        kind: AppMessageKind.error,
                       );
                     }
                     return;
@@ -131,10 +131,8 @@ class HomeLocationSetting extends ConsumerWidget {
         ),
       ),
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const LocationPickerScreen()),
-        );
+        // Hierarchical drill: settings row → map picker.
+        AppRoutes.pushSharedX(context, const LocationPickerScreen());
       },
     );
   }

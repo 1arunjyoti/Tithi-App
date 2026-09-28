@@ -9,6 +9,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/shloka.dart';
+import '../../../core/anim/press_scale.dart';
+import '../../../core/feedback/app_messages.dart';
 import '../../../services/share_file/share_file.dart';
 import '../../../theme/app_theme.dart';
 import '../providers/quote_providers.dart';
@@ -188,9 +190,11 @@ Future<void> shareWisdomAsImage(
     );
   } catch (_) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
+    showAppMessage(
       context,
-    ).showSnackBar(SnackBar(content: Text(l10n?.couldNotCreateImage ?? 'Could not create image')));
+      l10n?.couldNotCreateImage ?? 'Could not create image',
+      kind: AppMessageKind.error,
+    );
   }
 }
 
@@ -334,12 +338,20 @@ void _showShareOptions(
                   copyError = l10n?.couldNotCopyVerse ?? 'Could not copy verse';
                 }
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(copyError ?? (l10n?.verseCopied ?? 'Verse copied')),
+                  if (copyError != null) {
+                    showAppMessage(
+                      context,
+                      copyError,
+                      kind: AppMessageKind.error,
+                    );
+                  } else {
+                    showAppMessage(
+                      context,
+                      l10n?.verseCopied ?? 'Verse copied',
+                      kind: AppMessageKind.success,
                       duration: const Duration(seconds: 2),
-                    ),
-                  );
+                    );
+                  }
                 }
               },
             ),
@@ -369,14 +381,16 @@ class _ShareOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = AppTheme.festivalAccent(context);
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: Ink(
-        decoration: AppTheme.festivalRowDecoration(context),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
+    // Gated press haptic + scale live in PressScale (Stateless-safe).
+    return PressScale(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: Ink(
+          decoration: AppTheme.festivalRowDecoration(context),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -428,6 +442,7 @@ class _ShareOption extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -443,8 +458,10 @@ class DailyQuoteWidget extends ConsumerWidget {
     final hindiFirst = Localizations.localeOf(context).languageCode == 'hi';
 
     // Hero-card pattern: size glides from a pinned top edge (first launch,
-    // day browse, expand/collapse) while verse swaps fade in with no
-    // stacking, so rapid taps settle calmly instead of snapping.
+    // day browse, expand/collapse). The outer switcher only reacts to
+    // empty ↔ verse transitions (first load): day browsing is handled by
+    // the INNER content switcher in _buildCard, so the glass shell and the
+    // control bar stay mounted and never blink.
     return AnimatedSize(
       alignment: Alignment.topCenter,
       duration: AppTheme.animationDuration(
@@ -460,14 +477,7 @@ class DailyQuoteWidget extends ConsumerWidget {
         transitionBuilder: (child, animation) =>
             FadeTransition(opacity: animation, child: child),
         layoutBuilder: (currentChild, _) => currentChild!,
-        child: KeyedSubtree(
-          key: ValueKey(
-            shlokaAsync.valueOrNull == null
-                ? 'empty'
-                : 'wisdom-${shlokaAsync.valueOrNull!.shloka.id}-'
-                      '${shlokaAsync.valueOrNull!.dayOffset}',
-          ),
-          child: shlokaAsync.when(
+        child: shlokaAsync.when(
             data: (wisdom) {
               if (wisdom == null) return const SizedBox.shrink();
               return _buildCard(
@@ -505,8 +515,7 @@ class DailyQuoteWidget extends ConsumerWidget {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildCard(
@@ -555,14 +564,42 @@ class DailyQuoteWidget extends ConsumerWidget {
     }
 
     return Container(
-      key: ValueKey('daily-quote-${shloka.id}-${wisdom.dayOffset}'),
-      // Shared home gutter (matches CalendarWidget exactly).
+      // Shared home gutter (matches CalendarWidget exactly). No key: the
+      // shell stays mounted across day browse; only the content below swaps.
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
       decoration: AppTheme.glassmorphism(context: context, ref: ref),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _WisdomHeader(
+          // Verse content cross-dissolves per day while the glass shell and
+          // the control bar below stay put — so prev/next never blinks the
+          // chrome. Default stacking (both verses briefly co-exist) reads
+          // as a dissolve; the outer AnimatedSize glides any height delta.
+          // Top-aligned stack (not the default center): a shorter incoming
+          // verse must grow from the pinned header downward, never float
+          // mid-card and snap back when the transition ends.
+          AnimatedSwitcher(
+            duration: AppTheme.animationDuration(
+              context,
+              const Duration(milliseconds: 200),
+            ),
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
+            layoutBuilder: (currentChild, previousChildren) => Stack(
+              alignment: Alignment.topCenter,
+              children: <Widget>[
+                ...previousChildren,
+                ?currentChild,
+              ],
+            ),
+            child: KeyedSubtree(
+              key: ValueKey(
+                'wisdom-content-${shloka.id}-${wisdom.dayOffset}',
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _WisdomHeader(
             dayLabel: dayLabel,
             showTodayReset: offset != 0,
             onJumpToToday: jumpToToday,
@@ -658,8 +695,12 @@ class DailyQuoteWidget extends ConsumerWidget {
                 // Source attribution (always visible)
                 const SizedBox(height: 12),
                 _SourceLine(source: shloka.source),
-              ],
+                ],
+              ),
             ),
+          ],
+          ),
+          ),
           ),
 
           // Bottom control bar: browse days + expand toggle.
@@ -754,37 +795,42 @@ class _WisdomHeader extends StatelessWidget {
             ),
           ),
           if (showTodayReset) ...[
-            FilledButton(
-              onPressed: onJumpToToday,
-              style: FilledButton.styleFrom(
-                backgroundColor: accent,
-                // Shared helper: white-on-deep-gold (light),
-                // near-black-on-gold (dark), onPrimary in high contrast.
-                foregroundColor: AppTheme.onFestivalAccent(context),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                minimumSize: const Size(0, 32),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                textStyle: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+            // Gated press haptic + scale live in PressScale.
+            PressScale(
+              child: FilledButton(
+                onPressed: onJumpToToday,
+                style: FilledButton.styleFrom(
+                  backgroundColor: accent,
+                  // Shared helper: white-on-deep-gold (light),
+                  // near-black-on-gold (dark), onPrimary in high contrast.
+                  foregroundColor: AppTheme.onFestivalAccent(context),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
+                child: Text(l10n?.today ?? 'Today'),
               ),
-              child: Text(l10n?.today ?? 'Today'),
             ),
             const SizedBox(width: 8),
           ],
-          IconButton(
-            onPressed: onShare,
-            tooltip: l10n?.share ?? 'Share',
-            icon: const Icon(Icons.share_rounded, size: 18),
-            color: context.colors.onSurface.withValues(
-              alpha: AppTheme.contrastAlpha(context, 0.7),
-            ),
-            style: IconButton.styleFrom(
-              backgroundColor: accent.withValues(alpha: 0.1),
-              minimumSize: const Size(36, 36),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          PressScale(
+            child: IconButton(
+              onPressed: onShare,
+              tooltip: l10n?.share ?? 'Share',
+              icon: const Icon(Icons.share_rounded, size: 18),
+              color: context.colors.onSurface.withValues(
+                alpha: AppTheme.contrastAlpha(context, 0.7),
+              ),
+              style: IconButton.styleFrom(
+                backgroundColor: accent.withValues(alpha: 0.1),
+                minimumSize: const Size(36, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ),
         ],
@@ -883,18 +929,20 @@ class _TranslationPanel extends StatelessWidget {
               ),
               const SizedBox(height: 4),
             ],
-            TextButton(
-              onPressed: onToggleShowAll,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-              ),
-              child: Text(
-                showAll
-                    ? (l10n?.showLess ?? 'Show less')
-                    : (l10n?.showMoreTranslations ?? 'Show more translations'),
+            PressScale(
+              child: TextButton(
+                onPressed: onToggleShowAll,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  visualDensity: VisualDensity.compact,
+                ),
+                child: Text(
+                  showAll
+                      ? (l10n?.showLess ?? 'Show less')
+                      : (l10n?.showMoreTranslations ?? 'Show more translations'),
+                ),
               ),
             ),
           ],
@@ -986,49 +1034,59 @@ class _ControlBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left_rounded),
-            tooltip: l10n?.previousDaysVerse ?? "Previous day's verse",
-            onPressed: atPastBound ? null : onPrevious,
-            color: accent.withValues(alpha: atPastBound ? 0.25 : 0.75),
-            style: IconButton.styleFrom(
-              minimumSize: const Size(44, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-          ),
-          TextButton.icon(
-            onPressed: onToggleExpanded,
-            icon: Icon(
-              isExpanded
-                  ? Icons.keyboard_arrow_up_rounded
-                  : Icons.keyboard_arrow_down_rounded,
-              color: accent,
-              size: 20,
-            ),
-            label: Text(
-              isExpanded
-                  ? (l10n?.hideTranslation ?? 'Hide translation')
-                  : (l10n?.showTranslation ?? 'Show translation'),
-              style: context.textTheme.labelLarge?.copyWith(
-                color: accent,
-                fontWeight: FontWeight.w700,
+          // Disabled chevrons report enabled: false so PressScale stays
+          // quiet (no haptic/scale on a dead button).
+          PressScale(
+            enabled: !atPastBound,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_left_rounded),
+              tooltip: l10n?.previousDaysVerse ?? "Previous day's verse",
+              onPressed: atPastBound ? null : onPrevious,
+              color: accent.withValues(alpha: atPastBound ? 0.25 : 0.75),
+              style: IconButton.styleFrom(
+                minimumSize: const Size(44, 40),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              minimumSize: const Size(0, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              visualDensity: VisualDensity.compact,
+          ),
+          PressScale(
+            child: TextButton.icon(
+              onPressed: onToggleExpanded,
+              icon: Icon(
+                isExpanded
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                color: accent,
+                size: 20,
+              ),
+              label: Text(
+                isExpanded
+                    ? (l10n?.hideTranslation ?? 'Hide translation')
+                    : (l10n?.showTranslation ?? 'Show translation'),
+                style: context.textTheme.labelLarge?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                minimumSize: const Size(0, 40),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right_rounded),
-            tooltip: l10n?.nextDaysVerse ?? "Next day's verse",
-            onPressed: atToday ? null : onNext,
-            color: accent.withValues(alpha: atToday ? 0.25 : 0.75),
-            style: IconButton.styleFrom(
-              minimumSize: const Size(44, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          PressScale(
+            enabled: !atToday,
+            child: IconButton(
+              icon: const Icon(Icons.chevron_right_rounded),
+              tooltip: l10n?.nextDaysVerse ?? "Next day's verse",
+              onPressed: atToday ? null : onNext,
+              color: accent.withValues(alpha: atToday ? 0.25 : 0.75),
+              style: IconButton.styleFrom(
+                minimumSize: const Size(44, 40),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ),
         ],

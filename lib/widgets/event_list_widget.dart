@@ -8,6 +8,8 @@ import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_provider.dart';
 import '../screens/all_festivals_screen.dart';
+import '../core/anim/stagger_entrance.dart';
+import '../core/navigation/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../features/event_list/providers/event_providers.dart';
 import 'event_detail_sheet.dart';
@@ -112,16 +114,21 @@ class EventListWidget extends ConsumerWidget {
       children: [
         for (var i = 0; i < shown.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
-          FestivalRowTile(
-            festival: shown[i].festival,
-            date: shown[i].date,
-            panchang: shown[i].panchang,
-            daysAway: shown[i].daysAway,
-            onTap: () => _showFestivalDetail(
-              context,
-              ref,
-              shown[i].festival,
-              shown[i].panchang,
+          // One-shot stagger: entrance only on first mount; date-tap
+          // rebuilds reuse positions and show instantly (see StaggerEntrance).
+          StaggerEntrance(
+            index: i,
+            child: FestivalRowTile(
+              festival: shown[i].festival,
+              date: shown[i].date,
+              panchang: shown[i].panchang,
+              daysAway: shown[i].daysAway,
+              onTap: () => _showFestivalDetail(
+                context,
+                ref,
+                shown[i].festival,
+                shown[i].panchang,
+              ),
             ),
           ),
         ],
@@ -207,9 +214,9 @@ class _ViewAllButton extends ConsumerWidget {
             if (ref.read(accessibilityProvider).hapticFeedback) {
               HapticFeedback.lightImpact();
             }
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AllFestivalsScreen()),
-            );
+            // Fade through (not shared-X slide): the pop back to home
+            // fades instead of sliding out over the home card.
+            AppRoutes.pushFadeThrough(context, const AllFestivalsScreen());
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),

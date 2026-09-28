@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../providers/notification_provider.dart';
+import '../../../core/feedback/app_messages.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../../../services/notification_service.dart' show FestivalReminderTiming;
@@ -35,18 +36,16 @@ class NotificationSettings extends ConsumerWidget {
               final granted = await notificationService.requestPermission();
               if (!granted) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n?.notificationPermissionDenied ??
-                            'Notification permission denied. Please enable it in system settings.',
-                      ),
-                      action: SnackBarAction(
-                        label: l10n?.openSettings ?? 'Open Settings',
-                        onPressed: () {
-                          Geolocator.openAppSettings();
-                        },
-                      ),
+                  showAppMessage(
+                    context,
+                    l10n?.notificationPermissionDenied ??
+                        'Notification permission denied. Please enable it in system settings.',
+                    kind: AppMessageKind.error,
+                    action: SnackBarAction(
+                      label: l10n?.openSettings ?? 'Open Settings',
+                      onPressed: () {
+                        Geolocator.openAppSettings();
+                      },
                     ),
                   );
                 }
@@ -63,23 +62,21 @@ class NotificationSettings extends ConsumerWidget {
               // Revert so the switch reflects the real (unchanged) state.
               ref.read(notificationEnabledProvider.notifier).setEnabled(!val);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n?.notificationToggleFailed(val ? 'on' : 'off', e.toString()) ??
-                          'Could not turn notifications ${val ? 'on' : 'off'} ($e). Please try again.',
-                    ),
-                    // Enable failures are commonly the OS-level gate
-                    // (_assertSystemNotificationsAllowed), so offer the fix.
-                    action: val
-                        ? SnackBarAction(
-                            label: l10n?.openSettings ?? 'Open Settings',
-                            onPressed: () {
-                              Geolocator.openAppSettings();
-                            },
-                          )
-                        : null,
-                  ),
+                showAppMessage(
+                  context,
+                  l10n?.notificationToggleFailed(val ? 'on' : 'off', e.toString()) ??
+                      'Could not turn notifications ${val ? 'on' : 'off'} ($e). Please try again.',
+                  kind: AppMessageKind.error,
+                  // Enable failures are commonly the OS-level gate
+                  // (_assertSystemNotificationsAllowed), so offer the fix.
+                  action: val
+                      ? SnackBarAction(
+                          label: l10n?.openSettings ?? 'Open Settings',
+                          onPressed: () {
+                            Geolocator.openAppSettings();
+                          },
+                        )
+                      : null,
                 );
               }
             } finally {
@@ -100,13 +97,11 @@ class NotificationSettings extends ConsumerWidget {
               final granted = await notificationService.requestPermission();
               if (!granted) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n?.notificationPermissionDenied ??
-                            'Notification permission denied. Please enable it in system settings.',
-                      ),
-                    ),
+                  showAppMessage(
+                    context,
+                    l10n?.notificationPermissionDenied ??
+                        'Notification permission denied. Please enable it in system settings.',
+                    kind: AppMessageKind.error,
                   );
                 }
                 return;
@@ -123,13 +118,11 @@ class NotificationSettings extends ConsumerWidget {
                   .read(shlokaNotificationEnabledProvider.notifier)
                   .setEnabled(!val);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n?.dailyShlokaToggleFailed(val ? 'on' : 'off', e.toString()) ??
-                          'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
-                    ),
-                  ),
+                showAppMessage(
+                  context,
+                  l10n?.dailyShlokaToggleFailed(val ? 'on' : 'off', e.toString()) ??
+                      'Could not turn Daily Shloka ${val ? 'on' : 'off'} ($e). Please try again.',
+                  kind: AppMessageKind.error,
                 );
               }
             } finally {
@@ -151,13 +144,11 @@ class NotificationSettings extends ConsumerWidget {
               final granted = await notificationService.requestPermission();
               if (!granted) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        l10n?.notificationPermissionDenied ??
-                            'Notification permission denied. Please enable it in system settings.',
-                      ),
-                    ),
+                  showAppMessage(
+                    context,
+                    l10n?.notificationPermissionDenied ??
+                        'Notification permission denied. Please enable it in system settings.',
+                    kind: AppMessageKind.error,
                   );
                 }
                 return;
@@ -174,13 +165,11 @@ class NotificationSettings extends ConsumerWidget {
                   .read(festivalNotificationEnabledProvider.notifier)
                   .setEnabled(!val);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n?.festivalRemindersToggleFailed(val ? 'on' : 'off', e.toString()) ??
-                          'Could not turn Festival Reminders ${val ? 'on' : 'off'} ($e). Please try again.',
-                    ),
-                  ),
+                showAppMessage(
+                  context,
+                  l10n?.festivalRemindersToggleFailed(val ? 'on' : 'off', e.toString()) ??
+                      'Could not turn Festival Reminders ${val ? 'on' : 'off'} ($e). Please try again.',
+                  kind: AppMessageKind.error,
                 );
               }
             } finally {
@@ -258,13 +247,11 @@ class NotificationSettings extends ConsumerWidget {
                 } catch (e) {
                   debugPrint('Failed to set notification time: $e');
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          l10n?.notificationTimeUpdateFailed(e.toString()) ??
-                              'Could not update notification time ($e). Please try again.',
-                        ),
-                      ),
+                    showAppMessage(
+                      context,
+                      l10n?.notificationTimeUpdateFailed(e.toString()) ??
+                          'Could not update notification time ($e). Please try again.',
+                      kind: AppMessageKind.error,
                     );
                   }
                 } finally {
@@ -312,13 +299,11 @@ class NotificationSettings extends ConsumerWidget {
               debugPrint('Failed to set festival timing: $e');
               ref.read(festivalTimingProvider.notifier).setTiming(current);
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      l10n?.reminderTimeUpdateFailed(e.toString()) ??
-                          'Could not update reminder time ($e). Please try again.',
-                    ),
-                  ),
+                showAppMessage(
+                  context,
+                  l10n?.reminderTimeUpdateFailed(e.toString()) ??
+                      'Could not update reminder time ($e). Please try again.',
+                  kind: AppMessageKind.error,
                 );
               }
             } finally {

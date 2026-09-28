@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../core/anim/press_scale.dart';
 import '../../../models/eclipse.dart';
 import '../../../theme/app_theme.dart';
 import 'eclipse_details_sheet.dart';
@@ -35,9 +36,13 @@ class EclipseCard extends ConsumerWidget {
         ),
         child: Material(
         color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () => showEclipseDetailsSheet(context, eclipse),
+        // Haptic only: pressedScale 1.0 disables the dip while keeping
+        // the gated buzz (cards already stagger in; scale felt noisy).
+        child: PressScale(
+          pressedScale: 1.0,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => showEclipseDetailsSheet(context, eclipse),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -173,8 +178,9 @@ class EclipseCard extends ConsumerWidget {
             ),
           ),
         ),
+        ),
       ),
-    ),
-  );
+      ),
+    );
 }
 }

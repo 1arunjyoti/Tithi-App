@@ -11,6 +11,7 @@ import 'l10n/fallback_localization_delegates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:jyotish/jyotish.dart';
 import 'app/bootstrap.dart';
+import 'core/feedback/app_messages.dart';
 import 'core/storage/hive_adapters.dart';
 import 'providers/location_provider.dart';
 import 'providers/panchang_provider.dart';
@@ -301,11 +302,25 @@ class _LocationPermissionWrapperState
         }
       }
     } finally {
-      // Unblock background festival seeding now that the location decision
-      // is final (granted → device coordinates; denied/skipped/failed →
-      // default location). Runs on every path — including later launches,
-      // where it completes immediately — so seeding can never deadlock.
-      // Guarded: the wrapper outlives the flow, but never crash teardown.
+      // Wait for the device-location lookup to settle before unblocking
+      // background festival seeding. The granted path only invalidates
+      // `currentLocationProvider` without awaiting it, so without this the
+      // gate completes while `resolvedCoordinatesProvider` still holds the
+      // Delhi fallback — the month batch then computes once with fallback
+      // coordinates and again when GPS finishes. Awaiting here (with a
+      // timeout fallback) ensures seeding computes once with final
+      // coordinates (granted → device; denied/skipped/failed → default).
+      // Runs on every path — including later launches, where it completes
+      // immediately — so seeding can never deadlock. Guarded: the wrapper
+      // outlives the flow, but never crash teardown.
+      try {
+        await ref
+            .read(currentLocationProvider.future)
+            .timeout(const Duration(seconds: 10));
+      } catch (_) {
+        // GPS unavailable/timed out: fallback coordinates apply and
+        // seeding still proceeds.
+      }
       try {
         final gate = ref.read(locationPermissionGateProvider);
         if (!gate.isCompleted) gate.complete();
@@ -382,13 +397,11 @@ class _LocationPermissionWrapperState
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.pleaseEnableLocationServices ??
-                  'Please enable location services on your device',
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.pleaseEnableLocationServices ??
+              'Please enable location services on your device',
+          kind: AppMessageKind.error,
         );
       }
       await locationService.setLocationEnabled(false);
@@ -405,13 +418,11 @@ class _LocationPermissionWrapperState
         permission == LocationPermission.deniedForever) {
       await locationService.setLocationEnabled(false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.locationPermissionDenied ??
-                  'Location permission denied. Using default location.',
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.locationPermissionDenied ??
+              'Location permission denied. Using default location.',
+          kind: AppMessageKind.error,
         );
       }
     } else {
@@ -419,15 +430,10 @@ class _LocationPermissionWrapperState
       // Trigger location fetch
       ref.invalidate(currentLocationProvider);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
-            ),
-            backgroundColor: AppTheme.success(
-              Theme.of(context).brightness == Brightness.dark,
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.locationEnabledSuccess ?? 'Location enabled successfully!',
+          kind: AppMessageKind.success,
         );
       }
     }

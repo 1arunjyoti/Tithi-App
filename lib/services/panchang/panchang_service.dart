@@ -236,6 +236,52 @@ class PanchangService {
           date: day,
         );
         if (probeMatch) return true;
+        // Timing-override checkpoint (same as the UI batch in
+        // PanchangData.fromRawTithi): festivals observed at madhyahna,
+        // aparahna, nishita or pradosha match the tithi prevailing at that
+        // intraday instant — not the 06:00 probe. Without this, a tithi
+        // starting after 06:00 but prevailing at dusk (e.g. Trayodashi for
+        // Pradosh Vrata) is missed entirely by the forward scan.
+        // Masa stays the sunrise masa (probeMasa), matching the UI batch
+        // which matches override festivals against the sunrise masa — not
+        // the checkpoint masa — so sankranti-boundary days agree.
+        final override = festival.panchangRules.timingOverride;
+        if (override != null &&
+            timingOverrideCheckpoints.contains(override) &&
+            festival.nakshatraCondition == null) {
+          final checkpoint = SunriseCalculator.checkpointTimeFor(
+            day,
+            override,
+            latitude,
+            longitude,
+          );
+          if (checkpoint != null) {
+            final cpRaw = await calculateTithi(
+              checkpoint,
+              latitude: latitude,
+              longitude: longitude,
+            );
+            final cpIndex = cpRaw.floor().clamp(1, 30);
+            final String cpPaksha;
+            final int cpNum;
+            if (cpIndex <= 15) {
+              cpPaksha = 'Shukla';
+              cpNum = cpIndex;
+            } else {
+              cpPaksha = 'Krishna';
+              cpNum = cpIndex - 15;
+            }
+            return matchesFestivalOnDay(
+              festival: festival,
+              paksha: cpPaksha,
+              tithiNumber: cpNum,
+              masa: probeMasa,
+              nakshatra: null,
+              date: day,
+            );
+          }
+          return false;
+        }
         // Dominant-tithi grace (Drik rule, same as the UI batch).
         final usesSunrise = festival.panchangRules.timingOverride == null ||
             !timingOverrideCheckpoints.contains(

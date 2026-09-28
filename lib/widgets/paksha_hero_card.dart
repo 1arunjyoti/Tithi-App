@@ -229,6 +229,13 @@ class _HeroBody extends ConsumerWidget {
     // Tappable card done properly: button semantics for screen readers,
     // trailing chevron as the visual cue, and a Material ripple clipped to
     // the card shape (Ink paints the gradient so the splash shows above it).
+    //
+    // A transparent Material never clipped its children, which is how the
+    // gradient used to paint square past the rounded corners. The Material
+    // now clips (antiAlias) so the gradient, border, glow backdrop and
+    // ripple all stay within the 24px radius. No drop shadow: the card sits
+    // flat like the other home cards, and a shadow painted inside this clip
+    // would be sliced off at the edge anyway.
     return Semantics(
       button: true,
       child: Container(
@@ -236,6 +243,7 @@ class _HeroBody extends ConsumerWidget {
         child: Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(24),
+          clipBehavior: Clip.antiAlias,
           child: Ink(
             decoration: highContrast
                 ? AppTheme.glassmorphism(context: context, ref: ref)
@@ -254,7 +262,15 @@ class _HeroBody extends ConsumerWidget {
                   builder: (context) => TithiDetailSheet(panchang: panchang),
                 );
               },
-              child: Stack(
+              child: ClipRRect(
+                // Material defaults to Clip.none, so nothing bounded the
+                // card's children to the rounded shape: the glow backdrop
+                // and any ripple could square off past the corners. Clips
+                // only the content subtree — the gradient + drop shadow
+                // live on Ink's decoration, above this, so they keep their
+                // soft outer edge.
+                borderRadius: BorderRadius.circular(24),
+                child: Stack(
                 children: [
                   if (!highContrast)
                     Positioned.fill(
@@ -325,6 +341,7 @@ class _HeroBody extends ConsumerWidget {
                     ),
                   ),
                 ],
+                ),
               ),
             ),
           ),

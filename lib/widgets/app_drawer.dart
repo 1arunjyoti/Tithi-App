@@ -12,6 +12,9 @@ import '../screens/about_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../screens/sankalpa/sankalpa_list_screen.dart';
+import '../core/anim/press_scale.dart';
+import '../core/feedback/app_messages.dart';
+import '../core/navigation/app_routes.dart';
 import 'responsive_layout.dart';
 
 // Conditional imports for FFI-dependent screens (only available on native platforms)
@@ -133,7 +136,10 @@ class _DrawerHeader extends StatelessWidget {
 /// Google Maps in the browser; a snackbar only if nothing handles either.
 Future<void> _openTemplesInMaps(BuildContext context, WidgetRef ref) async {
   final l10n = AppLocalizations.of(context);
+  // Captured before the drawer pop + awaits: the drawer's context is
+  // unmounted by report time, so the helper's context variant can't run.
   final messenger = ScaffoldMessenger.of(context);
+  final colors = Theme.of(context).colorScheme;
   if (!ResponsiveLayout.isTabletOrLarger(context)) {
     Navigator.of(context).pop();
   }
@@ -160,8 +166,11 @@ Future<void> _openTemplesInMaps(BuildContext context, WidgetRef ref) async {
   } catch (_) {
     // Fall through to the snackbar below.
   }
-  messenger.showSnackBar(
-    SnackBar(content: Text(l10n?.couldNotOpenMaps ?? 'Could not open maps')),
+  showAppMessageOn(
+    messenger,
+    colors,
+    l10n?.couldNotOpenMaps ?? 'Could not open maps',
+    kind: AppMessageKind.error,
   );
 }
 
@@ -262,7 +271,8 @@ class _DrawerMenuList extends ConsumerWidget {
     if (!isWideScreen) {
       navigator.pop();
     }
-    navigator.push(MaterialPageRoute(builder: (context) => screen));
+    // Peer-level drawer destinations share one fade-through motion.
+    navigator.push(AppRoutes.fadeThroughRoute(screen));
   }
 }
 
@@ -287,21 +297,25 @@ class _DrawerMenuItem extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
-        child: ListTile(
-          onTap: onTap,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          leading: Icon(icon, color: colors.primary, size: 24),
-          title: Text(
-            title,
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
+        // Gated press haptic + scale live in PressScale (Stateless-safe,
+        // so every drawer/sidebar option gets feedback with no ref).
+        child: PressScale(
+          child: ListTile(
+            onTap: onTap,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            leading: Icon(icon, color: colors.primary, size: 24),
+            title: Text(
+              title,
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
             ),
-          ),
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            size: 16,
-            color: colors.onSurface.withValues(alpha: 0.4),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: colors.onSurface.withValues(alpha: 0.4),
+            ),
           ),
         ),
       ),
@@ -325,14 +339,15 @@ class _ViewModeToggleItem extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
-        child: ListTile(
-          onTap: () {
-            ref.read(homeViewModeProvider.notifier).toggle();
-            final navigator = Navigator.of(context);
-            if (!ResponsiveLayout.isTabletOrLarger(context)) {
-              navigator.pop();
-            }
-          },
+        child: PressScale(
+          child: ListTile(
+            onTap: () {
+              ref.read(homeViewModeProvider.notifier).toggle();
+              final navigator = Navigator.of(context);
+              if (!ResponsiveLayout.isTabletOrLarger(context)) {
+                navigator.pop();
+              }
+            },
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           leading: Icon(
             isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
@@ -363,6 +378,7 @@ class _ViewModeToggleItem extends ConsumerWidget {
             color: colors.primary.withValues(alpha: 0.7),
           ),
         ),
+        ),
       ),
     );
   }
@@ -382,25 +398,27 @@ class _AboutMenuItem extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: Colors.transparent,
-        child: ListTile(
-          onTap: () => _navigateToAbout(context),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          leading: Icon(
-            Icons.info_outline_rounded,
-            color: colors.primary,
-            size: 24,
-          ),
-          title: Text(
-            l10n?.aboutApp ?? 'About',
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
+        child: PressScale(
+          child: ListTile(
+            onTap: () => _navigateToAbout(context),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            leading: Icon(
+              Icons.info_outline_rounded,
+              color: colors.primary,
+              size: 24,
             ),
-          ),
-          trailing: Icon(
-            Icons.chevron_right_rounded,
-            size: 16,
-            color: colors.onSurface.withValues(alpha: 0.4),
+            title: Text(
+              l10n?.aboutApp ?? 'About',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
+            ),
+            trailing: Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: colors.onSurface.withValues(alpha: 0.4),
+            ),
           ),
         ),
       ),
@@ -412,9 +430,7 @@ class _AboutMenuItem extends ConsumerWidget {
     if (!ResponsiveLayout.isTabletOrLarger(context)) {
       navigator.pop();
     }
-    navigator.push(
-      MaterialPageRoute(builder: (context) => const AboutScreen()),
-    );
+    navigator.push(AppRoutes.fadeThroughRoute(const AboutScreen()));
   }
 }
 

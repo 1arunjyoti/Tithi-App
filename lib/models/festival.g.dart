@@ -216,10 +216,14 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       weekday: fields[6] as String?,
       endTithi: fields[7] as int?,
       timingOverride: fields[8] as String?,
-      vriddhi: fields[9] as String,
+      // defaultValue: 'both' (see @HiveField(9)) — legacy boxes written
+      // before field 9 read as the model default instead of throwing.
+      vriddhi: fields[9] == null ? 'both' : fields[9] as String,
       pujaKala: fields[10] as String?,
       paranRule: fields[11] as String?,
-      clipToTithi: fields[12] as bool,
+      // defaultValue: false (see @HiveField(12)) — legacy boxes written
+      // before field 12 read as the model default instead of throwing.
+      clipToTithi: fields[12] == null ? false : fields[12] as bool,
     );
   }
 

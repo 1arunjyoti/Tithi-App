@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
+import '../core/anim/press_scale.dart';
+import '../core/navigation/haptic_back_button.dart';
 import '../utils/tithi_localization.dart';
 import '../providers/planetary_view_provider.dart';
 import '../services/planetary_view_service.dart';
@@ -66,25 +68,31 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HapticBackButton(),
         title: Text(l10n.solarSystem),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
-          // Date picker button
-          IconButton(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: l10n.selectDate,
-            onPressed: () => _selectDate(context),
+          // Date picker button (gated press haptic + scale in PressScale).
+          PressScale(
+            child: IconButton(
+              icon: const Icon(Icons.calendar_today),
+              tooltip: l10n.selectDate,
+              onPressed: () => _selectDate(context),
+            ),
           ),
           // Reset to today
-          IconButton(
-            icon: const Icon(Icons.today),
-            tooltip: l10n.goToToday,
-            onPressed: () {
-              ref
-                  .read(planetaryViewDateProvider.notifier)
-                  .setDate(DateTime.now());
-            },
+          PressScale(
+            child: IconButton(
+              icon: const Icon(Icons.today),
+              tooltip: l10n.goToToday,
+              onPressed: () {
+                ref
+                    .read(planetaryViewDateProvider.notifier)
+                    .setDate(DateTime.now());
+              },
+            ),
           ),
         ],
       ),
