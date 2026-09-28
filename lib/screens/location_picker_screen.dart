@@ -9,6 +9,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
+import '../core/anim/press_scale.dart';
+import '../core/feedback/app_messages.dart';
 import '../theme/app_theme.dart';
 import '../app/bootstrap.dart';
 import '../providers/location_provider.dart';
@@ -130,24 +132,20 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.homeLocationSetTo(addressLabel) ??
-                  'Home location set to $addressLabel',
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.homeLocationSetTo(addressLabel) ??
+              'Home location set to $addressLabel',
+          kind: AppMessageKind.success,
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n?.errorSettingLocation(e.toString()) ??
-                  'Error setting location: $e',
-            ),
-          ),
+        showAppMessage(
+          context,
+          l10n?.errorSettingLocation(e.toString()) ??
+              'Error setting location: $e',
+          kind: AppMessageKind.error,
         );
       }
     } finally {
@@ -226,16 +224,18 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: context.colors.surface.withValues(alpha: 0.5),
-              shape: BoxShape.circle,
+        leading: PressScale(
+          child: IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: context.colors.surface.withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back_rounded),
             ),
-            child: const Icon(Icons.arrow_back_rounded),
+            onPressed: () => Navigator.pop(context),
           ),
-          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Stack(

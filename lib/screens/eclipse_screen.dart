@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
+import '../core/navigation/haptic_back_button.dart';
 import '../providers/eclipse_provider.dart';
 import '../theme/app_theme.dart';
 import '../features/eclipse/widgets/eclipse_list.dart';
@@ -18,6 +19,8 @@ class EclipseScreen extends ConsumerWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HapticBackButton(),
         title: Text(l10n.eclipses),
         backgroundColor: Colors.transparent,
         elevation: 0,

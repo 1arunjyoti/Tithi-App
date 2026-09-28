@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/sankalpa.dart';
 import '../../providers/sankalpa_provider.dart';
+import '../../core/feedback/app_messages.dart';
+import '../../core/navigation/haptic_back_button.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 
@@ -98,18 +100,19 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
         ref.read(sankalpaListProvider.notifier).addSankalpa(sankalpa);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.sankalpaCreatedSuccessfully)),
+          showAppMessage(
+            context,
+            l10n.sankalpaCreatedSuccessfully,
+            kind: AppMessageKind.success,
           );
           Navigator.of(context).pop();
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(l10n.failedToSaveSankalpa(e.toString())),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
+          showAppMessage(
+            context,
+            l10n.failedToSaveSankalpa(e.toString()),
+            kind: AppMessageKind.error,
           );
         }
       }
@@ -121,6 +124,8 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
+        leading: const HapticBackButton(),
         title: Text(l10n.newIntention),
         backgroundColor: Colors.transparent,
       ),

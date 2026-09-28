@@ -4,6 +4,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/feedback/app_messages.dart';
 import '../models/festival.dart';
 import '../widgets/festival_share_card.dart';
 
@@ -76,9 +77,11 @@ class ShareService {
       debugPrint("Error sharing festival: $e");
       if (context.mounted) {
         final errorL10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(
+        showAppMessage(
           context,
-        ).showSnackBar(SnackBar(content: Text(errorL10n?.failedToShare(e.toString()) ?? 'Failed to share: $e')));
+          errorL10n?.failedToShare(e.toString()) ?? 'Failed to share: $e',
+          kind: AppMessageKind.error,
+        );
       }
     }
   }

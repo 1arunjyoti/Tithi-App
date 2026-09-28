@@ -2,9 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/moon_phase_provider.dart';
+import '../services/moon_phase_service.dart';
+import '../core/navigation/app_routes.dart';
 import '../screens/moon_phases_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import 'moon_animation_widget.dart';
 
 /// Compact widget showing countdown to next Amavasya and Purnima
 /// Designed for integration into the home screen
@@ -20,9 +23,10 @@ class MoonCountdownWidget extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const MoonPhasesScreen()));
+        // Fade through (not shared-X slide): back lands directly on
+        // home, so pop fades instead of sliding out over the home card.
+        // The 'moon_icon' Hero flight still runs on top of the fade.
+        AppRoutes.pushFadeThrough(context, const MoonPhasesScreen());
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -64,11 +68,17 @@ class MoonCountdownWidget extends ConsumerWidget {
 
   Widget _buildContent(
     BuildContext context,
-    dynamic data,
+    MoonPhaseData data,
     AppLocalizations l10n,
     bool isDark,
   ) {
     final theme = Theme.of(context);
+    // Same widget type as the MoonPhasesScreen destination so the
+    // 'moon_icon' Hero flight scales moon-to-moon instead of morphing
+    // Icon -> CustomPaint (which flashed mid-push).
+    final phase =
+        (MoonPhaseService.illuminationForTithi(data.currentTithi) / 100.0)
+            .clamp(0.0, 1.0);
 
     return Row(
       children: [
@@ -91,9 +101,26 @@ class MoonCountdownWidget extends ConsumerWidget {
           ),
           child: Hero(
             tag: 'moon_icon',
-            child: Icon(
-              data.isShukla ? Icons.brightness_3 : Icons.brightness_2,
-              color: AppTheme.moonIconColor(isDark),
+            // Shuttle the source appearance during flight: the destination
+            // contains a TweenAnimationBuilder that would otherwise keep
+            // animating mid-flight while the hero scales 32 -> 168.
+            flightShuttleBuilder:
+                (
+                  flightContext,
+                  animation,
+                  flightDirection,
+                  fromHeroContext,
+                  toHeroContext,
+                ) => Material(
+                  type: MaterialType.transparency,
+                  child:
+                      flightDirection == HeroFlightDirection.push
+                          ? toHeroContext.widget
+                          : fromHeroContext.widget,
+                ),
+            child: MoonAnimationWidget(
+              phase: phase,
+              isWaxing: data.isShukla,
               size: 32,
             ),
           ),
@@ -207,11 +234,30 @@ class _LiveCountdownTextState extends State<_LiveCountdownText> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Text(
-      _formatCountdown(_countdown),
-      style: theme.textTheme.bodyMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: theme.colorScheme.onSurface,
+    final label = _formatCountdown(_countdown);
+    // Cross-fade on minute ticks instead of a hard text cut.
+    return AnimatedSwitcher(
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 250),
+      ),
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.3),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
+        ),
+      ),
+      child: Text(
+        label,
+        key: ValueKey(label),
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.onSurface,
+        ),
       ),
     );
   }

@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import '../../providers/sankalpa_provider.dart';
 import '../../models/sankalpa.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/anim/press_scale.dart';
+import '../../core/navigation/haptic_back_button.dart';
+import '../../core/navigation/app_routes.dart';
 import '../../theme/app_theme.dart';
 import 'sankalpa_create_screen.dart';
 
@@ -21,6 +24,8 @@ class SankalpaListScreen extends ConsumerWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: const HapticBackButton(),
           title: Text(l10n.mySankalpas),
           backgroundColor: Colors.transparent,
           bottom: TabBar(
@@ -30,14 +35,15 @@ class SankalpaListScreen extends ConsumerWidget {
             ],
           ),
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const SankalpaCreateScreen()),
-            );
-          },
-          label: Text(l10n.newIntention),
-          icon: const Icon(Icons.add),
+        floatingActionButton: PressScale(
+          child: FloatingActionButton.extended(
+            onPressed: () {
+              // Hierarchical drill: list → create form.
+              AppRoutes.pushSharedX(context, const SankalpaCreateScreen());
+            },
+            label: Text(l10n.newIntention),
+            icon: const Icon(Icons.add),
+          ),
         ),
         body: Container(
           decoration: AppTheme.backgroundDecoration(context),

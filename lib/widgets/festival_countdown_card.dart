@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/anim/press_scale.dart';
 import '../models/festival.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
@@ -324,34 +325,42 @@ class _CountdownActions extends StatelessWidget {
       children: [
         Tooltip(
           message: AppLocalizations.of(context)?.removeFromHomeScreen ?? 'Remove from home screen',
-          child: IconButton(
-            onPressed: onToggleHome,
-            icon: Icon(
-              isPinnedToHome ? Icons.home_rounded : Icons.home_outlined,
-            ),
-            color: isPinnedToHome
-                ? accent
-                : colors.onSurface.withValues(
-                    alpha: AppTheme.contrastAlpha(context, 0.56),
-                  ),
-            style: IconButton.styleFrom(
-              backgroundColor: isPinnedToHome
-                  ? accent.withValues(alpha: 0.12)
-                  : Colors.transparent,
-              minimumSize: const Size(40, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // Scale only: the onToggleHome callback already buzzes.
+          child: PressScale(
+            haptic: false,
+            child: IconButton(
+              onPressed: onToggleHome,
+              icon: Icon(
+                isPinnedToHome ? Icons.home_rounded : Icons.home_outlined,
+              ),
+              color: isPinnedToHome
+                  ? accent
+                  : colors.onSurface.withValues(
+                      alpha: AppTheme.contrastAlpha(context, 0.56),
+                    ),
+              style: IconButton.styleFrom(
+                backgroundColor: isPinnedToHome
+                    ? accent.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                minimumSize: const Size(40, 40),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ),
         ),
         Tooltip(
           message: AppLocalizations.of(context)?.removeCountdown ?? 'Remove countdown',
-          child: IconButton(
-            onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline_rounded),
-            color: colors.error,
-            style: IconButton.styleFrom(
-              minimumSize: const Size(40, 40),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          // Scale only: the onRemove callback already buzzes.
+          child: PressScale(
+            haptic: false,
+            child: IconButton(
+              onPressed: onRemove,
+              icon: const Icon(Icons.delete_outline_rounded),
+              color: colors.error,
+              style: IconButton.styleFrom(
+                minimumSize: const Size(40, 40),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
             ),
           ),
         ),
