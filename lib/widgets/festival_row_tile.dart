@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/app_localizations_en.dart';
+import '../core/format/date_only.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
+import '../providers/calendar_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
 
@@ -45,13 +47,15 @@ class FestivalRowTile extends ConsumerWidget {
   final VoidCallback? onTap;
 
 
-  String? _goldLine(BuildContext context) {
+  String? _goldLine(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final day = date;
     if (day != null) {
-      final now = DateTime.now();
-      final isToday =
-          day.year == now.year && day.month == now.month && day.day == now.day;
+      // App "today" (midnight-refreshed + resume-corrected), not wall-clock
+      // now: a suspended-then-resumed app would otherwise label rows with
+      // yesterday's Today around midnight.
+      final today = ref.watch(todayDateProvider);
+      final isToday = isSameDay(day, today);
       final parts = <String>[
         isToday
             ? l10n.today
@@ -83,7 +87,7 @@ class FestivalRowTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gold = AppTheme.festivalAccent(context);
-    final goldLine = _goldLine(context);
+    final goldLine = _goldLine(context, ref);
     final description = festival.description.trim();
 
     return Semantics(

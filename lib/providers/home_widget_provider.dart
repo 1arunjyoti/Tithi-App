@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/home_widget.dart';
 import 'festival_countdown_provider.dart';
+import 'locale_provider.dart';
 
 /// Exposes the [HomeWidgetService] as a shared const instance.
 /// Const constructor — no per-read allocation, no state to leak.
@@ -49,6 +50,10 @@ final homeWidgetSupportedProvider = FutureProvider<bool>((ref) async {
 /// subscription automatically when the last listener unsubscribes. No leak.
 final homeWidgetSyncProvider = Provider<void>((ref) {
   final asyncTargets = ref.watch(allFestivalCountdownTargetsProvider);
+  // Widget labels follow the app language (see HomeWidgetService): a pure
+  // language switch changes no dates, so without this the widget would keep
+  // yesterday's language until the next countdown change.
+  ref.watch(localeProvider);
 
   final targets = asyncTargets.valueOrNull;
   if (targets != null) {

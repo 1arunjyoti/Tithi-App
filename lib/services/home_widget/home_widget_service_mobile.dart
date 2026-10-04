@@ -51,14 +51,16 @@ class HomeWidgetService {
       // so nothing is ever hidden or truncated by size.
       // take() is lazy; toList(growable: false) avoids over-allocation.
       final limited = targets.take(20).toList(growable: false);
+      // Status labels follow the app language (saved locale, else English)
+      // so the widget matches the app when freshly synced. The native side
+      // keeps these labels while the day count is unchanged and only
+      // re-renders labels in the device language after a midnight rollover
+      // without the app running (see WidgetCountdownData).
+      final lang = _savedLanguageCode();
       final payload = limited
           .map((t) {
             final dateLabel = _dateLabelFormat.format(t.date);
-            final statusLabel = t.isToday
-                ? 'Today'
-                : t.isTomorrow
-                ? 'Tomorrow'
-                : '${t.daysRemaining} days to go';
+            final statusLabel = _statusLabel(t, lang);
             return {
               'title': t.title,
               'name': t.festival.name,
@@ -66,6 +68,7 @@ class HomeWidgetService {
               'dateLabel': dateLabel,
               'daysRemaining': t.daysRemaining,
               'statusLabel': statusLabel,
+              'lang': lang,
             };
           })
           .toList(growable: false);
@@ -83,6 +86,47 @@ class HomeWidgetService {
     } catch (e) {
       debugPrint('HomeWidgetService.update failed: $e');
     }
+  }
+
+  /// App language saved by LocaleNotifier ('locale' key), else English.
+  /// Read best-effort at sync time (no Ref here); unknown codes fall back.
+  static String _savedLanguageCode() {
+    try {
+      final box = StorageService().getSettingsBox();
+      final code = box.get('locale');
+      if (code is String && _statusToday.containsKey(code)) return code;
+    } catch (_) {
+      // Fall through to English.
+    }
+    return 'en';
+  }
+
+  static const _statusToday = {
+    'en': 'Today',
+    'hi': 'आज',
+    'bn': 'আজ',
+    'sa': 'अद्य',
+  };
+
+  static const _statusTomorrow = {
+    'en': 'Tomorrow',
+    'hi': 'कल',
+    'bn': 'আগামীকাল',
+    'sa': 'श्वः',
+  };
+
+  static const _statusDaysToGo = {
+    'en': '{days} days to go',
+    'hi': '{days} दिन बाकी',
+    'bn': '{days} দিন বাকি',
+    'sa': '{days} दिनानि शेषाणि',
+  };
+
+  static String _statusLabel(FestivalCountdownTarget t, String lang) {
+    if (t.isToday) return _statusToday[lang] ?? _statusToday['en']!;
+    if (t.isTomorrow) return _statusTomorrow[lang] ?? _statusTomorrow['en']!;
+    final template = _statusDaysToGo[lang] ?? _statusDaysToGo['en']!;
+    return template.replaceFirst('{days}', t.daysRemaining.toString());
   }
 
   /// One-time migration: the widget theme used to mirror the app theme and was

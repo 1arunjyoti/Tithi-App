@@ -1,5 +1,6 @@
 package app.tithi.pro.widget
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -14,7 +15,7 @@ import androidx.core.content.ContextCompat
 import es.antonborri.home_widget.HomeWidgetProvider
 import app.tithi.pro.R
 import app.tithi.pro.MainActivity
-import org.json.JSONArray
+import java.util.Calendar
 
 /**
  * Home screen widget that shows festival countdowns.
@@ -38,22 +39,59 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
 
     companion object {
         /**
+         * Daily self-refresh alarm: fires just after midnight so the
+         * date-recomputed countdowns roll over even when the app process
+         * is dead (killed from memory / never opened). Battery-friendly:
+         * RTC (no wakeup) + inexact — if the device sleeps through
+         * midnight the refresh lands on wake, and DATE_CHANGED covers
+         * the gap. Re-armed on every update + boot + package-replace so
+         * OEMs that clear alarms can't leave the widget stale.
+         */
+        const val ACTION_DAILY_REFRESH =
+            "app.tithi.pro.widget.ACTION_DAILY_REFRESH"
+        private const val ALARM_REQUEST_CODE = 1703
+
+        /**
          * Synchronously rebuilds every widget instance in-process.
          * Used by the theme configure activity so a new choice repaints
          * immediately instead of depending on broadcast delivery timing.
+         *
+         * Crash-isolated per widget: a dead launcher host or a bad
+         * RemoteViews on one instance (or credential-locked storage in
+         * direct-boot) must not abort the remaining instances or crash
+         * the broadcast that invoked this.
          */
         fun refreshAll(context: Context) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val prefs = context.getSharedPreferences(
-                WidgetCountdownData.PREFS_NAME,
-                Context.MODE_PRIVATE,
-            )
-            val ids = appWidgetManager.getAppWidgetIds(
-                ComponentName(context, FestivalCountdownWidgetProvider::class.java),
-            )
+            val appWidgetManager = try {
+                AppWidgetManager.getInstance(context)
+            } catch (_: Exception) {
+                return
+            }
+            val prefs = try {
+                context.getSharedPreferences(
+                    WidgetCountdownData.PREFS_NAME,
+                    Context.MODE_PRIVATE,
+                )
+            } catch (_: Exception) {
+                // Direct-boot before unlock: credential storage is locked.
+                return
+            }
+            val ids = try {
+                appWidgetManager.getAppWidgetIds(
+                    ComponentName(context, FestivalCountdownWidgetProvider::class.java),
+                )
+            } catch (_: Exception) {
+                return
+            }
             if (ids.isEmpty()) return
             val provider = FestivalCountdownWidgetProvider()
-            ids.forEach { provider.updateSingleWidget(context, appWidgetManager, it, prefs) }
+            ids.forEach {
+                try {
+                    provider.updateSingleWidget(context, appWidgetManager, it, prefs)
+                } catch (_: Exception) {
+                    // One bad instance never blocks the rest.
+                }
+            }
         }
 
         /**
@@ -72,6 +110,102 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
             }
             return PendingIntent.getActivity(context, 0, intent, flags)
         }
+
+        private fun dailyRefreshPendingIntent(context: Context): PendingIntent {
+            val intent = Intent(context, FestivalCountdownWidgetProvider::class.java).apply {
+                action = ACTION_DAILY_REFRESH
+            }
+            var flags = PendingIntent.FLAG_UPDATE_CURRENT
+            if (Build.VERSION.SDK_INT >= 23) {
+                flags = flags or PendingIntent.FLAG_IMMUTABLE
+            }
+            return PendingIntent.getBroadcast(
+                context,
+                ALARM_REQUEST_CODE,
+                intent,
+                flags,
+            )
+        }
+
+        /** Next 00:01 local time — just past midnight so LocalDate has rolled. */
+        private fun nextMidnightMillis(): Long {
+            val cal = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, 1)
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 1)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            return cal.timeInMillis
+        }
+
+        /**
+         * (Re)arms the daily inexact RTC alarm. Idempotent — safe to call
+         * from every update/receive path. RTC (not WAKEUP) needs no
+         * exact-alarm permission and costs no wakeups; inexact lets the
+         * system batch it with other midnight work.
+         */
+        fun ensureDailyAlarm(context: Context) {
+            try {
+                val am =
+                    context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                        ?: return
+                am.setInexactRepeating(
+                    AlarmManager.RTC,
+                    nextMidnightMillis(),
+                    AlarmManager.INTERVAL_DAY,
+                    dailyRefreshPendingIntent(context),
+                )
+            } catch (_: Exception) {
+                // Best-effort: updatePeriodMillis still triggers onUpdate.
+            }
+        }
+
+        fun cancelDailyAlarm(context: Context) {
+            try {
+                val am =
+                    context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+                        ?: return
+                am.cancel(dailyRefreshPendingIntent(context))
+            } catch (_: Exception) {
+                // Best-effort cleanup.
+            }
+        }
+    }
+
+    override fun onReceive(context: Context, intent: Intent?) {
+        // System never sends a null intent, but the base
+        // AppWidgetProvider dereferences it — guard instead of NPE-crash
+        // the broadcast.
+        val action = intent?.action ?: return
+        // Let the home_widget base + AppWidgetProvider handle the standard
+        // widget broadcasts first (it caches SharedPreferences for onUpdate).
+        super.onReceive(context, intent)
+        // Self-refresh paths that must work while the app process is dead:
+        // the daily alarm, reboot / app-update (alarms are cleared), and
+        // wall-clock jumps (date/time/timezone) that invalidate day counts.
+        when (action) {
+            ACTION_DAILY_REFRESH,
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            Intent.ACTION_DATE_CHANGED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            -> {
+                ensureDailyAlarm(context)
+                refreshAll(context)
+            }
+        }
+    }
+
+    override fun onEnabled(context: Context) {
+        super.onEnabled(context)
+        ensureDailyAlarm(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        cancelDailyAlarm(context)
     }
 
     override fun onUpdate(
@@ -80,6 +214,10 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
+        // updatePeriodMillis delivery is the heartbeat: re-arm the daily
+        // alarm here too so a cleared alarm (reboot, OEM task-killer,
+        // app update) is restored even if those broadcasts were missed.
+        ensureDailyAlarm(context)
         if (appWidgetIds.isEmpty()) return
         appWidgetIds.forEach { widgetId ->
             updateSingleWidget(context, appWidgetManager, widgetId, widgetData)
@@ -94,10 +232,15 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
     ) {
         // Resize: re-bind the same content. Nothing is hidden — the ListView
         // re-measures and scrolls if the new size fits fewer rows.
-        val prefs = context.getSharedPreferences(
-            WidgetCountdownData.PREFS_NAME,
-            Context.MODE_PRIVATE,
-        )
+        val prefs = try {
+            context.getSharedPreferences(
+                WidgetCountdownData.PREFS_NAME,
+                Context.MODE_PRIVATE,
+            )
+        } catch (_: Exception) {
+            // Credential-locked storage: keep the current frame.
+            return
+        }
         updateSingleWidget(context, appWidgetManager, appWidgetId, prefs)
     }
 
@@ -107,7 +250,22 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
         widgetId: Int,
         widgetData: SharedPreferences,
     ) {
-        val views = RemoteViews(context.packageName, R.layout.widget_festival_countdown).apply {
+        val views = try {
+            buildWidgetViews(context, widgetId, widgetData)
+        } catch (_: Exception) {
+            // Corrupt prefs / missing resources: leave the current frame
+            // in place rather than crashing the broadcast.
+            return
+        }
+        pushWidgetViews(appWidgetManager, widgetId, views)
+    }
+
+    private fun buildWidgetViews(
+        context: Context,
+        widgetId: Int,
+        widgetData: SharedPreferences,
+    ): RemoteViews {
+        return RemoteViews(context.packageName, R.layout.widget_festival_countdown).apply {
             // Launcher-style intent so a widget tap reuses the existing app
             // task instead of opening a second window in Recents. It mirrors
             // the LAUNCHER tap (ACTION_MAIN + CATEGORY_LAUNCHER) with
@@ -119,8 +277,12 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
             val launchIntent = buildLauncherPendingIntent(context)
             setOnClickPendingIntent(R.id.widget_container, launchIntent)
 
-            // Header count reflects the full stored list (parse is length-only).
-            val total = storedCount(widgetData.getString(WidgetCountdownData.KEY_DATA, null))
+            // Header count reflects the active (not yet passed) list so it
+            // matches the filtered rows after a midnight refresh without
+            // the app running. Bounded parse (<=20 small objects).
+            val total = WidgetCountdownData.activeCount(
+                widgetData.getString(WidgetCountdownData.KEY_DATA, null),
+            )
             if (total == 0) {
                 setTextViewText(R.id.widget_header_count, "")
             } else {
@@ -152,6 +314,13 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
                 "dark" -> applyHeaderTheme(this, context, isDark = true)
             }
         }
+    }
+
+    private fun pushWidgetViews(
+        appWidgetManager: AppWidgetManager,
+        widgetId: Int,
+        views: RemoteViews,
+    ) {
         // Push the chrome synchronously, then requery rows AFTER it lands.
         // The chrome update and the collection requery travel two different
         // async paths into the launcher; fired back-to-back they can race, and
@@ -161,7 +330,28 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
         // one generation. (A theme switch additionally rebinds a fresh factory
         // via the theme-discriminated URI, whose onCreate loads current prefs
         // even if a notify were ever dropped.)
-        appWidgetManager.updateAppWidget(widgetId, views)
+        //
+        // The immediate notify is load-bearing for dead-process refreshes
+        // (daily alarm / boot / date-change with the app killed): the process
+        // hosting this broadcast can die before a delayed post runs, leaving
+        // the header fresh but the rows stale — the reported "stuck"
+        // countdown. The delayed re-notify is kept as second-wave insurance
+        // for the chrome/rows race while the process is alive.
+        // Every IPC below is guarded: a dead launcher host must degrade to
+        // "rows refresh on the next update", never crash the broadcast.
+        try {
+            appWidgetManager.updateAppWidget(widgetId, views)
+        } catch (_: Exception) {
+            return
+        }
+        try {
+            appWidgetManager.notifyAppWidgetViewDataChanged(
+                widgetId,
+                R.id.widget_list,
+            )
+        } catch (_: Exception) {
+            // Best-effort: rows refresh on the next update regardless.
+        }
         try {
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 try {
@@ -174,16 +364,7 @@ class FestivalCountdownWidgetProvider : HomeWidgetProvider() {
                 }
             }, 300)
         } catch (_: Exception) {
-            appWidgetManager.notifyAppWidgetViewDataChanged(widgetId, R.id.widget_list)
-        }
-    }
-
-    private fun storedCount(jsonString: String?): Int {
-        if (jsonString.isNullOrBlank()) return 0
-        return try {
-            minOf(JSONArray(jsonString).length(), WidgetCountdownData.MAX_ITEMS)
-        } catch (e: Exception) {
-            0
+            // Handler unavailable (no looper): immediate notify above stands.
         }
     }
 

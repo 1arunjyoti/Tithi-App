@@ -42,12 +42,24 @@
             </intent-filter>
         </activity>
         
-        <!-- Festival countdown home screen widget -->
+        <!-- Festival countdown home screen widget.
+             Self-refreshes daily without the app running (see
+             FestivalCountdownWidgetProvider.ensureDailyAlarm + onReceive):
+             the stored payload carries ISO dates and the native side
+             recomputes days-remaining from LocalDate.now(), so a midnight
+             alarm / date-change / boot broadcast is enough to roll the
+             numbers over after the process was killed. -->
         <receiver
             android:name=".widget.FestivalCountdownWidgetProvider"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="app.tithi.pro.widget.ACTION_DAILY_REFRESH" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

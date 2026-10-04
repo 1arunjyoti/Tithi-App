@@ -48,6 +48,14 @@ class FestivalCountdownWidgetConfigureActivity : Activity() {
 
         findViewById<Button>(R.id.widget_theme_cancel).setOnClickListener { finish() }
         findViewById<Button>(R.id.widget_theme_save).setOnClickListener {
+            // A damaged host can deliver no valid id: binding with
+            // INVALID_APPWIDGET_ID confuses the launcher, so report
+            // cancellation and don't bind a broken instance.
+            if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+                setResult(RESULT_CANCELED)
+                finish()
+                return@setOnClickListener
+            }
             val selected = when (
                 findViewById<RadioGroup>(R.id.widget_theme_group).checkedRadioButtonId
             ) {

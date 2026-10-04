@@ -234,26 +234,27 @@ class EventDetailSheet extends ConsumerWidget {
               chips: heroChips,
               highContrast: highContrast,
             ),
-          // Observance banner: which tithi checkpoint fixes this date.
-          // Shown even for the default sunrise rule — the transparency is
-          // what makes the date trustworthy when it differs from another
-          // calendar. Hidden where no tithi checkpoint applies (Solar
-          // fixed dates, nakshatra-observed, dateless rules).
-          if (showsObservanceBanner(festival)) ...[
-            const SizedBox(height: 14),
-            // The observance date itself lives in the header date line
-            // above — the banner carries only the rule sentence.
-            _ObservanceBanner(
-              highContrast: highContrast,
-              rule: ruleSentence,
-            ),
-          ],
         ],
       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Observance banner: which tithi checkpoint fixes this date.
+          // Lives below the header, above the description — not inside the
+          // hero. Shown even for the default sunrise rule — the
+          // transparency is what makes the date trustworthy when it differs
+          // from another calendar. Hidden where no tithi checkpoint applies
+          // (Solar fixed dates, nakshatra-observed, dateless rules).
+          if (showsObservanceBanner(festival)) ...[
+            // The observance date itself lives in the header date line
+            // above — the banner carries only the rule sentence.
+            _ObservanceBanner(
+              highContrast: highContrast,
+              rule: ruleSentence,
+            ),
+            const SizedBox(height: 12),
+          ],
           _EventDescription(
             festival: festival,
             hasAdditionalDesc: flags.additionalDesc,
@@ -734,10 +735,15 @@ class _HeroLanguageChipsState extends ConsumerState<_HeroLanguageChips> {
           alignment: Alignment.topCenter,
           child: showToggle && !expanded
               // Collapsed multi-row: first row only, clipped at the
-              // measured chip height (clip is paint-only, so the hidden
-              // chips still lay out and the row grouping above stays
-              // valid).
-              ? SizedBox(height: _firstRowHeight, child: chipsWrap())
+              // measured chip height plus a 2px buffer so the bottom
+              // border isn't cut by anti-aliasing (still well under the
+              // 8px runSpacing, so the second row stays hidden). Clip is
+              // paint-only, so the hidden chips still lay out and the row
+              // grouping above stays valid.
+              ? SizedBox(
+                  height: (_firstRowHeight ?? 0) + 2,
+                  child: chipsWrap(),
+                )
               : chipsWrap(),
         ),
         if (showToggle)

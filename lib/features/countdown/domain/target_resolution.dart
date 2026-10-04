@@ -34,13 +34,19 @@ List<DatedFestival> sortDatedFestivals(List<DatedFestival> items) {
 
 /// One festival's next occurrence on/after [baseDate] (date-only), or null
 /// on failure. One bad rule never fails the caller — it resolves dateless.
+///
+/// Resolution is ALWAYS Amanta-based: festival rules are stored in Amanta
+/// and both scanners match with [HinduMonthSystem.amanta] hardcoded, so the
+/// display system must not enter the cache key (it did before occ7, causing
+/// a full re-scan of every festival on each Amanta↔Purnimant toggle for zero
+/// new information). Callers needing the user's system for *labels* (e.g.
+/// export's masaDisplay) keep it separately — it never affects dates.
 Future<DateTime?> resolveOccurrenceDate({
   required PanchangService service,
   required Festival festival,
   required DateTime baseDate,
   required double latitude,
   required double longitude,
-  required HinduMonthSystem monthSystem,
 }) async {
   try {
     return await findNextFestivalOccurrenceCached(
@@ -49,7 +55,7 @@ Future<DateTime?> resolveOccurrenceDate({
       startDate: baseDate,
       latitude: latitude,
       longitude: longitude,
-      monthSystem: monthSystem,
+      monthSystem: HinduMonthSystem.amanta,
     );
   } catch (e) {
     // One bad rule must not fail the whole list; log and sort last.
@@ -61,14 +67,14 @@ Future<DateTime?> resolveOccurrenceDate({
 /// Every festival's next occurrence, sorted ([sortDatedFestivals]).
 /// Resolved in small parallel batches: enough parallelism for throughput,
 /// small enough to avoid FFI stampedes that jank the UI thread (matches
-/// the month batch size).
+/// the month batch size). Resolution is Amanta-fixed (see above), so a
+/// month-system toggle never re-scans.
 Future<List<DatedFestival>> resolveDatedFestivals({
   required PanchangService service,
   required List<Festival> festivals,
   required DateTime baseDate,
   required double latitude,
   required double longitude,
-  required HinduMonthSystem monthSystem,
   int batchSize = 8,
 }) async {
   Future<DatedFestival> resolve(Festival festival) async {
@@ -78,7 +84,6 @@ Future<List<DatedFestival>> resolveDatedFestivals({
       baseDate: baseDate,
       latitude: latitude,
       longitude: longitude,
-      monthSystem: monthSystem,
     );
     return (festival: festival, date: date);
   }
