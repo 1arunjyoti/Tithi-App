@@ -49,18 +49,18 @@ final allFestivalOccurrencesProvider =
       final yearStart = DateTime(today.year);
       final coords = ref.watch(resolvedCoordinatesProvider);
       final service = ref.read(panchangServiceProvider);
-      final monthSystem = ref.watch(hinduMonthSystemProvider);
 
       try {
         // Shared resolver (features/countdown/domain): batched cached
         // scans — one bad rule resolves dateless instead of failing.
+        // No month-system watch: resolution is Amanta-fixed, so toggling
+        // Amanta↔Purnimant no longer re-scans (rows show dates, not masas).
         return await resolveDatedFestivals(
           service: service,
           festivals: festivals,
           baseDate: yearStart,
           latitude: coords.latitude,
           longitude: coords.longitude,
-          monthSystem: monthSystem,
         );
       } catch (e, st) {
         debugPrint('allFestivalOccurrences failed: $e\n$st');
@@ -307,7 +307,10 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final item = visible[index];
-        final daysAway = item.date?.difference(today).inDays;
+        // Calendar-day diff (DST-safe); see calendarDaysBetween docs.
+        final daysAway = item.date == null
+            ? null
+            : calendarDaysBetween(today, item.date!);
         // Stable key keeps element diffing O(1) on filter changes;
         // RepaintBoundary confines each row's repaint during fast scrolls.
         // StaggerEntrance is position-matched (no key): filter reorder

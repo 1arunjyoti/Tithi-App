@@ -36,17 +36,24 @@ class FestivalCountdownWidgetService : RemoteViewsService() {
         override fun onDataSetChanged() = load()
 
         private fun load() {
-            val prefs = context.getSharedPreferences(
-                WidgetCountdownData.PREFS_NAME,
-                Context.MODE_PRIVATE,
-            )
-            items = WidgetCountdownData.parseItems(
-                prefs.getString(WidgetCountdownData.KEY_DATA, null),
-            )
-            forceDark = when (prefs.getString(WidgetCountdownData.KEY_THEME, "system")) {
-                "dark" -> true
-                "light" -> false
-                else -> null
+            // Runs on the host's binder thread: never let a locked/broken
+            // prefs store kill the factory — keep the last good rows so the
+            // widget degrades to "stale" instead of going blank/crashing.
+            try {
+                val prefs = context.getSharedPreferences(
+                    WidgetCountdownData.PREFS_NAME,
+                    Context.MODE_PRIVATE,
+                )
+                items = WidgetCountdownData.parseItems(
+                    prefs.getString(WidgetCountdownData.KEY_DATA, null),
+                )
+                forceDark = when (prefs.getString(WidgetCountdownData.KEY_THEME, "system")) {
+                    "dark" -> true
+                    "light" -> false
+                    else -> null
+                }
+            } catch (_: Exception) {
+                // Keep previous items/forceDark.
             }
         }
 
@@ -66,7 +73,7 @@ class FestivalCountdownWidgetService : RemoteViewsService() {
                 )
                 views.setTextViewText(
                     R.id.widget_days_label,
-                    if (item.daysRemaining == 1) "day" else "days",
+                    WidgetCountdownData.dayUnitLabel(item.daysRemaining.coerceAtLeast(0)),
                 )
                 views.setTextViewText(
                     R.id.widget_name,
@@ -134,6 +141,9 @@ class FestivalCountdownWidgetService : RemoteViewsService() {
 
         override fun getItemId(position: Int): Long = position.toLong()
 
-        override fun hasStableIds(): Boolean = true
+        // Must be false: rows are filtered by date (passed festivals drop),
+        // so positions shift on every midnight refresh. Stable IDs bound to
+        // positions would make the launcher animate/recycle the wrong rows.
+        override fun hasStableIds(): Boolean = false
     }
 }

@@ -172,35 +172,60 @@ class PanchangService {
       if (parts.length == 2) {
         final month = int.tryParse(parts[0]) ?? 1;
         final day = int.tryParse(parts[1]) ?? 1;
-        var nextDate = DateTime(baseDate.year, month, day);
+        if (month < 1 || month > 12 || day < 1 || day > 31) return null;
         final baseDateOnly = DateTime(
           baseDate.year,
           baseDate.month,
           baseDate.day,
         );
-
-        if (nextDate.isBefore(baseDateOnly)) {
-          nextDate = DateTime(baseDate.year + 1, month, day);
+        // Dart's DateTime normalizes overflow (DateTime(2025, 2, 29) becomes
+        // Mar 1), so verify the construction round-trips and walk forward to
+        // the next year that actually contains the date (next leap year for
+        // Feb 29; 9 iterations cover century leap exceptions). Invalid dates
+        // (e.g. Feb 30) never resolve and correctly return null.
+        DateTime? candidateFor(int year) {
+          final d = DateTime(year, month, day);
+          if (d.month != month || d.day != day) return null;
+          return d;
         }
-        return nextDate;
+
+        for (var i = 0; i < 9; i++) {
+          final candidate = candidateFor(baseDateOnly.year + i);
+          if (candidate != null && !candidate.isBefore(baseDateOnly)) {
+            return candidate;
+          }
+        }
+        return null;
       }
     }
 
-    // BUG-05: single 380-day pass (redundant fallback loop removed).
+    // BUG-05: single 420-day pass (redundant fallback loop removed).
+    // 420 (not 380) covers Adhika-stretched gaps (~384d) and Kshaya skips.
     var date = _estimateFestivalSearchStart(baseDate, festival);
     if (date.isBefore(baseDate)) {
       date = baseDate;
     }
 
-    for (int i = 0; i < 380; i++) {
+    for (int i = 0; i < 420; i++) {
       Future<bool> matchesOn(DateTime day) async {
-        final probe = DateTime(day.year, day.month, day.day, 6);
+        // Sample at TRUE sunrise (not a fixed 06:00): the UI batch matches at
+        // sunrise, so a fixed 06:00 probe disagrees by a day whenever the
+        // tithi changes between 06:00 and sunrise.
+        final dayOnly = DateTime(day.year, day.month, day.day);
+        final probe = SunriseCalculator.calculateSunriseIST(
+          date: dayOnly,
+          latitude: latitude,
+          longitude: longitude,
+        );
         final probeRawTithi = await calculateTithi(
           probe,
           latitude: latitude,
           longitude: longitude,
         );
-        final probeIndex = probeRawTithi.floor();
+        // Clamp: the web mean-motion approximation can yield ~0.x near the
+        // wrap (native guards this in calculateTithi); floor() 0 would derive
+        // a bogus Shukla-0 tithi that matches nothing and skews Kshaya gaps.
+        final probeIndex = probeRawTithi.floor().clamp(1, 30);
         final String probePaksha;
         final int probeTithiNumber;
         if (probeIndex <= 15) {
@@ -239,8 +264,8 @@ class PanchangService {
         // Timing-override checkpoint (same as the UI batch in
         // PanchangData.fromRawTithi): festivals observed at madhyahna,
         // aparahna, nishita or pradosha match the tithi prevailing at that
-        // intraday instant — not the 06:00 probe. Without this, a tithi
-        // starting after 06:00 but prevailing at dusk (e.g. Trayodashi for
+        // intraday instant — not the sunrise probe. Without this, a tithi
+        // starting after sunrise but prevailing at dusk (e.g. Trayodashi for
         // Pradosh Vrata) is missed entirely by the forward scan.
         // Masa stays the sunrise masa (probeMasa), matching the UI batch
         // which matches override festivals against the sunrise masa — not
@@ -271,16 +296,20 @@ class PanchangService {
               cpPaksha = 'Krishna';
               cpNum = cpIndex - 15;
             }
-            return matchesFestivalOnDay(
+            if (matchesFestivalOnDay(
               festival: festival,
               paksha: cpPaksha,
               tithiNumber: cpNum,
               masa: probeMasa,
               nakshatra: null,
               date: day,
-            );
+            )) {
+              return true;
+            }
+            // Checkpoint missed: fall through to the Kshaya fallback below
+            // (mirrors PanchangData.fromRawTithi). Do NOT return false here.
           }
-          return false;
+          // No checkpoint, or checkpoint missed: fall through to Kshaya.
         }
         // Dominant-tithi grace (Drik rule, same as the UI batch).
         final usesSunrise = festival.panchangRules.timingOverride == null ||
@@ -288,11 +317,9 @@ class PanchangService {
               festival.panchangRules.timingOverride,
             );
         if (usesSunrise && festival.nakshatraCondition == null) {
-          final daySunrise = SunriseCalculator.calculateSunriseIST(
-            date: DateTime(day.year, day.month, day.day),
-            latitude: latitude,
-            longitude: longitude,
-          );
+          // `probe` IS today's sunrise (see above): reuse it instead of
+          // recomputing the same instant.
+          final daySunrise = probe;
           final domRaw = await calculateTithi(
             daySunrise.add(kDominantTithiGrace),
             latitude: latitude,
@@ -318,13 +345,92 @@ class PanchangService {
                 longitude: longitude,
               );
             }
-            return festival.matchesTithi(
+            if (festival.matchesTithi(
               domPaksha,
               domNum,
               domMasa,
               HinduMonthSystem.amanta,
               day,
-            );
+            )) {
+              return true;
+            }
+            // Dominant missed: fall through to the Kshaya fallback below
+            // (mirrors the UI batch). Do NOT return false here.
+          }
+        }
+        // Kshaya fallback (same as PanchangData.fromRawTithi): a tithi that
+        // begins after one sunrise and ends before the next never prevails at
+        // any sunrise, so probe/checkpoint/dominant all miss it. Without this
+        // the calendar grid shows the festival (via the UI batch) but the
+        // forward scan skips the day and jumps to next year.
+        // Nakshatra festivals returned with probeMatch above (a nakshatra
+        // always owns a sunrise, so there is no Kshaya fallback for them).
+        if (festival.nakshatraCondition == null) {
+          final nextSunriseDay = SunriseCalculator.calculateSunriseIST(
+            date: DateTime(day.year, day.month, day.day).add(
+              const Duration(days: 1),
+            ),
+            latitude: latitude,
+            longitude: longitude,
+          );
+          final rawNext = await calculateTithi(
+            nextSunriseDay,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          var currentSunriseIndex = probeRawTithi.floor();
+          var nextSunriseIndex = rawNext.floor();
+          if (currentSunriseIndex < 1) currentSunriseIndex = 1;
+          if (currentSunriseIndex > 30) currentSunriseIndex = 30;
+          if (nextSunriseIndex < 1) nextSunriseIndex = 1;
+          if (nextSunriseIndex > 30) nextSunriseIndex = 30;
+
+          if (nextSunriseIndex < currentSunriseIndex) {
+            nextSunriseIndex += 30; // Handle wrap-around.
+          }
+
+          if (nextSunriseIndex - currentSunriseIndex > 1) {
+            String? masaNextSunrise;
+            for (int i = currentSunriseIndex + 1; i < nextSunriseIndex; i++) {
+              final skippedIndex = i > 30 ? i - 30 : i;
+              final String kshayaPaksha = skippedIndex <= 15
+                  ? 'Shukla'
+                  : 'Krishna';
+              final int kshayaTithiNum = skippedIndex <= 15
+                  ? skippedIndex
+                  : skippedIndex - 15;
+
+              if (festival.matchesTithi(
+                kshayaPaksha,
+                kshayaTithiNum,
+                probeMasa,
+                HinduMonthSystem.amanta,
+                day,
+              )) {
+                return true;
+              }
+
+              // New-moon wrap inside the skipped span starts a new lunation.
+              if (skippedIndex == 1 || skippedIndex == 16) {
+                masaNextSunrise ??= await calculateMasa(
+                  nextSunriseDay,
+                  rawNext,
+                  latitude: latitude,
+                  longitude: longitude,
+                );
+                if (masaNextSunrise.isNotEmpty &&
+                    masaNextSunrise != probeMasa &&
+                    festival.matchesTithi(
+                      kshayaPaksha,
+                      kshayaTithiNum,
+                      masaNextSunrise,
+                      HinduMonthSystem.amanta,
+                      day,
+                    )) {
+                  return true;
+                }
+              }
+            }
           }
         }
         return false;
@@ -383,12 +489,16 @@ class PanchangService {
     final targetMonth = approxMonth[masa];
     if (targetMonth == null) return from;
 
-    var year = from.year;
-    if (targetMonth < from.month - 1) {
-      year += 1;
-    }
-
-    return DateTime(year, targetMonth);
+    // No year rollover (see native impl): the 420-day forward scan finds
+    // next year's occurrence on its own. Jumping to year+1 when the approx
+    // month looks "past" skips imminent lunar occurrences 1-2 months later
+    // than the Gregorian guess (e.g. Mahalaya 2026). The estimate must never
+    // start after [from]; subtract 45 days (Adhika buffer, same as native)
+    // so the fast-forward stays on the early/safe side.
+    return DateTime(
+      from.year,
+      targetMonth,
+    ).subtract(const Duration(days: 45));
   }
 
   /// Calculates the exact start time of a specific tithi (Web Fallback)

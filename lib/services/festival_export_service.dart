@@ -117,13 +117,14 @@ class FestivalExportService {
   ) async {
     DateTime? occurrence;
     try {
+      // Resolution is Amanta-fixed; [monthSystem] is display-only below
+      // (masaDisplay + document header) and never affects the date.
       final found = await resolveOccurrenceDate(
         service: service,
         festival: festival,
         baseDate: startOfYear,
         latitude: latitude,
         longitude: longitude,
-        monthSystem: monthSystem,
       );
       if (found != null && found.year == year) {
         occurrence = DateTime(found.year, found.month, found.day);

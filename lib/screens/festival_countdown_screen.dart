@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,6 +27,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
     ref.watch(homeWidgetSyncProvider);
     final countdowns = ref.watch(allFestivalCountdownTargetsProvider);
     final preferences = ref.watch(festivalCountdownPreferencesProvider);
+    final allFestivals = ref.watch(festivalProvider);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -64,7 +66,66 @@ class FestivalCountdownScreen extends ConsumerWidget {
             child: countdowns.when(
               skipLoadingOnReload: true,
               data: (targets) {
+                // IDs with no occurrence in the forward window (Kshaya-skip
+                // years, invalid rules): previously they vanished silently.
+                // Surface them as footer notes instead of dropping them.
+                // On web, nakshatra-observed festivals can never resolve (no
+                // ephemeris) — label those distinctly instead of implying
+                // the date is merely far away.
+                final targetIds = targets.map((t) => t.id).toSet();
+                final missingIds = preferences.countdownIds
+                    .where((id) => !targetIds.contains(id))
+                    .toList();
+                Festival? lookup(String id) {
+                  for (final f in allFestivals) {
+                    if (f.id == id) return f;
+                  }
+                  return null;
+                }
+
+                final webUnsupportedEntries = <({String id, String name})>[];
+                final undatedEntries = <({String id, String name})>[];
+                for (final id in missingIds) {
+                  final festival = lookup(id);
+                  if (kIsWeb &&
+                      festival?.nakshatraCondition != null) {
+                    webUnsupportedEntries.add((id: id, name: festival!.name));
+                  } else {
+                    undatedEntries.add((id: id, name: festival?.name ?? id));
+                  }
+                }
+                final hasMissing = undatedEntries.isNotEmpty ||
+                    webUnsupportedEntries.isNotEmpty;
+                // Removal shared by both footers (entries carry ids, not just
+                // names, so stuck countdowns are dismissible).
+                void removeEntry(String id) =>
+                    _removeCountdown(context, ref, id);
+
                 if (targets.isEmpty) {
+                  // All-undated is NOT empty: show the note(s), not the
+                  // "no countdowns yet" illustration.
+                  if (hasMissing) {
+                    return ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        const HomeWidgetCard(),
+                        const SizedBox(height: 10),
+                        if (undatedEntries.isNotEmpty)
+                          _UndatedCountdowns(
+                            entries: undatedEntries,
+                            onRemove: removeEntry,
+                          ),
+                        if (webUnsupportedEntries.isNotEmpty) ...[
+                          if (undatedEntries.isNotEmpty)
+                            const SizedBox(height: 10),
+                          _WebUnsupportedCountdowns(
+                            entries: webUnsupportedEntries,
+                            onRemove: removeEntry,
+                          ),
+                        ],
+                      ],
+                    );
+                  }
                   return ListView(
                     padding: const EdgeInsets.all(16),
                     children: const [
@@ -75,12 +136,30 @@ class FestivalCountdownScreen extends ConsumerWidget {
                   );
                 }
 
+                final hasUndatedNote = undatedEntries.isNotEmpty;
+                final hasWebNote = webUnsupportedEntries.isNotEmpty;
+                final footerCount =
+                    (hasUndatedNote ? 1 : 0) + (hasWebNote ? 1 : 0);
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                   itemBuilder: (context, index) {
                     // Header widget card at index 0
                     if (index == 0) {
                       return const HomeWidgetCard();
+                    }
+                    // Trailing footers: undated first, web-limitation last.
+                    if (hasUndatedNote && index == targets.length + 1) {
+                      return _UndatedCountdowns(
+                        entries: undatedEntries,
+                        onRemove: removeEntry,
+                      );
+                    }
+                    if (hasWebNote &&
+                        index == targets.length + footerCount) {
+                      return _WebUnsupportedCountdowns(
+                        entries: webUnsupportedEntries,
+                        onRemove: removeEntry,
+                      );
                     }
                     final target = targets[index - 1];
                     final isPinned = preferences.isPinnedToHome(target.id);
@@ -112,7 +191,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
                     );
                   },
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemCount: targets.length + 1,
+                  itemCount: targets.length + 1 + footerCount,
                 );
               },
               loading: () => const Padding(
@@ -425,6 +504,139 @@ class _CountdownError extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(color: context.colors.error),
         ),
+      ),
+    );
+  }
+}
+
+/// Footer note for countdown IDs with no occurrence in the forward window
+/// (Kshaya-skip years, invalid rules). Previously these vanished silently;
+/// now the user sees which countdowns are affected instead of wondering
+/// where they went. Every entry carries a remove button — without one,
+/// unresolvable countdowns would be stuck forever (tiles have delete
+/// actions; these rows would otherwise have none).
+class _UndatedCountdowns extends StatelessWidget {
+  const _UndatedCountdowns({required this.entries, required this.onRemove});
+
+  final List<({String id, String name})> entries;
+  final void Function(String id) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _UnresolvableCard(
+      icon: Icons.event_busy_rounded,
+      message: l10n?.couldNotFindUpcomingOccurrence ??
+          'Could not find upcoming occurrence within a year.',
+      entries: entries,
+      onRemove: onRemove,
+      removeTooltip: l10n?.removeCountdown ?? 'Remove countdown',
+    );
+  }
+}
+
+/// Footer note for nakshatra-observed festivals on web: the web fallback has
+/// no ephemeris, so these can never resolve there (not merely "far away").
+class _WebUnsupportedCountdowns extends StatelessWidget {
+  const _WebUnsupportedCountdowns({
+    required this.entries,
+    required this.onRemove,
+  });
+
+  final List<({String id, String name})> entries;
+  final void Function(String id) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return _UnresolvableCard(
+      icon: Icons.cloud_off_rounded,
+      message: 'Needs precise moon data, unavailable on web',
+      entries: entries,
+      onRemove: onRemove,
+      removeTooltip: l10n?.removeCountdown ?? 'Remove countdown',
+    );
+  }
+}
+
+/// Shared card for unresolvable countdown entries: an explanatory line plus
+/// one dismissible row per entry.
+class _UnresolvableCard extends StatelessWidget {
+  const _UnresolvableCard({
+    required this.icon,
+    required this.message,
+    required this.entries,
+    required this.onRemove,
+    required this.removeTooltip,
+  });
+
+  final IconData icon;
+  final String message;
+  final List<({String id, String name})> entries;
+  final void Function(String id) onRemove;
+  final String removeTooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: AppTheme.glassmorphism(context: context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: context.colors.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  message,
+                  style: context.textTheme.bodySmall?.copyWith(
+                    color: context.colors.onSurface.withValues(alpha: 0.65),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          for (final entry in entries)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  PressScale(
+                    child: IconButton(
+                      onPressed: () => onRemove(entry.id),
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      tooltip: removeTooltip,
+                      color: context.colors.error,
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(40, 40),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

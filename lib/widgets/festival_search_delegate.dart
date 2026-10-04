@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
+import '../core/format/date_only.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
@@ -144,13 +145,16 @@ class FestivalSearchDelegate extends SearchDelegate {
         // Try to find the next occurrence date so we can pass panchang context
         final panchangService = ref.read(panchangServiceProvider);
         final coords = ref.read(resolvedCoordinatesProvider);
+        // Same "today" as the countdowns (not wall-clock now): avoids a
+        // 1-day disagreement around midnight when todayDateProvider hasn't
+        // rolled yet. Resolution is Amanta-fixed (display system never
+        // affects dates).
         final nextDate = await resolveOccurrenceDate(
           service: panchangService,
           festival: festival,
-          baseDate: DateTime.now(),
+          baseDate: dateOnly(ref.read(todayDateProvider)),
           latitude: coords.latitude,
           longitude: coords.longitude,
-          monthSystem: ref.read(hinduMonthSystemProvider),
         );
 
         // Fetch panchang for that date if found
@@ -244,15 +248,16 @@ class FestivalSearchDelegate extends SearchDelegate {
                 );
 
                 // Find next date (cached; resolved location, not Delhi).
+                // Resolution is Amanta-fixed; the sheet resolves its own
+                // display system when fetching panchang.
                 final panchangService = ref.read(panchangServiceProvider);
                 final coords = ref.read(resolvedCoordinatesProvider);
                 final nextDate = await resolveOccurrenceDate(
                   service: panchangService,
                   festival: festival,
-                  baseDate: DateTime.now(),
+                  baseDate: dateOnly(ref.read(todayDateProvider)),
                   latitude: coords.latitude,
                   longitude: coords.longitude,
-                  monthSystem: ref.read(hinduMonthSystemProvider),
                 );
 
                 if (nextDate != null && context.mounted) {

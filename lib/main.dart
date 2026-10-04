@@ -150,6 +150,18 @@ class _TithiAppState extends ConsumerState<TithiApp>
       // are unreliable in the background): recompute the live tick so the
       // hero corrects instantly instead of showing a stale label.
       ref.invalidate(liveTithiTickProvider);
+      // Same for the calendar date: the one-shot midnight timer may never
+      // have fired while suspended, leaving todayDateProvider (and every
+      // countdown derived from it) a day behind. Re-sync when the wall
+      // date moved, and re-arm the midnight timer from now.
+      final today = ref.read(todayDateProvider);
+      final now = DateTime.now();
+      if (today.year != now.year ||
+          today.month != now.month ||
+          today.day != now.day) {
+        ref.read(todayDateProvider.notifier).setToday(now);
+      }
+      _scheduleMidnightRefresh();
     }
   }
 
