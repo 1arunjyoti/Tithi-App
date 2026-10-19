@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart';
+import '../providers/home_cards_visibility_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/calendar_widget.dart';
@@ -234,7 +235,17 @@ class _HomeBody extends ConsumerWidget {
     ref.watch(homeWidgetSyncProvider);
     final viewMode = ref.watch(homeViewModeProvider);
     final isScheduleView = viewMode == HomeViewMode.schedule;
-
+    // Optional cards the user hid (Daily Wisdom, Countdowns) are skipped
+    // entirely: no sliver, no gap, and their providers never fire.
+    final showWisdom = ref.watch(dailyWisdomVisibleProvider);
+    final showCountdowns = ref.watch(festivalCountdownsVisibleProvider);
+    final List<_HomeCard> cards = [
+      _HomeCard.calendar,
+      _HomeCard.events,
+      if (showWisdom) _HomeCard.wisdom,
+      if (showCountdowns) _HomeCard.countdowns,
+      _HomeCard.widget,
+    ];
     return Stack(
       children: [
         // Ambient Background — delegates to AppTheme.backgroundDecoration
@@ -273,21 +284,31 @@ class _HomeBody extends ConsumerWidget {
                       // (and delaying the cards' own content fade-ins). Each
                       // card still cross-fades its own skeleton → content
                       // internally, which is the feedback that matters.
+                      // Paksha hero (redesign v3 faithful) — above calendar
+                      // (top 8px breath comes from the Column above; 20px
+                      // breath below). Kept in a SliverToBoxAdapter (not the
+                      // lazy list below) so scrolling down then back up does
+                      // not dispose + remount it: a remount replays its
+                      // AnimatedSize glide + AnimatedSwitcher fade, reading
+                      // as its own slide-down independent of the scroll.
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 20),
+                          child: RepaintBoundary(
+                            child: PakshaHeroCard(),
+                          ),
+                        ),
+                      ),
+                      // Calendar View — genuinely lazy: SliverList.builder
+                      // creates each card on demand as it approaches the
+                      // viewport, so offscreen cards neither build nor trigger
+                      // their provider/fetch work until scrolled to. Each card
+                      // paints behind its own RepaintBoundary.
                       SliverList.builder(
-                        itemCount: 6,
+                        itemCount: cards.length,
                         itemBuilder: (context, index) {
-                          switch (index) {
-                            case 0:
-                              // Paksha hero (redesign v3 faithful) — above
-                              // calendar (top 8px breath comes from the
-                              // Column above; 20px breath below).
-                              return const Padding(
-                                padding: EdgeInsets.only(bottom: 20),
-                                child: RepaintBoundary(
-                                  child: PakshaHeroCard(),
-                                ),
-                              );
-                            case 1:
+                          switch (cards[index]) {
+                            case _HomeCard.calendar:
                               // Calendar.
                               return const Padding(
                                 padding: EdgeInsets.only(bottom: 16),
@@ -295,7 +316,7 @@ class _HomeBody extends ConsumerWidget {
                                   child: CalendarWidget(),
                                 ),
                               );
-                            case 2:
+                            case _HomeCard.events:
                               // Event list (uniform 16px gaps; cards carry
                               // no vertical margin; gutter via theme).
                               return const Padding(
@@ -308,16 +329,16 @@ class _HomeBody extends ConsumerWidget {
                                   child: EventListWidget(),
                                 ),
                               );
-                            case 3:
-                              // Daily Shloka.
+                            case _HomeCard.wisdom:
+                              // Daily Shloka (hideable in Settings).
                               return const Padding(
                                 padding: EdgeInsets.only(bottom: 16),
                                 child: RepaintBoundary(
                                   child: DailyQuoteWidget(),
                                 ),
                               );
-                            case 4:
-                              // Featured festival countdown.
+                            case _HomeCard.countdowns:
+                              // Featured festival countdown (hideable).
                               return const Padding(
                                 padding: EdgeInsets.only(
                                   left: AppTheme.homeCardGutter,
@@ -328,7 +349,7 @@ class _HomeBody extends ConsumerWidget {
                                   child: FestivalCountdownCard(),
                                 ),
                               );
-                            default:
+                            case _HomeCard.widget:
                               // Home screen widget affordance.
                               return const Padding(
                                 padding: EdgeInsets.only(
@@ -355,3 +376,7 @@ class _HomeBody extends ConsumerWidget {
     );
   }
 }
+
+/// Order of the lazy home cards below the hero. The list in [_HomeBody]
+/// filters out cards the user hid, so indices stay dense.
+enum _HomeCard { calendar, events, wisdom, countdowns, widget }

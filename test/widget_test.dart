@@ -15,7 +15,10 @@ import 'package:tithi/providers/festival_countdown_provider.dart';
 import 'package:tithi/providers/moon_phase_provider.dart';
 import 'package:tithi/providers/home_widget_provider.dart';
 import 'package:tithi/services/moon_phase_service.dart';
+import 'package:tithi/widgets/calendar_widget.dart';
 import 'package:tithi/widgets/daily_quote_widget.dart';
+import 'package:tithi/widgets/event_list_widget.dart';
+import 'package:tithi/widgets/paksha_hero_card.dart';
 
 /// LocationService without native dependencies (GetStorage/Geolocator).
 /// The real init() never completes under flutter_test's FakeAsync clock and
@@ -69,7 +72,12 @@ void main() {
   });
 
   tearDown(() async {
-    await Hive.close();
+    // Guarded: Hive.close() stalls when background precache work still holds
+    // box references (see the pumps comment below) — never fail the test on
+    // teardown I/O; the process exit releases the temp dir anyway.
+    try {
+      await Hive.close().timeout(const Duration(seconds: 10));
+    } catch (_) {}
   });
 
   testWidgets('App renders correctly', (WidgetTester tester) async {
@@ -125,16 +133,53 @@ void main() {
           moonPhaseDataProvider.overrideWith((ref) => Future.value(mockMoonPhase)),
           homeWidgetSupportedProvider.overrideWith((ref) => Future.value(false)),
           homeWidgetPinSupportProvider.overrideWith((ref) => Future.value(false)),
+          // Home-screen providers that otherwise hit FFI/MethodChannel and
+          // leave their cards in loading forever (spinner + pending Future,
+          // so the 30 bounded pumps below never drain):
+          // hero live label (watches tick + tithi timings FFI),
+          // hero Bengali date (Bengali calendar service),
+          // event-list 4-day window, full countdown list watched by
+          // homeWidgetSyncProvider (420-day FFI scans per id).
+          livePanchangProvider.overrideWith((ref, day) => Future.value(mockPanchang)),
+          bengaliDateForHeroProvider.overrideWith((ref, date) => Future.value()),
+          upcomingFestivalsProvider.overrideWith((ref) => Future.value([])),
+          allFestivalCountdownTargetsProvider.overrideWith((ref) => Future.value([])),
+          // No-op the sync side-effect: otherwise it hits the HomeWidget
+          // MethodChannel (no mock in tests) on every rebuild.
+          homeWidgetSyncProvider.overrideWith((ref) {}),
+          // Calendar grid + neighbor precache otherwise run FFI cell builds
+          // that never resolve under flutter_test (pending timer at
+          // calendar_widget.dart _scheduleAdjacentPrecache → "Timer is still
+          // pending" post-test failure). Empty cells are fine: this test
+          // only asserts the app chrome renders.
+          gregorianCalendarCellDataProvider.overrideWith(
+            (ref, args) => Future.value(<DateTime, CalendarCellData>{}),
+          ),
         ],
         child: const TithiApp(),
       ),
     );
     await tester.pump();
-    for (var i = 0; i < 30; i++) {
+    // Keep total fake time under the calendar neighbor-precache delay
+    // (800ms, calendar_widget.dart _scheduleAdjacentPrecache): at 6x100ms =
+    // 600ms the delayed precache never fires, so no pending timer survives
+    // to fail post-test verification. 6 frames still settle the 350ms moon
+    // tween, 250ms AnimatedSize and 180ms switchers with margin.
+    for (var i = 0; i < 6; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
 
     // Verify the app title is present
     expect(find.text('Tithi'), findsOneWidget);
+
+    // Drain the calendar neighbor-precache delay (800ms,
+    // calendar_widget.dart _scheduleAdjacentPrecache): it is scheduled on a
+    // post-frame callback, so merely staying under 800ms still leaves it
+    // pending at dispose ("Timer is still pending"). Pumping past it with
+    // every provider above mocked lets its async body resolve instantly and
+    // leaves no timer behind.
+    for (var i = 0; i < 4; i++) {
+      await tester.pump(const Duration(milliseconds: 500));
+    }
   });
 }

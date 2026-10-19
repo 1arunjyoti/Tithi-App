@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
+import '../core/navigation/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../providers/accessibility_provider.dart';
 import '../widgets/settings_widgets.dart';
@@ -14,6 +15,7 @@ import '../features/settings/widgets/calendar_settings.dart';
 import '../features/settings/widgets/accessibility_settings.dart';
 import '../features/settings/widgets/app_update_settings.dart';
 import '../features/settings/widgets/data_settings.dart';
+import 'home_cards_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -111,6 +113,24 @@ class SettingsScreen extends ConsumerWidget {
                           HinduYearEraSetting(),
                           SettingsDivider(),
                           TithiDisplayModeSetting(),
+                        ],
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      const SettingsSectionHeader('HOME SCREEN'),
+                      SettingsGroupCard(
+                        children: [
+                          SettingsActionTile(
+                            icon: Icons.widgets_rounded,
+                            title: 'Home screen cards',
+                            subtitle:
+                                'Show or hide Daily Wisdom and Countdowns',
+                            onTap: () => AppRoutes.pushSharedX(
+                              context,
+                              const HomeCardsScreen(),
+                            ),
+                          ),
                         ],
                       ),
 

@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/format/date_only.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
+import '../providers/calendar_provider.dart';
 import '../providers/festival_provider.dart';
 import '../screens/all_festivals_screen.dart';
 import '../core/navigation/app_routes.dart';
@@ -59,6 +61,16 @@ class EventListWidget extends ConsumerWidget {
                 color: context.colors.onSurface,
               ),
             ),
+            const SizedBox(height: 2),
+            // Range hint: the rows below cover the selected day plus the
+            // next 3 days (see upcomingFestivalWindowDays), not the whole
+            // calendar.
+            Text(
+              _rangeHint(ref),
+              style: context.textTheme.labelSmall?.copyWith(
+                color: context.colors.onSurface.withValues(alpha: 0.6),
+              ),
+            ),
             const SizedBox(height: 12),
             upcomingAsync.when(
               // Date taps reload for the new window; the old rows stay put
@@ -75,6 +87,15 @@ class EventListWidget extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  /// Coverage hint under the title: the rows span the selected day plus
+  /// the next 3 days. Names "Today" when the selection is today so the
+  /// default view reads naturally; browsed dates say "Selected day".
+  String _rangeHint(WidgetRef ref) {
+    final selected = ref.watch(selectedDateProvider);
+    if (isSameDay(selected, DateTime.now())) return 'Today + next 3 days';
+    return 'Selected day + next 3 days';
   }
 
   Widget _buildRows(
@@ -108,6 +129,7 @@ class EventListWidget extends ConsumerWidget {
       );
     }
     final shown = items.take(upcomingFestivalMaxRows).toList();
+    final hidden = items.skip(shown.length).toList();
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -128,6 +150,13 @@ class EventListWidget extends ConsumerWidget {
               shown[i].panchang,
             ),
           ),
+        ],
+        // Truncation used to be silent: beyond the row cap the glance
+        // failed without saying what was cut. Name the hidden festivals
+        // inline (tap goes to the full list, same as View all below).
+        if (hidden.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _OverflowLine(hidden: hidden),
         ],
       ],
     );
@@ -180,6 +209,35 @@ class EventListWidget extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) =>
           EventDetailSheet(festival: festival, panchang: panchang),
+    );
+  }
+}
+
+/// Inline overflow line naming the festivals cut by the home row cap, so a
+/// busy window never fails silently. Display only — the View all button
+/// right below it owns navigation to the full list.
+class _OverflowLine extends StatelessWidget {
+  const _OverflowLine({required this.hidden});
+
+  final List<UpcomingFestival> hidden;
+
+  @override
+  Widget build(BuildContext context) {
+    final gold = AppTheme.festivalAccent(context);
+    final names = hidden.map((e) => e.festival.name).join(' • ');
+    final label = hidden.length == 1 ? '+1 more: $names' : '+${hidden.length} more: $names';
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      child: Text(
+        label,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 13.5,
+          fontWeight: FontWeight.w700,
+          color: gold,
+        ),
+      ),
     );
   }
 }

@@ -34,6 +34,13 @@ const int quoteMaxDayOffset = 30;
 final dailyShlokaProvider = FutureProvider.autoDispose<DailyWisdom?>((
   ref,
 ) async {
+  // Retained across home scroll disposal (same pattern as the moon and
+  // countdown providers): without this, scrolling the card off-screen drops
+  // the last listener, the verse is discarded, and scrolling back remounts
+  // into a shrink -> content glide. One tiny verse object; date browses
+  // still rebuild in place via the watched offset.
+  ref.keepAlive();
+
   final service = ShlokaService();
   await service.init();
 
