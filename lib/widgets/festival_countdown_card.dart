@@ -102,12 +102,6 @@ class FestivalCountdownTile extends ConsumerWidget {
     final locale =
         l10n?.localeName ?? Localizations.localeOf(context).languageCode;
     final dateLabel = formatLocalizedDate(target.date, 'EEE, MMM d', locale);
-    final statusLabel = target.isToday
-        ? l10n?.today ?? 'Today'
-        : target.isTomorrow
-        ? l10n?.tomorrow ?? 'Tomorrow'
-        : l10n?.daysRemaining(target.daysRemaining) ??
-              '${target.daysRemaining} days to go';
 
     return RepaintBoundary(
       child: Material(
@@ -134,18 +128,17 @@ class FestivalCountdownTile extends ConsumerWidget {
                   width: 76,
                   height: 76,
                   decoration: BoxDecoration(
-                    color: AppTheme.festivalTileBackground(context),
+                    // The old status pill's job lives here now: the block
+                    // fills gold when the festival is today so the
+                    // "happening now" row still stands out.
+                    color: target.isToday
+                        ? accent
+                        : AppTheme.festivalTileBackground(context),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.auto_awesome_rounded,
-                        color: accent,
-                        size: 22,
-                      ),
-                      const SizedBox(height: 4),
                       Text(
                         target.isToday
                             ? (l10n?.zeroDays ?? '0')
@@ -154,17 +147,23 @@ class FestivalCountdownTile extends ConsumerWidget {
                                 locale,
                               ),
                         style: context.textTheme.headlineSmall?.copyWith(
-                          color: accent,
+                          color: target.isToday
+                              ? AppTheme.onFestivalAccent(context)
+                              : accent,
                           fontWeight: FontWeight.w800,
                           height: 1,
                         ),
                       ),
                       Text(
                         target.isToday
+                            ? (l10n?.today ?? 'Today')
+                            : target.daysRemaining == 1
                             ? (l10n?.day ?? 'day')
                             : (l10n?.days ?? 'days'),
                         style: context.textTheme.labelSmall?.copyWith(
-                          color: accent,
+                          color: target.isToday
+                              ? AppTheme.onFestivalAccent(context)
+                              : accent,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -199,43 +198,28 @@ class FestivalCountdownTile extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.calendar_today_rounded,
-                                size: 14,
-                                color: colors.onSurface.withValues(
-                                  alpha: AppTheme.contrastAlpha(context, 0.58),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  dateLabel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: context.textTheme.bodySmall?.copyWith(
-                                    color: colors.onSurface.withValues(
-                                      alpha: AppTheme.contrastAlpha(
-                                        context,
-                                        0.68,
-                                      ),
-                                    ),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 14,
+                            // Same voice as the event rows' date line
+                            // (FestivalRowTile gold line): the date is data,
+                            // not dim chrome.
+                            color: accent,
                           ),
-                          const SizedBox(height: 6),
-                          _StatusPill(
-                            label: statusLabel,
-                            filled: target.isToday,
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              dateLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.textTheme.bodySmall?.copyWith(
+                                color: accent,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ],
                       ),
@@ -271,35 +255,6 @@ class FestivalCountdownTile extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => EventDetailSheet(festival: festival),
-    );
-  }
-}
-
-/// Status pill beside the date: tinted gold normally, filled gold when the
-/// festival is today so the "happening now" row stands out.
-class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.label, required this.filled});
-
-  final String label;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = AppTheme.festivalAccent(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: filled ? accent : accent.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        style: context.textTheme.labelSmall?.copyWith(
-          color: filled ? AppTheme.onFestivalAccent(context) : accent,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
     );
   }
 }

@@ -26,6 +26,13 @@ const int upcomingFestivalMaxRows = 4;
 
 final upcomingFestivalsProvider =
     FutureProvider.autoDispose<List<UpcomingFestival>>((ref) async {
+      // Retained across home scroll disposal (same pattern as the moon and
+      // countdown providers): without this, scrolling the card off-screen
+      // drops the last listener, the rows are discarded, and scrolling back
+      // remounts into a skeleton -> content glide. A few tiny records;
+      // date taps still rebuild in place via the watched selection.
+      ref.keepAlive();
+
       final selected = ref.watch(selectedDateProvider);
       final base = DateTime(selected.year, selected.month, selected.day);
       final days = List.generate(
