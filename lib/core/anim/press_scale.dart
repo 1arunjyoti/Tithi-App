@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart' show kTouchSlop;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,12 @@ import '../../theme/app_theme.dart';
 /// (but keeps the haptic); [enabled] skips everything (disabled buttons).
 /// Pass `haptic: false` where the tap callback already buzzes (scale only,
 /// no double-buzz).
+///
+/// A drag is not a press: once the pointer travels past the touch slop the
+/// press is dropped for the rest of that gesture, so scrolling a list that
+/// starts on a card never leaves it shrunk under the finger. Raw pointers are
+/// not cancelled when an enclosing scrollable wins the arena, so this has to
+/// be handled here.
 class PressScale extends ConsumerStatefulWidget {
   const PressScale({
     super.key,
@@ -53,21 +60,38 @@ class PressScale extends ConsumerStatefulWidget {
 class _PressScaleState extends ConsumerState<PressScale> {
   bool _pressed = false;
 
-  void _onDown(PointerDownEvent _) {
-    if (!widget.enabled || _pressed) return;
-    if (widget.haptic &&
-        ref.read(accessibilityProvider).hapticFeedback) {
+  /// The pointer that owns the current press, and where it landed. Extra
+  /// fingers must not restart it, and movement past the touch slop hands the
+  /// gesture over to an enclosing scrollable.
+  int? _pointer;
+  Offset _downAt = Offset.zero;
+
+  void _onDown(PointerDownEvent event) {
+    if (_pointer != null) return;
+    _pointer = event.pointer;
+    _downAt = event.position;
+    if (!widget.enabled) return;
+    if (widget.haptic && ref.read(accessibilityProvider).hapticFeedback) {
       HapticFeedback.lightImpact();
     }
     setState(() => _pressed = true);
   }
 
-  void _onUp(PointerUpEvent _) {
-    if (!_pressed) return;
+  void _onMove(PointerMoveEvent event) {
+    if (event.pointer != _pointer || !_pressed) return;
+    if ((event.position - _downAt).distance <= kTouchSlop) return;
+    // A scroll, not a tap: let go now instead of staying shrunk until lift.
+    _pointer = null;
     setState(() => _pressed = false);
   }
 
-  void _onCancel(PointerCancelEvent _) {
+  void _onUp(PointerUpEvent event) => _release(event.pointer);
+
+  void _onCancel(PointerCancelEvent event) => _release(event.pointer);
+
+  void _release(int pointer) {
+    if (pointer != _pointer) return;
+    _pointer = null;
     if (!_pressed) return;
     setState(() => _pressed = false);
   }
@@ -95,8 +119,7 @@ class _PressScaleState extends ConsumerState<PressScale> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: widget.highlightColor,
-                    borderRadius:
-                        widget.highlightRadius ?? BorderRadius.zero,
+                    borderRadius: widget.highlightRadius ?? BorderRadius.zero,
                   ),
                 ),
               ),
@@ -114,6 +137,7 @@ class _PressScaleState extends ConsumerState<PressScale> {
       child: Listener(
         behavior: HitTestBehavior.translucent,
         onPointerDown: _onDown,
+        onPointerMove: _onMove,
         onPointerUp: _onUp,
         onPointerCancel: _onCancel,
         child: content,

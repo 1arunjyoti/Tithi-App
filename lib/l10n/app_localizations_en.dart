@@ -116,6 +116,31 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get searchLocationHint => 'Search for a city or area';
+
+  @override
+  String get noLocationsFound => 'No places found';
+
+  @override
+  String get searchFailed =>
+      'Search failed. Check your connection and try again.';
+
+  @override
+  String get searchRateLimited =>
+      'Too many searches. Please try again in a moment.';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get locationPermissionNeeded =>
+      'Location permission is required to use your current location.';
+
+  @override
+  String get couldNotGetCurrentLocation =>
+      'Could not get your current location. Please try again.';
+
+  @override
   String get startOfWeek => 'Start of Week';
 
   @override
@@ -1686,4 +1711,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get allowInstallPermissionNote =>
       'Allow installs from Tithi in system settings, then tap Install again.';
+
+  @override
+  String get enlargeArtworkHint => 'Long press to enlarge the artwork';
+
+  @override
+  String get swipeArtworkHint =>
+      'Swipe for the other festival artwork, long press to enlarge';
 }

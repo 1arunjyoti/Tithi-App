@@ -33,6 +33,13 @@
   "setThisLocation": "यह स्थान सेट करें",
   "homeLocationSetTo": "घर का स्थान {address} पर सेट किया गया",
   "errorSettingLocation": "स्थान सेट करने में त्रुटि: {error}",
+  "searchLocationHint": "शहर या क्षेत्र खोजें",
+  "noLocationsFound": "कोई स्थान नहीं मिला",
+  "searchFailed": "खोज विफल रही। अपना कनेक्शन जाँचें और पुनः प्रयास करें।",
+  "searchRateLimited": "बहुत अधिक खोजें। कृपया थोड़ी देर बाद पुनः प्रयास करें।",
+  "clearSearch": "खोज साफ़ करें",
+  "locationPermissionNeeded": "आपके वर्तमान स्थान का उपयोग करने के लिए स्थान अनुमति आवश्यक है।",
+  "couldNotGetCurrentLocation": "आपका वर्तमान स्थान प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।",
   "startOfWeek": "सप्ताह की शुरुआत",
   "sunday": "रविवार",
   "monday": "सोमवार",
@@ -495,5 +502,7 @@
   "viewReleasesOnGitHub": "GitHub पर रिलीज़ देखें",
   "releaseNotes": "नया क्या है",
   "allowInstallPermissionNote": "सिस्टम सेटिंग्स में Tithi से इंस्टॉल की अनुमति दें, फिर इंस्टॉल पर दोबारा टैप करें।",
-  "cancellingUpdate": "रद्द किया जा रहा है..."
+  "cancellingUpdate": "रद्द किया जा रहा है...",
+  "enlargeArtworkHint": "चित्र बड़ा करने के लिए देर तक दबाएँ",
+  "swipeArtworkHint": "दूसरा चित्र देखने के लिए स्वाइप करें, बड़ा करने के लिए देर तक दबाएँ"
 }

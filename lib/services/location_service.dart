@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
+import 'package:http/http.dart' as http;
 import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
 import 'storage_service.dart';
@@ -36,6 +37,77 @@ class LocationData {
   @override
   String toString() =>
       'LocationData($latitude, $longitude, $cityName, $timestamp)';
+}
+
+/// Why a place lookup produced no results. Lets the UI say something true
+/// instead of rendering an empty list for a request that actually failed.
+enum PlaceSearchError {
+  /// Device offline, or the request timed out.
+  offline,
+
+  /// Nominatim throttled the client (HTTP 429).
+  rateLimited,
+
+  /// Nominatim returned a non-success status (5xx, 403, ...).
+  server,
+
+  /// Unexpected payload, or a platform failure we did not classify.
+  unknown,
+}
+
+/// Result of [LocationService.searchPlaces].
+///
+/// Sealed so callers must handle the failure variant, matching the
+/// `WeatherResult` pattern used elsewhere in the app.
+sealed class PlaceSearchOutcome {
+  const PlaceSearchOutcome();
+}
+
+/// Lookup succeeded; [results] may still be empty (a genuine "no match").
+final class PlaceSearchSuccess extends PlaceSearchOutcome {
+  const PlaceSearchSuccess(this.results);
+
+  final List<PlaceSearchResult> results;
+}
+
+/// Lookup failed before producing a usable answer.
+final class PlaceSearchFailure extends PlaceSearchOutcome {
+  const PlaceSearchFailure(this.error);
+
+  final PlaceSearchError error;
+}
+
+/// A place returned by a forward-geocoding (text) search.
+class PlaceSearchResult {
+  const PlaceSearchResult({
+    required this.latitude,
+    required this.longitude,
+    required this.displayName,
+  });
+
+  final double latitude;
+  final double longitude;
+
+  /// Human-readable label, e.g. "Connaught Place, New Delhi, India".
+  final String displayName;
+
+  /// Parses one Nominatim `/search` row. Returns null for malformed rows or
+  /// out-of-range coordinates so a single bad entry cannot break the list.
+  static PlaceSearchResult? fromNominatim(Map<String, dynamic> json) {
+    final lat = double.tryParse(json['lat']?.toString() ?? '');
+    final lon = double.tryParse(json['lon']?.toString() ?? '');
+    if (lat == null || lon == null) return null;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+
+    final displayName = (json['display_name'] as String?)?.trim();
+    if (displayName == null || displayName.isEmpty) return null;
+
+    return PlaceSearchResult(
+      latitude: lat,
+      longitude: lon,
+      displayName: displayName,
+    );
+  }
 }
 
 /// Offline city entry for reverse-geocoding fallback (no network needed).
@@ -69,7 +141,12 @@ class _OfflineCity {
 /// Uses native Android LocationManager (not Google Play Services)
 /// Uses OpenStreetMap Nominatim for reverse geocoding
 class LocationService {
-  LocationService();
+  /// [httpClient] is for tests: production callers use the default lazily
+  /// created client (see [_httpClient]). An injected client is owned by the
+  /// caller and is never closed by [dispose].
+  LocationService({http.Client? httpClient})
+    : _injectedHttpClient = httpClient,
+      _ownsHttpClient = httpClient == null;
 
   static const String _keyFirstLaunch = 'first_launch';
   static const String _keyLocationEnabled = 'location_enabled';
@@ -83,9 +160,37 @@ class LocationService {
   static const String _keyHomeLng = 'home_lng';
   static const String _keyHomeAddress = 'home_address';
 
+  /// Contactable User-Agent required by the OSM Nominatim usage policy.
+  /// Names the app and gives a contact point instead of a library default.
+  static const String _nominatimUserAgent =
+      'Tithi (app.tithi.pro; +https://tithiapp.netlify.app)';
+
+  /// Nominatim rejects queries shorter than 3 characters; the picker gates on
+  /// this too so no request is sent for a stray keystroke.
+  static const int minSearchQueryLength = 3;
+
+  /// Nominatim's usage policy: absolute maximum of 1 request per second.
+  static const Duration _minSearchInterval = Duration(seconds: 1);
+
+  /// Upper bound on a single place lookup.
+  static const Duration _searchTimeout = Duration(seconds: 8);
+
   Box? _box;
   bool _isInitialized = false;
   List<_OfflineCity> _offlineCities = [];
+
+  final http.Client? _injectedHttpClient;
+  final bool _ownsHttpClient;
+  http.Client? _ownedHttpClient;
+
+  /// Shared client so repeated searches reuse the keep-alive connection
+  /// instead of paying a fresh TLS handshake per keystroke. Recreated after
+  /// [dispose] so a late search cannot use a closed client.
+  http.Client get _httpClient =>
+      _injectedHttpClient ?? (_ownedHttpClient ??= http.Client());
+
+  /// Start of the most recent Nominatim request, for [_respectNominatimRateLimit].
+  DateTime? _lastSearchRequestAt;
 
   // In-memory cache for request deduplication and short-term caching
   Future<LocationData?>? _pendingLocationRequest;
@@ -258,7 +363,7 @@ class LocationService {
 
       // If no last known position, get current position
       // Web uses standard LocationSettings, mobile uses AndroidSettings for FOSS
-      position ??= await _getPositionWithFallback();
+      position ??= await getCurrentPositionWithFallback();
 
       // Get city name via reverse geocoding (online-first, offline fallback)
       var cityName = await getCityName(position.latitude, position.longitude);
@@ -289,12 +394,22 @@ class LocationService {
   /// The fallback keeps the FOSS-first behavior: outdoors/de-googled flows
   /// are unchanged, and where Play Services is absent the fused call throws
   /// immediately, degrading to the same cached fallback as before.
-  Future<Position> _getPositionWithFallback() async {
+  ///
+  /// This *forces a new fix*, so both attempts can time out — callers acting
+  /// on a user tap should prefer [tryResolvePosition], which returns the OS's
+  /// last known position without waiting for a fix at all.
+  ///
+  /// [fossTimeout] / [fusedTimeout] are overridable so interactive callers
+  /// can fail fast instead of holding the UI for the full 30s + 20s.
+  Future<Position> getCurrentPositionWithFallback({
+    Duration fossTimeout = const Duration(seconds: 30),
+    Duration fusedTimeout = const Duration(seconds: 20),
+  }) async {
     if (kIsWeb) {
       return Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
+        locationSettings: LocationSettings(
           accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 15),
+          timeLimit: fusedTimeout,
         ),
       );
     }
@@ -303,7 +418,7 @@ class LocationService {
         locationSettings: AndroidSettings(
           accuracy: LocationAccuracy.medium,
           forceLocationManager: true, // FOSS: Use native LocationManager
-          timeLimit: const Duration(seconds: 30),
+          timeLimit: fossTimeout,
         ),
       );
     } on TimeoutException {
@@ -315,16 +430,64 @@ class LocationService {
       return Geolocator.getCurrentPosition(
         locationSettings: AndroidSettings(
           accuracy: LocationAccuracy.medium,
-          timeLimit: const Duration(seconds: 20),
+          timeLimit: fusedTimeout,
         ),
       );
     }
   }
 
-  /// Dispose services
+  /// Best-effort one-shot position for interactive UI actions (e.g. the home
+  /// location picker's "my location" button).
+  ///
+  /// Ordering mirrors [_fetchLocation]: the OS's **last known position**
+  /// first, then a fresh fix. The last known position is served from the
+  /// platform cache, so it returns instantly and needs no GPS fix — which is
+  /// the whole point: on a stationary/indoor device a forced fix can burn the
+  /// full timeout and still fail (see [getCurrentPositionWithFallback]).
+  ///
+  /// Never throws. Returns null when nothing resolves, so callers can show a
+  /// single honest "could not get your location" state instead of an
+  /// exception from deep inside a tap handler.
+  Future<Position?> tryResolvePosition({
+    Duration fossTimeout = const Duration(seconds: 10),
+    Duration fusedTimeout = const Duration(seconds: 10),
+  }) async {
+    if (!kIsWeb) {
+      try {
+        final lastKnown = await Geolocator.getLastKnownPosition();
+        if (lastKnown != null) return lastKnown;
+      } catch (e) {
+        if (kDebugMode) {
+          print('Last known position unavailable: $e');
+        }
+      }
+    }
+
+    try {
+      return await getCurrentPositionWithFallback(
+        fossTimeout: fossTimeout,
+        fusedTimeout: fusedTimeout,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Could not resolve current position: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Dispose services.
+  ///
+  /// Closes the owned HTTP client so its keep-alive sockets and connection
+  /// pool are released rather than being held for the app's lifetime. Callers
+  /// that injected a client keep ownership of it.
   Future<void> dispose() async {
     if (_box != null && _box!.isOpen) {
       await _box!.close();
+    }
+    if (_ownsHttpClient) {
+      _ownedHttpClient?.close();
+      _ownedHttpClient = null;
     }
     _isInitialized = false;
   }
@@ -381,6 +544,112 @@ class LocationService {
       }
     }
     return null;
+  }
+
+  /// Forward geocode free-text [query] into place candidates via the
+  /// OpenStreetMap Nominatim `/search` endpoint.
+  ///
+  /// Never throws: transport, status and payload failures come back as a
+  /// [PlaceSearchFailure] so the caller can show an honest state (and offer a
+  /// retry) rather than pretending the search merely matched nothing.
+  ///
+  /// Callers should debounce input; this method additionally enforces
+  /// Nominatim's "at most 1 request/second" policy itself, because exceeding
+  /// it gets the client IP blocked, which would take search down entirely.
+  Future<PlaceSearchOutcome> searchPlaces(
+    String query, {
+    int limit = 6,
+    String? languageCode,
+  }) async {
+    final trimmed = query.trim();
+    if (trimmed.length < minSearchQueryLength) {
+      return const PlaceSearchSuccess([]);
+    }
+
+    await _respectNominatimRateLimit();
+
+    try {
+      final uri = Uri.https('nominatim.openstreetmap.org', '/search', {
+        'q': trimmed,
+        'format': 'jsonv2',
+        'limit': '$limit',
+        'addressdetails': '1',
+        if (languageCode != null && languageCode.isNotEmpty)
+          'accept-language': languageCode,
+      });
+
+      final client = _httpClient;
+      // Stamp the attempt (not the response) so the rate-limit window tracks
+      // request starts, as the policy specifies.
+      _lastSearchRequestAt = DateTime.now();
+      final response = await client
+          .get(uri, headers: {'User-Agent': _nominatimUserAgent})
+          .timeout(_searchTimeout);
+
+      if (response.statusCode == 429) {
+        if (kDebugMode) {
+          print('Place search throttled (HTTP 429)');
+        }
+        return const PlaceSearchFailure(PlaceSearchError.rateLimited);
+      }
+      if (response.statusCode != 200) {
+        if (kDebugMode) {
+          print('Place search failed with status ${response.statusCode}');
+        }
+        return const PlaceSearchFailure(PlaceSearchError.server);
+      }
+
+      // Decode the bytes ourselves: `Response.body` falls back to latin1 when
+      // the response omits a charset, which mangles Indic place names.
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! List) {
+        return const PlaceSearchFailure(PlaceSearchError.unknown);
+      }
+
+      final results = <PlaceSearchResult>[];
+      for (final entry in decoded) {
+        if (entry is Map<String, dynamic>) {
+          final place = PlaceSearchResult.fromNominatim(entry);
+          if (place != null) results.add(place);
+        }
+      }
+      return PlaceSearchSuccess(results);
+    } on TimeoutException catch (e) {
+      if (kDebugMode) {
+        print('Place search timed out: $e');
+      }
+      return const PlaceSearchFailure(PlaceSearchError.offline);
+    } on http.ClientException catch (e) {
+      // Covers socket failures, DNS errors and connection resets on both the
+      // VM and web clients (`package:http` wraps SocketException here).
+      if (kDebugMode) {
+        print('Place search network error: $e');
+      }
+      return const PlaceSearchFailure(PlaceSearchError.offline);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error searching places: $e');
+      }
+      return const PlaceSearchFailure(PlaceSearchError.unknown);
+    }
+  }
+
+  /// Waits out the remainder of Nominatim's 1-request-per-second window.
+  ///
+  /// Only ever blocks when a request was sent very recently, so a single
+  /// search (the common case) never waits.
+  Future<void> _respectNominatimRateLimit() async {
+    final last = _lastSearchRequestAt;
+    if (last == null) return;
+
+    final elapsed = DateTime.now().difference(last);
+    final remaining = _minSearchInterval - elapsed;
+    if (remaining <= Duration.zero) return;
+
+    if (kDebugMode) {
+      print('Throttling place search for ${remaining.inMilliseconds}ms');
+    }
+    await Future<void>.delayed(remaining);
   }
 
   /// Load bundled city index for offline reverse geocoding.
@@ -516,7 +785,10 @@ class LocationService {
   /// Records when app transitions to background.
   Future<void> markAppBackgrounded() async {
     if (!_isInitialized) return;
-    await _box?.put(_keyLastBackgroundAtMs, DateTime.now().millisecondsSinceEpoch);
+    await _box?.put(
+      _keyLastBackgroundAtMs,
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   Future<bool> _shouldRefreshAfterBackground() async {

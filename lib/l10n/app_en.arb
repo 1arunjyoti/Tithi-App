@@ -150,6 +150,34 @@
       }
     }
   },
+  "searchLocationHint": "Search for a city or area",
+  "@searchLocationHint": {
+    "description": "Hint text for the place search field on the location picker"
+  },
+  "noLocationsFound": "No places found",
+  "@noLocationsFound": {
+    "description": "Empty state when the place search returns nothing"
+  },
+  "searchFailed": "Search failed. Check your connection and try again.",
+  "@searchFailed": {
+    "description": "Failure state when the place search request itself fails"
+  },
+  "searchRateLimited": "Too many searches. Please try again in a moment.",
+  "@searchRateLimited": {
+    "description": "Failure state when the geocoding service throttles the client"
+  },
+  "clearSearch": "Clear search",
+  "@clearSearch": {
+    "description": "Tooltip for the button that clears the search field"
+  },
+  "locationPermissionNeeded": "Location permission is required to use your current location.",
+  "@locationPermissionNeeded": {
+    "description": "Reported when the recenter button is tapped without location permission"
+  },
+  "couldNotGetCurrentLocation": "Could not get your current location. Please try again.",
+  "@couldNotGetCurrentLocation": {
+    "description": "Reported when the device position cannot be resolved"
+  },
   "startOfWeek": "Start of Week",
   "@startOfWeek": {
     "description": "Setting to choose first day of week"
@@ -2078,5 +2106,13 @@
   "allowInstallPermissionNote": "Allow installs from Tithi in system settings, then tap Install again.",
   "@allowInstallPermissionNote": {
     "description": "Guidance shown when the unknown-apps install permission is missing"
+  },
+  "enlargeArtworkHint": "Long press to enlarge the artwork",
+  "@enlargeArtworkHint": {
+    "description": "Accessibility hint on the festival artwork thumbnail"
+  },
+  "swipeArtworkHint": "Swipe for the other festival artwork, long press to enlarge",
+  "@swipeArtworkHint": {
+    "description": "Accessibility hint on a day with several festival artworks stacked"
   }
 }

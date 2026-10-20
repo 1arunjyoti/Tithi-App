@@ -211,6 +211,8 @@ Festival rules live in [`assets/festivals.json`](assets/festivals.json) (Amanta 
 
 📖 **Full authoring reference:** [docs/FESTIVALS_Modification_GUIDE.md](docs/FESTIVALS_Modification_GUIDE.md) — schema, masa/paksha/tithi rules, Solar and nakshatra festivals, timing overrides, vriddhi/kshaya/grace, same-day `displayPriority` ordering, traps, verification checklist, and pipeline map.
 
+🖼️ **Festival artwork:** [docs/FESTIVAL_ARTWORK_GUIDE.md](docs/FESTIVAL_ARTWORK_GUIDE.md) — the compression script (usage, flags, idempotence), the 800px / 200 KB budget, wiring `visuals.image`, and troubleshooting.
+
 > [!TIP]
 > No version bump needed after editing — the repository fingerprints the JSON content and reseeds Hive automatically on next launch.
 
@@ -219,6 +221,7 @@ Festival rules live in [`assets/festivals.json`](assets/festivals.json) (Amanta 
 ## 📚 More Docs
 
 - [docs/Bisuddha_Siddhanta_Bengali_Calendar_Implementation_Guide.md](docs/Bisuddha_Siddhanta_Bengali_Calendar_Implementation_Guide.md) — Bengali calendar implementation
+- [docs/FESTIVAL_ARTWORK_GUIDE.md](docs/FESTIVAL_ARTWORK_GUIDE.md) — festival artwork: compression script, budget, wiring, troubleshooting
 - [docs/Lunisolar_Shaka_Vikram_Reference.md](docs/Lunisolar_Shaka_Vikram_Reference.md) — Shaka/Vikram era reference
 - [packages/jyotish/README.md](packages/jyotish/README.md) + [packages/jyotish/QUICKSTART.md](packages/jyotish/QUICKSTART.md) — native ephemeris bindings
 
@@ -257,7 +260,7 @@ assets/
 └── data/ images/ icons/ map_data/
 test/                         # Host-side suite (matching, vriddhi, grace, nakshatra, export, ...)
 integration_test/             # On-device verification (e.g. Adhika month rows)
-docs/                         # Guides (festivals, Bengali calendar, era reference)
+docs/                         # Guides (festivals, artwork, Bengali calendar, era reference)
 ```
 
 ---

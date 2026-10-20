@@ -195,21 +195,24 @@ external reference.
 4. **Spelling traps that fail silently:** `"nishita"` (not
    `nishitha`/`nisitha`) for `timingOverride`; Amanta (not Purnimanta)
    month names — both fall back to sunrise/offset behavior with no error.
-5. **Festival artwork budget (`visuals.image`):** `image` is consumed by
-    the home hero card (`_HeroFestivalImage` in
-    `lib/widgets/paksha_hero_card.dart`, ~96px slot, `BoxFit.cover`) —
-    keep it `""` unless the festival really needs artwork. When adding
-    one, drop the source into `assets/images/festival/` and run
+5. **Festival artwork budget (`visuals.image`):** `image` feeds the home
+    hero card's artwork slot (`HeroFestivalImage` in
+    `lib/features/hero/widgets/hero_festival_image.dart`, 76-110px wide,
+    `BoxFit.cover`; several illustrated festivals on one day stack into a
+    deck) — keep it `""` unless the festival really needs artwork. When
+    adding one, drop the source into `assets/images/festival/` and run
     `python scripts/compress_festival_images.py` from the repo root: it
-    downsizes to **<=800px** longest side, converts to **WebP (q80)**,
-    guarantees **<=200 KB** (stepping quality down, then size, until it
-    fits), updates the `visuals.image` path in `assets/festivals.json`,
-    and removes the original. `test/festival_image_assets_test.dart`
-    fails on non-WebP, oversized, or unreferenced files, so CI catches
-    what the script wasn't run on. `theme_color` is ignored by the event
-    sheet (always app primary, per the comment in
-    `lib/widgets/event_detail_sheet.dart`); the entries carrying hex
-    values are inert documentation for future surfaces — leave new
+    converts to **WebP (q80)**, caps the longest side at **800px** and the
+    file at **<=200 KB**, rewrites the `visuals.image` path in
+    `assets/festivals.json`, and removes the original. Already-compressed
+    files are skipped, so it is safe to re-run and safe to point at a single
+    new picture. Full workflow, flags, and troubleshooting:
+    [FESTIVAL_ARTWORK_GUIDE.md](FESTIVAL_ARTWORK_GUIDE.md).
+    `test/festival_image_assets_test.dart` fails on non-WebP, oversized, or
+    unreferenced files, so CI catches what the script wasn't run on.
+    `theme_color` is ignored by the event sheet (always app primary, per the
+    comment in `lib/widgets/event_detail_sheet.dart`); the entries carrying
+    hex values are inert documentation for future surfaces — leave new
     entries `""`.
 6. **Empty sections are data, not bugs:** fasting/rituals/mantra blocks
    render only when their fields are non-empty.

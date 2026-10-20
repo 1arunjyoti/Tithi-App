@@ -300,6 +300,48 @@ abstract class AppLocalizations {
   /// **'Error setting location: {error}'**
   String errorSettingLocation(String error);
 
+  /// Hint text for the place search field on the location picker
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a city or area'**
+  String get searchLocationHint;
+
+  /// Empty state when the place search returns nothing
+  ///
+  /// In en, this message translates to:
+  /// **'No places found'**
+  String get noLocationsFound;
+
+  /// Failure state when the place search request itself fails
+  ///
+  /// In en, this message translates to:
+  /// **'Search failed. Check your connection and try again.'**
+  String get searchFailed;
+
+  /// Failure state when the geocoding service throttles the client
+  ///
+  /// In en, this message translates to:
+  /// **'Too many searches. Please try again in a moment.'**
+  String get searchRateLimited;
+
+  /// Tooltip for the button that clears the search field
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// Reported when the recenter button is tapped without location permission
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is required to use your current location.'**
+  String get locationPermissionNeeded;
+
+  /// Reported when the device position cannot be resolved
+  ///
+  /// In en, this message translates to:
+  /// **'Could not get your current location. Please try again.'**
+  String get couldNotGetCurrentLocation;
+
   /// Setting to choose first day of week
   ///
   /// In en, this message translates to:
@@ -3077,6 +3119,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Allow installs from Tithi in system settings, then tap Install again.'**
   String get allowInstallPermissionNote;
+
+  /// Accessibility hint on the festival artwork thumbnail
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to enlarge the artwork'**
+  String get enlargeArtworkHint;
+
+  /// Accessibility hint on a day with several festival artworks stacked
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe for the other festival artwork, long press to enlarge'**
+  String get swipeArtworkHint;
 }
 
 class _AppLocalizationsDelegate

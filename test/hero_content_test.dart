@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/features/hero/domain/hero_content.dart';
 import 'package:tithi/l10n/app_localizations.dart';
+import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/hindu_month_system.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/calendar_provider.dart';
@@ -20,6 +21,7 @@ void main() {
     String masa = 'Shravana',
     DateTime? transitionTime,
     int? transitionTithiIndex,
+    List<Festival> festivals = const [],
   }) {
     return PanchangData(
       date: DateTime(2026, 9, 14),
@@ -28,6 +30,7 @@ void main() {
       tithiName: '',
       paksha: paksha,
       masa: masa,
+      festivals: festivals,
       tithiTransitionTime: transitionTime,
       transitionTithiIndex: transitionTithiIndex,
     );
@@ -51,16 +54,91 @@ void main() {
     );
   }
 
+  Festival festival(String name, {String image = '', int? priority}) {
+    return Festival(
+      id: name,
+      name: name,
+      category: 'major',
+      nameRegional: NameRegional(nameEnglish: name),
+      visuals: Visuals(image: image),
+      purpose: const Purpose(description: ''),
+      panchangRules: const PanchangRules(
+        masa: '',
+        paksha: 'Shukla',
+        tithi: 1,
+        conditions: '',
+      ),
+      rituals: const Rituals(steps: []),
+      media: const Media(),
+      displayPriority: priority,
+    );
+  }
+
+  group('heroArtworks', () {
+    test('returns every distinct image, headline first', () {
+      // Arrange: B outranks A; C ships no artwork.
+      final panchang = day(
+        festivals: [
+          festival('B', image: 'b.webp', priority: 2),
+          festival('A', image: 'a.webp', priority: 1),
+          festival('C'),
+        ],
+      );
+
+      // Act
+      final artworks = heroArtworks(panchang);
+
+      // Assert
+      expect(artworks, [
+        (source: 'a.webp', label: 'A'),
+        (source: 'b.webp', label: 'B'),
+      ]);
+    });
+
+    test('collapses festivals that share one image', () {
+      // Arrange: the five Durga Puja entries all point at one file.
+      final panchang = day(
+        festivals: [
+          festival('Durga Puja- Shashthi', image: 'durga.webp', priority: 1),
+          festival('Durga Puja- Saptami', image: 'durga.webp', priority: 2),
+        ],
+      );
+
+      // Act
+      final artworks = heroArtworks(panchang);
+
+      // Assert
+      expect(artworks, [(source: 'durga.webp', label: 'Durga Puja- Shashthi')]);
+    });
+
+    test('keeps art when the headline festival has none', () {
+      // Arrange: the ranked festival is text-only, a lower one has a picture.
+      final panchang = day(
+        festivals: [
+          festival('Headline', priority: 1),
+          festival('Illustrated', image: 'art.webp', priority: 2),
+        ],
+      );
+
+      // Act
+      final artworks = heroArtworks(panchang);
+
+      // Assert
+      expect(artworks, [(source: 'art.webp', label: 'Illustrated')]);
+    });
+
+    test('empty day yields no artwork', () {
+      expect(heroArtworks(day()), isEmpty);
+    });
+  });
+
   group('HeroContent tag line', () {
     test('collapses to Today when both systems match', () {
       // Arrange
       final panchang = day();
 
       // Act
-      final c = content(
-        panchang,
-        secondary: AppCalendarSystem.gregorian,
-      );
+      final c = content(panchang, secondary: AppCalendarSystem.gregorian);
 
       // Assert
       expect(c.tagLabel, equals(l10n.today));
@@ -105,7 +183,7 @@ void main() {
       // Assert
       expect(panchang.hasTithiTransition, isFalse);
       expect(c.chips, isEmpty);
-      expect(c.artwork, isNull);
+      expect(c.artworks, isEmpty);
     });
 
     test('exiting transition yields a next-tithi chip with highlight', () {

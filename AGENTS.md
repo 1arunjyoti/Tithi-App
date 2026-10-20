@@ -259,6 +259,8 @@ flutter pub get
 ---
 
 ## Resources
+- Festival data guide: docs/FESTIVALS_Modification_GUIDE.md
+- Festival artwork guide (compression script, 800px / 200 KB budget): docs/FESTIVAL_ARTWORK_GUIDE.md
 - Flutter Docs: https://flutter.dev/docs
 - Riverpod Docs: https://riverpod.dev/docs
 - Dart Lints: https://dart.dev/tools/linter-rules
