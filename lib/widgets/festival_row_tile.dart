@@ -89,10 +89,14 @@ class FestivalRowTile extends ConsumerWidget {
     final gold = AppTheme.festivalAccent(context);
     final goldLine = _goldLine(context, ref);
     final description = festival.description.trim();
+    // One composed label instead of the row's separate Text nodes (which
+    // would otherwise repeat the name and date after this label).
+    final semanticsLabel = [festival.name, ?goldLine].join('. ');
 
     return Semantics(
       button: onTap != null,
-      label: festival.name,
+      label: semanticsLabel,
+      hint: description.isEmpty ? null : description,
       child: Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
@@ -108,80 +112,82 @@ class FestivalRowTile extends ConsumerWidget {
                     }
                     onTap!();
                   },
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppTheme.festivalTileBackground(context),
-                      borderRadius: BorderRadius.circular(14),
+            child: ExcludeSemantics(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppTheme.festivalTileBackground(context),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        festivalRowIcon(festival),
+                        size: 24,
+                        color: gold,
+                      ),
                     ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      festivalRowIcon(festival),
-                      size: 24,
-                      color: gold,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          festival.name,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: context.colors.onSurface,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (goldLine != null) ...[
-                          const SizedBox(height: 2),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            goldLine,
+                            festival.name,
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: gold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: context.colors.onSurface,
                             ),
-                            // Two lines so the "in N days" suffix survives on
-                            // narrow screens instead of ellipsizing away.
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ],
-                        if (description.isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            description,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.6,
+                          if (goldLine != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              goldLine,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: gold,
                               ),
+                              // Two lines so the "in N days" suffix survives on
+                              // narrow screens instead of ellipsizing away.
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ],
+                          if (description.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              description,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: context.colors.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-                  if (onTap != null) ...[
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      color: context.colors.onSurface.withValues(alpha: 0.5),
-                    ),
+                    if (onTap != null) ...[
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: context.colors.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

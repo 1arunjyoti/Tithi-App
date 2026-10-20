@@ -105,6 +105,8 @@
   "noFestivalsToday": "তিথি • আজ কোনো উৎসব নেই",
   "errorLoadingPanchang": "পঞ্জিকা লোড করতে ত্রুটি: {error}",
   "panchangDetails": "পঞ্জিকা বিবরণ",
+  "festivalsOnThisDay": "এই দিনের উৎসব",
+  "viewFullPanchang": "সম্পূর্ণ পঞ্জিকা দেখুন",
   "paksha": "পক্ষ",
   "pakshaWithName": "{paksha} পক্ষ",
   "waxing": "শুক্ল",

@@ -342,6 +342,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get panchangDetails => 'Panchang Details';
 
   @override
+  String get festivalsOnThisDay => 'Festivals on This Day';
+
+  @override
+  String get viewFullPanchang => 'View full panchang';
+
+  @override
   String get paksha => 'Paksha';
 
   @override

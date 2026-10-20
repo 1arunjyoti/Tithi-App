@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../models/panchang_data.dart';
+import '../../../models/festival.dart';
 import '../../../models/hindu_month_system.dart';
+import '../../../models/panchang_data.dart';
 import '../../../providers/accessibility_provider.dart';
 import '../../../providers/calendar_provider.dart' as cp;
 import '../../../theme/app_theme.dart';
 import '../../../utils/tithi_localization.dart';
 import '../providers/schedule_providers.dart';
-import '../../../widgets/event_detail_sheet.dart';
+import '../../../features/sheets/sheet_launcher.dart';
 
 export '../providers/schedule_providers.dart'
     show
@@ -713,7 +714,7 @@ class _ScheduleDateItem extends ConsumerWidget {
   Widget _buildFestivalCard(
     BuildContext context,
     WidgetRef ref,
-    dynamic festival,
+    Festival festival,
     PanchangData panchang,
   ) {
     final isMajor = festival.category == 'major';
@@ -783,17 +784,10 @@ class _ScheduleDateItem extends ConsumerWidget {
 
   void _showFestivalDetail(
     BuildContext context,
-    dynamic festival,
+    Festival festival,
     PanchangData panchang,
   ) {
-    showModalBottomSheet(
-      context: context,
-      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          EventDetailSheet(festival: festival, panchang: panchang),
-    );
+    showEventDetailSheet(context, festival: festival, panchang: panchang);
   }
 
   Widget _buildLoadingRow(BuildContext context) {

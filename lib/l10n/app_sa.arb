@@ -105,6 +105,8 @@
   "noFestivalsToday": "तिथिः • अद्य उत्सवो नास्ति",
   "errorLoadingPanchang": "पञ्चाङ्गप्रापणे त्रुटिः: {error}",
   "panchangDetails": "पञ्चाङ्गविवरणम्",
+  "festivalsOnThisDay": "अस्मिन् दिने उत्सवाः",
+  "viewFullPanchang": "पूर्णं पञ्चाङ्गं पश्यतु",
   "paksha": "पक्षः",
   "pakshaWithName": "{paksha} पक्षः",
   "waxing": "शुक्लः",

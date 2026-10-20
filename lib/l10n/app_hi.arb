@@ -105,6 +105,8 @@
   "noFestivalsToday": "तिथि • आज कोई त्योहार नहीं",
   "errorLoadingPanchang": "पंचांग लोड करने में त्रुटि: {error}",
   "panchangDetails": "पंचांग विवरण",
+  "festivalsOnThisDay": "इस दिन के त्योहार",
+  "viewFullPanchang": "पूरा पंचांग देखें",
   "paksha": "पक्ष",
   "pakshaWithName": "{paksha} पक्ष",
   "waxing": "शुक्ल",

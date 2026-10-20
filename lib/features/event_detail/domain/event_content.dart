@@ -12,7 +12,7 @@ export '../../../core/format/festival_labels.dart'
         heroLanguageChips,
         observanceRuleKey,
         observanceRuleLabel,
-        showsObservanceBanner,
+        showsObservanceRule,
         capitalizedMasaLabel,
         localizedMasaLabel;
 

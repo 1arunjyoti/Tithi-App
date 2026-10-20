@@ -732,6 +732,18 @@ abstract class AppLocalizations {
   /// **'Panchang Details'**
   String get panchangDetails;
 
+  /// Section header listing the festivals that fall on the day shown in the tithi detail sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Festivals on This Day'**
+  String get festivalsOnThisDay;
+
+  /// Link in the festival detail sheet that opens the day's tithi (panchang) sheet
+  ///
+  /// In en, this message translates to:
+  /// **'View full panchang'**
+  String get viewFullPanchang;
+
   /// Label for lunar fortnight
   ///
   /// In en, this message translates to:

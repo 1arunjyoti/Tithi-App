@@ -26,8 +26,8 @@ import '../features/hero/providers/hero_providers.dart';
 import '../features/hero/widgets/artwork_window.dart';
 import '../features/hero/widgets/hero_chip.dart';
 import '../features/hero/widgets/hero_festival_image.dart';
+import '../features/sheets/sheet_launcher.dart';
 import 'moon_animation_widget.dart';
-import 'tithi_detail_sheet.dart';
 
 export '../features/hero/providers/hero_providers.dart'
     show bengaliDateForHeroProvider;
@@ -81,7 +81,7 @@ const double _heroChipRunSpacing = 6;
 /// with [resolvedCoordinatesProvider] (GPS with Delhi fallback) — with the
 /// month batch and [cachedPanchangUiSync] as instant fallbacks so date taps
 /// never flash. City chip comes from [cityNameProvider]. Tap opens
-/// [TithiDetailSheet] for the displayed day.
+/// [showTithiDetailSheet] for the displayed day.
 ///
 /// The header mirrors the calendar Settings: the day line follows
 /// [primaryCalendarSystemProvider] (Bengali primary swaps in the Bengali
@@ -328,15 +328,7 @@ class _HeroBody extends ConsumerWidget {
                   if (ref.read(accessibilityProvider).hapticFeedback) {
                     HapticFeedback.lightImpact();
                   }
-                  showModalBottomSheet(
-                    context: context,
-                    sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(
-                      context,
-                    ),
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => TithiDetailSheet(panchang: panchang),
-                  );
+                  showTithiDetailSheet(context, panchang: panchang);
                 },
                 child: ClipRRect(
                   // Material defaults to Clip.none, so nothing bounded the

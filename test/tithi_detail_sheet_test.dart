@@ -1,9 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:tithi/features/sheets/widgets/sheet_explainer_card.dart';
+import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
@@ -12,6 +15,8 @@ import 'package:tithi/services/auspicious_timings.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 import 'package:tithi/utils/tithi_localization.dart';
+import 'package:tithi/widgets/event_detail_sheet.dart';
+import 'package:tithi/widgets/festival_row_tile.dart';
 import 'package:tithi/widgets/tithi_detail_sheet.dart';
 
 /// Clock-time / short-date expectations built with the same formatter the
@@ -75,6 +80,38 @@ void main() {
     rawTithi: 22.5,
     sunrise: DateTime(2026, 10, 3, 5, 24),
     sunset: DateTime(2026, 10, 3, 17, 36),
+  );
+
+  Festival testFestival({
+    String id = 'f1',
+    String name = 'Test Festival',
+  }) => Festival(
+    id: id,
+    name: name,
+    nameRegional: NameRegional(nameEnglish: name),
+    visuals: const Visuals(),
+    purpose: const Purpose(description: 'A test festival.'),
+    panchangRules: const PanchangRules(
+      masa: 'Kartika',
+      paksha: 'Krishna',
+      tithi: 11,
+      conditions: 'Lunar',
+    ),
+    rituals: const Rituals(steps: ['Light a lamp']),
+    media: const Media(),
+  );
+
+  /// Oct 6 2026 with one matched festival, for the cross-link section.
+  PanchangData festivalDay() => PanchangData(
+    date: DateTime(2026, 10, 6),
+    rawTithi: 26.5,
+    tithiNumber: 11,
+    tithiName: 'Ekadashi',
+    paksha: 'Krishna',
+    masa: 'Kartika',
+    festivals: [testFestival()],
+    sunrise: DateTime(2026, 10, 6, 5, 29),
+    sunset: DateTime(2026, 10, 6, 17, 28),
   );
 
   Future<void> pumpSheet(
@@ -956,6 +993,82 @@ void main() {
         find.text('Sunrise ${jm(DateTime(2026, 10, 6, 5, 29))}'),
         findsOneWidget,
       );
+    });
+
+    testWidgets('lists the day festivals and opens the festival sheet', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(tester, festivalDay());
+
+      // Assert: section header + the matched festival row.
+      expect(find.text('Festivals on This Day'), findsOneWidget);
+      expect(find.byType(FestivalRowTile), findsOneWidget);
+      expect(find.text('Test Festival'), findsOneWidget);
+
+      // One composed accessibility label (name + date/tithi line), one
+      // action — the visible Texts are excluded to avoid repetition.
+      final row = tester
+          .getSemantics(find.byType(FestivalRowTile))
+          .getSemanticsData();
+      expect(row.label, startsWith('Test Festival. '));
+      expect(row.label, contains('Waning Ekadashi'));
+      expect(row.hint, 'A test festival.');
+      expect(row.hasAction(SemanticsAction.tap), isTrue);
+
+      // Act: tap the row.
+      await tester.ensureVisible(find.byType(FestivalRowTile));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(FestivalRowTile));
+      await tester.pumpAndSettle();
+
+      // Assert: the festival sheet stacks on top; the tithi sheet stays
+      // underneath so popping the festival sheet returns here.
+      expect(find.byType(EventDetailSheet), findsOneWidget);
+      expect(find.byType(TithiDetailSheet), findsOneWidget);
+    });
+
+    testWidgets('lists every festival on the day', (tester) async {
+      // Arrange + Act: two matched festivals, same day.
+      await pumpSheet(
+        tester,
+        festivalDay().copyWith(
+          festivals: [
+            testFestival(),
+            testFestival(id: 'f2', name: 'Second Festival'),
+          ],
+        ),
+      );
+
+      // Assert
+      expect(find.text('Festivals on This Day'), findsOneWidget);
+      expect(find.byType(FestivalRowTile), findsNWidgets(2));
+      expect(find.text('Second Festival'), findsOneWidget);
+    });
+
+    testWidgets('puts the festival section above the explainer', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(tester, festivalDay());
+
+      // Assert: the explainer stays the closing note.
+      final explainer = tester.getTopLeft(find.byType(SheetExplainerCard)).dy;
+      final festivals = tester
+          .getTopLeft(find.text('Festivals on This Day'))
+          .dy;
+      expect(festivals, lessThan(explainer));
+    });
+
+    testWidgets('hides the festival section on days without festivals', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(tester, normalDay());
+
+      // Assert
+      expect(find.text('Festivals on This Day'), findsNothing);
+      expect(find.byType(FestivalRowTile), findsNothing);
     });
   });
 }

@@ -23,12 +23,14 @@ import '../features/tithi_sheet/widgets/nakshatra_card.dart';
 import '../features/tithi_sheet/widgets/timings_cards.dart';
 import '../features/tithi_sheet/widgets/yoga_karana_card.dart';
 import '../features/sheets/domain/sheet_labels.dart';
+import '../features/sheets/sheet_launcher.dart';
 import '../features/sheets/widgets/section_header.dart';
 import '../features/sheets/widgets/sheet_chip.dart';
 import '../features/sheets/widgets/sheet_explainer_card.dart';
 import '../features/sheets/widgets/sheet_hero_tile.dart';
 import '../features/sheets/widgets/sheet_scaffold.dart';
 import '../features/sheets/widgets/sheet_time_format.dart';
+import 'festival_row_tile.dart';
 import 'moon_animation_widget.dart';
 
 export '../features/tithi_sheet/providers/sheet_providers.dart'
@@ -835,6 +837,30 @@ class TithiDetailSheet extends ConsumerWidget {
                       ),
                     ],
                     const SizedBox(height: 12),
+                    // Festivals on the day: an extra to the panchang itself,
+                    // using the same rows as the home card. Tapping one opens
+                    // the festival sheet on top of this one (pop returns
+                    // here). Kept above the explainer so the explainer stays
+                    // the closing note.
+                    if (panchang.festivals.isNotEmpty) ...[
+                      SectionHeader(text: l10n.festivalsOnThisDay),
+                      const SizedBox(height: 10),
+                      for (var i = 0; i < panchang.festivals.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 8),
+                        FestivalRowTile(
+                          festival: panchang.festivals[i],
+                          date: panchang.date,
+                          panchang: panchang,
+                          onTap: () => showEventDetailSheet(
+                            context,
+                            festival: panchang.festivals[i],
+                            panchang: panchang,
+                            fromTithiSheet: true,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                    ],
                     // Explainer card (shared kit with the event sheet).
                     SheetExplainerCard(text: l10n.udayaTithiExplanation),
         ],

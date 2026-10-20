@@ -9,7 +9,7 @@ import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
-import 'event_detail_sheet.dart';
+import '../features/sheets/sheet_launcher.dart';
 
 class FestivalCountdownCard extends ConsumerWidget {
   const FestivalCountdownCard({super.key});
@@ -113,7 +113,7 @@ class FestivalCountdownTile extends ConsumerWidget {
             if (ref.read(accessibilityProvider).hapticFeedback) {
               HapticFeedback.lightImpact();
             }
-            _showFestivalDetail(context, target.festival);
+            _showFestivalDetail(context, target.festival, target.date);
           },
           child: Container(
             padding: EdgeInsets.all(embedded ? 12 : 16),
@@ -248,14 +248,12 @@ class FestivalCountdownTile extends ConsumerWidget {
     );
   }
 
-  void _showFestivalDetail(BuildContext context, Festival festival) {
-    showModalBottomSheet(
-      context: context,
-      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => EventDetailSheet(festival: festival),
-    );
+  void _showFestivalDetail(
+    BuildContext context,
+    Festival festival,
+    DateTime date,
+  ) {
+    showEventDetailSheet(context, festival: festival, date: date);
   }
 }
 

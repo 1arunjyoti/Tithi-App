@@ -14,17 +14,23 @@ class SheetSurfaceCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.border,
+    this.clipBehavior = Clip.none,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final BoxBorder? border;
 
+  /// Clips the child to the card radius; tappable cards (see
+  /// `SheetLinkTile`) need this so their ripple stays inside the surface.
+  final Clip clipBehavior;
+
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: padding,
+      clipBehavior: clipBehavior,
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color ?? context.colors.surface,
         borderRadius: BorderRadius.circular(16),
