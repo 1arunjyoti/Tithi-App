@@ -450,6 +450,14 @@
   "@panchangDetails": {
     "description": "Section title for panchang information"
   },
+  "festivalsOnThisDay": "Festivals on This Day",
+  "@festivalsOnThisDay": {
+    "description": "Section header listing the festivals that fall on the day shown in the tithi detail sheet"
+  },
+  "viewFullPanchang": "View full panchang",
+  "@viewFullPanchang": {
+    "description": "Link in the festival detail sheet that opens the day's tithi (panchang) sheet"
+  },
   "paksha": "Paksha",
   "@paksha": {
     "description": "Label for lunar fortnight"

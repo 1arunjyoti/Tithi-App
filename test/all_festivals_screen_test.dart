@@ -1,17 +1,38 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
+import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
+import 'package:tithi/services/storage_service.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
   AccessibilityState build() => const AccessibilityState(hapticFeedback: false);
 }
 
+class _HapticsNotifier extends AccessibilityNotifier {
+  @override
+  AccessibilityState build() => const AccessibilityState(hapticFeedback: true);
+}
+
 void main() {
+  setUp(() async {
+    final tempDir = await Directory.systemTemp.createTemp('tithi_all_fest_test');
+    Hive.init(tempDir.path);
+    await StorageService().init();
+  });
+
+  tearDown(() async {
+    await Hive.close();
+  });
+
   DateTime todayOnly() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
@@ -245,6 +266,47 @@ void main() {
       expect(find.text('Beta Vrat'), findsOneWidget);
       expect(find.text('Alpha Puja'), findsNothing);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a row tap fires exactly one haptic', (tester) async {
+      // Arrange: intercept the platform channel so haptics are countable.
+      final haptics = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'HapticFeedback.vibrate') haptics.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+
+      final festival = fixture(id: 'haptic', name: 'Haptic Festival');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            allFestivalOccurrencesProvider.overrideWith(
+              (ref) => Future.value([(festival: festival, date: null)]),
+            ),
+            festivalProvider.overrideWithValue([festival]),
+            accessibilityProvider.overrideWith(_HapticsNotifier.new),
+          ],
+          child: const MaterialApp(home: AllFestivalsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Act: the row owns the haptic; _showDetails must not add a second.
+      await tester.tap(find.text('Haptic Festival'));
+      await tester.pump();
+
+      // Assert
+      expect(haptics, hasLength(1));
+      expect(haptics.single.arguments, 'HapticFeedbackType.lightImpact');
     });
   });
 }

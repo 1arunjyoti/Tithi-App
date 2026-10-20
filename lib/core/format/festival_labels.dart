@@ -62,11 +62,11 @@ String observanceRuleLabel(String ruleKey, AppLocalizations? l10n) {
   };
 }
 
-/// Whether the observance banner applies: lunar tithi-observed festivals
+/// Whether the observance rule applies: lunar tithi-observed festivals
 /// only (shown even for the default sunrise rule). Solar fixed-date and
 /// nakshatra-observed festivals — and rules without a tithi — follow no
 /// tithi checkpoint, so the rule sentence would mislead.
-bool showsObservanceBanner(Festival festival) {
+bool showsObservanceRule(Festival festival) {
   if (festival.nakshatraCondition != null) return false;
   if (festival.conditions == 'Solar') return false;
   return festival.tithi >= 1;

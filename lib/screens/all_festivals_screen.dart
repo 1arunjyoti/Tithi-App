@@ -1,18 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
-import '../providers/accessibility_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/event_detail_sheet.dart';
+import '../features/sheets/sheet_launcher.dart';
 import '../widgets/festival_row_tile.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
@@ -72,8 +70,9 @@ final allFestivalOccurrencesProvider =
 /// every festival sorted by this year's occurrence date, January first, with
 /// the date on each row. On open the list auto-scrolls to the current point
 /// (first festival dated today or later). A live search field filters by
-/// name/category/description. Tapping a row opens its [EventDetailSheet]
-/// (dateless — the sheet renders festival info without a panchang day).
+/// name/category/description. Tapping a row opens the festival detail sheet
+/// with the row's occurrence date, so the sheet can backfill that day's
+/// panchang (timings, puja/paran windows).
 class AllFestivalsScreen extends ConsumerStatefulWidget {
   const AllFestivalsScreen({super.key});
 
@@ -325,7 +324,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
               festival: item.festival,
               date: item.date,
               daysAway: daysAway,
-              onTap: () => _showDetails(context, item.festival),
+              onTap: () => _showDetails(context, item.festival, item.date),
             ),
           ),
         );
@@ -333,17 +332,14 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     );
   }
 
-  void _showDetails(BuildContext context, Festival festival) {
-    if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.lightImpact();
-    }
-    showModalBottomSheet(
-      context: context,
-      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => EventDetailSheet(festival: festival),
-    );
+  void _showDetails(
+    BuildContext context,
+    Festival festival,
+    DateTime? date,
+  ) {
+    // Haptics belong to FestivalRowTile, which already fires them before
+    // invoking this callback; firing them here too double-buzzes the tap.
+    showEventDetailSheet(context, festival: festival, date: date);
   }
 }
 

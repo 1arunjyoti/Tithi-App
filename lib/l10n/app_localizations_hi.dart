@@ -343,6 +343,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get panchangDetails => 'पंचांग विवरण';
 
   @override
+  String get festivalsOnThisDay => 'इस दिन के त्योहार';
+
+  @override
+  String get viewFullPanchang => 'पूरा पंचांग देखें';
+
+  @override
   String get paksha => 'पक्ष';
 
   @override

@@ -13,7 +13,7 @@ import '../screens/all_festivals_screen.dart';
 import '../core/navigation/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../features/event_list/providers/event_providers.dart';
-import 'event_detail_sheet.dart';
+import '../features/sheets/sheet_launcher.dart';
 import 'festival_row_tile.dart';
 
 export '../features/event_list/providers/event_providers.dart'
@@ -202,14 +202,7 @@ class EventListWidget extends ConsumerWidget {
     Festival festival,
     PanchangData panchang,
   ) {
-    showModalBottomSheet(
-      context: context,
-      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) =>
-          EventDetailSheet(festival: festival, panchang: panchang),
-    );
+    showEventDetailSheet(context, festival: festival, panchang: panchang);
   }
 }
 

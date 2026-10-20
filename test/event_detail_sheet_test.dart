@@ -1,15 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
+import 'package:tithi/features/sheets/sheet_launcher.dart';
+import 'package:tithi/features/sheets/widgets/sheet_link_tile.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/widgets/event_detail_sheet.dart';
+import 'package:tithi/widgets/tithi_detail_sheet.dart';
 
 /// Widget-level proof that the Puja Samay card and the paran line render in
 /// the event sheet once the festival's data carries pujaKala / paranRule —
@@ -32,6 +37,8 @@ void main() {
     String? pujaKala,
     String? paranRule,
     String fasting = 'Fast until the puja.',
+    String conditions = 'Lunar',
+    int tithi = 4,
   }) {
     return Festival(
       id: 'f1',
@@ -42,8 +49,8 @@ void main() {
       panchangRules: PanchangRules(
         masa: 'Shravana',
         paksha: 'Shukla',
-        tithi: 4,
-        conditions: 'Lunar',
+        tithi: tithi,
+        conditions: conditions,
         pujaKala: pujaKala,
         paranRule: paranRule,
       ),
@@ -68,31 +75,56 @@ void main() {
     );
   }
 
+  List<Override> sheetOverrides() => [
+    resolvedCoordinatesProvider.overrideWithValue((
+      latitude: lat,
+      longitude: lon,
+    )),
+    tithiDisplayModeProvider.overrideWithValue(TithiDisplayMode.pakshaBased),
+    tithiTimingsProvider.overrideWith(
+      (ref, arg) => Future.value((
+        start: DateTime(2026, 10, 5, 20, 10),
+        end: DateTime(2026, 10, 6, 17),
+      )),
+    ),
+    // Hermetic for the tithi sheet the cross-link opens: the real
+    // nakshatra/yoga providers need the native ephemeris.
+    nakshatraTimingsProvider.overrideWith(
+      (ref, arg) => Future<
+        ({DateTime end, int index, String nakshatra, DateTime start})?
+      >.value(),
+    ),
+    yogaKaranaTimingsProvider.overrideWith(
+      (ref, arg) => Future<
+        ({
+          int yogaIndex,
+          String yoga,
+          DateTime yogaEnd,
+          int karanaIndex,
+          String karana,
+          DateTime karanaEnd,
+        })?
+      >.value(),
+    ),
+  ];
+
   Future<void> pumpSheet(
     WidgetTester tester,
     Festival f,
-    PanchangData? panchang,
-  ) async {
+    PanchangData? panchang, {
+    DateTime? date,
+    List<Override> extraOverrides = const [],
+  }) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          resolvedCoordinatesProvider.overrideWithValue((
-            latitude: lat,
-            longitude: lon,
-          )),
-          tithiDisplayModeProvider.overrideWithValue(
-            TithiDisplayMode.pakshaBased,
-          ),
-          tithiTimingsProvider.overrideWith(
-            (ref, arg) => Future.value((
-              start: DateTime(2026, 10, 5, 20, 10),
-              end: DateTime(2026, 10, 6, 17),
-            )),
-          ),
-        ],
+        overrides: [...sheetOverrides(), ...extraOverrides],
         child: MaterialApp(
           home: Scaffold(
-            body: EventDetailSheet(festival: f, panchang: panchang),
+            body: EventDetailSheet(
+              festival: f,
+              panchang: panchang,
+              date: date,
+            ),
           ),
         ),
       ),
@@ -279,6 +311,208 @@ void main() {
       expect(find.textContaining('Paran (breaking'), findsNothing);
       // The fasting text itself still shows.
       expect(find.text('Fast until the puja.'), findsOneWidget);
+    });
+  });
+
+  group('EventDetailSheet tithi cross-link', () {
+    testWidgets('shows the panchang link once the day is known', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(tester, festival(), day());
+
+      // Assert: label + the day the link opens.
+      expect(find.text('View full panchang'), findsOneWidget);
+      expect(find.text('6 October 2026'), findsOneWidget);
+    });
+
+    testWidgets('hides the link without panchang', (tester) async {
+      // Arrange + Act: rules-only layout.
+      await pumpSheet(tester, festival(), null);
+
+      // Assert
+      expect(find.text('View full panchang'), findsNothing);
+    });
+
+    testWidgets('tapping the link opens the tithi sheet', (tester) async {
+      // Arrange
+      await pumpSheet(tester, festival(), day());
+
+      // Act
+      await tester.ensureVisible(find.text('View full panchang'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('View full panchang'));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(TithiDetailSheet), findsOneWidget);
+      expect(find.byType(EventDetailSheet), findsOneWidget);
+    });
+
+    testWidgets('opened from the tithi sheet, the link pops back', (
+      tester,
+    ) async {
+      // Arrange: a host route, so the sheet has something to pop back to.
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: sheetOverrides(),
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => showEventDetailSheet(
+                    context,
+                    festival: festival(),
+                    panchang: day(),
+                    fromTithiSheet: true,
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byType(EventDetailSheet), findsOneWidget);
+
+      // Act
+      await tester.ensureVisible(find.text('View full panchang'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('View full panchang'));
+      await tester.pumpAndSettle();
+
+      // Assert: back to the host, no duplicate tithi sheet stacked.
+      expect(find.byType(EventDetailSheet), findsNothing);
+      expect(find.byType(TithiDetailSheet), findsNothing);
+      expect(find.text('open'), findsOneWidget);
+    });
+
+    testWidgets('resolves the day from the occurrence date', (tester) async {
+      // Arrange + Act: only the date, as the all-festivals list provides.
+      await pumpSheet(
+        tester,
+        festival(),
+        null,
+        date: DateTime(2026, 10, 6),
+        extraOverrides: [
+          panchangForDateProvider.overrideWith((ref, date) => day()),
+        ],
+      );
+
+      // Assert
+      expect(find.text('View full panchang'), findsOneWidget);
+      expect(find.text('6 October 2026'), findsOneWidget);
+    });
+
+    testWidgets('upgrades in place once the day resolves', (tester) async {
+      // Arrange: hold the resolution so the rules-only layout is visible.
+      final completer = Completer<PanchangData>();
+      await pumpSheet(
+        tester,
+        festival(),
+        null,
+        date: DateTime(2026, 10, 6),
+        extraOverrides: [
+          panchangForDateProvider.overrideWith((ref, date) => completer.future),
+        ],
+      );
+      expect(find.text('View full panchang'), findsNothing);
+
+      // Act: the occurrence date is already known, so the hero shows it
+      // while the panchang is still loading.
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Text &&
+              (w.textSpan?.toPlainText() ?? '').contains('6 October 2026'),
+        ),
+        findsOneWidget,
+      );
+
+      completer.complete(day());
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.text('View full panchang'), findsOneWidget);
+    });
+
+    testWidgets('a supplied panchang wins over the date', (tester) async {
+      // Arrange + Act
+      await pumpSheet(
+        tester,
+        festival(),
+        day(),
+        date: DateTime(2026, 12, 25),
+      );
+
+      // Assert: the link points at the panchang's own day.
+      expect(find.text('6 October 2026'), findsOneWidget);
+      expect(find.text('25 December 2026'), findsNothing);
+    });
+
+    testWidgets('hides the link when the day cannot be resolved', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(
+        tester,
+        festival(),
+        null,
+        date: DateTime(2026, 10, 6),
+        extraOverrides: [
+          panchangForDateProvider.overrideWith(
+            (ref, date) => Future.error(StateError('boom')),
+          ),
+        ],
+      );
+
+      // Assert: rules-only layout survives the failure.
+      expect(find.text('View full panchang'), findsNothing);
+      expect(find.text('Fast until the puja.'), findsOneWidget);
+    });
+
+    testWidgets('exposes the link as one labelled button', (tester) async {
+      // Arrange + Act
+      await pumpSheet(tester, festival(), day());
+
+      // Assert: one composed label (visible Texts excluded) + tap action.
+      final data = tester
+          .getSemantics(find.byType(SheetLinkTile))
+          .getSemanticsData();
+      expect(data.label, 'View full panchang. 6 October 2026');
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
+    });
+  });
+
+  group('EventDetailSheet observance note', () {
+    testWidgets('renders the rule as a caption under Panchang Details', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(tester, festival(), day());
+
+      // Assert: present, below the section header, in secondary text style.
+      final caption = find.text(
+        'Observed on the day the tithi prevailing at sunrise',
+      );
+      expect(caption, findsOneWidget);
+      final header = tester.getTopLeft(find.text('Panchang Details')).dy;
+      expect(tester.getTopLeft(caption).dy, greaterThan(header));
+      final style = tester.widget<Text>(caption).style;
+      expect(style?.fontSize, 12.5);
+      expect(style?.fontWeight, FontWeight.w500);
+    });
+
+    testWidgets('hides the note where no tithi checkpoint applies', (
+      tester,
+    ) async {
+      // Arrange + Act: solar fixed-date festival.
+      await pumpSheet(tester, festival(conditions: 'Solar', tithi: 0), null);
+
+      // Assert
+      expect(find.textContaining('Observed on the day'), findsNothing);
     });
   });
 }

@@ -15,9 +15,11 @@ import '../utils/tithi_localization.dart';
 import '../features/event_detail/domain/event_content.dart';
 import '../features/event_detail/domain/puja_samay.dart';
 import '../features/event_detail/providers/event_detail_providers.dart';
+import '../features/sheets/sheet_launcher.dart';
 import '../features/sheets/widgets/sheet_chip.dart';
 import '../features/sheets/widgets/sheet_explainer_card.dart';
 import '../features/sheets/widgets/sheet_hero_tile.dart';
+import '../features/sheets/widgets/sheet_link_tile.dart';
 import '../features/sheets/widgets/sheet_scaffold.dart';
 import '../features/sheets/widgets/sheet_surface_card.dart';
 import '../features/sheets/widgets/sheet_time_format.dart';
@@ -42,9 +44,27 @@ export '../features/event_detail/providers/event_detail_providers.dart'
 /// date), not the old Gregorian-only info rows.
 class EventDetailSheet extends ConsumerWidget {
   final Festival festival;
+
+  /// The day's panchang when the caller already holds it. When null, the
+  /// sheet resolves [date] itself (see [date]).
   final PanchangData? panchang;
 
-  const EventDetailSheet({super.key, required this.festival, this.panchang});
+  /// Occurrence date for callers that only know the festival (all-festivals
+  /// list, home countdown). Ignored when [panchang] is supplied.
+  final DateTime? date;
+
+  /// True when this sheet was opened from the tithi sheet: its
+  /// "View full panchang" link then pops back to that sheet instead of
+  /// stacking an identical one.
+  final bool openedFromTithiSheet;
+
+  const EventDetailSheet({
+    super.key,
+    required this.festival,
+    this.panchang,
+    this.date,
+    this.openedFromTithiSheet = false,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,9 +92,20 @@ class EventDetailSheet extends ConsumerWidget {
     // corresponding card or line hides).
     final pujaKala = normalizedPujaKala(festival);
     final paranRule = normalizedParanRule(festival);
+    // Panchang resolution: callers that already hold the day's record pass
+    // it directly; the all-festivals list and the home countdown only know
+    // the festival + occurrence date, so the sheet resolves that date here.
+    // While it loads (or with neither input) the rules-only fallback below
+    // stands — no skeleton flash, the sheet upgrades in place.
+    final requestedDate = date == null ? null : DateUtils.dateOnly(date!);
+    final AsyncValue<PanchangData?> panchangAsync = panchang != null
+        ? AsyncData<PanchangData?>(panchang)
+        : requestedDate != null
+        ? ref.watch(panchangForDateProvider(requestedDate))
+        : const AsyncData<PanchangData?>(null);
     // Local promotes null checks for the section widgets below (fields
     // don't promote).
-    final dayPanchang = panchang;
+    final dayPanchang = panchangAsync.valueOrNull;
     // All derived labels/rows (features/event_detail/domain, unit tested).
     // Null without panchang data: the rules-only fallback rows below apply.
     final content = dayPanchang != null
@@ -93,7 +124,10 @@ class EventDetailSheet extends ConsumerWidget {
         ref.watch(glassmorphismConfigProvider).isHighContrast;
 
     // Hero date line: observance weekday + Gregorian date (tithi-sheet
-    // date styling, 22pt semibold hero ink).
+    // date styling, 22pt semibold hero ink). Falls back to the requested
+    // occurrence date while the panchang loads, so date-only entry points
+    // show the date immediately instead of shifting it in later.
+    final headerDate = dayPanchang?.date ?? requestedDate;
     final dateBaseStyle = TextStyle(
       fontSize: 22,
       fontWeight: FontWeight.w600,
@@ -112,8 +146,9 @@ class EventDetailSheet extends ConsumerWidget {
     // up front when the title shows another language (shared helper,
     // unit tested).
     final heroChips = heroLanguageChips(festival: festival, locale: appLanguage);
-    // Observance banner sentence ("Observed on the day …"), mapped from
+    // Observance rule sentence ("Observed on the day …"), mapped from
     // timingOverride with an English fallback like the other sheet strings.
+    // Demoted to a caption on the Panchang Details section (see below).
     final ruleLabel = observanceRuleLabel(observanceRuleKey(festival), l10n);
     final ruleSentence =
         l10n?.observedOnTheDay(ruleLabel) ?? 'Observed on the day $ruleLabel';
@@ -128,18 +163,18 @@ class EventDetailSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header date: observance weekday + Gregorian date.
-          if (dayPanchang != null)
+          if (headerDate != null)
             Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
                     text:
-                        '${formatLocalizedDate(dayPanchang.date, 'EEEE', locale)}, ',
+                        '${formatLocalizedDate(headerDate, 'EEEE', locale)}, ',
                     style: dateBaseStyle,
                   ),
                   TextSpan(
                     text: formatLocalizedDate(
-                      dayPanchang.date,
+                      headerDate,
                       'd MMMM y',
                       locale,
                     ),
@@ -148,7 +183,7 @@ class EventDetailSheet extends ConsumerWidget {
                 ],
               ),
             ),
-          if (dayPanchang != null) const SizedBox(height: 12),
+          if (headerDate != null) const SizedBox(height: 12),
           // Title row: icon tile + name/subtitle + tithi badge + share.
           // Center-aligned like the tithi sheet's moon row, so the badge
           // and share button sit mid-row instead of riding the top edge.
@@ -240,21 +275,6 @@ class EventDetailSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Observance banner: which tithi checkpoint fixes this date.
-          // Lives below the header, above the description — not inside the
-          // hero. Shown even for the default sunrise rule — the
-          // transparency is what makes the date trustworthy when it differs
-          // from another calendar. Hidden where no tithi checkpoint applies
-          // (Solar fixed dates, nakshatra-observed, dateless rules).
-          if (showsObservanceBanner(festival)) ...[
-            // The observance date itself lives in the header date line
-            // above — the banner carries only the rule sentence.
-            _ObservanceBanner(
-              highContrast: highContrast,
-              rule: ruleSentence,
-            ),
-            const SizedBox(height: 12),
-          ],
           _EventDescription(
             festival: festival,
             hasAdditionalDesc: flags.additionalDesc,
@@ -276,6 +296,19 @@ class EventDetailSheet extends ConsumerWidget {
                 _buildTimingInfoButton(context),
             ],
           ),
+          // Observance rule, demoted to a section caption: which tithi
+          // checkpoint ("…at sunrise / midday / midnight") fixed this date.
+          // Still the only place in the sheet that states the rule, but it
+          // no longer competes with the description. Hidden where no tithi
+          // checkpoint applies (solar fixed dates, nakshatra-observed,
+          // dateless rules).
+          if (showsObservanceRule(festival)) ...[
+            const SizedBox(height: 4),
+            _ObservanceCaption(
+              highContrast: highContrast,
+              rule: ruleSentence,
+            ),
+          ],
           const SizedBox(height: 10),
           if (dayPanchang != null && content != null) ...[
             _EventPanchang(
@@ -341,6 +374,30 @@ class EventDetailSheet extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          ],
+
+          // Link into the day's tithi sheet (the other half of the
+          // cross-link). Only once the day's panchang is known; when this
+          // sheet was opened from the tithi sheet, pop back to it instead
+          // of stacking a duplicate.
+          if (dayPanchang != null) ...[
+            const SizedBox(height: 10),
+            SheetLinkTile(
+              icon: Icons.calendar_month_outlined,
+              label: l10n?.viewFullPanchang ?? 'View full panchang',
+              supporting: formatLocalizedDate(
+                dayPanchang.date,
+                'd MMMM y',
+                locale,
+              ),
+              onTap: () {
+                if (openedFromTithiSheet) {
+                  Navigator.of(context).pop();
+                  return;
+                }
+                showTithiDetailSheet(context, panchang: dayPanchang);
+              },
             ),
           ],
 
@@ -506,38 +563,28 @@ Widget _buildFormattedText(String text, TextStyle? baseStyle) {
   return Text.rich(TextSpan(children: spans), style: baseStyle);
 }
 
-/// Tinted observance banner (TransitionCard fill): the bold primary rule
-/// sentence ("Observed on the day …"). The date itself is not repeated
-/// here — it already stands in the header date line.
-class _ObservanceBanner extends StatelessWidget {
-  const _ObservanceBanner({required this.highContrast, required this.rule});
+/// Demoted observance note: the rule sentence ("Observed on the day …") as a
+/// muted caption under the Panchang Details header. It explains which tithi
+/// checkpoint fixed the date; the tinted banner it replaces competed with
+/// the description and repeated the sunrise default on almost every sheet.
+class _ObservanceCaption extends StatelessWidget {
+  const _ObservanceCaption({required this.highContrast, required this.rule});
 
   final bool highContrast;
   final String rule;
 
   @override
   Widget build(BuildContext context) {
-    final primary = context.colors.primary;
-    // Text ink: theme primary is unreadable on the tinted fill in light
-    // mode (vibrant orange on peach), so the banner uses the hero accent —
-    // burnt orange on the light card, neon/gold on the dark ones — the
-    // same ink as the hero titles. High contrast keeps primary.
-    final ink = highContrast
-        ? context.colors.primary
-        : AppTheme.heroAccent(context);
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: highContrast ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: primary.withValues(alpha: 0.35)),
-      ),
-      child: Text(
-        rule,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.bold,
-          color: ink,
+    return Text(
+      rule,
+      style: TextStyle(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w500,
+        height: 1.35,
+        // High contrast keeps the caption readable without the banner's
+        // primary-tinted fill; elsewhere it reads as secondary text.
+        color: context.colors.onSurface.withValues(
+          alpha: highContrast ? 0.9 : 0.6,
         ),
       ),
     );
@@ -670,7 +717,7 @@ class _HeroLanguageChipsState extends ConsumerState<_HeroLanguageChips> {
     final expanded = ref.watch(heroChipsExpandedProvider);
     final l10n = AppLocalizations.of(context);
     // Toggle ink matches the hero titles (primary is unreadable on the
-    // peach gradient in light mode — same call as _ObservanceBanner).
+    // peach gradient in light mode — same call as _ObservanceCaption).
     final ink = widget.highContrast
         ? context.colors.primary
         : AppTheme.heroForeground(context);

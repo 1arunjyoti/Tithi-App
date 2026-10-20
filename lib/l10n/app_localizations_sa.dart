@@ -342,6 +342,12 @@ class AppLocalizationsSa extends AppLocalizations {
   String get panchangDetails => 'पञ्चाङ्गविवरणम्';
 
   @override
+  String get festivalsOnThisDay => 'अस्मिन् दिने उत्सवाः';
+
+  @override
+  String get viewFullPanchang => 'पूर्णं पञ्चाङ्गं पश्यतु';
+
+  @override
   String get paksha => 'पक्षः';
 
   @override

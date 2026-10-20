@@ -11,10 +11,8 @@ import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../core/feedback/app_messages.dart';
-import '../theme/app_theme.dart';
 import '../features/countdown/domain/target_resolution.dart';
-
-import 'event_detail_sheet.dart';
+import '../features/sheets/sheet_launcher.dart';
 
 class FestivalSearchDelegate extends SearchDelegate {
   final WidgetRef ref;
@@ -168,13 +166,10 @@ class FestivalSearchDelegate extends SearchDelegate {
         }
 
         if (!context.mounted) return;
-        await showModalBottomSheet(
-          context: context,
-          sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) =>
-              EventDetailSheet(festival: festival, panchang: panchang),
+        await showEventDetailSheet(
+          context,
+          festival: festival,
+          panchang: panchang,
         );
       },
       child: Container(

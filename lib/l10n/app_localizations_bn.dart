@@ -342,6 +342,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get panchangDetails => 'পঞ্জিকা বিবরণ';
 
   @override
+  String get festivalsOnThisDay => 'এই দিনের উৎসব';
+
+  @override
+  String get viewFullPanchang => 'সম্পূর্ণ পঞ্জিকা দেখুন';
+
+  @override
   String get paksha => 'পক্ষ';
 
   @override

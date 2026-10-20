@@ -426,7 +426,7 @@ void main() {
     });
   });
 
-  group('observance banner', () {
+  group('observance rule', () {
     // ignore: prefer_const_constructors
     Festival ruled({
       String? timingOverride,
@@ -481,21 +481,22 @@ void main() {
 
     test('banner shows for lunar festivals, even default udaya ones', () {
       // Arrange + Act + Assert
-      expect(showsObservanceBanner(ruled()), isTrue);
+      expect(showsObservanceRule(ruled()), isTrue);
       expect(
-        showsObservanceBanner(ruled(timingOverride: 'madhyahna')),
+        showsObservanceRule(ruled(timingOverride: 'madhyahna')),
         isTrue,
       );
     });
 
     test('banner hides where no tithi checkpoint applies', () {
       // Arrange + Act + Assert
-      expect(showsObservanceBanner(ruled(conditions: 'Solar')), isFalse);
+      expect(showsObservanceRule(ruled(conditions: 'Solar')), isFalse);
       expect(
-        showsObservanceBanner(ruled(conditions: 'Mula Nakshatra')),
+        showsObservanceRule(ruled(conditions: 'Mula Nakshatra')),
         isFalse,
       );
-      expect(showsObservanceBanner(ruled(tithi: 0)), isFalse);
+      expect(showsObservanceRule(ruled(tithi: 0)), isFalse);
     });
   });
 }
+
