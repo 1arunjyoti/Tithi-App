@@ -33,6 +33,13 @@
   "setThisLocation": "এই অবস্থান সেট করুন",
   "homeLocationSetTo": "বাড়ির অবস্থান {address}-এ সেট করা হয়েছে",
   "errorSettingLocation": "অবস্থান সেট করতে ত্রুটি: {error}",
+  "searchLocationHint": "শহর বা এলাকা খুঁজুন",
+  "noLocationsFound": "কোনো স্থান পাওয়া যায়নি",
+  "searchFailed": "অনুসন্ধান ব্যর্থ হয়েছে। আপনার সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।",
+  "searchRateLimited": "অনেক বেশি অনুসন্ধান। কিছুক্ষণ পরে আবার চেষ্টা করুন।",
+  "clearSearch": "অনুসন্ধান মুছুন",
+  "locationPermissionNeeded": "আপনার বর্তমান অবস্থান ব্যবহার করতে অবস্থানের অনুমতি প্রয়োজন।",
+  "couldNotGetCurrentLocation": "আপনার বর্তমান অবস্থান পাওয়া যায়নি। আবার চেষ্টা করুন।",
   "startOfWeek": "সপ্তাহের শুরু",
   "sunday": "রবিবার",
   "monday": "সোমবার",
@@ -495,5 +502,7 @@
   "viewReleasesOnGitHub": "GitHub-এ রিলিজ দেখুন",
   "releaseNotes": "নতুন কী আছে",
   "allowInstallPermissionNote": "সিস্টেম সেটিংসে Tithi-র ইনস্টলের অনুমতি দিন, তারপর আবার ইনস্টল করুন।",
-  "cancellingUpdate": "বাতিল করা হচ্ছে..."
+  "cancellingUpdate": "বাতিল করা হচ্ছে...",
+  "enlargeArtworkHint": "শিল্পকর্ম বড় করতে দীর্ঘক্ষণ চাপুন",
+  "swipeArtworkHint": "অন্য শিল্পকর্ম দেখতে স্বাইপ করুন, বড় করতে দীর্ঘক্ষণ চাপুন"
 }

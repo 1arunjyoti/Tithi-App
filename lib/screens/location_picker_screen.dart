@@ -14,6 +14,7 @@ import '../core/feedback/app_messages.dart';
 import '../theme/app_theme.dart';
 import '../app/bootstrap.dart';
 import '../providers/location_provider.dart';
+import '../services/location_service.dart';
 import '../core/location/location_defaults.dart';
 
 class LocationPickerScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,11 @@ class LocationPickerScreen extends ConsumerStatefulWidget {
   ConsumerState<LocationPickerScreen> createState() =>
       _LocationPickerScreenState();
 }
+
+/// State of the place-search overlay. A single enum keeps the panel's
+/// visibility and content in sync — the previous pair of booleans could
+/// express impossible combinations.
+enum _SearchStatus { idle, searching, results, empty, failed }
 
 class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   final MapController _mapController = MapController();
@@ -47,6 +53,30 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     kDefaultLongitude,
   ); // Default Delhi
   bool _isLoading = false;
+  // True while the "my location" action is resolving a GPS fix.
+  bool _isLocating = false;
+  // Latest fix reported by the follow stream. Cached even while the camera
+  // is not following, so "my location" is instant instead of forcing a new
+  // fix (which can time out twice on a stationary/indoor device).
+  LatLng? _lastLivePosition;
+
+  /// Minimum zoom applied by the "my location" recenter so the fix is
+  /// readable instead of a dot on a continent-level view.
+  static const double _recenterMinZoom = 13;
+
+  // Place search state: debounced Nominatim lookups shown as an overlay
+  // list under the search field.
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  _SearchStatus _searchStatus = _SearchStatus.idle;
+  List<PlaceSearchResult> _searchResults = const [];
+  PlaceSearchError? _searchError;
+  // Guards against an older, slower response overwriting a newer one.
+  int _searchRequestId = 0;
+
+  /// Debounce window; combined with the service-side rate limit this keeps
+  /// keystroke bursts well inside Nominatim's 1 req/s policy.
+  static const Duration _searchDebounceDelay = Duration(milliseconds: 600);
 
   @override
   void initState() {
@@ -65,11 +95,27 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
 
   @override
   void dispose() {
-    _positionSubscription?.cancel();
+    // Cancel the pending debounce so a queued search can never fire against a
+    // torn-down element tree. Any response already in flight is dropped by the
+    // request-id + `mounted` guards in [_performSearch], and the shared HTTP
+    // client stays open because it is owned by LocationService, not this
+    // screen.
+    _searchDebounce?.cancel();
+    _searchDebounce = null;
+    _searchController.dispose();
+    _resetLiveLocationSubscription();
     super.dispose();
   }
 
+  /// Starts (or repairs) the live GPS follow stream.
+  ///
+  /// Idempotent: a second call while a subscription is alive is a no-op, so
+  /// the "my location" button can safely use it to recover a stream that was
+  /// never established (permission granted later) or that the platform
+  /// terminated (the [Stream.listen] error/done handlers null the field).
   Future<void> _startLiveLocation() async {
+    if (_positionSubscription != null) return;
+
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
 
@@ -81,6 +127,8 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         permission == LocationPermission.deniedForever) {
       return;
     }
+    // The awaits above can outlive the screen.
+    if (!mounted || _positionSubscription != null) return;
 
     final locationSettings = defaultTargetPlatform == TargetPlatform.android
         ? AndroidSettings(
@@ -96,14 +144,31 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     _positionSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
           (position) {
-            if (!_autoCenterEnabled || !mounted) return;
             final nextCenter = LatLng(position.latitude, position.longitude);
+            // Cache regardless of follow state: this is the only *live* fix
+            // the screen is guaranteed to have.
+            _lastLivePosition = nextCenter;
+            if (!_autoCenterEnabled || !mounted) return;
             setState(() {
               _center = nextCenter;
             });
             _mapController.move(nextCenter, _mapController.camera.zoom);
           },
+          onError: (Object error) {
+            if (kDebugMode) {
+              print('Live location stream error: $error');
+            }
+            _resetLiveLocationSubscription();
+          },
+          onDone: _resetLiveLocationSubscription,
+          cancelOnError: true,
         );
+  }
+
+  /// Tears down the follow stream so [_startLiveLocation] can rebuild it.
+  void _resetLiveLocationSubscription() {
+    _positionSubscription?.cancel();
+    _positionSubscription = null;
   }
 
   Future<void> _onSelectLocation() async {
@@ -155,32 +220,212 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     }
   }
 
+  /// Recenters the map on the device's current position.
+  ///
+  /// Every failure path reports to the user instead of returning silently —
+  /// a dead-looking button was the previous behaviour: location services off,
+  /// permission denied, and (on Android) a GPS-only request with no timeout
+  /// that never completes indoors all produced nothing at all.
   Future<void> _recenterToLiveLocation() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (_isLocating) return; // Ignore repeat taps while a fix is in flight.
+    setState(() => _isLocating = true);
+    final l10n = AppLocalizations.of(context);
 
-    final permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!mounted) return;
+      if (!serviceEnabled) {
+        showAppMessage(
+          context,
+          l10n?.pleaseEnableLocationServices ??
+              'Please enable location services on your device',
+          kind: AppMessageKind.error,
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        // A button tap is an explicit user action, so requesting here is fine.
+        permission = await Geolocator.requestPermission();
+      }
+      if (!mounted) return;
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        showAppMessage(
+          context,
+          l10n?.locationPermissionNeeded ??
+              'Location permission is required to use your current location.',
+          kind: AppMessageKind.error,
+          action: permission == LocationPermission.deniedForever
+              ? SnackBarAction(
+                  label: l10n?.openSettings ?? 'Open Settings',
+                  onPressed: Geolocator.openAppSettings,
+                )
+              : null,
+        );
+        return;
+      }
+
+      final service = ref.read(locationServiceProvider);
+
+      // Resolve a target in increasing order of cost:
+      //   1. the live fix the follow stream already reported — free and
+      //      genuinely current;
+      //   2. the OS last known position, then a fresh fix (service-owned,
+      //      with short timeouts and never throwing).
+      // Forcing a fix first (the previous behaviour) is what produced
+      // "GPS fix timed out, falling back to fused provider" followed by a
+      // second timeout: 20-50s of spinner, then nothing.
+      LatLng? resolved = _lastLivePosition;
+
+      if (resolved == null) {
+        final position = await service.tryResolvePosition();
+        if (!mounted) return;
+        if (position != null) {
+          resolved = LatLng(position.latitude, position.longitude);
+        }
+      }
+
+      if (resolved == null) {
+        showAppMessage(
+          context,
+          l10n?.couldNotGetCurrentLocation ??
+              'Could not get your current location. Please try again.',
+          kind: AppMessageKind.error,
+        );
+        return;
+      }
+
+      final nextCenter = resolved;
+      setState(() {
+        _autoCenterEnabled = true;
+        _center = nextCenter;
+      });
+
+      // A "reset" that leaves the camera at a continent-level zoom is not
+      // useful, so land at a readable zoom when the user was zoomed far out;
+      // otherwise keep their current level.
+      final zoom = _mapController.camera.zoom;
+      _mapController.move(
+        nextCenter,
+        zoom < _recenterMinZoom ? _recenterMinZoom : zoom,
+      );
+
+      // Recover the follow stream if it was never started or the platform
+      // dropped it.
+      await _startLiveLocation();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Failed to recenter on current location: $e');
+      }
+      if (mounted) {
+        showAppMessage(
+          context,
+          l10n?.couldNotGetCurrentLocation ??
+              'Could not get your current location. Please try again.',
+          kind: AppMessageKind.error,
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLocating = false);
+      }
+    }
+  }
+
+  /// Debounce keystrokes before hitting Nominatim: the usage policy allows
+  /// at most 1 request/second, and this keeps a burst of typing to a single
+  /// lookup. Queries below the minimum length clear any visible results.
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    final query = value.trim();
+
+    if (query.length < LocationService.minSearchQueryLength) {
+      // Nothing worth asking the server for: drop any in-flight response and
+      // close the panel.
+      _searchRequestId++;
+      setState(_resetSearchState);
       return;
     }
 
-    final position = await Geolocator.getCurrentPosition(
-      locationSettings: defaultTargetPlatform == TargetPlatform.android
-          ? AndroidSettings(
-              accuracy: LocationAccuracy.medium,
-              forceLocationManager: true,
-            )
-          : const LocationSettings(accuracy: LocationAccuracy.medium),
-    );
+    setState(() {}); // Reflect the clear button as soon as text exists.
+    _searchDebounce = Timer(_searchDebounceDelay, () => _performSearch(query));
+  }
 
-    final nextCenter = LatLng(position.latitude, position.longitude);
+  /// Clears all search UI state. The caller is responsible for incrementing
+  /// [_searchRequestId] so late responses are discarded.
+  void _resetSearchState() {
+    _searchStatus = _SearchStatus.idle;
+    _searchResults = const [];
+    _searchError = null;
+  }
+
+  Future<void> _performSearch(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.length < LocationService.minSearchQueryLength) return;
+    // Reached from a Timer, which dispose() cancels — belt and braces so a
+    // race can never touch a torn-down element tree.
     if (!mounted) return;
+
+    final requestId = ++_searchRequestId;
+    // Capture localizations before awaiting: the element may be unmounted by
+    // the time the response lands, and `l10n` must not be read afterwards.
+    final l10n = AppLocalizations.of(context);
+
     setState(() {
-      _autoCenterEnabled = true;
-      _center = nextCenter;
+      _searchStatus = _SearchStatus.searching;
+      _searchError = null;
     });
-    _mapController.move(nextCenter, _mapController.camera.zoom);
+
+    final outcome = await ref
+        .read(locationServiceProvider)
+        .searchPlaces(trimmed, languageCode: l10n?.localeName);
+
+    // Drop stale responses (a newer keystroke or a cleared field) and any
+    // response that lands after the screen is gone.
+    if (!mounted || requestId != _searchRequestId) return;
+
+    setState(() {
+      switch (outcome) {
+        case PlaceSearchSuccess(:final results):
+          _searchResults = results;
+          _searchError = null;
+          _searchStatus = results.isEmpty
+              ? _SearchStatus.empty
+              : _SearchStatus.results;
+        case PlaceSearchFailure(:final error):
+          _searchResults = const [];
+          _searchError = error;
+          _searchStatus = _SearchStatus.failed;
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _searchDebounce?.cancel();
+    _searchRequestId++;
+    _searchController.clear();
+    setState(_resetSearchState);
+  }
+
+  /// Moves the pin to a search result and closes the results list. Manual
+  /// selection disables the live-GPS auto-follow so the camera stays put.
+  void _selectSearchResult(PlaceSearchResult result) {
+    final target = LatLng(result.latitude, result.longitude);
+    _searchDebounce?.cancel();
+    _searchRequestId++;
+    _searchController.clear();
+    FocusScope.of(context).unfocus();
+
+    setState(() {
+      _autoCenterEnabled = false;
+      _center = target;
+      _resetSearchState();
+    });
+
+    final zoom = _mapController.camera.zoom;
+    _mapController.move(target, zoom < 12 ? 12 : zoom);
   }
 
   /// Opens the OSM copyright page from the attribution credit.
@@ -283,6 +528,23 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             ),
           ),
 
+          // Place Search. Sits below the transparent app bar so the back
+          // button and title pill stay reachable; results expand in place
+          // over the map.
+          Positioned(
+            top: MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+            left: 16,
+            right: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildSearchField(l10n),
+                if (_searchStatus != _SearchStatus.idle)
+                  _buildSearchResults(l10n),
+              ],
+            ),
+          ),
+
           // Zoom Controls
           Positioned(
             right: 16,
@@ -291,11 +553,14 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               children: [
                 _buildZoomButton(
                   icon: Icons.my_location,
+                  tooltip: l10n?.recenterMap ?? 'Recenter map',
+                  isBusy: _isLocating,
                   onTap: _recenterToLiveLocation,
                 ),
                 const SizedBox(height: 8),
                 _buildZoomButton(
                   icon: Icons.add,
+                  tooltip: l10n?.zoomIn ?? 'Zoom in',
                   onTap: () {
                     final currentZoom = _mapController.camera.zoom;
                     _mapController.move(_center, currentZoom + 1);
@@ -304,6 +569,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                 const SizedBox(height: 8),
                 _buildZoomButton(
                   icon: Icons.remove,
+                  tooltip: l10n?.zoomOut ?? 'Zoom out',
                   onTap: () {
                     final currentZoom = _mapController.camera.zoom;
                     _mapController.move(_center, currentZoom - 1);
@@ -396,12 +662,161 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     );
   }
 
+  Widget _buildSearchField(AppLocalizations? l10n) {
+    return Container(
+      decoration: AppTheme.glassmorphism(context: context, opacity: 0.9),
+      child: TextField(
+        controller: _searchController,
+        textInputAction: TextInputAction.search,
+        onChanged: _onSearchChanged,
+        onSubmitted: (value) {
+          _searchDebounce?.cancel();
+          _performSearch(value);
+        },
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colors.onSurface,
+        ),
+        decoration: InputDecoration(
+          hintText: l10n?.searchLocationHint ?? 'Search for a city or area',
+          hintStyle: context.textTheme.bodyMedium?.copyWith(
+            color: context.colors.onSurface.withValues(alpha: 0.6),
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: context.colors.onSurface.withValues(alpha: 0.7),
+          ),
+          suffixIcon: _searchController.text.isEmpty
+              ? null
+              : IconButton(
+                  tooltip: l10n?.clearSearch ?? 'Clear search',
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: context.colors.onSurface.withValues(alpha: 0.7),
+                  ),
+                  onPressed: _clearSearch,
+                ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults(AppLocalizations? l10n) {
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      constraints: const BoxConstraints(maxHeight: 280),
+      decoration: AppTheme.glassmorphism(context: context, opacity: 0.9),
+      clipBehavior: Clip.antiAlias,
+      child: switch (_searchStatus) {
+        _SearchStatus.idle => const SizedBox.shrink(),
+        _SearchStatus.searching => const Padding(
+          padding: EdgeInsets.all(24),
+          child: Center(
+            child: SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        _SearchStatus.failed => _buildSearchFailure(l10n),
+        _SearchStatus.empty => _buildSearchMessage(
+          l10n?.noLocationsFound ?? 'No places found',
+        ),
+        _SearchStatus.results => ListView.separated(
+          padding: EdgeInsets.zero,
+          shrinkWrap: true,
+          itemCount: _searchResults.length,
+          separatorBuilder: (_, _) => Divider(
+            height: 1,
+            thickness: 1,
+            color: context.colors.onSurface.withValues(alpha: 0.08),
+          ),
+          itemBuilder: (context, index) {
+            final result = _searchResults[index];
+            return ListTile(
+              dense: true,
+              leading: Icon(
+                Icons.location_on_outlined,
+                color: context.colors.onSurface.withValues(alpha: 0.7),
+              ),
+              title: Text(
+                result.displayName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.bodyMedium?.copyWith(
+                  color: context.colors.onSurface,
+                ),
+              ),
+              onTap: () => _selectSearchResult(result),
+            );
+          },
+        ),
+      },
+    );
+  }
+
+  Widget _buildSearchMessage(String message) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colors.onSurface.withValues(alpha: 0.7),
+        ),
+      ),
+    );
+  }
+
+  /// Failure state: says what actually went wrong and offers a retry, since
+  /// the field's [TextField.onChanged] will not fire again on its own.
+  Widget _buildSearchFailure(AppLocalizations? l10n) {
+    final message = switch (_searchError) {
+      PlaceSearchError.rateLimited =>
+        l10n?.searchRateLimited ??
+            'Too many searches. Please try again in a moment.',
+      _ =>
+        l10n?.searchFailed ??
+            'Search failed. Check your connection and try again.',
+    };
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildSearchMessage(message),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: TextButton.icon(
+            onPressed: () {
+              _searchDebounce?.cancel();
+              _performSearch(_searchController.text);
+            },
+            icon: const Icon(Icons.refresh_rounded, size: 18),
+            label: Text(l10n?.retry ?? 'Retry'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Square glass button used for the map controls.
+  ///
+  /// [isBusy] swaps the icon for a spinner and blocks taps, so a slow GPS fix
+  /// reads as "working" instead of "broken". [tooltip] doubles as the
+  /// accessibility label (the tooltip's own semantics are excluded to avoid
+  /// announcing it twice).
   Widget _buildZoomButton({
     required IconData icon,
     required VoidCallback onTap,
+    String? tooltip,
+    bool isBusy = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
+    final button = Semantics(
+      button: true,
+      label: tooltip,
+      enabled: !isBusy,
       child: Container(
         width: 44,
         height: 44,
@@ -416,8 +831,30 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             ),
           ],
         ),
-        child: Icon(icon, color: context.colors.onSurface, size: 24),
+        child: isBusy
+            ? Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: context.colors.onSurface,
+                  ),
+                ),
+              )
+            : Icon(icon, color: context.colors.onSurface, size: 24),
       ),
+    );
+
+    return GestureDetector(
+      onTap: isBusy ? null : onTap,
+      child: tooltip == null
+          ? button
+          : Tooltip(
+              message: tooltip,
+              excludeFromSemantics: true,
+              child: button,
+            ),
     );
   }
 }

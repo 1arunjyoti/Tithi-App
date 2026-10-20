@@ -33,6 +33,13 @@
   "setThisLocation": "एतत् स्थानं निर्धारयतु",
   "homeLocationSetTo": "गृहस्थानं {address} इत्यत्र निर्धारितम्",
   "errorSettingLocation": "स्थाननिर्धारणे त्रुटिः: {error}",
+  "searchLocationHint": "नगरं वा क्षेत्रं अन्विष्यताम्",
+  "noLocationsFound": "स्थानं न प्राप्तम्",
+  "searchFailed": "अन्वेषणं विफलम्। सन्धानं परीक्षतां पुनः प्रयततां च।",
+  "searchRateLimited": "अत्यधिकानि अन्वेषणानि। क्षणानन्तरं पुनः प्रयतताम्।",
+  "clearSearch": "अन्वेषणं शोधयतु",
+  "locationPermissionNeeded": "वर्तमानस्थानस्य उपयोगाय स्थानानुज्ञा आवश्यकी।",
+  "couldNotGetCurrentLocation": "वर्तमानस्थानं प्राप्तुं न शक्यम्। पुनः प्रयतताम्।",
   "startOfWeek": "सप्ताहारम्भः",
   "sunday": "रविवासरः",
   "monday": "सोमवासरः",
@@ -495,5 +502,7 @@
   "viewReleasesOnGitHub": "GitHub इत्यत्र प्रकाशनानि पश्यतु",
   "releaseNotes": "नवीनं किमस्ति",
   "allowInstallPermissionNote": "तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।",
-  "cancellingUpdate": "निरस्यते..."
+  "cancellingUpdate": "निरस्यते...",
+  "enlargeArtworkHint": "चित्रं वर्धयितुं दीर्घं निपीडयतु",
+  "swipeArtworkHint": "अन्यचित्रं द्रष्टुं स्वाइप् कुरुत, वर्धयितुं दीर्घं निपीडयतु"
 }

@@ -117,6 +117,31 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get searchLocationHint => 'शहर या क्षेत्र खोजें';
+
+  @override
+  String get noLocationsFound => 'कोई स्थान नहीं मिला';
+
+  @override
+  String get searchFailed =>
+      'खोज विफल रही। अपना कनेक्शन जाँचें और पुनः प्रयास करें।';
+
+  @override
+  String get searchRateLimited =>
+      'बहुत अधिक खोजें। कृपया थोड़ी देर बाद पुनः प्रयास करें।';
+
+  @override
+  String get clearSearch => 'खोज साफ़ करें';
+
+  @override
+  String get locationPermissionNeeded =>
+      'आपके वर्तमान स्थान का उपयोग करने के लिए स्थान अनुमति आवश्यक है।';
+
+  @override
+  String get couldNotGetCurrentLocation =>
+      'आपका वर्तमान स्थान प्राप्त नहीं हो सका। कृपया पुनः प्रयास करें।';
+
+  @override
   String get startOfWeek => 'सप्ताह की शुरुआत';
 
   @override
@@ -1693,4 +1718,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get allowInstallPermissionNote =>
       'सिस्टम सेटिंग्स में Tithi से इंस्टॉल की अनुमति दें, फिर इंस्टॉल पर दोबारा टैप करें।';
+
+  @override
+  String get enlargeArtworkHint => 'चित्र बड़ा करने के लिए देर तक दबाएँ';
+
+  @override
+  String get swipeArtworkHint =>
+      'दूसरा चित्र देखने के लिए स्वाइप करें, बड़ा करने के लिए देर तक दबाएँ';
 }

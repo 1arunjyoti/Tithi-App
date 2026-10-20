@@ -116,6 +116,31 @@ class AppLocalizationsSa extends AppLocalizations {
   }
 
   @override
+  String get searchLocationHint => 'नगरं वा क्षेत्रं अन्विष्यताम्';
+
+  @override
+  String get noLocationsFound => 'स्थानं न प्राप्तम्';
+
+  @override
+  String get searchFailed =>
+      'अन्वेषणं विफलम्। सन्धानं परीक्षतां पुनः प्रयततां च।';
+
+  @override
+  String get searchRateLimited =>
+      'अत्यधिकानि अन्वेषणानि। क्षणानन्तरं पुनः प्रयतताम्।';
+
+  @override
+  String get clearSearch => 'अन्वेषणं शोधयतु';
+
+  @override
+  String get locationPermissionNeeded =>
+      'वर्तमानस्थानस्य उपयोगाय स्थानानुज्ञा आवश्यकी।';
+
+  @override
+  String get couldNotGetCurrentLocation =>
+      'वर्तमानस्थानं प्राप्तुं न शक्यम्। पुनः प्रयतताम्।';
+
+  @override
   String get startOfWeek => 'सप्ताहारम्भः';
 
   @override
@@ -1693,4 +1718,11 @@ class AppLocalizationsSa extends AppLocalizations {
   @override
   String get allowInstallPermissionNote =>
       'तन्त्रसंस्थापनेषु Tithi कृते संस्थापनानुमतिं ददतु, ततः पुनः संस्थापयतु इत्यत्र ताड़यतु।';
+
+  @override
+  String get enlargeArtworkHint => 'चित्रं वर्धयितुं दीर्घं निपीडयतु';
+
+  @override
+  String get swipeArtworkHint =>
+      'अन्यचित्रं द्रष्टुं स्वाइप् कुरुत, वर्धयितुं दीर्घं निपीडयतु';
 }

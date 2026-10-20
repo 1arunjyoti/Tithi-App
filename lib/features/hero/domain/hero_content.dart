@@ -38,8 +38,7 @@ typedef HeroChipData = ({
   bool inlineIcon,
 });
 
-/// Festival artwork descriptor for the hero's right-side slot (null keeps
-/// the text-only layout).
+/// Festival artwork descriptor for the hero's right-side slot.
 typedef HeroArtwork = ({String source, String label});
 
 /// Resolved hero content. Split from the widget so formatting is testable
@@ -57,7 +56,7 @@ class HeroContent {
     required this.title,
     required this.subLabel,
     required this.chips,
-    required this.artwork,
+    required this.artworks,
   });
 
   /// Tag row label, e.g. "TODAY · 14 SEPTEMBER 2026".
@@ -89,21 +88,30 @@ class HeroContent {
   /// Transition chips (empty when no intraday transition).
   final List<HeroChipData> chips;
 
-  /// Right-side artwork slot (null = text-only layout).
-  final HeroArtwork? artwork;
+  /// Right-side artwork slot, headline festival first (empty = text-only
+  /// layout).
+  final List<HeroArtwork> artworks;
 }
 
-/// Festival artwork for the hero's right-side slot.
+/// Every festival artwork for [panchang], headline first.
 ///
-/// Resolves the day's primary festival ([primaryFestival]) image
-/// ([Visuals.image], asset path or http(s) URL). Returns null when the day
-/// has no festival or the festival ships no image.
-HeroArtwork? heroArtwork(PanchangData panchang) {
-  if (panchang.festivals.isEmpty) return null;
-  final festival = primaryFestival(panchang.festivals);
-  final source = festival.visuals.image.trim();
-  if (source.isEmpty) return null;
-  return (source: source, label: festival.name);
+/// Ranked the same way as [primaryFestival] (stable sort on
+/// [displayPriority]), so the first entry is the picture the card shows on
+/// top. Festivals without an image are skipped, and repeated sources collapse:
+/// several entries can share one bundled file (the five Durga Puja days), and
+/// a deck of identical pictures would read as a rendering bug.
+List<HeroArtwork> heroArtworks(PanchangData panchang) {
+  if (panchang.festivals.isEmpty) return const [];
+  final ordered = List<Festival>.of(panchang.festivals);
+  sortFestivalsByDisplayPriority(ordered);
+  final seen = <String>{};
+  final artworks = <HeroArtwork>[];
+  for (final festival in ordered) {
+    final source = festival.visuals.image.trim();
+    if (source.isEmpty || !seen.add(source)) continue;
+    artworks.add((source: source, label: festival.name));
+  }
+  return artworks;
 }
 
 /// Computes [HeroContent] for [panchang].
@@ -260,6 +268,6 @@ HeroContent heroContentData({
     title: title,
     subLabel: subLabel,
     chips: chips,
-    artwork: heroArtwork(panchang),
+    artworks: heroArtworks(panchang),
   );
 }
