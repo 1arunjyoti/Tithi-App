@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'widgets/error_display_widget.dart';
@@ -52,10 +52,8 @@ void main() {
         debugPrint('Stack trace: ${details.stack}');
       };
 
-      // Optimized Display Mode (90Hz/120Hz) - Skip on web
-      if (!kIsWeb) {
-        await initPlatformFeatures();
-      }
+      // Optimized Display Mode (90Hz/120Hz), Android only.
+      await initPlatformFeatures();
 
       // Independent warm-ups run concurrently: version metadata, Hive +
       // adapters + core boxes, and font preloads (bounded internally).

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -210,15 +209,6 @@ class ExportFestivalsSetting extends ConsumerWidget {
       }
 
       if (!context.mounted) return;
-
-      if (savedPath == null && kIsWeb && !pickerFailed) {
-        showAppMessage(
-          context,
-          l10n?.downloadStarted ?? 'Download started',
-          kind: AppMessageKind.success,
-        );
-        return;
-      }
 
       if (savedPath == null && !pickerFailed) {
         showAppMessage(

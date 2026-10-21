@@ -40,7 +40,7 @@ class HomeWidgetService {
   Future<void> updateFestivalCountdownWidget(
     List<FestivalCountdownTarget> targets,
   ) async {
-    if (kIsWeb || !Platform.isAndroid) return;
+    if (!Platform.isAndroid) return;
 
     try {
       await _migrateWidgetThemeOnce();
@@ -147,7 +147,7 @@ class HomeWidgetService {
   }
 
   Future<bool> isRequestPinSupported() async {
-    if (kIsWeb || !Platform.isAndroid) return false;
+    if (!Platform.isAndroid) return false;
     try {
       final supported = await HomeWidget.isRequestPinWidgetSupported();
       return supported ?? false;
@@ -158,7 +158,7 @@ class HomeWidgetService {
   }
 
   Future<bool> requestPinWidget() async {
-    if (kIsWeb || !Platform.isAndroid) return false;
+    if (!Platform.isAndroid) return false;
     try {
       final supported = await isRequestPinSupported();
       if (!supported) return false;
@@ -173,7 +173,7 @@ class HomeWidgetService {
   }
 
   Future<bool> isWidgetSupported() async {
-    if (kIsWeb || !Platform.isAndroid) return false;
+    if (!Platform.isAndroid) return false;
     return true;
   }
 }

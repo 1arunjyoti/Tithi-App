@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
@@ -24,16 +23,14 @@ class AccessibilitySettings extends ConsumerWidget {
           onChanged: (v) async => notifier.toggleReduceMotion(v),
         ),
         const SettingsDivider(),
-        if (!kIsWeb) ...[
-          SettingsSwitchTile(
-            icon: Icons.vibration_rounded,
-            title: l10n?.hapticFeedback ?? 'Haptic Feedback',
-            subtitle: l10n?.vibrateOnTouch ?? 'Vibrate on touch interactions',
-            value: accessibility.hapticFeedback,
-            onChanged: (v) async => notifier.toggleHapticFeedback(v),
-          ),
-          const SettingsDivider(),
-        ],
+        SettingsSwitchTile(
+          icon: Icons.vibration_rounded,
+          title: l10n?.hapticFeedback ?? 'Haptic Feedback',
+          subtitle: l10n?.vibrateOnTouch ?? 'Vibrate on touch interactions',
+          value: accessibility.hapticFeedback,
+          onChanged: (v) async => notifier.toggleHapticFeedback(v),
+        ),
+        const SettingsDivider(),
         SettingsSwitchTile(
           icon: Icons.contrast_rounded,
           title: l10n?.highContrast ?? 'High Contrast',

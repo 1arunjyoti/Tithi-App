@@ -291,7 +291,6 @@
   "exportingYear": "{year} এক্সপোর্ট করা হচ্ছে",
   "festivalsExportedProgress": "{done} / {total} উৎসব",
   "exportCancelled": "এক্সপোর্ট বাতিল করা হয়েছে",
-  "downloadStarted": "ডাউনলোড শুরু হয়েছে",
   "couldNotSaveExportFile": "এক্সপোর্ট ফাইল সংরক্ষণ করা যায়নি",
   "saved": "সংরক্ষিত হয়েছে",
   "festivalsExportedForYear": "{year} সালের জন্য {count}টি উৎসব এক্সপোর্ট করা হয়েছে।",

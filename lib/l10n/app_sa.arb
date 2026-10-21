@@ -291,7 +291,6 @@
   "exportingYear": "{year} निर्यात्यते",
   "festivalsExportedProgress": "{done} / {total} उत्सवाः",
   "exportCancelled": "निर्यातः निरस्तः",
-  "downloadStarted": "अवतारणम् आरब्धम्",
   "couldNotSaveExportFile": "निर्यातसञ्चिकां संरक्षयितुं न शक्यते",
   "saved": "संरक्षितम्",
   "festivalsExportedForYear": "{year} कृते {count} उत्सवाः निर्यातिताः।",

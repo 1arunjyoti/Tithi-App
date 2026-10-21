@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -219,20 +218,17 @@ class _DrawerMenuList extends ConsumerWidget {
           onTap: () => _openTemplesInMaps(context, ref),
         ),
 
-        // FFI-dependent features - hide on web
-        if (!kIsWeb) ...[
-          _DrawerMenuItem(
-            icon: Icons.brightness_3_rounded,
-            title: l10n?.eclipses ?? 'Eclipses',
-            onTap: () => _navigateTo(context, const EclipseScreen()),
-          ),
+        _DrawerMenuItem(
+          icon: Icons.brightness_3_rounded,
+          title: l10n?.eclipses ?? 'Eclipses',
+          onTap: () => _navigateTo(context, const EclipseScreen()),
+        ),
 
-          _DrawerMenuItem(
-            icon: Icons.public,
-            title: l10n?.solarSystem ?? 'Solar System',
-            onTap: () => _navigateTo(context, const SolarSystemScreen()),
-          ),
-        ],
+        _DrawerMenuItem(
+          icon: Icons.public,
+          title: l10n?.solarSystem ?? 'Solar System',
+          onTap: () => _navigateTo(context, const SolarSystemScreen()),
+        ),
 
         _DrawerMenuItem(
           icon: Icons.settings_rounded,

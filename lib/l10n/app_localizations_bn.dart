@@ -956,9 +956,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get exportCancelled => 'এক্সপোর্ট বাতিল করা হয়েছে';
 
   @override
-  String get downloadStarted => 'ডাউনলোড শুরু হয়েছে';
-
-  @override
   String get couldNotSaveExportFile => 'এক্সপোর্ট ফাইল সংরক্ষণ করা যায়নি';
 
   @override
