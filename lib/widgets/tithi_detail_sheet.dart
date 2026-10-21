@@ -537,8 +537,8 @@ class TithiDetailSheet extends ConsumerWidget {
                     ],
                     // Nakshatra section: dotted header (like TITHI TIMINGS)
                     // above the span card. Hidden when the span can't be
-                    // resolved (web fallback has no ephemeris) — same
-                    // hide-on-null contract as the timings card above.
+                    // resolved - same hide-on-null contract as the timings
+                    // card above.
                     nakshatraAsync.when(
                       data: (nak) {
                         if (nak == null) return const SizedBox.shrink();
@@ -608,8 +608,8 @@ class TithiDetailSheet extends ConsumerWidget {
                     ),
                     // Yoga & karana section: dotted header above a
                     // side-by-side card (timings-card idiom). Hidden when
-                    // the spans can't be resolved (web fallback has no
-                    // ephemeris) — same hide-on-null contract as above.
+                    // the spans can't be resolved - same hide-on-null
+                    // contract as above.
                     yogaKaranaAsync.when(
                       data: (yk) {
                         if (yk == null) return const SizedBox.shrink();

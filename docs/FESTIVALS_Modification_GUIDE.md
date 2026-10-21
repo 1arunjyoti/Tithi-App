@@ -300,8 +300,6 @@ Rules:
 - No Kshaya fallback: a nakshatra always owns a sunrise.
 - The detail sheet shows a Nakshatra row and hides the tithi Begins/Ends span
   (it would mislead); export reports the day's tithi with a null span.
-- Web builds have no ephemeris, so nakshatra festivals never match there
-  (documented limitation).
 - Vriddhi trimming applies normally (Mula can span two sunrises).
 
 Valid names (Vedic order): Ashwini, Bharani, Krittika, Rohini, Mrigashira,
@@ -585,11 +583,10 @@ this is where each piece lives — add new surfaces here, never around it:
 - UI: month grid + single-day-from-month-map (`lib/providers/panchang_provider.dart`;
   single-day never matches independently), calendar dots
   (`calendar_widget.dart` reads the filtered flag map).
-- Occurrence scanners: `findNextFestivalOccurrence` (native + web
-  `panchang_service` variants; loops duplicated, decision helpers shared) —
-  feeds countdown, search, export.
+- Occurrence scanners: `findNextFestivalOccurrence` in
+  `lib/services/panchang/panchang_service.dart` (decision helpers shared with
+  the provider) - feeds countdown, search, export.
 - Notifications (`notification_service.dart`): same matcher + same filter
   over its window and 3-day daily context.
-- Known duplications (same behavior, two code sites — change both):
-  checkpoint computation (provider helper vs notification inline copy) and
-  the native/web `findNext` loops.
+- Known duplication (same behavior, two code sites - change both): checkpoint
+  computation (provider helper vs notification inline copy).

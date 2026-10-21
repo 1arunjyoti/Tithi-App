@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import '../providers/festival_countdown_provider.dart';
 import 'storage_service.dart';
 
-/// Mobile implementation that syncs festival countdowns to the Android home screen widget.
+/// Syncs festival countdowns to the Android home screen widget.
 ///
 /// Stores a JSON array under the key `festival_widget_data` that the native
 /// [FestivalCountdownWidgetProvider] / [FestivalCountdownWidgetService] read

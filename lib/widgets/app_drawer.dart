@@ -186,7 +186,7 @@ class _DrawerMenuList extends ConsumerWidget {
     //    track something (countdowns, sankalpas),
     // 3. reference layers consulted while reading the panchang (moon, temples),
     // 4. the rare astronomical extras, which are also the heaviest screens
-    //    (FFI compute) and web-hidden,
+    //    (FFI compute),
     // 5. settings, then the social/utility footer below the divider.
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),

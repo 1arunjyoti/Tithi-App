@@ -146,9 +146,8 @@ class AppReleaseInfo {
 /// and hands it to the Android installer.
 ///
 /// No new dependencies: `http`, `path_provider` and `url_launcher`
-/// are already used by the app. File + installer operations live
-/// behind a `dart.library.io` conditional export so web builds keep
-/// compiling; there the service falls back to the releases page.
+/// are already used by the app. Off Android the service falls back to
+/// opening the releases page in the browser.
 class AppUpdateService {
   AppUpdateService({AppUpdateConfig? config, http.Client? httpClient})
     : config = config ?? AppUpdateConfig.fromEnvironment(),
@@ -385,12 +384,6 @@ class AppUpdateService {
     if (url == null) {
       throw const AppUpdateException(
         'This release has no APK attached. Open the releases page instead.',
-      );
-    }
-    if (!await supportsApkFileOperations) {
-      await openReleasesPage();
-      throw const AppUpdateException(
-        'Downloads work on Android. The releases page was opened instead.',
       );
     }
     final client = _httpClient ?? http.Client();

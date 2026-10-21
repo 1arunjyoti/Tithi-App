@@ -3,7 +3,7 @@ import 'package:flutter/services.dart' show AssetBundle;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
-/// Mobile implementation - copies ephemeris files to the app's documents directory
+/// Copies the bundled ephemeris files to the app's documents directory.
 Future<String> copyEphemerisFiles(AssetBundle bundle) async {
   final appDir = await getApplicationDocumentsDirectory();
   final epheDir = Directory(p.join(appDir.path, 'ephe'));

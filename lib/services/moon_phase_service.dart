@@ -300,8 +300,8 @@ class MoonPhaseService {
     return (illuminationForTithi(continuous) / 100.0).clamp(0.0, 1.0);
   }
 
-  /// Normalizes a fractional sunrise tithi into [1, 31]. The web fallback
-  /// wraps (30, 31] into (0, 1] (late Amavasya), which is shifted back.
+  /// Normalizes a fractional sunrise tithi into [1, 31]. A raw value in
+  /// (0, 1] is treated as late Amavasya (30-31) and shifted forward.
   /// Returns null for missing or out-of-range input.
   static double? _normalizeRawTithi(double? raw) {
     if (raw == null || raw.isNaN || raw.isInfinite || raw <= 0) return null;

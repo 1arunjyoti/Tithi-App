@@ -60,10 +60,10 @@ String baseMasaName(String masa) {
 }
 
 /// Solar approximation of the Bengali date (Pohela Boishakh = Apr 14).
-/// Same table as the web Bengali service; avoids FFI/Ref in the
+/// Same table as the Bengali calendar service; avoids FFI/Ref in the
 /// background isolate where notifications are built.
 ({int day, String month, int year}) approxBengaliDate(DateTime date) {
-  // Guide Sec 3.1 spellings; shared with the web/native services.
+  // Guide Sec 3.1 spellings; shared with the Bengali calendar service.
   const months = kBengaliMonths;
   int bengaliYear = date.year - 593;
   if (date.month < 4 || (date.month == 4 && date.day < 14)) {

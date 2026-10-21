@@ -314,7 +314,7 @@ class NotificationScheduler {
         return granted ?? false;
       }
 
-      // No runtime permission model (e.g. Windows/Linux/web).
+      // No runtime permission model (e.g. Windows/Linux).
       return true;
     } catch (e) {
       debugPrint('Notification permission request failed: $e');
@@ -373,7 +373,7 @@ class NotificationScheduler {
         }
         return;
       }
-      // No OS-level gate to check (Windows/Linux/web).
+      // No OS-level gate to check (Windows/Linux).
     } on StateError {
       rethrow;
     } catch (e) {

@@ -478,7 +478,7 @@ class PanchangService {
         // which matches override festivals against the sunrise masa — not
         // the checkpoint masa — so sankranti-boundary days agree.
         // Nakshatra festivals returned with probeMatch above, so the
-        // checkpoint match passes null (same as the web implementation).
+        // checkpoint match passes null.
         final override = festival.panchangRules.timingOverride;
         if (override != null &&
             timingOverrideCheckpoints.contains(override) &&

@@ -607,8 +607,8 @@ class LocationService {
       }
       return const PlaceSearchFailure(PlaceSearchError.offline);
     } on http.ClientException catch (e) {
-      // Covers socket failures, DNS errors and connection resets on both the
-      // VM and web clients (`package:http` wraps SocketException here).
+      // Covers socket failures, DNS errors and connection resets
+      // (`package:http` wraps SocketException here).
       if (kDebugMode) {
         print('Place search network error: $e');
       }

@@ -47,10 +47,9 @@ class SunriseCalculator {
   /// nishita = night midpoint, pradosha = sunset + night/10). Null for
   /// unknown overrides.
   ///
-  /// Shared by the web and native forward-scan occurrence finders so both
-  /// agree with the UI batch (`PanchangData.fromRawTithi`) on which tithi
-  /// an override festival observes. Single copy — do not duplicate per
-  /// service.
+  /// Shared by the forward-scan occurrence finder and the UI batch
+  /// (`PanchangData.fromRawTithi`) so both agree on which tithi an override
+  /// festival observes. Single definition - keep it that way.
   static DateTime? checkpointTimeFor(
     DateTime day,
     String timingOverride,
