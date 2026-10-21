@@ -40,6 +40,11 @@ flutter test --reporter expanded     # Run with expanded output
 flutter test --reporter compact     # Run with compact output
 ```
 
+`flutter test` also runs `test/no_web_target_test.dart`, which fails if the
+`web/` target, a `kIsWeb` branch, a `dart.library.*` conditional import, or a
+web entry in `analysis_options.yaml` / `flutter_launcher_icons.yaml` / `.metadata`
+ever comes back. See `docs/web-removal/BASELINE.md`.
+
 ### Code Generation
 ```bash
 flutter pub run build_runner build  # Run build_runner for code generation

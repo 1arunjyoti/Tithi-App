@@ -115,6 +115,9 @@ Each subsequent phase must satisfy all three:
 
 Domain phases (1-2) additionally require the on-device festival test above.
 
+From Phase 7 on, the expected unit-test count is **476** passed (472 + the four
+guard tests in `test/no_web_target_test.dart`).
+
 ## Outcome
 
 All seven phases landed on `chore/remove-web`; every gate held at baseline.
@@ -127,7 +130,8 @@ All seven phases landed on `chore/remove-web`; every gate held at baseline.
 | 3 | `7d504da` | delete 7 web-only stubs + 6 barrels |
 | 4 | `ba9f26f` | remove all 21 `kIsWeb` branches (14 files) |
 | 5 | `00a7e9d` | delete `web/` + config entries |
-| 6 | `docs: remove web references` | docs and comments (this commit) |
+| 6 | `docs: remove web references` | docs and comments |
+| 7 | `test: guard against web scaffolding` | regression guard (`test/no_web_target_test.dart`) |
 
 Final state: no `web/` directory, no `kIsWeb` reference anywhere in the repo, no
 conditional-export stubs, and the marketing site at `tithiapp.netlify.app` untouched.
