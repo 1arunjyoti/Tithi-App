@@ -930,13 +930,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get dismissTooltip => 'বন্ধ করুন';
 
   @override
-  String get solarSystemNotAvailableOnWeb => 'ওয়েবে সৌরজগৎ উপলব্ধ নেই';
-
-  @override
-  String get eclipseScreenNotAvailableOnWeb =>
-      'ওয়েবে গ্রহণ স্ক্রিন উপলব্ধ নেই';
-
-  @override
   String get findingNextOccurrence => 'পরবর্তী উদযাপন খোঁজা হচ্ছে...';
 
   @override

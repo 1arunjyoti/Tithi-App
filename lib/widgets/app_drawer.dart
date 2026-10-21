@@ -17,10 +17,7 @@ import '../core/feedback/app_messages.dart';
 import '../core/navigation/app_routes.dart';
 import 'responsive_layout.dart';
 
-// Conditional imports for FFI-dependent screens (only available on native platforms)
-// On web, we import a stub file that provides placeholder widgets
-import 'native_screens/native_screens.dart'
-    if (dart.library.html) 'native_screens/native_screens_stub.dart';
+import 'native_screens/native_screens.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, this.isSidebar = false});

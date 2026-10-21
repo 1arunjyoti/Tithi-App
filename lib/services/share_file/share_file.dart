@@ -1,4 +1,83 @@
-/// Conditional export for platform-specific file saving
-library;
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 
-export 'share_file_stub.dart' if (dart.library.io) 'share_file_mobile.dart';
+/// Mobile implementation - saves image to temporary directory
+Future<String?> saveImageToTemp(Uint8List imageBytes, String name) async {
+  try {
+    final directory = await getTemporaryDirectory();
+    final imagePath =
+        '${directory.path}/festival_share_${DateTime.now().millisecondsSinceEpoch}.png';
+    final imageFile = File(imagePath);
+    await imageFile.writeAsBytes(imageBytes);
+    return imagePath;
+  } catch (e) {
+    return null;
+  }
+}
+
+/// Mobile implementation - saves text content to a temporary file.
+/// Returns the file path, or null on failure.
+Future<String?> saveTextToTemp(String content, String filename) async {
+  try {
+    final directory = await getTemporaryDirectory();
+    final safeName = filename.replaceAll(RegExp(r'[^\w\-.]+'), '_');
+    final filePath = '${directory.path}/$safeName';
+    final file = File(filePath);
+    await file.writeAsString(content);
+    return filePath;
+  } catch (e) {
+    return null;
+  }
+}
+
+/// Mobile implementation - saves text content to the app's documents
+/// directory, where it persists (unlike the cache/temp directory, which the
+/// OS may purge). No storage permission needed. Returns the file path,
+/// or null on failure.
+Future<String?> saveTextToDocuments(String content, String filename) async {
+  try {
+    final directory = await getApplicationDocumentsDirectory();
+    final safeName = filename.replaceAll(RegExp(r'[^\w\-.]+'), '_');
+    final filePath = '${directory.path}/$safeName';
+    final file = File(filePath);
+    await file.writeAsString(content);
+    return filePath;
+  } catch (e) {
+    return null;
+  }
+}
+
+/// Mobile implementation - deletes share-image temp files older than
+/// [maxAge]. Share sheets timestamp every image and never clean up, so this
+/// best-effort purge (run before saving a new one) stops the temp directory
+/// from growing without bound. Never throws; returns the removal count.
+Future<int> purgeOldShareImages({
+  Duration maxAge = const Duration(days: 1),
+}) async {
+  try {
+    final directory = await getTemporaryDirectory();
+    var removed = 0;
+    await for (final entity in directory.list()) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.isNotEmpty
+          ? entity.uri.pathSegments.last
+          : '';
+      if (!name.startsWith('festival_share_') &&
+          !name.startsWith('daily-wisdom')) {
+        continue;
+      }
+      final modified = (await entity.stat()).modified;
+      if (DateTime.now().difference(modified) <= maxAge) continue;
+      try {
+        await entity.delete();
+        removed++;
+      } catch (_) {
+        continue;
+      }
+    }
+    return removed;
+  } catch (_) {
+    return 0;
+  }
+}

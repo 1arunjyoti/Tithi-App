@@ -14,7 +14,7 @@ class PanchangService {
   PanchangService();
 
   bool _isInitialized = false;
-  String? _ephePath;
+  late String _ephePath;
 
   /// BUG-08: cache is static so all PanchangService instances share it
   /// (background isolate + main isolate no longer maintain separate cache copies).
