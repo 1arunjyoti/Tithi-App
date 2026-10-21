@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/models/hindu_month_system.dart';
-import 'package:tithi/services/panchang/panchang_service_native.dart';
+import 'package:tithi/services/panchang_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 
 void main() {

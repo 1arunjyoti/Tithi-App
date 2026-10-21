@@ -32,8 +32,6 @@ class PanchangService {
 
   bool get isInitialized => _isInitialized;
 
-  bool get hasFullSupport => _isInitialized;
-
   Future<void> init() async {
     if (_isInitialized) return;
 
