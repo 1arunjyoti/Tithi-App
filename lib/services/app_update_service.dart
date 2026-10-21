@@ -178,7 +178,7 @@ class AppUpdateService {
 
   /// `true` on Android, where the package installer exists.
   static bool get supportsInAppInstall {
-    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    return defaultTargetPlatform == TargetPlatform.android;
   }
 
   /// Strips a leading `v` and surrounding whitespace: `v0.6.0+3` -> `0.6.0+3`.

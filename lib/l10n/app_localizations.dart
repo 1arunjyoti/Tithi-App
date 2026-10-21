@@ -1848,12 +1848,6 @@ abstract class AppLocalizations {
   /// **'Export cancelled'**
   String get exportCancelled;
 
-  /// Snackbar message when download starts on web
-  ///
-  /// In en, this message translates to:
-  /// **'Download started'**
-  String get downloadStarted;
-
   /// Snackbar message when export file cannot be saved
   ///
   /// In en, this message translates to:

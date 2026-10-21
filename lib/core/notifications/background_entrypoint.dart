@@ -47,11 +47,8 @@ void callbackDispatcher() {
 }
 
 /// Registers the periodic background notification check.
-/// Only meaningful on Android/iOS; no-op on web.
+/// Only meaningful on Android/iOS.
 Future<void> initNotificationWork() async {
-  // Only initialize on Android/iOS (skip web/desktop if targeted)
-  if (kIsWeb) return;
-
   try {
     await Workmanager().initialize(callbackDispatcher);
 

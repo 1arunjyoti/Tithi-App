@@ -1319,10 +1319,6 @@
   "@exportCancelled": {
     "description": "Snackbar message when export is cancelled"
   },
-  "downloadStarted": "Download started",
-  "@downloadStarted": {
-    "description": "Snackbar message when download starts on web"
-  },
   "couldNotSaveExportFile": "Could not save export file",
   "@couldNotSaveExportFile": {
     "description": "Snackbar message when export file cannot be saved"

@@ -956,9 +956,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exportCancelled => 'Export cancelled';
 
   @override
-  String get downloadStarted => 'Download started';
-
-  @override
   String get couldNotSaveExportFile => 'Could not save export file';
 
   @override

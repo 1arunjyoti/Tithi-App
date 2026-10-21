@@ -957,9 +957,6 @@ class AppLocalizationsSa extends AppLocalizations {
   String get exportCancelled => 'निर्यातः निरस्तः';
 
   @override
-  String get downloadStarted => 'अवतारणम् आरब्धम्';
-
-  @override
   String get couldNotSaveExportFile => 'निर्यातसञ्चिकां संरक्षयितुं न शक्यते';
 
   @override

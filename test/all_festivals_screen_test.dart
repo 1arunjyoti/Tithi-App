@@ -19,6 +19,7 @@ class _NoHapticsNotifier extends AccessibilityNotifier {
 
 class _HapticsNotifier extends AccessibilityNotifier {
   @override
+  // ignore: avoid_redundant_argument_values
   AccessibilityState build() => const AccessibilityState(hapticFeedback: true);
 }
 
