@@ -6,8 +6,8 @@ part 'festival.g.dart';
 /// The 27 lunar mansions in Vedic order (index 0 = Ashwini).
 /// Canonical source for nakshatra-name validation in festival rules and for
 /// mapping a sidereal Moon longitude to a name (index = floor(lon / (360/27))).
-/// Kept here (not in the jyotish package) so the model, the web fallback
-/// service, and tests can use it without an FFI dependency.
+/// Kept here (not in the jyotish package) so the model and tests can use it
+/// without an FFI dependency.
 const List<String> hinduNakshatras = [
   'Ashwini',
   'Bharani',
@@ -347,8 +347,7 @@ class Festival {
 /// - Nakshatra festivals (`conditions: "<Name> Nakshatra"`, e.g. Saraswati
 ///   Avahan on Mula): matches [masa] (Amanta basis) + [paksha] + prevailing
 ///   [nakshatra]. The stored tithi is ignored — it cannot represent such
-///   festivals across years. A null (unknown, e.g. web fallback) [nakshatra]
-///   never matches.
+///   festivals across years. A null (unknown) [nakshatra] never matches.
 /// - All other festivals: plain tithi delegation to [Festival.matchesTithi].
 ///
 /// The one definition of a match shared by [PanchangData.fromRawTithi] (tithi

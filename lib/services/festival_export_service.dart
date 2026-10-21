@@ -158,7 +158,7 @@ class FestivalExportService {
       latitude: latitude,
       longitude: longitude,
     );
-    // Nakshatra at sunrise for the occurrence record (null on web).
+    // Nakshatra at sunrise for the occurrence record, when the rule needs it.
     final nakshatraAtSunrise = festival.nakshatraCondition != null
         ? await service.calculateNakshatra(
             sunrise,

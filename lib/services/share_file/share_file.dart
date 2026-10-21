@@ -2,7 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 
-/// Mobile implementation - saves image to temporary directory
+/// Saves an image to the temporary directory.
 Future<String?> saveImageToTemp(Uint8List imageBytes, String name) async {
   try {
     final directory = await getTemporaryDirectory();
@@ -16,7 +16,7 @@ Future<String?> saveImageToTemp(Uint8List imageBytes, String name) async {
   }
 }
 
-/// Mobile implementation - saves text content to a temporary file.
+/// Saves text content to a temporary file.
 /// Returns the file path, or null on failure.
 Future<String?> saveTextToTemp(String content, String filename) async {
   try {
@@ -31,7 +31,7 @@ Future<String?> saveTextToTemp(String content, String filename) async {
   }
 }
 
-/// Mobile implementation - saves text content to the app's documents
+/// Saves text content to the app's documents
 /// directory, where it persists (unlike the cache/temp directory, which the
 /// OS may purge). No storage permission needed. Returns the file path,
 /// or null on failure.
@@ -48,7 +48,7 @@ Future<String?> saveTextToDocuments(String content, String filename) async {
   }
 }
 
-/// Mobile implementation - deletes share-image temp files older than
+/// Deletes share-image temp files older than
 /// [maxAge]. Share sheets timestamp every image and never clean up, so this
 /// best-effort purge (run before saving a new one) stops the temp directory
 /// from growing without bound. Never throws; returns the removal count.

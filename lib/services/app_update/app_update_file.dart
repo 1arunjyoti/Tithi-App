@@ -6,9 +6,6 @@ import 'package:path_provider/path_provider.dart';
 
 import 'update_apk_name.dart';
 
-/// `true` when the platform can save files (everything except web).
-Future<bool> get supportsApkFileOperations async => true;
-
 /// Streams an HTTP response body to the cache directory under
 /// [updateApkFileName]. Overwrites partial files. Returns the saved path.
 ///

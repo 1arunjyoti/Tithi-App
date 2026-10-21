@@ -8,7 +8,7 @@ final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
   return BengaliCalendarService(ref);
 });
 
-/// Native implementation of Bengali Calendar Service
+/// Bengali Calendar Service.
 /// Uses FFI-based Swiss Ephemeris for accurate calculations.
 ///
 /// West Bengal rule (Bisuddha Siddhanta / Drik): each solar month begins the

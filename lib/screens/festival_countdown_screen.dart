@@ -68,9 +68,6 @@ class FestivalCountdownScreen extends ConsumerWidget {
                 // IDs with no occurrence in the forward window (Kshaya-skip
                 // years, invalid rules): previously they vanished silently.
                 // Surface them as footer notes instead of dropping them.
-                // On web, nakshatra-observed festivals can never resolve (no
-                // ephemeris) — label those distinctly instead of implying
-                // the date is merely far away.
                 final targetIds = targets.map((t) => t.id).toSet();
                 final missingIds = preferences.countdownIds
                     .where((id) => !targetIds.contains(id))

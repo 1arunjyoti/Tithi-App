@@ -45,7 +45,7 @@ class ClearCacheSetting extends ConsumerWidget {
 
 /// Exports every festival with its computed Panchang details for a chosen
 /// year as JSON. The user picks the destination in the system save dialog
-/// (Downloads, Drive, SD card...); on web it triggers a browser download.
+/// (Downloads, Drive, SD card...).
 class ExportFestivalsSetting extends ConsumerWidget {
   const ExportFestivalsSetting({super.key});
 
@@ -181,10 +181,10 @@ class ExportFestivalsSetting extends ConsumerWidget {
       }
 
       // System save picker: the user chooses where the file goes
-      // (Downloads, Drive, SD card...). On web this starts a download and
-      // always resolves to null. If the picker itself throws (e.g. the
-      // plugin is missing from a stale install), fall back to app-private
-      // storage so the export still succeeds.
+      // (Downloads, Drive, SD card...); a null result means cancelled. If the
+      // picker itself throws (e.g. the plugin is missing from a stale
+      // install), fall back to app-private storage so the export still
+      // succeeds.
       final filename = 'tithi-festivals-$year.json';
       String? savedPath;
       var pickerFailed = false;

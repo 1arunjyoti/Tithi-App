@@ -4,9 +4,9 @@ import 'dart:math';
 ///
 /// Pure-Dart low-precision lunar theory (a truncated ELP-style series with
 /// the half-dozen largest periodic terms, ~0.3° in ecliptic longitude).
-/// That is ~1-3 minutes of rise/set error — ample for informational chips —
-/// and keeps the tithi sheet synchronous with zero FFI cost on both native
-/// and web (the Swiss Ephemeris path would need ~150 async calls per open).
+/// That is ~1-3 minutes of rise/set error - ample for informational chips -
+/// and keeps the tithi sheet synchronous with zero FFI cost (the Swiss
+/// Ephemeris path would need ~150 async calls per open).
 ///
 /// Convention mirrors [SunriseCalculator]: the events attributed to [date]
 /// are the crossings that fall inside that civil day (local

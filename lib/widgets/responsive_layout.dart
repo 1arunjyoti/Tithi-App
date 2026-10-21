@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 enum ScreenType { mobile, tablet, desktop }
 
 /// Responsive layout helper widget for different screen sizes
-/// Use this to adapt UI for mobile, tablet, and desktop/web
+/// Use this to adapt UI for mobile, tablet, and desktop
 class ResponsiveLayout extends StatelessWidget {
   final Widget mobile;
   final Widget? tablet;

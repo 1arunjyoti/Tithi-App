@@ -93,11 +93,12 @@ but this is why the site must outlive the removal.
 
 ## What is reproducible in `web/`
 
-All 13 files are generated output:
+All 15 files were generated output:
 
-- Icons → `flutter_launcher_icons.yaml` (`web: generate: true`, source
+- Icons → `flutter_launcher_icons.yaml` (`web: generate: true` at the time, source
   `assets/icons/logo_transparent.png`)
-- Splash → `assets/splash/splash_icon.png`
+- Splash → stale `web/splash/img/*` output; the current `flutter_native_splash.yaml`
+  generates no web assets, so these will not come back on their own
 - `index.html`, `manifest.json` → `flutter create . --platforms=web` defaults, plus the
   custom SEO/Open Graph meta block preserved in
   [`web-index-meta.md`](web-index-meta.md)
@@ -112,4 +113,22 @@ Each subsequent phase must satisfy all three:
 2. `flutter test` → 472 passed, 2 failed, and the 2 failures are the same two above.
 3. `flutter build apk --debug` → succeeds.
 
-Domain phases (1–2) additionally require the on-device festival test above.
+Domain phases (1-2) additionally require the on-device festival test above.
+
+## Outcome
+
+All seven phases landed on `chore/remove-web`; every gate held at baseline.
+
+| Phase | Commit | Scope |
+|---|---|---|
+| 0 | `75327c5` | baseline + preserved web metadata |
+| 1 | `1ff1c93`, `88ad6e3` | delete approximate web panchang, rename native → sole service |
+| 2 | `9c17629`, `772fa22` | delete approximate web Bengali calendar, rename native → sole service |
+| 3 | `7d504da` | delete 7 web-only stubs + 6 barrels |
+| 4 | `ba9f26f` | remove all 21 `kIsWeb` branches (14 files) |
+| 5 | `00a7e9d` | delete `web/` + config entries |
+| 6 | `docs: remove web references` | docs and comments (this commit) |
+
+Final state: no `web/` directory, no `kIsWeb` reference anywhere in the repo, no
+conditional-export stubs, and the marketing site at `tithiapp.netlify.app` untouched.
+`git tag pre-web-removal` (`b925e0f`) still restores the pre-removal tree.
