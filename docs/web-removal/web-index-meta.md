@@ -40,6 +40,24 @@ Source: `web/index.html` lines 20–40, recorded 2026-10-21 before deletion.
 <title>Tithi - Hindu Panchang Calendar</title>
 ```
 
+## `manifest.json` fields that were hand-edited
+
+The manifest itself is regenerable (and its four icons came from
+`flutter_launcher_icons.yaml`'s now-removed `web:` block), but these fields are not
+defaults:
+
+```json
+{
+  "name": "Tithi - Hindu Panchang Calendar",
+  "short_name": "Tithi",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "description": "Your spiritual companion for Hindu calendar, festivals, tithi, nakshatra, and auspicious timings.",
+  "categories": ["lifestyle", "utilities", "education"]
+}
+```
+
 ## Notes for a future web build
 
 Two problems in the original file are worth fixing rather than copying:
