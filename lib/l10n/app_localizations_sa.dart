@@ -931,12 +931,6 @@ class AppLocalizationsSa extends AppLocalizations {
   String get dismissTooltip => 'उपेक्षतु';
 
   @override
-  String get solarSystemNotAvailableOnWeb => 'सौरमण्डलं जाले उपलब्धं नास्ति';
-
-  @override
-  String get eclipseScreenNotAvailableOnWeb => 'ग्रहणपटलं जाले उपलब्धं नास्ति';
-
-  @override
   String get findingNextOccurrence => 'अग्रिमा घटना अन्विष्यते...';
 
   @override
@@ -961,9 +955,6 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get exportCancelled => 'निर्यातः निरस्तः';
-
-  @override
-  String get downloadStarted => 'अवतारणम् आरब्धम्';
 
   @override
   String get couldNotSaveExportFile => 'निर्यातसञ्चिकां संरक्षयितुं न शक्यते';

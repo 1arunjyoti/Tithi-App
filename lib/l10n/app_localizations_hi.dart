@@ -931,13 +931,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dismissTooltip => 'बंद करें';
 
   @override
-  String get solarSystemNotAvailableOnWeb => 'सौर मंडल वेब पर उपलब्ध नहीं है';
-
-  @override
-  String get eclipseScreenNotAvailableOnWeb =>
-      'ग्रहण स्क्रीन वेब पर उपलब्ध नहीं है';
-
-  @override
   String get findingNextOccurrence => 'अगला आयोजन खोजा जा रहा है...';
 
   @override
@@ -962,9 +955,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get exportCancelled => 'एक्सपोर्ट रद्द किया गया';
-
-  @override
-  String get downloadStarted => 'डाउनलोड शुरू हुआ';
 
   @override
   String get couldNotSaveExportFile => 'एक्सपोर्ट फ़ाइल सहेजी नहीं जा सकी';

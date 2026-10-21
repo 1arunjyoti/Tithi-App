@@ -31,9 +31,9 @@ import '../data/panchang_cache.dart';
 // on read and never written anymore.
 //
 // Why this instead of one shared scan pass: zero behavior change (pure
-// memoization around the existing per-festival API, working with both the
-// web and native service impls), composable across all five call sites, and
-// Hive-persisted so repeat visits — including after restarts — are instant.
+// memoization around the existing per-festival API), composable across all
+// five call sites, and Hive-persisted so repeat visits - including after
+// restarts - are instant.
 // A shared batch pass would change upfront-latency and memory tradeoffs and
 // deserves its own design pass if profiles still hurt after this.
 

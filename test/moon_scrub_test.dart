@@ -111,7 +111,7 @@ void main() {
       },
     );
 
-    test('web wrap fringe (0,1] reads as late Amavasya', () {
+    test('wrap fringe (0,1] reads as late Amavasya', () {
       // Act
       final phase = MoonPhaseService.illuminationFractionForDay(
         tithiNumber: 15,

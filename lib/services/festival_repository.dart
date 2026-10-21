@@ -95,8 +95,7 @@ class FestivalRepository {
       // "Skipped N frames" bursts). jsonDecode is a top-level function so
       // it qualifies as a compute callback; the small per-item fromJson
       // mapping + the single batched putAll stay on the main isolate
-      // (Hive boxes live there). No worse on web, where compute runs
-      // inline just like before.
+      // (Hive boxes live there).
       final List<dynamic> jsonList =
           await compute(jsonDecode, jsonString) as List<dynamic>;
       final festivals = jsonList.map((j) => Festival.fromJson(j)).toList();

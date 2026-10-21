@@ -1,8 +1,8 @@
 /// Shared Bisuddha Siddhanta Bengali calendar metadata.
 ///
-/// Pure constants + helpers (no Riverpod/FFI) so the native service, the web
-/// fallback, and the notification isolate (no FFI/Ref) can all share one
-/// source of truth. Spellings follow
+/// Pure constants + helpers (no Riverpod/FFI) so the Bengali calendar service
+/// and the notification isolate (no FFI/Ref) can share one source of truth.
+/// Spellings follow
 /// `docs/Bisuddha_Siddhanta_Bengali_Calendar_Implementation_Guide.md`
 /// Sec 3.1 (months), Sec 6 (seasons/ritu), Sec 7 (weekdays), Appendix A
 /// (sankranti mapping).

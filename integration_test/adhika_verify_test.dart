@@ -15,8 +15,8 @@ import 'package:tithi/services/hindu_calendar_service.dart';
 /// Per row: two mid-span dates must carry the full Adhika masa name, and
 /// one date safely past the Nija month must carry the following plain masa.
 /// Mid-span picks sit ≥10d from any plausible new-moon boundary, so verdicts
-/// do not depend on edge precision. Protocol on mismatch: web-verify that
-/// specific date before judging table vs app.
+/// do not depend on edge precision. Protocol on mismatch: check that date
+/// against an independent reference before judging table vs app.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

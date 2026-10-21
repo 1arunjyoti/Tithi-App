@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -93,7 +92,6 @@ class AppBootstrap {
       _tileCacheInit ??= _initTileCacheStatic();
 
   static Future<void> _initTileCacheStatic() async {
-    if (kIsWeb) return;
     // Warm the singleton with the app's config (no-op if a map screen won
     // the race — args are identical everywhere) and drop FMTC's orphaned
     // ObjectBox database once. Both best-effort; tiles work regardless.
@@ -106,7 +104,6 @@ class AppBootstrap {
 
   /// Background notification worker. Deferred: must not block first frame.
   Future<void> initBackgroundWork() async {
-    if (kIsWeb) return;
     await NotificationService().initWorkManager();
   }
 }

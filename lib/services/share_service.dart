@@ -23,23 +23,8 @@ class ShareService {
   ///
   /// This method builds the widget in the background (off-screen), captures it,
   /// saves it to a temporary file, and triggers the native share sheet.
-  /// On web, falls back to text-only sharing.
   Future<void> shareFestival(BuildContext context, Festival festival) async {
     try {
-      // On web, use text-only sharing
-      if (kIsWeb) {
-        final l10n = AppLocalizations.of(context);
-        await SharePlus.instance.share(
-          ShareParams(
-            subject: festival.name,
-            text:
-                '${l10n?.celebratingFestivalWithTithi(festival.name) ?? 'Celebrating ${festival.name} with Tithi App!'}\n\n'
-                'Check out this festival on Tithi - your Hindu Panchang Calendar.',
-          ),
-        );
-        return;
-      }
-
       // 1. Create the widget to capture
       final widgetToCapture = Material(
         type: MaterialType.transparency,

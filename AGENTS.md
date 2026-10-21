@@ -36,10 +36,14 @@ flutter test                        # Run all tests
 flutter test test/panchang_data_test.dart          # Run single test file
 flutter test test/panchang_data_test.dart -n "PanchangData Model Tests"  # Run specific test group
 flutter test test/panchang_data_test.dart --name "fromRawTithi creates"  # Run tests matching pattern
-flutter test --platform chrome       # Run tests in browser (if web support added)
 flutter test --reporter expanded     # Run with expanded output
 flutter test --reporter compact     # Run with compact output
 ```
+
+`flutter test` also runs `test/no_web_target_test.dart`, which fails if the
+`web/` target, a `kIsWeb` branch, a `dart.library.*` conditional import, or a
+web entry in `analysis_options.yaml` / `flutter_launcher_icons.yaml` / `.metadata`
+ever comes back. See `docs/web-removal/BASELINE.md`.
 
 ### Code Generation
 ```bash
@@ -220,25 +224,34 @@ group('PanchangData Model Tests', () {
 
 ## Platform-Specific Code
 
-The project uses platform channels for native functionality:
+There is no web target and no stub / conditional-export layer. Native functionality
+lives behind plain imports and is dispatched with runtime checks:
 
-- `lib/services/panchang_init/` - Platform initialization
-- `lib/services/share_file/` - Cross-platform sharing
-- `lib/widgets/native_screens/` - Native screen support
+- `lib/services/panchang_init/` - copies the bundled ephemeris files into the app's
+  documents directory before the panchang service initializes
+- `lib/services/share_file/` - temp/documents file helpers used by sharing and export
+- `lib/widgets/native_screens/` - barrel for the FFI-dependent screens
+  (eclipse, solar system)
 - `packages/jyotish/` - Swiss Ephemeris FFI bindings (requires NDK)
 
-When adding platform-specific code, create stub implementations:
+Because these use `dart:io`, gate the platform-specific entry point with a runtime
+check instead of a conditional import:
 
 ```dart
-// lib/services/example/example.dart - main export
-export 'example_stub.dart' if(dart.library.io) 'example_mobile.dart';
+// dart:io guard
+if (!Platform.isAndroid) return;
 
-// lib/services/example/example_stub.dart - default (web/desktop)
-class ExampleService { ... }
-
-// lib/services/example/example_mobile.dart - mobile specific
-class ExampleService { ... }
+// flutter/foundation guard
+if (defaultTargetPlatform != TargetPlatform.android) {
+  await openReleasesPage();
+  return;
+}
 ```
+
+Both forms compile on every target; the guard only decides what runs. Capability
+questions belong to the service (e.g. `HomeWidgetService.isWidgetSupported()`,
+`AppUpdateService.supportsInAppInstall`), not to the UI, so screens stay
+platform-agnostic.
 
 ---
 
