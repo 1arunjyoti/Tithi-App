@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' show Response;
 import 'package:http/testing.dart';
 import 'package:tithi/services/app_update/app_update_file.dart';
+import 'package:tithi/services/app_update/update_apk_name.dart';
 import 'package:tithi/services/app_update_service.dart';
 
 void main() {

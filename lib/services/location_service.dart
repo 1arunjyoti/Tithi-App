@@ -355,14 +355,11 @@ class LocationService {
         return await _getCachedLocation();
       }
 
-      // Try to get last known position first (faster) - not supported on web
-      Position? position;
-      if (!kIsWeb) {
-        position = await Geolocator.getLastKnownPosition();
-      }
+      // Try to get last known position first (faster).
+      Position? position = await Geolocator.getLastKnownPosition();
 
       // If no last known position, get current position
-      // Web uses standard LocationSettings, mobile uses AndroidSettings for FOSS
+      // Android uses LocationManager (FOSS), with a fused fallback.
       position ??= await getCurrentPositionWithFallback();
 
       // Get city name via reverse geocoding (online-first, offline fallback)
@@ -405,14 +402,6 @@ class LocationService {
     Duration fossTimeout = const Duration(seconds: 30),
     Duration fusedTimeout = const Duration(seconds: 20),
   }) async {
-    if (kIsWeb) {
-      return Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: fusedTimeout,
-        ),
-      );
-    }
     try {
       return await Geolocator.getCurrentPosition(
         locationSettings: AndroidSettings(
@@ -452,14 +441,12 @@ class LocationService {
     Duration fossTimeout = const Duration(seconds: 10),
     Duration fusedTimeout = const Duration(seconds: 10),
   }) async {
-    if (!kIsWeb) {
-      try {
-        final lastKnown = await Geolocator.getLastKnownPosition();
-        if (lastKnown != null) return lastKnown;
-      } catch (e) {
-        if (kDebugMode) {
-          print('Last known position unavailable: $e');
-        }
+    try {
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) return lastKnown;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Last known position unavailable: $e');
       }
     }
 
@@ -620,8 +607,8 @@ class LocationService {
       }
       return const PlaceSearchFailure(PlaceSearchError.offline);
     } on http.ClientException catch (e) {
-      // Covers socket failures, DNS errors and connection resets on both the
-      // VM and web clients (`package:http` wraps SocketException here).
+      // Covers socket failures, DNS errors and connection resets
+      // (`package:http` wraps SocketException here).
       if (kDebugMode) {
         print('Place search network error: $e');
       }

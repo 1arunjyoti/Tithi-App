@@ -517,8 +517,7 @@ void main() {
     });
 
     testWidgets('missing nakshatra span hides the card', (tester) async {
-      // Arrange + Act: default pumpSheet resolves the span to null (web
-      // fallback has no ephemeris).
+      // Arrange + Act: default pumpSheet resolves the span to null.
       await pumpSheet(
         tester,
         squeezeDay(),
@@ -618,8 +617,7 @@ void main() {
     });
 
     testWidgets('missing yoga/karana spans hide the card', (tester) async {
-      // Arrange + Act: default pumpSheet resolves the spans to null (web
-      // fallback has no ephemeris).
+      // Arrange + Act: default pumpSheet resolves the spans to null.
       await pumpSheet(
         tester,
         squeezeDay(),

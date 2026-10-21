@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
@@ -82,11 +81,8 @@ class SettingsScreen extends ConsumerWidget {
                       SettingsSectionHeader(l10n?.preferences ?? 'PREFERENCES'),
                       const SettingsGroupCard(
                         children: [
-                          // Hide notifications on web - not supported
-                          if (!kIsWeb) ...[
-                            NotificationSettings(),
-                            SettingsDivider(),
-                          ],
+                          NotificationSettings(),
+                          SettingsDivider(),
                           LocationSettingsSection(),
                           SettingsDivider(),
                           HomeLocationSetting(),

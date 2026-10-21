@@ -14,8 +14,8 @@ class PanchangData {
   final DateTime? sunset;
 
   /// Nakshatra prevailing at sunrise (canonical name, e.g. 'Mula'), when
-  /// computed. Null on the web fallback (no ephemeris) and in unit tests
-  /// that build days without it — nakshatra festivals then don't match.
+  /// computed. Null when unavailable (e.g. unit tests that build days
+  /// without it) - nakshatra festivals then don't match.
   final String? nakshatra;
 
   /// Instant the sunrise tithi ends (first tithi boundary after sunrise),

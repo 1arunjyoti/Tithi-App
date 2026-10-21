@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,9 +68,6 @@ class FestivalCountdownScreen extends ConsumerWidget {
                 // IDs with no occurrence in the forward window (Kshaya-skip
                 // years, invalid rules): previously they vanished silently.
                 // Surface them as footer notes instead of dropping them.
-                // On web, nakshatra-observed festivals can never resolve (no
-                // ephemeris) — label those distinctly instead of implying
-                // the date is merely far away.
                 final targetIds = targets.map((t) => t.id).toSet();
                 final missingIds = preferences.countdownIds
                     .where((id) => !targetIds.contains(id))
@@ -83,21 +79,14 @@ class FestivalCountdownScreen extends ConsumerWidget {
                   return null;
                 }
 
-                final webUnsupportedEntries = <({String id, String name})>[];
                 final undatedEntries = <({String id, String name})>[];
                 for (final id in missingIds) {
                   final festival = lookup(id);
-                  if (kIsWeb &&
-                      festival?.nakshatraCondition != null) {
-                    webUnsupportedEntries.add((id: id, name: festival!.name));
-                  } else {
-                    undatedEntries.add((id: id, name: festival?.name ?? id));
-                  }
+                  undatedEntries.add((id: id, name: festival?.name ?? id));
                 }
-                final hasMissing = undatedEntries.isNotEmpty ||
-                    webUnsupportedEntries.isNotEmpty;
-                // Removal shared by both footers (entries carry ids, not just
-                // names, so stuck countdowns are dismissible).
+                final hasMissing = undatedEntries.isNotEmpty;
+                // Entries carry ids, not just names, so stuck countdowns
+                // are dismissible.
                 void removeEntry(String id) =>
                     _removeCountdown(context, ref, id);
 
@@ -115,14 +104,6 @@ class FestivalCountdownScreen extends ConsumerWidget {
                             entries: undatedEntries,
                             onRemove: removeEntry,
                           ),
-                        if (webUnsupportedEntries.isNotEmpty) ...[
-                          if (undatedEntries.isNotEmpty)
-                            const SizedBox(height: 10),
-                          _WebUnsupportedCountdowns(
-                            entries: webUnsupportedEntries,
-                            onRemove: removeEntry,
-                          ),
-                        ],
                       ],
                     );
                   }
@@ -137,9 +118,6 @@ class FestivalCountdownScreen extends ConsumerWidget {
                 }
 
                 final hasUndatedNote = undatedEntries.isNotEmpty;
-                final hasWebNote = webUnsupportedEntries.isNotEmpty;
-                final footerCount =
-                    (hasUndatedNote ? 1 : 0) + (hasWebNote ? 1 : 0);
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                   itemBuilder: (context, index) {
@@ -147,17 +125,10 @@ class FestivalCountdownScreen extends ConsumerWidget {
                     if (index == 0) {
                       return const HomeWidgetCard();
                     }
-                    // Trailing footers: undated first, web-limitation last.
+                    // Trailing footer for undated entries.
                     if (hasUndatedNote && index == targets.length + 1) {
                       return _UndatedCountdowns(
                         entries: undatedEntries,
-                        onRemove: removeEntry,
-                      );
-                    }
-                    if (hasWebNote &&
-                        index == targets.length + footerCount) {
-                      return _WebUnsupportedCountdowns(
-                        entries: webUnsupportedEntries,
                         onRemove: removeEntry,
                       );
                     }
@@ -191,7 +162,7 @@ class FestivalCountdownScreen extends ConsumerWidget {
                     );
                   },
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemCount: targets.length + 1 + footerCount,
+                  itemCount: targets.length + 1 + (hasUndatedNote ? 1 : 0),
                 );
               },
               loading: () => const Padding(
@@ -528,30 +499,6 @@ class _UndatedCountdowns extends StatelessWidget {
       icon: Icons.event_busy_rounded,
       message: l10n?.couldNotFindUpcomingOccurrence ??
           'Could not find upcoming occurrence within a year.',
-      entries: entries,
-      onRemove: onRemove,
-      removeTooltip: l10n?.removeCountdown ?? 'Remove countdown',
-    );
-  }
-}
-
-/// Footer note for nakshatra-observed festivals on web: the web fallback has
-/// no ephemeris, so these can never resolve there (not merely "far away").
-class _WebUnsupportedCountdowns extends StatelessWidget {
-  const _WebUnsupportedCountdowns({
-    required this.entries,
-    required this.onRemove,
-  });
-
-  final List<({String id, String name})> entries;
-  final void Function(String id) onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return _UnresolvableCard(
-      icon: Icons.cloud_off_rounded,
-      message: 'Needs precise moon data, unavailable on web',
       entries: entries,
       onRemove: onRemove,
       removeTooltip: l10n?.removeCountdown ?? 'Remove countdown',

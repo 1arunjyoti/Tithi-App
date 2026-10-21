@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,8 +114,7 @@ String? otherShlokaTranslation(Shloka shloka, {required bool hindiFirst}) {
 
 /// Shares the verse as a branded image card, mirroring [ShareService].
 ///
-/// Falls back to text sharing on web (no temp-file support) and when the
-/// capture fails.
+/// Falls back to text sharing when the image capture fails.
 Future<void> shareWisdomAsImage(
   BuildContext context,
   Shloka shloka, {
@@ -139,10 +137,6 @@ Future<void> shareWisdomAsImage(
     );
   }
 
-  if (kIsWeb) {
-    await shareTextFallback();
-    return;
-  }
   try {
     // Storage hygiene first: drop day-old share images so repeated
     // shares don't grow the temp directory without bound.

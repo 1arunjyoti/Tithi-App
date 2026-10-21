@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_update/app_update_file.dart';
+import 'app_update/update_apk_name.dart';
 
 /// Raised when the user cancels an in-flight download.
 class AppUpdateCancelled implements Exception {
@@ -145,9 +146,8 @@ class AppReleaseInfo {
 /// and hands it to the Android installer.
 ///
 /// No new dependencies: `http`, `path_provider` and `url_launcher`
-/// are already used by the app. File + installer operations live
-/// behind a `dart.library.io` conditional export so web builds keep
-/// compiling; there the service falls back to the releases page.
+/// are already used by the app. Off Android the service falls back to
+/// opening the releases page in the browser.
 class AppUpdateService {
   AppUpdateService({AppUpdateConfig? config, http.Client? httpClient})
     : config = config ?? AppUpdateConfig.fromEnvironment(),
@@ -177,7 +177,7 @@ class AppUpdateService {
 
   /// `true` on Android, where the package installer exists.
   static bool get supportsInAppInstall {
-    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    return defaultTargetPlatform == TargetPlatform.android;
   }
 
   /// Strips a leading `v` and surrounding whitespace: `v0.6.0+3` -> `0.6.0+3`.
@@ -384,12 +384,6 @@ class AppUpdateService {
     if (url == null) {
       throw const AppUpdateException(
         'This release has no APK attached. Open the releases page instead.',
-      );
-    }
-    if (!await supportsApkFileOperations) {
-      await openReleasesPage();
-      throw const AppUpdateException(
-        'Downloads work on Android. The releases page was opened instead.',
       );
     }
     final client = _httpClient ?? http.Client();

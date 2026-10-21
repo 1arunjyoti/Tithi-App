@@ -1,34 +1,60 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:jyotish/jyotish.dart';
 import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
 import '../festival_matching_pipeline.dart';
+import '../panchang_init/panchang_init.dart';
 import '../sunrise_calculator.dart';
 import '../../core/location/location_defaults.dart';
 
-/// Web implementation of PanchangService
-/// Uses simplified calculations since FFI-based Swiss Ephemeris is not available on web
+/// Native (mobile/desktop) implementation of PanchangService
+/// Uses FFI-based Swiss Ephemeris for accurate calculations
 class PanchangService {
   PanchangService();
 
   bool _isInitialized = false;
+  late String _ephePath;
+
+  /// BUG-08: cache is static so all PanchangService instances share it
+  /// (background isolate + main isolate no longer maintain separate cache copies).
+  /// BUG-MEDIUM-5: Bounded LRU cache – evicts oldest entries when size exceeds
+  /// [_maxCacheSize] to prevent unbounded memory growth on long-running sessions.
+  static const int _maxCacheSize = 500;
+  static final Map<String, double> _tithiCache = {};
+
+  /// OPT-7: Cache for Sun’s ecliptic longitude keyed by date+hour.
+  /// calculateMasa makes two getPlanetPosition(Sun) calls per invocation;
+  /// day-to-day calls on adjacent dates overlap heavily, so caching cuts FFI
+  /// work substantially when computing a full month of panchang data.
+  static const int _maxSunCacheSize = 100;
+  static final Map<String, double> _sunLongitudeCache = {};
 
   bool get isInitialized => _isInitialized;
-
-  bool get hasFullSupport => false; // Web doesn't have full FFI support
 
   Future<void> init() async {
     if (_isInitialized) return;
 
-    if (kDebugMode) {
-      print(
-        'PanchangService: Web platform detected, using simplified calculations',
-      );
+    try {
+      // Copy ephemeris files and initialize
+      _ephePath = await copyEphemerisFiles(rootBundle);
+
+      // Initialize Jyotish/SwissEph with the path
+      await Jyotish().initialize(ephemerisPath: _ephePath);
+
+      if (kDebugMode) {
+        print("Swiss Ephemeris files copied to $_ephePath");
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error initializing PanchangService: $e");
+      }
+      rethrow;
     }
-    _isInitialized = true;
   }
 
-  /// Simplified Tithi calculation using basic astronomical formulas
-  /// This is less accurate than the Swiss Ephemeris but works on web
   Future<double> calculateTithi(
     DateTime date, {
     double latitude = kDefaultLatitude,
@@ -38,53 +64,119 @@ class PanchangService {
       throw Exception("PanchangService not initialized.");
     }
 
-    // Use simplified lunar phase calculation
-    // This is an approximation based on the synodic month
-    return _calculateApproximateTithi(date);
+    // Generate cache key
+    final cacheKey =
+        '${date.millisecondsSinceEpoch}_${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+
+    // Check cache first
+    if (_tithiCache.containsKey(cacheKey)) {
+      return _tithiCache[cacheKey]!;
+    }
+
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    final sun = await Jyotish().getPlanetPosition(
+      planet: Planet.sun,
+      dateTime: date,
+      location: location,
+    );
+    final moon = await Jyotish().getPlanetPosition(
+      planet: Planet.moon,
+      dateTime: date,
+      location: location,
+    );
+
+    double diff = moon.longitude - sun.longitude;
+    if (diff < 0) {
+      diff += 360;
+    }
+
+    // Tithi = diff / 12
+    // We add 1 because Tithi starts from 1, not 0.
+    // Guard against the floating-point fringe where diff rounds to exactly
+    // 360°, which would produce tithi = 31.0 — out of the [1, 30] cycle.
+    double tithi = (diff / 12) + 1;
+    if (tithi >= 31.0) tithi -= 30.0;
+
+    // Store in cache with LRU eviction
+    if (_tithiCache.length >= _maxCacheSize) {
+      // Remove the oldest ~20% of entries to amortize eviction cost
+      final keysToRemove = _tithiCache.keys.take(_maxCacheSize ~/ 5).toList();
+      for (final key in keysToRemove) {
+        _tithiCache.remove(key);
+      }
+    }
+    _tithiCache[cacheKey] = tithi;
+
+    return tithi;
   }
 
-  /// Approximate tithi calculation using known new moon reference
-  double _calculateApproximateTithi(DateTime date) {
-    // Reference new moon: January 6, 2000, 18:14 UTC (known astronomical new moon)
-    final referenceNewMoon = DateTime.utc(2000, 1, 6, 18, 14);
-
-    // Synodic month (average time between new moons) = 29.530588853 days
-    const synodicMonth = 29.530588853;
-
-    // Calculate days since reference new moon
-    final daysSinceReference =
-        date.toUtc().difference(referenceNewMoon).inMinutes / (24 * 60);
-
-    // Calculate current phase (0 to 1, where 0 = new moon)
-    final phase = (daysSinceReference % synodicMonth) / synodicMonth;
-
-    // Convert to tithi (1-30, where 1 = first day after new moon)
-    // Each tithi is 12 degrees of lunar elongation, or 1/30th of the cycle
-    final tithi = (phase * 30) + 1;
-
-    return tithi > 30 ? tithi - 30 : tithi;
-  }
-
-  /// Sun+Moon longitudes are unsupported without an ephemeris (web
-  /// fallback): always null, so the yoga/karana card hides on web.
-  /// Documented limitation, not silent drift.
+  /// Sidereal (Lahiri) ecliptic longitudes of the Sun and Moon in degrees.
+  ///
+  /// Powers the yoga (sum) and karana (difference) computations, which each
+  /// need both longitudes at the same instant. Returns null instead of
+  /// throwing when uninitialized or the ephemeris call fails, so callers
+  /// degrade to hiding rather than breaking the whole day.
   Future<({double sun, double moon})?> calculateSunMoonLongitudes(
     DateTime date, {
     double latitude = kDefaultLatitude,
     double longitude = kDefaultLongitude,
   }) async {
-    return null;
+    if (!_isInitialized) return null;
+    try {
+      // PERF-3: one parallel batch — the two FFI calls are independent.
+      final positions = await Jyotish().getMultiplePlanetPositions(
+        planets: [Planet.sun, Planet.moon],
+        dateTime: date,
+        location: GeographicLocation(
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+      final sun = positions[Planet.sun];
+      final moon = positions[Planet.moon];
+      if (sun == null || moon == null) return null;
+      return (sun: sun.longitude, moon: moon.longitude);
+    } catch (e) {
+      if (kDebugMode) {
+        print('calculateSunMoonLongitudes failed: $e');
+      }
+      return null;
+    }
   }
 
-  /// Nakshatra is unsupported without an ephemeris (web fallback): always
-  /// null, so nakshatra-conditioned festivals (e.g. Saraswati Avahan on
-  /// Mula) don't match on web. Documented limitation, not silent drift.
+  /// Nakshatra prevailing at [date] (canonical name, e.g. 'Mula').
+  ///
+  /// Derived from the sidereal Moon longitude — the same Lahiri frame
+  /// [calculateTithi] uses: index = floor(longitude / (360/27)).
+  /// Returns null instead of throwing when uninitialized or the ephemeris
+  /// call fails, so one bad sample degrades to "nakshatra festivals don't
+  /// match today" rather than breaking the whole day.
   Future<String?> calculateNakshatra(
     DateTime date, {
     double latitude = kDefaultLatitude,
     double longitude = kDefaultLongitude,
   }) async {
-    return null;
+    if (!_isInitialized) return null;
+    try {
+      final moon = await Jyotish().getPlanetPosition(
+        planet: Planet.moon,
+        dateTime: date,
+        location: GeographicLocation(
+          latitude: latitude,
+          longitude: longitude,
+        ),
+      );
+      return nakshatraForLongitude(moon.longitude);
+    } catch (e) {
+      if (kDebugMode) {
+        print('calculateNakshatra failed: $e');
+      }
+      return null;
+    }
   }
 
   Future<String> calculateMasa(
@@ -97,64 +189,177 @@ class PanchangService {
       throw Exception("PanchangService not initialized.");
     }
 
-    // Simplified masa calculation based on the month
-    // This maps Gregorian months to approximate Hindu months
-    // Note: This is a rough approximation and may not be accurate for all dates
-    return _getApproximateMasa(date, rawTithi);
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    // Lunation-exact new moons (see _adhikaVerdict): the old code sampled the
+    // Sun at mean-motion ESTIMATES (query date minus mean elapsed days, plus
+    // a mean 29.53d month). Those estimates can sit on opposite sides of a
+    // sankranti from the true new moons, so Adhika detection fired only for
+    // the few days whose estimates happened to land right — adjacent dates
+    // in one Adhika month disagreed (Adhika vs plain). Sampling at refined
+    // true new moons makes the verdict lunation-wide and stable.
+    final verdict = await _adhikaVerdict(date, rawTithi, location);
+
+    // Nija (real) masa detection:
+    // If it has a sankranti, it's either a normal month or a Nija month.
+    // In either case, it should be the plain masa name so festivals DO match (e.g. June 25 shows).
+    // Adhika months carry the 'Adhika_' prefix so regular festivals DO NOT
+    // match (e.g. skip May 27).
+    return verdict.adhika ? 'Adhika_${verdict.masa}' : verdict.masa;
   }
 
-  String _getApproximateMasa(DateTime date, double rawTithi) {
-    // Calculate days since last New Moon (Amavasya)
+  static DateTime _noon(DateTime dt) =>
+      DateTime(dt.year, dt.month, dt.day, 12);
+
+  /// Memoized verdicts per lunation. All dates (and all intraday checkpoints)
+  /// of one lunation share a single verdict — that sharing is load-bearing
+  /// for consistency: per-date sampling is what made Adhika flicker between
+  /// adjacent days. Bounded; entries are deterministic so eviction only costs
+  /// recomputation.
+  static const int _maxLunationVerdicts = 8;
+  static final Map<String, ({DateTime n1, DateTime n2, bool adhika, String masa})>
+      _lunationVerdicts = {};
+
+  /// Adhika verdict for the lunation containing [date].
+  /// Mean-motion estimate first (lunations are ~29.2-29.8d apart, so an
+  /// estimate within 3d pins exactly one memoized lunation); on a miss,
+  /// refine both new moons to their wrap-interpolated instants and sample
+  /// the Sun there. The ~14 extra tithi reads happen once per lunation —
+  /// later dates (and the Hive masa cache afterwards) pay ~zero.
+  Future<({bool adhika, String masa})> _adhikaVerdict(
+    DateTime date,
+    double rawTithi,
+    GeographicLocation location,
+  ) async {
     final diffDegrees = (rawTithi - 1) * 12;
     final daysSinceNewMoon = diffDegrees / 12.19074;
-
-    // Estimate date of previous New Moon
-    final prevNewMoonDate = date.subtract(
-      Duration(minutes: (daysSinceNewMoon * 1440).round()),
+    final estPrev = _noon(
+      date.subtract(
+        Duration(minutes: (daysSinceNewMoon * 1440).round()),
+      ),
     );
 
-    // Estimate date of next New Moon (~29.53 days after the previous one)
-    const synodicMonth = 29.530588853;
-    final nextNewMoonDate = prevNewMoonDate.add(
-      Duration(minutes: (synodicMonth * 1440).round()),
+    for (final entry in _lunationVerdicts.values) {
+      if ((entry.n1.difference(estPrev).inHours).abs() <= 72) {
+        return (adhika: entry.adhika, masa: entry.masa);
+      }
+    }
+
+    final n1 = await _refineNewMoonInstant(estPrev, location);
+    final n2 = await _refineNewMoonInstant(
+      _noon(n1.add(const Duration(days: 29, hours: 12))),
+      location,
+    );
+    // OPT-7: Sun-longitude cache helper avoids redundant FFI calls.
+    final sunLongPrev = await _getCachedSunLongitude(n1, location);
+    final sunLongNext = await _getCachedSunLongitude(n2, location);
+    final verdict = resolveAdhikaVerdict(
+      sunLongN1: sunLongPrev,
+      sunLongN2: sunLongNext,
     );
 
-    // Approximate sun longitude based on date (1 degree/day from spring equinox)
-    double sunLongitude(DateTime d) {
-      final marchEquinox = DateTime(d.year, 3, 21);
-      final daysFromEquinox = d.difference(marchEquinox).inDays;
-      double sunLng = (daysFromEquinox % 365.25) * (360 / 365.25);
-      if (sunLng < 0) sunLng += 360;
-      return sunLng;
+    final key =
+        '${n1.year}-${n1.month.toString().padLeft(2, '0')}-${n1.day.toString().padLeft(2, '0')}';
+    if (_lunationVerdicts.length >= _maxLunationVerdicts) {
+      _lunationVerdicts.remove(_lunationVerdicts.keys.first);
     }
+    _lunationVerdicts[key] = (
+      n1: n1,
+      n2: n2,
+      adhika: verdict.adhika,
+      masa: verdict.masa,
+    );
+    return verdict;
+  }
 
-    const masas = [
-      'Vaishakha', // Aries
-      'Jyeshtha', // Taurus
-      'Ashadha', // Gemini
-      'Shravana', // Cancer
-      'Bhadrapada', // Leo
-      'Ashwin', // Virgo
-      'Kartika', // Libra
-      'Margashirsha', // Scorpio
-      'Pausha', // Sagittarius
-      'Magha', // Capricorn
-      'Phalguna', // Aquarius
-      'Chaitra', // Pisces
-    ];
+  /// New-moon instant near [centerNoon]: sample tithi at noon ±3d, find the
+  /// adjacent pair straddling the 30→1 wrap, and interpolate between them
+  /// (free, ~±2h). Sampling the Sun AT the wrap — instead of at noon — keeps
+  /// same-day transit/new-moon coincidences (e.g. Simha sankranti and the new
+  /// moon both on 2031-08-17) on the correct side. Falls back to the nearest
+  /// noon when no wrap is in window (estimate error beyond ±3d).
+  Future<DateTime> _refineNewMoonInstant(
+    DateTime centerNoon,
+    GeographicLocation location,
+  ) async {
+    Future<double> tithiAt(DateTime at) => calculateTithi(
+      at,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    );
 
-    final prevIndex = (sunLongitude(prevNewMoonDate) / 30).floor() % 12;
-    final nextIndex = (sunLongitude(nextNewMoonDate) / 30).floor() % 12;
-
-    final masaName = masas[prevIndex];
-
-    // If prevIndex == nextIndex → Adhika month (no sankranti) → return Adhika prefix.
-    if (prevIndex == nextIndex) {
-      return 'Adhika_$masaName';
+    final cands = <({DateTime at, double t})>[];
+    for (int d = -3; d <= 3; d++) {
+      final at = centerNoon.add(Duration(days: d));
+      cands.add((at: at, t: await tithiAt(at)));
     }
+    final wrap = wrapPairIndex(cands.map((c) => c.t).toList());
+    if (wrap < 0) {
+      DateTime best = centerNoon;
+      double bestScore = double.infinity;
+      for (final c in cands) {
+        final score = newMoonDistance(c.t);
+        if (score < bestScore) {
+          bestScore = score;
+          best = c.at;
+        }
+      }
+      return best;
+    }
+    DateTime pre = cands[wrap].at;
+    DateTime post = cands[wrap + 1].at;
+    // Two bisection rounds halve the ±12h noon-grid window twice (~±3h).
+    // Linear interpolation alone can err ~±6h on skewed tithis (e.g. a long
+    // Amavasya), which still straddles same-day transit/new-moon coincidences
+    // like 2031-08-17. Side test is Kshaya/Adhika-tithi safe: near a new moon
+    // the tithi is always ~28-30 (pre) or ~0-2 (post), never mid-cycle.
+    for (int i = 0; i < 2; i++) {
+      final mid = DateTime.fromMicrosecondsSinceEpoch(
+        (pre.microsecondsSinceEpoch + post.microsecondsSinceEpoch) ~/ 2,
+      );
+      if (await tithiAt(mid) > 15.0) {
+        pre = mid;
+      } else {
+        post = mid;
+      }
+    }
+    return interpolateNewMoonInstant(
+      pre,
+      await tithiAt(pre),
+      post,
+      await tithiAt(post),
+    );
+  }
 
-    // Nija (real) or normal month (has sankranti) → return plain name (festivals match).
-    return masaName;
+  /// OPT-7: Returns the Sun’s ecliptic longitude for [dt], using a bounded
+  /// in-memory cache keyed by (date+hour) to avoid repeated FFI calls when
+  /// [calculateMasa] is invoked on adjacent new-moon dates.
+  Future<double> _getCachedSunLongitude(
+    DateTime dt,
+    GeographicLocation location,
+  ) async {
+    final key =
+        '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}-${dt.hour.toString().padLeft(2, '0')}';
+    if (_sunLongitudeCache.containsKey(key)) return _sunLongitudeCache[key]!;
+
+    final sun = await Jyotish().getPlanetPosition(
+      planet: Planet.sun,
+      dateTime: dt,
+      location: location,
+    );
+
+    if (_sunLongitudeCache.length >= _maxSunCacheSize) {
+      final toRemove =
+          _sunLongitudeCache.keys.take(_maxSunCacheSize ~/ 5).toList();
+      for (final k in toRemove) {
+        _sunLongitudeCache.remove(k);
+      }
+    }
+    _sunLongitudeCache[key] = sun.longitude;
+    return sun.longitude;
   }
 
   Future<DateTime?> findNextFestivalOccurrence(
@@ -199,8 +404,11 @@ class PanchangService {
       }
     }
 
-    // BUG-05: single 420-day pass (redundant fallback loop removed).
-    // 420 (not 380) covers Adhika-stretched gaps (~384d) and Kshaya skips.
+    // BUG-05: single 420-day pass – the redundant brute-force fallback loop
+    // is removed. We start from the heuristic estimate (clamped to baseDate)
+    // and search forward once. 420 (not 380) covers Adhika-stretched gaps:
+    // a lunisolar year is ~354d but an intercalary month pushes same-festival
+    // gaps toward ~384d, and a Kshaya-skip year can push further.
     var date = _estimateFestivalSearchStart(baseDate, festival);
     if (date.isBefore(baseDate)) {
       date = baseDate;
@@ -208,9 +416,10 @@ class PanchangService {
 
     for (int i = 0; i < 420; i++) {
       Future<bool> matchesOn(DateTime day) async {
-        // Sample at TRUE sunrise (not a fixed 06:00): the UI batch matches at
+        // Sample at TRUE sunrise (not a fixed 06:00): the UI batch
+        // (PanchangData.fromRawTithi via resolveTithiCheckpoints) matches at
         // sunrise, so a fixed 06:00 probe disagrees by a day whenever the
-        // tithi changes between 06:00 and sunrise.
+        // tithi changes between 06:00 and sunrise (high latitudes/seasons).
         final dayOnly = DateTime(day.year, day.month, day.day);
         final probe = SunriseCalculator.calculateSunriseIST(
           date: dayOnly,
@@ -222,10 +431,7 @@ class PanchangService {
           latitude: latitude,
           longitude: longitude,
         );
-        // Clamp: the web mean-motion approximation can yield ~0.x near the
-        // wrap (native guards this in calculateTithi); floor() 0 would derive
-        // a bogus Shukla-0 tithi that matches nothing and skews Kshaya gaps.
-        final probeIndex = probeRawTithi.floor().clamp(1, 30);
+        final probeIndex = probeRawTithi.floor();
         final String probePaksha;
         final int probeTithiNumber;
         if (probeIndex <= 15) {
@@ -241,8 +447,8 @@ class PanchangService {
           latitude: latitude,
           longitude: longitude,
         );
-        // Nakshatra override: web has no ephemeris (always null), so such
-        // festivals never match here — documented in calculateNakshatra.
+        // Nakshatra override (e.g. Mula Avahan): one Moon-longitude read
+        // per probe day, only when this festival needs it.
         final probeNakshatra = festival.nakshatraCondition != null
             ? await calculateNakshatra(
                 probe,
@@ -251,7 +457,8 @@ class PanchangService {
               )
             : null;
         // BUG-04: pass `date` so weekday constraints are evaluated.
-        // Shared pipeline: matches agree with the UI grid by construction.
+        // Shared pipeline: nakshatra overrides and tithi rules agree with
+        // the UI grid by construction.
         final probeMatch = matchesFestivalOnDay(
           festival: festival,
           paksha: probePaksha,
@@ -270,6 +477,8 @@ class PanchangService {
         // Masa stays the sunrise masa (probeMasa), matching the UI batch
         // which matches override festivals against the sunrise masa — not
         // the checkpoint masa — so sankranti-boundary days agree.
+        // Nakshatra festivals returned with probeMatch above, so the
+        // checkpoint match passes null.
         final override = festival.panchangRules.timingOverride;
         if (override != null &&
             timingOverrideCheckpoints.contains(override) &&
@@ -307,11 +516,15 @@ class PanchangService {
               return true;
             }
             // Checkpoint missed: fall through to the Kshaya fallback below
-            // (mirrors PanchangData.fromRawTithi). Do NOT return false here.
+            // (mirrors PanchangData.fromRawTithi, which still applies Kshaya
+            // after an override miss). Do NOT return false here.
           }
           // No checkpoint, or checkpoint missed: fall through to Kshaya.
         }
-        // Dominant-tithi grace (Drik rule, same as the UI batch).
+        // Dominant-tithi grace (Drik rule, same as the UI batch): a tithi
+        // beginning within kDominantTithiGrace after TRUE sunrise counts
+        // for this day. Override festivals keep their own checkpoint, and
+        // nakshatra festivals returned above.
         final usesSunrise = festival.panchangRules.timingOverride == null ||
             !timingOverrideCheckpoints.contains(
               festival.panchangRules.timingOverride,
@@ -436,10 +649,10 @@ class PanchangService {
         return false;
       }
 
-      // BUG-04: pass `date` so weekday constraints are evaluated.
-      // Shared pipeline: a Vriddhi run resolves to first/last/both days so
-      // countdown, search, export and notifications agree with the UI grid.
+      // BUG-04: pass `date` so weekday constraints are evaluated
       if (await matchesOn(date)) {
+        // Shared pipeline: a Vriddhi run resolves to first/last/both days so
+        // countdown, search, export and notifications agree with the UI grid.
         final baseDateOnly = DateTime(
           baseDate.year,
           baseDate.month,
@@ -452,8 +665,11 @@ class PanchangService {
           matchesDay: matchesOn,
         );
         if (resolved.occurrence != null) {
-          final o = resolved.occurrence!;
-          return DateTime(o.year, o.month, o.day);
+          return DateTime(
+            resolved.occurrence!.year,
+            resolved.occurrence!.month,
+            resolved.occurrence!.day,
+          );
         }
         date = resolved.resumeFrom;
         continue;
@@ -489,39 +705,203 @@ class PanchangService {
     final targetMonth = approxMonth[masa];
     if (targetMonth == null) return from;
 
-    // No year rollover (see native impl): the 420-day forward scan finds
-    // next year's occurrence on its own. Jumping to year+1 when the approx
-    // month looks "past" skips imminent lunar occurrences 1-2 months later
-    // than the Gregorian guess (e.g. Mahalaya 2026). The estimate must never
-    // start after [from]; subtract 45 days (Adhika buffer, same as native)
-    // so the fast-forward stays on the early/safe side.
-    return DateTime(
-      from.year,
-      targetMonth,
-    ).subtract(const Duration(days: 45));
+    // No year rollover here: the 420-day forward scan from [baseDate] finds
+    // next year's occurrence on its own when this year's has truly passed.
+    // Rolling to year+1 when targetMonth < from.month - 1 skipped imminent
+    // occurrences whose real lunar date falls 1-2 months AFTER the crude
+    // Gregorian approximation (e.g. Bhadrapada ~= Aug but Mahalaya 2026 is
+    // Oct 10: on Oct 3 the old code jumped to Aug 2027 and returned the 2027
+    // date, flipping the countdown from 7 days to ~362 days). The estimate
+    // is only a fast-forward optimization, so it must never start AFTER
+    // [from]: an early estimate is clamped up by the caller (safe, just scans
+    // more), a late estimate would skip the very occurrence we want.
+    // SMELL-14: Subtract 45 days from the Gregorian approximation so that
+    // Adhika (intercalary) months — which can shift the real Hindu month ~30
+    // days later than the heuristic estimates — are still covered by the
+    // caller’s 420-day forward search window.  The caller clamps the result
+    // back to [baseDate] if it falls in the past.
+    final estimate = DateTime(from.year, targetMonth);
+    return estimate.subtract(const Duration(days: 45));
   }
 
-  /// Calculates the exact start time of a specific tithi (Web Fallback)
+  /// Shared helper: finds the occurrence of [targetTithiNum] nearest to
+  /// [approxDate] by searching outward in 2-hour steps (up to ±15 days).
+  ///
+  /// This matters because [approxDate] is the festival day at midnight, which
+  /// is often still the *previous* tithi (e.g. Saptami at 00:00 while sunrise
+  /// is Ashtami). A one-directional walk from there picks the wrong lunation:
+  /// walking backward finds last month's occurrence (hence "Ends: Aug 6" for
+  /// a Sep 4 festival), walking forward finds next month's. Searching outward
+  /// guarantees the day's own occurrence (hours away) wins over the adjacent
+  /// lunation's (~29.5 days away). Returns null for a Kshaya (skipped) tithi.
+  Future<DateTime?> _findNearestTithiOccurrence(
+    DateTime approxDate,
+    int targetTithiNum,
+    Future<int> Function(DateTime dt) getTithi,
+  ) async {
+    if (await getTithi(approxDate) == targetTithiNum) return approxDate;
+    // ±15 days in 2-hour steps = 180 iterations per side.
+    for (var step = 1; step <= 180; step++) {
+      final forward = approxDate.add(Duration(hours: step * 2));
+      if (await getTithi(forward) == targetTithiNum) return forward;
+      final backward = approxDate.subtract(Duration(hours: step * 2));
+      if (await getTithi(backward) == targetTithiNum) return backward;
+    }
+    return null;
+  }
+
+  /// BUG-06: Calculates the exact start time of a specific tithi using binary
+  /// search instead of linear stepping, reducing worst-case FFI calls from
+  /// O(hours + minutes) ≈ 168 to O(log(minutes in 2 days)) ≈ 25.
+  ///
+  /// [targetTithiNum] is the full 1-30 tithi index (rawTithi.floor():
+  /// 1-15 = Shukla, 16-30 = Krishna). Pass e.g. 23 for Krishna Ashtami,
+  /// NOT 8 — the paksha-relative number is ambiguous.
   Future<DateTime> calculateTithiStartTime(
     DateTime approxDate,
     int targetTithiNum, {
     double latitude = kDefaultLatitude,
     double longitude = kDefaultLongitude,
   }) async {
-    // Web does not have FFI Swiss Ephemeris.
-    // Return approximate date to satisfy compilation.
-    return approxDate.subtract(const Duration(hours: 12));
+    assert(
+      targetTithiNum >= 1 && targetTithiNum <= 30,
+      'targetTithiNum must be the 1-30 tithi index, got $targetTithiNum',
+    );
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    Future<int> getTithi(DateTime dt) async {
+      final sun = await Jyotish().getPlanetPosition(
+        planet: Planet.sun,
+        dateTime: dt,
+        location: location,
+      );
+      final moon = await Jyotish().getPlanetPosition(
+        planet: Planet.moon,
+        dateTime: dt,
+        location: location,
+      );
+      double diff = moon.longitude - sun.longitude;
+      if (diff < 0) diff += 360;
+      // BUG-1: guard wrap at 360° (same fix as calculateTithi)
+      double raw = (diff / 12) + 1;
+      if (raw >= 31.0) raw -= 30.0;
+      return raw.floor();
+    }
+
+    // Anchor on the nearest occurrence: approxDate (midnight) is often still
+    // the previous tithi, so establish `hi` inside the day's own occurrence
+    // rather than walking blindly forward (which overshoots to next month
+    // when approxDate is already past the tithi).
+    final inside = await _findNearestTithiOccurrence(
+      approxDate,
+      targetTithiNum,
+      getTithi,
+    );
+    // Kshaya (skipped) tithi — no occurrence nearby; return approx as fallback.
+    if (inside == null) return approxDate;
+
+    // Establish a search window: lo must be outside the target tithi,
+    // hi must be inside it.
+    DateTime lo = inside.subtract(const Duration(days: 2));
+    DateTime hi = inside;
+
+    // Walk lo back until it is outside the target tithi (normally 0
+    // iterations: a tithi lasts <26h so 2 days back is always outside).
+    var loGuard = 0;
+    while (await getTithi(lo) == targetTithiNum && loGuard++ < 360) {
+      lo = lo.subtract(const Duration(hours: 2));
+    }
+
+    // Binary search: narrow lo/hi until they are 1 minute apart.
+    while (hi.difference(lo).inMinutes > 1) {
+      final mid =
+          lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
+      if (await getTithi(mid) == targetTithiNum) {
+        hi = mid;
+      } else {
+        lo = mid;
+      }
+    }
+
+    return hi; // first minute of the target tithi
   }
 
-  /// Calculates the exact end time of a specific tithi (Web Fallback)
+  /// BUG-06: Calculates the exact end time of a specific tithi using binary
+  /// search instead of linear stepping.
+  ///
+  /// [targetTithiNum] is the full 1-30 tithi index (see [calculateTithiStartTime]).
   Future<DateTime> calculateTithiEndTime(
     DateTime approxDate,
     int targetTithiNum, {
     double latitude = kDefaultLatitude,
     double longitude = kDefaultLongitude,
   }) async {
-    // Web does not have FFI Swiss Ephemeris.
-    // Return approximate date to satisfy compilation.
-    return approxDate.add(const Duration(hours: 12));
+    assert(
+      targetTithiNum >= 1 && targetTithiNum <= 30,
+      'targetTithiNum must be the 1-30 tithi index, got $targetTithiNum',
+    );
+    final location = GeographicLocation(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    Future<int> getTithi(DateTime dt) async {
+      final sun = await Jyotish().getPlanetPosition(
+        planet: Planet.sun,
+        dateTime: dt,
+        location: location,
+      );
+      final moon = await Jyotish().getPlanetPosition(
+        planet: Planet.moon,
+        dateTime: dt,
+        location: location,
+      );
+      double diff = moon.longitude - sun.longitude;
+      if (diff < 0) diff += 360;
+      // BUG-1: guard wrap at 360° (same fix as calculateTithi)
+      double raw = (diff / 12) + 1;
+      if (raw >= 31.0) raw -= 30.0;
+      return raw.floor();
+    }
+
+    // Anchor on the nearest occurrence: approxDate (midnight) is often still
+    // the previous tithi, so establish `lo` inside the day's own occurrence
+    // rather than walking backward (which falls back to last month's
+    // occurrence — the "Ends: Aug 6 for a Sep 4 festival" bug).
+    final inside = await _findNearestTithiOccurrence(
+      approxDate,
+      targetTithiNum,
+      getTithi,
+    );
+    // Kshaya (skipped) tithi — no occurrence nearby; return approx as fallback.
+    if (inside == null) return approxDate;
+
+    // Establish a search window: lo must be inside the target tithi,
+    // hi must be outside it.
+    DateTime lo = inside;
+    DateTime hi = inside.add(const Duration(days: 2));
+
+    // Walk hi forward until it is outside the target tithi (normally 0
+    // iterations: a tithi lasts <26h so 2 days ahead is always outside).
+    var hiGuard = 0;
+    while (await getTithi(hi) == targetTithiNum && hiGuard++ < 360) {
+      hi = hi.add(const Duration(hours: 2));
+    }
+
+    // Binary search: narrow lo/hi until they are 1 minute apart.
+    while (hi.difference(lo).inMinutes > 1) {
+      final mid =
+          lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
+      if (await getTithi(mid) == targetTithiNum) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+
+    return hi; // first minute after the target tithi ends
   }
 }

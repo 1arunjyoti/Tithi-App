@@ -131,7 +131,7 @@ Accurate daily Panchang, moon phases, and festival data — powered entirely by 
 | Framework        | [Flutter](https://flutter.dev/) 3.x / Dart 3.10+                                                                                                                                          |
 | State Management | [Riverpod](https://riverpod.dev/) (`flutter_riverpod`)                                                                                                                                    |
 | Local Storage    | [Hive](https://pub.dev/packages/hive) + `hive_flutter` (codegen via `build_runner`)                                                                                                       |
-| Astronomy Engine | [Swiss Ephemeris](https://www.astro.com/swisseph/) via the `jyotish` package (`packages/jyotish`, Dart FFI + native Android bindings; a no-ephemeris web fallback ships limited matching) |
+| Astronomy Engine | [Swiss Ephemeris](https://www.astro.com/swisseph/) via the `jyotish` package (`packages/jyotish`, Dart FFI + native Android bindings) |
 | Calendars / UI   | `table_calendar`, `flutter_map` (OpenStreetMap) + tile caching, `lottie`, `google_fonts`                                                                                                  |
 | Geolocation      | [geolocator](https://pub.dev/packages/geolocator) (device GPS) + [nominatim_geocoding](https://pub.dev/packages/nominatim_geocoding) (reverse geocoding)                                  |
 | Notifications    | [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) + `workmanager` (background reminders)                                                                |
@@ -236,7 +236,7 @@ lib/
 ├── l10n/                     # Localization (en, hi, bn, sa)
 ├── models/                   # Data models + Hive adapters (festival, panchang_data, shloka, ...)
 ├── services/                 # Backend logic
-│   ├── panchang/             # Native + web panchang services
+│   ├── panchang/             # Panchang calculation service
 │   ├── bengali_calendar/     # Bengali calendar service
 │   ├── festival_matching_pipeline.dart  # Shared matching/filter single source of truth
 │   ├── festival_repository.dart         # Hive-backed festival store (content-fingerprinted)
@@ -244,7 +244,7 @@ lib/
 │   ├── notification_service.dart        # Local + festival reminders
 │   ├── eclipse_service.dart / moon_phase_service.dart / planetary_view_service.dart
 │   ├── sankalpa_service.dart / shloka_service.dart / temple_service.dart / weather_service.dart
-│   └── share_file/ / panchang_init/     # Platform-channel stubs + implementations
+│   └── share_file/ / panchang_init/     # Platform-channel file helpers
 ├── providers/                # Riverpod providers (panchang, festivals, countdown, theme, locale, ...)
 ├── screens/                  # Home, countdown, eclipse, moon phases, solar system, temple map,
 │                             # sankalpa/, settings, location picker, about, privacy policy

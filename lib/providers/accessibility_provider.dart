@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/storage_service.dart';
 
@@ -10,7 +9,7 @@ class AccessibilityState {
 
   const AccessibilityState({
     this.reduceMotion = false,
-    this.hapticFeedback = !kIsWeb,
+    this.hapticFeedback = true,
     this.highContrast = false,
     this.largeText = false,
   });
@@ -41,7 +40,7 @@ class AccessibilityNotifier extends Notifier<AccessibilityState> {
 
     return AccessibilityState(
       reduceMotion: map['reduceMotion'] as bool? ?? false,
-      hapticFeedback: map['hapticFeedback'] as bool? ?? !kIsWeb,
+      hapticFeedback: map['hapticFeedback'] as bool? ?? true,
       highContrast: map['highContrast'] as bool? ?? false,
       largeText: map['largeText'] as bool? ?? false,
     );

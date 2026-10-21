@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -17,10 +16,7 @@ import '../core/feedback/app_messages.dart';
 import '../core/navigation/app_routes.dart';
 import 'responsive_layout.dart';
 
-// Conditional imports for FFI-dependent screens (only available on native platforms)
-// On web, we import a stub file that provides placeholder widgets
-import 'native_screens/native_screens.dart'
-    if (dart.library.html) 'native_screens/native_screens_stub.dart';
+import 'native_screens/native_screens.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, this.isSidebar = false});
@@ -190,7 +186,7 @@ class _DrawerMenuList extends ConsumerWidget {
     //    track something (countdowns, sankalpas),
     // 3. reference layers consulted while reading the panchang (moon, temples),
     // 4. the rare astronomical extras, which are also the heaviest screens
-    //    (FFI compute) and web-hidden,
+    //    (FFI compute),
     // 5. settings, then the social/utility footer below the divider.
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -222,20 +218,17 @@ class _DrawerMenuList extends ConsumerWidget {
           onTap: () => _openTemplesInMaps(context, ref),
         ),
 
-        // FFI-dependent features - hide on web
-        if (!kIsWeb) ...[
-          _DrawerMenuItem(
-            icon: Icons.brightness_3_rounded,
-            title: l10n?.eclipses ?? 'Eclipses',
-            onTap: () => _navigateTo(context, const EclipseScreen()),
-          ),
+        _DrawerMenuItem(
+          icon: Icons.brightness_3_rounded,
+          title: l10n?.eclipses ?? 'Eclipses',
+          onTap: () => _navigateTo(context, const EclipseScreen()),
+        ),
 
-          _DrawerMenuItem(
-            icon: Icons.public,
-            title: l10n?.solarSystem ?? 'Solar System',
-            onTap: () => _navigateTo(context, const SolarSystemScreen()),
-          ),
-        ],
+        _DrawerMenuItem(
+          icon: Icons.public,
+          title: l10n?.solarSystem ?? 'Solar System',
+          onTap: () => _navigateTo(context, const SolarSystemScreen()),
+        ),
 
         _DrawerMenuItem(
           icon: Icons.settings_rounded,

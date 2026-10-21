@@ -533,10 +533,9 @@ Future<DateTime?> _bisectNakshatraEdge({
 /// precision, so the sheet can show "Rohini until 3:42 PM" with elapsed
 /// progress.
 ///
-/// Returns null when the nakshatra can't be resolved (the web fallback has
-/// no ephemeris) or a boundary search fails: callers hide the card instead
-/// of showing a wrong span — same hide-on-null contract as
-/// [tithiTimingsProvider].
+/// Returns null when the nakshatra can't be resolved or a boundary search
+/// fails: callers hide the card instead of showing a wrong span - same
+/// hide-on-null contract as [tithiTimingsProvider].
 final nakshatraTimingsProvider = FutureProvider.family<
   ({int index, String nakshatra, DateTime start, DateTime end})?,
   ({DateTime date, double latitude, double longitude})
@@ -641,9 +640,9 @@ final nakshatraTimingsProvider = FutureProvider.family<
 /// bisected to ~1-minute precision (yoga spans ~24h like nakshatras,
 /// karanas ~12h, so the bracket steps differ).
 ///
-/// Returns null when longitudes are unavailable (web fallback) or a search
-/// fails: callers hide the card instead of showing a wrong span — same
-/// hide-on-null contract as [tithiTimingsProvider].
+/// Returns null when longitudes are unavailable or a search fails: callers
+/// hide the card instead of showing a wrong span - same hide-on-null
+/// contract as [tithiTimingsProvider].
 final yogaKaranaTimingsProvider = FutureProvider.family<
   ({
     int yogaIndex,

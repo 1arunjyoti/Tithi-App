@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -46,7 +45,7 @@ class ClearCacheSetting extends ConsumerWidget {
 
 /// Exports every festival with its computed Panchang details for a chosen
 /// year as JSON. The user picks the destination in the system save dialog
-/// (Downloads, Drive, SD card...); on web it triggers a browser download.
+/// (Downloads, Drive, SD card...).
 class ExportFestivalsSetting extends ConsumerWidget {
   const ExportFestivalsSetting({super.key});
 
@@ -182,10 +181,10 @@ class ExportFestivalsSetting extends ConsumerWidget {
       }
 
       // System save picker: the user chooses where the file goes
-      // (Downloads, Drive, SD card...). On web this starts a download and
-      // always resolves to null. If the picker itself throws (e.g. the
-      // plugin is missing from a stale install), fall back to app-private
-      // storage so the export still succeeds.
+      // (Downloads, Drive, SD card...); a null result means cancelled. If the
+      // picker itself throws (e.g. the plugin is missing from a stale
+      // install), fall back to app-private storage so the export still
+      // succeeds.
       final filename = 'tithi-festivals-$year.json';
       String? savedPath;
       var pickerFailed = false;
@@ -210,15 +209,6 @@ class ExportFestivalsSetting extends ConsumerWidget {
       }
 
       if (!context.mounted) return;
-
-      if (savedPath == null && kIsWeb && !pickerFailed) {
-        showAppMessage(
-          context,
-          l10n?.downloadStarted ?? 'Download started',
-          kind: AppMessageKind.success,
-        );
-        return;
-      }
 
       if (savedPath == null && !pickerFailed) {
         showAppMessage(
