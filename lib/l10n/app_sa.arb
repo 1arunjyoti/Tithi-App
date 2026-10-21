@@ -284,8 +284,6 @@
   "couldNotPinWidget": "विजेटं पिनं कर्तुं न शक्यते। स्वहस्तेन योजयितुं प्रयतध्वम्: दीर्घस्पर्शः → विजेट्स् → तिथिः",
   "infoTooltip": "विवरणम्",
   "dismissTooltip": "उपेक्षतु",
-  "solarSystemNotAvailableOnWeb": "सौरमण्डलं जाले उपलब्धं नास्ति",
-  "eclipseScreenNotAvailableOnWeb": "ग्रहणपटलं जाले उपलब्धं नास्ति",
   "findingNextOccurrence": "अग्रिमा घटना अन्विष्यते...",
   "goToNextOccurrence": "अग्रिमां घटनां गच्छतु",
   "couldNotFindUpcomingOccurrence": "वर्षाभ्यन्तरे आगामिकी घटना न प्राप्ता।",

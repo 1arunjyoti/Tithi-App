@@ -1806,18 +1806,6 @@ abstract class AppLocalizations {
   /// **'Dismiss'**
   String get dismissTooltip;
 
-  /// Message shown when Solar System screen accessed on web
-  ///
-  /// In en, this message translates to:
-  /// **'Solar System is not available on web'**
-  String get solarSystemNotAvailableOnWeb;
-
-  /// Message shown when Eclipse screen accessed on web
-  ///
-  /// In en, this message translates to:
-  /// **'Eclipse screen is not available on web'**
-  String get eclipseScreenNotAvailableOnWeb;
-
   /// Snackbar message while finding next festival occurrence
   ///
   /// In en, this message translates to:

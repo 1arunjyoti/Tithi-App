@@ -284,8 +284,6 @@
   "couldNotPinWidget": "উইজেট পিন করা যায়নি। ম্যানুয়ালি যোগ করার চেষ্টা করুন: দীর্ঘক্ষণ চেপে ধরুন → উইজেট → তিথি",
   "infoTooltip": "তথ্য",
   "dismissTooltip": "বন্ধ করুন",
-  "solarSystemNotAvailableOnWeb": "ওয়েবে সৌরজগৎ উপলব্ধ নেই",
-  "eclipseScreenNotAvailableOnWeb": "ওয়েবে গ্রহণ স্ক্রিন উপলব্ধ নেই",
   "findingNextOccurrence": "পরবর্তী উদযাপন খোঁজা হচ্ছে...",
   "goToNextOccurrence": "পরবর্তী উদযাপনে যান",
   "couldNotFindUpcomingOccurrence": "এক বছরের মধ্যে কোনো আসন্ন উদযাপন পাওয়া যায়নি।",

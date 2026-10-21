@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
 import 'app_update/app_update_file.dart';
+import 'app_update/update_apk_name.dart';
 
 /// Raised when the user cancels an in-flight download.
 class AppUpdateCancelled implements Exception {

@@ -930,14 +930,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dismissTooltip => 'Dismiss';
 
   @override
-  String get solarSystemNotAvailableOnWeb =>
-      'Solar System is not available on web';
-
-  @override
-  String get eclipseScreenNotAvailableOnWeb =>
-      'Eclipse screen is not available on web';
-
-  @override
   String get findingNextOccurrence => 'Finding next occurrence...';
 
   @override

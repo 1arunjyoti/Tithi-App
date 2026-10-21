@@ -931,13 +931,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dismissTooltip => 'बंद करें';
 
   @override
-  String get solarSystemNotAvailableOnWeb => 'सौर मंडल वेब पर उपलब्ध नहीं है';
-
-  @override
-  String get eclipseScreenNotAvailableOnWeb =>
-      'ग्रहण स्क्रीन वेब पर उपलब्ध नहीं है';
-
-  @override
   String get findingNextOccurrence => 'अगला आयोजन खोजा जा रहा है...';
 
   @override

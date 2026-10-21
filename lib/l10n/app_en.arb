@@ -1275,14 +1275,6 @@
   "@dismissTooltip": {
     "description": "Tooltip for dismiss button"
   },
-  "solarSystemNotAvailableOnWeb": "Solar System is not available on web",
-  "@solarSystemNotAvailableOnWeb": {
-    "description": "Message shown when Solar System screen accessed on web"
-  },
-  "eclipseScreenNotAvailableOnWeb": "Eclipse screen is not available on web",
-  "@eclipseScreenNotAvailableOnWeb": {
-    "description": "Message shown when Eclipse screen accessed on web"
-  },
   "findingNextOccurrence": "Finding next occurrence...",
   "@findingNextOccurrence": {
     "description": "Snackbar message while finding next festival occurrence"
