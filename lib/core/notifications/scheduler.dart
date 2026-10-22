@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../models/festival.dart';
+import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
 import '../../models/panchang_data.dart';
 import '../../models/sankalpa.dart';
@@ -205,8 +206,11 @@ class NotificationScheduler {
       final date = today.add(Duration(days: i));
       final panchang = filtered[date];
       if (panchang == null || !panchang.hasFestivals) continue;
-      // Ranked festivals win; otherwise legacy major-first behaviour.
-      final festival = primaryFestival(panchang.festivals);
+      // Region-ranked festivals win; otherwise legacy major-first behaviour.
+      final festival = primaryFestivalForRegion(
+        panchang.festivals,
+        prefs.festivalRegion,
+      );
 
       final displayMasa = displayMasaName(
         panchang.masa,
@@ -637,7 +641,10 @@ class NotificationScheduler {
       // preferred, else major preferred, else first), matching the home
       // screen. Otherwise the tithi identity.
       if (panchang.hasFestivals) {
-        final festival = primaryFestival(panchang.festivals);
+        final festival = primaryFestivalForRegion(
+          panchang.festivals,
+          prefs.festivalRegion,
+        );
         return (
           title: festival.name,
           body: '${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',

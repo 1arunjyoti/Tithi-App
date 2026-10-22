@@ -17,6 +17,8 @@ import 'sunrise_calculator.dart';
 ///   "name": "Ganesh Chaturthi",
 ///   "nameHindi": "...",
 ///   "category": "major",
+///   "regions": ["all"],
+///   "displayPriority": null,
 ///   "rule": {"masa": "Bhadrapada", "paksha": "Shukla",
 ///            "tithi": 4, "conditions": "Chaturthi"},
 ///   "occurrence": {
@@ -50,6 +52,9 @@ import 'sunrise_calculator.dart';
 ///   (timingOverride-aware). They are null for Solar festivals (fixed
 ///   Gregorian dates, no tithi span), for nakshatra-observed festivals
 ///   (their stored tithi is documentation only), and for Kshaya tithis.
+/// - `regions` is the normalized region tags list (`["all"]` for pan-India)
+///   and `displayPriority` is the same-day rank (null when unranked), so an
+///   exported year describes the ordering metadata the UI actually uses.
 /// - All instants are local wall-clock ISO-8601; see `location` in the
 ///   document header for the coordinates they were computed for.
 class FestivalExportService {
@@ -279,6 +284,8 @@ class FestivalExportService {
       'name': festival.name,
       'nameHindi': festival.nameHindi,
       'category': festival.category,
+      'regions': festival.regions,
+      'displayPriority': festival.displayPriority,
       'rule': {
         'masa': festival.masa,
         'paksha': festival.paksha,

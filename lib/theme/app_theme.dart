@@ -274,9 +274,27 @@ class AppTheme {
   /// embedded countdown rows on home: faint surface tint + hairline border
   /// (NOT glass, so rows stay defined on the base card in every theme,
   /// including pure-dark's flat surfaces). High contrast steps both up.
-  static BoxDecoration festivalRowDecoration(BuildContext context) {
+  ///
+  /// [isSelectedDay] swaps the neutral tint for the festival accent — a soft
+  /// accent wash plus an accent hairline — so the rows of the day the user
+  /// is viewing read as the primary group next to the following days. That
+  /// day may be today or any browsed date.
+  static BoxDecoration festivalRowDecoration(
+    BuildContext context, {
+    bool isSelectedDay = false,
+  }) {
     final scheme = Theme.of(context).colorScheme;
     final highContrast = highContrastOf(context);
+    if (isSelectedDay) {
+      final accent = festivalAccent(context);
+      return BoxDecoration(
+        color: accent.withValues(alpha: highContrast ? 0.18 : 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: accent.withValues(alpha: highContrast ? 0.6 : 0.35),
+        ),
+      );
+    }
     return BoxDecoration(
       color: scheme.onSurface.withValues(alpha: highContrast ? 0.08 : 0.05),
       borderRadius: BorderRadius.circular(16),
@@ -485,6 +503,73 @@ class AppTheme {
           : !isDark
           ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
+    );
+  }
+
+  /// Hairline used by sheet body cards and their chips. White cards on the
+  /// Shukla cream scaffold are only 3 RGB steps apart from the background,
+  /// so an explicit edge is what separates them; dark themes use the same
+  /// idea with a faint light hairline to lift cards off the void.
+  static Color sheetHairline(
+    BuildContext context, {
+    bool highContrast = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (highContrast) {
+      return Theme.of(
+        context,
+      ).colorScheme.onSurface.withValues(alpha: isDark ? 0.35 : 0.28);
+    }
+    return Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: isDark ? 0.12 : 0.1);
+  }
+
+  /// Sheet body card decoration (tithi detail + festival event sheets):
+  /// the shared card fill, 16pt radius and the [sheetHairline] edge — all
+  /// constant-cost paint (solid fill + 1px stroke), which matters because
+  /// the sheets scroll in a non-lazy [SingleChildScrollView], so the cards
+  /// repaint on every scroll frame. A blurred drop shadow was deliberately
+  /// left out: it would add a per-card blur pass per frame for depth the
+  /// hairline already provides.
+  ///
+  /// Set [withBorder] to false for cards that clip an edge-to-edge child
+  /// (the Begins/Ends and Yoga/Karana two-cell cards): Container insets the
+  /// child by the border width but clips it to the *outer* radius, so the
+  /// child's fill shows through the corner notch and squares off the
+  /// stroke. Those cards paint [sheetCardBorderOverlay] on top instead.
+  static BoxDecoration sheetCardDecoration(
+    BuildContext context, {
+    bool highContrast = false,
+    double radius = 16,
+    Color? color,
+    bool withBorder = true,
+  }) {
+    final theme = Theme.of(context);
+    return BoxDecoration(
+      color: color ?? theme.cardTheme.color ?? theme.colorScheme.surface,
+      borderRadius: BorderRadius.circular(radius),
+      border: withBorder
+          ? Border.all(
+              color: sheetHairline(context, highContrast: highContrast),
+            )
+          : null,
+    );
+  }
+
+  /// Foreground twin of [sheetCardDecoration]'s border: painted above a
+  /// clipped child so the [sheetHairline] stroke rides the rounded edge
+  /// instead of being covered by the child's fill at the corners.
+  static BoxDecoration sheetCardBorderOverlay(
+    BuildContext context, {
+    bool highContrast = false,
+    double radius = 16,
+  }) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(
+        color: sheetHairline(context, highContrast: highContrast),
+      ),
     );
   }
 

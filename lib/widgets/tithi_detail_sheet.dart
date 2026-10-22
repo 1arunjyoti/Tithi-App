@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/app_localizations_en.dart';
 import '../models/festival.dart';
+import '../models/festival_region.dart';
 import '../models/panchang_data.dart';
 import '../core/locale/app_locale.dart';
 import '../providers/calendar_provider.dart';
@@ -22,12 +23,16 @@ import '../features/tithi_sheet/widgets/inauspicious_card.dart';
 import '../features/tithi_sheet/widgets/nakshatra_card.dart';
 import '../features/tithi_sheet/widgets/timings_cards.dart';
 import '../features/tithi_sheet/widgets/yoga_karana_card.dart';
+import '../features/ai/domain/ai_prompt.dart';
+import '../features/ai/providers/ai_providers.dart';
+import '../features/ai/widgets/ask_ai_sheet.dart';
 import '../features/sheets/domain/sheet_labels.dart';
 import '../features/sheets/sheet_launcher.dart';
 import '../features/sheets/widgets/section_header.dart';
 import '../features/sheets/widgets/sheet_chip.dart';
 import '../features/sheets/widgets/sheet_explainer_card.dart';
 import '../features/sheets/widgets/sheet_hero_tile.dart';
+import '../features/sheets/widgets/sheet_link_tile.dart';
 import '../features/sheets/widgets/sheet_scaffold.dart';
 import '../features/sheets/widgets/sheet_time_format.dart';
 import 'festival_row_tile.dart';
@@ -60,7 +65,8 @@ String _moonChipText(DateTime event, DateTime day, String label, String locale) 
 ///
 /// Layout follows assets/redesign assets/tithi-redesign-v3-faithful.html:
 /// a hero-gradient header matching [PakshaHeroCard] (same [AppTheme] hero
-/// colors), a dotted section label, a side-by-side Begins/Ends card, a
+/// colors), a sun/moon anchor chip row just below the header, a dotted
+/// section label, a side-by-side Begins/Ends card, a
 /// tinted Transition card, a Nakshatra section (dotted header + span card
 /// with elapsed progress), a Yoga & Karana section (dotted header +
 /// side-by-side card in the timings-card idiom), an Auspicious Timings
@@ -82,6 +88,9 @@ class TithiDetailSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final locale = l10n.localeName;
+    // Opt-in gate: every AI affordance is hidden (not disabled) until the
+    // user turns the feature on in Settings.
+    final aiAssistEnabled = ref.watch(aiAssistEnabledProvider);
     final coords = ref.watch(resolvedCoordinatesProvider);
     final timingsAsync = ref.watch(
       tithiTimingsProvider((
@@ -125,6 +134,13 @@ class TithiDetailSheet extends ConsumerWidget {
     );
     final displayMasa = names.localizedMasa;
     final displayTithiName = names.tithiName;
+    // Display-only region ordering: the cached panchang record keeps its
+    // canonical displayPriority order so switching region never needs a
+    // cache invalidation.
+    final dayFestivals = sortedFestivalsForRegion(
+      panchang.festivals,
+      ref.watch(festivalRegionProvider),
+    );
     final bengali = ref
         .watch(bengaliDateForSheetProvider(panchang.date))
         .valueOrNull;
@@ -259,6 +275,57 @@ class TithiDetailSheet extends ConsumerWidget {
         break;
     }
 
+    // Sun + moon anchor chips (sunrise/sunset, moonrise/moonset), built in
+    // that order and rendered as a two-up grid below the hero header.
+    final anchorChips = <Widget>[
+      if (panchang.sunrise != null)
+        SheetChip(
+          icon: Icons.wb_sunny_rounded,
+          text:
+              '${l10n.sunrise} '
+              '${formatLocalizedDate(panchang.sunrise!, 'jm', locale)}',
+          highContrast: highContrast,
+          onSurface: true,
+          centerContent: true,
+        ),
+      if (panchang.sunset != null)
+        SheetChip(
+          icon: Icons.nightlight_round,
+          text:
+              '${l10n.sunset} '
+              '${formatLocalizedDate(panchang.sunset!, 'jm', locale)}',
+          highContrast: highContrast,
+          onSurface: true,
+          centerContent: true,
+        ),
+      if (moonrise != null)
+        SheetChip(
+          icon: Icons.dark_mode_outlined,
+          text: _moonChipText(
+            moonrise,
+            panchang.date,
+            l10n.moonrise,
+            locale,
+          ),
+          highContrast: highContrast,
+          onSurface: true,
+          centerContent: true,
+        ),
+      if (moonset != null)
+        SheetChip(
+          icon: Icons.dark_mode,
+          text: _moonChipText(
+            moonset,
+            panchang.date,
+            l10n.moonset,
+            locale,
+          ),
+          highContrast: highContrast,
+          onSurface: true,
+          centerContent: true,
+        ),
+    ];
+
     // Shared sheet scaffold (85% cap + gradient hero header + scroll
     // body, same kit as the festival event sheet): the card stack keeps
     // growing, so beyond the cap the scroll view takes over instead of
@@ -358,67 +425,25 @@ class TithiDetailSheet extends ConsumerWidget {
                               ),
                             ],
                           ),
-                          // Sun + moon chips. Moonrise/moonset are computed
-                          // synchronously (pure-Dart lunar theory, no FFI)
-                          // for the sheet's date and resolved coordinates,
-                          // falling back to the prevailing neighbouring
-                          // event (with its date) on no-rise/set days.
-                          if (panchang.sunrise != null ||
-                              panchang.sunset != null ||
-                              moonrise != null ||
-                              moonset != null) ...[
-                            const SizedBox(height: 14),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                if (panchang.sunrise != null)
-                                  SheetChip(
-                                    icon: Icons.wb_sunny_rounded,
-                                    text:
-                                        '${l10n.sunrise} '
-                                        '${formatLocalizedDate(panchang.sunrise!, 'jm', locale)}',
-                                    highContrast: highContrast,
-                                  ),
-                                if (panchang.sunset != null)
-                                  SheetChip(
-                                    icon: Icons.nightlight_round,
-                                    text:
-                                        '${l10n.sunset} '
-                                        '${formatLocalizedDate(panchang.sunset!, 'jm', locale)}',
-                                    highContrast: highContrast,
-                                  ),
-                                if (moonrise != null)
-                                  SheetChip(
-                                    icon: Icons.dark_mode_outlined,
-                                    text: _moonChipText(
-                                      moonrise,
-                                      panchang.date,
-                                      l10n.moonrise,
-                                      locale,
-                                    ),
-                                    highContrast: highContrast,
-                                  ),
-                                if (moonset != null)
-                                  SheetChip(
-                                    icon: Icons.dark_mode,
-                                    text: _moonChipText(
-                                      moonset,
-                                      panchang.date,
-                                      l10n.moonset,
-                                      locale,
-                                    ),
-                                    highContrast: highContrast,
-                                  ),
-                              ],
-                            ),
-                          ],
                         ],
                       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+                    // Sun + moon anchors sit just below the hero header
+                    // (not inside it) so the gradient stays focused on the
+                    // date + paksha/tithi identity: sunrise, sunset,
+                    // moonrise and moonset as a two-up chip grid that
+                    // spans the sheet width. Moonrise/moonset are computed
+                    // synchronously (pure-Dart lunar theory, no FFI) for
+                    // the sheet's date and resolved coordinates, falling
+                    // back to the prevailing neighbouring event (with its
+                    // date) on no-rise/set days.
+                    if (anchorChips.isNotEmpty) ...[
+                      _AnchorChipGrid(chips: anchorChips),
+                      const SizedBox(height: 16),
+                    ],
                     // Dotted section label.
                     SectionHeader(text: l10n.tithiTimings),
                     const SizedBox(height: 10),
@@ -842,18 +867,18 @@ class TithiDetailSheet extends ConsumerWidget {
                     // the festival sheet on top of this one (pop returns
                     // here). Kept above the explainer so the explainer stays
                     // the closing note.
-                    if (panchang.festivals.isNotEmpty) ...[
+                    if (dayFestivals.isNotEmpty) ...[
                       SectionHeader(text: l10n.festivalsOnThisDay),
                       const SizedBox(height: 10),
-                      for (var i = 0; i < panchang.festivals.length; i++) ...[
+                      for (var i = 0; i < dayFestivals.length; i++) ...[
                         if (i > 0) const SizedBox(height: 8),
                         FestivalRowTile(
-                          festival: panchang.festivals[i],
+                          festival: dayFestivals[i],
                           date: panchang.date,
                           panchang: panchang,
                           onTap: () => showEventDetailSheet(
                             context,
-                            festival: panchang.festivals[i],
+                            festival: dayFestivals[i],
                             panchang: panchang,
                             fromTithiSheet: true,
                           ),
@@ -861,10 +886,71 @@ class TithiDetailSheet extends ConsumerWidget {
                       ],
                       const SizedBox(height: 12),
                     ],
+                    // AI hand-off (opt-in). Sits above the closing explainer
+                    // so the explainer stays the sheet's last word.
+                    if (aiAssistEnabled) ...[
+                      const SizedBox(height: 12),
+                      SheetLinkTile(
+                        icon: Icons.auto_awesome_outlined,
+                        // This sheet opens for any date the user selects, so
+                        // "today" is only right when it actually is.
+                        label: DateUtils.isSameDay(panchang.date, DateTime.now())
+                            ? l10n.aiAskAboutToday
+                            : l10n.aiAskAboutDay,
+                        supporting: l10n.aiOpensYourApp,
+                        onTap: () => showAskAiSheet(
+                          context,
+                          intent: AiIntent.todayPanchang,
+                          panchang: panchang,
+                          // Same windows the cards above show, so a muhurta
+                          // question is answered from Tithi's numbers.
+                          timings: auspicious,
+                          inauspicious: inauspicious,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     // Explainer card (shared kit with the event sheet).
                     SheetExplainerCard(text: l10n.udayaTithiExplanation),
         ],
       ),
+    );
+  }
+}
+
+/// Two-up grid for the sun/moon anchor chips: equal-width cells fill the
+/// sheet width (sunrise | sunset, moonrise | moonset) instead of wrapping
+/// into a ragged block with dead space on the right. An odd chip count
+/// makes the last pill span the full row. [IntrinsicHeight] keeps both
+/// pills of a row the same height when a long label (a prevailing moon
+/// event carries its date) wraps to two lines.
+class _AnchorChipGrid extends StatelessWidget {
+  const _AnchorChipGrid({required this.chips});
+
+  final List<Widget> chips;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < chips.length; i += 2)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : 8),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: chips[i]),
+                  if (i + 1 < chips.length) ...[
+                    const SizedBox(width: 8),
+                    Expanded(child: chips[i + 1]),
+                  ],
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

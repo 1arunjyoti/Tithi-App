@@ -20,6 +20,21 @@ Festival _ganesh() => Festival.fromJson({
       },
     });
 
+Festival _regionalChhath() => Festival.fromJson({
+      'id': 'chhath_puja',
+      'name': 'Chhath Puja',
+      'category': 'major',
+      'regions': ['north', 'east'],
+      'displayPriority': 2,
+      'nameRegional': {'nameHindi': 'छठ पूजा'},
+      'panchang_rules': {
+        'masa': 'Kartika',
+        'paksha': 'Shukla',
+        'tithi': 6,
+        'conditions': 'Shashthi',
+      },
+    });
+
 void main() {
   group('FestivalExportService.buildEntry', () {
     test('encodes identity, rule, and occurrence', () {
@@ -43,6 +58,9 @@ void main() {
       expect(entry['id'], equals('ganesh_chaturthi'));
       expect(entry['name'], equals('Ganesh Chaturthi'));
       expect(entry['category'], equals('major'));
+      // Pan-India default and no same-day rank.
+      expect(entry['regions'], equals(['all']));
+      expect(entry['displayPriority'], isNull);
       expect(
         entry['rule'],
         equals({
@@ -77,6 +95,17 @@ void main() {
       final entry = FestivalExportService.buildEntry(festival: _ganesh());
 
       expect(entry['id'], equals('ganesh_chaturthi'));
+      expect(entry['occurrence'], isNull);
+    });
+
+    test('encodes region tags and display priority', () {
+      final entry = FestivalExportService.buildEntry(
+        festival: _regionalChhath(),
+      );
+
+      expect(entry['regions'], equals(['north', 'east']));
+      expect(entry['displayPriority'], equals(2));
+      // Metadata survives the no-occurrence path too.
       expect(entry['occurrence'], isNull);
     });
 
@@ -119,6 +148,8 @@ void main() {
       // Must not throw; null timings stay null.
       final encoded = jsonEncode(entry);
       final decoded = jsonDecode(encoded) as Map<String, dynamic>;
+      expect(decoded['regions'], equals(['all']));
+      expect(decoded['displayPriority'], isNull);
       final occurrence = decoded['occurrence'] as Map<String, dynamic>;
       expect(occurrence['tithiBegins'], isNull);
       expect(occurrence['tithiEnds'], isNull);

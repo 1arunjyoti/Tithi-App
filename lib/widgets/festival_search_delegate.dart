@@ -13,6 +13,7 @@ import '../providers/panchang_provider.dart';
 import '../core/feedback/app_messages.dart';
 import '../features/countdown/domain/target_resolution.dart';
 import '../features/sheets/sheet_launcher.dart';
+import 'festival_thumbnail.dart';
 
 class FestivalSearchDelegate extends SearchDelegate {
   final WidgetRef ref;
@@ -188,18 +189,17 @@ class FestivalSearchDelegate extends SearchDelegate {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(
-                  alpha: isMajor ? 0.2 : 0.1,
-                ),
-                borderRadius: BorderRadius.circular(12),
+            FestivalThumbnail(
+              festival: festival,
+              size: 44,
+              borderRadius: 12,
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(
+                alpha: isMajor ? 0.2 : 0.1,
               ),
-              child: Icon(
-                isMajor ? Icons.celebration : Icons.event,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              glyphColor: Theme.of(context).colorScheme.primary,
+              // Search results keep their own category glyphs (celebration /
+              // event) rather than the row's sun/temple set.
+              glyphIcon: isMajor ? Icons.celebration : Icons.event,
             ),
             const SizedBox(width: 16),
             Expanded(

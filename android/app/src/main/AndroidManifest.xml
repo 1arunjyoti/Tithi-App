@@ -130,5 +130,16 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="geo" />
         </intent>
+
+        <!-- Package visibility (Android 11+) for the optional AI hand-off.
+             Tithi sends an explicit ACTION_SEND to the assistant the user
+             picked, and resolveActivity() only sees declared packages. These
+             are app ids, not permissions: no QUERY_ALL_PACKAGES is used. -->
+        <package android:name="com.google.android.apps.bard" />
+        <package android:name="com.openai.chatgpt" />
+        <package android:name="com.anthropic.claude" />
+        <package android:name="com.microsoft.copilot" />
+        <package android:name="ai.perplexity.app.android" />
+        <package android:name="ai.sarvam.indus" />
     </queries>
 </manifest>

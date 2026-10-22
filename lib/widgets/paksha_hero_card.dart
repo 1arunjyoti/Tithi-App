@@ -256,6 +256,7 @@ class _HeroBody extends ConsumerWidget {
       useBengaliScript:
           resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn',
       isToday: isToday,
+      region: ref.watch(festivalRegionProvider),
     );
 
     // Display title: larger than the old 22/600, tighter tracking and a

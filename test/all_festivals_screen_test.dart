@@ -6,11 +6,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:tithi/features/countdown/domain/target_resolution.dart'
+    show collectRecurringOccurrences;
 import 'package:tithi/models/festival.dart';
+import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
+import 'package:tithi/widgets/festival_row_tile.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
@@ -25,7 +29,9 @@ class _HapticsNotifier extends AccessibilityNotifier {
 
 void main() {
   setUp(() async {
-    final tempDir = await Directory.systemTemp.createTemp('tithi_all_fest_test');
+    final tempDir = await Directory.systemTemp.createTemp(
+      'tithi_all_fest_test',
+    );
     Hive.init(tempDir.path);
     await StorageService().init();
   });
@@ -43,6 +49,8 @@ void main() {
     required String id,
     required String name,
     String category = 'major',
+    bool recurring = false,
+    List<String> regions = const ['all'],
   }) => Festival(
     id: id,
     name: name,
@@ -50,14 +58,16 @@ void main() {
     nameRegional: const NameRegional(nameEnglish: 'Test'),
     visuals: const Visuals(),
     purpose: const Purpose(description: 'A test festival description'),
-    panchangRules: const PanchangRules(
+    panchangRules: PanchangRules(
       masa: '',
       paksha: 'Shukla',
       tithi: 4,
       conditions: '',
+      recurring: recurring,
     ),
     rituals: const Rituals(steps: []),
     media: const Media(),
+    regions: regions,
   );
 
   Future<void> pumpScreen(
@@ -75,6 +85,32 @@ void main() {
         child: const MaterialApp(home: AllFestivalsScreen()),
       ),
     );
+    await tester.pumpAndSettle();
+  }
+
+  /// Opens the app-bar filter sheet, optionally stages a category/region (or
+  /// taps Reset), then applies with Done.
+  Future<void> applyFilters(
+    WidgetTester tester, {
+    String? category,
+    String? region,
+    bool reset = false,
+  }) async {
+    await tester.tap(find.byIcon(Icons.tune_rounded));
+    await tester.pumpAndSettle();
+    if (reset) {
+      await tester.tap(find.text('Reset'));
+      await tester.pumpAndSettle();
+    }
+    if (category != null) {
+      await tester.tap(find.text(category));
+      await tester.pumpAndSettle();
+    }
+    if (region != null) {
+      await tester.tap(find.text(region));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Done'));
     await tester.pumpAndSettle();
   }
 
@@ -99,6 +135,188 @@ void main() {
       expect(
         sorted.map((e) => e.festival.id),
         equals(['now', 'soon', 'later', 'undated']),
+      );
+    });
+  });
+
+  group('collectRecurringOccurrences', () {
+    test('expands a recurring vrat to every occurrence in the year', () async {
+      // Arrange: a tithi that recurs every 29 days, first on Jan 5.
+      final occurrences = List.generate(
+        18,
+        (i) => DateTime(2026, 1, 5).add(Duration(days: 29 * i)),
+      );
+      Future<DateTime?> nextAfter(DateTime start) async {
+        for (final date in occurrences) {
+          if (!date.isBefore(start)) return date;
+        }
+        return null;
+      }
+
+      // Act
+      final dates = await collectRecurringOccurrences(
+        first: occurrences.first,
+        through: DateTime(2026, 12, 31),
+        nextAfter: nextAfter,
+      );
+
+      // Assert: 13 lunations fall inside 2026 (Jan 5 … Dec 19), none after.
+      expect(dates, hasLength(13));
+      expect(dates.last, equals(DateTime(2026, 12, 19)));
+      expect(dates.every((d) => d.year == 2026), isTrue);
+    });
+
+    test('stops when the resolver does not advance', () async {
+      // A malformed rule that keeps returning the same date must not hang.
+      final dates = await collectRecurringOccurrences(
+        first: DateTime(2026, 1, 5),
+        through: DateTime(2026, 12, 31),
+        nextAfter: (_) async => DateTime(2026, 1, 5),
+      );
+
+      expect(dates, equals([DateTime(2026, 1, 5)]));
+    });
+  });
+
+  group('festivalMatchesCategoryFilter', () {
+    test('major appears only under All and Major', () {
+      final festival = fixture(id: 'm', name: 'Major');
+
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.all),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.major),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.vrat),
+        isFalse,
+      );
+      expect(
+        festivalMatchesCategoryFilter(
+          festival,
+          FestivalCategoryFilter.recurring,
+        ),
+        isFalse,
+      );
+    });
+
+    test('vrat appears under All and Vrat, not Recurring', () {
+      final festival = fixture(id: 'v', name: 'Vrat', category: 'vrat');
+
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.all),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.major),
+        isFalse,
+      );
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.vrat),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(
+          festival,
+          FestivalCategoryFilter.recurring,
+        ),
+        isFalse,
+      );
+    });
+
+    test('recurring appears under All, Vrat and Recurring', () {
+      // Purnima/Amavasya use category 'recurring'; the app-wide vrat
+      // definition includes the recurring flag, so both chips show them.
+      final festival = fixture(
+        id: 'r',
+        name: 'Recurring',
+        category: 'recurring',
+        recurring: true,
+      );
+
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.all),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.major),
+        isFalse,
+      );
+      expect(
+        festivalMatchesCategoryFilter(festival, FestivalCategoryFilter.vrat),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(
+          festival,
+          FestivalCategoryFilter.recurring,
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  group('festivalMatchesRegionFilter', () {
+    test('pan-India festivals match every region', () {
+      final panIndia = fixture(id: 'all', name: 'Pan India');
+
+      for (final region in FestivalRegion.values) {
+        expect(festivalMatchesRegionFilter(panIndia, region), isTrue);
+      }
+    });
+
+    test('a zone keeps pan-India and its own, hides other zones', () {
+      final south = fixture(id: 's', name: 'South', regions: const ['south']);
+      final north = fixture(id: 'n', name: 'North', regions: const ['north']);
+
+      expect(festivalMatchesRegionFilter(south, FestivalRegion.all), isTrue);
+      expect(festivalMatchesRegionFilter(south, FestivalRegion.south), isTrue);
+      expect(festivalMatchesRegionFilter(south, FestivalRegion.north), isFalse);
+
+      expect(festivalMatchesRegionFilter(north, FestivalRegion.south), isFalse);
+      expect(festivalMatchesRegionFilter(north, FestivalRegion.north), isTrue);
+    });
+
+    test('category and region compose', () {
+      final southVrat = fixture(
+        id: 'sv',
+        name: 'South Vrat',
+        category: 'vrat',
+        regions: const ['south'],
+      );
+
+      expect(
+        festivalMatchesFilters(
+          southVrat,
+          const FestivalFilterSelection(
+            category: FestivalCategoryFilter.vrat,
+            region: FestivalRegion.south,
+          ),
+        ),
+        isTrue,
+      );
+      expect(
+        festivalMatchesFilters(
+          southVrat,
+          const FestivalFilterSelection(
+            category: FestivalCategoryFilter.vrat,
+            region: FestivalRegion.north,
+          ),
+        ),
+        isFalse,
+      );
+      expect(
+        festivalMatchesFilters(
+          southVrat,
+          const FestivalFilterSelection(
+            category: FestivalCategoryFilter.major,
+            region: FestivalRegion.south,
+          ),
+        ),
+        isFalse,
       );
     });
   });
@@ -146,9 +364,14 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(find.text('Major'), findsNothing);
+      // Chip labels also say "Major"/"Vrat", so scope these to the rows.
+      Finder inRows(String text) => find.descendant(
+        of: find.byType(FestivalRowTile),
+        matching: find.text(text),
+      );
+      expect(inRows('Major'), findsNothing);
       // The undatable row keeps the category label as its fallback line.
-      expect(find.text('Vrat'), findsOneWidget);
+      expect(inRows('Vrat'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -242,6 +465,133 @@ void main() {
       // (same jumpTo note as above: content, not pixels, proves position).
       expect(find.text('Today Festival'), findsOneWidget);
       expect(find.text('Past Festival 0'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('lists every occurrence of a recurring festival', (
+      tester,
+    ) async {
+      // Arrange: the same catalog entry on two dates (Ekadashi Shukla).
+      final today = todayOnly();
+      final ekadashi = fixture(
+        id: 'ekadashi_shukla',
+        name: 'Ekadashi (Shukla)',
+        category: 'vrat',
+      );
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: ekadashi, date: today),
+          (festival: ekadashi, date: today.add(const Duration(days: 15))),
+        ]),
+      );
+
+      // Assert: one row per occurrence — no duplicate-key crash.
+      expect(find.text('Ekadashi (Shukla)'), findsNWidgets(2));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('filter sheet narrows by category and composes with search', (
+      tester,
+    ) async {
+      // Arrange: one festival per category, dated in order.
+      final today = todayOnly();
+      final major = fixture(id: 'alpha', name: 'Alpha Major');
+      final vrat = fixture(id: 'beta', name: 'Beta Vrat', category: 'vrat');
+      final recurring = fixture(
+        id: 'gamma',
+        name: 'Gamma Recurring',
+        category: 'recurring',
+        recurring: true,
+      );
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: major, date: today),
+          (festival: vrat, date: today.add(const Duration(days: 1))),
+          (festival: recurring, date: today.add(const Duration(days: 2))),
+        ]),
+      );
+
+      // Default: no filter selected, so no dot on the filter icon.
+      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+      expect(find.text('Alpha Major'), findsOneWidget);
+      expect(find.text('Beta Vrat'), findsOneWidget);
+      expect(find.text('Gamma Recurring'), findsOneWidget);
+
+      // Vrat: category vrat + recurring (Ekadashi/Purnima convention).
+      await applyFilters(tester, category: 'Vrat');
+      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
+      expect(find.text('Alpha Major'), findsNothing);
+      expect(find.text('Beta Vrat'), findsOneWidget);
+      expect(find.text('Gamma Recurring'), findsOneWidget);
+
+      // Recurring: only the recurring flag.
+      await applyFilters(tester, category: 'Recurring');
+      expect(find.text('Alpha Major'), findsNothing);
+      expect(find.text('Beta Vrat'), findsNothing);
+      expect(find.text('Gamma Recurring'), findsOneWidget);
+
+      // Major: only category major.
+      await applyFilters(tester, category: 'Major');
+      expect(find.text('Alpha Major'), findsOneWidget);
+      expect(find.text('Beta Vrat'), findsNothing);
+
+      // Search composes with the active filter: no vrat named "beta" among
+      // the major-only rows would show if the filter were ignored.
+      await applyFilters(tester, category: 'Vrat');
+      await tester.enterText(find.byType(TextField), 'beta');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      expect(find.text('Alpha Major'), findsNothing);
+      expect(find.text('Beta Vrat'), findsOneWidget);
+      expect(find.text('Gamma Recurring'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('filter sheet narrows by region and resets', (tester) async {
+      // Arrange: pan-India plus one vrat rooted in each of two zones.
+      final today = todayOnly();
+      final panIndia = fixture(id: 'pan', name: 'Pan India Festival');
+      final southVrat = fixture(
+        id: 'south',
+        name: 'South Vrat',
+        category: 'vrat',
+        regions: const ['south'],
+      );
+      final northVrat = fixture(
+        id: 'north',
+        name: 'North Vrat',
+        category: 'vrat',
+        regions: const ['north'],
+      );
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: panIndia, date: today),
+          (festival: southVrat, date: today.add(const Duration(days: 1))),
+          (festival: northVrat, date: today.add(const Duration(days: 2))),
+        ]),
+      );
+
+      // South keeps pan-India festivals plus South-rooted ones.
+      await applyFilters(tester, region: 'South India');
+      expect(find.text('Pan India Festival'), findsOneWidget);
+      expect(find.text('South Vrat'), findsOneWidget);
+      expect(find.text('North Vrat'), findsNothing);
+
+      // Category composes with the retained region.
+      await applyFilters(tester, category: 'Vrat');
+      expect(find.text('Pan India Festival'), findsNothing);
+      expect(find.text('South Vrat'), findsOneWidget);
+      expect(find.text('North Vrat'), findsNothing);
+
+      // Reset returns both dimensions to no filtering.
+      await applyFilters(tester, reset: true);
+      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+      expect(find.text('Pan India Festival'), findsOneWidget);
+      expect(find.text('South Vrat'), findsOneWidget);
+      expect(find.text('North Vrat'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

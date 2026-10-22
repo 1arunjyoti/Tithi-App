@@ -592,7 +592,7 @@
   "@privacyOpenSourceDesc": {
     "description": "Privacy policy - open source explanation"
   },
-  "lastUpdated": "Last Updated: December 2025",
+  "lastUpdated": "Last Updated: October 2026",
   "@lastUpdated": {
     "description": "Privacy policy last updated date"
   },
@@ -1203,6 +1203,38 @@
   "@allFestivals": {
     "description": "Title for all festivals screen"
   },
+  "festivalFilterAll": "All",
+  "@festivalFilterAll": {
+    "description": "Filter chip: show every festival"
+  },
+  "festivalFilterMajor": "Major",
+  "@festivalFilterMajor": {
+    "description": "Filter chip: major festivals"
+  },
+  "festivalFilterVrat": "Vrat",
+  "@festivalFilterVrat": {
+    "description": "Filter chip: vrat (fasting) observances"
+  },
+  "festivalFilterRecurring": "Recurring",
+  "@festivalFilterRecurring": {
+    "description": "Filter chip: observances that repeat every lunar month"
+  },
+  "festivalFilterTitle": "Filter festivals",
+  "@festivalFilterTitle": {
+    "description": "Title of the festival filter sheet and tooltip of its icon button"
+  },
+  "festivalFilterSubtitle": "Narrow the list by category and region",
+  "@festivalFilterSubtitle": {
+    "description": "Subtitle of the festival filter sheet"
+  },
+  "festivalFilterRegion": "Region",
+  "@festivalFilterRegion": {
+    "description": "Section header for the region filter options"
+  },
+  "festivalFilterAllRegions": "All regions",
+  "@festivalFilterAllRegions": {
+    "description": "Region filter option that disables region narrowing"
+  },
   "searchFestivalsHint": "Search festivals",
   "@searchFestivalsHint": {
     "description": "Hint text for festival search field"
@@ -1482,6 +1514,70 @@
   "hinduMonthSystemSubtitle": "Choose how months are named during Krishna Paksha",
   "@hinduMonthSystemSubtitle": {
     "description": "Hindu month system selection explanation"
+  },
+  "festivalRegion": "Festival Region",
+  "@festivalRegion": {
+    "description": "Festival region setting and selection sheet title"
+  },
+  "festivalRegionSubtitle": "Choose which region's festivals appear first when several fall on the same day",
+  "@festivalRegionSubtitle": {
+    "description": "Festival region selection explanation"
+  },
+  "festivalRegionAll": "All India",
+  "@festivalRegionAll": {
+    "description": "Festival region option that keeps the default pan-India order"
+  },
+  "festivalRegionAllDescription": "Keep the default order for every festival",
+  "@festivalRegionAllDescription": {
+    "description": "Explanation for the All India festival region option"
+  },
+  "festivalRegionNorth": "North India",
+  "@festivalRegionNorth": {
+    "description": "North India festival region option"
+  },
+  "festivalRegionNorthDescription": "Show North Indian festivals first on shared dates",
+  "@festivalRegionNorthDescription": {
+    "description": "Explanation for the North India festival region option"
+  },
+  "festivalRegionSouth": "South India",
+  "@festivalRegionSouth": {
+    "description": "South India festival region option"
+  },
+  "festivalRegionSouthDescription": "Show South Indian festivals first on shared dates",
+  "@festivalRegionSouthDescription": {
+    "description": "Explanation for the South India festival region option"
+  },
+  "festivalRegionEast": "East India",
+  "@festivalRegionEast": {
+    "description": "East India festival region option"
+  },
+  "festivalRegionEastDescription": "Show East Indian festivals first on shared dates",
+  "@festivalRegionEastDescription": {
+    "description": "Explanation for the East India festival region option"
+  },
+  "festivalRegionWest": "West India",
+  "@festivalRegionWest": {
+    "description": "West India festival region option"
+  },
+  "festivalRegionWestDescription": "Show West Indian festivals first on shared dates",
+  "@festivalRegionWestDescription": {
+    "description": "Explanation for the West India festival region option"
+  },
+  "festivalRegionCentral": "Central India",
+  "@festivalRegionCentral": {
+    "description": "Central India festival region option"
+  },
+  "festivalRegionCentralDescription": "Show Central Indian festivals first on shared dates",
+  "@festivalRegionCentralDescription": {
+    "description": "Explanation for the Central India festival region option"
+  },
+  "festivalRegionNortheast": "North-East India",
+  "@festivalRegionNortheast": {
+    "description": "North-East India festival region option"
+  },
+  "festivalRegionNortheastDescription": "Show North-Eastern festivals first on shared dates",
+  "@festivalRegionNortheastDescription": {
+    "description": "Explanation for the North-East India festival region option"
   },
   "hinduYearEra": "Hindu Year Era",
   "@hinduYearEra": {
@@ -2110,5 +2206,231 @@
   "swipeArtworkHint": "Swipe for the other festival artwork, long press to enlarge",
   "@swipeArtworkHint": {
     "description": "Accessibility hint on a day with several festival artworks stacked"
+  },
+  "aiAssistSection": "AI ASSIST",
+  "@aiAssistSection": {
+    "description": "Settings section header for the optional AI hand-off"
+  },
+  "aiAssist": "AI assist",
+  "@aiAssist": {
+    "description": "Settings toggle title for the optional AI hand-off"
+  },
+  "aiAssistSubtitle": "Send panchang details to your AI app when you ask",
+  "@aiAssistSubtitle": {
+    "description": "Settings toggle subtitle explaining what the feature does"
+  },
+  "aiAskAi": "Ask AI",
+  "@aiAskAi": {
+    "description": "Drawer item that opens the month-level AI prompt sheet"
+  },
+  "aiAskAboutToday": "Ask AI about today",
+  "@aiAskAboutToday": {
+    "description": "Tithi sheet link that opens the AI prompt sheet for the day"
+  },
+  "aiAskAboutDay": "Ask AI about this day",
+  "@aiAskAboutDay": {
+    "description": "Same link on a date that is not today"
+  },
+  "aiAskAboutFestival": "Ask AI about this festival",
+  "@aiAskAboutFestival": {
+    "description": "Festival sheet link that opens the AI prompt sheet"
+  },
+  "aiOpensYourApp": "Opens your AI app",
+  "@aiOpensYourApp": {
+    "description": "Supporting line under the AI entry points"
+  },
+  "aiYourQuestion": "YOUR QUESTION",
+  "@aiYourQuestion": {
+    "description": "Section header above the editable question field"
+  },
+  "aiQuestionHint": "What would you like to know?",
+  "@aiQuestionHint": {
+    "description": "Placeholder in the AI prompt question field"
+  },
+  "aiWhatWillBeShared": "WHAT WILL BE SHARED",
+  "@aiWhatWillBeShared": {
+    "description": "Section header above the payload preview"
+  },
+  "aiShowAll": "Show all",
+  "@aiShowAll": {
+    "description": "Expands the truncated AI payload preview"
+  },
+  "aiHidePreview": "Hide",
+  "@aiHidePreview": {
+    "description": "Collapses the expanded AI payload preview"
+  },
+  "aiPreviewFull": "Show the exact message",
+  "@aiPreviewFull": {
+    "description": "Switches the preview to the literal string handed to the AI app"
+  },
+  "aiPreviewSummary": "Show the summary",
+  "@aiPreviewSummary": {
+    "description": "Switches the preview back from the exact message to the data block"
+  },
+  "aiAlsoSends": "Also sends your question, and asks for the answer in your app language.",
+  "@aiAlsoSends": {
+    "description": "Caption under the data preview naming the rest of the message"
+  },
+  "aiPreparing": "Preparing the month's panchang…",
+  "@aiPreparing": {
+    "description": "Shown while the month digest is still computing"
+  },
+  "aiMonthFailed": "Couldn't prepare this month's panchang.",
+  "@aiMonthFailed": {
+    "description": "Month digest failed to compute; a Retry action is offered"
+  },
+  "aiLocationNote": "Your GPS location is never sent — only the city name.",
+  "@aiLocationNote": {
+    "description": "Privacy note under the AI payload preview"
+  },
+  "aiOpenApp": "Open AI app",
+  "@aiOpenApp": {
+    "description": "Primary action that hands the prompt to the AI app"
+  },
+  "aiOpenInApp": "Open {app}",
+  "@aiOpenInApp": {
+    "description": "Primary action when a specific AI app is chosen in Settings",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAppSetting": "AI app",
+  "@aiAppSetting": {
+    "description": "Settings tile that chooses which assistant the hand-off opens"
+  },
+  "aiAppAutomatic": "Automatic",
+  "@aiAppAutomatic": {
+    "description": "AI app setting value: try the known assistants, then the share sheet"
+  },
+  "aiAppAutomaticSubtitle": "Tries Gemini first, then other installed AI apps",
+  "@aiAppAutomaticSubtitle": {
+    "description": "Explains what the automatic AI app choice does"
+  },
+  "aiAppPickerTitle": "Open prompts in",
+  "@aiAppPickerTitle": {
+    "description": "Title of the AI app picker dialog"
+  },
+  "aiAppPickerFailed": "Couldn't save the AI app choice",
+  "@aiAppPickerFailed": {
+    "description": "Error when the chosen AI app could not be persisted"
+  },
+  "aiAppNotInstalled": "Not installed",
+  "@aiAppNotInstalled": {
+    "description": "Subtitle in the AI app picker for an app that cannot receive the hand-off"
+  },
+  "aiAppUnavailable": "{app} isn't available",
+  "@aiAppUnavailable": {
+    "description": "Title of the dialog shown when the chosen AI app cannot resolve the hand-off",
+    "placeholders": {
+      "app": {
+        "type": "String"
+      }
+    }
+  },
+  "aiAppUnavailableBody": "It may have been uninstalled. You can share the prompt instead, or copy it and paste it into your AI app.",
+  "@aiAppUnavailableBody": {
+    "description": "Body of the missing-AI-app dialog"
+  },
+  "aiOpenShareSheet": "Share instead",
+  "@aiOpenShareSheet": {
+    "description": "Confirms the share-sheet fallback after the chosen AI app is unavailable"
+  },
+  "aiCopy": "Copy",
+  "@aiCopy": {
+    "description": "Secondary action that copies the prompt without leaving the app"
+  },
+  "aiCopied": "Prompt copied",
+  "@aiCopied": {
+    "description": "Confirmation after copying the AI prompt"
+  },
+  "aiCopyFailed": "Couldn't copy the prompt",
+  "@aiCopyFailed": {
+    "description": "Error when the clipboard refused the AI prompt"
+  },
+  "aiShareFailed": "Couldn't open an app to share this",
+  "@aiShareFailed": {
+    "description": "Error shown when the AI hand-off finds no share target"
+  },
+  "aiShareFailedCopied": "Couldn't open an app to share this — the prompt is copied instead.",
+  "@aiShareFailedCopied": {
+    "description": "Share failed, so the prompt was put on the clipboard"
+  },
+  "aiFooterNote": "Tithi has no AI of its own. This opens your AI app with the details filled in — the answer appears there.",
+  "@aiFooterNote": {
+    "description": "Closing note explaining the hand-off"
+  },
+  "aiTitleToday": "Ask about today",
+  "@aiTitleToday": {
+    "description": "Hero title of the AI sheet for the current day"
+  },
+  "aiTitleMonth": "Ask about this month",
+  "@aiTitleMonth": {
+    "description": "Hero title of the AI sheet for a month digest"
+  },
+  "aiDefaultQuestionToday": "Explain today's tithi in plain language.",
+  "@aiDefaultQuestionToday": {
+    "description": "Prefilled question for the day prompt"
+  },
+  "aiDefaultQuestionFestival": "Explain this festival's meaning and how it is observed.",
+  "@aiDefaultQuestionFestival": {
+    "description": "Prefilled question for the festival prompt"
+  },
+  "aiDefaultQuestionMonth": "Summarise this month's festivals and notable tithis.",
+  "@aiDefaultQuestionMonth": {
+    "description": "Prefilled question for the month digest prompt"
+  },
+  "aiConsentTitle": "Turn on AI assist?",
+  "@aiConsentTitle": {
+    "description": "Title of the AI opt-in confirmation dialog"
+  },
+  "aiConsentBody": "When you ask AI, Tithi will build a short summary of the panchang and hand it to the AI app you choose.",
+  "@aiConsentBody": {
+    "description": "Body of the AI opt-in confirmation dialog"
+  },
+  "aiConsentBulletSend": "Sends the panchang for your city (tithi, nakshatra, sunrise, sunset), the festival details when you ask about one, and the question you type.",
+  "@aiConsentBulletSend": {
+    "description": "Consent bullet listing what data is shared"
+  },
+  "aiConsentBulletLocation": "Never your GPS coordinates or exact position.",
+  "@aiConsentBulletLocation": {
+    "description": "Consent bullet stating coordinates are excluded"
+  },
+  "aiConsentBulletWhere": "Opens your AI app — the answer appears there, not in Tithi.",
+  "@aiConsentBulletWhere": {
+    "description": "Consent bullet explaining where the answer appears"
+  },
+  "aiConsentEnable": "Turn on",
+  "@aiConsentEnable": {
+    "description": "Confirms enabling AI assist"
+  },
+  "aiHowItWorks": "How it works",
+  "@aiHowItWorks": {
+    "description": "Settings action that opens the AI explainer"
+  },
+  "aiHowItWorksSubtitle": "What is shared and what isn't",
+  "@aiHowItWorksSubtitle": {
+    "description": "Subtitle of the AI explainer action"
+  },
+  "aiHowItWorksRule": "Tithi calculates. The assistant explains.",
+  "@aiHowItWorksRule": {
+    "description": "One-line rule governing the AI hand-off"
+  },
+  "aiHowItWorksBody": "Every tithi, nakshatra and sunrise/sunset time in the summary comes from Tithi's own on-device calculations. The AI is only asked to explain those numbers in your language, so it cannot change them. You see the exact text before anything leaves the app, and you can copy it instead of opening an AI app.",
+  "@aiHowItWorksBody": {
+    "description": "Explainer body for the AI hand-off"
+  },
+  "aiToggleFailed": "Couldn't save the AI assist setting",
+  "@aiToggleFailed": {
+    "description": "Error shown when the AI opt-in cannot be persisted"
+  },
+  "privacyAiTitle": "AI Assist (Optional)",
+  "@privacyAiTitle": {
+    "description": "Privacy policy card title for AI assist"
+  },
+  "privacyAiDesc": "AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary — the panchang for your city (date, tithi, nakshatra, sunrise and sunset), the festival details when you ask about one, and the question you type — and hands it to the AI app you chose in Settings, or to the system share sheet when that app is not available. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app's own privacy policy.",
+  "@privacyAiDesc": {
+    "description": "Privacy policy card body for AI assist"
   }
 }

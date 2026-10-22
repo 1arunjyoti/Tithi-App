@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import '../models/festival_region.dart';
 import '../models/hindu_month_system.dart';
 import '../services/storage_service.dart';
 
@@ -152,6 +153,7 @@ class CalendarPreferences {
   final HinduMonthSystem hinduMonthSystem;
   final HinduYearEra hinduYearEra;
   final TithiDisplayMode tithiDisplayMode;
+  final FestivalRegion festivalRegion;
 
   const CalendarPreferences({
     required this.startOfWeek,
@@ -161,6 +163,7 @@ class CalendarPreferences {
     required this.hinduMonthSystem,
     required this.hinduYearEra,
     required this.tithiDisplayMode,
+    required this.festivalRegion,
   });
 
   CalendarPreferences copyWith({
@@ -171,6 +174,7 @@ class CalendarPreferences {
     HinduMonthSystem? hinduMonthSystem,
     HinduYearEra? hinduYearEra,
     TithiDisplayMode? tithiDisplayMode,
+    FestivalRegion? festivalRegion,
   }) {
     return CalendarPreferences(
       startOfWeek: startOfWeek ?? this.startOfWeek,
@@ -182,6 +186,7 @@ class CalendarPreferences {
       hinduMonthSystem: hinduMonthSystem ?? this.hinduMonthSystem,
       hinduYearEra: hinduYearEra ?? this.hinduYearEra,
       tithiDisplayMode: tithiDisplayMode ?? this.tithiDisplayMode,
+      festivalRegion: festivalRegion ?? this.festivalRegion,
     );
   }
 }
@@ -194,6 +199,7 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   static const _hinduMonthSystemKey = 'hindu_month_system';
   static const _hinduYearEraKey = 'hindu_year_era';
   static const _tithiDisplayModeKey = 'tithi_display_mode';
+  static const _festivalRegionKey = kFestivalRegionPrefKey;
 
   @override
   CalendarPreferences build() {
@@ -208,6 +214,7 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
       hinduMonthSystem: _parseEnum(box, _hinduMonthSystemKey, HinduMonthSystem.values, HinduMonthSystem.amanta),
       hinduYearEra: _parseEnum(box, _hinduYearEraKey, HinduYearEra.values, HinduYearEra.shakaSamvat),
       tithiDisplayMode: _parseEnum(box, _tithiDisplayModeKey, TithiDisplayMode.values, TithiDisplayMode.continuous30),
+      festivalRegion: _parseEnum(box, _festivalRegionKey, FestivalRegion.values, FestivalRegion.all),
     );
   }
 
@@ -266,6 +273,11 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   Future<void> setTithiDisplayMode(TithiDisplayMode mode) async {
     await StorageService().getSettingsBox().put(_tithiDisplayModeKey, mode.index);
     state = state.copyWith(tithiDisplayMode: mode);
+  }
+
+  Future<void> setFestivalRegion(FestivalRegion region) async {
+    await StorageService().getSettingsBox().put(_festivalRegionKey, region.index);
+    state = state.copyWith(festivalRegion: region);
   }
 }
 
@@ -335,4 +347,10 @@ final tithiDisplayModeProvider = Provider<TithiDisplayMode>((ref) {
   return ref.watch(
     calendarPreferencesProvider.select((p) => p.tithiDisplayMode),
   );
+});
+
+// --- Festival Region (same-day festival ordering) ---
+
+final festivalRegionProvider = Provider<FestivalRegion>((ref) {
+  return ref.watch(calendarPreferencesProvider.select((p) => p.festivalRegion));
 });

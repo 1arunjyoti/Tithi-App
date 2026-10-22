@@ -456,7 +456,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'तिथि एक ओपन-सोर्स प्रोजेक्ट है। हमारा कोड ऑडिट के लिए सार्वजनिक रूप से उपलब्ध है, जो यह सुनिश्चित करता है कि हमारी गोपनीयता प्रतिबद्धताएँ सत्यापित पारदर्शिता द्वारा समर्थित हैं। जो दिखता है, बिल्कुल वही मिलता है।';
 
   @override
-  String get lastUpdated => 'अंतिम अपडेट: दिसंबर २०२५';
+  String get lastUpdated => 'अंतिम अपडेट: अक्टूबर २०२६';
 
   @override
   String get applicationLegalese =>
@@ -877,6 +877,31 @@ class AppLocalizationsHi extends AppLocalizations {
   String get allFestivals => 'सभी त्योहार';
 
   @override
+  String get festivalFilterAll => 'सभी';
+
+  @override
+  String get festivalFilterMajor => 'प्रमुख';
+
+  @override
+  String get festivalFilterVrat => 'व्रत';
+
+  @override
+  String get festivalFilterRecurring => 'आवर्ती';
+
+  @override
+  String get festivalFilterTitle => 'त्योहार फ़िल्टर करें';
+
+  @override
+  String get festivalFilterSubtitle =>
+      'श्रेणी और क्षेत्र के अनुसार सूची सीमित करें';
+
+  @override
+  String get festivalFilterRegion => 'क्षेत्र';
+
+  @override
+  String get festivalFilterAllRegions => 'सभी क्षेत्र';
+
+  @override
   String get searchFestivalsHint => 'त्योहार खोजें';
 
   @override
@@ -1081,6 +1106,62 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get hinduMonthSystemSubtitle =>
       'चुनें कि कृष्ण पक्ष में महीनों का नामकरण कैसे हो';
+
+  @override
+  String get festivalRegion => 'त्योहार क्षेत्र';
+
+  @override
+  String get festivalRegionSubtitle =>
+      'चुनें कि एक ही दिन कई त्योहार होने पर किस क्षेत्र के त्योहार पहले दिखें';
+
+  @override
+  String get festivalRegionAll => 'सम्पूर्ण भारत';
+
+  @override
+  String get festivalRegionAllDescription =>
+      'प्रत्येक त्योहार का डिफ़ॉल्ट क्रम बनाए रखें';
+
+  @override
+  String get festivalRegionNorth => 'उत्तर भारत';
+
+  @override
+  String get festivalRegionNorthDescription =>
+      'साझा तिथियों पर उत्तर भारतीय त्योहार पहले दिखाएँ';
+
+  @override
+  String get festivalRegionSouth => 'दक्षिण भारत';
+
+  @override
+  String get festivalRegionSouthDescription =>
+      'साझा तिथियों पर दक्षिण भारतीय त्योहार पहले दिखाएँ';
+
+  @override
+  String get festivalRegionEast => 'पूर्व भारत';
+
+  @override
+  String get festivalRegionEastDescription =>
+      'साझा तिथियों पर पूर्व भारतीय त्योहार पहले दिखाएँ';
+
+  @override
+  String get festivalRegionWest => 'पश्चिम भारत';
+
+  @override
+  String get festivalRegionWestDescription =>
+      'साझा तिथियों पर पश्चिम भारतीय त्योहार पहले दिखाएँ';
+
+  @override
+  String get festivalRegionCentral => 'मध्य भारत';
+
+  @override
+  String get festivalRegionCentralDescription =>
+      'साझा तिथियों पर मध्य भारतीय त्योहार पहले दिखाएँ';
+
+  @override
+  String get festivalRegionNortheast => 'पूर्वोत्तर भारत';
+
+  @override
+  String get festivalRegionNortheastDescription =>
+      'साझा तिथियों पर पूर्वोत्तर भारतीय त्योहार पहले दिखाएँ';
 
   @override
   String get hinduYearEra => 'हिन्दू वर्ष संवत्';
@@ -1721,4 +1802,184 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get swipeArtworkHint =>
       'दूसरा चित्र देखने के लिए स्वाइप करें, बड़ा करने के लिए देर तक दबाएँ';
+
+  @override
+  String get aiAssistSection => 'AI सहायता';
+
+  @override
+  String get aiAssist => 'AI सहायता';
+
+  @override
+  String get aiAssistSubtitle => 'पूछने पर पंचांग विवरण अपने AI ऐप को भेजें';
+
+  @override
+  String get aiAskAi => 'AI से पूछें';
+
+  @override
+  String get aiAskAboutToday => 'आज के बारे में AI से पूछें';
+
+  @override
+  String get aiAskAboutDay => 'इस दिन के बारे में AI से पूछें';
+
+  @override
+  String get aiAskAboutFestival => 'इस त्योहार के बारे में AI से पूछें';
+
+  @override
+  String get aiOpensYourApp => 'आपका AI ऐप खुलता है';
+
+  @override
+  String get aiYourQuestion => 'आपका प्रश्न';
+
+  @override
+  String get aiQuestionHint => 'आप क्या जानना चाहते हैं?';
+
+  @override
+  String get aiWhatWillBeShared => 'क्या साझा किया जाएगा';
+
+  @override
+  String get aiShowAll => 'सब दिखाएँ';
+
+  @override
+  String get aiHidePreview => 'छिपाएँ';
+
+  @override
+  String get aiPreviewFull => 'पूरा संदेश देखें';
+
+  @override
+  String get aiPreviewSummary => 'सारांश देखें';
+
+  @override
+  String get aiAlsoSends =>
+      'आपका प्रश्न भी भेजता है, और उत्तर आपकी ऐप भाषा में देने को कहता है।';
+
+  @override
+  String get aiPreparing => 'इस महीने का पंचांग तैयार हो रहा है…';
+
+  @override
+  String get aiMonthFailed => 'इस महीने का पंचांग तैयार नहीं हो सका।';
+
+  @override
+  String get aiLocationNote =>
+      'आपका GPS स्थान कभी नहीं भेजा जाता — केवल शहर का नाम।';
+
+  @override
+  String get aiOpenApp => 'AI ऐप खोलें';
+
+  @override
+  String aiOpenInApp(String app) {
+    return '$app खोलें';
+  }
+
+  @override
+  String get aiAppSetting => 'AI ऐप';
+
+  @override
+  String get aiAppAutomatic => 'स्वचालित';
+
+  @override
+  String get aiAppAutomaticSubtitle =>
+      'पहले Gemini, फिर अन्य इंस्टॉल किए गए AI ऐप आज़माता है';
+
+  @override
+  String get aiAppPickerTitle => 'प्रॉम्प्ट इसमें खोलें';
+
+  @override
+  String get aiAppPickerFailed => 'AI ऐप का चयन सहेजा नहीं जा सका';
+
+  @override
+  String get aiAppNotInstalled => 'इंस्टॉल नहीं है';
+
+  @override
+  String aiAppUnavailable(String app) {
+    return '$app उपलब्ध नहीं है';
+  }
+
+  @override
+  String get aiAppUnavailableBody =>
+      'हो सकता है यह ऐप अनइंस्टॉल कर दिया गया हो। आप इसके बजाय प्रॉम्प्ट साझा कर सकते हैं, या उसे कॉपी करके अपने AI ऐप में पेस्ट कर सकते हैं।';
+
+  @override
+  String get aiOpenShareSheet => 'इसके बजाय साझा करें';
+
+  @override
+  String get aiCopy => 'कॉपी करें';
+
+  @override
+  String get aiCopied => 'प्रॉम्प्ट कॉपी हो गया';
+
+  @override
+  String get aiCopyFailed => 'प्रॉम्प्ट कॉपी नहीं हो सका';
+
+  @override
+  String get aiShareFailed => 'साझा करने के लिए कोई ऐप नहीं खुल सका';
+
+  @override
+  String get aiShareFailedCopied =>
+      'साझा करने के लिए कोई ऐप नहीं खुल सका — प्रॉम्प्ट कॉपी कर दिया गया है।';
+
+  @override
+  String get aiFooterNote =>
+      'तिथि का अपना कोई AI नहीं है। यह विवरण भरकर आपका AI ऐप खोलता है — उत्तर वहीं दिखेगा।';
+
+  @override
+  String get aiTitleToday => 'आज के बारे में पूछें';
+
+  @override
+  String get aiTitleMonth => 'इस महीने के बारे में पूछें';
+
+  @override
+  String get aiDefaultQuestionToday => 'आज की तिथि को सरल भाषा में समझाएँ।';
+
+  @override
+  String get aiDefaultQuestionFestival =>
+      'इस त्योहार का अर्थ और इसे कैसे मनाया जाता है, समझाएँ।';
+
+  @override
+  String get aiDefaultQuestionMonth =>
+      'इस महीने के त्योहारों और प्रमुख तिथियों का सारांश दें।';
+
+  @override
+  String get aiConsentTitle => 'AI सहायता चालू करें?';
+
+  @override
+  String get aiConsentBody =>
+      'जब आप AI से पूछेंगे, तिथि पंचांग का संक्षिप्त विवरण बनाकर आपके चुने हुए AI ऐप को देगा।';
+
+  @override
+  String get aiConsentBulletSend =>
+      'आपके शहर का पंचांग (तिथि, नक्षत्र, सूर्योदय, सूर्यास्त), त्योहार के बारे में पूछने पर उसका विवरण, और आपका लिखा हुआ प्रश्न भेजता है।';
+
+  @override
+  String get aiConsentBulletLocation =>
+      'आपके GPS निर्देशांक या सटीक स्थान कभी नहीं।';
+
+  @override
+  String get aiConsentBulletWhere =>
+      'आपका AI ऐप खुलता है — उत्तर वहीं दिखेगा, तिथि में नहीं।';
+
+  @override
+  String get aiConsentEnable => 'चालू करें';
+
+  @override
+  String get aiHowItWorks => 'यह कैसे काम करता है';
+
+  @override
+  String get aiHowItWorksSubtitle => 'क्या साझा होता है और क्या नहीं';
+
+  @override
+  String get aiHowItWorksRule => 'तिथि गणना करता है। सहायक समझाता है।';
+
+  @override
+  String get aiHowItWorksBody =>
+      'सारांश में दी गई हर तिथि, नक्षत्र और सूर्योदय/सूर्यास्त का समय तिथि की अपनी डिवाइस-गणना से आता है। AI से केवल इन्हीं संख्याओं को आपकी भाषा में समझाने के लिए कहा जाता है, इसलिए वह उन्हें बदल नहीं सकता। ऐप से कुछ भी बाहर जाने से पहले आप ठीक वही पाठ देखते हैं, और चाहें तो AI ऐप खोलने के बजाय उसे कॉपी कर सकते हैं।';
+
+  @override
+  String get aiToggleFailed => 'AI सहायता सेटिंग सहेजी नहीं जा सकी';
+
+  @override
+  String get privacyAiTitle => 'AI सहायता (वैकल्पिक)';
+
+  @override
+  String get privacyAiDesc =>
+      'AI सहायता डिफ़ॉल्ट रूप से बंद है। जब आप इसे चालू करके AI से पूछते हैं, तिथि एक संक्षिप्त सारांश बनाकर — आपके शहर का पंचांग (तिथि, नक्षत्र, सूर्योदय और सूर्यास्त), त्योहार के बारे में पूछने पर उसका विवरण, और आपका लिखा हुआ प्रश्न — आपके द्वारा सेटिंग्स में चुने गए AI ऐप को देता है, और वह ऐप उपलब्ध न हो तो सिस्टम शेयर शीट को देता है। आपके GPS निर्देशांक कभी शामिल नहीं होते, तिथि स्वयं कुछ नहीं भेजता, और उसके बाद की बातचीत उस ऐप की अपनी गोपनीयता नीति के अधीन होती है।';
 }

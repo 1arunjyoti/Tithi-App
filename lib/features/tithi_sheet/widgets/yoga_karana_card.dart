@@ -139,9 +139,14 @@ class YogaKaranaCard extends StatelessWidget {
     }
 
     return Container(
-      decoration: BoxDecoration(
-        color: border,
-        borderRadius: BorderRadius.circular(16),
+      decoration: AppTheme.sheetCardDecoration(
+        context,
+        highContrast: highContrast,
+        withBorder: false,
+      ),
+      foregroundDecoration: AppTheme.sheetCardBorderOverlay(
+        context,
+        highContrast: highContrast,
       ),
       clipBehavior: Clip.antiAlias,
       child: IntrinsicHeight(

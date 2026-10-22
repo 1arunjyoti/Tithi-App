@@ -147,6 +147,39 @@ String karanaNameForIndex(int index) {
   return 'Naga';
 }
 
+/// Canonical region tags for `Festival.regions`.
+///
+/// `all` is the pan-India tag and is exclusive: a festival is either
+/// observed nationwide or rooted in one or more zones.
+const List<String> kFestivalRegionTags = [
+  'north',
+  'south',
+  'east',
+  'west',
+  'central',
+  'northeast',
+  'all',
+];
+
+/// Normalizes a raw `regions` JSON value into a valid, non-empty tag list.
+///
+/// Unknown and non-string entries are dropped; `all` anywhere collapses the
+/// list to `['all']`; missing/empty falls back to `['all']` (pan-India) so
+/// pre-region data behaves exactly as before.
+List<String> normalizeFestivalRegions(Object? raw) {
+  final tags = <String>[];
+  if (raw is List) {
+    for (final item in raw) {
+      if (item is! String) continue;
+      final tag = item.trim().toLowerCase();
+      if (!kFestivalRegionTags.contains(tag)) continue;
+      if (tag == 'all') return const ['all'];
+      if (!tags.contains(tag)) tags.add(tag);
+    }
+  }
+  return tags.isEmpty ? const ['all'] : List<String>.unmodifiable(tags);
+}
+
 /// Festival model matching festivals.json structure
 @HiveType(typeId: 0)
 class Festival {
@@ -186,6 +219,19 @@ class Festival {
   @HiveField(9)
   final int? displayPriority;
 
+  /// Regions where this festival is traditionally observed.
+  ///
+  /// Canonical tags: `north`, `south`, `east`, `west`, `central`,
+  /// `northeast`, or `all` for pan-India festivals (exclusive — never mixed
+  /// with the others). Used only for same-day display ordering, see
+  /// [sortedFestivalsForRegion] in `festival_region.dart`.
+  ///
+  /// Missing/empty means `['all']`, so pre-region data and tests keep the
+  /// current pan-India behaviour. `defaultValue` keeps Hive boxes written
+  /// before field 10 readable after upgrades.
+  @HiveField(10, defaultValue: <String>['all'])
+  final List<String> regions;
+
   const Festival({
     required this.id,
     required this.name,
@@ -197,6 +243,7 @@ class Festival {
     required this.rituals,
     required this.media,
     this.displayPriority,
+    this.regions = const ['all'],
   });
 
   factory Festival.fromJson(Map<String, dynamic> json) {
@@ -218,6 +265,7 @@ class Festival {
       rituals: Rituals.fromJson(json['rituals'] ?? {}),
       media: Media.fromJson(json['media'] ?? {}),
       displayPriority: priority,
+      regions: normalizeFestivalRegions(json['regions']),
     );
   }
 

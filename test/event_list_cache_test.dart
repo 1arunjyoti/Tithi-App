@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
@@ -21,7 +22,14 @@ void main() {
     'upcoming events use cached adaptive records without panchang FFI',
     () async {
       // Arrange
-      final container = ProviderContainer();
+      // The provider now also watches the region preference, whose notifier
+      // opens the settings Hive box. Override it so this stays a pure cache
+      // test with no storage setup.
+      final container = ProviderContainer(
+        overrides: [
+          festivalRegionProvider.overrideWithValue(FestivalRegion.all),
+        ],
+      );
       addTearDown(container.dispose);
       final selected = DateTime(2098, 1, 10);
       container.read(selectedDateProvider.notifier).setDate(selected);

@@ -33,6 +33,10 @@ class EventListWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final upcomingAsync = ref.watch(upcomingFestivalsProvider);
     final totalCount = ref.watch(festivalProvider).length;
+    // One selection watch for the card: the range hint and the row
+    // highlight both key off it, and the provider above already depends on
+    // it, so this adds no extra rebuild.
+    final selectedDate = ref.watch(selectedDateProvider);
 
     return AnimatedSize(
       alignment: Alignment.topCenter,
@@ -66,7 +70,7 @@ class EventListWidget extends ConsumerWidget {
             // next 3 days (see upcomingFestivalWindowDays), not the whole
             // calendar.
             Text(
-              _rangeHint(ref),
+              _rangeHint(selectedDate),
               style: context.textTheme.labelSmall?.copyWith(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),
@@ -77,7 +81,7 @@ class EventListWidget extends ConsumerWidget {
               // underneath instead of flashing a skeleton (same pattern as
               // the countdown screen's skipLoadingOnReload).
               skipLoadingOnReload: true,
-              data: (items) => _buildRows(context, ref, items),
+              data: (items) => _buildRows(context, ref, items, selectedDate),
               loading: () => _buildLoadingSkeleton(context),
               error: (error, _) => _buildErrorBody(context, error),
             ),
@@ -92,9 +96,8 @@ class EventListWidget extends ConsumerWidget {
   /// Coverage hint under the title: the rows span the selected day plus
   /// the next 3 days. Names "Today" when the selection is today so the
   /// default view reads naturally; browsed dates say "Selected day".
-  String _rangeHint(WidgetRef ref) {
-    final selected = ref.watch(selectedDateProvider);
-    if (isSameDay(selected, DateTime.now())) return 'Today + next 3 days';
+  String _rangeHint(DateTime selectedDate) {
+    if (isSameDay(selectedDate, DateTime.now())) return 'Today + next 3 days';
     return 'Selected day + next 3 days';
   }
 
@@ -102,6 +105,7 @@ class EventListWidget extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     List<UpcomingFestival> items,
+    DateTime selectedDate,
   ) {
     if (items.isEmpty) {
       return Padding(
@@ -143,6 +147,7 @@ class EventListWidget extends ConsumerWidget {
             date: shown[i].date,
             panchang: shown[i].panchang,
             daysAway: shown[i].daysAway,
+            isSelectedDay: isSameDay(shown[i].date, selectedDate),
             onTap: () => _showFestivalDetail(
               context,
               ref,

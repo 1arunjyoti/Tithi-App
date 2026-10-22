@@ -1,7 +1,7 @@
 name: tithi
 description: "A new Flutter project."
 publish_to: "none"
-version: 0.6.20+16
+version: 0.6.20+18
 environment:
   sdk: ^3.10.4
 
@@ -46,6 +46,7 @@ dependencies:
   home_widget: ^0.9.3
   file_picker: ^13.1.0
   scrollable_positioned_list: ^0.3.8
+  android_intent_plus: ^6.1.0
 
 dev_dependencies:
   flutter_test:

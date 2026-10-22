@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/festival.dart';
+import '../../../models/festival_region.dart';
 import '../../../models/panchang_data.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/panchang_provider.dart';
@@ -34,6 +35,7 @@ final upcomingFestivalsProvider =
       ref.keepAlive();
 
       final selected = ref.watch(selectedDateProvider);
+      final region = ref.watch(festivalRegionProvider);
       final base = DateTime(selected.year, selected.month, selected.day);
       final days = List.generate(
         upcomingFestivalWindowDays,
@@ -58,7 +60,10 @@ final upcomingFestivalsProvider =
       for (var i = 0; i < days.length; i++) {
         final panchang = panchangs[i];
         if (panchang == null) continue;
-        for (final festival in panchang.festivals) {
+        for (final festival in sortedFestivalsForRegion(
+          panchang.festivals,
+          region,
+        )) {
           out.add((
             date: days[i],
             festival: festival,

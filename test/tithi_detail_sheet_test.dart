@@ -5,7 +5,10 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:tithi/features/sheets/widgets/sheet_chip.dart';
 import 'package:tithi/features/sheets/widgets/sheet_explainer_card.dart';
+import 'package:tithi/features/sheets/widgets/sheet_hero_header.dart';
+import 'package:tithi/features/tithi_sheet/widgets/timings_cards.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
@@ -415,6 +418,93 @@ void main() {
       expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
       expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
       expect(find.byIcon(Icons.dark_mode), findsOneWidget);
+    });
+
+    testWidgets('sun and moon chips sit below the hero header', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpSheet(tester, normalDay());
+
+      // Assert: the header keeps only the date + moon row; the anchor
+      // chips live on the body surface, between the header and the first
+      // dotted section label.
+      expect(
+        find.descendant(
+          of: find.byType(SheetHeroHeader),
+          matching: find.byType(SheetChip),
+        ),
+        findsNothing,
+      );
+      expect(find.byType(SheetChip), findsNWidgets(4));
+      final headerBottom = tester
+          .getBottomLeft(find.byType(SheetHeroHeader))
+          .dy;
+      final chipsTop = tester.getTopLeft(find.byType(SheetChip).first).dy;
+      final timingsTop = tester.getTopLeft(find.text('TITHI TIMINGS')).dy;
+      expect(chipsTop, greaterThanOrEqualTo(headerBottom));
+      expect(chipsTop, lessThan(timingsTop));
+
+      // The grid uses the full body width in two equal columns: first
+      // pill flush left, second flush right, both on the same row (no
+      // ragged block with dead space on the right).
+      final cardLeft = tester.getTopLeft(find.byType(TimingsCard)).dx;
+      final cardRight = tester.getTopRight(find.byType(TimingsCard)).dx;
+      expect(
+        tester.getTopLeft(find.byType(SheetChip).at(0)).dx,
+        closeTo(cardLeft, 0.5),
+      );
+      expect(
+        tester.getTopRight(find.byType(SheetChip).at(1)).dx,
+        closeTo(cardRight, 0.5),
+      );
+      expect(
+        tester.getTopLeft(find.byType(SheetChip).at(0)).dy,
+        tester.getTopLeft(find.byType(SheetChip).at(1)).dy,
+      );
+
+      // Chip fill matches the sheet's cards (same cardTheme color), so the
+      // anchor row belongs to the same surface family as the cards below.
+      final chipContainer = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(SheetChip).first,
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      final chipDecoration = chipContainer.decoration! as BoxDecoration;
+      final chipTheme = Theme.of(
+        tester.element(find.byType(SheetChip).first),
+      );
+      expect(
+        chipDecoration.color,
+        equals(chipTheme.cardTheme.color ?? chipTheme.colorScheme.surface),
+      );
+
+      // The same hairline that separates the body cards runs around the
+      // chips: on the Shukla cream scaffold the shared white card fill is
+      // only ~3 RGB steps from the background, so the edge does the work.
+      expect(chipDecoration.border, isNotNull);
+      final timingsContainer = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(TimingsCard),
+              matching: find.byType(Container),
+            )
+            .first,
+      );
+      // Clipped, edge-to-edge cells: the hairline must ride on top as a
+      // foreground decoration, otherwise the cells' fill squares off the
+      // stroke at the corners.
+      expect(
+        (timingsContainer.decoration! as BoxDecoration).border,
+        isNull,
+      );
+      expect(
+        (timingsContainer.foregroundDecoration! as BoxDecoration).border,
+        isNotNull,
+      );
     });
 
     testWidgets('shows the prevailing rise on no-moonrise days', (
@@ -1010,7 +1100,7 @@ void main() {
           .getSemantics(find.byType(FestivalRowTile))
           .getSemanticsData();
       expect(row.label, startsWith('Test Festival. '));
-      expect(row.label, contains('Waning Ekadashi'));
+      expect(row.label, contains('Krishna Ekadashi'));
       expect(row.hint, 'A test festival.');
       expect(row.hasAction(SemanticsAction.tap), isTrue);
 

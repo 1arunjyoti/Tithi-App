@@ -2,6 +2,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 
+import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
 import '../../models/panchang_data.dart';
 import '../../services/storage_service.dart';
@@ -72,6 +73,7 @@ HinduMonthSystem readMonthSystem(Box<dynamic> settingsBox) {
   int secondarySystem,
   int yearEraIndex,
   int tithiMode,
+  FestivalRegion festivalRegion,
 })
 readCalendarPrefs(Box<dynamic> settingsBox) {
   return (
@@ -84,6 +86,9 @@ readCalendarPrefs(Box<dynamic> settingsBox) {
         (settingsBox.get('hindu_year_era', defaultValue: 1) as int?) ?? 1,
     tithiMode:
         (settingsBox.get('tithi_display_mode', defaultValue: 1) as int?) ?? 1,
+    festivalRegion: parseFestivalRegion(
+      settingsBox.get(kFestivalRegionPrefKey),
+    ),
   );
 }
 

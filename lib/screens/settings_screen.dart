@@ -11,9 +11,11 @@ import '../features/settings/widgets/notification_settings.dart';
 import '../features/settings/widgets/location_settings.dart';
 import '../features/settings/widgets/language_display_settings.dart';
 import '../features/settings/widgets/calendar_settings.dart';
+import '../features/settings/widgets/region_settings.dart';
 import '../features/settings/widgets/accessibility_settings.dart';
 import '../features/settings/widgets/app_update_settings.dart';
 import '../features/settings/widgets/data_settings.dart';
+import '../features/ai/widgets/ai_section.dart';
 import 'home_cards_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -88,6 +90,8 @@ class SettingsScreen extends ConsumerWidget {
                           HomeLocationSetting(),
                           SettingsDivider(),
                           LanguageSetting(),
+                          SettingsDivider(),
+                          FestivalRegionSetting(),
                         ],
                       ),
 
@@ -151,6 +155,10 @@ class SettingsScreen extends ConsumerWidget {
                           ResetSettingsTile(),
                         ],
                       ),
+                      const SizedBox(height: 32),
+
+                      SettingsSectionHeader(l10n?.aiAssistSection ?? 'AI ASSIST'),
+                      const SettingsGroupCard(children: [AiSection()]),
                       const SizedBox(height: 32),
 
                       SettingsSectionHeader(l10n?.about ?? 'ABOUT'),

@@ -27,15 +27,14 @@ class SheetSurfaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final decoration = AppTheme.sheetCardDecoration(context);
     return Container(
       width: double.infinity,
       padding: padding,
       clipBehavior: clipBehavior,
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? context.colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: border,
-      ),
+      decoration: border == null
+          ? decoration
+          : decoration.copyWith(border: border),
       child: child,
     );
   }

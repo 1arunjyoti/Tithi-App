@@ -23,13 +23,18 @@ class SectionHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 11,
-            letterSpacing: 1.5,
-            fontWeight: FontWeight.bold,
-            color: context.colors.onSurface,
+        // Flexible: callers put this label in a Row next to a trailing action
+        // (e.g. "Show all"), and at large text scales the unwrapped Text used
+        // to overflow that Row.
+        Flexible(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              letterSpacing: 1.5,
+              fontWeight: FontWeight.bold,
+              color: context.colors.onSurface,
+            ),
           ),
         ),
       ],
