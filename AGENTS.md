@@ -271,7 +271,52 @@ flutter pub get
 
 ---
 
+## Changelog Process
+
+Every new feature implementation must add an entry to `changelogs.md` (repo
+root) **in the same commit as the feature**. Do not batch entries later; the
+changelog is written from the change, not from memory.
+
+What qualifies:
+
+- New user-facing features, new settings/preferences, new screens or sheets.
+- New domain models, services, providers, or platform integrations that other
+  code is expected to reuse.
+- Behaviour changes to an existing feature (e.g. new ordering rules) - update
+  that feature's existing entry if the change is part of it, otherwise add a
+  new one.
+
+What does not: pure refactors, formatting, test-only or docs-only commits,
+dependency bumps, and generated files (`*.g.dart`, `app_localizations*.dart`).
+
+Entry format (newest first, under the heading for today's date and the version
+in `pubspec.yaml`):
+
+```markdown
+## YYYY-MM-DD - <version from pubspec.yaml>
+
+### <Feature name>
+<one line: what the user gets>
+
+- <key behaviour or constraint a maintainer must not break>
+- <where it lives: files / services / providers / settings key>
+```
+
+Rules:
+
+- Brief. 3-6 bullets per feature. Rationale and design debate belong in the
+  commit message and code comments, not here.
+- User outcome first, then the implementation map (paths, Hive fields, settings
+  keys), so the entry stays useful while the code moves.
+- Record constraints that are easy to break silently: exclusive flag values,
+  "append only" enum/field ordering, shared storage keys, fallback behaviour.
+- Reuse the existing date/version heading when adding to a version that has not
+  been released yet; open a new heading after a version bump.
+
+---
+
 ## Resources
+- Changelog (add a feature entry per implementation): changelogs.md
 - Festival data guide: docs/FESTIVALS_Modification_GUIDE.md
 - Festival artwork guide (compression script, 800px / 200 KB budget): docs/FESTIVAL_ARTWORK_GUIDE.md
 - Flutter Docs: https://flutter.dev/docs
