@@ -1,6 +1,7 @@
 [
   {
     "id": "chaitra_navratri_day_1",
+    "regions": ["all"],
     "name": "Chaitra Navratri / Vasantha Navaratri Day 1: Shailaputri Puja",
     "category": "major",
     "nameRegional": {
@@ -43,6 +44,7 @@
   },
   {
     "id": "chaitra_navratri_day_2",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 2: Brahmacharini Puja",
     "category": "major",
     "nameRegional": {
@@ -84,6 +86,7 @@
   },
   {
     "id": "chaitra_navratri_day_3",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 3: Chandraghanta Puja",
     "category": "major",
     "nameRegional": {
@@ -119,6 +122,7 @@
   },
   {
     "id": "chaitra_navratri_day_4",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 4: Kushmanda Puja",
     "category": "major",
     "nameRegional": {
@@ -154,6 +158,7 @@
   },
   {
     "id": "chaitra_navratri_day_5",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 5: Skandamata Puja",
     "category": "major",
     "nameRegional": {
@@ -189,6 +194,7 @@
   },
   {
     "id": "chaitra_navratri_day_6",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 6: Katyayani Puja",
     "category": "major",
     "nameRegional": {
@@ -224,6 +230,7 @@
   },
   {
     "id": "chaitra_navratri_day_7",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 7: Kalaratri Puja",
     "category": "major",
     "nameRegional": {
@@ -259,6 +266,7 @@
   },
   {
     "id": "chaitra_navratri_day_8",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 8: Mahagauri Puja",
     "category": "major",
     "nameRegional": {
@@ -294,6 +302,7 @@
   },
   {
     "id": "chaitra_navratri_day_9",
+    "regions": ["all"],
     "name": "Chaitra Navratri Day 9: Siddhidatri Puja & Ram Navami",
     "category": "major",
     "nameRegional": {
@@ -330,6 +339,7 @@
   },
   {
     "id": "matsya_jayanti",
+    "regions": ["all"],
     "name": "Matsya Jayanti",
     "category": "major",
     "nameRegional": {
@@ -374,6 +384,7 @@
 
   {
     "id": "ram_navami",
+    "regions": ["all"],
     "name": "Ram Navami",
     "category": "major",
     "nameRegional": {
@@ -416,6 +427,7 @@
   },
   {
     "id": "gauri_tritiya",
+    "regions": ["north", "west", "central"],
     "name": "Gauri Tritiya/ Gangaur / Gauri Puja",
     "category": "major",
     "nameRegional": {
@@ -455,6 +467,7 @@
   },
   {
     "id": "hanuman_jayanti",
+    "regions": ["all"],
     "name": "Hanuman Jayanti",
     "category": "major",
     "nameRegional": {
@@ -497,6 +510,7 @@
   },
   {
     "id": "akshaya_tritiya",
+    "regions": ["all"],
     "name": "Akshaya Tritiya",
     "category": "major",
     "nameRegional": {
@@ -539,6 +553,7 @@
   },
   {
     "id": "ganga_saptami",
+    "regions": ["north", "east"],
     "name": "Ganga Saptami",
     "category": "major",
     "nameRegional": {
@@ -581,6 +596,7 @@
   },
   {
     "id": "buddha_purnima",
+    "regions": ["all"],
     "name": "Buddha Purnima",
     "category": "major",
     "nameRegional": {
@@ -623,6 +639,7 @@
   },
   {
     "id": "kurma_jayanti",
+    "regions": ["all"],
     "name": "Kurma Jayanti",
     "category": "major",
     "nameRegional": {
@@ -666,6 +683,7 @@
   },
   {
     "id": "narada_jayanti",
+    "regions": ["all"],
     "name": "Narada Jayanti",
     "category": "major",
     "nameRegional": {
@@ -708,6 +726,7 @@
   },
   {
     "id": "shani_jayanti",
+    "regions": ["all"],
     "name": "Shani Jayanti",
     "category": "major",
     "nameRegional": {
@@ -750,6 +769,7 @@
   },
   {
     "id": "narasimha_jayanti",
+    "regions": ["all"],
     "name": "Narasimha Jayanti",
     "category": "major",
     "nameRegional": {
@@ -792,6 +812,7 @@
   },
   {
     "id": "parashurama_jayanti",
+    "regions": ["all"],
     "name": "Parashurama Jayanti",
     "category": "major",
     "nameRegional": {
@@ -835,6 +856,7 @@
   },
   {
     "id": "varuthini_ekadashi",
+    "regions": ["all"],
     "name": "Varuthini Ekadashi",
     "category": "vrat",
     "nameRegional": {
@@ -878,6 +900,7 @@
   },
   {
     "id": "sita_navami",
+    "regions": ["north", "east"],
     "name": "Sita Navami",
     "category": "major",
     "nameRegional": {
@@ -920,6 +943,7 @@
   },
   {
     "id": "vat_savitri",
+    "regions": ["north", "west", "central"],
     "name": "Vat Savitri Vrat",
     "category": "vrat",
     "nameRegional": {
@@ -962,6 +986,7 @@
   },
   {
     "id": "ganga_dussehra",
+    "regions": ["north", "east"],
     "name": "Ganga Dussehra",
     "category": "major",
     "nameRegional": {
@@ -1004,6 +1029,7 @@
   },
   {
     "id": "nirjala_ekadashi",
+    "regions": ["all"],
     "name": "Nirjala Ekadashi",
     "category": "vrat",
     "nameRegional": {
@@ -1041,6 +1067,7 @@
   },
   {
     "id": "jamai_shashti",
+    "regions": ["east"],
     "name": "Jamai Shashti",
     "category": "major",
     "nameRegional": {
@@ -1083,6 +1110,7 @@
   },
   {
     "id": "guru_purnima",
+    "regions": ["all"],
     "name": "Guru Purnima",
     "category": "major",
     "nameRegional": {
@@ -1124,6 +1152,7 @@
   },
   {
     "id": "jagannath_rath_yatra",
+    "regions": ["east"],
     "name": "Jagannath Rath Yatra",
     "category": "major",
     "nameRegional": {
@@ -1166,6 +1195,7 @@
   },
   {
     "id": "devshayani_ekadashi",
+    "regions": ["all"],
     "name": "Devshayani Ekadashi",
     "category": "major",
     "nameRegional": {
@@ -1208,6 +1238,7 @@
   },
   {
     "id": "raksha_bandhan",
+    "regions": ["all"],
     "name": "Raksha Bandhan",
     "category": "major",
     "nameRegional": {
@@ -1249,6 +1280,7 @@
   },
   {
     "id": "nag_panchami",
+    "regions": ["all"],
     "name": "Nag Panchami",
     "category": "major",
     "nameRegional": {
@@ -1291,6 +1323,7 @@
   },
   {
     "id": "hariyali_teej",
+    "regions": ["north", "central"],
     "name": "Hariyali Teej",
     "category": "major",
     "nameRegional": {
@@ -1334,6 +1367,7 @@
   },
   {
     "id": "kalki_jayanti",
+    "regions": ["all"],
     "name": "Kalki Jayanti",
     "category": "major",
     "nameRegional": {
@@ -1377,6 +1411,7 @@
   },
   {
     "id": "janmashtami",
+    "regions": ["all"],
     "name": "Krishna Janmashtami",
     "category": "major",
     "nameRegional": {
@@ -1425,6 +1460,7 @@
   },
   {
     "id": "kamika_ekadashi",
+    "regions": ["all"],
     "name": "Kamika Ekadashi",
     "category": "vrat",
     "nameRegional": {
@@ -1468,6 +1504,7 @@
   },
   {
     "id": "pavitra_ekadashi",
+    "regions": ["all"],
     "name": "Pavitra Ekadashi",
     "category": "vrat",
     "nameRegional": {
@@ -1511,6 +1548,7 @@
   },
   {
     "id": "koushiki_amavasya",
+    "regions": ["east"],
     "name": "Koushiki Amavasya",
     "category": "major",
     "nameRegional": {
@@ -1557,6 +1595,7 @@
   },
   {
     "id": "varaha_jayanti",
+    "regions": ["all"],
     "name": "Varaha Jayanti",
     "category": "major",
     "nameRegional": {
@@ -1602,6 +1641,7 @@
 
   {
     "id": "ganesh_chaturthi",
+    "regions": ["all"],
     "name": "Ganesh Chaturthi",
     "category": "major",
     "nameRegional": {
@@ -1649,6 +1689,7 @@
   },
   {
     "id": "rishi_panchami",
+    "regions": ["all"],
     "name": "Rishi Panchami",
     "category": "major",
     "nameRegional": {
@@ -1695,6 +1736,7 @@
   },
   {
     "id": "balarama_jayanti",
+    "regions": ["all"],
     "name": "Balarama Jayanti",
     "category": "major",
     "nameRegional": {
@@ -1740,6 +1782,7 @@
   },
   {
     "id": "vishwakarma_puja",
+    "regions": ["all"],
     "name": "Vishwakarma Puja",
     "category": "major",
     "nameRegional": {
@@ -1786,6 +1829,7 @@
   },
   {
     "id": "radha_ashtami",
+    "regions": ["all"],
     "name": "Radha Ashtami",
     "category": "major",
     "nameRegional": {
@@ -1832,6 +1876,7 @@
   },
   {
     "id": "ganesh_visarjan",
+    "regions": ["all"],
     "name": "Ganesh Visarjan",
     "category": "major",
     "nameRegional": {
@@ -1877,6 +1922,7 @@
   },
   {
     "id": "kajari_teej",
+    "regions": ["north", "central"],
     "name": "Kajari Teej",
     "category": "vrat",
     "nameRegional": {
@@ -1924,6 +1970,7 @@
   },
   {
     "id": "hartalika_teej",
+    "regions": ["north", "west", "central"],
     "name": "Hartalika Teej",
     "category": "vrat",
     "nameRegional": {
@@ -1971,6 +2018,7 @@
   },
   {
     "id": "onam",
+    "regions": ["south"],
     "name": "Onam (Thiruvonam)",
     "category": "major",
     "nameRegional": {
@@ -2014,6 +2062,7 @@
   },
   {
     "id": "vamana_jayanti",
+    "regions": ["all"],
     "name": "Vamana Jayanti",
     "category": "major",
     "nameRegional": {
@@ -2057,6 +2106,7 @@
   },
   {
     "id": "anant_chaturdashi",
+    "regions": ["all"],
     "name": "Anant Chaturdashi",
     "category": "major",
     "nameRegional": {
@@ -2103,6 +2153,7 @@
   },
   {
     "id": "pitru_paksha_start",
+    "regions": ["all"],
     "name": "Pitru Paksha Begins",
     "category": "major",
     "nameRegional": {
@@ -2149,6 +2200,7 @@
   },
   {
     "id": "mahalaya_amavasya",
+    "regions": ["all"],
     "name": "Mahalaya Amavasya",
     "category": "major",
     "nameRegional": {
@@ -2194,6 +2246,7 @@
   },
   {
     "id": "sharad_navratri_start",
+    "regions": ["all"],
     "name": "Sharad Navratri Begins",
     "category": "major",
     "nameRegional": {
@@ -2236,6 +2289,7 @@
   },
   {
     "id": "sharad_navratri_shailputri_puja",
+    "regions": ["all"],
     "name": "Ghatasthapana, Shailputri Puja",
     "category": "major",
     "nameRegional": {
@@ -2276,6 +2330,7 @@
   },
   {
     "id": "sharad_navratri_brahmacharini_puja",
+    "regions": ["all"],
     "name": "Chandra Darshana, Brahmacharini Puja",
     "category": "major",
     "nameRegional": {
@@ -2316,6 +2371,7 @@
   },
   {
     "id": "sharad_navratri_chandraghanta_puja",
+    "regions": ["all"],
     "name": "Sindoor Tritiya, Chandraghanta Puja",
     "category": "major",
     "nameRegional": {
@@ -2356,6 +2412,7 @@
   },
   {
     "id": "sharad_navratri_kushmanda_puja",
+    "regions": ["all"],
     "name": "Kushmanda Puja",
     "category": "major",
     "nameRegional": {
@@ -2396,6 +2453,7 @@
   },
   {
     "id": "sharad_navratri_skandamata_puja",
+    "regions": ["all"],
     "name": "Skandamata Puja",
     "category": "major",
     "nameRegional": {
@@ -2436,6 +2494,7 @@
   },
   {
     "id": "sharad_navratri_katyayani_puja",
+    "regions": ["all"],
     "name": "Katyayani Puja",
     "category": "major",
     "nameRegional": {
@@ -2477,6 +2536,7 @@
   },
   {
     "id": "sharad_navratri_saraswati Avahan",
+    "regions": ["east"],
     "name": "Saraswati Avahan",
     "category": "major",
     "nameRegional": {
@@ -2513,6 +2573,7 @@
   },
   {
     "id": "sharad_navratri_kalaratri_puja",
+    "regions": ["all"],
     "name": "Kalaratri Puja",
     "category": "major",
     "nameRegional": {
@@ -2554,6 +2615,7 @@
   },
   {
     "id": "sharad_navratri_mahagauri_puja",
+    "regions": ["all"],
     "name": "Sharad Navratri- Maa Mahagauri",
     "category": "major",
     "nameRegional": {
@@ -2598,6 +2660,7 @@
   },
   {
     "id": "sharad_navratri_siddhidatri_puja",
+    "regions": ["all"],
     "name": "Sharad Navratri- Maa Siddhidatri",
     "category": "major",
     "displayPriority": 2,
@@ -2643,6 +2706,7 @@
   },
   {
     "id": "sharad_navratri_saraswati_puja",
+    "regions": ["south", "east", "west"],
     "name": "Saraswati Puja",
     "category": "major",
     "nameRegional": {
@@ -2684,6 +2748,7 @@
   },
   {
     "id": "shashthi_durga_puja",
+    "regions": ["east"],
     "name": "Durga Puja- Shashthi",
     "category": "major",
     "displayPriority": 1,
@@ -2728,6 +2793,7 @@
   },
   {
     "id": "saptami_durga_puja",
+    "regions": ["east"],
     "name": "Durga Puja- Saptami",
     "category": "major",
     "displayPriority": 1,
@@ -2773,6 +2839,7 @@
   },
   {
     "id": "ashtami_durga_puja",
+    "regions": ["east"],
     "name": "Durga Puja- Mahashtami",
     "category": "major",
     "displayPriority": 1,
@@ -2816,6 +2883,7 @@
   },
   {
     "id": "kumari_puja",
+    "regions": ["north", "east"],
     "name": "Kumari Puja",
     "category": "major",
     "nameRegional": {
@@ -2859,6 +2927,7 @@
   },
   {
     "id": "navami_durga_puja",
+    "regions": ["east"],
     "name": "Durga Puja- Maha Navami",
     "category": "major",
     "displayPriority": 1,
@@ -2903,6 +2972,7 @@
   },
   {
     "id": "dasami_durga_puja",
+    "regions": ["east"],
     "name": "Durga Puja- Dasami",
     "category": "major",
     "displayPriority": 1,
@@ -2947,6 +3017,7 @@
   },
   {
     "id": "dussehra",
+    "regions": ["all"],
     "name": "Dussehra / Vijayadashami",
     "category": "major",
     "displayPriority": 3,
@@ -2995,6 +3066,7 @@
   },
   {
     "id": "kojagori_puja",
+    "regions": ["east"],
     "name": "Kojagori Puja",
     "category": "major",
     "nameRegional": {
@@ -3031,6 +3103,7 @@
   },
   {
     "id": "sharad_purnima",
+    "regions": ["all"],
     "name": "Sharad Purnima",
     "category": "major",
     "nameRegional": {
@@ -3074,6 +3147,7 @@
   },
   {
     "id": "karva_chauth",
+    "regions": ["north", "west", "central"],
     "name": "Karva Chauth",
     "category": "vrat",
     "nameRegional": {
@@ -3118,6 +3192,7 @@
   },
   {
     "id": "dhanteras",
+    "regions": ["all"],
     "name": "Dhanteras / Dhantrayodashi",
     "category": "major",
     "nameRegional": {
@@ -3160,6 +3235,7 @@
   },
   {
     "id": "kali_choudas",
+    "regions": ["north", "west", "east"],
     "name": "Kali Chaudas/ Bhoot Chaturdashi",
     "category": "major",
     "nameRegional": {
@@ -3199,6 +3275,7 @@
   },
   {
     "id": "lakshmi_puja",
+    "regions": ["all"],
     "name": "Lakshmi Puja",
     "category": "major",
     "nameRegional": {
@@ -3239,6 +3316,7 @@
   },
   {
     "id": "narak_chaturdashi",
+    "regions": ["all"],
     "name": "Narak Chaturdashi / Choti Diwali",
     "category": "major",
     "nameRegional": {
@@ -3281,6 +3359,7 @@
   },
   {
     "id": "diwali",
+    "regions": ["all"],
     "name": "Diwali",
     "category": "major",
     "nameRegional": {
@@ -3323,6 +3402,7 @@
   },
   {
     "id": "govardhan_puja",
+    "regions": ["all"],
     "name": "Govardhan Puja / Annakut",
     "category": "major",
     "nameRegional": {
@@ -3365,6 +3445,7 @@
   },
   {
     "id": "bhai_dooj",
+    "regions": ["all"],
     "name": "Bhai Dooj",
     "category": "major",
     "nameRegional": {
@@ -3407,6 +3488,7 @@
   },
   {
     "id": "ahoi_ashtami",
+    "regions": ["north"],
     "name": "Ahoi Ashtami",
     "category": "vrat",
     "nameRegional": {
@@ -3449,6 +3531,7 @@
   },
   {
     "id": "chhath_puja",
+    "regions": ["north", "east"],
     "name": "Chhath Puja",
     "category": "major",
     "nameRegional": {
@@ -3492,6 +3575,7 @@
   },
   {
     "id": "devutthani_ekadashi",
+    "regions": ["all"],
     "name": "Devutthani Ekadashi",
     "category": "major",
     "nameRegional": {
@@ -3535,6 +3619,7 @@
   },
   {
     "id": "Kansha Badh",
+    "regions": ["north"],
     "name": "Kansha Badh",
     "category": "major",
     "nameRegional": {
@@ -3574,6 +3659,7 @@
   },
   {
     "id": "tulsi_vivah",
+    "regions": ["all"],
     "name": "Tulsi Vivah",
     "category": "major",
     "nameRegional": {
@@ -3616,6 +3702,7 @@
   },
   {
     "id": "kartik_purnima",
+    "regions": ["all"],
     "name": "Kartik Purnima",
     "category": "major",
     "nameRegional": {
@@ -3658,6 +3745,7 @@
   },
   {
     "id": "kalbhairav_jayanti",
+    "regions": ["all"],
     "name": "Kalbhairav Jayanti",
     "category": "major",
     "nameRegional": {
@@ -3700,6 +3788,7 @@
   },
   {
     "id": "vivah_panchami",
+    "regions": ["north", "east"],
     "name": "Vivah Panchami",
     "category": "major",
     "nameRegional": {
@@ -3741,6 +3830,7 @@
   },
   {
     "id": "gita_jayanti",
+    "regions": ["all"],
     "name": "Gita Jayanti",
     "category": "major",
     "nameRegional": {
@@ -3783,6 +3873,7 @@
   },
   {
     "id": "dattatreya_jayanti",
+    "regions": ["all"],
     "name": "Dattatreya Jayanti",
     "category": "major",
     "nameRegional": {
@@ -3825,6 +3916,7 @@
   },
   {
     "id": "paush_purnima",
+    "regions": ["all"],
     "name": "Paush Purnima",
     "category": "major",
     "nameRegional": {
@@ -3864,6 +3956,7 @@
   },
   {
     "id": "pongal",
+    "regions": ["south"],
     "name": "Pongal",
     "category": "major",
     "nameRegional": {
@@ -3904,6 +3997,7 @@
   },
   {
     "id": "makar_sankranti",
+    "regions": ["all"],
     "name": "Makar Sankranti",
     "category": "major",
     "nameRegional": {
@@ -3947,6 +4041,7 @@
   },
   {
     "id": "pausha_putrada_ekadashi",
+    "regions": ["all"],
     "name": "Pausha Putrada Ekadashi",
     "category": "vrat",
     "nameRegional": {
@@ -3990,6 +4085,7 @@
   },
   {
     "id": "lohri",
+    "regions": ["north"],
     "name": "Lohri",
     "category": "major",
     "nameRegional": {
@@ -4033,6 +4129,7 @@
   },
   {
     "id": "basant_panchami",
+    "regions": ["all"],
     "name": "Basant Panchami",
     "category": "major",
     "nameRegional": {
@@ -4075,6 +4172,7 @@
   },
   {
     "id": "ratha_saptami",
+    "regions": ["all"],
     "name": "Ratha Saptami",
     "category": "major",
     "nameRegional": {
@@ -4114,6 +4212,7 @@
   },
   {
     "id": "bhishma_ashtami",
+    "regions": ["all"],
     "name": "Bhishma Ashtami",
     "category": "major",
     "nameRegional": {
@@ -4153,6 +4252,7 @@
   },
   {
     "id": "magh_purnima",
+    "regions": ["all"],
     "name": "Magh Purnima",
     "category": "major",
     "nameRegional": {
@@ -4195,6 +4295,7 @@
   },
   {
     "id": "maha_shivaratri",
+    "regions": ["all"],
     "name": "Maha Shivaratri",
     "category": "major",
     "nameRegional": {
@@ -4240,6 +4341,7 @@
   },
   {
     "id": "holika_dahan",
+    "regions": ["all"],
     "name": "Holika Dahan/ Choti Holi",
     "category": "major",
     "nameRegional": {
@@ -4281,6 +4383,7 @@
   },
   {
     "id": "holi",
+    "regions": ["all"],
     "name": "Holi",
     "category": "major",
     "nameRegional": {
@@ -4320,6 +4423,7 @@
   },
   {
     "id": "sheetala_ashtami",
+    "regions": ["north", "west", "central"],
     "name": "Sheetala Ashtami / Basoda",
     "category": "major",
     "nameRegional": {
@@ -4359,6 +4463,7 @@
   },
   {
     "id": "ekadashi_shukla",
+    "regions": ["all"],
     "name": "Ekadashi (Shukla)",
     "category": "vrat",
     "nameRegional": {
@@ -4404,6 +4509,7 @@
   },
   {
     "id": "ekadashi_krishna",
+    "regions": ["all"],
     "name": "Ekadashi (Krishna)",
     "category": "vrat",
     "nameRegional": {
@@ -4449,6 +4555,7 @@
   },
   {
     "id": "purnima",
+    "regions": ["all"],
     "name": "Purnima (Full Moon)",
     "category": "recurring",
     "nameRegional": {
@@ -4485,6 +4592,7 @@
   },
   {
     "id": "amavasya",
+    "regions": ["all"],
     "name": "Amavasya (New Moon)",
     "category": "recurring",
     "nameRegional": {

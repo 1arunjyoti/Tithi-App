@@ -17,9 +17,9 @@ class AuspiciousCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? context.colors.surface,
-        borderRadius: BorderRadius.circular(16),
+      decoration: AppTheme.sheetCardDecoration(
+        context,
+        highContrast: highContrast,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

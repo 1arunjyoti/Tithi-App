@@ -11,24 +11,19 @@ import '../providers/accessibility_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
-
-/// Best-effort glyph per festival category (the bundle ships no per-festival
-/// icon metadata). Major festivals get the gold sun from the redesign mock,
-/// vrats the temple glyph, everything else the celebration glyph.
-IconData festivalRowIcon(Festival festival) {
-  return switch (festival.category) {
-    'major' => Icons.wb_sunny_rounded,
-    'vrat' => Icons.temple_buddhist,
-    _ => Icons.celebration_rounded,
-  };
-}
+import 'festival_thumbnail.dart';
 
 /// Single festival row shared by the home "Festivals & Events" card and the
-/// all-festivals screen: gold icon tile, bold name, gold date/tithi line with
-/// an optional "in N days" suffix, dim one-line description, chevron.
+/// all-festivals screen: gold icon or festival artwork tile, bold name, gold
+/// date/tithi line with an optional "in N days" suffix, dim one-line
+/// description, chevron.
 ///
 /// Pass [date]/[panchang]/[daysAway] for dated rows (home card). Without a
 /// date the gold line falls back to the category label (all-festivals list).
+/// [isSelectedDay] gives the row the accent surface: the home card sets it
+/// for the festivals of the calendar's selected date, so that day's rows
+/// stand out from the following days (whether the selection is today or a
+/// browsed date).
 /// A null [onTap] renders the row without a chevron or ripple.
 class FestivalRowTile extends ConsumerWidget {
   const FestivalRowTile({
@@ -37,6 +32,7 @@ class FestivalRowTile extends ConsumerWidget {
     this.date,
     this.panchang,
     this.daysAway,
+    this.isSelectedDay = false,
     this.onTap,
   });
 
@@ -44,18 +40,17 @@ class FestivalRowTile extends ConsumerWidget {
   final DateTime? date;
   final PanchangData? panchang;
   final int? daysAway;
+  final bool isSelectedDay;
   final VoidCallback? onTap;
 
 
-  String? _goldLine(BuildContext context, WidgetRef ref) {
+  String? _goldLine(
+    BuildContext context, {
+    required bool isToday,
+  }) {
     final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final day = date;
     if (day != null) {
-      // App "today" (midnight-refreshed + resume-corrected), not wall-clock
-      // now: a suspended-then-resumed app would otherwise label rows with
-      // yesterday's Today around midnight.
-      final today = ref.watch(todayDateProvider);
-      final isToday = isSameDay(day, today);
       final parts = <String>[
         isToday
             ? l10n.today
@@ -65,8 +60,11 @@ class FestivalRowTile extends ConsumerWidget {
       // holds; the all-festivals list passes date-only rows (no extra fetch).
       final p = panchang;
       if (p != null) {
+        // Paksha name, not the "Waxing/Waning" phase word: "Waxing Ekadashi"
+        // describes the moon, not the tithi. Panchang convention is
+        // "Shukla Ekadashi" / "Krishna Ekadashi".
         parts.add(
-          '${p.isShukla ? l10n.waxing : l10n.waning} '
+          '${p.isShukla ? l10n.themeShukla : l10n.themeKrishna} '
           '${localizedTithiName(p.tithiNumber, p.paksha, l10n)}',
         );
       }
@@ -87,7 +85,13 @@ class FestivalRowTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gold = AppTheme.festivalAccent(context);
-    final goldLine = _goldLine(context, ref);
+    // App "today" (midnight-refreshed + resume-corrected), not wall-clock
+    // now: a suspended-then-resumed app would otherwise label rows with
+    // yesterday's Today around midnight. The accent surface below follows
+    // the calendar selection instead (see [isSelectedDay]).
+    final day = date;
+    final isToday = day != null && isSameDay(day, ref.watch(todayDateProvider));
+    final goldLine = _goldLine(context, isToday: isToday);
     final description = festival.description.trim();
     // One composed label instead of the row's separate Text nodes (which
     // would otherwise repeat the name and date after this label).
@@ -101,7 +105,10 @@ class FestivalRowTile extends ConsumerWidget {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: Ink(
-          decoration: AppTheme.festivalRowDecoration(context),
+          decoration: AppTheme.festivalRowDecoration(
+            context,
+            isSelectedDay: isSelectedDay,
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: onTap == null
@@ -117,19 +124,13 @@ class FestivalRowTile extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppTheme.festivalTileBackground(context),
-                        borderRadius: BorderRadius.circular(14),
+                    FestivalThumbnail(
+                      festival: festival,
+                      size: 48,
+                      backgroundColor: AppTheme.festivalTileBackground(
+                        context,
                       ),
-                      alignment: Alignment.center,
-                      child: Icon(
-                        festivalRowIcon(festival),
-                        size: 24,
-                        color: gold,
-                      ),
+                      glyphColor: gold,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -196,3 +197,4 @@ class FestivalRowTile extends ConsumerWidget {
     );
   }
 }
+

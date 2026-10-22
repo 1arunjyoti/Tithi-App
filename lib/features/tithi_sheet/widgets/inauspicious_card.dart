@@ -82,9 +82,9 @@ class InauspiciousCard extends StatelessWidget {
     final neutral = context.colors.onSurface.withValues(alpha: 0.1);
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? context.colors.surface,
-        borderRadius: BorderRadius.circular(16),
+      decoration: AppTheme.sheetCardDecoration(
+        context,
+        highContrast: highContrast,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

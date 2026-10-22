@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/features/hero/domain/hero_content.dart';
 import 'package:tithi/l10n/app_localizations.dart';
 import 'package:tithi/models/festival.dart';
+import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/models/hindu_month_system.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/calendar_provider.dart';
@@ -129,6 +130,42 @@ void main() {
 
     test('empty day yields no artwork', () {
       expect(heroArtworks(day()), isEmpty);
+    });
+
+    test('selected region leads the artwork deck over higher priority', () {
+      // Arrange: the pan-India festival outranks the regional one.
+      final panchang = day(
+        festivals: [
+          festival('PanIndia', image: 'india.webp', priority: 1),
+          const Festival(
+            id: 'Regional',
+            name: 'Regional',
+            category: 'major',
+            nameRegional: NameRegional(nameEnglish: 'Regional'),
+            visuals: Visuals(image: 'regional.webp'),
+            purpose: Purpose(description: ''),
+            panchangRules: PanchangRules(
+              masa: '',
+              paksha: 'Shukla',
+              tithi: 1,
+              conditions: '',
+            ),
+            rituals: Rituals(steps: []),
+            media: Media(),
+            displayPriority: 9,
+            regions: ['east'],
+          ),
+        ],
+      );
+
+      // Act
+      final artworks = heroArtworks(panchang, region: FestivalRegion.east);
+
+      // Assert
+      expect(artworks, [
+        (source: 'regional.webp', label: 'Regional'),
+        (source: 'india.webp', label: 'PanIndia'),
+      ]);
     });
   });
 

@@ -12,8 +12,10 @@ import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
+import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/event_detail_sheet.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
+import 'package:tithi/widgets/festival_row_tile.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
@@ -24,6 +26,13 @@ class _NoHapticsNotifier extends AccessibilityNotifier {
 class _FixedDateNotifier extends SelectedDateNotifier {
   @override
   DateTime build() => DateTime(2026, 9, 14);
+}
+
+class _FixedTodayNotifier extends TodayDateNotifier {
+  // Deliberately not the selected date: the row highlight must follow the
+  // calendar selection, not "today".
+  @override
+  DateTime build() => DateTime(2026, 9, 20);
 }
 
 void main() {
@@ -42,12 +51,13 @@ void main() {
     required String name,
     String category = 'major',
     String description = 'A test festival description',
+    String image = '',
   }) => Festival(
     id: id,
     name: name,
     category: category,
     nameRegional: const NameRegional(nameEnglish: 'Test'),
-    visuals: const Visuals(),
+    visuals: Visuals(image: image),
     purpose: Purpose(description: description),
     panchangRules: const PanchangRules(
       masa: '',
@@ -139,10 +149,10 @@ void main() {
 
       // Assert: order + gold date lines. Rows dated today show the "Today"
       // label (no date, no countdown suffix); other rows keep the formatted
-      // date. The tithi half uses the waxing/waning word + localized tithi
-      // name (matching FestivalRowTile), not the paksha name. Fixture dates
-      // are fixed, so resolve against the real today to stay hermetic
-      // whatever day the suite runs.
+      // date. The tithi half uses the paksha name + localized tithi name
+      // (matching FestivalRowTile), not the waxing/waning phase word.
+      // Fixture dates are fixed, so resolve against the real today to stay
+      // hermetic whatever day the suite runs.
       final now = DateTime.now();
       bool isRealToday(DateTime d) =>
           d.year == now.year && d.month == now.month && d.day == now.day;
@@ -152,21 +162,132 @@ void main() {
       expect(
         find.text(
           isRealToday(DateTime(2026, 9, 14))
-              ? 'Today · Waxing Chaturthi'
-              : 'Mon, 14 Sep · Waxing Chaturthi',
+              ? 'Today · Shukla Chaturthi'
+              : 'Mon, 14 Sep · Shukla Chaturthi',
         ),
         findsOneWidget,
       );
       expect(
         find.text(
           isRealToday(DateTime(2026, 9, 16))
-              ? 'Today · Waxing Shashthi'
-              : 'Wed, 16 Sep · Waxing Shashthi · in 2 days',
+              ? 'Today · Shukla Shashthi'
+              : 'Wed, 16 Sep · Shukla Shashthi · in 2 days',
         ),
         findsOneWidget,
       );
       expect(find.text('View all 3 festivals'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('rows show festival artwork when the bundle ships one', (
+      tester,
+    ) async {
+      // Arrange: two rows on the selected day — one with artwork, one without.
+      final withArt = fixture(
+        id: 'art',
+        name: 'Ganesh Chaturthi',
+        image: 'assets/images/festival/shri_ganesh.webp',
+      );
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [withArt, festB],
+          ),
+        },
+        all: [withArt, festB],
+      );
+
+      // Assert: the artwork replaces the category glyph in the leading slot;
+      // the festival without artwork keeps the glyph.
+      Finder rowOf(String name) => find.ancestor(
+        of: find.text(name),
+        matching: find.byType(FestivalRowTile),
+      );
+      final artRow = rowOf('Ganesh Chaturthi');
+      expect(
+        find.descendant(of: artRow, matching: find.byType(Image)),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: artRow,
+          matching: find.byIcon(Icons.wb_sunny_rounded),
+        ),
+        findsNothing,
+      );
+      final glyphRow = rowOf('Vishwakarma Puja');
+      expect(
+        find.descendant(of: glyphRow, matching: find.byType(Image)),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: glyphRow,
+          matching: find.byIcon(Icons.temple_buddhist),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('selected-day rows get the accent wash, later days neutral', (
+      tester,
+    ) async {
+      // Arrange: fixed selection (9/14) and a different fixed "today"
+      // (9/20), so the highlight can only come from the selection.
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [festA],
+          ),
+          DateTime(2026, 9, 16): dayData(
+            date: DateTime(2026, 9, 16),
+            festivals: [festB],
+            tithiName: 'Shashthi',
+            tithiNumber: 6,
+          ),
+        },
+        all: [festA, festB],
+        extraOverrides: [
+          todayDateProvider.overrideWith(_FixedTodayNotifier.new),
+        ],
+      );
+
+      BoxDecoration decorationOf(String name) {
+        final row = find.ancestor(
+          of: find.text(name),
+          matching: find.byType(FestivalRowTile),
+        );
+        final ink = tester.widget<Ink>(
+          find.descendant(of: row, matching: find.byType(Ink)).first,
+        );
+        return ink.decoration! as BoxDecoration;
+      }
+
+      final selectedRow = decorationOf('Balarama Jayanti');
+      final laterRow = decorationOf('Vishwakarma Puja');
+
+      // Assert: the selected day's fill/border are the festival accent (hue
+      // match), no later row shares them, and the selected row is labelled
+      // with its date (it is not "today" in this fixture).
+      final context = tester.element(find.byType(FestivalRowTile).first);
+      final accent = AppTheme.festivalAccent(context);
+      expect(find.text('Mon, 14 Sep · Shukla Chaturthi'), findsOneWidget);
+      expect(selectedRow.color, isNotNull);
+      expect(selectedRow.color!.withValues(alpha: 1), equals(accent));
+      expect(selectedRow.color, isNot(equals(laterRow.color)));
+      expect(
+        (selectedRow.border! as Border).top.color,
+        isNot(equals((laterRow.border! as Border).top.color)),
+      );
+      expect(
+        (selectedRow.border! as Border).top.color.r,
+        closeTo(accent.r, 0.001),
+      );
     });
 
     testWidgets('empty window keeps the view-all button', (tester) async {

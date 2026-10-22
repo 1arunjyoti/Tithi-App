@@ -11,6 +11,7 @@ This guide explains how to add or edit festivals in `festivals.json`.
 ```json
 {
   "id": "unique_festival_id",
+  "regions": ["all"],
   "name": "Festival Name",
   "category": "major|vrat|recurring",
   "displayPriority": 1,
@@ -55,26 +56,32 @@ This guide explains how to add or edit festivals in `festivals.json`.
 
 All `panchang_rules` keys except `masa`/`paksha`/`tithi`/`conditions` are
 optional and fall back to safe defaults when omitted (see field table
-below). `visuals`, `rituals`, and `media` are likewise optional — the
+below). `visuals`, `rituals`, and `media` are likewise optional - the
 parser defaults them to empty (13 current entries omit one or more,
 mostly the terse Navratri sequence markers). `displayPriority`
-(top-level, sibling of `id`/`name`/`category` — **not** inside
+(top-level, sibling of `id`/`name`/`category` - **not** inside
 `panchang_rules`) is also optional; omit it unless the festival shares
 its day with others and needs an explicit order (see Display Priority).
-`category` in use: `major` (94 entries), `vrat` (12), `recurring` (2) —
-the sheet shows fasting/rituals/mantra sections only when those fields
-are non-empty, so an entry with empty `steps`/`mantra`/`fasting` renders
-fewer sections by design, not by bug.
+`regions` (top-level, next to `id`) is optional and defaults to
+`["all"]`; only set it for festivals rooted in specific zones (see
+Festival Region). `category` in use: `major` (94 entries), `vrat` (12),
+`recurring` (2) - the sheet shows fasting/rituals/mantra sections only
+when those fields are non-empty, so an entry with empty
+`steps`/`mantra`/`fasting` renders fewer sections by design, not by bug.
 
 `category` and the `recurring` flag never affect matching — they only
-drive filtering and headlines. The vrat list is `category == 'vrat'` OR
+drive filtering, headlines, and yearly-list repetition. The vrat list is
+`category == 'vrat'` OR
 `recurring == true` (`vratProvider` in `lib/providers/festival_provider.dart`;
 today that is the two Ekadashi vrats plus `purnima`/`amavasya`), the major
 list is `category == 'major'`, and the day headline falls back to the
 first `major` only when no `displayPriority` rank is present (see Display
 Priority). So tagging a monthly vrat `recurring: true` controls which tab
 it appears under, not which days it matches — matching still comes purely
-from `masa`/`paksha`/`tithi` (usually with `"masa": "*"`).
+from `masa`/`paksha`/`tithi` (usually with `"masa": "*"`). It also makes
+the All Festivals screen repeat the entry for every occurrence in the
+year instead of listing only the first one (see `recurring` in the field
+table below).
 
 ## Panchang Rules
 
@@ -506,6 +513,71 @@ Rules:
   existing 1/2/3 convention for the Durga Puja cluster and use the next
   free int for new collisions.
 
+### Festival Region (Same-Day Ordering)
+
+`regions` (optional top-level list, sibling of `id`) records where a
+festival is traditionally observed. It drives a **presentation-only**
+preference: when the user picks a region in Settings → Preferences →
+Festival Region, festivals rooted in that region are shown first on days
+that have several festivals. Festivals from other regions are **never
+hidden** — only reordered.
+
+```json
+{ "id": "onam",
+  "regions": ["south"],
+  "name": "Onam (Thiruvonam)" }
+```
+
+Canonical tags: `north`, `south`, `east`, `west`, `central`, `northeast`,
+and `all`. Rules:
+
+- Omit `regions` (or use `["all"]`) for pan-India festivals. Missing,
+  empty, or invalid values normalize to `["all"]`, so older data and
+  tests keep the current order.
+- `all` is **exclusive** — never mix it with zone tags. Any `all` in the
+  list collapses the whole list to `["all"]`.
+- Use multiple zone tags only when the observance genuinely spans them,
+  e.g. `chhath_puja` is `["north", "east"]` (Bihar/Jharkhand/UP) and
+  `karva_chauth` is `["north", "west", "central"]`.
+- Tags are case-insensitive on parse, but write them lowercase.
+- North-East currently has no exclusive festivals; selecting it promotes
+  pan-India festivals over the other zones' festivals until an entry is
+  tagged `northeast`.
+
+Same-day ranking (`sortedFestivalsForRegion` in
+`lib/models/festival_region.dart`):
+
+1. tier 0 — rooted in the selected region;
+2. tier 1 — pan-India (`all`);
+3. tier 2 — rooted in other regions.
+
+Within each tier the incoming order is preserved, which is the
+`displayPriority` order already applied by `PanchangData.fromRawTithi`.
+Do **not** re-sort by `displayPriority` after region ordering — that
+would undo the tiers. Picking `All India` returns the list untouched
+(current behavior). The headline (`primaryFestivalForRegion`) picks the
+best festival inside the winning tier, falling back to
+`primaryFestival` when no festival matches the selected region.
+
+The preference is stored in the settings box under `festival_region`
+(index into `FestivalRegion`), shared by the UI and the notification
+scheduler, and cleared by Reset Settings. Region ordering is applied at
+render time in the home event list, the tithi sheet, the hero artwork,
+and notification headlines; cached `PanchangData` is never re-written,
+so switching regions needs no cache invalidation.
+
+The All Festivals screen also offers an explicit **region filter**
+(`All regions` or one zone in the filter sheet). Unlike the preference,
+this is an opt-in narrowing: it keeps pan-India festivals plus festivals
+tagged with the chosen zone and hides festivals rooted only in other
+zones. It composes with the category filter and with search, and the
+default selection filters nothing.
+
+The yearly JSON export (`festival_export_service.dart`) emits `regions`
+(normalized, always present — `["all"]` for pan-India) and
+`displayPriority` (null when unranked) per festival, so an exported year
+carries the same ordering metadata as the source data.
+
 ### Full Field Reference (`panchang_rules`)
 
 | Field | Type | Default | Purpose |
@@ -514,7 +586,7 @@ Rules:
 | `paksha` | string | (required) | `Shukla` / `Krishna`; `"*"` = either |
 | `tithi` | 0-15 | (required) | Paksha-relative tithi (15 = Purnima/Amavasya). Ignored for `Solar` (use `0`) and `<Name> Nakshatra` conditions (keep typical value as docs). |
 | `conditions` | string | (required) | Tithi-name echo (informational; spelling variants like `Dasami`/`Dashami` are harmless), `"Solar"`, or `"<Name> Nakshatra"` (both override matching) |
-| `recurring` | bool | `false` | Tab filter only (`vrat` tab = `category == 'vrat'` OR `recurring`), never matching |
+| `recurring` | bool | `false` | Tab filter only (`vrat` tab = `category == 'vrat'` OR `recurring`), never matching. Also expands the yearly All Festivals list to every occurrence (e.g. all 24 Ekadashis) instead of just the first. |
 | `solarDate` | string | — | Exact zero-padded `"MM-DD"` for `Solar` festivals; missing/other shapes never match |
 | `weekday` | string | — | Full `"Monday"`…`"Sunday"` (case-sensitive; unknown = ignored); 0 shipped entries use it |
 | `endTithi` | int | — | Inclusive tithi *range* (`tithi`…`endTithi`); 0 shipped entries use it |
@@ -542,12 +614,12 @@ adding a `HiveField`, regenerate adapters with `build_runner`).
 ### Verification checklist
 
 1. `flutter analyze` on touched files — clean.
-2. `flutter test test/festival_data_test.dart test/vriddhi_filter_test.dart test/dominant_grace_test.dart test/nakshatra_matching_test.dart test/panchang_data_test.dart test/festival_export_test.dart test/display_priority_test.dart` — all green.
+2. `flutter test test/festival_data_test.dart test/festival_region_test.dart test/vriddhi_filter_test.dart test/dominant_grace_test.dart test/nakshatra_matching_test.dart test/panchang_data_test.dart test/festival_export_test.dart test/display_priority_test.dart` — all green.
    Note: the `Dataset` groups in those files assert live annotations
-   (`vriddhi`, `Mula Nakshatra`, `displayPriority`, Amanta months). If you
-   intentionally change an annotation, update the corresponding expectation
-   — a red dataset test means the data drifted, not (only) that the test
-   is stale.
+   (`vriddhi`, `Mula Nakshatra`, `displayPriority`, Amanta months,
+   `regions`). If you intentionally change an annotation, update the
+   corresponding expectation — a red dataset test means the data drifted,
+   not (only) that the test is stale.
 3. Relaunch and check the affected date on **all surfaces that show it**:
    calendar dot, event sheet (incl. Begins/Ends), countdown/search, and —
    for boundary weeks — the notification content. They share one pipeline,

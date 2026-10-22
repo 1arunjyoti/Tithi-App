@@ -455,7 +455,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Tithi is an open-source project. Our code is publicly available for audit, ensuring that our privacy promises are backed by verifiable transparency. What you see is exactly what you get.';
 
   @override
-  String get lastUpdated => 'Last Updated: December 2025';
+  String get lastUpdated => 'Last Updated: October 2026';
 
   @override
   String get applicationLegalese =>
@@ -876,6 +876,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allFestivals => 'All Festivals';
 
   @override
+  String get festivalFilterAll => 'All';
+
+  @override
+  String get festivalFilterMajor => 'Major';
+
+  @override
+  String get festivalFilterVrat => 'Vrat';
+
+  @override
+  String get festivalFilterRecurring => 'Recurring';
+
+  @override
+  String get festivalFilterTitle => 'Filter festivals';
+
+  @override
+  String get festivalFilterSubtitle => 'Narrow the list by category and region';
+
+  @override
+  String get festivalFilterRegion => 'Region';
+
+  @override
+  String get festivalFilterAllRegions => 'All regions';
+
+  @override
   String get searchFestivalsHint => 'Search festivals';
 
   @override
@@ -1071,6 +1095,62 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get hinduMonthSystemSubtitle =>
       'Choose how months are named during Krishna Paksha';
+
+  @override
+  String get festivalRegion => 'Festival Region';
+
+  @override
+  String get festivalRegionSubtitle =>
+      'Choose which region\'s festivals appear first when several fall on the same day';
+
+  @override
+  String get festivalRegionAll => 'All India';
+
+  @override
+  String get festivalRegionAllDescription =>
+      'Keep the default order for every festival';
+
+  @override
+  String get festivalRegionNorth => 'North India';
+
+  @override
+  String get festivalRegionNorthDescription =>
+      'Show North Indian festivals first on shared dates';
+
+  @override
+  String get festivalRegionSouth => 'South India';
+
+  @override
+  String get festivalRegionSouthDescription =>
+      'Show South Indian festivals first on shared dates';
+
+  @override
+  String get festivalRegionEast => 'East India';
+
+  @override
+  String get festivalRegionEastDescription =>
+      'Show East Indian festivals first on shared dates';
+
+  @override
+  String get festivalRegionWest => 'West India';
+
+  @override
+  String get festivalRegionWestDescription =>
+      'Show West Indian festivals first on shared dates';
+
+  @override
+  String get festivalRegionCentral => 'Central India';
+
+  @override
+  String get festivalRegionCentralDescription =>
+      'Show Central Indian festivals first on shared dates';
+
+  @override
+  String get festivalRegionNortheast => 'North-East India';
+
+  @override
+  String get festivalRegionNortheastDescription =>
+      'Show North-Eastern festivals first on shared dates';
 
   @override
   String get hinduYearEra => 'Hindu Year Era';
@@ -1713,4 +1793,186 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get swipeArtworkHint =>
       'Swipe for the other festival artwork, long press to enlarge';
+
+  @override
+  String get aiAssistSection => 'AI ASSIST';
+
+  @override
+  String get aiAssist => 'AI assist';
+
+  @override
+  String get aiAssistSubtitle =>
+      'Send panchang details to your AI app when you ask';
+
+  @override
+  String get aiAskAi => 'Ask AI';
+
+  @override
+  String get aiAskAboutToday => 'Ask AI about today';
+
+  @override
+  String get aiAskAboutDay => 'Ask AI about this day';
+
+  @override
+  String get aiAskAboutFestival => 'Ask AI about this festival';
+
+  @override
+  String get aiOpensYourApp => 'Opens your AI app';
+
+  @override
+  String get aiYourQuestion => 'YOUR QUESTION';
+
+  @override
+  String get aiQuestionHint => 'What would you like to know?';
+
+  @override
+  String get aiWhatWillBeShared => 'WHAT WILL BE SHARED';
+
+  @override
+  String get aiShowAll => 'Show all';
+
+  @override
+  String get aiHidePreview => 'Hide';
+
+  @override
+  String get aiPreviewFull => 'Show the exact message';
+
+  @override
+  String get aiPreviewSummary => 'Show the summary';
+
+  @override
+  String get aiAlsoSends =>
+      'Also sends your question, and asks for the answer in your app language.';
+
+  @override
+  String get aiPreparing => 'Preparing the month\'s panchang…';
+
+  @override
+  String get aiMonthFailed => 'Couldn\'t prepare this month\'s panchang.';
+
+  @override
+  String get aiLocationNote =>
+      'Your GPS location is never sent — only the city name.';
+
+  @override
+  String get aiOpenApp => 'Open AI app';
+
+  @override
+  String aiOpenInApp(String app) {
+    return 'Open $app';
+  }
+
+  @override
+  String get aiAppSetting => 'AI app';
+
+  @override
+  String get aiAppAutomatic => 'Automatic';
+
+  @override
+  String get aiAppAutomaticSubtitle =>
+      'Tries Gemini first, then other installed AI apps';
+
+  @override
+  String get aiAppPickerTitle => 'Open prompts in';
+
+  @override
+  String get aiAppPickerFailed => 'Couldn\'t save the AI app choice';
+
+  @override
+  String get aiAppNotInstalled => 'Not installed';
+
+  @override
+  String aiAppUnavailable(String app) {
+    return '$app isn\'t available';
+  }
+
+  @override
+  String get aiAppUnavailableBody =>
+      'It may have been uninstalled. You can share the prompt instead, or copy it and paste it into your AI app.';
+
+  @override
+  String get aiOpenShareSheet => 'Share instead';
+
+  @override
+  String get aiCopy => 'Copy';
+
+  @override
+  String get aiCopied => 'Prompt copied';
+
+  @override
+  String get aiCopyFailed => 'Couldn\'t copy the prompt';
+
+  @override
+  String get aiShareFailed => 'Couldn\'t open an app to share this';
+
+  @override
+  String get aiShareFailedCopied =>
+      'Couldn\'t open an app to share this — the prompt is copied instead.';
+
+  @override
+  String get aiFooterNote =>
+      'Tithi has no AI of its own. This opens your AI app with the details filled in — the answer appears there.';
+
+  @override
+  String get aiTitleToday => 'Ask about today';
+
+  @override
+  String get aiTitleMonth => 'Ask about this month';
+
+  @override
+  String get aiDefaultQuestionToday =>
+      'Explain today\'s tithi in plain language.';
+
+  @override
+  String get aiDefaultQuestionFestival =>
+      'Explain this festival\'s meaning and how it is observed.';
+
+  @override
+  String get aiDefaultQuestionMonth =>
+      'Summarise this month\'s festivals and notable tithis.';
+
+  @override
+  String get aiConsentTitle => 'Turn on AI assist?';
+
+  @override
+  String get aiConsentBody =>
+      'When you ask AI, Tithi will build a short summary of the panchang and hand it to the AI app you choose.';
+
+  @override
+  String get aiConsentBulletSend =>
+      'Sends the panchang for your city (tithi, nakshatra, sunrise, sunset), the festival details when you ask about one, and the question you type.';
+
+  @override
+  String get aiConsentBulletLocation =>
+      'Never your GPS coordinates or exact position.';
+
+  @override
+  String get aiConsentBulletWhere =>
+      'Opens your AI app — the answer appears there, not in Tithi.';
+
+  @override
+  String get aiConsentEnable => 'Turn on';
+
+  @override
+  String get aiHowItWorks => 'How it works';
+
+  @override
+  String get aiHowItWorksSubtitle => 'What is shared and what isn\'t';
+
+  @override
+  String get aiHowItWorksRule => 'Tithi calculates. The assistant explains.';
+
+  @override
+  String get aiHowItWorksBody =>
+      'Every tithi, nakshatra and sunrise/sunset time in the summary comes from Tithi\'s own on-device calculations. The AI is only asked to explain those numbers in your language, so it cannot change them. You see the exact text before anything leaves the app, and you can copy it instead of opening an AI app.';
+
+  @override
+  String get aiToggleFailed => 'Couldn\'t save the AI assist setting';
+
+  @override
+  String get privacyAiTitle => 'AI Assist (Optional)';
+
+  @override
+  String get privacyAiDesc =>
+      'AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary — the panchang for your city (date, tithi, nakshatra, sunrise and sunset), the festival details when you ask about one, and the question you type — and hands it to the AI app you chose in Settings, or to the system share sheet when that app is not available. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app\'s own privacy policy.';
 }

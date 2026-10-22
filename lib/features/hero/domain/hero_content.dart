@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
+import '../../../models/festival_region.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../models/panchang_data.dart';
 import '../../../providers/calendar_provider.dart';
@@ -95,18 +96,27 @@ class HeroContent {
 
 /// Every festival artwork for [panchang], headline first.
 ///
-/// Ranked the same way as [primaryFestival] (stable sort on
-/// [displayPriority]), so the first entry is the picture the card shows on
-/// top. Festivals without an image are skipped, and repeated sources collapse:
-/// several entries can share one bundled file (the five Durga Puja days), and
-/// a deck of identical pictures would read as a rendering bug.
-List<HeroArtwork> heroArtworks(PanchangData panchang) {
+/// Festivals are ranked exactly like [primaryFestival] — a stable sort on
+/// [displayPriority] — and then the region tier lifts the user's regional
+/// festivals above pan-India and out-of-region ones. So the first entry is
+/// the picture the card shows on top. Festivals without an image are
+/// skipped, and repeated sources collapse: several entries can share one
+/// bundled file (the five Durga Puja days), and a deck of identical
+/// pictures would read as a rendering bug.
+List<HeroArtwork> heroArtworks(
+  PanchangData panchang, {
+  FestivalRegion region = FestivalRegion.all,
+}) {
   if (panchang.festivals.isEmpty) return const [];
+  // Priority first (callers may hand over an unsorted list), then region
+  // tiers: sortedFestivalsForRegion keeps the incoming order inside a tier,
+  // so this cannot undo the displayPriority ranking.
   final ordered = List<Festival>.of(panchang.festivals);
   sortFestivalsByDisplayPriority(ordered);
+  final ranked = sortedFestivalsForRegion(ordered, region);
   final seen = <String>{};
   final artworks = <HeroArtwork>[];
-  for (final festival in ordered) {
+  for (final festival in ranked) {
     final source = festival.visuals.image.trim();
     if (source.isEmpty || !seen.add(source)) continue;
     artworks.add((source: source, label: festival.name));
@@ -129,6 +139,7 @@ HeroContent heroContentData({
   required ({int day, String month, int year})? bengali,
   required bool useBengaliScript,
   required bool isToday,
+  FestivalRegion region = FestivalRegion.all,
 }) {
   final isShukla = panchang.isShukla;
 
@@ -268,6 +279,6 @@ HeroContent heroContentData({
     title: title,
     subLabel: subLabel,
     chips: chips,
-    artworks: heroArtworks(panchang),
+    artworks: heroArtworks(panchang, region: region),
   );
 }

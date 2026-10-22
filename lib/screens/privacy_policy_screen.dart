@@ -72,6 +72,16 @@ class PrivacyPolicyScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
                     _buildPolicyCard(
                       context,
+                      title: l10n?.privacyAiTitle ?? 'AI Assist (Optional)',
+                      content:
+                          l10n?.privacyAiDesc ??
+                          'AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary of the panchang for your city (date, tithi, nakshatra, sunrise and sunset) and hands it to the AI app you pick from the system share sheet. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app\'s own privacy policy.',
+                      icon: Icons.auto_awesome_outlined,
+                      ref: ref,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildPolicyCard(
+                      context,
                       title: l10n?.privacyOffline ?? 'Offline Functionality',
                       content:
                           l10n?.privacyOfflineDesc ??
@@ -93,7 +103,7 @@ class PrivacyPolicyScreen extends ConsumerWidget {
                     const SizedBox(height: 48),
                     Center(
                       child: Text(
-                        l10n?.lastUpdated ?? 'Last Updated: December 2025',
+                        l10n?.lastUpdated ?? 'Last Updated: October 2026',
                         style: context.textTheme.labelSmall?.copyWith(
                           color: context.colors.onSurface.withValues(
                             alpha: 0.5,

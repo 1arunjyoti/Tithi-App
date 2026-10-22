@@ -6,11 +6,13 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
+import '../models/festival_filter.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../features/sheets/sheet_launcher.dart';
+import '../widgets/festival_filter_sheet.dart';
 import '../widgets/festival_row_tile.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
@@ -20,10 +22,19 @@ import '../features/countdown/domain/target_resolution.dart';
 
 export '../features/countdown/domain/target_resolution.dart'
     show DatedFestival, sortDatedFestivals;
+export '../models/festival_filter.dart'
+    show
+        FestivalCategoryFilter,
+        FestivalFilterSelection,
+        festivalMatchesCategoryFilter,
+        festivalMatchesFilters,
+        festivalMatchesRegionFilter;
 
 /// All bundled festivals with this year's occurrence dates, ascending from
 /// January — past festivals first, then the current/upcoming ones (the screen
-/// auto-scrolls to those on open), undatable entries last.
+/// auto-scrolls to those on open), undatable entries last. Recurring entries
+/// (Ekadashi, Purnima, Amavasya) appear once per occurrence, not once per
+/// catalog entry, so the yearly list shows all 24 Ekadashis.
 ///
 /// Each festival reuses the vriddhi-aware
 /// [PanchangService.findNextFestivalOccurrence] forward scan (the same source
@@ -51,12 +62,15 @@ final allFestivalOccurrencesProvider =
       try {
         // Shared resolver (features/countdown/domain): batched cached
         // scans — one bad rule resolves dateless instead of failing.
+        // Recurring vrats (Ekadashi, Purnima, Amavasya) expand to every
+        // occurrence through Dec 31, so the yearly list shows all of them.
         // No month-system watch: resolution is Amanta-fixed, so toggling
         // Amanta↔Purnimant no longer re-scans (rows show dates, not masas).
         return await resolveDatedFestivals(
           service: service,
           festivals: festivals,
           baseDate: yearStart,
+          through: DateTime(today.year, 12, 31),
           latitude: coords.latitude,
           longitude: coords.longitude,
         );
@@ -70,9 +84,12 @@ final allFestivalOccurrencesProvider =
 /// every festival sorted by this year's occurrence date, January first, with
 /// the date on each row. On open the list auto-scrolls to the current point
 /// (first festival dated today or later). A live search field filters by
-/// name/category/description. Tapping a row opens the festival detail sheet
-/// with the row's occurrence date, so the sheet can backfill that day's
-/// panchang (timings, puja/paran windows).
+/// name/category/description, and the app-bar filter button opens a sheet
+/// with category (All / Major / Vrat / Recurring) and region (all regions or
+/// one zone) narrowing; search and filters compose, and a dot on the button
+/// marks an active filter. Tapping a row opens the festival detail sheet with
+/// the row's occurrence date, so the sheet can backfill that day's panchang
+/// (timings, puja/paran windows).
 class AllFestivalsScreen extends ConsumerStatefulWidget {
   const AllFestivalsScreen({super.key});
 
@@ -85,16 +102,19 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   final _itemScrollController = ItemScrollController();
   Timer? _searchDebounce;
   String _query = '';
+  FestivalFilterSelection _filters = const FestivalFilterSelection();
 
   // Leak-free auto-scroll token: an int key, NOT the list itself, so the
   // previous occurrence list can be GC'd after a midnight/location refresh.
   int? _scrolledForKey;
   int _scrollVersion = 0;
 
-  // Memoized filter: rebuilt only when the source list identity or the
-  // applied query changes — not on every unrelated rebuild (theme, today).
+  // Memoized filter: rebuilt only when the source list identity, the
+  // applied query, or the filter selection changes — not on every unrelated
+  // rebuild (theme, today).
   List<DatedFestival>? _filterSource;
   String _filterQuery = '';
+  FestivalFilterSelection _filterSelection = const FestivalFilterSelection();
   List<DatedFestival>? _filterResult;
   // Precomputed lowercase haystacks, aligned with _filterSource indices.
   // Built once per source list so typing never re-lowercases multi-KB
@@ -113,7 +133,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
 
   void _onSearchChanged(String value) {
     // Debounce: without this, every keystroke rebuilds the scaffold +
-    // refilters ~100 items (each with a KB-long description) at 60wpm.
+    // refilters ~150 rows (each with a KB-long description) at 60wpm.
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 250), () {
       if (!mounted) return;
@@ -127,11 +147,21 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     setState(() => _query = '');
   }
 
+  Future<void> _openFilters() async {
+    final result = await showFestivalFilterSheet(
+      context,
+      initial: _filters,
+    );
+    if (!mounted || result == null || result == _filters) return;
+    setState(() => _filters = result);
+  }
+
   List<DatedFestival> _visible(List<DatedFestival> all) {
     final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return all;
+    if (q.isEmpty && !_filters.isActive) return all;
     if (identical(all, _filterSource) &&
         q == _filterQuery &&
+        _filters == _filterSelection &&
         _filterResult != null) {
       return _filterResult!;
     }
@@ -147,9 +177,13 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     final haystacks = _filterHaystacks!;
     final out = <DatedFestival>[];
     for (var i = 0; i < all.length; i++) {
-      if (haystacks[i].contains(q)) out.add(all[i]);
+      final festival = all[i].festival;
+      if (!festivalMatchesFilters(festival, _filters)) continue;
+      if (q.isNotEmpty && !haystacks[i].contains(q)) continue;
+      out.add(all[i]);
     }
     _filterQuery = q;
+    _filterSelection = _filters;
     _filterResult = out;
     return out;
   }
@@ -167,6 +201,21 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         leading: const HapticBackButton(),
         title: Text(l10n?.allFestivals ?? 'All Festivals'),
         backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            tooltip: l10n?.festivalFilterTitle ?? 'Filter festivals',
+            onPressed: _openFilters,
+            icon: Badge(
+              isLabelVisible: _filters.isActive,
+              smallSize: 8,
+              backgroundColor: context.colors.primary,
+              child: Icon(
+                Icons.tune_rounded,
+                color: _filters.isActive ? context.colors.primary : null,
+              ),
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -250,6 +299,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       final key = Object.hash(
         identityHashCode(items),
         today.millisecondsSinceEpoch,
+        _filters.category.index,
+        _filters.region.index,
       );
       if (_scrolledForKey != key) {
         _scrolledForKey = key;
@@ -320,7 +371,10 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
           maxStaggered: 10,
           child: RepaintBoundary(
             child: FestivalRowTile(
-              key: ValueKey(item.festival.id),
+              key: ValueKey(
+                '${item.festival.id}@'
+                '${item.date?.toIso8601String() ?? 'undated'}',
+              ),
               festival: item.festival,
               date: item.date,
               daysAway: daysAway,

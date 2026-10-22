@@ -344,6 +344,10 @@ class ResetSettingsTile extends ConsumerWidget {
           await notificationService.cancelAllNotifications();
 
           // Reset providers
+          // Invalidate the source notifier first: the derived providers below
+          // re-read from it, and a cleared Hive box alone does not refresh its
+          // in-memory state (this kept e.g. the festival region stale).
+          ref.invalidate(calendarPreferencesProvider);
           ref.invalidate(startOfWeekProvider);
           ref.invalidate(primaryEventViewProvider);
           ref.invalidate(themeOverrideProvider);

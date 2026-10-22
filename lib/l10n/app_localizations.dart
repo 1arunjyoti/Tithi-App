@@ -939,7 +939,7 @@ abstract class AppLocalizations {
   /// Privacy policy last updated date
   ///
   /// In en, this message translates to:
-  /// **'Last Updated: December 2025'**
+  /// **'Last Updated: October 2026'**
   String get lastUpdated;
 
   /// Legal text shown in about dialog
@@ -1716,6 +1716,54 @@ abstract class AppLocalizations {
   /// **'All Festivals'**
   String get allFestivals;
 
+  /// Filter chip: show every festival
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get festivalFilterAll;
+
+  /// Filter chip: major festivals
+  ///
+  /// In en, this message translates to:
+  /// **'Major'**
+  String get festivalFilterMajor;
+
+  /// Filter chip: vrat (fasting) observances
+  ///
+  /// In en, this message translates to:
+  /// **'Vrat'**
+  String get festivalFilterVrat;
+
+  /// Filter chip: observances that repeat every lunar month
+  ///
+  /// In en, this message translates to:
+  /// **'Recurring'**
+  String get festivalFilterRecurring;
+
+  /// Title of the festival filter sheet and tooltip of its icon button
+  ///
+  /// In en, this message translates to:
+  /// **'Filter festivals'**
+  String get festivalFilterTitle;
+
+  /// Subtitle of the festival filter sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow the list by category and region'**
+  String get festivalFilterSubtitle;
+
+  /// Section header for the region filter options
+  ///
+  /// In en, this message translates to:
+  /// **'Region'**
+  String get festivalFilterRegion;
+
+  /// Region filter option that disables region narrowing
+  ///
+  /// In en, this message translates to:
+  /// **'All regions'**
+  String get festivalFilterAllRegions;
+
   /// Hint text for festival search field
   ///
   /// In en, this message translates to:
@@ -2033,6 +2081,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose how months are named during Krishna Paksha'**
   String get hinduMonthSystemSubtitle;
+
+  /// Festival region setting and selection sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Festival Region'**
+  String get festivalRegion;
+
+  /// Festival region selection explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose which region\'s festivals appear first when several fall on the same day'**
+  String get festivalRegionSubtitle;
+
+  /// Festival region option that keeps the default pan-India order
+  ///
+  /// In en, this message translates to:
+  /// **'All India'**
+  String get festivalRegionAll;
+
+  /// Explanation for the All India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the default order for every festival'**
+  String get festivalRegionAllDescription;
+
+  /// North India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'North India'**
+  String get festivalRegionNorth;
+
+  /// Explanation for the North India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Show North Indian festivals first on shared dates'**
+  String get festivalRegionNorthDescription;
+
+  /// South India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'South India'**
+  String get festivalRegionSouth;
+
+  /// Explanation for the South India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Show South Indian festivals first on shared dates'**
+  String get festivalRegionSouthDescription;
+
+  /// East India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'East India'**
+  String get festivalRegionEast;
+
+  /// Explanation for the East India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Show East Indian festivals first on shared dates'**
+  String get festivalRegionEastDescription;
+
+  /// West India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'West India'**
+  String get festivalRegionWest;
+
+  /// Explanation for the West India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Show West Indian festivals first on shared dates'**
+  String get festivalRegionWestDescription;
+
+  /// Central India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Central India'**
+  String get festivalRegionCentral;
+
+  /// Explanation for the Central India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Show Central Indian festivals first on shared dates'**
+  String get festivalRegionCentralDescription;
+
+  /// North-East India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'North-East India'**
+  String get festivalRegionNortheast;
+
+  /// Explanation for the North-East India festival region option
+  ///
+  /// In en, this message translates to:
+  /// **'Show North-Eastern festivals first on shared dates'**
+  String get festivalRegionNortheastDescription;
 
   /// Hindu year era setting and selection sheet title
   ///
@@ -3125,6 +3269,330 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Swipe for the other festival artwork, long press to enlarge'**
   String get swipeArtworkHint;
+
+  /// Settings section header for the optional AI hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'AI ASSIST'**
+  String get aiAssistSection;
+
+  /// Settings toggle title for the optional AI hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'AI assist'**
+  String get aiAssist;
+
+  /// Settings toggle subtitle explaining what the feature does
+  ///
+  /// In en, this message translates to:
+  /// **'Send panchang details to your AI app when you ask'**
+  String get aiAssistSubtitle;
+
+  /// Drawer item that opens the month-level AI prompt sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI'**
+  String get aiAskAi;
+
+  /// Tithi sheet link that opens the AI prompt sheet for the day
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI about today'**
+  String get aiAskAboutToday;
+
+  /// Same link on a date that is not today
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI about this day'**
+  String get aiAskAboutDay;
+
+  /// Festival sheet link that opens the AI prompt sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Ask AI about this festival'**
+  String get aiAskAboutFestival;
+
+  /// Supporting line under the AI entry points
+  ///
+  /// In en, this message translates to:
+  /// **'Opens your AI app'**
+  String get aiOpensYourApp;
+
+  /// Section header above the editable question field
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR QUESTION'**
+  String get aiYourQuestion;
+
+  /// Placeholder in the AI prompt question field
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to know?'**
+  String get aiQuestionHint;
+
+  /// Section header above the payload preview
+  ///
+  /// In en, this message translates to:
+  /// **'WHAT WILL BE SHARED'**
+  String get aiWhatWillBeShared;
+
+  /// Expands the truncated AI payload preview
+  ///
+  /// In en, this message translates to:
+  /// **'Show all'**
+  String get aiShowAll;
+
+  /// Collapses the expanded AI payload preview
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get aiHidePreview;
+
+  /// Switches the preview to the literal string handed to the AI app
+  ///
+  /// In en, this message translates to:
+  /// **'Show the exact message'**
+  String get aiPreviewFull;
+
+  /// Switches the preview back from the exact message to the data block
+  ///
+  /// In en, this message translates to:
+  /// **'Show the summary'**
+  String get aiPreviewSummary;
+
+  /// Caption under the data preview naming the rest of the message
+  ///
+  /// In en, this message translates to:
+  /// **'Also sends your question, and asks for the answer in your app language.'**
+  String get aiAlsoSends;
+
+  /// Shown while the month digest is still computing
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing the month\'s panchang…'**
+  String get aiPreparing;
+
+  /// Month digest failed to compute; a Retry action is offered
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t prepare this month\'s panchang.'**
+  String get aiMonthFailed;
+
+  /// Privacy note under the AI payload preview
+  ///
+  /// In en, this message translates to:
+  /// **'Your GPS location is never sent — only the city name.'**
+  String get aiLocationNote;
+
+  /// Primary action that hands the prompt to the AI app
+  ///
+  /// In en, this message translates to:
+  /// **'Open AI app'**
+  String get aiOpenApp;
+
+  /// Primary action when a specific AI app is chosen in Settings
+  ///
+  /// In en, this message translates to:
+  /// **'Open {app}'**
+  String aiOpenInApp(String app);
+
+  /// Settings tile that chooses which assistant the hand-off opens
+  ///
+  /// In en, this message translates to:
+  /// **'AI app'**
+  String get aiAppSetting;
+
+  /// AI app setting value: try the known assistants, then the share sheet
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get aiAppAutomatic;
+
+  /// Explains what the automatic AI app choice does
+  ///
+  /// In en, this message translates to:
+  /// **'Tries Gemini first, then other installed AI apps'**
+  String get aiAppAutomaticSubtitle;
+
+  /// Title of the AI app picker dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Open prompts in'**
+  String get aiAppPickerTitle;
+
+  /// Error when the chosen AI app could not be persisted
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the AI app choice'**
+  String get aiAppPickerFailed;
+
+  /// Subtitle in the AI app picker for an app that cannot receive the hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed'**
+  String get aiAppNotInstalled;
+
+  /// Title of the dialog shown when the chosen AI app cannot resolve the hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'{app} isn\'t available'**
+  String aiAppUnavailable(String app);
+
+  /// Body of the missing-AI-app dialog
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been uninstalled. You can share the prompt instead, or copy it and paste it into your AI app.'**
+  String get aiAppUnavailableBody;
+
+  /// Confirms the share-sheet fallback after the chosen AI app is unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'Share instead'**
+  String get aiOpenShareSheet;
+
+  /// Secondary action that copies the prompt without leaving the app
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get aiCopy;
+
+  /// Confirmation after copying the AI prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt copied'**
+  String get aiCopied;
+
+  /// Error when the clipboard refused the AI prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t copy the prompt'**
+  String get aiCopyFailed;
+
+  /// Error shown when the AI hand-off finds no share target
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open an app to share this'**
+  String get aiShareFailed;
+
+  /// Share failed, so the prompt was put on the clipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open an app to share this — the prompt is copied instead.'**
+  String get aiShareFailedCopied;
+
+  /// Closing note explaining the hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi has no AI of its own. This opens your AI app with the details filled in — the answer appears there.'**
+  String get aiFooterNote;
+
+  /// Hero title of the AI sheet for the current day
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about today'**
+  String get aiTitleToday;
+
+  /// Hero title of the AI sheet for a month digest
+  ///
+  /// In en, this message translates to:
+  /// **'Ask about this month'**
+  String get aiTitleMonth;
+
+  /// Prefilled question for the day prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Explain today\'s tithi in plain language.'**
+  String get aiDefaultQuestionToday;
+
+  /// Prefilled question for the festival prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Explain this festival\'s meaning and how it is observed.'**
+  String get aiDefaultQuestionFestival;
+
+  /// Prefilled question for the month digest prompt
+  ///
+  /// In en, this message translates to:
+  /// **'Summarise this month\'s festivals and notable tithis.'**
+  String get aiDefaultQuestionMonth;
+
+  /// Title of the AI opt-in confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on AI assist?'**
+  String get aiConsentTitle;
+
+  /// Body of the AI opt-in confirmation dialog
+  ///
+  /// In en, this message translates to:
+  /// **'When you ask AI, Tithi will build a short summary of the panchang and hand it to the AI app you choose.'**
+  String get aiConsentBody;
+
+  /// Consent bullet listing what data is shared
+  ///
+  /// In en, this message translates to:
+  /// **'Sends the panchang for your city (tithi, nakshatra, sunrise, sunset), the festival details when you ask about one, and the question you type.'**
+  String get aiConsentBulletSend;
+
+  /// Consent bullet stating coordinates are excluded
+  ///
+  /// In en, this message translates to:
+  /// **'Never your GPS coordinates or exact position.'**
+  String get aiConsentBulletLocation;
+
+  /// Consent bullet explaining where the answer appears
+  ///
+  /// In en, this message translates to:
+  /// **'Opens your AI app — the answer appears there, not in Tithi.'**
+  String get aiConsentBulletWhere;
+
+  /// Confirms enabling AI assist
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get aiConsentEnable;
+
+  /// Settings action that opens the AI explainer
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get aiHowItWorks;
+
+  /// Subtitle of the AI explainer action
+  ///
+  /// In en, this message translates to:
+  /// **'What is shared and what isn\'t'**
+  String get aiHowItWorksSubtitle;
+
+  /// One-line rule governing the AI hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi calculates. The assistant explains.'**
+  String get aiHowItWorksRule;
+
+  /// Explainer body for the AI hand-off
+  ///
+  /// In en, this message translates to:
+  /// **'Every tithi, nakshatra and sunrise/sunset time in the summary comes from Tithi\'s own on-device calculations. The AI is only asked to explain those numbers in your language, so it cannot change them. You see the exact text before anything leaves the app, and you can copy it instead of opening an AI app.'**
+  String get aiHowItWorksBody;
+
+  /// Error shown when the AI opt-in cannot be persisted
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save the AI assist setting'**
+  String get aiToggleFailed;
+
+  /// Privacy policy card title for AI assist
+  ///
+  /// In en, this message translates to:
+  /// **'AI Assist (Optional)'**
+  String get privacyAiTitle;
+
+  /// Privacy policy card body for AI assist
+  ///
+  /// In en, this message translates to:
+  /// **'AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary — the panchang for your city (date, tithi, nakshatra, sunrise and sunset), the festival details when you ask about one, and the question you type — and hands it to the AI app you chose in Settings, or to the system share sheet when that app is not available. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app\'s own privacy policy.'**
+  String get privacyAiDesc;
 }
 
 class _AppLocalizationsDelegate

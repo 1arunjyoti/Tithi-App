@@ -12,6 +12,9 @@ import '../services/moonrise_calculator.dart';
 import '../services/share_service.dart';
 import '../services/sunrise_calculator.dart';
 import '../utils/tithi_localization.dart';
+import '../features/ai/domain/ai_prompt.dart';
+import '../features/ai/providers/ai_providers.dart';
+import '../features/ai/widgets/ask_ai_sheet.dart';
 import '../features/event_detail/domain/event_content.dart';
 import '../features/event_detail/domain/puja_samay.dart';
 import '../features/event_detail/providers/event_detail_providers.dart';
@@ -74,6 +77,9 @@ class EventDetailSheet extends ConsumerWidget {
     final monthSystem = ref.watch(hinduMonthSystemProvider);
     final l10n = AppLocalizations.of(context);
     final locale = l10n?.localeName ?? 'en';
+    // Opt-in gate: the AI row is hidden (not disabled) until Settings turns
+    // the feature on.
+    final aiAssistEnabled = ref.watch(aiAssistEnabledProvider);
     // Hero title follows the app language (Bengali/Hindi/Sanskrit names
     // under those locales, English otherwise), resolved from the language
     // setting like the tithi sheet — not the Material locale.
@@ -398,6 +404,24 @@ class EventDetailSheet extends ConsumerWidget {
                 }
                 showTithiDetailSheet(context, panchang: dayPanchang);
               },
+            ),
+          ],
+
+          // AI hand-off (opt-in). Below the panchang link so the sheet's own
+          // data keeps priority; works with or without resolved panchang.
+          if (aiAssistEnabled) ...[
+            const SizedBox(height: 10),
+            SheetLinkTile(
+              icon: Icons.auto_awesome_outlined,
+              label: l10n?.aiAskAboutFestival ?? 'Ask AI about this festival',
+              supporting: l10n?.aiOpensYourApp ?? 'Opens your AI app',
+              accent: themeColor,
+              onTap: () => showAskAiSheet(
+                context,
+                intent: AiIntent.festival,
+                festival: festival,
+                panchang: dayPanchang,
+              ),
             ),
           ],
 

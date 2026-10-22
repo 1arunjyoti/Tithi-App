@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
+import '../features/ai/domain/ai_prompt.dart';
+import '../features/ai/providers/ai_providers.dart';
+import '../features/ai/widgets/ask_ai_sheet.dart';
+import '../providers/calendar_provider.dart';
 import '../providers/location_provider.dart';
 import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
@@ -179,6 +185,8 @@ class _DrawerMenuList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // Opt-in gate: no AI entry point exists until Settings turns it on.
+    final aiAssistEnabled = ref.watch(aiAssistEnabledProvider);
 
     // Ordered by how often each destination is reached, most-used first:
     // 1. the home calendar/schedule switch (acts on the current screen),
@@ -229,6 +237,30 @@ class _DrawerMenuList extends ConsumerWidget {
           title: l10n?.solarSystem ?? 'Solar System',
           onTap: () => _navigateTo(context, const SolarSystemScreen()),
         ),
+
+        // Month-level AI hand-off, grouped with the reference layers: it
+        // reads the month the user is looking at.
+        if (aiAssistEnabled)
+          _DrawerMenuItem(
+            icon: Icons.auto_awesome_outlined,
+            title: l10n?.aiAskAi ?? 'Ask AI',
+            onTap: () {
+              final navigator = Navigator.of(context);
+              final month = ref.read(focusedMonthProvider);
+              // Close the drawer first: the sheet would otherwise open
+              // underneath it on narrow screens.
+              if (!ResponsiveLayout.isTabletOrLarger(context)) {
+                navigator.pop();
+              }
+              unawaited(
+                showAskAiSheet(
+                  navigator.context,
+                  intent: AiIntent.monthDigest,
+                  month: month,
+                ),
+              );
+            },
+          ),
 
         _DrawerMenuItem(
           icon: Icons.settings_rounded,

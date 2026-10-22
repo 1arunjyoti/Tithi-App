@@ -64,7 +64,47 @@ Future<DateTime?> resolveOccurrenceDate({
   }
 }
 
-/// Every festival's next occurrence, sorted ([sortDatedFestivals]).
+/// Every occurrence of a `recurring` festival from [first] through [through].
+///
+/// [first] is the already-resolved occurrence on/after the window start;
+/// [nextAfter] resolves the next occurrence on/after its argument. The search
+/// restarts 25 days after the previous occurrence: the same tithi cannot
+/// repeat sooner (a synodic month is ~29.5 days), so this skips the current
+/// lunation without missing the next one.
+///
+/// The loop is defensive: it stops on a null, a date after [through], a
+/// non-advancing date (bad rule), or [maxOccurrences] so one malformed
+/// festival can never hang the screen. Twenty-four Ekadashis, twelve
+/// Purnimas/Amavasyas fit comfortably under the cap.
+@visibleForTesting
+Future<List<DateTime>> collectRecurringOccurrences({
+  required DateTime first,
+  required DateTime through,
+  required Future<DateTime?> Function(DateTime start) nextAfter,
+  int maxOccurrences = 32,
+}) async {
+  final dates = <DateTime>[first];
+  var previous = first;
+  while (dates.length < maxOccurrences) {
+    final next = await nextAfter(previous.add(const Duration(days: 25)));
+    if (next == null || next.isAfter(through) || !next.isAfter(previous)) {
+      break;
+    }
+    dates.add(next);
+    previous = next;
+  }
+  return dates;
+}
+
+/// Every festival's date(s), sorted ([sortDatedFestivals]).
+///
+/// Non-recurring festivals resolve to a single next occurrence on/after
+/// [baseDate] (which may fall after [through] when the festival does not
+/// occur this year). When [through] is set, `recurring` festivals (Ekadashi,
+/// Purnima, Amavasya, …) are expanded to every occurrence in
+/// [baseDate]..[through], so a yearly list shows all 24 Ekadashis instead of
+/// only the first one in January.
+///
 /// Resolved in small parallel batches: enough parallelism for throughput,
 /// small enough to avoid FFI stampedes that jank the UI thread (matches
 /// the month batch size). Resolution is Amanta-fixed (see above), so a
@@ -75,24 +115,38 @@ Future<List<DatedFestival>> resolveDatedFestivals({
   required DateTime baseDate,
   required double latitude,
   required double longitude,
+  DateTime? through,
   int batchSize = 8,
 }) async {
-  Future<DatedFestival> resolve(Festival festival) async {
-    final date = await resolveOccurrenceDate(
+  Future<DateTime?> nextAfter(Festival festival, DateTime start) {
+    return resolveOccurrenceDate(
       service: service,
       festival: festival,
-      baseDate: baseDate,
+      baseDate: start,
       latitude: latitude,
       longitude: longitude,
     );
-    return (festival: festival, date: date);
+  }
+
+  Future<List<DatedFestival>> resolve(Festival festival) async {
+    final first = await nextAfter(festival, baseDate);
+    if (first == null || through == null || !festival.recurring) {
+      return [(festival: festival, date: first)];
+    }
+    final dates = await collectRecurringOccurrences(
+      first: first,
+      through: through,
+      nextAfter: (start) => nextAfter(festival, start),
+    );
+    return [for (final date in dates) (festival: festival, date: date)];
   }
 
   final out = <DatedFestival>[];
   for (var i = 0; i < festivals.length; i += batchSize) {
     final end = (i + batchSize).clamp(0, festivals.length);
     final batch = festivals.sublist(i, end);
-    out.addAll(await Future.wait(batch.map(resolve)));
+    final resolved = await Future.wait(batch.map(resolve));
+    out.addAll(resolved.expand((rows) => rows));
   }
   return sortDatedFestivals(out);
 }

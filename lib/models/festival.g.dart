@@ -27,13 +27,15 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       rituals: fields[7] as Rituals,
       media: fields[8] as Media,
       displayPriority: fields[9] as int?,
+      regions:
+          fields[10] == null ? ['all'] : (fields[10] as List).cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Festival obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +55,9 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       ..writeByte(8)
       ..write(obj.media)
       ..writeByte(9)
-      ..write(obj.displayPriority);
+      ..write(obj.displayPriority)
+      ..writeByte(10)
+      ..write(obj.regions);
   }
 
   @override
@@ -216,13 +220,9 @@ class PanchangRulesAdapter extends TypeAdapter<PanchangRules> {
       weekday: fields[6] as String?,
       endTithi: fields[7] as int?,
       timingOverride: fields[8] as String?,
-      // defaultValue: 'both' (see @HiveField(9)) — legacy boxes written
-      // before field 9 read as the model default instead of throwing.
       vriddhi: fields[9] == null ? 'both' : fields[9] as String,
       pujaKala: fields[10] as String?,
       paranRule: fields[11] as String?,
-      // defaultValue: false (see @HiveField(12)) — legacy boxes written
-      // before field 12 read as the model default instead of throwing.
       clipToTithi: fields[12] == null ? false : fields[12] as bool,
     );
   }
