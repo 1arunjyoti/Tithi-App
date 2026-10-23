@@ -11,6 +11,7 @@ import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
 import 'storage_service.dart';
 import '../core/location/location_defaults.dart';
+import '../core/location/timezone_resolver.dart';
 
 /// Location data model
 class LocationData {
@@ -19,11 +20,27 @@ class LocationData {
   final String? cityName;
   final DateTime timestamp;
 
+  /// Height above mean sea level in metres, when known.
+  ///
+  /// A GPS fix supplies the platform's reported altitude (WGS84 ellipsoidal).
+  /// Manually picked places leave this null until an elevation lookup exists.
+  /// Consumers must treat null as 0 m, and Phase 1 must normalize ellipsoidal
+  /// to orthometric height before passing it to `swe_set_topo`.
+  final double? altitudeMeters;
+
+  /// IANA zone identifier persisted for this place, e.g. `Asia/Kolkata`.
+  ///
+  /// Null means the zone has not been resolved; callers fall back to the
+  /// device zone. See [resolvePlaceTimezoneId] for the Phase 0 limitation.
+  final String? timezoneId;
+
   const LocationData({
     required this.latitude,
     required this.longitude,
     this.cityName,
     required this.timestamp,
+    this.altitudeMeters,
+    this.timezoneId,
   });
 
   /// Default location (Delhi, India) when location is not available
@@ -32,11 +49,14 @@ class LocationData {
     longitude: kDefaultLongitude,
     cityName: 'Delhi',
     timestamp: DateTime.now(),
+    altitudeMeters: kDefaultAltitudeMeters,
+    timezoneId: kDefaultTimezoneId,
   );
 
   @override
   String toString() =>
-      'LocationData($latitude, $longitude, $cityName, $timestamp)';
+      'LocationData($latitude, $longitude, $cityName, $timestamp, '
+      'altitude: $altitudeMeters, tz: $timezoneId)';
 }
 
 /// Why a place lookup produced no results. Lets the UI say something true
@@ -154,11 +174,15 @@ class LocationService {
   static const String _keyCachedLat = 'cached_lat';
   static const String _keyCachedLng = 'cached_lng';
   static const String _keyCachedAtMs = 'cached_at_ms';
+  static const String _keyCachedAltitude = 'cached_altitude';
+  static const String _keyCachedTimezone = 'cached_timezone';
   static const String _keyLastBackgroundAtMs = 'last_background_at_ms';
   // Home location keys
   static const String _keyHomeLat = 'home_lat';
   static const String _keyHomeLng = 'home_lng';
   static const String _keyHomeAddress = 'home_address';
+  static const String _keyHomeAltitude = 'home_altitude';
+  static const String _keyHomeTimezone = 'home_timezone';
 
   /// Contactable User-Agent required by the OSM Nominatim usage policy.
   /// Names the app and gives a contact point instead of a library default.
@@ -213,6 +237,10 @@ class LocationService {
       // Load offline city index (best-effort: offline labels still work
       // even if Nominatim is unreachable).
       await _loadOfflineCities();
+
+      // Phase 0 migration: older boxes have coordinates but no zone. Resolve
+      // and persist it once so locations become self-describing.
+      await _backfillPlaceMetadata();
 
       _isInitialized = true;
 
@@ -367,14 +395,31 @@ class LocationService {
       // Preserve last known label when both lookups fail.
       cityName ??= (await _getCachedLocation())?.cityName;
 
+      // The platform reports ellipsoidal altitude in metres. The field is
+      // non-nullable, so a device without an altitude component reports 0;
+      // Phase 1 validates against SEI_ECL_GEOALT_MIN..MAX.
+      final double altitudeMeters = position.altitude;
+      final timezoneId = await resolvePlaceTimezoneId(
+        position.latitude,
+        position.longitude,
+      );
+
       // Cache the location
-      await _cacheLocation(position.latitude, position.longitude, cityName);
+      await _cacheLocation(
+        position.latitude,
+        position.longitude,
+        cityName,
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
+      );
 
       return LocationData(
         latitude: position.latitude,
         longitude: position.longitude,
         cityName: cityName,
         timestamp: DateTime.now(),
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       );
     } catch (e) {
       if (kDebugMode) {
@@ -726,6 +771,8 @@ class LocationService {
     final lng = _box?.get(_keyCachedLng) as double?;
     final city = _box?.get(_keyCachedCity) as String?;
     final cachedAtMs = _box?.get(_keyCachedAtMs) as int?;
+    final altitudeMeters = _box?.get(_keyCachedAltitude) as double?;
+    final timezoneId = _box?.get(_keyCachedTimezone) as String?;
 
     if (lat != null && lng != null) {
       return LocationData(
@@ -735,23 +782,41 @@ class LocationService {
         timestamp: cachedAtMs != null
             ? DateTime.fromMillisecondsSinceEpoch(cachedAtMs)
             : DateTime.now(),
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       );
     }
 
     return null;
   }
 
-  /// Cache location for offline use
+  /// Cache location for offline use.
+  ///
+  /// Null metadata keys are removed rather than left stale from an earlier
+  /// fix, so a place without altitude never inherits the previous place's
+  /// height.
   Future<void> _cacheLocation(
     double latitude,
     double longitude,
-    String? cityName,
-  ) async {
+    String? cityName, {
+    double? altitudeMeters,
+    String? timezoneId,
+  }) async {
     await _box?.put(_keyCachedLat, latitude);
     await _box?.put(_keyCachedLng, longitude);
     await _box?.put(_keyCachedAtMs, DateTime.now().millisecondsSinceEpoch);
     if (cityName != null) {
       await _box?.put(_keyCachedCity, cityName);
+    }
+    if (altitudeMeters == null) {
+      await _box?.delete(_keyCachedAltitude);
+    } else {
+      await _box?.put(_keyCachedAltitude, altitudeMeters);
+    }
+    if (timezoneId == null || timezoneId.isEmpty) {
+      await _box?.delete(_keyCachedTimezone);
+    } else {
+      await _box?.put(_keyCachedTimezone, timezoneId);
     }
     // Fresh GPS fetch satisfied any pending background-based refresh.
     await _box?.delete(_keyLastBackgroundAtMs);
@@ -764,6 +829,8 @@ class LocationService {
     await _box?.delete(_keyCachedLng);
     await _box?.delete(_keyCachedCity);
     await _box?.delete(_keyCachedAtMs);
+    await _box?.delete(_keyCachedAltitude);
+    await _box?.delete(_keyCachedTimezone);
     if (kDebugMode) {
       print('Location cache cleared');
     }
@@ -789,8 +856,17 @@ class LocationService {
     return elapsed > _backgroundRefreshThreshold;
   }
 
-  /// SET home location manually
-  Future<void> setHomeLocation(double lat, double lng, String address) async {
+  /// SET home location manually.
+  ///
+  /// [altitudeMeters] is orthometric height when the caller knows it; null
+  /// means unknown. [timezoneId] overrides the Phase 0 device-zone seed.
+  Future<void> setHomeLocation(
+    double lat,
+    double lng,
+    String address, {
+    double? altitudeMeters,
+    String? timezoneId,
+  }) async {
     _ensureInitialized();
     // SEC-3: validate coordinate ranges before persisting.
     if (lat < -90 || lat > 90) {
@@ -799,9 +875,23 @@ class LocationService {
     if (lng < -180 || lng > 180) {
       throw ArgumentError.value(lng, 'lng', 'Longitude must be in [-180, 180]');
     }
+
+    final resolvedTimezone =
+        timezoneId ?? await resolvePlaceTimezoneId(lat, lng);
+
     await _box?.put(_keyHomeLat, lat);
     await _box?.put(_keyHomeLng, lng);
     await _box?.put(_keyHomeAddress, address);
+    if (altitudeMeters == null) {
+      await _box?.delete(_keyHomeAltitude);
+    } else {
+      await _box?.put(_keyHomeAltitude, altitudeMeters);
+    }
+    if (resolvedTimezone.isEmpty) {
+      await _box?.delete(_keyHomeTimezone);
+    } else {
+      await _box?.put(_keyHomeTimezone, resolvedTimezone);
+    }
   }
 
   /// GET home location manually
@@ -811,6 +901,8 @@ class LocationService {
     final lat = _box?.get(_keyHomeLat) as double?;
     final lng = _box?.get(_keyHomeLng) as double?;
     final address = _box?.get(_keyHomeAddress) as String?;
+    final altitudeMeters = _box?.get(_keyHomeAltitude) as double?;
+    final timezoneId = _box?.get(_keyHomeTimezone) as String?;
 
     if (lat != null && lng != null) {
       return LocationData(
@@ -818,9 +910,50 @@ class LocationService {
         longitude: lng,
         cityName: address, // Using address as "city name" for UI display
         timestamp: DateTime.now(),
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       );
     }
     return null;
+  }
+
+  /// Phase 0 migration for settings boxes written before altitude/timezone.
+  ///
+  /// Resolves and persists a zone for existing cached and home coordinates.
+  /// Altitude is left null: the app has no elevation lookup, and a bogus
+  /// value is worse than an explicit unknown. Best-effort throughout.
+  Future<void> _backfillPlaceMetadata() async {
+    final box = _box;
+    if (box == null) return;
+
+    Future<void> backfillZone({
+      required double? latitude,
+      required double? longitude,
+      required String timezoneKey,
+    }) async {
+      if (latitude == null || longitude == null) return;
+      final existing = box.get(timezoneKey) as String?;
+      if (existing != null && existing.isNotEmpty) return;
+      try {
+        final timezoneId = await resolvePlaceTimezoneId(latitude, longitude);
+        if (timezoneId.isNotEmpty) {
+          await box.put(timezoneKey, timezoneId);
+        }
+      } catch (_) {
+        // The location still works without a persisted zone.
+      }
+    }
+
+    await backfillZone(
+      latitude: box.get(_keyCachedLat) as double?,
+      longitude: box.get(_keyCachedLng) as double?,
+      timezoneKey: _keyCachedTimezone,
+    );
+    await backfillZone(
+      latitude: box.get(_keyHomeLat) as double?,
+      longitude: box.get(_keyHomeLng) as double?,
+      timezoneKey: _keyHomeTimezone,
+    );
   }
 
   void _ensureInitialized() {

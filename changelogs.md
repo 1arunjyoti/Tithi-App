@@ -37,6 +37,24 @@ description of the calculation contract, with no behavior change yet.
 - Lives in `lib/models/panchang_profile.dart`; tests in
   `test/panchang_profile_test.dart`.
 
+### Location altitude and IANA timezone
+
+`LocationData` now carries an optional altitude and IANA zone, persisted with
+the cached and home coordinates so a Panchang record can describe its own place.
+
+- GPS fixes store the platform altitude (ellipsoidal, metres); manually picked
+  places leave it null until an elevation lookup exists. Null means unknown,
+  and Phase 1 must normalize before passing it to `swe_set_topo`.
+- `timezoneId` is seeded from the device zone by `resolvePlaceTimezoneId`,
+  with `Asia/Calcutta` canonicalized to `Asia/Kolkata`. Phase 0 ships no
+  coordinate-to-zone table, so a place outside the device's zone is a known
+  limitation; `setHomeLocation` accepts an explicit `timezoneId`.
+- `LocationService.init()` backfills the zone for coordinates written before
+  this change. A new fix without metadata deletes the old keys, so Mumbai
+  cannot inherit Delhi's altitude.
+- Stored under `cached_altitude` / `cached_timezone` and `home_altitude` /
+  `home_timezone` in the `location_settings` box.
+
 ### Panchang home-screen widgets
 
 Four new Android home-screen widgets join the festival countdown: a hero card
