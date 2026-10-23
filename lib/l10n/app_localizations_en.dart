@@ -1602,6 +1602,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeWidgetCanPin => 'Add festival countdowns to your home screen';
 
   @override
+  String get homeWidgetGallerySubtitle =>
+      'Add panchang widgets to your home screen';
+
+  @override
+  String get widgetCountdownsLabel => 'Festival Countdowns';
+
+  @override
+  String get widgetHeroLabel => 'Hero Card';
+
+  @override
+  String get widgetHeroDescription => 'Today\'s tithi, paksha and festival';
+
+  @override
+  String get widgetAuspiciousLabel => 'Auspicious Timings';
+
+  @override
+  String get widgetAuspiciousDescription => 'Abhijit, Brahma Muhurta, Godhuli';
+
+  @override
+  String get widgetInauspiciousLabel => 'Inauspicious Timings';
+
+  @override
+  String get widgetInauspiciousDescription => 'Rahu Kalam, Yamaganda, Gulika';
+
+  @override
+  String get widgetCombinedLabel => 'Auspicious & Inauspicious';
+
+  @override
+  String get widgetCombinedDescription => 'Both timing sets in one widget';
+
+  @override
+  String get widgetOpenToRefresh => 'Open Tithi to refresh';
+
+  @override
+  String get widgetAddTooltip => 'Add to home screen';
+
+  @override
   String get dailyWisdom => 'DAILY WISDOM';
 
   @override

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared shell for the three timing widgets (auspicious, inauspicious,
+     combined). The rows live in a ListView backed by TimingWidgetService so a
+     small widget scrolls instead of hiding windows and a large one expands
+     without a blank gap. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/widget_timings_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/widget_timings_brand"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="TITHI"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12" />
+
+        <TextView
+            android:id="@+id/widget_timings_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_secondary_text"
+            android:textSize="10sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Fri, 23 Oct" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="2dp">
+
+        <TextView
+            android:id="@+id/widget_timings_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="@color/widget_title_text"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            tools:text="Auspicious Timings" />
+
+        <TextView
+            android:id="@+id/widget_timings_now"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/widget_primary_text"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:visibility="gone"
+            tools:text="● Abhijit" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/widget_timings_sun"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_secondary_text"
+        android:textSize="9sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:layout_marginBottom="4dp"
+        tools:text="Sunrise 6:12 AM · Sunset 5:47 PM" />
+
+    <ListView
+        android:id="@+id/widget_timings_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="@null"
+        android:dividerHeight="3dp"
+        android:scrollbars="vertical"
+        android:clipToPadding="false" />
+
+    <TextView
+        android:id="@+id/widget_timings_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/widget_timings_no_data"
+        android:textColor="@color/widget_secondary_text"
+        android:textSize="11sp"
+        android:gravity="center"
+        android:padding="12dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+</LinearLayout>

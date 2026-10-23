@@ -1,0 +1,294 @@
+# Jyotish and Panchang Improvement Plan
+
+## Objective and scope
+
+Make Tithi an India-first, location-specific Drik Panchang engine while
+keeping `packages/jyotish` a correct, well-defined public Swiss Ephemeris
+wrapper.
+
+This plan distinguishes between:
+
+- **Panchang-critical work**: can change an end user's daily tithi, festival,
+  sunrise, or observance time.
+- **Latent package/API work**: confirmed defects in public `jyotish` APIs that
+  are not currently reached by the Tithi application.
+
+The default target profile is Lahiri/Chitrapaksha, geocentric sidereal
+ecliptic Sun and Moon, matched Hindu solar rise/set conventions, and Amanta as
+the calculation basis.
+Purnimanta and regional observance differences must be explicit profiles, not
+presented as a universally correct alternative.
+
+## Confirmed current state
+
+- Tithi is calculated from the Sun--Moon longitude difference; ayanamsa
+  cancels in this difference when the same frame is used for both bodies.
+- Nakshatra, yoga, karana, masa, Adhika masa, Kshaya, Vriddhi, and several
+  festival timing overrides are calculated locally. The app does not consume a
+  precomputed external almanac.
+- The app copies `sepl_18.se1`, `semo_18.se1`, and `seas_18.se1` before it
+  initializes `jyotish` with that path. Those bundled files cover
+  **1800--2399 CE**.
+- The package's manual ayanamsa subtraction is not itself the primary
+  Panchang defect for ordinary ecliptic longitude. Its confirmed error is that
+  it is also applied to right ascension when equatorial coordinates are
+  requested.
+- The active app's highest date-assignment risk is its NOAA-style apparent
+  sunrise calculation, not houses or planetary dignity.
+
+## Phase 0 — contract, profile, and reference data
+
+Create a versioned `PanchangProfile` domain model. `FestivalRegion` must not
+be reused: it is a display-ordering preference only.
+
+The profile must record:
+
+- ayanamsa, with Lahiri as the default;
+- month system: Amanta or Purnimanta;
+- matched sunrise and sunset conventions;
+- a separate Moon rise/set convention, including limb and refraction policy;
+- IANA timezone for the selected place;
+- festival-observance policy for sunrise, Madhyahna, Aparahna, Nishita,
+  Pradosha, moonrise, Kshaya, Vriddhi, and dominant tithi;
+- node convention and any regional rule set; and
+- a calculation-engine version.
+
+Extend `LocationData` and its persisted settings with altitude and timezone.
+This is a data-model/storage migration, not a presentation setting: the
+current model stores only latitude, longitude, city name, and timestamp.
+
+Build a locked golden-reference dataset before changing behavior. Cover Delhi,
+Kolkata, Mumbai, Varanasi, Chennai, and Guwahati; sunrise boundaries;
+Kshaya/Vriddhi; Ekadashi; Amavasya/Purnima; Sankranti; Adhika masa; Bengali
+dates; and dates immediately around a new moon/Sankranti coincidence. Record
+the source, profile, location, timezone, instant precision, and tolerance for
+every fixture. Do not copy proprietary app output without permission.
+
+## Phase 1 — solar-events seam and Hindu rise/set migration (highest priority)
+
+First route every current `SunriseCalculator` caller through one cached,
+behavior-preserving solar-events provider or precomputed `PanchangDay` value.
+It must initially delegate to the current NOAA-style calculator. This covers
+calendar/day assembly, detail sheets, widgets, notifications, export,
+`HinduCalendarService`, and Bengali calendar paths before any astronomical
+behavior changes.
+
+Then replace that provider's implementation with a native Swiss Ephemeris
+Sun rise/set binding.
+
+- Bind `swe_rise_trans()` and expose the required rise/set constants.
+- Implement `SE_BIT_HINDU_RISING` as Tithi's Hindu solar-rise and solar-set
+  default. It is the Swiss Ephemeris primitive for disc-centre,
+  no-refraction, geocentric Hindu rising/setting.
+- Keep seconds internally; round only for UI text.
+- Make polar/no-rise conditions explicit errors or states rather than returning
+  a fabricated 06:00/18:00 value.
+- Resolve local civil time from the selected location's IANA timezone, not the
+  device timezone.
+- Version the convention and invalidate all Panchang/festival caches when it
+  changes.
+- `swe_rise_trans()` keeps only `SEFLG_EPHMASK | SEFLG_NONUT | SEFLG_TRUEPOS`
+  from the ephemeris flag, so pass the backend only; `SEFLG_SIDEREAL` and
+  `SEFLG_EQUATORIAL` are stripped. It calls `swe_set_topo(geopos[0..2])`
+  internally for topocentric events and rejects `geopos[2]` outside
+  `SEI_ECL_GEOALT_MIN..MAX`, so altitude is required for lunar events.
+- Until Phase 6, this binding links only on Android: `swecl.c` is compiled only
+  by `android/src/main/cpp/CMakeLists.txt`; Windows and Linux build an empty
+  stub, and the iOS/macOS podspecs vendor no library. Keep a labelled NOAA
+  fallback for other targets, or declare Android-only distribution.
+
+Each festival rule is anchored to the local sunrise day. Ordinary rules sample
+at sunrise; timing overrides sample Madhyahna, Aparahna, Nishita, Pradosha, or
+moonrise checkpoints derived from sunrise, sunset, next sunrise, and moonrise.
+This migration can move boundary-day results, so ship it only with the Phase 0
+references and a visible methodology/version update.
+
+## Phase 2 — one Panchang day and observance resolver
+
+Create one application-domain Panchang computation pipeline. This is **new
+domain work**, not a move from `jyotish`: `jyotish` currently has no tithi,
+nakshatra, yoga, karana, masa, or festival concepts.
+
+The canonical resolver must produce:
+
+- Sun/Moon longitudes and provenance at requested instants;
+- sunrise, sunset, next sunrise, moonrise, and moonset;
+- tithi, nakshatra, yoga, karana, and their transition instants;
+- Amanta masa, Adhika verdict, and display-system conversion;
+- all festival checkpoint values; and
+- a versioned calculation/provenance record.
+
+Route the calendar grid, detail sheets, widgets, notifications, exports,
+search/countdowns, and event sheets through it. In particular, eliminate the
+inline copy of sunrise/override/dominant/Kshaya matching in
+`PanchangService.findNextFestivalOccurrence`.
+
+Current day assembly is duplicated in `tithi_transitions.dart`, notification
+scheduling, festival export, and `HinduCalendarService`; each duplicate is a
+future behavior-drift risk.
+
+Make the moonrise checkpoint real. `timingOverrideCheckpoints` and
+`PanchangData.fromRawTithi` currently omit `'moonrise'` (it falls through to the
+sunrise tithi), while `PanchangRules` documents it as valid. Shipped Karva
+Chauth uses `pujaKala`/`paranRule: moonrise`, so its puja window follows
+moonrise while its tithi match follows sunrise. Add `'moonrise'` to the
+checkpoint set, the matcher, and the scheduler, and record the chosen policy in
+`PanchangProfile`.
+
+## Phase 3 — precise transitions, masa, and Adhika masa
+
+Keep the existing astronomical definitions but replace coarse approximation
+where it determines a boundary:
+
+- Tithi: Sun--Moon separation in 12-degree segments.
+- Nakshatra: sidereal Moon longitude in 13°20′ segments.
+- Yoga: sidereal Sun + Moon longitude in 27 segments.
+- Karana: half-tithi progression, including fixed karanas.
+- Masa: lunation/new-moon and sidereal solar-ingress basis.
+- Adhika masa: no solar Sankranti between consecutive new moons.
+
+Add a shared adaptive root solver with seconds-level tolerance for tithi,
+nakshatra, yoga, karana, new-moon, and Sankranti crossings.
+
+This is mandatory for Adhika masa: the current new-moon solver stops at about
+±3 hours, then compares the Sun's rashi at the two estimated new moons. A
+new moon near Sankranti can therefore produce the wrong Adhika verdict. Reuse
+the Bengali calendar's stronger Sankranti bisection design (about 20 seconds)
+as the starting point for the shared ingress primitive.
+
+Continue to separate three decisions in code and data:
+
+1. astronomical fact: an element's start/end instant;
+2. civil/religious day assignment; and
+3. a named festival's observance rule.
+
+## Phase 4 — `jyotish` correctness and API hardening
+
+### Panchang-relevant package work
+
+| Work | Required change |
+|---|---|
+| Ephemeris provenance | Preserve `swe_calc_ut()` return flags and warning text. Report requested/actual backend and reject fallback when the caller requires Swiss data. |
+| Data-range enforcement | Report the actual loaded range per file via `swe_get_current_file_data()` (ifno 0 = planets, 1 = Moon, 2 = asteroids); the app asserts its expected 1800--2399 CE assets. Do not hardcode an asset range in the public package, and do not silently label Moshier fallback as Swiss Ephemeris output. The struct is populated only after the first `swe_calc_ut()` probe. |
+| Native state and initialization | Serialize access to global Swiss Ephemeris state and make initialization idempotent with a shared in-flight future. Background and foreground isolates must initialize independently and safely. |
+| Cache correctness | Use typed keys; include altitude for topocentric calls; omit location for geocentric calls; include calculation/profile version. Clear affected caches on disposal/configuration change. |
+| Batch shape | Replace `Future.wait` pseudo-parallelism with a synchronous, state-aware batch designed around a Panchang day/checkpoint workload, not only arbitrary N-body calls. |
+
+### Latent public-package API work
+
+These are confirmed package defects, but currently do not affect Tithi's daily
+Panchang path:
+
+| Work | Required change |
+|---|---|
+| Dead sidereal constant | Correct or remove `SwissEphConstants.sidereal = 64`; no current execution path reads it. If native sidereal flags are adopted, use `64 * 1024`. |
+| Manual sidereal frame bug | Do not subtract ayanamsa from `results[0]` when the result is equatorial right ascension. Prefer explicit coordinate-frame result types or reject incompatible combinations. |
+| Sidereal houses | Bind `swe_houses_ex()` for sidereal house calculation. |
+| Requested house system | Honor `houseSystem`; do not always calculate/label Placidus when Whole Sign was requested. |
+| Dignity | Correct Venus debilitation to 177° and evaluate moola-trikona before generic own-sign dignity, with degree-range rules. |
+| Input/model validation | Reject non-finite coordinates and invalid DMS components. Fix the hardcoded north/east location string in `VedicChartService`; `GeographicLocation.toString()` already handles N/S/E/W correctly. |
+| Stable enum identifiers | Do not use `SiderealMode.name` as a persistence/cache key because it is a display-label field shadowing the usual enum name. Use the integer constant or an explicit stable key. |
+
+Also remove the developer-specific macOS path from `SwissEphBindings`, correct
+the README statement that `defaultFlags()` is tropical, and decide whether
+`jyotish-js` is a maintained public artifact or should be separated/removed.
+
+### Optional native sidereal path
+
+`swe_set_sid_mode()` is already bound and called. Add an opt-in
+`SEFLG_SIDEREAL` path by including the correct flag in `toSwissEphFlag()`,
+removing the stale claim that it does not work in the compiled library, and
+validating returned flags. Keep comparison tests against the established
+ecliptic-longitude path before making it the default.
+
+## Phase 5 — moonrise, moonset, and timing accuracy
+
+Replace the pure-Dart approximate moonrise/moonset implementation for all
+observance decisions with native Swiss Ephemeris rise/set results.
+
+- The existing approximation may remain as a clearly labelled UI fallback
+  only if it cannot influence festival or vrata assignment.
+- Do not use `SE_BIT_HINDU_RISING` for Moon events: it ignores ecliptic
+  latitude and uses geocentric coordinates. Configure topocentric Moon
+  position with its actual ecliptic latitude plus an explicit lunar
+  limb/refraction policy from `PanchangProfile`.
+- Preserve the existing no-rise/no-set fallback behavior, but source its
+  event times from the native calculation.
+- Measure the tithi-sheet latency before release. The current approximation
+  exists to avoid roughly 150 asynchronous samples per sheet; a direct native
+  rise/set binding should avoid that regression.
+
+## Phase 6 — platform, data, and licensing delivery
+
+- Verify every Android ABI shipped by the app with reproducible CMake builds.
+- Implement/package/test Swiss Ephemeris for Windows, Linux, macOS, and iOS,
+  or remove unsupported platform claims from package metadata and docs.
+- Add native-library smoke tests for every supported platform.
+- Validate ephemeris assets after installation and show a safe, actionable
+  error when they are missing/corrupt.
+- Review Swiss Ephemeris licensing and distribution obligations before
+  publishing. `packages/jyotish/pubspec.yaml` has no `publish_to: none`, so
+  the package is publishable.
+
+## Phase 7 — performance and cache rollout
+
+After correctness is demonstrated:
+
+- Make speed vectors optional where retrograde state is not needed.
+- Reuse native buffers/state inside calculation batches.
+- Use bounded typed LRU caches with hit/miss/eviction telemetry.
+- Benchmark release-mode Android, not debug VM:
+  - a single Sun/Moon request;
+  - a full Panchang day with every checkpoint;
+  - a month grid;
+  - a forward festival search;
+  - transition solving; and
+  - moonrise/sunset detail-sheet loading.
+- Introduce a calculation-engine version, for example `panchang-v2`, in every
+  cached record/key. Invalidate old Hive and in-memory records; never mix old
+  apparent-sunrise output with Hindu-sunrise output.
+
+## Phase 8 — tests, CI, documentation, and release
+
+Add:
+
+- package tests for return flags, backend fallback, cache frame/altitude/time
+  behavior, initialization races, coordinate-frame safety, houses, dignity,
+  DMS validation, and stable enum keys;
+- golden Swiss Ephemeris tests with the actual shipped files;
+- Panchang golden tests from Phase 0;
+- boundary/property tests for 0°/360°, tithi/nakshatra/yoga crossings,
+  sunrise, Kshaya, Vriddhi, new-moon/Sankranti coincidence, and polar events;
+- Android integration tests using real copied ephemeris assets;
+- deterministic timezone tests using explicit IANA zones; and
+- platform smoke tests for every platform claimed by the package.
+
+Current Windows package integration tests fail because `swisseph.dll` is not
+built/shipped; treat platform smoke coverage as a release gate.
+
+Document the exact calculation methodology in-app and in the repository:
+ephemeris backend/data range, Lahiri setting, coordinate frame, Hindu-sunrise
+definition, timezone/location policy, month system, festival profile, and
+known limits. Add a `changelogs.md` entry with every user-facing feature or
+behavior change.
+
+## Delivery order
+
+1. Define `PanchangProfile`, migrate location data, and lock golden fixtures.
+2. Route every solar-event consumer through the current-calculator provider or
+   precomputed day data, with no behavior change.
+3. Bind native Hindu Sun rise/set and change the provider once, with
+   cache/version handling.
+4. Centralize Panchang-day and observance resolution.
+5. Implement precise transition/new-moon/Sankranti solvers and correct Adhika
+   boundaries.
+6. Add provenance/data-range enforcement, isolate-safe initialization, and
+   Panchang-shaped batching in `jyotish`.
+7. Replace observance-critical moonrise/moonset approximation using the
+   separate Moon event policy.
+8. Address latent chart/package APIs, platform delivery, documentation, and
+   licensing.
+9. Optimize against release-device benchmarks only after golden tests pass.
+
+This order prioritizes the calculations that can change a user's displayed
+Panchang date, then makes those calculations reproducible, testable, and fast.

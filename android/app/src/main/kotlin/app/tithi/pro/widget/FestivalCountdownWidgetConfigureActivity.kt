@@ -67,7 +67,8 @@ class FestivalCountdownWidgetConfigureActivity : Activity() {
 
             // Rebuild every instance in-process so the new theme repaints
             // immediately (no broadcast round-trip for the launcher to drop).
-            FestivalCountdownWidgetProvider.refreshAll(this)
+            // The theme key is shared by all Tithi widgets, so repaint all.
+            WidgetRefreshReceiver.refreshAll(this)
 
             setResult(
                 RESULT_OK,

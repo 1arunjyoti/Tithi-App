@@ -1,4 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="widget_description">Shows your pinned festival countdowns — days remaining until the next celebrations.</string>
+
+    <!-- Widget picker labels/descriptions. The in-app gallery localizes these
+         via AppLocalizations; these resources are the launcher-side fallback
+         and must stay distinct per provider. -->
+    <string name="widget_countdowns_label">Festival Countdowns</string>
+    <string name="widget_hero_label">Hero Card</string>
+    <string name="widget_hero_description">Today\'s tithi, paksha and festival</string>
+    <string name="widget_auspicious_label">Auspicious Timings</string>
+    <string name="widget_auspicious_description">Abhijit, Brahma Muhurta, Godhuli</string>
+    <string name="widget_inauspicious_label">Inauspicious Timings</string>
+    <string name="widget_inauspicious_description">Rahu Kalam, Yamaganda, Gulika</string>
+    <string name="widget_combined_label">Auspicious &amp; Inauspicious</string>
+    <string name="widget_combined_description">Both timing sets in one widget</string>
+
+    <!-- Fallbacks used when the app has not synced yet; a synced payload
+         carries the same string in the app language. -->
+    <string name="widget_open_to_refresh">Open Tithi to refresh</string>
+    <string name="widget_timings_now">Now</string>
+    <string name="widget_timings_no_data">Open Tithi to refresh today\'s timings.</string>
 </resources>

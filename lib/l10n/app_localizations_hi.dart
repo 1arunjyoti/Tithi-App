@@ -1611,6 +1611,43 @@ class AppLocalizationsHi extends AppLocalizations {
   String get homeWidgetCanPin => 'अपनी होम स्क्रीन पर त्योहार काउंटडाउन जोड़ें';
 
   @override
+  String get homeWidgetGallerySubtitle =>
+      'अपनी होम स्क्रीन पर पंचांग विजेट जोड़ें';
+
+  @override
+  String get widgetCountdownsLabel => 'त्योहार काउंटडाउन';
+
+  @override
+  String get widgetHeroLabel => 'मुख्य कार्ड';
+
+  @override
+  String get widgetHeroDescription => 'आज की तिथि, पक्ष और त्योहार';
+
+  @override
+  String get widgetAuspiciousLabel => 'शुभ समय';
+
+  @override
+  String get widgetAuspiciousDescription => 'अभिजीत, ब्रह्म मुहूर्त, गोधूलि';
+
+  @override
+  String get widgetInauspiciousLabel => 'अशुभ समय';
+
+  @override
+  String get widgetInauspiciousDescription => 'राहु काल, यमगंड, गुलिक';
+
+  @override
+  String get widgetCombinedLabel => 'शुभ और अशुभ समय';
+
+  @override
+  String get widgetCombinedDescription => 'दोनों समय एक ही विजेट में';
+
+  @override
+  String get widgetOpenToRefresh => 'ताज़ा करने के लिए तिथि खोलें';
+
+  @override
+  String get widgetAddTooltip => 'होम स्क्रीन पर जोड़ें';
+
+  @override
   String get dailyWisdom => 'दैनिक ज्ञान';
 
   @override

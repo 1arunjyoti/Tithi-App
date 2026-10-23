@@ -2922,6 +2922,78 @@ abstract class AppLocalizations {
   /// **'Add festival countdowns to your home screen'**
   String get homeWidgetCanPin;
 
+  /// Subtitle of the home widget gallery card
+  ///
+  /// In en, this message translates to:
+  /// **'Add panchang widgets to your home screen'**
+  String get homeWidgetGallerySubtitle;
+
+  /// Widget picker label: festival countdown widget
+  ///
+  /// In en, this message translates to:
+  /// **'Festival Countdowns'**
+  String get widgetCountdownsLabel;
+
+  /// Widget picker label: panchang hero card widget
+  ///
+  /// In en, this message translates to:
+  /// **'Hero Card'**
+  String get widgetHeroLabel;
+
+  /// Widget picker description: panchang hero card widget
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s tithi, paksha and festival'**
+  String get widgetHeroDescription;
+
+  /// Widget picker label: auspicious timings widget
+  ///
+  /// In en, this message translates to:
+  /// **'Auspicious Timings'**
+  String get widgetAuspiciousLabel;
+
+  /// Widget picker description: auspicious timings widget
+  ///
+  /// In en, this message translates to:
+  /// **'Abhijit, Brahma Muhurta, Godhuli'**
+  String get widgetAuspiciousDescription;
+
+  /// Widget picker label: inauspicious timings widget
+  ///
+  /// In en, this message translates to:
+  /// **'Inauspicious Timings'**
+  String get widgetInauspiciousLabel;
+
+  /// Widget picker description: inauspicious timings widget
+  ///
+  /// In en, this message translates to:
+  /// **'Rahu Kalam, Yamaganda, Gulika'**
+  String get widgetInauspiciousDescription;
+
+  /// Widget picker label: combined timings widget
+  ///
+  /// In en, this message translates to:
+  /// **'Auspicious & Inauspicious'**
+  String get widgetCombinedLabel;
+
+  /// Widget picker description: combined timings widget
+  ///
+  /// In en, this message translates to:
+  /// **'Both timing sets in one widget'**
+  String get widgetCombinedDescription;
+
+  /// Shown on a home screen widget when its cached day is stale
+  ///
+  /// In en, this message translates to:
+  /// **'Open Tithi to refresh'**
+  String get widgetOpenToRefresh;
+
+  /// Tooltip on the add button in the home widget gallery
+  ///
+  /// In en, this message translates to:
+  /// **'Add to home screen'**
+  String get widgetAddTooltip;
+
   /// Brand label on the shloka share card image
   ///
   /// In en, this message translates to:

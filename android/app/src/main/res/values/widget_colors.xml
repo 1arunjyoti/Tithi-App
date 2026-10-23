@@ -18,6 +18,39 @@
     <color name="widget_title_text_light">#FF3E2723</color>
     <color name="widget_secondary_text_light">#FF8B7355</color>
     <color name="widget_hint_text_light">#FFBC9B6A</color>
+    <color name="widget_accent_light">#FFBF360C</color>
+    <color name="widget_hero_text_light">#FF4E342E</color>
+    <color name="widget_hero_muted_light">#FF6D4C41</color>
+    <color name="widget_hero_accent_light">#FFBF360C</color>
+
+    <!-- Auto-mode hero palette (mirrors the fixed light palette). -->
+    <color name="widget_hero_text">#FF4E342E</color>
+    <color name="widget_hero_muted">#FF6D4C41</color>
+    <color name="widget_hero_accent">#FFBF360C</color>
+
+    <!-- Hero card surfaces: pills, moon tile, festival chip and moon painter.
+         The auto colors are overridden in values-night; the _light/_dark
+         copies are for the forced theme. -->
+    <color name="widget_hero_chip_bg">#99FFFFFF</color>
+    <color name="widget_hero_chip_border">#2EBF360C</color>
+    <color name="widget_hero_chip_bg_light">#99FFFFFF</color>
+    <color name="widget_hero_chip_border_light">#2EBF360C</color>
+    <color name="widget_hero_chip_bg_dark">#1FFFFFFF</color>
+    <color name="widget_hero_chip_border_dark">#29FFFFFF</color>
+    <color name="widget_hero_tile">#99FFFFFF</color>
+    <color name="widget_hero_tile_border">#2EBF360C</color>
+    <color name="widget_hero_tile_light">#99FFFFFF</color>
+    <color name="widget_hero_tile_border_light">#2EBF360C</color>
+    <color name="widget_hero_tile_dark">#1FFFFFFF</color>
+    <color name="widget_hero_tile_border_dark">#29FFFFFF</color>
+    <color name="widget_hero_festival_bg">#1ABF360C</color>
+    <color name="widget_hero_festival_border">#40BF360C</color>
+    <color name="widget_hero_festival_bg_light">#1ABF360C</color>
+    <color name="widget_hero_festival_border_light">#40BF360C</color>
+    <color name="widget_hero_festival_bg_dark">#1FFFE082</color>
+    <color name="widget_hero_festival_border_dark">#4DFFE082</color>
+    <color name="widget_hero_moon_shadow">#FF1A1A2E</color>
+    <color name="widget_hero_moon_lit">#FFFFE082</color>
 
     <!-- Fixed dark palette (mirrors AppTheme.pureDarkTheme) for forced-dark mode -->
     <color name="widget_background_dark">#FF1E1E1E</color>
@@ -27,4 +60,8 @@
     <color name="widget_title_text_dark">#FFE0E0E0</color>
     <color name="widget_secondary_text_dark">#FFBDBDBD</color>
     <color name="widget_hint_text_dark">#FF757575</color>
+    <color name="widget_accent_dark">#FFFFE082</color>
+    <color name="widget_hero_text_dark">#FFFFFFFF</color>
+    <color name="widget_hero_muted_dark">#FFD6D6D6</color>
+    <color name="widget_hero_accent_dark">#FFFFE082</color>
 </resources>

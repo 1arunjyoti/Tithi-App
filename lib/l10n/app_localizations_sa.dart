@@ -1611,6 +1611,42 @@ class AppLocalizationsSa extends AppLocalizations {
   String get homeWidgetCanPin => 'मुख्यपटले उत्सवकाउंटडाउनं योजयतु';
 
   @override
+  String get homeWidgetGallerySubtitle => 'मुख्यपटले पञ्चाङ्गविजेट् योजयतु';
+
+  @override
+  String get widgetCountdownsLabel => 'उत्सवगणना';
+
+  @override
+  String get widgetHeroLabel => 'मुख्यपत्रम्';
+
+  @override
+  String get widgetHeroDescription => 'अद्यतन तिथिः पक्षः उत्सवश्च';
+
+  @override
+  String get widgetAuspiciousLabel => 'शुभसमयाः';
+
+  @override
+  String get widgetAuspiciousDescription => 'अभिजित्, ब्रह्ममुहूर्तम्, गोधूलिः';
+
+  @override
+  String get widgetInauspiciousLabel => 'अशुभसमयाः';
+
+  @override
+  String get widgetInauspiciousDescription => 'राहुकालः, यमगण्डः, गुलिकः';
+
+  @override
+  String get widgetCombinedLabel => 'शुभाशुभसमयाः';
+
+  @override
+  String get widgetCombinedDescription => 'उभौ समयौ एकस्मिन् विजेट्';
+
+  @override
+  String get widgetOpenToRefresh => 'नवीकरणाय तिथिं उद्घाटयतु';
+
+  @override
+  String get widgetAddTooltip => 'मुख्यपटले योजयतु';
+
+  @override
   String get dailyWisdom => 'दैनिकं ज्ञानम्';
 
   @override

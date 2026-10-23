@@ -18,6 +18,7 @@ import 'providers/panchang_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/accessibility_provider.dart';
 import 'providers/calendar_provider.dart';
+import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
@@ -147,6 +148,9 @@ class _TithiAppState extends ConsumerState<TithiApp>
       // A tithi boundary may have passed while suspended (OS-held timers
       // are unreliable in the background): recompute the live tick so the
       // hero corrects instantly instead of showing a stale label.
+      // Refresh the wall-clock seam too; livePanchangProvider reads it and a
+      // cached first-read instant would keep the pre-boundary label.
+      ref.invalidate(liveNowProvider);
       ref.invalidate(liveTithiTickProvider);
       // Same for the calendar date: the one-shot midnight timer may never
       // have fired while suspended, leaving todayDateProvider (and every
@@ -169,6 +173,9 @@ class _TithiAppState extends ConsumerState<TithiApp>
     final darkTheme = ref.watch(darkThemeProvider);
     final accessibility = ref.watch(accessibilityProvider);
     final locale = ref.watch(localeProvider);
+    // Keeps the hero + timing home-screen widgets fed for the whole session,
+    // even when the promo card on the home screen is dismissed.
+    ref.watch(panchangWidgetSyncProvider);
 
     return MaterialApp(
       title: 'Tithi',

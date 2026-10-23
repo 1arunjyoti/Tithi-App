@@ -201,6 +201,18 @@ void main() {
           panchangForDateProvider.overrideWith(
             (ref, date) => Future.value(record),
           ),
+          // The tick rebuild after a flip checks for a follow-on intraday
+          // boundary. Short-circuit the location chain (no Hive in unit
+          // tests) and return a next-day end so no second timer is armed.
+          resolvedCoordinatesProvider.overrideWithValue(
+            (latitude: 28.6139, longitude: 77.2090),
+          ),
+          tithiTimingsProvider.overrideWith(
+            (ref, arg) => Future.value((
+              start: arg.date,
+              end: arg.date.add(const Duration(days: 2)),
+            )),
+          ),
         ],
       );
       addTearDown(container.dispose);
