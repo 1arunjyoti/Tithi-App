@@ -47,9 +47,9 @@ void stepQuoteDay(WidgetRef ref, int offset, int delta) {
 ///
 /// Collapsed shares the always-visible fields (Sanskrit + transliteration +
 /// source); expanded also includes translation(s): just the locale-appropriate
-/// one, or every available translation when [showAll] is true. Pass [l10n] so
-/// the attribution line is localized; it falls back to English when null
-/// (e.g. in unit tests with no BuildContext).
+/// one, or every available translation when [showAll] is true. Theme hashtags
+/// are always appended. Pass [l10n] so the attribution line is localized; it
+/// falls back to English when null (e.g. in unit tests with no BuildContext).
 String buildShlokaShareText(
   Shloka shloka, {
   required bool expanded,
@@ -75,6 +75,9 @@ String buildShlokaShareText(
     }
   }
   parts.add('— ${shloka.source}');
+  if (shloka.themes.isNotEmpty) {
+    parts.add(shloka.themes.map((t) => '#$t').join(' '));
+  }
   parts.add(l10n?.sharedViaTithiApp ?? 'Shared via Tithi App');
   return parts.join('\n\n');
 }
