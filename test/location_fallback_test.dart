@@ -67,6 +67,14 @@ void main() {
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async => tempDir.path);
+    // Deterministic device zone: the resolver consults this on every fix.
+    const timezoneChannel = MethodChannel('flutter_timezone');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          timezoneChannel,
+          (call) async =>
+              call.method == 'getLocalTimezone' ? 'Asia/Kolkata' : null,
+        );
     Hive.init(tempDir.path);
     await StorageService().init();
   });
@@ -113,6 +121,109 @@ void main() {
       expect(location, isNotNull);
       expect(fake.currentPositionCalls, equals(1));
     });
+  });
+
+  group('LocationData metadata persistence', () {
+    test('GPS fix stores altitude and resolved timezone', () async {
+      // Arrange
+      final fake = _MountainFixFake();
+      GeolocatorPlatform.instance = fake;
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      final location = await service.getCurrentLocation();
+
+      // Assert
+      expect(location, isNotNull);
+      expect(location!.altitudeMeters, equals(216.0));
+      expect(location.timezoneId, equals('Asia/Kolkata'));
+    });
+
+    test('home location persists altitude and resolves a zone', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setHomeLocation(
+        28.6139,
+        77.2090,
+        'Delhi',
+        altitudeMeters: 216,
+      );
+      final home = service.getHomeLocation();
+
+      // Assert
+      expect(home, isNotNull);
+      expect(home!.altitudeMeters, equals(216.0));
+      expect(home.timezoneId, equals('Asia/Kolkata'));
+    });
+
+    test(
+      'home location clears stale altitude when the new pick has none',
+      () async {
+        // Arrange
+        final service = LocationService();
+        await service.init();
+        await service.setHomeLocation(
+          28.6139,
+          77.2090,
+          'Delhi',
+          altitudeMeters: 216,
+        );
+
+        // Act: a later pick without elevation must not inherit Delhi's height.
+        await service.setHomeLocation(19.0760, 72.8777, 'Mumbai');
+        final home = service.getHomeLocation();
+
+        // Assert
+        expect(home, isNotNull);
+        expect(home!.altitudeMeters, isNull);
+        expect(home.timezoneId, equals('Asia/Kolkata'));
+      },
+    );
+
+    test('explicit timezone override wins over the device seed', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setHomeLocation(
+        40.7128,
+        -74.0060,
+        'New York',
+        timezoneId: 'America/New_York',
+      );
+      final home = service.getHomeLocation();
+
+      // Assert
+      expect(home, isNotNull);
+      expect(home!.timezoneId, equals('America/New_York'));
+    });
+
+    test(
+      'init backfills a zone for coordinates written before Phase 0',
+      () async {
+        // Arrange: write coordinates, then drop the zone to mimic an old box.
+        final first = LocationService();
+        await first.init();
+        await first.setHomeLocation(28.6139, 77.2090, 'Delhi');
+        final box = Hive.box(StorageService.locationSettingsBoxName);
+        await box.delete('home_timezone');
+        await first.dispose();
+
+        // Act: a fresh service must resolve and persist the missing zone.
+        final second = LocationService();
+        await second.init();
+        final home = second.getHomeLocation();
+
+        // Assert
+        expect(home, isNotNull);
+        expect(home!.timezoneId, equals('Asia/Kolkata'));
+      },
+    );
   });
 
   group('LocationService.tryResolvePosition', () {
@@ -431,5 +542,28 @@ class _AlwaysTimingOutFake extends TimeoutThenFixFake {
     currentPositionCalls++;
     requestedSettings.add(locationSettings);
     throw TimeoutException('GPS fix timed out');
+  }
+}
+
+/// Immediate fix that reports a real altitude (216 m, Delhi).
+class _MountainFixFake extends _ImmediateFixFake {
+  @override
+  Future<Position> getCurrentPosition({
+    LocationSettings? locationSettings,
+  }) async {
+    currentPositionCalls++;
+    requestedSettings.add(locationSettings);
+    return Position(
+      longitude: 77.2,
+      latitude: 28.6,
+      timestamp: DateTime.now(),
+      accuracy: 20,
+      altitude: 216,
+      altitudeAccuracy: 1,
+      heading: 0,
+      headingAccuracy: 1,
+      speed: 0,
+      speedAccuracy: 1,
+    );
   }
 }
