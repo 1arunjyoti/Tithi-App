@@ -2241,7 +2241,7 @@
         "authority": "Tithi panchang-v1 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
-        "notes": "Known gap: nishita (00:20) samples after Ashtami ends (00:15), so the nishita-override festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Expected to change with the Phase 2 checkpoint policy."
+        "notes": "Known gap: the nishita sampler uses the night midpoint (00:20), where the raw tithi is 24.005 (Navami); Ashtami ends at 00:15. Nishita Kaal is the one-muhurta window 23:57-00:43, where Ashtami still prevails. Phase 2 replaces the point sample with a windowed checkpoint; expected result then becomes [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
       }
     },
     {
@@ -2332,7 +2332,7 @@
         "authority": "Tithi panchang-v1 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
-        "notes": "Known gap: nishita (00:20) samples after Ashtami ends (00:15), so the nishita-override festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Expected to change with the Phase 2 checkpoint policy."
+        "notes": "Known gap: the nishita sampler uses the night midpoint (00:37), where the raw tithi is 24.018 (Navami); Ashtami ends at 00:15. Nishita Kaal is the one-muhurta window 00:14-01:01, where Ashtami still prevails. Phase 2 replaces the point sample with a windowed checkpoint; expected result then becomes [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
       }
     },
     {

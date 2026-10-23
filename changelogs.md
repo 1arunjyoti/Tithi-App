@@ -75,7 +75,10 @@ and six Indian cities without changing production calculations.
   `SWISSEPH_LIB_PATH` is set on an IST host, because the Phase 0 NOAA sunrise
   calculator is device-timezone dependent. Known gaps (Delhi/Mumbai
   Janmashtami nishita, Bengali New Year date) are recorded in case notes rather
-  than hidden.
+  than hidden. The Janmashtami defect is an explicit Phase 2 fix: replace the
+  single night-midpoint sample with the one-muhurta Nishita Kaal window, then
+  change the two expected results from `[]` to `["janmashtami"]`
+  (`docs/jyotish_package_improvements_plan.md`, Phase 2).
 
 ### Panchang home-screen widgets
 

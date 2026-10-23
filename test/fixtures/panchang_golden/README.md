@@ -55,10 +55,16 @@ Notable cases:
   in Delhi and Pratipada in Mumbai/Chennai.
 - `kolkata-2026-10-17`: Shashthi prevails at both the Oct 16 and Oct 17
   sunrises (Vriddhi), while Delhi advances to Saptami.
-- `delhi-2026-09-04` / `mumbai-2026-09-04`: known Janmashtami gap — nishita
-  (00:20) samples just after Ashtami ends (00:15), so the nishita-override
-  festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the
-  same date. Revisit with the Phase 2 checkpoint policy.
+- `delhi-2026-09-04` / `mumbai-2026-09-04`: **known Janmashtami gap**. The
+  engine samples the tithi at the night midpoint (Delhi 00:20, Mumbai 00:37),
+  which is already Navami; Ashtami ends at 00:15. Nishita Kaal is the
+  one-muhurta window centred on that midpoint (Delhi 23:57–00:43, Mumbai
+  00:14–01:01), so Ashtami still prevails when the window opens.
+  Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Phase 2 replaces
+  the point sample with a windowed, profile-driven checkpoint; the expected
+  fixture diff is `[]` → `["janmashtami"]` for Delhi and Mumbai. Tracked in
+  `docs/jyotish_package_improvements_plan.md`, Phase 2, "Nishita checkpoint:
+  Janmashtami boundary defect".
 - `kolkata-2026-04-14`: the West Bengal rule yields Boishakh 1; the fixture
   notes that the sankranti rule should be cross-checked before external
   verification.
