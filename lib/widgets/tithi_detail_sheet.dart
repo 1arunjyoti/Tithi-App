@@ -12,7 +12,7 @@ import '../providers/locale_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../services/auspicious_timings.dart';
 import '../services/inauspicious_timings.dart';
-import '../services/sunrise_calculator.dart';
+import '../services/solar_events_service.dart';
 import '../services/moon_phase_service.dart';
 import '../services/moonrise_calculator.dart';
 import '../theme/app_theme.dart';
@@ -193,7 +193,7 @@ class TithiDetailSheet extends ConsumerWidget {
             date: panchang.date,
             sunrise: panchang.sunrise!,
             sunset: panchang.sunset!,
-            nextSunrise: SunriseCalculator.calculateSunriseIST(
+            nextSunrise: solarEventsService.sunrise(
               date: panchang.date.add(const Duration(days: 1)),
               latitude: coords.latitude,
               longitude: coords.longitude,

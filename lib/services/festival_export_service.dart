@@ -6,7 +6,7 @@ import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import 'hindu_calendar_service.dart';
 import 'panchang_service.dart';
-import 'sunrise_calculator.dart';
+import 'solar_events_service.dart';
 
 /// Exports the full festival dataset with computed Panchang details as JSON.
 ///
@@ -142,12 +142,12 @@ class FestivalExportService {
       return buildEntry(festival: festival);
     }
 
-    final sunrise = SunriseCalculator.calculateSunriseIST(
+    final sunrise = solarEventsService.sunrise(
       date: occurrence,
       latitude: latitude,
       longitude: longitude,
     );
-    final sunset = SunriseCalculator.calculateSunsetIST(
+    final sunset = solarEventsService.sunset(
       date: occurrence,
       latitude: latitude,
       longitude: longitude,

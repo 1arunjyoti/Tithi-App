@@ -73,6 +73,12 @@ calendar/day assembly, detail sheets, widgets, notifications, export,
 `HinduCalendarService`, and Bengali calendar paths before any astronomical
 behavior changes.
 
+Phase 1a status: complete. `SolarEventsService` in
+`lib/services/solar_events_service.dart` is the single cached entry point and
+still delegates to `SunriseCalculator`; every production caller above reads it,
+and the Phase 0 golden set passes unchanged under `panchang-v1`. Phase 1b is the
+native swap below.
+
 Then replace that provider's implementation with a native Swiss Ephemeris
 Sun rise/set binding.
 

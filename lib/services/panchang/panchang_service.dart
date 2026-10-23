@@ -5,7 +5,7 @@ import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
 import '../festival_matching_pipeline.dart';
 import '../panchang_init/panchang_init.dart';
-import '../sunrise_calculator.dart';
+import '../solar_events_service.dart';
 import '../../core/location/location_defaults.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
@@ -421,7 +421,7 @@ class PanchangService {
         // sunrise, so a fixed 06:00 probe disagrees by a day whenever the
         // tithi changes between 06:00 and sunrise (high latitudes/seasons).
         final dayOnly = DateTime(day.year, day.month, day.day);
-        final probe = SunriseCalculator.calculateSunriseIST(
+        final probe = solarEventsService.sunrise(
           date: dayOnly,
           latitude: latitude,
           longitude: longitude,
@@ -483,11 +483,11 @@ class PanchangService {
         if (override != null &&
             timingOverrideCheckpoints.contains(override) &&
             festival.nakshatraCondition == null) {
-          final checkpoint = SunriseCalculator.checkpointTimeFor(
-            day,
-            override,
-            latitude,
-            longitude,
+          final checkpoint = solarEventsService.checkpointTimeFor(
+            date: day,
+            timingOverride: override,
+            latitude: latitude,
+            longitude: longitude,
           );
           if (checkpoint != null) {
             final cpRaw = await calculateTithi(
@@ -579,7 +579,7 @@ class PanchangService {
         // Nakshatra festivals returned with probeMatch above (a nakshatra
         // always owns a sunrise, so there is no Kshaya fallback for them).
         if (festival.nakshatraCondition == null) {
-          final nextSunriseDay = SunriseCalculator.calculateSunriseIST(
+          final nextSunriseDay = solarEventsService.sunrise(
             date: DateTime(day.year, day.month, day.day).add(
               const Duration(days: 1),
             ),

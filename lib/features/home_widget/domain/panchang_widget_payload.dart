@@ -4,7 +4,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../models/panchang_data.dart';
 import '../../../services/auspicious_timings.dart';
 import '../../../services/inauspicious_timings.dart';
-import '../../../services/sunrise_calculator.dart';
+import '../../../services/solar_events_service.dart';
 import '../../../utils/tithi_localization.dart';
 import '../../hero/domain/hero_content.dart';
 
@@ -121,7 +121,7 @@ Map<String, dynamic> buildTimingsWidgetPayload({
       // windows, and a tithi that flips mid-window clips Pradosha.
       // Calendar-day arithmetic, not +24h: across a DST transition a
       // Duration(days: 1) can land on the previous calendar day.
-      final nextSunrise = SunriseCalculator.calculateSunriseIST(
+      final nextSunrise = solarEventsService.sunrise(
         date: DateTime(day.date.year, day.date.month, day.date.day + 1),
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,

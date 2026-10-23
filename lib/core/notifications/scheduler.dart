@@ -12,7 +12,7 @@ import '../../services/festival_matching_pipeline.dart';
 import '../../services/panchang_service.dart';
 import '../../services/shloka_service.dart';
 import '../../services/storage_service.dart';
-import '../../services/sunrise_calculator.dart';
+import '../../services/solar_events_service.dart';
 import '../../utils/date_utils.dart';
 import 'festival_store.dart';
 import 'notification_keys.dart';
@@ -181,7 +181,7 @@ class NotificationScheduler {
     final window = <DateTime, PanchangData>{};
     for (int i = -2; i < NotificationKeys.festivalWindowDays + 2; i++) {
       final date = today.add(Duration(days: i));
-      final sunrise = SunriseCalculator.calculateSunriseIST(
+      final sunrise = solarEventsService.sunrise(
         date: date,
         latitude: latitude,
         longitude: longitude,
@@ -472,12 +472,12 @@ class NotificationScheduler {
     required HinduMonthSystem monthSystem,
     required DateTime sunriseTime,
   }) async {
-    final sunsetTime = SunriseCalculator.calculateSunsetIST(
+    final sunsetTime = solarEventsService.sunset(
       date: date,
       latitude: latitude,
       longitude: longitude,
     );
-    final nextSunriseTime = SunriseCalculator.calculateSunriseIST(
+    final nextSunriseTime = solarEventsService.sunrise(
       date: date.add(const Duration(days: 1)),
       latitude: latitude,
       longitude: longitude,
@@ -600,7 +600,7 @@ class NotificationScheduler {
       final contextDays = <DateTime, PanchangData>{};
       for (int i = -1; i <= 1; i++) {
         final day = date.add(Duration(days: i));
-        final daySunrise = SunriseCalculator.calculateSunriseIST(
+        final daySunrise = solarEventsService.sunrise(
           date: day,
           latitude: latitude,
           longitude: longitude,

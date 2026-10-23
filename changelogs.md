@@ -21,6 +21,26 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Solar-events seam
+
+Every production sunrise/sunset read now goes through one cached service, with
+no change to the NOAA-based output.
+
+- `SolarEventsService` wraps the shipped `SunriseCalculator` behind a
+  `SolarEventCalculator` strategy; `solarEventsService` is the process-wide
+  instance. Cache keys include the civil day, place, device offset, and
+  convention, so a timezone change cannot serve a stale instant.
+- Calendar assembly, detail sheets, home-widget payloads, notifications,
+  export, Hindu/Bengali calendar paths, and the occurrence finder all read the
+  service; `SunriseCalculator` remains the Phase 1b fallback and parity
+  reference.
+- `forDate` bundles sunrise/sunset/next sunrise, and `checkpointTimeFor` keeps
+  the shipped Madhyahna/Aparahna/Nishita/Pradosha arithmetic until Phase 2.
+- Phase 1a only implements `apparentUpperLimb`; constructing the service with
+  `hindu` throws until the native binding lands in Phase 1b.
+- Lives in `lib/services/solar_events_service.dart`; tests in
+  `test/solar_events_service_test.dart`.
+
 ### Panchang calculation profile
 
 The first piece of the Drik Panchang migration: a versioned, serializable
