@@ -135,6 +135,61 @@ moonrise while its tithi match follows sunrise. Add `'moonrise'` to the
 checkpoint set, the matcher, and the scheduler, and record the chosen policy in
 `PanchangProfile`.
 
+### Nishita checkpoint: Janmashtami boundary defect
+
+The locked baseline exposes a real engine defect, not a fixture error.
+`delhi-2026-09-04` and `mumbai-2026-09-04` resolve no `janmashtami`, although
+`docs/Lunisolar_Shaka_Vikram_Reference.md` §6.3/§6.4 records 2026-09-04 for both
+Smarta and Vaishnava observance (Ashtami must prevail at Nishita Kaal).
+
+`panchang-v1` samples one instant: `resolveTithiCheckpoints` sets
+`nishitaTime = sunset + (nextSunrise - sunset) / 2`, and
+`PanchangData.fromRawTithi` maps `timingOverride: nishita` to the tithi at that
+instant. Nishita Kaal is not a point. It is the eighth muhurta of the night, a
+one-muhurta window (night duration / 15, about 46 minutes) centred on the night
+midpoint. The midpoint can therefore fall after the tithi boundary while the
+required tithi still prevails when the window opens.
+
+Captured on 2026-09-04 with the `panchang-v1` engine:
+
+| City | Night midpoint | Derived Nishita window | Ashtami ends | Tithi at midpoint | Result |
+| --- | --- | --- | --- | --- | --- |
+| Delhi | 00:20 | 23:57--00:43 | 00:15 | Navami (`24.005`) | no match (defect) |
+| Mumbai | 00:37 | 00:14--01:01 | 00:15 | Navami (`24.018`) | no match (defect) |
+| Kolkata | 23:36 | 23:13--23:59 | 00:15 | Ashtami (`23.971`) | match |
+| Varanasi | 23:57 | 23:34--00:20 | 00:15 | Ashtami (`23.987`) | match |
+| Chennai | 00:08 | 23:45--00:31 | 00:15 | Ashtami (`23.995`) | match |
+| Guwahati | 23:22 | 22:59--23:45 | 00:15 | Ashtami (`23.960`) | match |
+
+The raw value is the engine's tithi index at the sampled instant; 24.0 is the
+Ashtami/Navami boundary. Delhi and Mumbai cross it before the midpoint, but
+Ashtami is still current when their Nishita windows open.
+
+Phase 2 must make the checkpoint a window:
+
+- add the Nishita window definition (one muhurta, night duration / 15, centred
+  on the night midpoint) to `PanchangProfile`;
+- resolve the required tithi across the window rather than at one instant: at
+  minimum evaluate the window opening and closing, and record in the profile
+  which instant decides. For Janmashtami and Maha Shivaratri, the festival
+  matches when the required tithi is current at the window opening; if the
+  tithi begins inside the window, apply an explicit, documented precedence
+  rule instead of falling back to the midpoint;
+- route `timingOverride: nishita`, the scheduler, exports, and detail sheets
+  through the same checkpoint; and
+- version the policy so a future definition change is visible in provenance.
+
+Acceptance criteria:
+
+- `delhi-2026-09-04` and `mumbai-2026-09-04` resolve `janmashtami`;
+- the other four cities keep resolving it;
+- Maha Shivaratri and every other `nishita` festival keep their documented
+  dates, with at least one regression case on each side of the window; and
+- the fixture change is deliberate: `expectedFestivalIds` changes from `[]` to
+  `["janmashtami"]` for Delhi and Mumbai, the `known-gap` tag and note are
+  removed, and the source/old-result/new-result/reason are recorded per the
+  fixture update rules.
+
 ## Phase 3 — precise transitions, masa, and Adhika masa
 
 Keep the existing astronomical definitions but replace coarse approximation

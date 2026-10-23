@@ -293,7 +293,7 @@
     {
       "caseId": "delhi-2026-09-04",
       "expectedFestivalIds": [],
-      "notes": "Known gap: nishita (00:20) samples after Ashtami ends (00:15), so the nishita-override festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Expected to change with the Phase 2 checkpoint policy."
+      "notes": "Known gap: the midpoint sample (00:20) is Navami while the Nishita window (23:57-00:43) opens with Ashtami. Phase 2 must change this to [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
     },
     {
       "caseId": "kolkata-2026-09-04",
@@ -304,7 +304,7 @@
     {
       "caseId": "mumbai-2026-09-04",
       "expectedFestivalIds": [],
-      "notes": "Known gap: nishita (00:20) samples after Ashtami ends (00:15), so the nishita-override festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Expected to change with the Phase 2 checkpoint policy."
+      "notes": "Known gap: the midpoint sample (00:37) is Navami while the Nishita window (00:14-01:01) opens with Ashtami. Phase 2 must change this to [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
     },
     {
       "caseId": "varanasi-2026-09-04",
