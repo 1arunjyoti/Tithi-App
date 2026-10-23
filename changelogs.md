@@ -44,6 +44,10 @@ for today's panchang, plus auspicious, inauspicious and combined timing widgets.
 - All widgets share `widget_theme_override` (existing configure activity);
   app syncs never write it. The gallery in `lib/widgets/home_widget_card.dart`
   pins each provider by qualified Android name.
+- The gallery starts collapsed to its header on both the home and countdown
+  screens; tap the header (or its chevron) to reveal the five rows. Expansion
+  is local to the card instance and is not persisted, so a re-mounted card
+  starts compact again.
 - The hero widget mirrors the app hero card: gradient + glow shell, uppercase
   tag + location pill, inline weekday + accent tithi title, a 44dp moon-phase
   tile and the next-tithi pill, with masa/nakshatra + sunrise/sunset in a

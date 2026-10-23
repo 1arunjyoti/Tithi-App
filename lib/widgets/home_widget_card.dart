@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
+import '../features/home_widget/providers/home_widget_promo_providers.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/home_widget_provider.dart';
 import '../services/home_widget.dart';
-import '../features/home_widget/providers/home_widget_promo_providers.dart';
 import '../theme/app_theme.dart';
 
 export '../features/home_widget/providers/home_widget_promo_providers.dart'
@@ -23,9 +25,10 @@ typedef _WidgetEntry = ({
 });
 
 /// Card that lets the user add any of the app's home screen widgets.
-/// Shown on the home screen below countdowns and in settings.
-/// On unsupported platforms the widget renders nothing.
-class HomeWidgetCard extends ConsumerWidget {
+/// Collapsed to a single header row by default; tap the header to reveal the
+/// five-row gallery. Shown on the home screen and the festival countdown
+/// screen. On unsupported platforms the widget renders nothing.
+class HomeWidgetCard extends ConsumerStatefulWidget {
   const HomeWidgetCard({super.key, this.showDismiss = false});
 
   /// Shows a close button that hides the card (persisted). Enabled on home;
@@ -33,15 +36,32 @@ class HomeWidgetCard extends ConsumerWidget {
   final bool showDismiss;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeWidgetCard> createState() => _HomeWidgetCardState();
+}
+
+class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
+  /// The gallery starts collapsed so the card stays a compact header on both
+  /// screens. This is local state: a rebuilt card keeps it, but a newly
+  /// mounted card starts collapsed again.
+  bool _expanded = false;
+
+  void _toggleExpanded() {
+    if (ref.read(accessibilityProvider).hapticFeedback) {
+      HapticFeedback.lightImpact();
+    }
+    setState(() => _expanded = !_expanded);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Keep widgets in sync
     ref.watch(homeWidgetSyncProvider);
 
-    if (showDismiss && ref.watch(homeWidgetPromoDismissedProvider)) {
+    if (widget.showDismiss && ref.watch(homeWidgetPromoDismissedProvider)) {
       return const SizedBox.shrink();
     }
     // Dismissal and support-state swaps glide closed/open instead of popping
-    // the column below.
+    // the column below. Expansion rides the same size animation.
     return AnimatedSize(
       alignment: Alignment.topCenter,
       duration: AppTheme.animationDuration(
@@ -49,20 +69,20 @@ class HomeWidgetCard extends ConsumerWidget {
         const Duration(milliseconds: 250),
       ),
       curve: Curves.easeInOutCubic,
-      child: _supportedBody(context, ref),
+      child: _supportedBody(context),
     );
   }
 
-  Widget _supportedBody(BuildContext context, WidgetRef ref) {
+  Widget _supportedBody(BuildContext context) {
     final supported = ref.watch(homeWidgetSupportedProvider);
     return supported.when(
       data: (isSupported) {
         if (!isSupported) return const SizedBox.shrink();
         final pinSupported = ref.watch(homeWidgetPinSupportProvider);
         return pinSupported.when(
-          data: (canPin) => _buildCard(context, ref, canPin),
-          loading: () => _buildCard(context, ref, false, isLoading: true),
-          error: (_, _) => _buildCard(context, ref, false),
+          data: (canPin) => _buildCard(context, canPin),
+          loading: () => _buildCard(context, false, isLoading: true),
+          error: (_, _) => _buildCard(context, false),
         );
       },
       loading: () => const SizedBox.shrink(),
@@ -72,7 +92,6 @@ class HomeWidgetCard extends ConsumerWidget {
 
   Widget _buildCard(
     BuildContext context,
-    WidgetRef ref,
     bool canPin, {
     bool isLoading = false,
   }) {
@@ -122,88 +141,145 @@ class HomeWidgetCard extends ConsumerWidget {
 
     return Container(
       decoration: AppTheme.glassmorphism(context: context, ref: ref),
-      padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppTheme.festivalTileBackground(context),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(Icons.widgets_rounded, color: accent, size: 22),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n?.homeScreenWidget ?? 'Home Screen Widgets',
-                      style: context.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      canPin
-                          ? l10n?.homeWidgetGallerySubtitle ??
-                                'Add panchang widgets to your home screen'
-                          : l10n?.homeWidgetManualHint ??
-                                'Long-press home screen → Widgets → Tithi',
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: colors.onSurface.withValues(
-                          alpha: AppTheme.contrastAlpha(context, 0.64),
+          Padding(
+            // Tighter bottom gap while the rows are open; the collapsed card
+            // keeps the standard 16dp edge.
+            padding: EdgeInsets.fromLTRB(16, 16, 16, _expanded ? 8 : 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    expanded: _expanded,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _toggleExpanded,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppTheme.festivalTileBackground(context),
+                                borderRadius: BorderRadius.circular(13),
+                              ),
+                              child: Icon(
+                                Icons.widgets_rounded,
+                                color: accent,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n?.homeScreenWidget ??
+                                        'Home Screen Widgets',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: context.textTheme.titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    canPin
+                                        ? l10n?.homeWidgetGallerySubtitle ??
+                                              'Add panchang widgets to your home screen'
+                                        : l10n?.homeWidgetManualHint ??
+                                              'Long-press home screen → Widgets → Tithi',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: context.textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: colors.onSurface.withValues(
+                                            alpha: AppTheme.contrastAlpha(
+                                              context,
+                                              0.64,
+                                            ),
+                                          ),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            AnimatedRotation(
+                              turns: _expanded ? 0.5 : 0.0,
+                              duration: AppTheme.animationDuration(
+                                context,
+                                const Duration(milliseconds: 200),
+                              ),
+                              curve: Curves.easeInOutCubic,
+                              child: Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 22,
+                                color: colors.onSurface.withValues(
+                                  alpha: AppTheme.contrastAlpha(context, 0.55),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              if (showDismiss)
-                PressScale(
-                  child: IconButton(
-                    tooltip: l10n?.dismissTooltip ?? 'Dismiss',
-                    onPressed: () => ref
-                        .read(homeWidgetPromoDismissedProvider.notifier)
-                        .dismiss(),
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    color: colors.onSurface.withValues(
-                      alpha: AppTheme.contrastAlpha(context, 0.5),
-                    ),
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size(32, 32),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
                   ),
                 ),
-            ],
+                if (widget.showDismiss) ...[
+                  const SizedBox(width: 4),
+                  PressScale(
+                    child: IconButton(
+                      tooltip: l10n?.dismissTooltip ?? 'Dismiss',
+                      onPressed: () => ref
+                          .read(homeWidgetPromoDismissedProvider.notifier)
+                          .dismiss(),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      color: colors.onSurface.withValues(
+                        alpha: AppTheme.contrastAlpha(context, 0.5),
+                      ),
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size(32, 32),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          for (final entry in entries)
-            _WidgetTile(
-              icon: entry.icon,
-              label: entry.label,
-              description: entry.description,
-              canPin: canPin,
-              isLoading: isLoading,
-              onAdd: () => _requestPin(context, ref, entry),
-              onInfo: () => _showManualInstructions(context, entry.label),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final entry in entries)
+                    _WidgetTile(
+                      icon: entry.icon,
+                      label: entry.label,
+                      description: entry.description,
+                      canPin: canPin,
+                      isLoading: isLoading,
+                      onAdd: () => _requestPin(context, entry),
+                      onInfo: () =>
+                          _showManualInstructions(context, entry.label),
+                    ),
+                ],
+              ),
             ),
         ],
       ),
     );
   }
 
-  Future<void> _requestPin(
-    BuildContext context,
-    WidgetRef ref,
-    _WidgetEntry entry,
-  ) async {
+  Future<void> _requestPin(BuildContext context, _WidgetEntry entry) async {
     final l10n = AppLocalizations.of(context);
     final service = ref.read(homeWidgetServiceProvider);
     final success = await service.requestPinWidget(entry.kind);
