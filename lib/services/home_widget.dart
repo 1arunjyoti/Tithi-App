@@ -5,16 +5,57 @@ import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 
+import '../features/home_widget/domain/panchang_widget_payload.dart';
 import '../providers/festival_countdown_provider.dart';
 import 'storage_service.dart';
 
-/// Syncs festival countdowns to the Android home screen widget.
+/// Every Android home-screen widget the app ships.
 ///
-/// Stores a JSON array under the key `festival_widget_data` that the native
-/// [FestivalCountdownWidgetProvider] / [FestivalCountdownWidgetService] read
-/// via SharedPreferences. The native side hosts a scrollable ListView, so all
-/// entries are shown and the list scrolls when the widget is small.
-/// Each entry: { title, name, date, dateLabel, daysRemaining, statusLabel }
+/// The native class names are the contract with the manifest receivers; a
+/// mismatch fails silently in the launcher, so they live in one place.
+enum HomeWidgetKind {
+  countdowns(
+    androidName: 'FestivalCountdownWidgetProvider',
+    qualifiedName: 'app.tithi.pro.widget.FestivalCountdownWidgetProvider',
+  ),
+  hero(
+    androidName: 'HeroWidgetProvider',
+    qualifiedName: 'app.tithi.pro.widget.HeroWidgetProvider',
+  ),
+  auspicious(
+    androidName: 'AuspiciousTimingsWidgetProvider',
+    qualifiedName: 'app.tithi.pro.widget.AuspiciousTimingsWidgetProvider',
+  ),
+  inauspicious(
+    androidName: 'InauspiciousTimingsWidgetProvider',
+    qualifiedName: 'app.tithi.pro.widget.InauspiciousTimingsWidgetProvider',
+  ),
+  combined(
+    androidName: 'CombinedTimingsWidgetProvider',
+    qualifiedName: 'app.tithi.pro.widget.CombinedTimingsWidgetProvider',
+  );
+
+  const HomeWidgetKind({
+    required this.androidName,
+    required this.qualifiedName,
+  });
+
+  final String androidName;
+  final String qualifiedName;
+}
+
+/// Syncs panchang data to the Android home screen widgets.
+///
+/// Festival countdowns are stored as a JSON array under
+/// `festival_widget_data`; the panchang widgets read two more documents:
+/// [kHeroWidgetDataKey] (one object) and [kTimingsWidgetDataKey] (today and
+/// tomorrow, all windows). All keys are read natively from
+/// `HomeWidgetPreferences`.
+///
+/// Every user-visible string is localized on the Dart side at sync time. The
+/// native widgets only recompute what they safely can without the ephemeris:
+/// countdown day counts (from ISO dates) and which timing window is current
+/// (from ISO instants).
 ///
 /// The widget theme (`widget_theme_override`) is owned solely by the widget
 /// itself (configure screen on add, long-press → Reconfigure on API 31+).
@@ -22,9 +63,6 @@ import 'storage_service.dart';
 class HomeWidgetService {
   const HomeWidgetService();
 
-  static const String _androidWidgetName = 'FestivalCountdownWidgetProvider';
-  static const String _qualifiedAndroidName =
-      'app.tithi.pro.widget.FestivalCountdownWidgetProvider';
   static const String _dataKey = 'festival_widget_data';
   static const String _themeKey = 'widget_theme_override';
   static const String _themeMigrationKey = 'widget_theme_own_migration_v1';
@@ -33,9 +71,11 @@ class HomeWidgetService {
   static final DateFormat _dateLabelFormat = DateFormat('EEE, MMM d');
   static final DateFormat _isoFormat = DateFormat('yyyy-MM-dd');
 
-  /// Dedup cache: skip platform-channel IPC when the data is unchanged.
+  /// Dedup caches: skip platform-channel IPC when a payload is unchanged.
   /// Guarded by Dart's single-threaded event loop — no locking needed.
   static String? _lastSyncedPayload;
+  static String? _lastHeroPayload;
+  static String? _lastTimingsPayload;
 
   Future<void> updateFestivalCountdownWidget(
     List<FestivalCountdownTarget> targets,
@@ -77,14 +117,65 @@ class HomeWidgetService {
       if (jsonString == _lastSyncedPayload) return;
 
       await HomeWidget.saveWidgetData<String>(_dataKey, jsonString);
-      _lastSyncedPayload = jsonString;
-
-      await HomeWidget.updateWidget(
-        name: _androidWidgetName,
-        qualifiedAndroidName: _qualifiedAndroidName,
-      );
+      // Cache only after the repaint broadcast succeeds: a failed notify
+      // must be retried by the next sync, not masked by the dedup cache.
+      if (await _notify(HomeWidgetKind.countdowns)) {
+        _lastSyncedPayload = jsonString;
+      }
     } catch (e) {
       debugPrint('HomeWidgetService.update failed: $e');
+    }
+  }
+
+  /// Persists and repaints the hero and timing widgets.
+  ///
+  /// [hero] and [timings] are the payloads from
+  /// `features/home_widget/domain/panchang_widget_payload.dart`. Each document
+  /// dedups independently, so a language-only change repaints everything
+  /// while an unchanged hero does not cost a second broadcast.
+  Future<void> updatePanchangWidgets({
+    required Map<String, dynamic> hero,
+    required Map<String, dynamic> timings,
+  }) async {
+    if (!Platform.isAndroid) return;
+
+    try {
+      await _migrateWidgetThemeOnce();
+
+      final heroJson = jsonEncode(hero);
+      final timingsJson = jsonEncode(timings);
+      final heroChanged = heroJson != _lastHeroPayload;
+      final timingsChanged = timingsJson != _lastTimingsPayload;
+      if (!heroChanged && !timingsChanged) return;
+
+      if (heroChanged) {
+        await HomeWidget.saveWidgetData<String>(kHeroWidgetDataKey, heroJson);
+        // Cache only after the repaint broadcast succeeds, so a transient
+        // platform-channel failure is retried instead of being deduped away.
+        if (await _notify(HomeWidgetKind.hero)) {
+          _lastHeroPayload = heroJson;
+        }
+      }
+      if (timingsChanged) {
+        await HomeWidget.saveWidgetData<String>(
+          kTimingsWidgetDataKey,
+          timingsJson,
+        );
+        // Notify every timing widget even if one host fails; only skip the
+        // cache when any repaint was lost, so the next sync retries all three.
+        var repainted = true;
+        for (final kind in const [
+          HomeWidgetKind.auspicious,
+          HomeWidgetKind.inauspicious,
+          HomeWidgetKind.combined,
+        ]) {
+          final ok = await _notify(kind);
+          repainted = ok && repainted;
+        }
+        if (repainted) _lastTimingsPayload = timingsJson;
+      }
+    } catch (e) {
+      debugPrint('HomeWidgetService panchang update failed: $e');
     }
   }
 
@@ -146,6 +237,21 @@ class HomeWidgetService {
     }
   }
 
+  /// Returns false (instead of throwing) when the repaint broadcast fails, so
+  /// callers can decide whether the payload is safe to dedup.
+  Future<bool> _notify(HomeWidgetKind kind) async {
+    try {
+      await HomeWidget.updateWidget(
+        name: kind.androidName,
+        qualifiedAndroidName: kind.qualifiedName,
+      );
+      return true;
+    } catch (e) {
+      debugPrint('HomeWidgetService notify ${kind.name} failed: $e');
+      return false;
+    }
+  }
+
   Future<bool> isRequestPinSupported() async {
     if (!Platform.isAndroid) return false;
     try {
@@ -157,13 +263,15 @@ class HomeWidgetService {
     }
   }
 
-  Future<bool> requestPinWidget() async {
+  Future<bool> requestPinWidget([
+    HomeWidgetKind kind = HomeWidgetKind.countdowns,
+  ]) async {
     if (!Platform.isAndroid) return false;
     try {
       final supported = await isRequestPinSupported();
       if (!supported) return false;
       await HomeWidget.requestPinWidget(
-        qualifiedAndroidName: _qualifiedAndroidName,
+        qualifiedAndroidName: kind.qualifiedName,
       );
       return true;
     } catch (e) {

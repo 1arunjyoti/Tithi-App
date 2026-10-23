@@ -9,4 +9,13 @@
     <color name="widget_title_text">#FFE0E0E0</color>
     <color name="widget_secondary_text">#FFBDBDBD</color>
     <color name="widget_hint_text">#FF757575</color>
+    <color name="widget_hero_text">#FFFFFFFF</color>
+    <color name="widget_hero_muted">#FFD6D6D6</color>
+    <color name="widget_hero_accent">#FFFFE082</color>
+    <color name="widget_hero_chip_bg">#1FFFFFFF</color>
+    <color name="widget_hero_chip_border">#29FFFFFF</color>
+    <color name="widget_hero_tile">#1FFFFFFF</color>
+    <color name="widget_hero_tile_border">#29FFFFFF</color>
+    <color name="widget_hero_festival_bg">#1FFFE082</color>
+    <color name="widget_hero_festival_border">#4DFFE082</color>
 </resources>

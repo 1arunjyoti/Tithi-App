@@ -1,10 +1,28 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/format/festival_labels.dart';
+import '../core/locale/app_locale.dart';
+import '../features/hero/domain/hero_content.dart';
+import '../features/hero/providers/hero_providers.dart';
+import '../features/home_widget/domain/panchang_widget_payload.dart';
+import '../features/sheets/domain/sheet_labels.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_bn.dart';
+import '../l10n/app_localizations_en.dart';
+import '../l10n/app_localizations_hi.dart';
+import '../l10n/app_localizations_sa.dart';
+import '../models/festival_region.dart';
 import '../services/home_widget.dart';
+import '../utils/tithi_localization.dart';
+import 'calendar_provider.dart';
 import 'festival_countdown_provider.dart';
 import 'locale_provider.dart';
+import 'location_provider.dart';
+import 'panchang_provider.dart';
 
 /// Exposes the [HomeWidgetService] as a shared const instance.
 /// Const constructor — no per-read allocation, no state to leak.
@@ -66,3 +84,116 @@ final homeWidgetSyncProvider = Provider<void>((ref) {
     );
   }
 });
+
+/// Side-effect provider: keeps the hero and timing widgets fed with today's
+/// panchang and windows.
+///
+/// Mounted at the app root (not inside the promo card) so the widgets stay
+/// fresh even after the user dismisses the home-screen-widget card. The
+/// payload includes tomorrow's timings too, letting the native midnight
+/// refresh roll over without waiting for the app to run.
+///
+/// Every string is localized here, at sync time: the native widgets never
+/// resolve `AppLocalizations`.
+final panchangWidgetSyncProvider = Provider<void>((ref) {
+  final locale = resolveAppLocale(ref.watch(localeProvider));
+  final l10n = _localizationsFor(locale);
+  final today = ref.watch(todayDateProvider);
+  final coordinates = ref.watch(resolvedCoordinatesProvider);
+  final city = ref.watch(currentLocationProvider).valueOrNull?.cityName ?? '';
+  final region = ref.watch(festivalRegionProvider);
+  final primarySystem = ref.watch(primaryCalendarSystemProvider);
+  final secondarySystem = ref.watch(secondaryCalendarSystemProvider);
+  final monthSystem = ref.watch(hinduMonthSystemProvider);
+
+  final panchang = ref.watch(livePanchangProvider(today)).valueOrNull;
+  if (panchang == null) return;
+
+  final tomorrow = DateTime(today.year, today.month, today.day + 1);
+  // Already warm on the home screen (the month batch and event list need
+  // it); a missing tomorrow just means no rollover payload today.
+  final tomorrowPanchang = ref
+      .watch(panchangForDateProvider(tomorrow))
+      .valueOrNull;
+
+  // Payload construction is pure but not infallible (astronomy edge cases,
+  // malformed festival data). A widget failure must never throw into the
+  // app-root build, so degrade to "no sync this time" and retry on the next
+  // data change.
+  try {
+    final content = heroContentData(
+      panchang: panchang,
+      l10n: l10n,
+      primarySystem: primarySystem,
+      secondarySystem: secondarySystem,
+      monthSystem: monthSystem,
+      bengali: ref
+          .watch(bengaliDateForHeroProvider(panchang.date))
+          .valueOrNull,
+      useBengaliScript: locale.languageCode == 'bn',
+      isToday: true,
+      region: region,
+    );
+    final names = masaTithiNames(
+      masa: panchang.masa,
+      paksha: panchang.paksha,
+      monthSystem: monthSystem,
+      tithiNumber: panchang.tithiNumber,
+      l10n: l10n,
+    );
+    final detail = [
+      names.localizedMasa,
+      ?panchang.nakshatra,
+    ].where((part) => part.trim().isNotEmpty).join(' · ');
+
+    // Widget text follows the app language, including festival names.
+    final festivals = sortedFestivalsForRegion(
+      panchang.festivals,
+      region,
+    )
+        .map(
+          (festival) => festivalDisplayName(
+            festival: festival,
+            locale: locale.languageCode,
+          ),
+        )
+        .toList(growable: false);
+
+    final hero = buildHeroWidgetPayload(
+      panchang: panchang,
+      content: content,
+      l10n: l10n,
+      detail: detail,
+      festivals: festivals,
+      lang: locale.languageCode,
+      refreshLabel: l10n.widgetOpenToRefresh,
+      formatTime: (time) => formatLocalizedDate(time, 'jm', l10n.localeName),
+      location: city,
+    );
+
+    final timings = buildTimingsWidgetPayload(
+      days: [panchang, ?tomorrowPanchang],
+      coordinates: coordinates,
+      l10n: l10n,
+      lang: locale.languageCode,
+      refreshLabel: l10n.widgetOpenToRefresh,
+    );
+
+    unawaited(
+      ref
+          .read(homeWidgetServiceProvider)
+          .updatePanchangWidgets(hero: hero, timings: timings),
+    );
+  } catch (e, stack) {
+    debugPrint('panchangWidgetSyncProvider failed: $e\n$stack');
+  }
+});
+
+/// Context-free localizations for background sync work.
+AppLocalizations _localizationsFor(Locale locale) =>
+    switch (locale.languageCode) {
+      'hi' => AppLocalizationsHi(),
+      'bn' => AppLocalizationsBn(),
+      'sa' => AppLocalizationsSa(),
+      _ => AppLocalizationsEn(),
+    };

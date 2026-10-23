@@ -289,6 +289,10 @@ class LiveTithiTickNotifier extends AutoDisposeNotifier<int> {
     final delay = instant.difference(now) + _flipGrace;
     if (delay.isNegative) return;
     _timer = Timer(delay, () {
+      // Refresh the wall-clock seam before rebuilding: it is a plain
+      // Provider, so a cached first-read instant would otherwise keep
+      // livePanchangProvider on the pre-boundary label forever.
+      ref.invalidate(liveNowProvider);
       _tick++;
       state = _tick;
     });

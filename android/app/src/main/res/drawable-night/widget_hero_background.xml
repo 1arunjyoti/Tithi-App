@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hero widget shell (dark): the app's PureDark hero gradient with the amber
+     top-right glow and a faint white hairline. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:endColor="#FF050505"
+                android:startColor="#FF1E1E1E"
+                android:type="linear" />
+            <corners android:radius="24dp" />
+        </shape>
+    </item>
+    <item
+        android:left="90dp"
+        android:bottom="90dp">
+        <shape android:shape="oval">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="0.5"
+                android:endColor="#00FFA000"
+                android:gradientRadius="120dp"
+                android:startColor="#40FFA000"
+                android:type="radial" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <corners android:radius="24dp" />
+            <stroke
+                android:width="1dp"
+                android:color="#33FFFFFF" />
+        </shape>
+    </item>
+</layer-list>

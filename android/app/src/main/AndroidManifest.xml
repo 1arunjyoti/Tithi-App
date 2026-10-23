@@ -51,7 +51,8 @@
              numbers over after the process was killed. -->
         <receiver
             android:name=".widget.FestivalCountdownWidgetProvider"
-            android:exported="true">
+            android:exported="true"
+            android:label="@string/widget_countdowns_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="app.tithi.pro.widget.ACTION_DAILY_REFRESH" />
@@ -71,6 +72,81 @@
             android:name=".widget.FestivalCountdownWidgetService"
             android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
+
+        <!-- Hero-card widget: today's panchang at a glance. Refreshed by the
+             app sync and by the shared nightly alarm below. -->
+        <receiver
+            android:name=".widget.HeroWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_hero_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/hero_widget_info" />
+        </receiver>
+
+        <!-- Timing widgets share one payload and one RemoteViewsService;
+             each receiver is a distinct launcher entry. -->
+        <receiver
+            android:name=".widget.AuspiciousTimingsWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_auspicious_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/auspicious_timings_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.InauspiciousTimingsWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_inauspicious_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/inauspicious_timings_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.CombinedTimingsWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_combined_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/combined_timings_widget_info" />
+        </receiver>
+
+        <!-- Collection backing shared by the three timing widgets
+             (mode extra selects rows). -->
+        <service
+            android:name=".widget.TimingWidgetService"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:exported="false" />
+
+        <!-- Shared nightly + window-boundary refresh for the panchang
+             widgets. Explicit alarm intents; system broadcasts re-arm after
+             reboot / app update / clock jumps. -->
+        <receiver
+            android:name=".widget.WidgetRefreshReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+
 
         <!-- Widget-local theme picker: shown on add, and on API 31+ via
              long-press → Reconfigure (see widgetFeatures="reconfigurable") -->

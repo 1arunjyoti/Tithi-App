@@ -19,6 +19,58 @@ Format:
 
 ---
 
+## 2026-10-23 - 0.7.20+20
+
+### Panchang home-screen widgets
+
+Four new Android home-screen widgets join the festival countdown: a hero card
+for today's panchang, plus auspicious, inauspicious and combined timing widgets.
+
+- Native widgets are dumb renderers. Dart pre-computes and localizes every
+  string in all four app languages in
+  `lib/features/home_widget/domain/panchang_widget_payload.dart`; payloads live
+  under `hero_widget_data` / `timings_widget_data` in `HomeWidgetPreferences`.
+- The timing payload carries today **and** tomorrow with ISO start/end instants
+  (`kTimingsWidgetDayCount = 2`), so the native midnight alarm rolls over
+  without the app. Do not trim it to one day.
+- One `TimingWidgetService` backs all three timing widgets; the provider's mode
+  extra (`auspicious` / `inauspicious` / `combined`) selects rows and section
+  headers. The "now" marker is derived natively from the ISO instants.
+- `WidgetRefreshReceiver` owns the shared heartbeat: a one-shot 00:01 alarm and
+  a one-shot next-window-edge alarm, re-armed on boot / app update / clock
+  changes and cancelled when no Tithi panchang widget remains. The window-edge
+  alarm is armed only while a timing widget exists; a hero-only launcher gets
+  just the daily refresh.
+- All widgets share `widget_theme_override` (existing configure activity);
+  app syncs never write it. The gallery in `lib/widgets/home_widget_card.dart`
+  pins each provider by qualified Android name.
+- The hero widget mirrors the app hero card: gradient + glow shell, uppercase
+  tag + location pill, inline weekday + accent tithi title, a 44dp moon-phase
+  tile and the next-tithi pill, with masa/nakshatra + sunrise/sunset in a
+  compact footer. The moon phase is drawn natively from the payload's
+  `illumination` / `isShukla`; the headline festival takes the artwork slot as
+  an accent pill.
+- The hero payload now carries `secondaryKind`, `illumination`, `isShukla`,
+  `location`, and the structured `chipText` / `chipHighlight` / `chipSuffix` /
+  `chipInlineIcon` parts. Keep those fields when changing the Dart payload
+  builder; the native side uses them to style the title and chip without
+  re-parsing localized sentences.
+- The hero widget shows a refresh prompt when the stored day is not today
+  instead of yesterday's panchang.
+- Hero festival names follow the app language (regional name when available).
+  Timing payload construction is isolated per day, and a failed widget
+  repaint is retried on the next sync instead of being masked by the payload
+  dedup cache.
+
+### Live tithi clock refresh
+The hero label now flips at the tithi boundary and after the app resumes,
+instead of sticking to the clock instant captured on the first read.
+
+- `liveNowProvider` is a plain `Provider`, so it caches its first value; the
+  tick timer and the resume path invalidate it before `livePanchangProvider`
+  rebuilds.
+- Files: `lib/providers/panchang_provider.dart`, `lib/main.dart`.
+
 ## 2026-10-22 - 0.6.20+18
 
 ### Festival regions

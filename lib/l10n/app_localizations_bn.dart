@@ -1607,6 +1607,43 @@ class AppLocalizationsBn extends AppLocalizations {
   String get homeWidgetCanPin => 'হোম স্ক্রিনে উৎসবের কাউন্টডাউন যোগ করুন';
 
   @override
+  String get homeWidgetGallerySubtitle =>
+      'হোম স্ক্রিনে পঞ্চাঙ্গ উইজেট যোগ করুন';
+
+  @override
+  String get widgetCountdownsLabel => 'উৎসব কাউন্টডাউন';
+
+  @override
+  String get widgetHeroLabel => 'হিরো কার্ড';
+
+  @override
+  String get widgetHeroDescription => 'আজকের তিথি, পক্ষ ও উৎসব';
+
+  @override
+  String get widgetAuspiciousLabel => 'শুভ সময়';
+
+  @override
+  String get widgetAuspiciousDescription => 'অভিজিৎ, ব্রহ্ম মুহূর্ত, গোধূলি';
+
+  @override
+  String get widgetInauspiciousLabel => 'অশুভ সময়';
+
+  @override
+  String get widgetInauspiciousDescription => 'রাহু কাল, যমগণ্ড, গুলিক';
+
+  @override
+  String get widgetCombinedLabel => 'শুভ ও অশুভ সময়';
+
+  @override
+  String get widgetCombinedDescription => 'দুটি সময় এক উইজেটে';
+
+  @override
+  String get widgetOpenToRefresh => 'রিফ্রেশ করতে তিথি খুলুন';
+
+  @override
+  String get widgetAddTooltip => 'হোম স্ক্রিনে যোগ করুন';
+
+  @override
   String get dailyWisdom => 'দৈনিক জ্ঞান';
 
   @override

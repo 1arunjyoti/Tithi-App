@@ -147,6 +147,7 @@ void main() {
           // No-op the sync side-effect: otherwise it hits the HomeWidget
           // MethodChannel (no mock in tests) on every rebuild.
           homeWidgetSyncProvider.overrideWith((ref) {}),
+          panchangWidgetSyncProvider.overrideWith((ref) {}),
           // Calendar grid + neighbor precache otherwise run FFI cell builds
           // that never resolve under flutter_test (pending timer at
           // calendar_widget.dart _scheduleAdjacentPrecache → "Timer is still
