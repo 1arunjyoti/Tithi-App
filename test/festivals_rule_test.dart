@@ -277,5 +277,9 @@ void main() {
       }
       print('');
     });
-  });
+  },
+    skip:
+        'Needs native Swiss Ephemeris (swisseph.dll) and a path_provider '
+        'implementation; run on a device as an integration test.',
+  );
 }
