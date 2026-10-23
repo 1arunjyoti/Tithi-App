@@ -9,7 +9,7 @@ import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../services/festival_matching_pipeline.dart';
 import '../services/panchang_service.dart';
-import '../services/sunrise_calculator.dart';
+import '../services/solar_events_service.dart';
 import 'festival_provider.dart';
 import 'location_provider.dart';
 import 'calendar_provider.dart';
@@ -272,7 +272,7 @@ class LiveTithiTickNotifier extends AutoDisposeNotifier<int> {
         .valueOrNull
         ?.end;
     if (followOnEnd == null) return _tick;
-    final nextSunrise = SunriseCalculator.calculateSunriseIST(
+    final nextSunrise = solarEventsService.sunrise(
       date: day.date.add(const Duration(days: 1)),
       latitude: coords.latitude,
       longitude: coords.longitude,
@@ -338,7 +338,7 @@ final livePanchangProvider = FutureProvider.autoDispose
               longitude: coords.longitude,
             )).future,
           );
-          final nextSunrise = SunriseCalculator.calculateSunriseIST(
+          final nextSunrise = solarEventsService.sunrise(
             date: base.date.add(const Duration(days: 1)),
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -554,7 +554,7 @@ final nakshatraTimingsProvider = FutureProvider.family<
     params.date.month,
     params.date.day,
   );
-  final sunrise = SunriseCalculator.calculateSunriseIST(
+  final sunrise = solarEventsService.sunrise(
     date: normalized,
     latitude: params.latitude,
     longitude: params.longitude,
@@ -668,7 +668,7 @@ final yogaKaranaTimingsProvider = FutureProvider.family<
     params.date.month,
     params.date.day,
   );
-  final sunrise = SunriseCalculator.calculateSunriseIST(
+  final sunrise = solarEventsService.sunrise(
     date: normalized,
     latitude: params.latitude,
     longitude: params.longitude,

@@ -27,8 +27,10 @@ the calculation baseline.
 - Engine tag: `panchang-v1` (`kPanchangCalculationVersion = 1`).
 - Ayanamsa: Lahiri. Month system: Amanta. Timezone: `Asia/Kolkata`.
 - Sunrise: the current NOAA-style `SunriseCalculator`
-  (`apparent_upper_limb_noaa`), which is **minute-rounded**. Phase 1 will move
-  this to the Swiss Ephemeris `hindu_rising` convention; that change is
+  (`apparent_upper_limb_noaa`), which is **minute-rounded**. Phase 1a routes
+  every production caller through `SolarEventsService`, which still delegates
+  to this calculator, so the baseline is unchanged. Phase 1b will move the
+  delegate to the Swiss Ephemeris `hindu_rising` convention; that change is
   expected to move sunrise/sunset by up to about a minute and will require a
   reviewed fixture update.
 - Tithi, nakshatra, masa, and festival matching come from the shipped

@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
 import '../../providers/panchang_provider.dart';
-import '../sunrise_calculator.dart';
+import '../solar_events_service.dart';
 import 'bengali_calendar_data.dart';
 
 final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
@@ -109,7 +109,7 @@ class BengaliCalendarService {
     var normalized = DateTime(date.year, date.month, date.day);
     final hasTime = date.hour != 0 || date.minute != 0 || date.second != 0;
     if (hasTime) {
-      final sunrise = SunriseCalculator.calculateSunriseIST(
+      final sunrise = solarEventsService.sunrise(
         date: normalized,
         latitude: latitude,
         longitude: longitude,

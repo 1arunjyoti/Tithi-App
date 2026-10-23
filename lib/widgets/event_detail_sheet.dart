@@ -10,7 +10,7 @@ import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../services/moonrise_calculator.dart';
 import '../services/share_service.dart';
-import '../services/sunrise_calculator.dart';
+import '../services/solar_events_service.dart';
 import '../utils/tithi_localization.dart';
 import '../features/ai/domain/ai_prompt.dart';
 import '../features/ai/providers/ai_providers.dart';
@@ -1273,7 +1273,7 @@ class _EventPujaSamay extends ConsumerWidget {
           date: panchang.date,
           sunrise: panchang.sunrise,
           sunset: panchang.sunset,
-          nextSunrise: SunriseCalculator.calculateSunriseIST(
+          nextSunrise: solarEventsService.sunrise(
             date: panchang.date.add(const Duration(days: 1)),
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -1456,7 +1456,7 @@ class _EventParan extends ConsumerWidget {
         );
       case 'next_sunrise':
         // Typical morning eat window: two hours from sunrise.
-        final rise = SunriseCalculator.calculateSunriseIST(
+        final rise = solarEventsService.sunrise(
           date: panchang.date.add(const Duration(days: 1)),
           latitude: coords.latitude,
           longitude: coords.longitude,
@@ -1495,7 +1495,7 @@ class _EventParan extends ConsumerWidget {
           if (panchang.sunrise == null || panchang.sunset == null) {
             return const SizedBox.shrink();
           }
-          nextSunrise = SunriseCalculator.calculateSunriseIST(
+          nextSunrise = solarEventsService.sunrise(
             date: panchang.date.add(const Duration(days: 1)),
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -1554,12 +1554,12 @@ class _EventParan extends ConsumerWidget {
         // hides the line.
         if (content.observedIndex >= 30) return const SizedBox.shrink();
         final nextDay = panchang.date.add(const Duration(days: 1));
-        final rise = SunriseCalculator.calculateSunriseIST(
+        final rise = solarEventsService.sunrise(
           date: nextDay,
           latitude: coords.latitude,
           longitude: coords.longitude,
         );
-        final set = SunriseCalculator.calculateSunsetIST(
+        final set = solarEventsService.sunset(
           date: nextDay,
           latitude: coords.latitude,
           longitude: coords.longitude,

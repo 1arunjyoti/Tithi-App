@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import '../providers/panchang_provider.dart';
-import 'sunrise_calculator.dart';
+import 'solar_events_service.dart';
 
 final hinduCalendarServiceProvider = Provider<HinduCalendarService>((ref) {
   return HinduCalendarService(ref);
@@ -62,7 +62,7 @@ class HinduCalendarService {
 
     final coords = _ref.read(resolvedCoordinatesProvider);
     final normalized = DateTime(date.year, date.month, date.day);
-    final sunrise = SunriseCalculator.calculateSunriseIST(
+    final sunrise = solarEventsService.sunrise(
       date: normalized,
       latitude: coords.latitude,
       longitude: coords.longitude,

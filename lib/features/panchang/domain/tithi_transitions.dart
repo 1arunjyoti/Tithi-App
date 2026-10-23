@@ -6,7 +6,7 @@ import '../../../models/hindu_month_system.dart';
 import '../../../models/panchang_data.dart';
 import '../../../services/festival_matching_pipeline.dart';
 import '../../../services/panchang_service.dart';
-import '../../../services/sunrise_calculator.dart';
+import '../../../services/solar_events_service.dart';
 import '../data/panchang_cache.dart';
 
 // ---------------------------------------------------------------------------
@@ -139,17 +139,17 @@ Future<TithiCheckpoints> resolveTithiCheckpoints({
   required double longitude,
   required Box<dynamic> cacheBox,
 }) async {
-  final sunriseTime = SunriseCalculator.calculateSunriseIST(
+  final sunriseTime = solarEventsService.sunrise(
     date: normalizedDate,
     latitude: latitude,
     longitude: longitude,
   );
-  final sunsetTime = SunriseCalculator.calculateSunsetIST(
+  final sunsetTime = solarEventsService.sunset(
     date: normalizedDate,
     latitude: latitude,
     longitude: longitude,
   );
-  final nextSunriseTime = SunriseCalculator.calculateSunriseIST(
+  final nextSunriseTime = solarEventsService.sunrise(
     date: normalizedDate.add(const Duration(days: 1)),
     latitude: latitude,
     longitude: longitude,
