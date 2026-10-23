@@ -21,6 +21,22 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Panchang calculation profile
+
+The first piece of the Drik Panchang migration: a versioned, serializable
+description of the calculation contract, with no behavior change yet.
+
+- `PanchangProfile` fixes the target defaults: Lahiri, Amanta, Hindu
+  sunrise/sunset, traditional upper-limb moonrise, mean node.
+- Persisted as a JSON map under `panchang_profile`; the ayanamsa is stored by
+  Swiss Ephemeris sidereal-mode constant, never by enum index.
+- `engineTag` / `cacheKey` cover every output-affecting field so a future cache
+  cannot serve a record from a different contract.
+- Moonrise is in the target checkpoint set, but the live matcher still omits it
+  until Phase 2; nothing reads the profile before Phase 1b.
+- Lives in `lib/models/panchang_profile.dart`; tests in
+  `test/panchang_profile_test.dart`.
+
 ### Panchang home-screen widgets
 
 Four new Android home-screen widgets join the festival countdown: a hero card
