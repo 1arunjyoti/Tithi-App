@@ -1,0 +1,511 @@
+{
+  "schemaVersion": 1,
+  "profileId": "india_drik_lahiri_amanta",
+  "source": {
+    "authority": "Tithi panchang-v1 engine characterization",
+    "retrievedOn": "2026-10-23",
+    "kind": "engine-characterization",
+    "notes": "Captured before the Drik migration. This is a regression lock, not an external accuracy certification."
+  },
+  "cases": [
+    {
+      "caseId": "delhi-2026-01-06",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "kolkata-2026-01-06",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "mumbai-2026-01-06",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "varanasi-2026-01-06",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "chennai-2026-01-06",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "guwahati-2026-01-06",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "delhi-2026-01-14",
+      "expectedFestivalIds": [
+        "ekadashi_krishna",
+        "makar_sankranti",
+        "pongal"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-01-14",
+      "expectedFestivalIds": [
+        "ekadashi_krishna",
+        "makar_sankranti",
+        "pongal"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-01-14",
+      "expectedFestivalIds": [
+        "ekadashi_krishna",
+        "makar_sankranti",
+        "pongal"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-01-14",
+      "expectedFestivalIds": [
+        "ekadashi_krishna",
+        "makar_sankranti",
+        "pongal"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-01-14",
+      "expectedFestivalIds": [
+        "ekadashi_krishna",
+        "makar_sankranti",
+        "pongal"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-01-14",
+      "expectedFestivalIds": [
+        "ekadashi_krishna",
+        "makar_sankranti",
+        "pongal"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-01-29",
+      "expectedFestivalIds": [
+        "ekadashi_shukla"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-01-29",
+      "expectedFestivalIds": [
+        "ekadashi_shukla"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-01-29",
+      "expectedFestivalIds": [
+        "ekadashi_shukla"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-01-29",
+      "expectedFestivalIds": [
+        "ekadashi_shukla"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-01-29",
+      "expectedFestivalIds": [
+        "ekadashi_shukla"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-01-29",
+      "expectedFestivalIds": [
+        "ekadashi_shukla"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-02-15",
+      "expectedFestivalIds": [
+        "maha_shivaratri"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-02-15",
+      "expectedFestivalIds": [
+        "maha_shivaratri"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-02-15",
+      "expectedFestivalIds": [
+        "maha_shivaratri"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-02-15",
+      "expectedFestivalIds": [
+        "maha_shivaratri"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-02-15",
+      "expectedFestivalIds": [
+        "maha_shivaratri"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-02-15",
+      "expectedFestivalIds": [
+        "maha_shivaratri"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-03-04",
+      "expectedFestivalIds": [
+        "holi"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-03-04",
+      "expectedFestivalIds": [
+        "holi"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-03-04",
+      "expectedFestivalIds": [
+        "holi"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-03-04",
+      "expectedFestivalIds": [
+        "holi"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-03-04",
+      "expectedFestivalIds": [
+        "holi"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-03-04",
+      "expectedFestivalIds": [
+        "holi"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-03-27",
+      "expectedFestivalIds": [
+        "chaitra_navratri_day_9",
+        "ram_navami"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-03-27",
+      "expectedFestivalIds": [
+        "chaitra_navratri_day_9",
+        "ram_navami"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-03-27",
+      "expectedFestivalIds": [
+        "chaitra_navratri_day_9",
+        "ram_navami"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-03-27",
+      "expectedFestivalIds": [
+        "chaitra_navratri_day_9",
+        "ram_navami"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-03-27",
+      "expectedFestivalIds": [
+        "chaitra_navratri_day_9",
+        "ram_navami"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-03-27",
+      "expectedFestivalIds": [
+        "chaitra_navratri_day_9",
+        "ram_navami"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-05-20",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "kolkata-2026-05-20",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "mumbai-2026-05-20",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "varanasi-2026-05-20",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "chennai-2026-05-20",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "guwahati-2026-05-20",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "delhi-2026-06-15",
+      "expectedFestivalIds": [
+        "amavasya"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-06-15",
+      "expectedFestivalIds": [
+        "amavasya"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-06-15",
+      "expectedFestivalIds": [
+        "amavasya"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-06-15",
+      "expectedFestivalIds": [
+        "amavasya"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-06-15",
+      "expectedFestivalIds": [
+        "amavasya"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-06-15",
+      "expectedFestivalIds": [
+        "amavasya"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-09-04",
+      "expectedFestivalIds": [],
+      "notes": "Known gap: nishita (00:20) samples after Ashtami ends (00:15), so the nishita-override festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Expected to change with the Phase 2 checkpoint policy."
+    },
+    {
+      "caseId": "kolkata-2026-09-04",
+      "expectedFestivalIds": [
+        "janmashtami"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-09-04",
+      "expectedFestivalIds": [],
+      "notes": "Known gap: nishita (00:20) samples after Ashtami ends (00:15), so the nishita-override festival does not resolve. Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Expected to change with the Phase 2 checkpoint policy."
+    },
+    {
+      "caseId": "varanasi-2026-09-04",
+      "expectedFestivalIds": [
+        "janmashtami"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-09-04",
+      "expectedFestivalIds": [
+        "janmashtami"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-09-04",
+      "expectedFestivalIds": [
+        "janmashtami"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-11-09",
+      "expectedFestivalIds": [
+        "amavasya",
+        "diwali",
+        "lakshmi_puja"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-11-09",
+      "expectedFestivalIds": [
+        "amavasya",
+        "diwali",
+        "lakshmi_puja"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-11-09",
+      "expectedFestivalIds": [
+        "amavasya",
+        "diwali",
+        "lakshmi_puja"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-11-09",
+      "expectedFestivalIds": [
+        "amavasya",
+        "diwali",
+        "lakshmi_puja"
+      ]
+    },
+    {
+      "caseId": "chennai-2026-11-09",
+      "expectedFestivalIds": [
+        "amavasya",
+        "diwali",
+        "lakshmi_puja"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-11-09",
+      "expectedFestivalIds": [
+        "amavasya",
+        "diwali",
+        "lakshmi_puja"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-06-30",
+      "expectedFestivalIds": [
+        "purnima"
+      ],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+    },
+    {
+      "caseId": "kolkata-2026-06-30",
+      "expectedFestivalIds": [
+        "purnima"
+      ],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+    },
+    {
+      "caseId": "mumbai-2026-06-30",
+      "expectedFestivalIds": [],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+    },
+    {
+      "caseId": "varanasi-2026-06-30",
+      "expectedFestivalIds": [
+        "purnima"
+      ],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+    },
+    {
+      "caseId": "chennai-2026-06-30",
+      "expectedFestivalIds": [],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+    },
+    {
+      "caseId": "guwahati-2026-06-30",
+      "expectedFestivalIds": [
+        "purnima"
+      ],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+    },
+    {
+      "caseId": "delhi-2026-02-24",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "varanasi-2026-02-24",
+      "expectedFestivalIds": []
+    },
+    {
+      "caseId": "delhi-2026-10-16",
+      "expectedFestivalIds": [
+        "sharad_navratri_katyayani_puja",
+        "shashthi_durga_puja"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-10-16",
+      "expectedFestivalIds": [
+        "sharad_navratri_katyayani_puja",
+        "shashthi_durga_puja"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-10-16",
+      "expectedFestivalIds": [
+        "sharad_navratri_katyayani_puja",
+        "shashthi_durga_puja"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-10-17",
+      "expectedFestivalIds": [
+        "sharad_navratri_kalaratri_puja",
+        "sharad_navratri_saraswati Avahan"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-10-17",
+      "expectedFestivalIds": [
+        "sharad_navratri_kalaratri_puja",
+        "sharad_navratri_saraswati Avahan",
+        "shashthi_durga_puja"
+      ],
+      "notes": "Vriddhi case: Kolkata keeps Shashthi at both sunrises (Oct 16+17) while Delhi advances to Saptami on Oct 17."
+    },
+    {
+      "caseId": "kolkata-2026-10-18",
+      "expectedFestivalIds": [
+        "saptami_durga_puja",
+        "sharad_navratri_saraswati_puja"
+      ]
+    },
+    {
+      "caseId": "guwahati-2026-10-18",
+      "expectedFestivalIds": [
+        "saptami_durga_puja",
+        "sharad_navratri_saraswati_puja"
+      ]
+    },
+    {
+      "caseId": "delhi-2026-10-29",
+      "expectedFestivalIds": [
+        "karva_chauth"
+      ]
+    },
+    {
+      "caseId": "mumbai-2026-10-29",
+      "expectedFestivalIds": [
+        "karva_chauth"
+      ]
+    },
+    {
+      "caseId": "varanasi-2026-10-29",
+      "expectedFestivalIds": [
+        "karva_chauth"
+      ]
+    },
+    {
+      "caseId": "kolkata-2026-04-14",
+      "expectedFestivalIds": [],
+      "notes": "Engine West Bengal rule yields Boishakh 1 on 2026-04-14; cross-check the sankranti rule before promoting this case to external-verified."
+    },
+    {
+      "caseId": "guwahati-2026-04-14",
+      "expectedFestivalIds": [],
+      "notes": "Engine West Bengal rule yields Boishakh 1 on 2026-04-14; cross-check the sankranti rule before promoting this case to external-verified."
+    },
+    {
+      "caseId": "delhi-1800-01-01",
+      "expectedFestivalIds": [],
+      "notes": "Exercises the lower bundled-ephemeris range boundary (1800)."
+    },
+    {
+      "caseId": "guwahati-2399-12-31",
+      "expectedFestivalIds": [],
+      "notes": "Exercises the upper bundled-ephemeris range boundary (2399)."
+    }
+  ]
+}

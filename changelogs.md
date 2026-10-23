@@ -55,6 +55,28 @@ the cached and home coordinates so a Panchang record can describe its own place.
 - Stored under `cached_altitude` / `cached_timezone` and `home_altitude` /
   `home_timezone` in the `location_settings` box.
 
+### Panchang golden reference fixtures
+
+A locked 82-case regression baseline for the Drik migration, covering 19 dates
+and six Indian cities without changing production calculations.
+
+- Fixtures live in `test/fixtures/panchang_golden/` and are read-only in tests;
+  no test or tool regenerates them. Update one only with source, old result, new
+  result, and a documented reason.
+- `india_drik_lahiri_amanta.json` locks sunrise/sunset, sunrise tithi and next
+  tithi, nakshatra, yoga, karana, Sun/Moon longitudes, Amanta/Purnimanta masa,
+  adhika flag, moonrise, and (for Bengali cases) the Bengali date.
+- `festival_resolution.json` stores expected festival IDs only; rules and names
+  stay in `assets/festivals.json`.
+- Coverage includes Kshaya/Vriddhi, a one-minute sunrise boundary, Adhika
+  Jyeshtha, Mahashivratri, Janmashtami, Diwali, Holi, Ram Navami, Karva Chauth,
+  Bengali month transitions, and the 1800/2399 ephemeris boundaries.
+- Pure validation runs everywhere; the engine comparison runs only when
+  `SWISSEPH_LIB_PATH` is set on an IST host, because the Phase 0 NOAA sunrise
+  calculator is device-timezone dependent. Known gaps (Delhi/Mumbai
+  Janmashtami nishita, Bengali New Year date) are recorded in case notes rather
+  than hidden.
+
 ### Panchang home-screen widgets
 
 Four new Android home-screen widgets join the festival countdown: a hero card
