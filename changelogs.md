@@ -21,6 +21,25 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Canonical Panchang day
+
+One immutable day value object replaces the four separate day-assembly paths
+as they migrate onto it.
+
+- `PanchangDay` carries the place context, solar/lunar anchors, tithi,
+  nakshatra/yoga/karana, Amanta masa with the Adhika verdict, solar-anchored
+  checkpoints, and provenance (engine version, ayanamsa, sunrise convention,
+  ephemeris backend).
+- Missing solar events are nulls, not exceptions: a polar day still resolves
+  its tithi and masa. The tithi sample point is recorded
+  (`PanchangTithiSample.sunrise` / `civilNoon`) so the UI can label a day
+  that has no sunrise instead of pretending it does.
+- `PanchangDayResolver` is the single computation pipeline; it does not
+  decide festivals or touch Hive, so callers keep their caches until they are
+  migrated. Lives in `lib/features/panchang/domain/panchang_day.dart` and
+  `panchang_day_resolver.dart`; do not add a fourth inline day assembly, route
+  new callers through the resolver.
+
 ### Place timezone for solar events
 
 Sunrise/sunset reads that only know coordinates now use the selected place's
