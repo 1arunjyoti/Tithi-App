@@ -99,12 +99,9 @@ Phase 1 status: complete.
   through `SolarEventsService.placeTimezoneId`, published by
   `currentLocationProvider` in the UI isolate and from the persisted
   `cached_timezone` key in the notification background isolate. An explicit
-  `timezoneId` argument still wins. This is a bridge, not the Phase 2 model.
-- Remaining source limitation: `resolvePlaceTimezoneId` still seeds the zone
-  from the device clock because the app ships no coordinate-to-zone table.
-  India-first that is correct (one zone), but a user abroad viewing an Indian
-  place gets the device zone. The place-lookup table is deferred with the
-  Phase 2 place context; `timezone_resolver.dart` documents the limitation.
+  `timezoneId` argument still wins.
+- Place zone resolution is coordinate-based, not device-based: see "Place
+  timezone lookup" below.
 - The 82-case golden set was recaptured deliberately. The only semantic
   festival change is Delhi `2026-06-30`: the native sunrise moves past the
   Purnima -> Pratipada transition, so `[purnima]` becomes `[]` and the tithi is
@@ -140,6 +137,38 @@ at sunrise; timing overrides sample Madhyahna, Aparahna, Nishita, Pradosha, or
 moonrise checkpoints derived from sunrise, sunset, next sunrise, and moonrise.
 This migration can move boundary-day results, so ship it only with the Phase 0
 references and a visible methodology/version update.
+
+### Place timezone lookup
+
+**Fixed.** `resolvePlaceTimezone` (`lib/core/location/timezone_resolver.dart`)
+turns coordinates into the zone the *place* observes, so an Indian user abroad
+viewing an Indian city gets `Asia/Kolkata`, not the device zone.
+
+- Bundled boundaries: `timezone_finder` (MIT code, ODbL boundary data) is
+  compiled into the app on every target; no network and no asset loading. The
+  lookup is `findLocation(longitude, latitude)` - GeoJSON argument order.
+- tzdata must be loaded from `package:timezone/data/latest_all.dart`, not
+  `latest.dart`: `latest` omits 106 of the 419 boundary identifiers and a hit
+  throws `StateError`. Both `AppBootstrap.initTimezones` and the WorkManager
+  entrypoint use `latest_all`; `timezone` is therefore `^0.11.2` and
+  `flutter_local_notifications` moves to `^22.3.2` (its 20.x API converted
+  positional parameters to named ones).
+- Fallback order: boundary hit -> device zone -> `Asia/Kolkata`. The fallback
+  covers open ocean (the data stops ~22 km offshore), an identifier missing
+  from the loaded tzdb, and tzdata that was never initialized.
+- Provenance is persisted beside the zone: `home_timezone_source` /
+  `cached_timezone_source` hold `place`, `user`, or `device` (`TimezoneSource`,
+  values stable once shipped). `_backfillPlaceMetadata` re-resolves only
+  `device`-marked or legacy marker-less values, so a later upgrade heals old
+  device-seeded rows without overwriting an explicit override.
+- ODbL attribution is required wherever the data ships:
+  `kTimezoneBoundaryAttribution` is shown on the About screen
+  (`timezoneDataCredit`).
+- Two product questions remain open and are **not** decided here:
+  `selectedDateProvider` still defaults to the device's "today"
+  (`DateTime.now()`), and a reminder tied to a place-local panchang instant
+  (e.g. a 05:00 puja at the selected place) fires at that instant at the place,
+  not at 05:00 in the user's own zone.
 
 ## Phase 2 — one Panchang day and observance resolver
 

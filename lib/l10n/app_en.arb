@@ -600,6 +600,10 @@
   "@applicationLegalese": {
     "description": "Legal text shown in about dialog"
   },
+  "timezoneDataCredit": "Time zone boundaries: © OpenStreetMap contributors (ODbL), built by Timezone Boundary Builder.",
+  "@timezoneDataCredit": {
+    "description": "Attribution required by the ODbL licence of the bundled time zone boundary data"
+  },
   "moonPhases": "Moon Phases",
   "@moonPhases": {
     "description": "Title for moon phases screen"

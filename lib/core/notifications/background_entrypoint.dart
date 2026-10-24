@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
+// `latest_all`: the place lookup may return any zone in the boundary data, not
+// just the reduced `latest` set.
+import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:workmanager/workmanager.dart';
 
 import '../../services/notification_service.dart';

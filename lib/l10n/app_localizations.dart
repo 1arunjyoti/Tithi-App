@@ -948,6 +948,12 @@ abstract class AppLocalizations {
   /// **'© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma'**
   String get applicationLegalese;
 
+  /// Attribution required by the ODbL licence of the bundled time zone boundary data
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone boundaries: © OpenStreetMap contributors (ODbL), built by Timezone Boundary Builder.'**
+  String get timezoneDataCredit;
+
   /// Title for moon phases screen
   ///
   /// In en, this message translates to:

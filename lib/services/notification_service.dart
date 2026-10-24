@@ -186,7 +186,7 @@ class NotificationService {
       );
 
       await _notifications.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
       );
 
@@ -303,7 +303,7 @@ class NotificationService {
         // reminders have their own lifecycle and must survive toggling
         // daily notifications (use cancelAllNotifications() only for full
         // reset flows).
-        await _notifications.cancel(NotificationKeys.dailyNotificationId);
+        await _notifications.cancel(id: NotificationKeys.dailyNotificationId);
       }
     } catch (e) {
       // Roll back so the toggle can reflect the real state on retry.

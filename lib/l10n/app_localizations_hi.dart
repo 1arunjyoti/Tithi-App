@@ -463,6 +463,10 @@ class AppLocalizationsHi extends AppLocalizations {
       '© २०२५ तिथि प्रोजेक्ट\nसनातन धर्म के लिए ❤️ से बनाया गया';
 
   @override
+  String get timezoneDataCredit =>
+      'समय क्षेत्र सीमाएँ: © OpenStreetMap योगदानकर्ता (ODbL), Timezone Boundary Builder द्वारा निर्मित।';
+
+  @override
   String get moonPhases => 'चंद्र कलाएँ';
 
   @override

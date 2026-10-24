@@ -21,6 +21,37 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Place timezone from coordinates
+
+A place now carries the time zone it actually observes, so viewing Varanasi from
+New York uses IST instead of the device zone.
+
+- `resolvePlaceTimezone` (`lib/core/location/timezone_resolver.dart`) looks the
+  coordinate up in the bundled `timezone_finder` boundaries
+  (`findLocation(longitude, latitude)` - longitude first). Fallback order is
+  place -> device zone -> `Asia/Kolkata`; the fallback covers open ocean (data
+  stops ~22 km offshore), a boundary id missing from the tzdb, and tzdata that
+  was never initialized.
+- tzdata must come from `package:timezone/data/latest_all.dart` (both
+  `AppBootstrap.initTimezones` and the WorkManager entrypoint): `latest` omits
+  106 of the 419 boundary identifiers and a hit throws `StateError`.
+- Provenance is stored with the zone in `home_timezone_source` /
+  `cached_timezone_source` (`place`, `user`, `device`; values stable once
+  shipped). `_backfillPlaceMetadata` retries only `device`-marked or legacy
+  marker-less values, so an explicit `timezoneId` override is never clobbered.
+- `setHomeLocation` resolves the zone itself; the picker no longer needs to.
+- Cached days are invalidated once: `locationSignature` gained
+  `kPlaceContextVersion` (`_p2`) because instants cached under a foreign device
+  zone would otherwise be served with the place's zone.
+- Dependency: `timezone ^0.11.2`, `timezone_finder ^1.0.0`,
+  `flutter_local_notifications ^22.3.2` (20.x converted its positional
+  parameters to named ones). ODbL credit shown on the About screen
+  (`timezoneDataCredit`, `kTimezoneBoundaryAttribution`).
+- Still open, deliberately: `selectedDateProvider` defaults to the device's
+  "today", and a reminder tied to a place-local panchang instant (a 05:00 puja
+  at the selected place) fires at that instant at the place, not at 05:00 in
+  the user's own zone.
+
 ### Poila Boishakh on the right day
 
 The Bengali calendar no longer reports Boishakh 1 on the sankranti day itself,

@@ -30,8 +30,9 @@ class LocationData {
 
   /// IANA zone identifier persisted for this place, e.g. `Asia/Kolkata`.
   ///
-  /// Null means the zone has not been resolved; callers fall back to the
-  /// device zone. See [resolvePlaceTimezoneId] for the Phase 0 limitation.
+  /// Resolved from the coordinates when the place is set (see
+  /// [resolvePlaceTimezone]); null means it has not been resolved yet and
+  /// callers fall back to the device zone.
   final String? timezoneId;
 
   const LocationData({
@@ -176,6 +177,7 @@ class LocationService {
   static const String _keyCachedAtMs = 'cached_at_ms';
   static const String _keyCachedAltitude = 'cached_altitude';
   static const String _keyCachedTimezone = 'cached_timezone';
+  static const String _keyCachedTimezoneSource = 'cached_timezone_source';
   static const String _keyLastBackgroundAtMs = 'last_background_at_ms';
   // Home location keys
   static const String _keyHomeLat = 'home_lat';
@@ -183,6 +185,7 @@ class LocationService {
   static const String _keyHomeAddress = 'home_address';
   static const String _keyHomeAltitude = 'home_altitude';
   static const String _keyHomeTimezone = 'home_timezone';
+  static const String _keyHomeTimezoneSource = 'home_timezone_source';
 
   /// Contactable User-Agent required by the OSM Nominatim usage policy.
   /// Names the app and gives a contact point instead of a library default.
@@ -399,7 +402,7 @@ class LocationService {
       // non-nullable, so a device without an altitude component reports 0;
       // Phase 1 validates against SEI_ECL_GEOALT_MIN..MAX.
       final double altitudeMeters = position.altitude;
-      final timezoneId = await resolvePlaceTimezoneId(
+      final timezone = await resolvePlaceTimezone(
         position.latitude,
         position.longitude,
       );
@@ -410,7 +413,7 @@ class LocationService {
         position.longitude,
         cityName,
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezone: timezone,
       );
 
       return LocationData(
@@ -419,7 +422,7 @@ class LocationService {
         cityName: cityName,
         timestamp: DateTime.now(),
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezoneId: timezone.id,
       );
     } catch (e) {
       if (kDebugMode) {
@@ -800,7 +803,7 @@ class LocationService {
     double longitude,
     String? cityName, {
     double? altitudeMeters,
-    String? timezoneId,
+    PlaceTimezone? timezone,
   }) async {
     await _box?.put(_keyCachedLat, latitude);
     await _box?.put(_keyCachedLng, longitude);
@@ -813,11 +816,11 @@ class LocationService {
     } else {
       await _box?.put(_keyCachedAltitude, altitudeMeters);
     }
-    if (timezoneId == null || timezoneId.isEmpty) {
-      await _box?.delete(_keyCachedTimezone);
-    } else {
-      await _box?.put(_keyCachedTimezone, timezoneId);
-    }
+    await _writePlaceTimezone(
+      timezone: timezone,
+      timezoneKey: _keyCachedTimezone,
+      sourceKey: _keyCachedTimezoneSource,
+    );
     // Fresh GPS fetch satisfied any pending background-based refresh.
     await _box?.delete(_keyLastBackgroundAtMs);
   }
@@ -831,6 +834,7 @@ class LocationService {
     await _box?.delete(_keyCachedAtMs);
     await _box?.delete(_keyCachedAltitude);
     await _box?.delete(_keyCachedTimezone);
+    await _box?.delete(_keyCachedTimezoneSource);
     if (kDebugMode) {
       print('Location cache cleared');
     }
@@ -859,7 +863,10 @@ class LocationService {
   /// SET home location manually.
   ///
   /// [altitudeMeters] is orthometric height when the caller knows it; null
-  /// means unknown. [timezoneId] overrides the Phase 0 device-zone seed.
+  /// means unknown. When [timezoneId] is omitted (the picker's normal path)
+  /// the zone is resolved from [lat]/[lng], so the place - not the device -
+  /// decides the civil day. An explicit [timezoneId] is recorded as a user
+  /// override and is never re-resolved.
   Future<void> setHomeLocation(
     double lat,
     double lng,
@@ -876,8 +883,10 @@ class LocationService {
       throw ArgumentError.value(lng, 'lng', 'Longitude must be in [-180, 180]');
     }
 
-    final resolvedTimezone =
-        timezoneId ?? await resolvePlaceTimezoneId(lat, lng);
+    final explicitZone = canonicalTimezoneId(timezoneId ?? '');
+    final PlaceTimezone timezone = explicitZone.isNotEmpty
+        ? (id: explicitZone, source: TimezoneSource.user)
+        : await resolvePlaceTimezone(lat, lng);
 
     await _box?.put(_keyHomeLat, lat);
     await _box?.put(_keyHomeLng, lng);
@@ -887,11 +896,30 @@ class LocationService {
     } else {
       await _box?.put(_keyHomeAltitude, altitudeMeters);
     }
-    if (resolvedTimezone.isEmpty) {
-      await _box?.delete(_keyHomeTimezone);
-    } else {
-      await _box?.put(_keyHomeTimezone, resolvedTimezone);
+    await _writePlaceTimezone(
+      timezone: timezone,
+      timezoneKey: _keyHomeTimezone,
+      sourceKey: _keyHomeTimezoneSource,
+    );
+  }
+
+  /// Persists a zone and its provenance; deletes both when there is no zone.
+  ///
+  /// The marker is what lets [_backfillPlaceMetadata] retry a device-seeded
+  /// value without clobbering a place lookup or an explicit user override.
+  Future<void> _writePlaceTimezone({
+    required PlaceTimezone? timezone,
+    required String timezoneKey,
+    required String sourceKey,
+  }) async {
+    final id = canonicalTimezoneId(timezone?.id ?? '');
+    if (timezone == null || id.isEmpty) {
+      await _box?.delete(timezoneKey);
+      await _box?.delete(sourceKey);
+      return;
     }
+    await _box?.put(timezoneKey, id);
+    await _box?.put(sourceKey, timezone.source.storageValue);
   }
 
   /// GET home location manually
@@ -933,7 +961,10 @@ class LocationService {
 
   /// Phase 0 migration for settings boxes written before altitude/timezone.
   ///
-  /// Resolves and persists a zone for existing cached and home coordinates.
+  /// Resolves and persists a zone for coordinates that have none, and retries
+  /// values the app itself seeded from the device zone before the coordinate
+  /// lookup existed. A `place` or `user` marker is left alone: re-resolving
+  /// those would either repeat work or overwrite an explicit override.
   /// Altitude is left null: the app has no elevation lookup, and a bogus
   /// value is worse than an explicit unknown. Best-effort throughout.
   Future<void> _backfillPlaceMetadata() async {
@@ -944,15 +975,26 @@ class LocationService {
       required double? latitude,
       required double? longitude,
       required String timezoneKey,
+      required String sourceKey,
     }) async {
       if (latitude == null || longitude == null) return;
       final existing = box.get(timezoneKey) as String?;
-      if (existing != null && existing.isNotEmpty) return;
+      final source = TimezoneSource.parse(box.get(sourceKey));
+      // Missing marker means a legacy box: the old code always seeded from
+      // the device zone, so those values are safe to re-resolve.
+      final retryable =
+          existing == null ||
+          existing.isEmpty ||
+          source == null ||
+          source == TimezoneSource.device;
+      if (!retryable) return;
       try {
-        final timezoneId = await resolvePlaceTimezoneId(latitude, longitude);
-        if (timezoneId.isNotEmpty) {
-          await box.put(timezoneKey, timezoneId);
-        }
+        final timezone = await resolvePlaceTimezone(latitude, longitude);
+        await _writePlaceTimezone(
+          timezone: timezone,
+          timezoneKey: timezoneKey,
+          sourceKey: sourceKey,
+        );
       } catch (_) {
         // The location still works without a persisted zone.
       }
@@ -962,11 +1004,13 @@ class LocationService {
       latitude: box.get(_keyCachedLat) as double?,
       longitude: box.get(_keyCachedLng) as double?,
       timezoneKey: _keyCachedTimezone,
+      sourceKey: _keyCachedTimezoneSource,
     );
     await backfillZone(
       latitude: box.get(_keyHomeLat) as double?,
       longitude: box.get(_keyHomeLng) as double?,
       timezoneKey: _keyHomeTimezone,
+      sourceKey: _keyHomeTimezoneSource,
     );
   }
 

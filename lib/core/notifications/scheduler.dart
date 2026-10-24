@@ -48,7 +48,7 @@ class NotificationScheduler {
   Future<void> cancelShlokaNotifications() async {
     // Cancel IDs 1000 to 1006 (7 days)
     for (int i = 0; i < 7; i++) {
-      await plugin.cancel(NotificationKeys.shlokaNotificationIdBase + i);
+      await plugin.cancel(id: NotificationKeys.shlokaNotificationIdBase + i);
     }
   }
 
@@ -101,11 +101,11 @@ class NotificationScheduler {
       );
 
       await plugin.zonedSchedule(
-        NotificationKeys.shlokaNotificationIdBase + i,
-        'Daily Wisdom',
-        '"${shlokas[i].text}"\n\n${shlokas[i].translation}',
-        scheduledDate,
-        notificationDetails,
+        id: NotificationKeys.shlokaNotificationIdBase + i,
+        title: 'Daily Wisdom',
+        body: '"${shlokas[i].text}"\n\n${shlokas[i].translation}',
+        scheduledDate: scheduledDate,
+        notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
     }
@@ -131,7 +131,7 @@ class NotificationScheduler {
     // IDs [NotificationKeys.festivalNotificationIdBase, +NotificationKeys.festivalWindowDays * 2):
     // two slots (on-day, day-before) per scanned day.
     for (int i = 0; i < NotificationKeys.festivalWindowDays * 2; i++) {
-      await plugin.cancel(NotificationKeys.festivalNotificationIdBase + i);
+      await plugin.cancel(id: NotificationKeys.festivalNotificationIdBase + i);
     }
   }
 
@@ -235,11 +235,11 @@ class NotificationScheduler {
         );
         if (!onDay.isBefore(now)) {
           await plugin.zonedSchedule(
-            NotificationKeys.festivalNotificationIdBase + i * 2,
-            festival.name,
-            'Today • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
-            onDay,
-            notificationDetails,
+            id: NotificationKeys.festivalNotificationIdBase + i * 2,
+            title: festival.name,
+            body: 'Today • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
+            scheduledDate: onDay,
+            notificationDetails: notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           );
         }
@@ -255,11 +255,11 @@ class NotificationScheduler {
         ).subtract(const Duration(days: 1));
         if (!eve.isBefore(now)) {
           await plugin.zonedSchedule(
-            NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
-            festival.name,
-            'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
-            eve,
-            notificationDetails,
+            id: NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
+            title: festival.name,
+            body: 'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
+            scheduledDate: eve,
+            notificationDetails: notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           );
         }
@@ -385,7 +385,7 @@ class NotificationScheduler {
   Future<void> scheduleDailyNotification({String? title, String? body}) async {
 
     // Cancel existing notification first
-    await plugin.cancel(NotificationKeys.dailyNotificationId);
+    await plugin.cancel(id: NotificationKeys.dailyNotificationId);
 
     final time = await getNotificationTime();
 
@@ -416,11 +416,11 @@ class NotificationScheduler {
     final resolvedBody = body ?? content.body;
 
     await plugin.zonedSchedule(
-      NotificationKeys.dailyNotificationId,
-      resolvedTitle,
-      resolvedBody,
-      scheduledDate,
-      notificationDetails,
+      id: NotificationKeys.dailyNotificationId,
+      title: resolvedTitle,
+      body: resolvedBody,
+      scheduledDate: scheduledDate,
+      notificationDetails: notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
     );
@@ -598,7 +598,12 @@ class NotificationScheduler {
       description: 'Daily tithi and panchang notifications',
     );
 
-    await plugin.show(0, title, body, notificationDetails);
+    await plugin.show(
+      id: 0,
+      title: title,
+      body: body,
+      notificationDetails: notificationDetails,
+    );
 
     if (kDebugMode) {
       print('Showed test notification: $title');
@@ -674,11 +679,11 @@ class NotificationScheduler {
     );
 
     await plugin.zonedSchedule(
-      notificationId,
-      'Sankalpa Reminder',
-      sankalpa.title,
-      scheduledDate,
-      notificationDetails,
+      id: notificationId,
+      title: 'Sankalpa Reminder',
+      body: sankalpa.title,
+      scheduledDate: scheduledDate,
+      notificationDetails: notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
       payload: 'sankalpa:${sankalpa.id}',
@@ -694,7 +699,7 @@ class NotificationScheduler {
   /// Cancel a sankalpa reminder
   Future<void> cancelSankalpaReminder(String id) async {
     final notificationId = _getOrCreateSankalpaNotificationId(id);
-    await plugin.cancel(notificationId);
+    await plugin.cancel(id: notificationId);
     if (kDebugMode) {
       print('Cancelled sankalpa notification: $id (ID: $notificationId)');
     }

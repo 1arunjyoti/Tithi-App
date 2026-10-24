@@ -66,7 +66,7 @@ void main() {
       ]);
 
       // Initialize timezone for notifications
-      bootstrap.initTimezones();
+      await bootstrap.initTimezones();
 
       runApp(const ProviderScope(child: TithiApp()));
 
