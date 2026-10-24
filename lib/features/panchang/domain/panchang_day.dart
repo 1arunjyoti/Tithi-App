@@ -19,7 +19,7 @@ import '../../../models/panchang_data.dart';
 /// Bump this whenever a change can move a boundary result; the golden
 /// fixtures and every cache keyed by it must be recaptured in the same
 /// commit.
-const String kPanchangEngineVersion = 'panchang-v2';
+const String kPanchangEngineVersion = 'panchang-v3';
 
 /// Ayanamsa the engine computes sidereal positions in.
 const String kPanchangAyanamsa = 'lahiri';
@@ -185,14 +185,15 @@ class PanchangMasaDay {
 /// Raw tithi values sampled at the solar-anchored checkpoints.
 ///
 /// Festival rules match against these (a Madhyahna rule samples the tithi at
-/// midday, a Nishita rule at the night midpoint). Each is null when its
-/// checkpoint instant does not exist, so a polar day cannot silently match a
-/// timing rule it never reached.
+/// midday, a Nishita rule at the opening of the Nishita window). Each is null
+/// when its checkpoint instant does not exist, so a polar day cannot silently
+/// match a timing rule it never reached.
 class PanchangCheckpointTithis {
   const PanchangCheckpointTithis({
     this.madhyahna,
     this.aparahna,
     this.nishita,
+    this.nishitaEnd,
     this.pradosha,
     this.nextSunrise,
     this.dominant,
@@ -200,7 +201,14 @@ class PanchangCheckpointTithis {
 
   final double? madhyahna;
   final double? aparahna;
+
+  /// Tithi at the Nishita window opening - the deciding instant.
   final double? nishita;
+
+  /// Tithi at the Nishita window close, so a rule can see a boundary that
+  /// falls inside the window.
+  final double? nishitaEnd;
+
   final double? pradosha;
   final double? nextSunrise;
   final double? dominant;
@@ -215,13 +223,22 @@ class PanchangCheckpoints {
     this.madhyahna,
     this.aparahna,
     this.nishita,
+    this.nishitaEnd,
     this.pradosha,
     this.dominant,
   });
 
   final DateTime? madhyahna;
   final DateTime? aparahna;
+
+  /// Opening of the Nishita window: the eighth of the fifteen night muhurtas,
+  /// `sunset + 7/15 night`. This is the instant a `nishita` rule decides on.
   final DateTime? nishita;
+
+  /// Closing of the Nishita window, `sunset + 8/15 night` (one muhurta after
+  /// [nishita]). Null exactly when [nishita] is.
+  final DateTime? nishitaEnd;
+
   final DateTime? pradosha;
   final DateTime? dominant;
 
@@ -230,6 +247,7 @@ class PanchangCheckpoints {
       madhyahna == null &&
       aparahna == null &&
       nishita == null &&
+      nishitaEnd == null &&
       pradosha == null &&
       dominant == null;
 }

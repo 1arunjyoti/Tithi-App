@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "profileId": "india_drik_lahiri_amanta",
   "profile": {
-    "engineVersion": "panchang-v2",
+    "engineVersion": "panchang-v3",
     "ayanamsa": "lahiri",
     "monthSystem": "amanta",
     "sunriseConvention": "hindu",
     "timezone": "Asia/Kolkata",
-    "calculationVersion": 2
+    "calculationVersion": 3
   },
   "source": {
-    "authority": "Tithi panchang-v2 engine characterization",
-    "retrievedOn": "2026-10-23",
+    "authority": "Tithi panchang-v3 engine characterization",
+    "retrievedOn": "2026-10-24",
     "kind": "engine-characterization",
-    "notes": "Phase 1b recapture after native Swiss Ephemeris swe_rise_trans with SE_BIT_HINDU_RISING replaced the NOAA apparent-upper-limb convention. Regression lock only; not an external accuracy certification."
+    "notes": "Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges). Every other case is unchanged from the Phase 1b capture and is re-verified by the engine test. Regression lock only; not an external accuracy certification."
   },
   "tolerance": {
     "eventSeconds": 60,
@@ -59,7 +59,7 @@
         "moonrise": "2026-01-06T20:55:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -104,7 +104,7 @@
         "moonrise": "2026-01-06T20:16:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -149,7 +149,7 @@
         "moonrise": "2026-01-06T21:24:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -194,7 +194,7 @@
         "moonrise": "2026-01-06T20:35:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -239,7 +239,7 @@
         "moonrise": "2026-01-06T21:00:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -284,7 +284,7 @@
         "moonrise": "2026-01-06T19:58:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -330,7 +330,7 @@
         "moonrise": "2026-01-14T03:31:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -376,7 +376,7 @@
         "moonrise": "2026-01-14T02:30:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -422,7 +422,7 @@
         "moonrise": "2026-01-14T03:26:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -468,7 +468,7 @@
         "moonrise": "2026-01-14T02:59:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -514,7 +514,7 @@
         "moonrise": "2026-01-14T02:43:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -560,7 +560,7 @@
         "moonrise": "2026-01-14T02:24:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -605,7 +605,7 @@
         "moonrise": "2026-01-29T14:02:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -650,7 +650,7 @@
         "moonrise": "2026-01-29T13:33:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "provided-anchor",
         "notes": "Matches the illustrative Kolkata anchor in the migration brief (Shukla Ekadashi). Sunrise/sunset are native Swiss Ephemeris Hindu values."
@@ -695,7 +695,7 @@
         "moonrise": "2026-01-29T14:47:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -740,7 +740,7 @@
         "moonrise": "2026-01-29T13:48:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -785,7 +785,7 @@
         "moonrise": "2026-01-29T14:31:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -830,7 +830,7 @@
         "moonrise": "2026-01-29T13:09:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -875,7 +875,7 @@
         "moonrise": "2026-02-15T05:37:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -920,7 +920,7 @@
         "moonrise": "2026-02-15T04:37:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -965,7 +965,7 @@
         "moonrise": "2026-02-15T05:33:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1010,7 +1010,7 @@
         "moonrise": "2026-02-15T05:06:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1055,7 +1055,7 @@
         "moonrise": "2026-02-15T04:51:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1100,7 +1100,7 @@
         "moonrise": "2026-02-15T04:32:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1145,7 +1145,7 @@
         "moonrise": "2026-03-04T19:21:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1190,7 +1190,7 @@
         "moonrise": "2026-03-04T18:35:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1235,7 +1235,7 @@
         "moonrise": "2026-03-04T19:39:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1280,7 +1280,7 @@
         "moonrise": "2026-03-04T18:57:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1325,7 +1325,7 @@
         "moonrise": "2026-03-04T19:08:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1370,7 +1370,7 @@
         "moonrise": "2026-03-04T18:21:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1416,7 +1416,7 @@
         "moonrise": "2026-03-27T13:00:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1462,7 +1462,7 @@
         "moonrise": "2026-03-27T12:28:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1508,7 +1508,7 @@
         "moonrise": "2026-03-27T13:41:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1554,7 +1554,7 @@
         "moonrise": "2026-03-27T12:44:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1600,7 +1600,7 @@
         "moonrise": "2026-03-27T13:22:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1646,7 +1646,7 @@
         "moonrise": "2026-03-27T12:06:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1691,7 +1691,7 @@
         "moonrise": "2026-05-20T08:38:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1736,7 +1736,7 @@
         "moonrise": "2026-05-20T08:07:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1781,7 +1781,7 @@
         "moonrise": "2026-05-20T09:20:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1826,7 +1826,7 @@
         "moonrise": "2026-05-20T08:23:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1871,7 +1871,7 @@
         "moonrise": "2026-05-20T09:03:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1916,7 +1916,7 @@
         "moonrise": "2026-05-20T07:44:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -1962,7 +1962,7 @@
         "moonrise": "2026-06-15T05:06:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2008,7 +2008,7 @@
         "moonrise": "2026-06-15T04:36:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2054,7 +2054,7 @@
         "moonrise": "2026-06-15T05:50:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2100,7 +2100,7 @@
         "moonrise": "2026-06-15T04:51:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2146,7 +2146,7 @@
         "moonrise": "2026-06-15T05:34:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2192,7 +2192,7 @@
         "moonrise": "2026-06-15T04:12:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2210,7 +2210,6 @@
       "date": "2026-09-04",
       "tags": [
         "janmashtami",
-        "known-gap",
         "amanta-purnimanta"
       ],
       "expected": {
@@ -2238,10 +2237,10 @@
         "moonrise": "2026-09-04T23:24:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
-        "retrievedOn": "2026-10-23",
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
         "kind": "engine-characterization",
-        "notes": "Known gap: the nishita sampler uses the night midpoint (00:20), where the raw tithi is 24.005 (Navami); Ashtami ends at 00:15. Nishita Kaal is the one-muhurta window 23:57-00:43, where Ashtami still prevails. Phase 2 replaces the point sample with a windowed checkpoint; expected result then becomes [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
+        "notes": "Janmashtami defect fixed by panchang-v3: the tithi is now sampled at the Nishita window opening (sunset + 7/15 night = 23:57:19) instead of the night midpoint (00:20), where the raw tithi is 24.005 (Navami). Ashtami (raw 23.987) prevails at the opening, so this day resolves janmashtami. Old result: []. New result: [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
       }
     },
     {
@@ -2283,7 +2282,7 @@
         "moonrise": "2026-09-04T22:54:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2328,10 +2327,10 @@
         "adhika": false
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
-        "retrievedOn": "2026-10-23",
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
         "kind": "engine-characterization",
-        "notes": "Known gap: the nishita sampler uses the night midpoint (00:37), where the raw tithi is 24.018 (Navami); Ashtami ends at 00:15. Nishita Kaal is the one-muhurta window 00:14-01:01, where Ashtami still prevails. Phase 2 replaces the point sample with a windowed checkpoint; expected result then becomes [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
+        "notes": "Decided by seconds, recorded as-is: Ashtami ends at 00:14:06 and the Nishita window (sunset + 7/15 night to + 8/15 night) opens at 00:14:11, so Ashtami prevails at neither edge and panchang-v3 resolves no janmashtami on this date (Navami at the opening, raw 24.0001). The pre-v3 note claimed Ashtami still prevailed because it compared minute-rounded times from the Phase 0 capture (Ashtami end 00:14:36); the native Hindu sunrise/sunset moved the window edge past the boundary by ~6 s. Old result: [] (midpoint sample). New result: [] (window edges). Kept as a documented boundary case, not an external accuracy claim; see docs/jyotish_package_improvements_plan.md, Phase 2."
       }
     },
     {
@@ -2373,7 +2372,7 @@
         "moonrise": "2026-09-04T23:09:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2418,7 +2417,7 @@
         "moonrise": "2026-09-04T23:51:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2463,7 +2462,7 @@
         "moonrise": "2026-09-04T22:30:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2508,7 +2507,7 @@
         "moonrise": "2026-11-09T06:36:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2553,7 +2552,7 @@
         "moonrise": "2026-11-09T05:38:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2598,7 +2597,7 @@
         "moonrise": "2026-11-09T06:36:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2643,7 +2642,7 @@
         "moonrise": "2026-11-09T06:05:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2688,7 +2687,7 @@
         "moonrise": "2026-11-09T05:55:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2733,7 +2732,7 @@
         "moonrise": "2026-11-09T05:30:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -2774,7 +2773,7 @@
         "moonrise": "2026-06-30T19:59:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
@@ -2819,7 +2818,7 @@
         "moonrise": "2026-06-30T18:57:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
@@ -2860,7 +2859,7 @@
         "moonrise": "2026-06-30T19:53:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
@@ -2905,7 +2904,7 @@
         "moonrise": "2026-06-30T19:27:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
@@ -2946,7 +2945,7 @@
         "moonrise": "2026-06-30T19:09:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
@@ -2991,7 +2990,7 @@
         "moonrise": "2026-06-30T18:53:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
@@ -3036,7 +3035,7 @@
         "moonrise": "2026-02-24T10:59:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3081,7 +3080,7 @@
         "moonrise": "2026-02-24T10:44:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3128,7 +3127,7 @@
         "moonrise": "2026-10-16T11:34:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3171,7 +3170,7 @@
         "moonrise": "2026-10-16T10:31:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3214,7 +3213,7 @@
         "moonrise": "2026-10-16T10:27:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3258,7 +3257,7 @@
         "moonrise": "2026-10-17T12:23:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3311,7 +3310,7 @@
         }
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Vriddhi case: Kolkata keeps Shashthi at both sunrises (Oct 16+17) while Delhi advances to Saptami on Oct 17."
@@ -3363,7 +3362,7 @@
         }
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3415,7 +3414,7 @@
         }
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3461,7 +3460,7 @@
         "moonrise": "2026-10-29T20:10:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3507,7 +3506,7 @@
         "moonrise": "2026-10-29T20:54:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3553,7 +3552,7 @@
         "moonrise": "2026-10-29T19:56:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
@@ -3604,7 +3603,7 @@
         }
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Known defect, not a verified value: West Bengal Poila Boishakh 1433 is 2026-04-15 (Mesha sankranti 09:39 IST on 2026-04-14), so 2026-04-14 should be Choitro 30, 1432. The engine yields Boishakh 1 on both dates; this record stays engine-characterization and must not be promoted. Tracked in docs/jyotish_package_improvements_plan.md, Phase 2, 'Boishakh-1 boundary defect'."
@@ -3655,7 +3654,7 @@
         }
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Known defect, not a verified value: West Bengal Poila Boishakh 1433 is 2026-04-15 (Mesha sankranti 09:39 IST on 2026-04-14), so 2026-04-14 should be Choitro 30, 1432. The engine yields Boishakh 1 on both dates; this record stays engine-characterization and must not be promoted. Tracked in docs/jyotish_package_improvements_plan.md, Phase 2, 'Boishakh-1 boundary defect'."
@@ -3700,7 +3699,7 @@
         "moonrise": "1800-01-01T11:28:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Exercises the lower bundled-ephemeris range boundary (1800)."
@@ -3745,7 +3744,7 @@
         "moonrise": "2399-12-31T08:25:00+05:30"
       },
       "source": {
-        "authority": "Tithi panchang-v2 engine characterization",
+        "authority": "Tithi panchang-v3 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
         "notes": "Exercises the upper bundled-ephemeris range boundary (2399)."

@@ -506,6 +506,7 @@ class NotificationScheduler {
       rawTithiMadhyahna: day.checkpointTithis.madhyahna,
       rawTithiAparahna: day.checkpointTithis.aparahna,
       rawTithiNishita: day.checkpointTithis.nishita,
+      rawTithiNishitaEnd: day.checkpointTithis.nishitaEnd,
       rawTithiPradosha: day.checkpointTithis.pradosha,
       rawTithiNextSunrise: rawTithiNextSunrise,
       masaNextSunrise: masaNextSunrise,

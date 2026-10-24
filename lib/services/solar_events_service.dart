@@ -404,10 +404,15 @@ class SolarEventsService {
 
   /// Intraday instant for a timing-override checkpoint.
   ///
-  /// Mirrors the shipped checkpoint arithmetic exactly: madhyahna = midday,
-  /// aparahna = 3/4 day, nishita = night midpoint, pradosha = sunset +
-  /// night/10. The Phase 2 resolver replaces this point sample with the
-  /// observance policy.
+  /// Mirrors the resolver's checkpoint arithmetic: madhyahna = midday,
+  /// aparahna = 3/4 day, nishita = the opening of the Nishita window
+  /// (`sunset + 7/15 night`, the eighth of the fifteen night muhurtas),
+  /// pradosha = sunset + night/10.
+  ///
+  /// This is the forward-scan probe, which samples one instant per checkpoint.
+  /// A `nishita` observance matches the tithi at either edge of the window, so
+  /// the scan also checks the closing instant; see
+  /// `PanchangService.findNextFestivalOccurrence`.
   DateTime? checkpointTimeFor({
     required DateTime date,
     required String timingOverride,
@@ -431,6 +436,7 @@ class SolarEventsService {
     );
     final dayLength = events.sunset.difference(events.sunrise);
     final nightLength = events.nextSunrise.difference(events.sunset);
+    final nightMicros = nightLength.inMicroseconds;
     switch (timingOverride) {
       case 'madhyahna':
         return events.sunrise.add(Duration(minutes: dayLength.inMinutes ~/ 2));
@@ -439,7 +445,13 @@ class SolarEventsService {
           Duration(minutes: dayLength.inMinutes * 3 ~/ 4),
         );
       case 'nishita':
-        return events.sunset.add(Duration(minutes: nightLength.inMinutes ~/ 2));
+        return events.sunset.add(
+          Duration(microseconds: nightMicros * 7 ~/ 15),
+        );
+      case 'nishitaEnd':
+        return events.sunset.add(
+          Duration(microseconds: nightMicros * 8 ~/ 15),
+        );
       case 'pradosha':
         return events.sunset.add(
           Duration(minutes: nightLength.inMinutes ~/ 10),

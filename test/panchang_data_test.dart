@@ -360,6 +360,67 @@ void main() {
     });
   });
 
+  group('Nishita window matching', () {
+    // Nishita Kaal is a muhurta-long window (`sunset + 7/15 night` to
+    // `+ 8/15 night`), so a `nishita` rule matches the tithi at either edge.
+    // The old point sample at the night midpoint is gone: it lost Delhi
+    // 2026-09-04, where Ashtami ends 00:14 but the window opens at 23:57.
+    Festival janmashtami() => Festival.fromJson({
+      'id': 'janmashtami',
+      'name': 'Krishna Janmashtami',
+      'panchang_rules': {
+        'masa': 'Shravana',
+        'paksha': 'Krishna',
+        'tithi': 8,
+        'conditions': 'Ashtami',
+        'timingOverride': 'nishita',
+      },
+    });
+
+    PanchangData at({
+      required double sunrise,
+      double? nishita,
+      double? nishitaEnd,
+    }) => PanchangData.fromRawTithi(
+      date: DateTime(2026, 9, 4),
+      rawTithi: sunrise,
+      masa: 'Shravana',
+      allFestivals: [janmashtami()],
+      rawTithiNishita: nishita,
+      rawTithiNishitaEnd: nishitaEnd,
+    );
+
+    test('matches when Ashtami prevails at the window opening', () {
+      // Delhi: sunrise Saptami, opening Ashtami, close Navami.
+      final panchang = at(sunrise: 22.6, nishita: 23.987, nishitaEnd: 24.022);
+
+      expect(panchang.festivals.map((f) => f.id), equals(['janmashtami']));
+    });
+
+    test('matches when Ashtami only arrives before the window closes', () {
+      // Ashtami begins just inside the window: absent at the opening,
+      // prevailing at the close. Losing this day would be the mirror defect.
+      final panchang = at(sunrise: 22.6, nishita: 22.98, nishitaEnd: 23.02);
+
+      expect(panchang.festivals.map((f) => f.id), equals(['janmashtami']));
+    });
+
+    test('does not match when neither window edge holds Ashtami', () {
+      // Mumbai 2026-09-04: Ashtami ends 00:14:06, the window opens 00:14:11.
+      final panchang = at(sunrise: 22.6, nishita: 24.0001, nishitaEnd: 24.0359);
+
+      expect(panchang.festivals, isEmpty);
+    });
+
+    test('falls back to the sunrise tithi without a window', () {
+      // Polar day: no sunset, so no window. The rule then reads the sunrise
+      // tithi rather than inventing a checkpoint.
+      final panchang = at(sunrise: 23.5);
+
+      expect(panchang.festivals.map((f) => f.id), equals(['janmashtami']));
+    });
+  });
+
   group('Kshaya (skipped tithi) fallback', () {
     // A tithi that begins after one sunrise and ends before the next owns
     // no sunrise. The engine credits it to the earlier day so its festivals

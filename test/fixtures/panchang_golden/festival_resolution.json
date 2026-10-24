@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "profileId": "india_drik_lahiri_amanta",
   "source": {
-    "authority": "Tithi panchang-v2 engine characterization",
-    "retrievedOn": "2026-10-23",
+    "authority": "Tithi panchang-v3 engine characterization",
+    "retrievedOn": "2026-10-24",
     "kind": "engine-characterization",
-    "notes": "Phase 1b recapture after the native Hindu sunrise convention changed the tithi sampled at sunrise on boundary days. Regression lock only; not an external accuracy certification."
+    "notes": "Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night). Only the Janmashtami cases changed. Regression lock only; not an external accuracy certification."
   },
   "cases": [
     {
@@ -292,8 +292,10 @@
     },
     {
       "caseId": "delhi-2026-09-04",
-      "expectedFestivalIds": [],
-      "notes": "Known gap: the midpoint sample (00:20) is Navami while the Nishita window (23:57-00:43) opens with Ashtami. Phase 2 must change this to [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
+      "expectedFestivalIds": [
+        "janmashtami"
+      ],
+      "notes": "panchang-v3: Ashtami prevails at the Nishita window opening (23:57:19, raw 23.987); the old midpoint sample (00:20) was Navami. Old result: []. New result: [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
     },
     {
       "caseId": "kolkata-2026-09-04",
@@ -304,7 +306,7 @@
     {
       "caseId": "mumbai-2026-09-04",
       "expectedFestivalIds": [],
-      "notes": "Known gap: the midpoint sample (00:37) is Navami while the Nishita window (00:14-01:01) opens with Ashtami. Phase 2 must change this to [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
+      "notes": "Documented knife edge: Ashtami ends 00:14:06 and the Nishita window opens 00:14:11, so Ashtami prevails at neither window edge and panchang-v3 resolves no janmashtami here (the old midpoint sample agreed). The earlier note's \"Ashtami still prevails\" came from minute-rounded Phase 0 times (Ashtami end 00:14:36); the native Hindu sunrise/sunset moved the window edge ~6 s past the boundary. Recorded as engine characterization, not an external accuracy claim. See docs/jyotish_package_improvements_plan.md, Phase 2."
     },
     {
       "caseId": "varanasi-2026-09-04",

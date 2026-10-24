@@ -260,12 +260,19 @@ class PanchangDayResolver {
     }
 
     DateTime? nishita;
+    DateTime? nishitaEnd;
     DateTime? pradosha;
     if (sunset != null && nextSunrise != null) {
       final nightLength = nextSunrise.difference(sunset);
-      nishita = sunset.add(
-        Duration(minutes: nightLength.inMinutes ~/ 2),
-      );
+      // Nishita is the eighth of the fifteen night muhurtas, i.e. the window
+      // `sunset + 7/15 night` to `sunset + 8/15 night` - not the midpoint it
+      // was sampled at before panchang-v3. Microseconds rather than whole
+      // minutes: the window is only ~46 minutes wide, and rounding its edges
+      // can move a boundary tithi across it (the Mumbai Janmashtami case has
+      // ~1 minute of margin).
+      final nightMicros = nightLength.inMicroseconds;
+      nishita = sunset.add(Duration(microseconds: nightMicros * 7 ~/ 15));
+      nishitaEnd = sunset.add(Duration(microseconds: nightMicros * 8 ~/ 15));
       pradosha = sunset.add(
         Duration(minutes: nightLength.inMinutes ~/ 10),
       );
@@ -275,6 +282,7 @@ class PanchangDayResolver {
       madhyahna: madhyahna,
       aparahna: aparahna,
       nishita: nishita,
+      nishitaEnd: nishitaEnd,
       pradosha: pradosha,
       dominant: sunrise?.add(kDominantTithiGrace),
     );
@@ -298,6 +306,7 @@ class PanchangDayResolver {
       madhyahna: await at(checkpoints.madhyahna, 'madhyahna'),
       aparahna: await at(checkpoints.aparahna, 'aparahna'),
       nishita: await at(checkpoints.nishita, 'nishita'),
+      nishitaEnd: await at(checkpoints.nishitaEnd, 'nishitaEnd'),
       pradosha: await at(checkpoints.pradosha, 'pradosha'),
       nextSunrise: await at(nextSunrise, 'nextSunrise'),
       dominant: await at(checkpoints.dominant, 'dominant'),
