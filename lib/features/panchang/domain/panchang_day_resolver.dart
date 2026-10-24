@@ -20,6 +20,16 @@ import 'tithi_transitions.dart';
 // touch Hive - callers keep their caches until they are migrated onto this
 // type.
 
+/// Reads the raw tithi at [instant].
+///
+/// [samplePoint] names the checkpoint the value is for (`''` for the day's
+/// own sample, then `madhyahna`, `aparahna`, `nishita`, `pradosha`,
+/// `nextSunrise`, `dominant`). Callers that cache key by that name; a sampler
+/// must not cache instants whose sample point is empty unless the instant is
+/// the day's sample point, because the cache key has no time component.
+typedef PanchangTithiSampler =
+    Future<double> Function(DateTime instant, String samplePoint);
+
 /// Computes [PanchangDay] values from the Panchang and solar-event services.
 class PanchangDayResolver {
   PanchangDayResolver({
@@ -35,12 +45,30 @@ class PanchangDayResolver {
   ///
   /// [date] is normalized to midnight; only its civil date is used. Missing
   /// solar events become nulls on [PanchangDay.solar] instead of throwing.
+  ///
+  /// [tithiSampler] lets a caller keep its tithi cache (the provider path
+  /// caches one value per date, place, and sample point). Bisection reads
+  /// during the transition search always bypass it: those instants are not
+  /// sample points and would collide with a cached value.
+  ///
+  /// [computeTransition] is false when the caller resolves the daytime
+  /// transition itself (the provider path caches it separately). The day then
+  /// reports no transition rather than paying for a search it discards.
   Future<PanchangDay> resolve({
     required DateTime date,
     required PanchangPlace place,
+    PanchangTithiSampler? tithiSampler,
+    bool computeTransition = true,
   }) async {
     final normalized = DateTime(date.year, date.month, date.day);
     final solar = _solarDay(normalized, place);
+    final sampler =
+        tithiSampler ??
+        (instant, _) => _service.calculateTithi(
+          instant,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        );
 
     // Sunrise is the canonical sample point. A polar day has none, so the
     // day still needs a documented instant: civil noon, recorded on the day
@@ -53,11 +81,7 @@ class PanchangDayResolver {
         solar.sunrise ??
         DateTime(normalized.year, normalized.month, normalized.day, 12);
 
-    final rawTithi = await _service.calculateTithi(
-      sampledAt,
-      latitude: place.latitude,
-      longitude: place.longitude,
-    );
+    final rawTithi = await sampler(sampledAt, '');
     final masaValue = await _service.calculateMasa(
       sampledAt,
       rawTithi,
@@ -71,12 +95,20 @@ class PanchangDayResolver {
 
     final limbs = await _limbs(sampledAt, place);
     final checkpoints = _checkpoints(solar);
-    final transition = await _transition(
-      solar: solar,
+    final checkpointTithis = await _checkpointTithis(
       checkpoints: checkpoints,
-      rawTithiAtSunrise: rawTithi,
-      place: place,
+      nextSunrise: solar.nextSunrise,
+      sampler: sampler,
     );
+    final transition = computeTransition
+        ? await _transition(
+            solar: solar,
+            checkpoints: checkpoints,
+            checkpointTithis: checkpointTithis,
+            rawTithiAtSunrise: rawTithi,
+            place: place,
+          )
+        : null;
 
     return PanchangDay(
       date: normalized,
@@ -92,6 +124,7 @@ class PanchangDayResolver {
       limbs: limbs,
       masa: PanchangMasaDay(amanta: amanta, adhika: adhika),
       checkpoints: checkpoints,
+      checkpointTithis: checkpointTithis,
       provenance: PanchangProvenance(
         engineVersion: kPanchangEngineVersion,
         ayanamsa: kPanchangAyanamsa,
@@ -213,10 +246,35 @@ class PanchangDayResolver {
     );
   }
 
+  /// Samples the tithi at each checkpoint that exists.
+  ///
+  /// A missing checkpoint stays null: it was never reached, so a timing rule
+  /// anchored to it must not match.
+  static Future<PanchangCheckpointTithis> _checkpointTithis({
+    required PanchangCheckpoints checkpoints,
+    required DateTime? nextSunrise,
+    required PanchangTithiSampler sampler,
+  }) async {
+    Future<double?> at(DateTime? instant, String name) async {
+      if (instant == null) return null;
+      return sampler(instant, name);
+    }
+
+    return PanchangCheckpointTithis(
+      madhyahna: await at(checkpoints.madhyahna, 'madhyahna'),
+      aparahna: await at(checkpoints.aparahna, 'aparahna'),
+      nishita: await at(checkpoints.nishita, 'nishita'),
+      pradosha: await at(checkpoints.pradosha, 'pradosha'),
+      nextSunrise: await at(nextSunrise, 'nextSunrise'),
+      dominant: await at(checkpoints.dominant, 'dominant'),
+    );
+  }
+
   /// Daytime transition search, skipped when the solar window is missing.
   Future<({DateTime at, int index})?> _transition({
     required PanchangSolarDay solar,
     required PanchangCheckpoints checkpoints,
+    required PanchangCheckpointTithis checkpointTithis,
     required double rawTithiAtSunrise,
     required PanchangPlace place,
   }) async {
@@ -225,14 +283,24 @@ class PanchangDayResolver {
     final madhyahna = checkpoints.madhyahna;
     final aparahna = checkpoints.aparahna;
     final nishita = checkpoints.nishita;
+    final rawMadhyahna = checkpointTithis.madhyahna;
+    final rawAparahna = checkpointTithis.aparahna;
+    final rawNishita = checkpointTithis.nishita;
+    final rawNextSunrise = checkpointTithis.nextSunrise;
     if (sunrise == null ||
         nextSunrise == null ||
         madhyahna == null ||
         aparahna == null ||
-        nishita == null) {
+        nishita == null ||
+        rawMadhyahna == null ||
+        rawAparahna == null ||
+        rawNishita == null ||
+        rawNextSunrise == null) {
       return null;
     }
 
+    // Bisection instants are not sample points, so this read bypasses any
+    // caller cache on purpose.
     Future<double> tithiAt(DateTime time) => _service.calculateTithi(
       time,
       latitude: place.latitude,
@@ -245,13 +313,10 @@ class PanchangDayResolver {
       rawTithiAtSunrise: rawTithiAtSunrise,
       segments: [
         (time: sunrise, rawTithi: rawTithiAtSunrise),
-        (time: madhyahna, rawTithi: await tithiAt(madhyahna)),
-        (time: aparahna, rawTithi: await tithiAt(aparahna)),
-        (time: nishita, rawTithi: await tithiAt(nishita)),
-        (
-          time: nextSunrise,
-          rawTithi: await tithiAt(nextSunrise),
-        ),
+        (time: madhyahna, rawTithi: rawMadhyahna),
+        (time: aparahna, rawTithi: rawAparahna),
+        (time: nishita, rawTithi: rawNishita),
+        (time: nextSunrise, rawTithi: rawNextSunrise),
       ],
       getRawTithi: tithiAt,
     );

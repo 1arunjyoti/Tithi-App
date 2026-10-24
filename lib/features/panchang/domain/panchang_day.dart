@@ -182,6 +182,30 @@ class PanchangMasaDay {
       displayMasaName(amanta, paksha, system);
 }
 
+/// Raw tithi values sampled at the solar-anchored checkpoints.
+///
+/// Festival rules match against these (a Madhyahna rule samples the tithi at
+/// midday, a Nishita rule at the night midpoint). Each is null when its
+/// checkpoint instant does not exist, so a polar day cannot silently match a
+/// timing rule it never reached.
+class PanchangCheckpointTithis {
+  const PanchangCheckpointTithis({
+    this.madhyahna,
+    this.aparahna,
+    this.nishita,
+    this.pradosha,
+    this.nextSunrise,
+    this.dominant,
+  });
+
+  final double? madhyahna;
+  final double? aparahna;
+  final double? nishita;
+  final double? pradosha;
+  final double? nextSunrise;
+  final double? dominant;
+}
+
 /// Solar-anchored checkpoint instants used by festival timing overrides.
 ///
 /// Each is null when the anchors it needs are missing, so a polar day can
@@ -250,6 +274,7 @@ class PanchangDay {
     required this.limbs,
     required this.masa,
     required this.checkpoints,
+    required this.checkpointTithis,
     required this.provenance,
   });
 
@@ -261,6 +286,10 @@ class PanchangDay {
   final PanchangLimbDay limbs;
   final PanchangMasaDay masa;
   final PanchangCheckpoints checkpoints;
+
+  /// Raw tithi at each checkpoint, for festival timing rules.
+  final PanchangCheckpointTithis checkpointTithis;
+
   final PanchangProvenance provenance;
 
   /// The day has no usable solar anchor, so solar-anchored UI must be
