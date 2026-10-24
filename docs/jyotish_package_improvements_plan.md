@@ -162,7 +162,9 @@ anchors, recorded tithi sample point, and provenance. The provider path is
 migrated: `resolveTithiCheckpoints` is now an adapter over the resolver that
 keeps the Hive tithi cache, and its checkpoint instants are nullable, so
 `computePanchangData` renders a polar day instead of throwing. The
-notification scheduler, festival export, and `HinduCalendarService` still
+notification scheduler also reads the resolver and no longer pre-reads sunrise
+at its call sites, so a polar location schedules the rest of the window
+instead of failing the run. Festival export and `HinduCalendarService` still
 assemble their own days; migrate them next, and delete each inline assembly
 as its caller moves.
 

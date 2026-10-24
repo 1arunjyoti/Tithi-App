@@ -3,6 +3,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../features/panchang/domain/panchang_day.dart';
+import '../../features/panchang/domain/panchang_day_resolver.dart';
 import '../../models/festival.dart';
 import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
@@ -12,7 +14,6 @@ import '../../services/festival_matching_pipeline.dart';
 import '../../services/panchang_service.dart';
 import '../../services/shloka_service.dart';
 import '../../services/storage_service.dart';
-import '../../services/solar_events_service.dart';
 import '../../utils/date_utils.dart';
 import 'festival_store.dart';
 import 'notification_keys.dart';
@@ -181,11 +182,6 @@ class NotificationScheduler {
     final window = <DateTime, PanchangData>{};
     for (int i = -2; i < NotificationKeys.festivalWindowDays + 2; i++) {
       final date = today.add(Duration(days: i));
-      final sunrise = solarEventsService.sunrise(
-        date: date,
-        latitude: latitude,
-        longitude: longitude,
-      );
       window[date] = await computePanchangForDate(
         date: date,
         service: service,
@@ -193,7 +189,6 @@ class NotificationScheduler {
         longitude: longitude,
         festivals: festivals,
         monthSystem: monthSystem,
-        sunriseTime: sunrise,
       );
     }
     // Shared pipeline: same Vriddhi trimming as the UI grid, so reminders
@@ -463,6 +458,12 @@ class NotificationScheduler {
   /// Full panchang for [date] with the same intraday checkpoints the app UI
   /// uses, so festival matching (timingOverride, Kshaya) agrees with what
   /// the user sees. Shared by the daily content and the festival scanner.
+  /// Computes one notification day through the canonical Panchang day.
+  ///
+  /// Scheduling has no Hive panchang cache and runs in the background isolate,
+  /// so it reads the resolver directly. A polar day yields null solar anchors;
+  /// the window then has no sunrise-anchored content for that day instead of
+  /// failing the whole run.
   Future<PanchangData> computePanchangForDate({
     required DateTime date,
     required PanchangService service,
@@ -470,110 +471,46 @@ class NotificationScheduler {
     required double longitude,
     required List<Festival> festivals,
     required HinduMonthSystem monthSystem,
-    required DateTime sunriseTime,
   }) async {
-    final sunsetTime = solarEventsService.sunset(
+    final day = await PanchangDayResolver(service: service).resolve(
       date: date,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final nextSunriseTime = solarEventsService.sunrise(
-      date: date.add(const Duration(days: 1)),
-      latitude: latitude,
-      longitude: longitude,
+      place: PanchangPlace(latitude: latitude, longitude: longitude),
     );
 
-    final rawTithi = await service.calculateTithi(
-      sunriseTime,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final masa = await service.calculateMasa(
-      sunriseTime,
-      rawTithi,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    // Intraday checkpoints so timingOverride festivals (madhyahna,
-    // aparahna, nishita, pradosha) and Kshaya tithis match the app UI.
-    final rawTithiMadhyahna = await service.calculateTithi(
-      sunriseTime.add(
-        Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiAparahna = await service.calculateTithi(
-      sunriseTime.add(
-        Duration(
-          minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
-        ),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiNishita = await service.calculateTithi(
-      sunsetTime.add(
-        Duration(
-          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
-        ),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiPradosha = await service.calculateTithi(
-      sunsetTime.add(
-        Duration(
-          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 10,
-        ),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiNextSunrise = await service.calculateTithi(
-      nextSunriseTime,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final masaNextSunrise = await service.calculateMasa(
-      nextSunriseTime,
-      rawTithiNextSunrise,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    // Dominant-tithi grace checkpoint (same Drik rule as the UI batch).
-    final rawTithiDominant = await service.calculateTithi(
-      sunriseTime.add(kDominantTithiGrace),
-      latitude: latitude,
-      longitude: longitude,
-    );
+    // Kshaya detection compares the sunrise masa with the next-sunrise masa;
+    // without a next sunrise there is nothing to compare.
+    var masaNextSunrise = '';
+    final nextSunrise = day.solar.nextSunrise;
+    final rawTithiNextSunrise = day.checkpointTithis.nextSunrise;
+    if (nextSunrise != null && rawTithiNextSunrise != null) {
+      masaNextSunrise = await service.calculateMasa(
+        nextSunrise,
+        rawTithiNextSunrise,
+        latitude: latitude,
+        longitude: longitude,
+      );
+    }
+
     // Nakshatra at sunrise for nakshatra-conditioned festivals (Mula
     // Avahan). Gated so days without such festivals skip the extra call.
     final needsNakshatra = festivals.any((f) => f.nakshatraCondition != null);
-    final nakshatraAtSunrise = needsNakshatra
-        ? await service.calculateNakshatra(
-            sunriseTime,
-            latitude: latitude,
-            longitude: longitude,
-          )
-        : null;
 
     return PanchangData.fromRawTithi(
-      date: date,
-      rawTithi: rawTithi,
-      masa: masa,
+      date: day.date,
+      rawTithi: day.tithi.rawAtSample,
+      masa: day.masa.amantaForMatching,
       allFestivals: festivals,
       monthSystem: monthSystem,
-      sunrise: sunriseTime,
-      sunset: sunsetTime,
-      rawTithiMadhyahna: rawTithiMadhyahna,
-      rawTithiAparahna: rawTithiAparahna,
-      rawTithiNishita: rawTithiNishita,
-      rawTithiPradosha: rawTithiPradosha,
+      sunrise: day.solar.sunrise,
+      sunset: day.solar.sunset,
+      rawTithiMadhyahna: day.checkpointTithis.madhyahna,
+      rawTithiAparahna: day.checkpointTithis.aparahna,
+      rawTithiNishita: day.checkpointTithis.nishita,
+      rawTithiPradosha: day.checkpointTithis.pradosha,
       rawTithiNextSunrise: rawTithiNextSunrise,
       masaNextSunrise: masaNextSunrise,
-      nakshatraAtSunrise: nakshatraAtSunrise,
-      rawTithiDominant: rawTithiDominant,
+      nakshatraAtSunrise: needsNakshatra ? day.limbs.nakshatra : null,
+      rawTithiDominant: day.checkpointTithis.dominant,
     );
   }
 
@@ -600,11 +537,6 @@ class NotificationScheduler {
       final contextDays = <DateTime, PanchangData>{};
       for (int i = -1; i <= 1; i++) {
         final day = date.add(Duration(days: i));
-        final daySunrise = solarEventsService.sunrise(
-          date: day,
-          latitude: latitude,
-          longitude: longitude,
-        );
         contextDays[day] = await computePanchangForDate(
           date: day,
           service: service,
@@ -612,7 +544,6 @@ class NotificationScheduler {
           longitude: longitude,
           festivals: festivals,
           monthSystem: monthSystem,
-          sunriseTime: daySunrise,
         );
       }
       final panchang =
