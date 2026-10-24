@@ -49,9 +49,18 @@ void storePanchangUiSync(DateTime date, PanchangData data) {
 
 String panchangDateKeyLocal(DateTime date) => panchangDateKey(date);
 
+/// Bumped when a cached day's *inputs* change without a calculation-version
+/// bump, so old entries become misses.
+///
+/// 2: the place zone is resolved from the coordinates (it used to be the
+/// device zone), so days cached while the device was in another zone hold
+/// instants in the wrong zone.
+const int kPlaceContextVersion = 2;
+
 String locationSignature(double latitude, double longitude) {
   return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'
-      '_v$kPanchangCalculationVersion';
+      '_v$kPanchangCalculationVersion'
+      '_p$kPlaceContextVersion';
 }
 
 String buildCacheKey(

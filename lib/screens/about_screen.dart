@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
+import '../core/location/timezone_resolver.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/version_provider.dart';
 import '../features/settings/widgets/app_update_settings.dart';
@@ -207,6 +208,21 @@ class AboutScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    // ODbL credit for the bundled time zone boundaries; the
+                    // package's licence requires it wherever the data ships.
+                    Center(
+                      child: Text(
+                        l10n?.timezoneDataCredit ??
+                            kTimezoneBoundaryAttribution,
+                        textAlign: TextAlign.center,
+                        style: context.textTheme.labelSmall?.copyWith(
+                          color: context.colors.onSurface.withValues(
+                            alpha: 0.55,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Center(
                       child: Text(
                         l10n?.applicationLegalese ??

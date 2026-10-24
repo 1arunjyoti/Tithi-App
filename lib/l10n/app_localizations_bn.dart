@@ -462,6 +462,10 @@ class AppLocalizationsBn extends AppLocalizations {
       '© ২০২৫ তিথি প্রকল্প\nসনাতন ধর্মের জন্য ভালোবাসা ❤️ দিয়ে তৈরি';
 
   @override
+  String get timezoneDataCredit =>
+      'সময় অঞ্চল সীমানা: © OpenStreetMap অবদানকারী (ODbL), Timezone Boundary Builder দ্বারা নির্মিত।';
+
+  @override
   String get moonPhases => 'চাঁদের কলা';
 
   @override

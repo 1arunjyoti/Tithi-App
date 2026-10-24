@@ -9,6 +9,8 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:timezone/data/latest_all.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
 import 'package:tithi/services/location_service.dart';
 import 'package:tithi/services/storage_service.dart';
 
@@ -67,7 +69,13 @@ void main() {
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async => tempDir.path);
-    // Deterministic device zone: the resolver consults this on every fix.
+    // The place lookup needs the full tzdb: `latest` omits 106 of the zone
+    // identifiers the bundled boundaries can return.
+    if (!tz.timeZoneDatabase.isInitialized) {
+      tz_data.initializeTimeZones();
+    }
+    // Device zone used when a coordinate has no boundary polygon (or when the
+    // lookup is unavailable). A real place coordinate must ignore it.
     const timezoneChannel = MethodChannel('flutter_timezone');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
@@ -184,12 +192,12 @@ void main() {
       },
     );
 
-    test('explicit timezone override wins over the device seed', () async {
+    test('explicit timezone override wins over the place lookup', () async {
       // Arrange
       final service = LocationService();
       await service.init();
 
-      // Act
+      // Act: New York coordinates, but the caller insists on IST.
       await service.setHomeLocation(
         40.7128,
         -74.0060,
@@ -201,6 +209,32 @@ void main() {
       // Assert
       expect(home, isNotNull);
       expect(home!.timezoneId, equals('America/New_York'));
+      expect(
+        Hive.box(StorageService.locationSettingsBoxName)
+            .get('home_timezone_source'),
+        equals('user'),
+        reason:
+            'An explicit override must be marked so no migration retries it.',
+      );
+    });
+
+    test('home location uses the place zone, not the device zone', () async {
+      // Arrange: the platform reports Asia/Kolkata (setUp).
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setHomeLocation(40.7128, -74.0060, 'New York');
+      final home = service.getHomeLocation();
+
+      // Assert
+      expect(home, isNotNull);
+      expect(home!.timezoneId, equals('America/New_York'));
+      expect(
+        Hive.box(StorageService.locationSettingsBoxName)
+            .get('home_timezone_source'),
+        equals('place'),
+      );
     });
 
     test(
@@ -212,6 +246,7 @@ void main() {
         await first.setHomeLocation(28.6139, 77.2090, 'Delhi');
         final box = Hive.box(StorageService.locationSettingsBoxName);
         await box.delete('home_timezone');
+        await box.delete('home_timezone_source');
         await first.dispose();
 
         // Act: a fresh service must resolve and persist the missing zone.
@@ -224,6 +259,51 @@ void main() {
         expect(home!.timezoneId, equals('Asia/Kolkata'));
       },
     );
+
+    test('init re-resolves a legacy zone that has no source marker', () async {
+      // Arrange: pre-lookup boxes stored the device zone (here IST) next to
+      // the coordinates and have no provenance marker.
+      final first = LocationService();
+      await first.init();
+      final box = Hive.box(StorageService.locationSettingsBoxName);
+      await box.put('home_lat', 40.7128);
+      await box.put('home_lng', -74.0060);
+      await box.put('home_address', 'New York');
+      await box.put('home_timezone', 'Asia/Kolkata');
+      await first.dispose();
+
+      // Act
+      final second = LocationService();
+      await second.init();
+
+      // Assert
+      expect(second.getHomeLocation()!.timezoneId, equals('America/New_York'));
+      expect(
+        Hive.box(StorageService.locationSettingsBoxName)
+            .get('home_timezone_source'),
+        equals('place'),
+      );
+    });
+
+    test('init keeps a user-chosen zone for the same place', () async {
+      // Arrange: a deliberate override that differs from the place's zone.
+      final first = LocationService();
+      await first.init();
+      final box = Hive.box(StorageService.locationSettingsBoxName);
+      await box.put('home_lat', 28.6139);
+      await box.put('home_lng', 77.2090);
+      await box.put('home_address', 'Delhi');
+      await box.put('home_timezone', 'America/New_York');
+      await box.put('home_timezone_source', 'user');
+      await first.dispose();
+
+      // Act
+      final second = LocationService();
+      await second.init();
+
+      // Assert: the migration must not overwrite an explicit choice.
+      expect(second.getHomeLocation()!.timezoneId, equals('America/New_York'));
+    });
   });
 
   group('LocationService.tryResolvePosition', () {

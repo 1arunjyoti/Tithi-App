@@ -29,8 +29,9 @@ dependencies:
   url_launcher: ^6.3.2
   geolocator: ^14.0.1 # FOSS: Uses native LocationManager with forceAndroidLocationManager
   nominatim_geocoding: ^0.0.6 # FOSS: OpenStreetMap Nominatim API for reverse geocoding
-  flutter_local_notifications: ^19.0.0 # FOSS: Native notifications, no GMS required
-  timezone: ^0.10.0 # For scheduling notifications at specific times
+  flutter_local_notifications: ^22.3.2 # FOSS: Native notifications, no GMS required
+  timezone: ^0.11.2 # For scheduling notifications at specific times
+  timezone_finder: ^1.0.0 # Offline coordinate -> IANA zone (ODbL boundaries)
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   path: ^1.9.1
