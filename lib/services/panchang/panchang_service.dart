@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:jyotish/jyotish.dart';
+import '../../features/panchang/domain/panchang_day.dart';
+import '../../features/panchang/domain/panchang_day_projection.dart';
+import '../../features/panchang/domain/panchang_day_resolver.dart';
 import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
 import '../festival_matching_pipeline.dart';
@@ -432,246 +435,46 @@ class PanchangService {
     }
 
     for (int i = 0; i < 420; i++) {
+      // One canonical day, projected into the same PanchangData the UI grid
+      // matches against, so the scan and the grid cannot disagree about a
+      // match. The previous inline copy of sunrise/override/dominant/Kshaya
+      // matching was a second definition of a match, and had already drifted:
+      // it accepted a sunrise match for a `timingOverride` festival that the
+      // grid rejects. A polar day no longer throws here either - the day
+      // carries a null sunrise instead.
       Future<bool> matchesOn(DateTime day) async {
-        // Sample at TRUE sunrise (not a fixed 06:00): the UI batch
-        // (PanchangData.fromRawTithi via resolveTithiCheckpoints) matches at
-        // sunrise, so a fixed 06:00 probe disagrees by a day whenever the
-        // tithi changes between 06:00 and sunrise (high latitudes/seasons).
         final dayOnly = DateTime(day.year, day.month, day.day);
-        final probe = solarEventsService.sunrise(
+        final resolved = await PanchangDayResolver(service: this).resolve(
           date: dayOnly,
-          latitude: latitude,
-          longitude: longitude,
+          place: PanchangPlace(latitude: latitude, longitude: longitude),
+          // Only a nakshatra-conditioned festival reads a limb; yoga and
+          // karana would be wasted ephemeris reads.
+          computeLimbs: festival.nakshatraCondition != null,
+          // The scan never shows the daytime transition.
+          computeTransition: false,
         );
-        final probeRawTithi = await calculateTithi(
-          probe,
-          latitude: latitude,
-          longitude: longitude,
-        );
-        final probeIndex = probeRawTithi.floor();
-        final String probePaksha;
-        final int probeTithiNumber;
-        if (probeIndex <= 15) {
-          probePaksha = 'Shukla';
-          probeTithiNumber = probeIndex;
-        } else {
-          probePaksha = 'Krishna';
-          probeTithiNumber = probeIndex - 15;
-        }
-        final probeMasa = await calculateMasa(
-          probe,
-          probeRawTithi,
-          latitude: latitude,
-          longitude: longitude,
-        );
-        // Nakshatra override (e.g. Mula Avahan): one Moon-longitude read
-        // per probe day, only when this festival needs it.
-        final probeNakshatra = festival.nakshatraCondition != null
-            ? await calculateNakshatra(
-                probe,
+
+        // Kshaya and the dominant-grace wrap compare against the next
+        // lunation. calculateMasa memoizes per lunation, so this is a cache
+        // lookup on all but the first day of each lunation.
+        final nextSunrise = resolved.solar.nextSunrise;
+        final rawNextSunrise = resolved.checkpointTithis.nextSunrise;
+        final masaNextSunrise = nextSunrise != null && rawNextSunrise != null
+            ? await calculateMasa(
+                nextSunrise,
+                rawNextSunrise,
                 latitude: latitude,
                 longitude: longitude,
               )
-            : null;
-        // BUG-04: pass `date` so weekday constraints are evaluated.
-        // Shared pipeline: nakshatra overrides and tithi rules agree with
-        // the UI grid by construction.
-        final probeMatch = matchesFestivalOnDay(
-          festival: festival,
-          paksha: probePaksha,
-          tithiNumber: probeTithiNumber,
-          masa: probeMasa,
-          nakshatra: probeNakshatra,
-          date: day,
+            : '';
+
+        final projected = projectPanchangDay(
+          resolved,
+          festivals: [festival],
+          masaNextSunrise: masaNextSunrise,
+          nakshatraAtSunrise: resolved.limbs.nakshatra,
         );
-        if (probeMatch) return true;
-        // Timing-override checkpoint (same as the UI batch in
-        // PanchangData.fromRawTithi): festivals observed at madhyahna,
-        // aparahna, nishita, pradosha or moonrise match the tithi prevailing
-        // at that intraday instant - not the sunrise probe. Without this, a
-        // tithi starting after sunrise but prevailing at dusk (e.g. Trayodashi
-        // for Pradosh Vrata) is missed entirely by the forward scan.
-        // Masa stays the sunrise masa (probeMasa), matching the UI batch
-        // which matches override festivals against the sunrise masa — not
-        // the checkpoint masa — so sankranti-boundary days agree.
-        // Nakshatra festivals returned with probeMatch above, so the
-        // checkpoint match passes null.
-        final override = festival.panchangRules.timingOverride;
-        if (override != null &&
-            timingOverrideCheckpoints.contains(override) &&
-            festival.nakshatraCondition == null) {
-          // Nishita is a window, so the observance matches the tithi at either
-          // edge: probe the opening and the close (the UI batch applies the
-          // same rule in PanchangData.fromRawTithi). Every other checkpoint is
-          // a single instant.
-          final probes = override == 'nishita'
-              ? const ['nishita', 'nishitaEnd']
-              : [override];
-          for (final checkpointName in probes) {
-            final checkpoint = solarEventsService.checkpointTimeFor(
-              date: day,
-              timingOverride: checkpointName,
-              latitude: latitude,
-              longitude: longitude,
-            );
-            if (checkpoint == null) continue;
-            final cpRaw = await calculateTithi(
-              checkpoint,
-              latitude: latitude,
-              longitude: longitude,
-            );
-            final cpIndex = cpRaw.floor().clamp(1, 30);
-            final String cpPaksha;
-            final int cpNum;
-            if (cpIndex <= 15) {
-              cpPaksha = 'Shukla';
-              cpNum = cpIndex;
-            } else {
-              cpPaksha = 'Krishna';
-              cpNum = cpIndex - 15;
-            }
-            if (matchesFestivalOnDay(
-              festival: festival,
-              paksha: cpPaksha,
-              tithiNumber: cpNum,
-              masa: probeMasa,
-              nakshatra: null,
-              date: day,
-            )) {
-              return true;
-            }
-          }
-          // No checkpoint, or every checkpoint missed: fall through to the
-          // Kshaya fallback below (mirrors PanchangData.fromRawTithi, which
-          // still applies Kshaya after an override miss). Do NOT return false
-          // here.
-        }
-        // Dominant-tithi grace (Drik rule, same as the UI batch): a tithi
-        // beginning within kDominantTithiGrace after TRUE sunrise counts
-        // for this day. Override festivals keep their own checkpoint, and
-        // nakshatra festivals returned above.
-        final usesSunrise = festival.panchangRules.timingOverride == null ||
-            !timingOverrideCheckpoints.contains(
-              festival.panchangRules.timingOverride,
-            );
-        if (usesSunrise && festival.nakshatraCondition == null) {
-          // `probe` IS today's sunrise (see above): reuse it instead of
-          // recomputing the same instant.
-          final daySunrise = probe;
-          final domRaw = await calculateTithi(
-            daySunrise.add(kDominantTithiGrace),
-            latitude: latitude,
-            longitude: longitude,
-          );
-          final domIndex = domRaw.floor().clamp(1, 30);
-          if (domIndex != probeIndex) {
-            final String domPaksha;
-            final int domNum;
-            if (domIndex <= 15) {
-              domPaksha = 'Shukla';
-              domNum = domIndex;
-            } else {
-              domPaksha = 'Krishna';
-              domNum = domIndex - 15;
-            }
-            var domMasa = probeMasa;
-            if (probeIndex == 30 && domIndex == 1) {
-              domMasa = await calculateMasa(
-                daySunrise.add(kDominantTithiGrace),
-                domRaw,
-                latitude: latitude,
-                longitude: longitude,
-              );
-            }
-            if (festival.matchesTithi(
-              domPaksha,
-              domNum,
-              domMasa,
-              HinduMonthSystem.amanta,
-              day,
-            )) {
-              return true;
-            }
-            // Dominant missed: fall through to the Kshaya fallback below
-            // (mirrors the UI batch). Do NOT return false here.
-          }
-        }
-        // Kshaya fallback (same as PanchangData.fromRawTithi): a tithi that
-        // begins after one sunrise and ends before the next never prevails at
-        // any sunrise, so probe/checkpoint/dominant all miss it. Without this
-        // the calendar grid shows the festival (via the UI batch) but the
-        // forward scan skips the day and jumps to next year.
-        // Nakshatra festivals returned with probeMatch above (a nakshatra
-        // always owns a sunrise, so there is no Kshaya fallback for them).
-        if (festival.nakshatraCondition == null) {
-          final nextSunriseDay = solarEventsService.sunrise(
-            date: DateTime(day.year, day.month, day.day).add(
-              const Duration(days: 1),
-            ),
-            latitude: latitude,
-            longitude: longitude,
-          );
-          final rawNext = await calculateTithi(
-            nextSunriseDay,
-            latitude: latitude,
-            longitude: longitude,
-          );
-          var currentSunriseIndex = probeRawTithi.floor();
-          var nextSunriseIndex = rawNext.floor();
-          if (currentSunriseIndex < 1) currentSunriseIndex = 1;
-          if (currentSunriseIndex > 30) currentSunriseIndex = 30;
-          if (nextSunriseIndex < 1) nextSunriseIndex = 1;
-          if (nextSunriseIndex > 30) nextSunriseIndex = 30;
-
-          if (nextSunriseIndex < currentSunriseIndex) {
-            nextSunriseIndex += 30; // Handle wrap-around.
-          }
-
-          if (nextSunriseIndex - currentSunriseIndex > 1) {
-            String? masaNextSunrise;
-            for (int i = currentSunriseIndex + 1; i < nextSunriseIndex; i++) {
-              final skippedIndex = i > 30 ? i - 30 : i;
-              final String kshayaPaksha = skippedIndex <= 15
-                  ? 'Shukla'
-                  : 'Krishna';
-              final int kshayaTithiNum = skippedIndex <= 15
-                  ? skippedIndex
-                  : skippedIndex - 15;
-
-              if (festival.matchesTithi(
-                kshayaPaksha,
-                kshayaTithiNum,
-                probeMasa,
-                HinduMonthSystem.amanta,
-                day,
-              )) {
-                return true;
-              }
-
-              // New-moon wrap inside the skipped span starts a new lunation.
-              if (skippedIndex == 1 || skippedIndex == 16) {
-                masaNextSunrise ??= await calculateMasa(
-                  nextSunriseDay,
-                  rawNext,
-                  latitude: latitude,
-                  longitude: longitude,
-                );
-                if (masaNextSunrise.isNotEmpty &&
-                    masaNextSunrise != probeMasa &&
-                    festival.matchesTithi(
-                      kshayaPaksha,
-                      kshayaTithiNum,
-                      masaNextSunrise,
-                      HinduMonthSystem.amanta,
-                      day,
-                    )) {
-                  return true;
-                }
-              }
-            }
-          }
-        }
-        return false;
+        return projected.festivals.isNotEmpty;
       }
 
       // BUG-04: pass `date` so weekday constraints are evaluated

@@ -167,12 +167,24 @@ its call sites; the festival year export projects the resolver's day; and
 `HinduCalendarService.calculateDate` resolves with limbs/checkpoints/transition
 turned off while keeping its shared Hive tithi and masa entries.
 
-Still inline: the forward scan in
-`PanchangService.findNextFestivalOccurrence` probes sunrise, timing overrides,
-the dominant grace window, and Kshaya itself. The moonrise checkpoint it
-blocked on now exists (see "Moonrise checkpoint" below), so it is ready to
-move onto the resolver; migrating it before that would have encoded the old
-sunrise fallback for `moonrise` rules.
+The forward scan in `PanchangService.findNextFestivalOccurrence` is migrated
+too. It resolves one canonical day per candidate date and projects it through
+`projectPanchangDay` (`lib/features/panchang/domain/panchang_day_projection.dart`)
+into the same `PanchangData` the grid matches against, so the scan and the grid
+share one definition of "matches today"; the ~240-line inline copy of the
+sunrise/override/dominant/Kshaya rules is gone. Two consequences are deliberate:
+
+- the scan is now *stricter* for `timingOverride` festivals. The inline copy
+  returned a sunrise match that `PanchangData.fromRawTithi` rejects, so a
+  boundary date could differ between the countdown and the calendar;
+- a polar candidate day no longer throws. `solarEventsService.sunrise` used to
+  raise `SolarEventUnavailable` out of the search; the canonical day carries a
+  null sunrise, the tithi is sampled at civil noon, and the scan resolves.
+
+The moonrise checkpoint the migration blocked on exists (see "Moonrise
+checkpoint" below); migrating before it would have encoded the old sunrise
+fallback for `moonrise` rules. The engine version stays `panchang-v3` and no
+golden fixture moved.
 
 **Missing solar events are data, not exceptions (Phase 2 acceptance
 criterion).** At polar latitudes the Sun may not rise or set on a civil day.
@@ -186,9 +198,10 @@ add a defensive `try/catch` before the day model exists: it would invent a UI
 policy that this resolver then has to undo.
 
 Route the calendar grid, detail sheets, widgets, notifications, exports,
-search/countdowns, and event sheets through it. In particular, eliminate the
-inline copy of sunrise/override/dominant/Kshaya matching in
-`PanchangService.findNextFestivalOccurrence`.
+search/countdowns, and event sheets through it. The inline copy of
+sunrise/override/dominant/Kshaya matching in
+`PanchangService.findNextFestivalOccurrence` was the last duplicate and is now
+removed; `test/festival_occurrence_scan_test.dart` locks the scan/grid parity.
 
 Current day assembly is duplicated in `tithi_transitions.dart`, notification
 scheduling, festival export, and `HinduCalendarService`; each duplicate is a
@@ -231,10 +244,10 @@ Shipped rule (`FestivalObservancePolicy.nishita = NishitaPolicy.windowEdges`):
 Implementation map: `PanchangCheckpoints.nishita` / `.nishitaEnd` and
 `PanchangCheckpointTithis.nishita` / `.nishitaEnd` in
 `panchang_day_resolver.dart` (microsecond edges), `TithiCheckpoints`, the
-matcher in `PanchangData.fromRawTithi`, `SolarEventsService.checkpointTimeFor`
-(`nishita` = opening, `nishitaEnd` = closing), and
-`PanchangService.findNextFestivalOccurrence`, whose forward scan probes both
-edges.
+matcher in `PanchangData.fromRawTithi`, and
+`SolarEventsService.checkpointTimeFor` (`nishita` = opening, `nishitaEnd` =
+closing). `PanchangService.findNextFestivalOccurrence` projects the same
+canonical day, so both edges reach the scan unchanged.
 
 Result, re-measured with the native Hindu sunrise convention:
 
@@ -286,8 +299,9 @@ Implemented:
 - `timingOverrideCheckpoints` includes `moonrise`, so a moonrise rule is tested
   only at the rise - no sunrise match and no dominant grace, exactly like the
   other overrides - and keeps the Kshaya fallback.
-- `SolarEventsService.checkpointTimeFor('moonrise')` returns the day's rise, so
-  the forward scan in `findNextFestivalOccurrence` probes the same instant.
+- `SolarEventsService.checkpointTimeFor('moonrise')` returns the day's rise. The
+  forward scan reads the checkpoint off the canonical day it already resolves,
+  so the scan and the grid sample the same instant.
 - `FestivalObservancePolicy.moonrise` records the no-rise policy:
   `MoonrisePolicy.fallbackToSunrise` (shipped) uses the day's own tithi when the
   Moon does not rise; `requireRise` would move the observance to a day whose

@@ -4,6 +4,7 @@ import 'package:hive/hive.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../features/panchang/domain/panchang_day.dart';
+import '../../features/panchang/domain/panchang_day_projection.dart';
 import '../../features/panchang/domain/panchang_day_resolver.dart';
 import '../../models/festival.dart';
 import '../../models/festival_region.dart';
@@ -495,24 +496,12 @@ class NotificationScheduler {
     // Avahan). Gated so days without such festivals skip the extra call.
     final needsNakshatra = festivals.any((f) => f.nakshatraCondition != null);
 
-    return PanchangData.fromRawTithi(
-      date: day.date,
-      rawTithi: day.tithi.rawAtSample,
-      masa: day.masa.amantaForMatching,
-      allFestivals: festivals,
+    return projectPanchangDay(
+      day,
+      festivals: festivals,
       monthSystem: monthSystem,
-      sunrise: day.solar.sunrise,
-      sunset: day.solar.sunset,
-      rawTithiMadhyahna: day.checkpointTithis.madhyahna,
-      rawTithiAparahna: day.checkpointTithis.aparahna,
-      rawTithiNishita: day.checkpointTithis.nishita,
-      rawTithiNishitaEnd: day.checkpointTithis.nishitaEnd,
-      rawTithiPradosha: day.checkpointTithis.pradosha,
-      rawTithiMoonrise: day.checkpointTithis.moonrise,
-      rawTithiNextSunrise: rawTithiNextSunrise,
       masaNextSunrise: masaNextSunrise,
       nakshatraAtSunrise: needsNakshatra ? day.limbs.nakshatra : null,
-      rawTithiDominant: day.checkpointTithis.dominant,
     );
   }
 
