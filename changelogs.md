@@ -35,9 +35,12 @@ as they migrate onto it.
   (`PanchangTithiSample.sunrise` / `civilNoon`) so the UI can label a day
   that has no sunrise instead of pretending it does.
 - `PanchangDayResolver` is the single computation pipeline; it does not
-  decide festivals or touch Hive, so callers keep their caches until they are
-  migrated. Lives in `lib/features/panchang/domain/panchang_day.dart` and
-  `panchang_day_resolver.dart`; do not add a fourth inline day assembly, route
+  decide festivals or touch Hive. Callers that own a cache pass
+  `tithiSampler` / `masaSampler` instead of the resolver growing one, and
+  `computeLimbs` / `computeCheckpoints` / `computeTransition` let a caller
+  skip parts it never reads (each costs ephemeris calls). Lives in
+  `lib/features/panchang/domain/panchang_day.dart` and
+  `panchang_day_resolver.dart`; do not add another inline day assembly, route
   new callers through the resolver.
 - The provider path already uses it: `resolveTithiCheckpoints` is a thin
   adapter over the resolver (keeping the Hive tithi cache) and its checkpoint
@@ -52,6 +55,10 @@ as they migrate onto it.
 - The festival year export projects the resolver's day as well, so its
   sunrise/sunset/masa/nakshatra columns come from the same pipeline as the
   calendar and the scheduler.
+- `HinduCalendarService.calculateDate` resolves the day with limbs,
+  checkpoints, and transition turned off (it only reads the udaya tithi and
+  masa) and keeps its shared Hive tithi/masa entries through the samplers, so
+  the Hindu month grid and the Gregorian batch still warm each other.
 
 ### Place timezone for solar events
 
