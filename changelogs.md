@@ -21,6 +21,29 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Festival scan on the canonical day
+
+The next-festival scan and the calendar grid now agree on which day a festival
+falls on, because both match against the same projected day.
+
+- `PanchangService.findNextFestivalOccurrence` resolves one canonical
+  `PanchangDay` per candidate date and projects it with `projectPanchangDay`
+  (`lib/features/panchang/domain/panchang_day_projection.dart`), the single
+  day -> `PanchangData` projection also used by the notification scheduler. The
+  ~240-line inline matcher is gone; do not reintroduce sunrise/override/Kshaya
+  matching at a call site.
+- Deliberate behaviour change: the scan no longer accepts a sunrise match for a
+  `timingOverride` festival. The old copy did, which disagreed with
+  `PanchangData.fromRawTithi`; a boundary date could differ between the
+  countdown and the grid.
+- A polar candidate day no longer throws: the old scan called
+  `solarEventsService.sunrise` directly and let `SolarEventUnavailable` escape,
+  so no date resolved. The day's null sunrise means the tithi is sampled at
+  civil noon and the scan continues.
+- Engine stays `panchang-v3`; no golden fixture moved.
+  `test/festival_occurrence_scan_test.dart` locks scan/grid parity (Nishita,
+  madhyahna, moonrise-puja, a Kshaya tithi, and a polar day).
+
 ### Moonrise observance checkpoint
 
 A festival rule can now be decided by the tithi at moonrise (`timingOverride:

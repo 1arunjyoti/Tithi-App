@@ -54,7 +54,7 @@ void main() {
       });
 
   /// Jagannath Rath Yatra: Ashadha Shukla Dwitiya. Used to drive the polar
-  /// case, where no occurrence can be resolved at all.
+  /// case, where the day has no solar anchors to export.
   Festival rathYatra() => Festival.fromJson({
         'id': 'jagannath_rath_yatra',
         'name': 'Jagannath Rath Yatra',
@@ -121,10 +121,11 @@ void main() {
       expect(occurrence['sunset'], equals(sunset.toIso8601String()));
     }, skip: skipReason);
 
-    test('a polar location degrades to a null occurrence, not a failure', () async {
-      // Occurrence resolution itself needs a sunrise, so a place inside the
-      // polar night yields no date to export. The year document must still be
-      // produced for every other festival rather than the export throwing.
+    test('a polar location exports null anchors instead of no row', () async {
+      // Occurrence resolution used to throw on a place where the Sun does not
+      // set (midnight sun), so the row was dropped. The scan now reads the
+      // canonical day, whose missing anchors are nulls, so the occurrence
+      // resolves and only sunrise/sunset are absent.
       final occurrence = await exportOne(
         festival: rathYatra(),
         year: 2026,
@@ -132,7 +133,10 @@ void main() {
         longitude: 18.9553,
       );
 
-      expect(occurrence, isNull);
+      expect(occurrence, isNotNull);
+      expect(occurrence!['date'], equals('2026-07-15'));
+      expect(occurrence['sunrise'], isNull);
+      expect(occurrence['sunset'], isNull);
     }, skip: skipReason);
   });
 }
