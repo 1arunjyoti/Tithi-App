@@ -4,6 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../core/location/timezone_resolver.dart';
 import '../models/panchang_profile.dart';
+import 'moonrise_calculator.dart';
 import 'sunrise_calculator.dart';
 
 /// Solar events for one civil day at one place.
@@ -407,7 +408,8 @@ class SolarEventsService {
   /// Mirrors the resolver's checkpoint arithmetic: madhyahna = midday,
   /// aparahna = 3/4 day, nishita = the opening of the Nishita window
   /// (`sunset + 7/15 night`, the eighth of the fifteen night muhurtas),
-  /// pradosha = sunset + night/10.
+  /// pradosha = sunset + night/10, moonrise = the Moon's rise on the civil day
+  /// (null when the Moon does not rise, matching the canonical day's anchor).
   ///
   /// This is the forward-scan probe, which samples one instant per checkpoint.
   /// A `nishita` observance matches the tithi at either edge of the window, so
@@ -456,6 +458,14 @@ class SolarEventsService {
         return events.sunset.add(
           Duration(minutes: nightLength.inMinutes ~/ 10),
         );
+      case 'moonrise':
+        // A lunar anchor, not a solar offset: reuse the same civil-day rise the
+        // canonical day records, so the forward scan and the day agree.
+        return MoonriseCalculator.calculateMoonriseSet(
+          date: dateOnly,
+          latitude: latitude,
+          longitude: longitude,
+        ).moonrise;
       default:
         return null;
     }

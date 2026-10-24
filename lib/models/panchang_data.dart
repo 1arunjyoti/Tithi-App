@@ -149,6 +149,11 @@ class PanchangData {
   /// `+ 8/15 night`). A `nishita` rule matches when its tithi prevails at
   /// either edge; callers that only know one instant pass it as
   /// [rawTithiNishita] and leave [rawTithiNishitaEnd] null.
+  ///
+  /// [rawTithiMoonrise] is the tithi at the Moon's rise. A `moonrise` rule
+  /// reads it, and falls back to [rawTithi] when the day has no moonrise -
+  /// the same "checkpoint absent, use the day's own tithi" fallback as the
+  /// other overrides.
   factory PanchangData.fromRawTithi({
     required DateTime date,
     required double rawTithi,
@@ -162,6 +167,7 @@ class PanchangData {
     double? rawTithiNishita,
     double? rawTithiNishitaEnd,
     double? rawTithiPradosha,
+    double? rawTithiMoonrise,
     double? rawTithiNextSunrise,
     String masaNextSunrise = '',
     String? nakshatraAtSunrise,
@@ -234,6 +240,7 @@ class PanchangData {
         'aparahna' => rawTithiAparahna ?? rawTithi,
         'nishita' => rawTithiNishita ?? rawTithi,
         'pradosha' => rawTithiPradosha ?? rawTithi,
+        'moonrise' => rawTithiMoonrise ?? rawTithi,
         _ => rawTithi,
       };
 

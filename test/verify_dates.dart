@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/models/hindu_month_system.dart';
+import 'package:tithi/services/moonrise_calculator.dart';
 import 'package:tithi/services/panchang_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 
@@ -154,6 +155,18 @@ void main() {
         latitude: lat,
         longitude: lon,
       );
+      final moonriseTime = MoonriseCalculator.calculateMoonrise(
+        date: date,
+        latitude: lat,
+        longitude: lon,
+      );
+      final rawTithiMoonrise = moonriseTime == null
+          ? null
+          : await service.calculateTithi(
+              moonriseTime,
+              latitude: lat,
+              longitude: lon,
+            );
 
       final data = PanchangData.fromRawTithi(
         date: date,
@@ -167,6 +180,7 @@ void main() {
         rawTithiAparahna: rawTithiAparahna,
         rawTithiNishita: rawTithiNishita,
         rawTithiNishitaEnd: rawTithiNishitaEnd,
+        rawTithiMoonrise: rawTithiMoonrise,
       );
 
       if (date.month == 10 && (date.day == 20 || date.day == 21)) {

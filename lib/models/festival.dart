@@ -578,16 +578,20 @@ class Purpose {
   }
 }
 
-/// timingOverride values resolved at their own intraday checkpoint instead
-/// of sunrise (madhyahna, aparahna, nishita, pradosha). Shared by the UI
+/// timingOverride values resolved at their own checkpoint instead of sunrise
+/// (madhyahna, aparahna, nishita, pradosha, moonrise). Shared by the UI
 /// batch (panchang_data), the matching pipeline, and the notification
 /// scheduler so all three agree on which festivals skip sunrise matching
 /// and the dominant-tithi grace.
+///
+/// Adding a value here is a matching change: the festival stops being tested
+/// against the sunrise tithi and is tested only at its checkpoint.
 const timingOverrideCheckpoints = {
   'madhyahna',
   'aparahna',
   'nishita',
   'pradosha',
+  'moonrise',
 };
 
 @HiveType(typeId: 4)
@@ -618,7 +622,8 @@ class PanchangRules {
 
   /// SMELL-05: Which timing checkpoint to use when evaluating this festival.
   /// Replaces the hardcoded switch on festival ID in PanchangData.fromRawTithi.
-  /// Valid values: 'madhyahna', 'aparahna', 'nishita', 'pradosha'.
+  /// Valid values: 'madhyahna', 'aparahna', 'nishita', 'pradosha',
+  /// 'moonrise' (see [timingOverrideCheckpoints]).
   /// Null (default) = use sunrise tithi.
   @HiveField(8)
   final String? timingOverride;

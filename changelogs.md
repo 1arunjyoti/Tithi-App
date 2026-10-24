@@ -21,6 +21,28 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Moonrise observance checkpoint
+
+A festival rule can now be decided by the tithi at moonrise (`timingOverride:
+moonrise`), which `PanchangRules` already documented but the matcher silently
+ignored.
+
+- `PanchangCheckpointTithis.moonrise` is the tithi at the day's own moonrise;
+  `PanchangDayResolver` samples it under the `moonrise` cache point and
+  `TithiCheckpoints.rawTithiMoonrise` / `rawTithiMoonrise:` carry it to the
+  scheduler and export paths.
+- `timingOverrideCheckpoints` includes `moonrise`, so such a rule is matched
+  only at the rise: no sunrise match, no dominant grace, Kshaya fallback kept.
+  `SolarEventsService.checkpointTimeFor('moonrise')` returns the rise for the
+  forward scan.
+- `FestivalObservancePolicy.moonrise` records the no-rise policy:
+  `MoonrisePolicy.fallbackToSunrise` (default) uses the day's own tithi when the
+  Moon does not rise; `requireRise` would move the observance instead. Do not
+  change the default without a fixture diff.
+- No shipped festival sets `timingOverride: moonrise` yet, so no result moves and
+  the engine stays `panchang-v3`. Karva Chauth still matches at sunrise; its
+  `pujaKala`/`paranRule: moonrise` only drives the puja window.
+
 ### Nishita observance window
 
 Janmashtami and Maha Shivaratri are decided by the Nishita Kaal window instead

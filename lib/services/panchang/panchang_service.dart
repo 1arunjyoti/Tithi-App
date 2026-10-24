@@ -487,10 +487,10 @@ class PanchangService {
         if (probeMatch) return true;
         // Timing-override checkpoint (same as the UI batch in
         // PanchangData.fromRawTithi): festivals observed at madhyahna,
-        // aparahna, nishita or pradosha match the tithi prevailing at that
-        // intraday instant — not the sunrise probe. Without this, a tithi
-        // starting after sunrise but prevailing at dusk (e.g. Trayodashi for
-        // Pradosh Vrata) is missed entirely by the forward scan.
+        // aparahna, nishita, pradosha or moonrise match the tithi prevailing
+        // at that intraday instant - not the sunrise probe. Without this, a
+        // tithi starting after sunrise but prevailing at dusk (e.g. Trayodashi
+        // for Pradosh Vrata) is missed entirely by the forward scan.
         // Masa stays the sunrise masa (probeMasa), matching the UI batch
         // which matches override festivals against the sunrise masa — not
         // the checkpoint masa — so sankranti-boundary days agree.

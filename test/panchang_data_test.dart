@@ -421,6 +421,57 @@ void main() {
     });
   });
 
+  group('Moonrise checkpoint matching', () {
+    // A `moonrise` rule is tested against the tithi at the Moon's rise, not at
+    // sunrise. Karva Chauth is the shipped example of a moonrise observance
+    // (its `pujaKala`/`paranRule`), so the checkpoint must be real rather than
+    // a documented value that silently degrades to sunrise matching.
+    Festival karvaChauth() => Festival.fromJson({
+      'id': 'karva_chauth',
+      'name': 'Karva Chauth',
+      'panchang_rules': {
+        'masa': 'Ashwin',
+        'paksha': 'Krishna',
+        'tithi': 4,
+        'conditions': 'Chaturthi',
+        'timingOverride': 'moonrise',
+        'pujaKala': 'moonrise',
+        'paranRule': 'moonrise',
+      },
+    });
+
+    PanchangData at({required double sunrise, double? moonrise}) =>
+        PanchangData.fromRawTithi(
+          date: DateTime(2026, 10, 29),
+          rawTithi: sunrise,
+          masa: 'Ashwin',
+          allFestivals: [karvaChauth()],
+          rawTithiMoonrise: moonrise,
+        );
+
+    test('matches on the tithi prevailing at moonrise', () {
+      // Sunrise is still Tritiya; Chaturthi has begun by moonrise.
+      final panchang = at(sunrise: 18.6, moonrise: 19.2);
+
+      expect(panchang.festivals.map((f) => f.id), equals(['karva_chauth']));
+    });
+
+    test('does not match when the tithi has already left by moonrise', () {
+      // Sunrise is Chaturthi, but Panchami begins before the Moon rises.
+      final panchang = at(sunrise: 19.2, moonrise: 20.4);
+
+      expect(panchang.festivals, isEmpty);
+    });
+
+    test('falls back to the sunrise tithi on a day with no moonrise', () {
+      // The Moon does not rise on roughly one civil day a month. The rule then
+      // reads the day's own tithi instead of inventing a checkpoint.
+      final panchang = at(sunrise: 19.2);
+
+      expect(panchang.festivals.map((f) => f.id), equals(['karva_chauth']));
+    });
+  });
+
   group('Kshaya (skipped tithi) fallback', () {
     // A tithi that begins after one sunrise and ends before the next owns
     // no sunrise. The engine credits it to the earlier day so its festivals

@@ -169,9 +169,9 @@ turned off while keeping its shared Hive tithi and masa entries.
 
 Still inline: the forward scan in
 `PanchangService.findNextFestivalOccurrence` probes sunrise, timing overrides,
-the dominant grace window, and Kshaya itself. It moves onto the resolver after
-the moonrise checkpoint exists, because the scan must match the same checkpoint
-set as `PanchangData.fromRawTithi`; migrating it first would encode the current
+the dominant grace window, and Kshaya itself. The moonrise checkpoint it
+blocked on now exists (see "Moonrise checkpoint" below), so it is ready to
+move onto the resolver; migrating it before that would have encoded the old
 sunrise fallback for `moonrise` rules.
 
 **Missing solar events are data, not exceptions (Phase 2 acceptance
@@ -195,12 +195,10 @@ scheduling, festival export, and `HinduCalendarService`; each duplicate is a
 future behavior-drift risk.
 
 Make the moonrise checkpoint real. `timingOverrideCheckpoints` and
-`PanchangData.fromRawTithi` currently omit `'moonrise'` (it falls through to the
-sunrise tithi), while `PanchangRules` documents it as valid. Shipped Karva
-Chauth uses `pujaKala`/`paranRule: moonrise`, so its puja window follows
-moonrise while its tithi match follows sunrise. Add `'moonrise'` to the
-checkpoint set, the matcher, and the scheduler, and record the chosen policy in
-`PanchangProfile`.
+`PanchangData.fromRawTithi` omitted `'moonrise'` (it fell through to the sunrise
+tithi) while `PanchangRules` documented it as valid; shipped Karva Chauth uses
+`pujaKala`/`paranRule: moonrise`, so its puja window followed moonrise while its
+tithi match followed sunrise. Implemented in the section below.
 
 ### Nishita checkpoint: Janmashtami boundary defect
 
@@ -266,6 +264,41 @@ Fixture diff: `delhi-2026-09-04` `[]` -> `["janmashtami"]`, with the
 `known-gap` tag and note removed; `mumbai-2026-09-04` keeps `[]` with its note
 rewritten to the measured boundaries; the profile block moves to `panchang-v3` /
 `calculationVersion: 3`. The other four cities are unchanged.
+
+### Moonrise checkpoint
+
+A `moonrise` rule was documented as valid in `PanchangRules` but silently fell
+through to the sunrise tithi: neither `timingOverrideCheckpoints` nor
+`PanchangData.fromRawTithi` had a `moonrise` case. Karva Chauth made the gap
+visible - its puja window and paran follow moonrise (`pujaKala`/`paranRule`),
+while its date was decided at sunrise.
+
+Implemented:
+
+- `PanchangCheckpointTithis.moonrise` is the tithi at
+  `PanchangSolarDay.moonrise`. It is the only checkpoint sampled at a primary
+  lunar anchor rather than a solar offset, so the instant stays on the solar
+  day and the sampled tithi travels with the checkpoint set.
+- `PanchangDayResolver._checkpointTithis` samples it under the `moonrise` cache
+  point. `TithiCheckpoints.rawTithiMoonrise`,
+  `PanchangData.fromRawTithi(rawTithiMoonrise:)`, the notification scheduler,
+  and `test/verify_dates.dart` carry it.
+- `timingOverrideCheckpoints` includes `moonrise`, so a moonrise rule is tested
+  only at the rise - no sunrise match and no dominant grace, exactly like the
+  other overrides - and keeps the Kshaya fallback.
+- `SolarEventsService.checkpointTimeFor('moonrise')` returns the day's rise, so
+  the forward scan in `findNextFestivalOccurrence` probes the same instant.
+- `FestivalObservancePolicy.moonrise` records the no-rise policy:
+  `MoonrisePolicy.fallbackToSunrise` (shipped) uses the day's own tithi when the
+  Moon does not rise; `requireRise` would move the observance to a day whose
+  Moon does rise.
+
+No shipped festival rule sets `timingOverride: moonrise` yet, so no result
+moves and the engine version stays `panchang-v3`. The policy adds a
+`moonrise:` segment to `PanchangProfile.cacheKey`, so Panchang caches
+invalidate once. Promoting Karva Chauth's date rule from sunrise to moonrise is
+a data change that needs an external check and a fixture diff, and is not part
+of this step.
 
 ### Boishakh-1 boundary defect
 
