@@ -46,6 +46,9 @@ as they migrate onto it.
 - `TithiCheckpoints` instant fields are nullable and carry
   `tithiSample`/`tithiSampledAt`; a missing anchor means the anchored timing
   rule never matched, not that it matched at 06:00.
+- The notification scheduler now computes each day through the resolver too,
+  and no longer pre-reads sunrise at its call sites, so a polar location
+  schedules the rest of the window instead of failing the run.
 
 ### Place timezone for solar events
 
