@@ -177,13 +177,19 @@ void main() {
       );
       final dayLength = sunset.difference(sunrise);
       final nightLength = nextSunrise.difference(sunset);
+      final nightMicros = nightLength.inMicroseconds;
 
       final expected = <String, DateTime>{
         'madhyahna': sunrise.add(Duration(minutes: dayLength.inMinutes ~/ 2)),
         'aparahna': sunrise.add(
           Duration(minutes: dayLength.inMinutes * 3 ~/ 4),
         ),
-        'nishita': sunset.add(Duration(minutes: nightLength.inMinutes ~/ 2)),
+        // Nishita Kaal is the 8th of the 15 night muhurtas: the window opens
+        // at sunset + 7/15 night and closes one muhurta later.
+        'nishita': sunset.add(Duration(microseconds: nightMicros * 7 ~/ 15)),
+        'nishitaEnd': sunset.add(
+          Duration(microseconds: nightMicros * 8 ~/ 15),
+        ),
         'pradosha': sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10)),
       };
 

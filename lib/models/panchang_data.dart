@@ -143,6 +143,12 @@ class PanchangData {
   /// matching here would double-shift Krishna-paksha masas (e.g. Amanta
   /// Shravana Krishna misread as Purnimant and shifted to Ashadha),
   /// making Krishna festivals such as Janmashtami disappear.
+  ///
+  /// [rawTithiNishita] and [rawTithiNishitaEnd] are the tithi at the opening
+  /// and closing of the Nishita window (`sunset + 7/15 night` and
+  /// `+ 8/15 night`). A `nishita` rule matches when its tithi prevails at
+  /// either edge; callers that only know one instant pass it as
+  /// [rawTithiNishita] and leave [rawTithiNishitaEnd] null.
   factory PanchangData.fromRawTithi({
     required DateTime date,
     required double rawTithi,
@@ -154,6 +160,7 @@ class PanchangData {
     double? rawTithiMadhyahna,
     double? rawTithiAparahna,
     double? rawTithiNishita,
+    double? rawTithiNishitaEnd,
     double? rawTithiPradosha,
     double? rawTithiNextSunrise,
     String masaNextSunrise = '',
@@ -201,6 +208,24 @@ class PanchangData {
         );
       }
 
+      // Matches the festival's tithi rule against an arbitrary raw tithi.
+      // Amanta basis: both the stored festival rules and `masa` (from
+      // calculateMasa) are Amanta. `monthSystem` is display-only; passing it
+      // here would convert an already-Amanta masa a second time and drop
+      // every Krishna-paksha festival in Purnimant mode.
+      bool matchesTithiAt(double rawTithiValue) {
+        final index = rawTithiValue.floor();
+        final pakshaAt = index <= 15 ? 'Shukla' : 'Krishna';
+        final tithiNumAt = index <= 15 ? index : index - 15;
+        return f.matchesTithi(
+          pakshaAt,
+          tithiNumAt,
+          masa,
+          HinduMonthSystem.amanta,
+          date,
+        );
+      }
+
       // SMELL-05: Select the appropriate timing checkpoint generically via
       // timingOverride instead of hard-coding festival IDs.
       // BUG-04: pass `date` so weekday constraints are evaluated.
@@ -213,19 +238,23 @@ class PanchangData {
       };
 
       final targetIndex = targetRawTithi.floor();
-      final targetPaksha = targetIndex <= 15 ? 'Shukla' : 'Krishna';
-      final targetTithiNum = targetIndex <= 15 ? targetIndex : targetIndex - 15;
-      // Match in Amanta: both the stored festival rules and `masa` (from
-      // calculateMasa) are Amanta. `monthSystem` is display-only; passing it
-      // here would convert an already-Amanta masa a second time and drop
-      // every Krishna-paksha festival in Purnimant mode.
-      bool isMatch = f.matchesTithi(
-        targetPaksha,
-        targetTithiNum,
-        masa,
-        HinduMonthSystem.amanta,
-        date,
-      );
+      bool isMatch = matchesTithiAt(targetRawTithi);
+
+      // Nishita is a window, not a point: `sunset + 7/15 night` to
+      // `sunset + 8/15 night`. The tithi at the opening decides, but a tithi
+      // that arrives just after it and is still current at the close also
+      // counts, so an observance is never lost because its tithi began a few
+      // minutes inside the window. The reverse (a tithi that ends inside the
+      // window) is already covered by the opening sample - that is the
+      // Janmashtami fix.
+      if (!isMatch &&
+          f.panchangRules.timingOverride == 'nishita' &&
+          rawTithiNishitaEnd != null) {
+        final closeIndex = rawTithiNishitaEnd.floor();
+        if (closeIndex != targetIndex) {
+          isMatch = matchesTithiAt(rawTithiNishitaEnd);
+        }
+      }
 
       // Dominant-tithi grace (Drik convention): a festival with no
       // timingOverride additionally matches when its tithi begins within

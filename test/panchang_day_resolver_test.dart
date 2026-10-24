@@ -202,9 +202,16 @@ void main() {
         sunrise.add(Duration(minutes: dayLength * 3 ~/ 4)),
       );
       final nightLength = nextSunrise.difference(sunset).inMinutes;
+      // Nishita is the 7/15 - 8/15 night window, in microseconds so its edges
+      // are not rounded by a whole minute.
+      final nightMicros = nextSunrise.difference(sunset).inMicroseconds;
       expect(
         day.checkpoints.nishita,
-        sunset.add(Duration(minutes: nightLength ~/ 2)),
+        sunset.add(Duration(microseconds: nightMicros * 7 ~/ 15)),
+      );
+      expect(
+        day.checkpoints.nishitaEnd,
+        sunset.add(Duration(microseconds: nightMicros * 8 ~/ 15)),
       );
       expect(
         day.checkpoints.pradosha,

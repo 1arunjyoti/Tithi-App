@@ -18,7 +18,7 @@ const String kPanchangProfilePrefKey = 'panchang_profile';
 /// node convention, or a new regional rule set. Cached Panchang and festival
 /// records must key on it and be discarded when it changes. Never reuse a
 /// version number once it has shipped.
-const int kPanchangCalculationVersion = 2;
+const int kPanchangCalculationVersion = 3;
 
 /// Sentinel used by [PanchangProfile.copyWith] to distinguish "leave as is"
 /// from "set to null" for nullable fields.
@@ -111,6 +111,25 @@ enum DominantTithiPolicy {
 /// `true` is a Dart keyword, hence the `Node` suffix on both values.
 enum NodeConvention { meanNode, trueNode }
 
+/// Which instant of the Nishita Kaal window decides a `nishita` observance.
+///
+/// Nishita Kaal is not a point: it is the eighth of the fifteen night muhurtas,
+/// a window of `night / 15` centred on the night midpoint
+/// (`sunset + 7/15 night` to `sunset + 8/15 night`).
+enum NishitaPolicy {
+  /// The window opening decides. A tithi that only arrives before the window
+  /// closes still counts, so a required tithi never loses a day because it
+  /// began a few minutes after the window opened. Shipped default.
+  windowEdges,
+
+  /// The night midpoint decides (the pre-`panchang-v3` point sample).
+  ///
+  /// Kept only to reproduce older results; it misses observances whose tithi
+  /// ends between the window opening and the midpoint (the Janmashtami
+  /// defect: Delhi and Mumbai 2026-09-04).
+  midpoint,
+}
+
 /// Festival-observance policy shared by a [PanchangProfile]. Defaults reproduce
 /// shipped conventions, so adoption alone changes nothing; Phase 2 wires this
 /// into the matcher and scheduler, replacing `timingOverrideCheckpoints`.
@@ -127,6 +146,7 @@ class FestivalObservancePolicy {
     this.kshaya = KshayaPolicy.fallback,
     this.vriddhi = VriddhiPolicy.both,
     this.dominantTithi = DominantTithiPolicy.grace,
+    this.nishita = NishitaPolicy.windowEdges,
   });
 
   /// Target policy: every documented checkpoint, including moonrise.
@@ -146,17 +166,22 @@ class FestivalObservancePolicy {
   /// Dominant-tithi handling.
   final DominantTithiPolicy dominantTithi;
 
+  /// Which instant of the Nishita window decides a `nishita` observance.
+  final NishitaPolicy nishita;
+
   FestivalObservancePolicy copyWith({
     Set<ObservanceCheckpoint>? checkpoints,
     KshayaPolicy? kshaya,
     VriddhiPolicy? vriddhi,
     DominantTithiPolicy? dominantTithi,
+    NishitaPolicy? nishita,
   }) {
     return FestivalObservancePolicy(
       checkpoints: checkpoints ?? this.checkpoints,
       kshaya: kshaya ?? this.kshaya,
       vriddhi: vriddhi ?? this.vriddhi,
       dominantTithi: dominantTithi ?? this.dominantTithi,
+      nishita: nishita ?? this.nishita,
     );
   }
 
@@ -170,6 +195,7 @@ class FestivalObservancePolicy {
       'kshaya': kshaya.name,
       'vriddhi': vriddhi.name,
       'dominantTithi': dominantTithi.name,
+      'nishita': nishita.name,
     };
   }
 
@@ -205,6 +231,11 @@ class FestivalObservancePolicy {
         json['dominantTithi'],
         DominantTithiPolicy.grace,
       ),
+      nishita: _enumByName(
+        NishitaPolicy.values,
+        json['nishita'],
+        NishitaPolicy.windowEdges,
+      ),
     );
   }
 
@@ -214,7 +245,8 @@ class FestivalObservancePolicy {
         setEquals(other.checkpoints, checkpoints) &&
         other.kshaya == kshaya &&
         other.vriddhi == vriddhi &&
-        other.dominantTithi == dominantTithi;
+        other.dominantTithi == dominantTithi &&
+        other.nishita == nishita;
   }
 
   @override
@@ -223,13 +255,14 @@ class FestivalObservancePolicy {
     kshaya,
     vriddhi,
     dominantTithi,
+    nishita,
   );
 
   @override
   String toString() =>
       'FestivalObservancePolicy(checkpoints: $checkpoints, '
       'kshaya: ${kshaya.name}, vriddhi: ${vriddhi.name}, '
-      'dominantTithi: ${dominantTithi.name})';
+      'dominantTithi: ${dominantTithi.name}, nishita: ${nishita.name})';
 }
 
 /// Versioned calculation contract for the Panchang.
@@ -322,6 +355,7 @@ class PanchangProfile {
       'kshaya:${observance.kshaya.name}',
       'vriddhi:${observance.vriddhi.name}',
       'dominant:${observance.dominantTithi.name}',
+      'nishita:${observance.nishita.name}',
       'nodes:${nodeConvention.name}',
       'rules:${regionalRuleSetId ?? '-'}',
     ].join('|');

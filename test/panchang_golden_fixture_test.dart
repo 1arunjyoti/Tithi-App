@@ -29,12 +29,12 @@ void main() {
 
     test('profile metadata matches the locked calculation contract', () {
       final profile = fixture.panchang.profile;
-      expect(profile.engineVersion, 'panchang-v2');
+      expect(profile.engineVersion, 'panchang-v3');
       expect(profile.ayanamsa, 'lahiri');
       expect(profile.monthSystem, 'amanta');
       expect(profile.sunriseConvention, 'hindu');
       expect(profile.timezone, 'Asia/Kolkata');
-      expect(profile.calculationVersion, 2);
+      expect(profile.calculationVersion, 3);
       expect(fixture.panchang.tolerance.eventSeconds, 60);
       expect(fixture.panchang.tolerance.longitudeArcseconds, 1);
     });
@@ -205,17 +205,29 @@ void main() {
       expect(after.expected.bengaliDate?.day, 1);
     });
 
-    test('Janmashtami known gaps stay documented', () {
-      for (final id in ['delhi-2026-09-04', 'mumbai-2026-09-04']) {
-        final c = fixture.caseById(id)!;
-        expect(c.tags, contains('known-gap'), reason: id);
-        expect(c.source.notes, contains('Known gap'), reason: id);
-        expect(
-          fixture.festivalCaseById(id)!.expectedFestivalIds,
-          isEmpty,
-          reason: id,
-        );
-      }
+    test('Janmashtami window cases stay documented', () {
+      // panchang-v3 samples the Nishita window (`sunset + 7/15 night` to
+      // `+ 8/15 night`) instead of the night midpoint, so Delhi resolves the
+      // observance again: Ashtami prevails at the 23:57 opening even though
+      // the old 00:20 midpoint sample was Navami.
+      final delhi = fixture.caseById('delhi-2026-09-04')!;
+      expect(delhi.tags, isNot(contains('known-gap')));
+      expect(
+        fixture.festivalCaseById(delhi.id)!.expectedFestivalIds,
+        contains('janmashtami'),
+      );
+
+      // Mumbai stays a documented knife edge: Ashtami ends ~6 s before the
+      // window opens, so neither edge holds it. Recorded as engine
+      // characterization, not an asserted observance date.
+      final mumbai = fixture.caseById('mumbai-2026-09-04')!;
+      expect(mumbai.tags, contains('known-gap'));
+      expect(mumbai.source.notes, contains('00:14:06'));
+      expect(
+        fixture.festivalCaseById(mumbai.id)!.expectedFestivalIds,
+        isEmpty,
+      );
+
       final kolkata = fixture.caseById('kolkata-2026-09-04')!;
       expect(kolkata.tags, isNot(contains('known-gap')));
       expect(

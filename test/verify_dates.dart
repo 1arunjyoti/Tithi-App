@@ -111,10 +111,15 @@ void main() {
           minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
         ),
       );
+      // Nishita Kaal is the eighth of the fifteen night muhurtas: the window
+      // `sunset + 7/15 night` to `+ 8/15 night`. A nishita rule matches the
+      // tithi at either edge.
+      final nightMicros = nextSunriseTime.difference(sunsetTime).inMicroseconds;
       final nishitaTime = sunsetTime.add(
-        Duration(
-          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
-        ),
+        Duration(microseconds: nightMicros * 7 ~/ 15),
+      );
+      final nishitaEndTime = sunsetTime.add(
+        Duration(microseconds: nightMicros * 8 ~/ 15),
       );
 
       final rawTithi = await service.calculateTithi(
@@ -144,6 +149,11 @@ void main() {
         latitude: lat,
         longitude: lon,
       );
+      final rawTithiNishitaEnd = await service.calculateTithi(
+        nishitaEndTime,
+        latitude: lat,
+        longitude: lon,
+      );
 
       final data = PanchangData.fromRawTithi(
         date: date,
@@ -156,6 +166,7 @@ void main() {
         rawTithiMadhyahna: rawTithiMadhyahna,
         rawTithiAparahna: rawTithiAparahna,
         rawTithiNishita: rawTithiNishita,
+        rawTithiNishitaEnd: rawTithiNishitaEnd,
       );
 
       if (date.month == 10 && (date.day == 20 || date.day == 21)) {

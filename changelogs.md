@@ -21,6 +21,31 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Nishita observance window
+
+Janmashtami and Maha Shivaratri are decided by the Nishita Kaal window instead
+of a single night-midpoint sample, which restores Janmashtami on 2026-09-04 in
+Delhi.
+
+- Nishita Kaal is the eighth of the fifteen night muhurtas: `sunset + 7/15
+  night` to `sunset + 8/15 night`. A `nishita` rule matches the tithi at the
+  opening, or one still current at the close; the midpoint is never a fallback.
+  The policy is `FestivalObservancePolicy.nishita` (`NishitaPolicy.windowEdges`;
+  `midpoint` exists only to reproduce pre-v3 results).
+- Window edges are computed in microseconds
+  (`PanchangDayResolver._checkpoints`): the window is ~46 minutes wide, so
+  whole-minute rounding can move a boundary tithi across it.
+- `panchang-v3` / `kPanchangCalculationVersion = 3`: Panchang cache keys and
+  the golden fixtures move with the version, so pre-v3 days are not reused.
+- Both edges travel with the day: `PanchangCheckpointTithis.nishitaEnd`,
+  `TithiCheckpoints.rawTithiNishitaEnd`, the `rawTithiNishitaEnd` argument of
+  `PanchangData.fromRawTithi`, the scheduler, and the forward scan in
+  `PanchangService.findNextFestivalOccurrence`. `checkpointTimeFor` on
+  `SolarEventsService` gained a `nishitaEnd` case.
+- Mumbai 2026-09-04 stays unmatched on purpose: Ashtami ends 00:14:06 and the
+  window opens 00:14:11. Do not add a tolerance to force it; the golden fixture
+  documents the margin.
+
 ### Canonical Panchang day
 
 One immutable day value object replaces the four separate day-assembly paths

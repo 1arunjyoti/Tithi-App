@@ -26,6 +26,7 @@ void main() {
       expect(observance.kshaya, KshayaPolicy.fallback);
       expect(observance.vriddhi, VriddhiPolicy.both);
       expect(observance.dominantTithi, DominantTithiPolicy.grace);
+      expect(observance.nishita, NishitaPolicy.windowEdges);
     });
 
     test('standard enum identifiers match shipped festival data spelling', () {
@@ -60,6 +61,7 @@ void main() {
         kshaya: KshayaPolicy.strict,
         vriddhi: VriddhiPolicy.first,
         dominantTithi: DominantTithiPolicy.strict,
+        nishita: NishitaPolicy.midpoint,
       ),
       nodeConvention: NodeConvention.trueNode,
       regionalRuleSetId: 'bengali',
@@ -81,6 +83,7 @@ void main() {
       expect(decoded.regionalRuleSetId, 'bengali');
       expect(decoded.calculationVersion, 7);
       expect(decoded.observance, custom.observance);
+      expect(decoded.observance.nishita, NishitaPolicy.midpoint);
     });
 
     test('stores ayanamsa by stable sidereal-mode constant', () {
@@ -135,6 +138,7 @@ void main() {
           'kshaya': 'nope',
           'vriddhi': 'nope',
           'dominantTithi': 'nope',
+          'nishita': 'nope',
         },
       });
 
@@ -246,7 +250,7 @@ void main() {
         base.copyWith(timezoneId: 'Asia/Tokyo'),
         base.copyWith(nodeConvention: NodeConvention.trueNode),
         base.copyWith(regionalRuleSetId: 'bengali'),
-        base.copyWith(calculationVersion: 3),
+        base.copyWith(calculationVersion: 4),
         base.copyWith(
           observance: base.observance.copyWith(
             checkpoints: const {ObservanceCheckpoint.sunrise},
@@ -263,6 +267,11 @@ void main() {
             dominantTithi: DominantTithiPolicy.strict,
           ),
         ),
+        base.copyWith(
+          observance: base.observance.copyWith(
+            nishita: NishitaPolicy.midpoint,
+          ),
+        ),
       ];
 
       final keys = <String>{base.cacheKey};
@@ -276,9 +285,9 @@ void main() {
     });
 
     test('engine tag carries the calculation version', () {
-      const profile = PanchangProfile(calculationVersion: 3);
+      const profile = PanchangProfile();
 
-      expect(profile.engineTag, 'panchang-v3');
+      expect(profile.engineTag, 'panchang-v$kPanchangCalculationVersion');
       expect(profile.cacheKey, startsWith('panchang-v3|'));
     });
   });

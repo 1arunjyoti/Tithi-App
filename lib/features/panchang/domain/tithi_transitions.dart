@@ -111,8 +111,10 @@ Future<({int toIndex, DateTime at})?> findSunriseTithiTransition({
 }
 
 /// All six intraday tithi checkpoints plus the instants they were sampled at.
-/// Pradosha samples its window midpoint (sunset + N/10), mirroring nishita
-/// (night midpoint = its window midpoint) and madhyahna (midday).
+/// Pradosha samples its window midpoint (sunset + N/10). Nishita samples both
+/// edges of its window (`sunset + 7/15 night` and `+ 8/15 night`), because the
+/// observance rule is "the tithi at the opening, or one still current at the
+/// close".
 ///
 /// Every instant is nullable: at polar latitudes the Sun may not rise or set,
 /// so the anchor a checkpoint needs can be absent. [rawTithi] is always
@@ -125,6 +127,7 @@ typedef TithiCheckpoints = ({
   DateTime? madhyahnaTime,
   DateTime? aparahnaTime,
   DateTime? nishitaTime,
+  DateTime? nishitaEndTime,
   DateTime? pradoshaTime,
   DateTime? dominantTime,
   double rawTithi,
@@ -133,6 +136,7 @@ typedef TithiCheckpoints = ({
   double? rawTithiMadhyahna,
   double? rawTithiAparahna,
   double? rawTithiNishita,
+  double? rawTithiNishitaEnd,
   double? rawTithiPradosha,
   double? rawTithiNextSunrise,
   double? rawTithiDominant,
@@ -183,6 +187,7 @@ Future<TithiCheckpoints> resolveTithiCheckpoints({
     madhyahnaTime: day.checkpoints.madhyahna,
     aparahnaTime: day.checkpoints.aparahna,
     nishitaTime: day.checkpoints.nishita,
+    nishitaEndTime: day.checkpoints.nishitaEnd,
     pradoshaTime: day.checkpoints.pradosha,
     dominantTime: day.checkpoints.dominant,
     rawTithi: day.tithi.rawAtSample,
@@ -191,6 +196,7 @@ Future<TithiCheckpoints> resolveTithiCheckpoints({
     rawTithiMadhyahna: day.checkpointTithis.madhyahna,
     rawTithiAparahna: day.checkpointTithis.aparahna,
     rawTithiNishita: day.checkpointTithis.nishita,
+    rawTithiNishitaEnd: day.checkpointTithis.nishitaEnd,
     rawTithiPradosha: day.checkpointTithis.pradosha,
     rawTithiNextSunrise: day.checkpointTithis.nextSunrise,
     rawTithiDominant: day.checkpointTithis.dominant,
@@ -309,6 +315,7 @@ Future<PanchangData> computePanchangData({
   final rawTithiMadhyahna = checkpoints.rawTithiMadhyahna;
   final rawTithiAparahna = checkpoints.rawTithiAparahna;
   final rawTithiNishita = checkpoints.rawTithiNishita;
+  final rawTithiNishitaEnd = checkpoints.rawTithiNishitaEnd;
   final rawTithiPradosha = checkpoints.rawTithiPradosha;
   final rawTithiNextSunrise = checkpoints.rawTithiNextSunrise;
   final rawTithiDominant = checkpoints.rawTithiDominant;
@@ -389,6 +396,7 @@ Future<PanchangData> computePanchangData({
     rawTithiMadhyahna: rawTithiMadhyahna,
     rawTithiAparahna: rawTithiAparahna,
     rawTithiNishita: rawTithiNishita,
+    rawTithiNishitaEnd: rawTithiNishitaEnd,
     rawTithiPradosha: rawTithiPradosha,
     rawTithiNextSunrise: rawTithiNextSunrise,
     masaNextSunrise: masaNextSunrise,

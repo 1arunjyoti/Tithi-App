@@ -24,7 +24,7 @@ the calculation baseline.
 
 ## Current baseline
 
-- Engine tag: `panchang-v2` (`kPanchangCalculationVersion = 2`).
+- Engine tag: `panchang-v3` (`kPanchangCalculationVersion = 3`).
 - Ayanamsa: Lahiri. Month system: Amanta. Timezone: `Asia/Kolkata`.
 - Sunrise/sunset: native Swiss Ephemeris `swe_rise_trans()` with
   `SE_BIT_HINDU_RISING` - disc centre, no refraction, geocentric, and no
@@ -61,16 +61,17 @@ Notable cases:
   deliberate semantic fixture change from Phase 1b.
 - `kolkata-2026-10-17`: Shashthi prevails at both the Oct 16 and Oct 17
   sunrises (Vriddhi), while Delhi advances to Saptami.
-- `delhi-2026-09-04` / `mumbai-2026-09-04`: **known Janmashtami gap**. The
-  engine samples the tithi at the night midpoint (Delhi 00:20, Mumbai 00:37),
-  which is already Navami; Ashtami ends at 00:15. Nishita Kaal is the
-  one-muhurta window centred on that midpoint (Delhi 23:57–00:43, Mumbai
-  00:14–01:01), so Ashtami still prevails when the window opens.
-  Kolkata/Varanasi/Chennai/Guwahati resolve on the same date. Phase 2 replaces
-  the point sample with a windowed, profile-driven checkpoint; the expected
-  fixture diff is `[]` → `["janmashtami"]` for Delhi and Mumbai. Tracked in
-  `docs/jyotish_package_improvements_plan.md`, Phase 2, "Nishita checkpoint:
-  Janmashtami boundary defect".
+- `delhi-2026-09-04` / `mumbai-2026-09-04`: Janmashtami, the case that forced
+  `panchang-v3`. A `nishita` rule now samples the Nishita window - the eighth
+  of the fifteen night muhurtas, `sunset + 7/15 night` to `+ 8/15 night` -
+  instead of the night midpoint, and matches the tithi at either edge.
+  Delhi: Ashtami (raw 23.987) prevails at the opening (23:57:19), so the day
+  resolves `janmashtami` (old result `[]`). Mumbai: Ashtami ends 00:14:06 and
+  the window opens 00:14:11, so neither edge holds it and the result stays
+  `[]`; the case is decided by ~6 seconds, is kept tagged `known-gap`, and is
+  not an external accuracy claim. Kolkata/Varanasi/Chennai/Guwahati resolve on
+  the same date. See `docs/jyotish_package_improvements_plan.md`, Phase 2,
+  "Nishita checkpoint".
 - `kolkata-2026-04-14` / `guwahati-2026-04-14`: **known Boishakh-1 boundary
   defect**. External sources (Drik Panchang, Indian Express, Times of India)
   put West Bengal Poila Boishakh 1433 on 2026-04-15; Mesha sankranti is 09:39

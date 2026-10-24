@@ -500,13 +500,21 @@ class PanchangService {
         if (override != null &&
             timingOverrideCheckpoints.contains(override) &&
             festival.nakshatraCondition == null) {
-          final checkpoint = solarEventsService.checkpointTimeFor(
-            date: day,
-            timingOverride: override,
-            latitude: latitude,
-            longitude: longitude,
-          );
-          if (checkpoint != null) {
+          // Nishita is a window, so the observance matches the tithi at either
+          // edge: probe the opening and the close (the UI batch applies the
+          // same rule in PanchangData.fromRawTithi). Every other checkpoint is
+          // a single instant.
+          final probes = override == 'nishita'
+              ? const ['nishita', 'nishitaEnd']
+              : [override];
+          for (final checkpointName in probes) {
+            final checkpoint = solarEventsService.checkpointTimeFor(
+              date: day,
+              timingOverride: checkpointName,
+              latitude: latitude,
+              longitude: longitude,
+            );
+            if (checkpoint == null) continue;
             final cpRaw = await calculateTithi(
               checkpoint,
               latitude: latitude,
@@ -532,11 +540,11 @@ class PanchangService {
             )) {
               return true;
             }
-            // Checkpoint missed: fall through to the Kshaya fallback below
-            // (mirrors PanchangData.fromRawTithi, which still applies Kshaya
-            // after an override miss). Do NOT return false here.
           }
-          // No checkpoint, or checkpoint missed: fall through to Kshaya.
+          // No checkpoint, or every checkpoint missed: fall through to the
+          // Kshaya fallback below (mirrors PanchangData.fromRawTithi, which
+          // still applies Kshaya after an override miss). Do NOT return false
+          // here.
         }
         // Dominant-tithi grace (Drik rule, same as the UI batch): a tithi
         // beginning within kDominantTithiGrace after TRUE sunrise counts
