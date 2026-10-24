@@ -3607,7 +3607,7 @@
         "authority": "Tithi panchang-v2 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
-        "notes": "Engine West Bengal rule yields Boishakh 1 on 2026-04-14; cross-check the sankranti rule before promoting this case to external-verified."
+        "notes": "Known defect, not a verified value: West Bengal Poila Boishakh 1433 is 2026-04-15 (Mesha sankranti 09:39 IST on 2026-04-14), so 2026-04-14 should be Choitro 30, 1432. The engine yields Boishakh 1 on both dates; this record stays engine-characterization and must not be promoted. Tracked in docs/jyotish_package_improvements_plan.md, Phase 2, 'Boishakh-1 boundary defect'."
       }
     },
     {
@@ -3658,7 +3658,7 @@
         "authority": "Tithi panchang-v2 engine characterization",
         "retrievedOn": "2026-10-23",
         "kind": "engine-characterization",
-        "notes": "Engine West Bengal rule yields Boishakh 1 on 2026-04-14; cross-check the sankranti rule before promoting this case to external-verified."
+        "notes": "Known defect, not a verified value: West Bengal Poila Boishakh 1433 is 2026-04-15 (Mesha sankranti 09:39 IST on 2026-04-14), so 2026-04-14 should be Choitro 30, 1432. The engine yields Boishakh 1 on both dates; this record stays engine-characterization and must not be promoted. Tracked in docs/jyotish_package_improvements_plan.md, Phase 2, 'Boishakh-1 boundary defect'."
       }
     },
     {
