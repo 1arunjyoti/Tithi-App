@@ -21,6 +21,31 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Native Hindu sunrise/sunset
+
+Panchang days now use the traditional Hindu solar-rise/set definition from
+Swiss Ephemeris instead of the NOAA apparent-upper-limb approximation.
+
+- `SwissSolarEventCalculator` calls `swe_rise_trans()` with
+  `SE_BIT_HINDU_RISING` (disc centre, no refraction, geocentric) and keeps
+  seconds internally; polar no-rise/no-set is an explicit
+  `SolarEventUnavailable`, never a synthetic 06:00/18:00.
+- `PanchangService.init()` installs the native calculator after the ephemeris
+  files are available. Non-Android targets keep the labelled NOAA fallback
+  until Phase 6.
+- `kPanchangCalculationVersion` is now `2`; the version is part of
+  `locationSignature`, and in-memory caches are cleared at startup, so old
+  Hive results are not reused.
+- `resolvedSolarContextProvider` passes altitude and IANA timezone through the
+  main Panchang/calendar-flag compute paths. The Hindu convention is
+  geocentric, so altitude does not change the event instant.
+- Golden fixtures were deliberately recaptured: event times shift by roughly
+  3-5 minutes, and Delhi `2026-06-30` changes from Purnima to Krishna
+  Pratipada because native sunrise moves past the transition.
+- Lives in `lib/services/solar_events_service.dart`, the `jyotish` bindings,
+  and `test/fixtures/panchang_golden/`. The Janmashtami nishita defect remains
+  the documented Phase 2 change.
+
 ### Solar-events seam
 
 Every production sunrise/sunset read now goes through one cached service, with

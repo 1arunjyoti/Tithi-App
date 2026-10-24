@@ -5,6 +5,33 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 
+/// Result of a Swiss Ephemeris rise/set search.
+@immutable
+class RiseTransResult {
+  const RiseTransResult({
+    required this.status,
+    this.julianDay,
+    this.error,
+  });
+
+  /// Raw `swe_rise_trans` return code.
+  ///
+  /// `0` means success, `-1` is an error, and `-2` means the body does not
+  /// rise or set on the requested day (for example, a polar day or night).
+  final int status;
+
+  /// Event time as a UT Julian day, present when [status] is `0`.
+  final double? julianDay;
+
+  /// Native error text, empty when the native call succeeded.
+  final String? error;
+
+  bool get isSuccess => status == 0 && julianDay != null;
+
+  /// True when the body is circumpolar for the requested day.
+  bool get isUnavailable => status == -2;
+}
+
 /// FFI bindings for Swiss Ephemeris C library.
 ///
 /// This class provides low-level bindings to the Swiss Ephemeris shared library.
@@ -87,6 +114,72 @@ class SwissEphBindings {
         ffi.Pointer<ffi.Double>,
         ffi.Pointer<ffi.Double>,
       )>('swe_houses');
+
+  late final _swe_rise_trans = _lib.lookupFunction<
+      ffi.Int32 Function(
+        ffi.Double, // tjd_ut
+        ffi.Int32, // ipl
+        ffi.Pointer<ffi.Char>, // starname
+        ffi.Int32, // epheflag
+        ffi.Int32, // rsmi
+        ffi.Pointer<ffi.Double>, // geopos [lon, lat, altitude]
+        ffi.Double, // atpress
+        ffi.Double, // attemp
+        ffi.Pointer<ffi.Double>, // tret
+        ffi.Pointer<ffi.Char>, // serr
+      ),
+      int Function(
+        double,
+        int,
+        ffi.Pointer<ffi.Char>,
+        int,
+        int,
+        ffi.Pointer<ffi.Double>,
+        double,
+        double,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Char>,
+      )>('swe_rise_trans');
+
+  // ============== Rise/set constants ==============
+
+  /// Search for a rise event in [riseTrans].
+  static const int SE_CALC_RISE = 1;
+
+  /// Search for a set event in [riseTrans].
+  static const int SE_CALC_SET = 2;
+
+  /// Use the centre of the body's disc instead of its upper limb.
+  static const int SE_BIT_DISC_CENTER = 256;
+
+  /// Omit atmospheric refraction.
+  static const int SE_BIT_NO_REFRACTION = 512;
+
+  /// Use a geocentric position and ignore ecliptic latitude.
+  static const int SE_BIT_GEOCTR_NO_ECL_LAT = 128;
+
+  /// Swiss Ephemeris' Hindu rising/setting convention:
+  /// disc centre, no refraction, geocentric, ecliptic latitude ignored.
+  static const int SE_BIT_HINDU_RISING =
+      SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION | SE_BIT_GEOCTR_NO_ECL_LAT;
+
+  /// JPL ephemeris backend.
+  static const int SEFLG_JPLEPH = 1;
+
+  /// Swiss Ephemeris backend.
+  static const int SEFLG_SWIEPH = 2;
+
+  /// Moshier analytical ephemeris backend.
+  static const int SEFLG_MOSEPH = 4;
+
+  /// Mask selecting one of the supported ephemeris backends.
+  static const int SEFLG_EPHMASK = SEFLG_JPLEPH | SEFLG_SWIEPH | SEFLG_MOSEPH;
+
+  /// Disable nutation.
+  static const int SEFLG_NONUT = 64;
+
+  /// Return true/geometric positions rather than apparent positions.
+  static const int SEFLG_TRUEPOS = 16;
 
   // ============== Eclipse Functions ==============
 
@@ -618,6 +711,55 @@ class SwissEphBindings {
     }
   }
 
+  /// Find the next rise or set of a body.
+  ///
+  /// [startJulianDay] is a UT Julian day. For the Hindu convention pass
+  /// [SE_BIT_HINDU_RISING] in [riseSetFlag] together with [SE_CALC_RISE] or
+  /// [SE_CALC_SET]. The native function filters the ephemeris flags to its
+  /// supported subset, so callers only need to select a backend.
+  RiseTransResult riseTrans({
+    required double startJulianDay,
+    required int planetId,
+    required int riseSetFlag,
+    required double longitude,
+    required double latitude,
+    double altitudeMeters = 0,
+    int ephemerisFlag = SEFLG_SWIEPH,
+  }) {
+    final geoposPtr = calloc<ffi.Double>(3);
+    final tretPtr = calloc<ffi.Double>(1);
+    final errorBuffer = calloc<ffi.Char>(256);
+
+    try {
+      geoposPtr[0] = longitude;
+      geoposPtr[1] = latitude;
+      geoposPtr[2] = altitudeMeters;
+
+      final status = _swe_rise_trans(
+        startJulianDay,
+        planetId,
+        ffi.nullptr,
+        ephemerisFlag,
+        riseSetFlag,
+        geoposPtr,
+        0,
+        0,
+        tretPtr,
+        errorBuffer,
+      );
+
+      return RiseTransResult(
+        status: status,
+        julianDay: status == 0 ? tretPtr[0] : null,
+        error: errorBuffer.cast<Utf8>().toDartString(),
+      );
+    } finally {
+      calloc.free(geoposPtr);
+      calloc.free(tretPtr);
+      calloc.free(errorBuffer);
+    }
+  }
+
   /// Convert Julian day to calendar date.
   /// Returns map with 'year', 'month', 'day', 'hour'.
   Map<String, dynamic> julianDayToDate(double julianDay) {
@@ -666,5 +808,18 @@ class SwissEphBindings {
       minutes,
       seconds,
     );
+  }
+
+  /// Convert a UT Julian day to a UTC [DateTime] without dropping the
+  /// sub-second part.
+  ///
+  /// [julianDayToDateTime] floors to whole seconds, which is fine for display
+  /// but loses precision when a value is fed back into another calculation.
+  DateTime julianDayToUtcDateTime(double julianDay) {
+    const unixEpochJulianDay = 2440587.5;
+    final milliseconds =
+        ((julianDay - unixEpochJulianDay) * Duration.millisecondsPerDay)
+            .round();
+    return DateTime.fromMillisecondsSinceEpoch(milliseconds, isUtc: true);
   }
 }

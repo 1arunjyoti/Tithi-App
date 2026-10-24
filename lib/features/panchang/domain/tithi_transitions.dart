@@ -138,21 +138,29 @@ Future<TithiCheckpoints> resolveTithiCheckpoints({
   required double latitude,
   required double longitude,
   required Box<dynamic> cacheBox,
+  double altitudeMeters = 0,
+  String? timezoneId,
 }) async {
   final sunriseTime = solarEventsService.sunrise(
     date: normalizedDate,
     latitude: latitude,
     longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
   );
   final sunsetTime = solarEventsService.sunset(
     date: normalizedDate,
     latitude: latitude,
     longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
   );
   final nextSunriseTime = solarEventsService.sunrise(
     date: normalizedDate.add(const Duration(days: 1)),
     latitude: latitude,
     longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
   );
 
   final madhyahnaTime = sunriseTime.add(
@@ -332,6 +340,8 @@ Future<PanchangData> computePanchangData({
   required double longitude,
   required Box<dynamic> cacheBox,
   bool includeTransition = false,
+  double altitudeMeters = 0,
+  String? timezoneId,
 }) async {
   final TithiCheckpoints checkpoints = await resolveTithiCheckpoints(
     normalizedDate: normalizedDate,
@@ -339,6 +349,8 @@ Future<PanchangData> computePanchangData({
     latitude: latitude,
     longitude: longitude,
     cacheBox: cacheBox,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
   );
   final sunriseTime = checkpoints.sunriseTime;
   final sunsetTime = checkpoints.sunsetTime;

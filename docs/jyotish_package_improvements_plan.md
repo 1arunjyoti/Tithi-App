@@ -73,14 +73,35 @@ calendar/day assembly, detail sheets, widgets, notifications, export,
 `HinduCalendarService`, and Bengali calendar paths before any astronomical
 behavior changes.
 
-Phase 1a status: complete. `SolarEventsService` in
-`lib/services/solar_events_service.dart` is the single cached entry point and
-still delegates to `SunriseCalculator`; every production caller above reads it,
-and the Phase 0 golden set passes unchanged under `panchang-v1`. Phase 1b is the
-native swap below.
+Phase 1 status: complete.
 
-Then replace that provider's implementation with a native Swiss Ephemeris
-Sun rise/set binding.
+- **1a (seam):** `SolarEventsService` in
+  `lib/services/solar_events_service.dart` is the single cached entry point;
+  every production caller above reads it, and the Phase 0 golden set passed
+  unchanged under `panchang-v1`.
+- **1b (native convention):** `SwissSolarEventCalculator` now calls
+  `swe_rise_trans()` with `SE_BIT_HINDU_RISING` (disc centre, no refraction,
+  geocentric, no ecliptic latitude). `PanchangService.init()` configures it
+  synchronously after the ephemeris files are copied and
+  `Jyotish().initialize()` completes; a failure keeps the labelled NOAA
+  fallback. Non-Android targets use that fallback until Phase 6 builds the
+  native library for them.
+- `kPanchangCalculationVersion` is `2` and `locationSignature` carries the
+  version, so Hive caches from the NOAA convention are misses. In-memory
+  Panchang/solar caches are cleared on initialization.
+- `resolvedSolarContextProvider` supplies latitude, longitude, altitude, and
+  IANA timezone to the main Panchang and calendar-flag compute paths. The
+  Hindu convention is geocentric, so altitude does not move the event instant;
+  the timezone is carried so events use the place zone. Timing/follow-on
+  searches still pass latitude/longitude and are instant-equivalent.
+- The 82-case golden set was recaptured deliberately. The only semantic
+  festival change is Delhi `2026-06-30`: the native sunrise moves past the
+  Purnima -> Pratipada transition, so `[purnima]` becomes `[]` and the tithi is
+  Krishna Pratipada. All sunrise/sunset values shift by roughly 3-5 minutes.
+- The Janmashtami nishita defect remains the Phase 2 change described below;
+  it is not part of the Phase 1b fixture recapture.
+
+The implementation requirements were:
 
 - Bind `swe_rise_trans()` and expose the required rise/set constants.
 - Implement `SE_BIT_HINDU_RISING` as Tithi's Hindu solar-rise and solar-set

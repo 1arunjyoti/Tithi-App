@@ -29,12 +29,12 @@ void main() {
 
     test('profile metadata matches the locked calculation contract', () {
       final profile = fixture.panchang.profile;
-      expect(profile.engineVersion, 'panchang-v1');
+      expect(profile.engineVersion, 'panchang-v2');
       expect(profile.ayanamsa, 'lahiri');
       expect(profile.monthSystem, 'amanta');
-      expect(profile.sunriseConvention, 'apparent_upper_limb_noaa');
+      expect(profile.sunriseConvention, 'hindu');
       expect(profile.timezone, 'Asia/Kolkata');
-      expect(profile.calculationVersion, 1);
+      expect(profile.calculationVersion, 2);
       expect(fixture.panchang.tolerance.eventSeconds, 60);
       expect(fixture.panchang.tolerance.longitudeArcseconds, 1);
     });
@@ -175,8 +175,13 @@ void main() {
     test('sunrise-boundary case flips tithi between cities', () {
       final delhi = fixture.caseById('delhi-2026-06-30')!;
       final mumbai = fixture.caseById('mumbai-2026-06-30')!;
-      expect(delhi.expected.tithiAtSunrise.name, 'Purnima');
+      final kolkata = fixture.caseById('kolkata-2026-06-30')!;
+      // Native Hindu sunrise moves Delhi past the transition, so it joins
+      // Mumbai/Chennai in Krishna Pratipada; Kolkata/Varanasi/Guwahati keep
+      // Purnima.
+      expect(delhi.expected.tithiAtSunrise.name, 'Pratipada');
       expect(mumbai.expected.tithiAtSunrise.name, 'Pratipada');
+      expect(kolkata.expected.tithiAtSunrise.name, 'Purnima');
       expect(delhi.tags, contains('sunrise-boundary'));
     });
 

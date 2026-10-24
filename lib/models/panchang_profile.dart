@@ -18,7 +18,7 @@ const String kPanchangProfilePrefKey = 'panchang_profile';
 /// node convention, or a new regional rule set. Cached Panchang and festival
 /// records must key on it and be discarded when it changes. Never reuse a
 /// version number once it has shipped.
-const int kPanchangCalculationVersion = 1;
+const int kPanchangCalculationVersion = 2;
 
 /// Sentinel used by [PanchangProfile.copyWith] to distinguish "leave as is"
 /// from "set to null" for nullable fields.

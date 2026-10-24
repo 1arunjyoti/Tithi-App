@@ -246,7 +246,7 @@ void main() {
         base.copyWith(timezoneId: 'Asia/Tokyo'),
         base.copyWith(nodeConvention: NodeConvention.trueNode),
         base.copyWith(regionalRuleSetId: 'bengali'),
-        base.copyWith(calculationVersion: 2),
+        base.copyWith(calculationVersion: 3),
         base.copyWith(
           observance: base.observance.copyWith(
             checkpoints: const {ObservanceCheckpoint.sunrise},

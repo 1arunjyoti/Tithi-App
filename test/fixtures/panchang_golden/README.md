@@ -24,20 +24,22 @@ the calculation baseline.
 
 ## Current baseline
 
-- Engine tag: `panchang-v1` (`kPanchangCalculationVersion = 1`).
+- Engine tag: `panchang-v2` (`kPanchangCalculationVersion = 2`).
 - Ayanamsa: Lahiri. Month system: Amanta. Timezone: `Asia/Kolkata`.
-- Sunrise: the current NOAA-style `SunriseCalculator`
-  (`apparent_upper_limb_noaa`), which is **minute-rounded**. Phase 1a routes
-  every production caller through `SolarEventsService`, which still delegates
-  to this calculator, so the baseline is unchanged. Phase 1b will move the
-  delegate to the Swiss Ephemeris `hindu_rising` convention; that change is
-  expected to move sunrise/sunset by up to about a minute and will require a
-  reviewed fixture update.
+- Sunrise/sunset: native Swiss Ephemeris `swe_rise_trans()` with
+  `SE_BIT_HINDU_RISING` - disc centre, no refraction, geocentric, and no
+  ecliptic latitude. Values keep seconds internally; the fixture stores them
+  at second precision. This replaces the Phase 0 NOAA apparent-upper-limb
+  convention, which was minute-rounded.
+- Non-Android targets keep the labelled NOAA fallback until the native
+  library is built for them in Phase 6. The fallback is not the Hindu
+  convention and must not be presented as one.
 - Tithi, nakshatra, masa, and festival matching come from the shipped
   `computePanchangData` pipeline, including the Vriddhi filter on a three-day
   window (`date - 1 .. date + 1`).
 - Yoga and karana are derived from the sidereal Sun/Moon longitudes at sunrise.
-- `moonrise` uses `MoonriseCalculator` (upper-limb rise, local civil day).
+- `moonrise` still uses `MoonriseCalculator` (upper-limb rise, local civil
+  day); the Phase 2 Moon migration owns its convention change.
 
 ## Coverage
 
@@ -53,8 +55,10 @@ requires the union to cover:
 Notable cases:
 
 - `delhi-2026-06-30` / `mumbai-2026-06-30`: the Purnima → Pratipada boundary
-  falls about one minute after sunrise, so the same date resolves to Purnima
-  in Delhi and Pratipada in Mumbai/Chennai.
+  falls near sunrise. Under the native Hindu convention Delhi's sunrise moves
+  past the boundary, so Delhi joins Mumbai/Chennai in Krishna Pratipada;
+  Kolkata, Varanasi, and Guwahati still resolve to Purnima. This is the one
+  deliberate semantic fixture change from Phase 1b.
 - `kolkata-2026-10-17`: Shashthi prevails at both the Oct 16 and Oct 17
   sunrises (Vriddhi), while Delhi advances to Saptami.
 - `delhi-2026-09-04` / `mumbai-2026-09-04`: **known Janmashtami gap**. The
@@ -94,7 +98,8 @@ Notable cases:
 flutter test test/panchang_golden_fixture_test.dart
 
 # Runs the real engine. Requires the native Swiss Ephemeris library and an
-# IST host (the Phase 0 solar calculator uses the device timezone).
+# IST host (the golden harness still samples moonrise in the device zone and
+# stores +05:30 timestamps).
 $env:SWISSEPH_LIB_PATH = "C:\path\to\swisseph.dll"
 flutter test test/panchang_golden_engine_test.dart
 ```
