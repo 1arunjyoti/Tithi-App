@@ -13,7 +13,7 @@
     "authority": "Tithi panchang-v3 engine characterization",
     "retrievedOn": "2026-10-24",
     "kind": "engine-characterization",
-    "notes": "Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges). Every other case is unchanged from the Phase 1b capture and is re-verified by the engine test. Regression lock only; not an external accuracy certification."
+    "notes": "Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Every other case is unchanged from the Phase 1b capture and is re-verified by the engine test. Regression lock only; not an external accuracy certification."
   },
   "tolerance": {
     "eventSeconds": 60,
@@ -3597,6 +3597,57 @@
         "adhika": false,
         "moonrise": "2026-04-14T02:59:00+05:30",
         "bengaliDate": {
+          "year": 1432,
+          "month": "Choitro",
+          "day": 30
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "Bengali date corrected from {1433, Boishakh, 1} to {1432, Choitro, 30}: West Bengal Poila Boishakh 1433 is 2026-04-15, because Mesha sankranti falls at 09:39 IST on 2026-04-14 and the Bengal rule gives the sankranti civil day to the outgoing month (Drik Panchang, Indian Express, Times of India; Prokerala and Hindupad give Choitro 1432 as Mar 16 - Apr 14). The Panchang fields remain engine characterization."
+      }
+    },
+    {
+      "id": "kolkata-2026-04-15",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-04-15",
+      "tags": [
+        "bengali-transition",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-04-15T05:20:23+05:30",
+        "sunset": "2026-04-15T17:53:08+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-04-15T22:32:23+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Purva Bhadrapada",
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Gara",
+        "sunLongitude": 0.809862246920261,
+        "moonLongitude": 327.5327145927738,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Vaishakha",
+        "adhika": false,
+        "moonrise": "2026-04-15T03:34:00+05:30",
+        "bengaliDate": {
           "year": 1433,
           "month": "Boishakh",
           "day": 1
@@ -3604,9 +3655,9 @@
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
-        "retrievedOn": "2026-10-23",
-        "kind": "engine-characterization",
-        "notes": "Known defect, not a verified value: West Bengal Poila Boishakh 1433 is 2026-04-15 (Mesha sankranti 09:39 IST on 2026-04-14), so 2026-04-14 should be Choitro 30, 1432. The engine yields Boishakh 1 on both dates; this record stays engine-characterization and must not be promoted. Tracked in docs/jyotish_package_improvements_plan.md, Phase 2, 'Boishakh-1 boundary defect'."
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "West Bengal Poila Boishakh 1433 is 2026-04-15 (Drik Panchang, Indian Express, Times of India): Mesha sankranti is 09:39 IST on 2026-04-14, so the month starts the next day. Pairs with kolkata-2026-04-14 and proves there is exactly one Boishakh 1. Panchang fields are engine characterization."
       }
     },
     {
@@ -3648,6 +3699,57 @@
         "adhika": false,
         "moonrise": "2026-04-14T02:48:00+05:30",
         "bengaliDate": {
+          "year": 1432,
+          "month": "Choitro",
+          "day": 30
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "Bengali date corrected from {1433, Boishakh, 1} to {1432, Choitro, 30}: West Bengal Poila Boishakh 1433 is 2026-04-15, because Mesha sankranti falls at 09:39 IST on 2026-04-14 and the Bengal rule gives the sankranti civil day to the outgoing month (Drik Panchang, Indian Express, Times of India; Prokerala and Hindupad give Choitro 1432 as Mar 16 - Apr 14). The Panchang fields remain engine characterization."
+      }
+    },
+    {
+      "id": "guwahati-2026-04-15",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-04-15",
+      "tags": [
+        "bengali-transition",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-04-15T05:03:57+05:30",
+        "sunset": "2026-04-15T17:42:39+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-04-15T22:31:57+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Purva Bhadrapada",
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Gara",
+        "sunLongitude": 0.7986855906387405,
+        "moonLongitude": 327.3755708956512,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Vaishakha",
+        "adhika": false,
+        "moonrise": "2026-04-15T03:21:00+05:30",
+        "bengaliDate": {
           "year": 1433,
           "month": "Boishakh",
           "day": 1
@@ -3655,9 +3757,9 @@
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
-        "retrievedOn": "2026-10-23",
-        "kind": "engine-characterization",
-        "notes": "Known defect, not a verified value: West Bengal Poila Boishakh 1433 is 2026-04-15 (Mesha sankranti 09:39 IST on 2026-04-14), so 2026-04-14 should be Choitro 30, 1432. The engine yields Boishakh 1 on both dates; this record stays engine-characterization and must not be promoted. Tracked in docs/jyotish_package_improvements_plan.md, Phase 2, 'Boishakh-1 boundary defect'."
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "West Bengal Poila Boishakh 1433 is 2026-04-15 (Drik Panchang, Indian Express, Times of India): Mesha sankranti is 09:39 IST on 2026-04-14, so the month starts the next day. Pairs with guwahati-2026-04-14 and proves there is exactly one Boishakh 1. Panchang fields are engine characterization."
       }
     },
     {

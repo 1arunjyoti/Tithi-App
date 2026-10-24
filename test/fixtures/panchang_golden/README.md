@@ -43,7 +43,7 @@ the calculation baseline.
 
 ## Coverage
 
-82 cases across 19 dates and 6 cities: Delhi, Kolkata, Mumbai, Varanasi,
+84 cases across 20 dates and 6 cities: Delhi, Kolkata, Mumbai, Varanasi,
 Chennai, Guwahati. The `tags` array records intent; the validation test
 requires the union to cover:
 
@@ -72,16 +72,16 @@ Notable cases:
   not an external accuracy claim. Kolkata/Varanasi/Chennai/Guwahati resolve on
   the same date. See `docs/jyotish_package_improvements_plan.md`, Phase 2,
   "Nishita checkpoint".
-- `kolkata-2026-04-14` / `guwahati-2026-04-14`: **known Boishakh-1 boundary
-  defect**. External sources (Drik Panchang, Indian Express, Times of India)
-  put West Bengal Poila Boishakh 1433 on 2026-04-15; Mesha sankranti is 09:39
-  IST on 2026-04-14, so that day should be Choitro 30, 1432 (Prokerala;
-  Hindupad gives Choitro 1432 as Mar 16 - Apr 14). The engine emits Boishakh 1
-  on both dates, so these records stay `engine-characterization` and must not
-  be promoted. Phase 2 fixes the month-start resolution; the expected diff is
-  `{1433, Boishakh, 1}` -> `{1432, Choitro, 30}` on 2026-04-14. Tracked in
-  `docs/jyotish_package_improvements_plan.md`, Phase 2, "Boishakh-1 boundary
-  defect".
+- `kolkata-2026-04-14` / `guwahati-2026-04-14`: **Boishakh-1 boundary, fixed in
+  Phase 2.** West Bengal Poila Boishakh 1433 is 2026-04-15: Mesha sankranti is
+  09:39 IST on 2026-04-14, and the Bengal rule gives the sankranti civil day to
+  the outgoing month, so 2026-04-14 is Choitro 30, 1432 (Prokerala; Hindupad
+  gives Choitro 1432 as Mar 16 - Apr 14). The engine used to emit Boishakh 1 on
+  both dates; the expected diff was `{1433, Boishakh, 1}` -> `{1432, Choitro,
+  30}` and these records are promoted to `external-verified`. The matching
+  `*-2026-04-15` cases lock `{1433, Boishakh, 1}`, so there is exactly one
+  Boishakh 1. See `docs/jyotish_package_improvements_plan.md`, Phase 2,
+  "Boishakh-1 boundary defect".
 - `delhi-1800-01-01` / `guwahati-2399-12-31`: bundled-ephemeris range
   boundaries.
 

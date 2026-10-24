@@ -189,9 +189,9 @@ golden fixture moved.
 **Missing solar events are data, not exceptions (Phase 2 acceptance
 criterion).** At polar latitudes the Sun may not rise or set on a civil day.
 `SolarEventsService` already reports that as `SolarEventUnavailable` instead
-of a fabricated 06:00/18:00, but no production caller catches it, so such a
-day currently fails as a computation error. The canonical day must carry
-nullable sunrise, sunset, next sunrise, moonrise, and moonset, and the
+of a fabricated 06:00/18:00, but no production caller caught it, so such a
+day used to fail as a computation error. The canonical day carries nullable
+sunrise, sunset, next sunrise, moonrise, and moonset, and the
 calendar grid, detail sheets, notification scheduling, and export must skip
 or label the missing event while still rendering the rest of the day. Do not
 add a defensive `try/catch` before the day model exists: it would invent a UI
@@ -316,42 +316,67 @@ of this step.
 
 ### Boishakh-1 boundary defect
 
-The locked baseline exposes a second real engine defect, found by checking the
+**Fixed.** `kolkata-2026-04-14` / `guwahati-2026-04-14` now resolve
+`{1432, Choitro, 30}`, and the new `*-2026-04-15` cases resolve
+`{1433, Boishakh, 1}`. Engine version stays `panchang-v3`; this is a calendar
+resolution fix, not a Panchang calculation change.
+
+The locked baseline exposed a second real engine defect, found by checking the
 Bengali transition fixtures against external sources. For West Bengal, Poila
 Boishakh 1433 is **2026-04-15**: Mesha sankranti falls at 09:39 IST on
 2026-04-14, and the Bisuddha Siddhanta rule assigns the sankranti civil day to
 the outgoing month. Drik Panchang, Indian Express, and Times of India agree;
 Wikipedia records 14 or 15 April for India and 14 April for Bangladesh, so the
-West Bengal reading is the one this app must model.
+West Bengal reading is the one this app must model. 2026-04-14 is Choitro 30,
+1432 (Prokerala's Bengali panjika for that date; Hindupad records Choitro 1432
+as Mar 16 - Apr 14).
 
-The engine yields Boishakh 1 on **both** 2026-04-14 and 2026-04-15, and
-2026-04-14 should be Choitro 30, 1432 (Prokerala's Bengali panjika for that
-date; Hindupad records Choitro 1432 as Mar 16 - Apr 14). The cause is in
-`BengaliCalendarService._resolveMonthStart`:
+The engine used to yield Boishakh 1 on **both** 2026-04-14 and 2026-04-15. The
+cause was in `BengaliCalendarService._resolveMonthStart`:
 
 - `monthIndex` is derived from the Sun's longitude at local noon, so on
   2026-04-14 noon it is already Boishakh (post-ingress);
 - the resolved `monthStart` is `sankrantiDay + 1` = 2026-04-15;
-- `if (monthStart.isAfter(noon)) return fallback;` then returns the noon date
-  itself, so 2026-04-14 claims day 1 of the month that starts on 2026-04-15;
-- 2026-04-15 resolves normally to the same start, producing the duplicate.
+- `if (monthStart.isAfter(noon)) return fallback;` then returned the noon date
+  itself, so 2026-04-14 claimed day 1 of the month that starts on 2026-04-15;
+- 2026-04-15 resolved normally to the same start, producing the duplicate.
 
-The noon-anchored fallback was added to keep the grid bounded, so it must not
-simply be removed. The correct resolution is: when the start of month `N` is
-after noon, the civil day belongs to month `N-1`, and the answer is that
-month's start (Choitro 1, 1432), not the noon date.
+The noon-anchored fallback existed to keep the grid bounded, so it was not
+simply removed. The fix keeps the bound and corrects the answer:
 
-Acceptance criteria:
+- `_resolveMonthStart` returns `({int index, DateTime start})`. When month `N`
+  starts after noon, it resolves month `N-1` at the noon before that start and
+  returns that month's index and start, one step only (the outgoing month's
+  start is 29-32 days earlier, so it cannot land on its own sankranti day).
+  The noon fallback remains as the unreachable one-step guard.
+- `_monthStartFor` caches under the resolved index, and `calculateDate` takes
+  the month name and Bangabda year from the resolved index instead of the
+  noon's rashi. Both were previously derived from `monthIndex`, so returning
+  the previous month's start alone would have produced Choitro day 30 labelled
+  Boishakh 1433.
+- `test/bengali_calendar_month_start_test.dart` locks the transition (forward
+  and reverse order, so the month-start cache cannot decide it), the
+  day-by-day continuity across April 2026, and exactly one Boishakh 1 in
+  2025-2027.
+
+Fixture diff (reviewed, per the update rules): both 2026-04-14 cases changed
+`bengaliDate` `{1433, Boishakh, 1}` -> `{1432, Choitro, 30}` and moved to
+`external-verified` with the citations above; `kolkata-2026-04-15` and
+`guwahati-2026-04-15` were added (`{1433, Boishakh, 1}`, full Panchang fields
+captured from the engine). `kolkata-2026-10-17` / `guwahati-2026-10-17` keep
+their values (Ashshin 30 -> Kartik 1).
+
+Acceptance criteria, all met:
 
 - `kolkata-2026-04-14` and `guwahati-2026-04-14` resolve
   `{1432, Choitro, 30}`;
-- a new 2026-04-15 case for both cities resolves `{1433, Boishakh, 1}`, proving
-  the duplicate day is gone and there is exactly one Boishakh 1 per year;
+- the new 2026-04-15 cases resolve `{1433, Boishakh, 1}`, proving the duplicate
+  day is gone and there is exactly one Boishakh 1 per year;
 - the existing `kolkata-2026-10-17` / `guwahati-2026-10-17` Bengali transition
   cases keep their current values;
 - the fixture diff, source, and reason are recorded per the update rules, and
-  both records move from `engine-characterization` to `external-verified` with
-  the citations above.
+  both 2026-04-14 records moved from `engine-characterization` to
+  `external-verified` with the citations above.
 
 ## Phase 3 - precise transitions, masa, and Adhika masa
 
