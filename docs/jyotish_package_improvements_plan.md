@@ -217,7 +217,46 @@ Acceptance criteria:
   removed, and the source/old-result/new-result/reason are recorded per the
   fixture update rules.
 
-## Phase 3 — precise transitions, masa, and Adhika masa
+### Boishakh-1 boundary defect
+
+The locked baseline exposes a second real engine defect, found by checking the
+Bengali transition fixtures against external sources. For West Bengal, Poila
+Boishakh 1433 is **2026-04-15**: Mesha sankranti falls at 09:39 IST on
+2026-04-14, and the Bisuddha Siddhanta rule assigns the sankranti civil day to
+the outgoing month. Drik Panchang, Indian Express, and Times of India agree;
+Wikipedia records 14 or 15 April for India and 14 April for Bangladesh, so the
+West Bengal reading is the one this app must model.
+
+The engine yields Boishakh 1 on **both** 2026-04-14 and 2026-04-15, and
+2026-04-14 should be Choitro 30, 1432 (Prokerala's Bengali panjika for that
+date; Hindupad records Choitro 1432 as Mar 16 - Apr 14). The cause is in
+`BengaliCalendarService._resolveMonthStart`:
+
+- `monthIndex` is derived from the Sun's longitude at local noon, so on
+  2026-04-14 noon it is already Boishakh (post-ingress);
+- the resolved `monthStart` is `sankrantiDay + 1` = 2026-04-15;
+- `if (monthStart.isAfter(noon)) return fallback;` then returns the noon date
+  itself, so 2026-04-14 claims day 1 of the month that starts on 2026-04-15;
+- 2026-04-15 resolves normally to the same start, producing the duplicate.
+
+The noon-anchored fallback was added to keep the grid bounded, so it must not
+simply be removed. The correct resolution is: when the start of month `N` is
+after noon, the civil day belongs to month `N-1`, and the answer is that
+month's start (Choitro 1, 1432), not the noon date.
+
+Acceptance criteria:
+
+- `kolkata-2026-04-14` and `guwahati-2026-04-14` resolve
+  `{1432, Choitro, 30}`;
+- a new 2026-04-15 case for both cities resolves `{1433, Boishakh, 1}`, proving
+  the duplicate day is gone and there is exactly one Boishakh 1 per year;
+- the existing `kolkata-2026-10-17` / `guwahati-2026-10-17` Bengali transition
+  cases keep their current values;
+- the fixture diff, source, and reason are recorded per the update rules, and
+  both records move from `engine-characterization` to `external-verified` with
+  the citations above.
+
+## Phase 3 - precise transitions, masa, and Adhika masa
 
 Keep the existing astronomical definitions but replace coarse approximation
 where it determines a boundary:
