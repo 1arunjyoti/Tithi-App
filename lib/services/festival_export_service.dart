@@ -1,12 +1,13 @@
 import 'dart:convert';
 
 import '../features/countdown/domain/target_resolution.dart';
+import '../features/panchang/domain/panchang_day.dart';
+import '../features/panchang/domain/panchang_day_resolver.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import 'hindu_calendar_service.dart';
 import 'panchang_service.dart';
-import 'solar_events_service.dart';
 
 /// Exports the full festival dataset with computed Panchang details as JSON.
 ///
@@ -142,38 +143,23 @@ class FestivalExportService {
       return buildEntry(festival: festival);
     }
 
-    final sunrise = solarEventsService.sunrise(
+    // One canonical day for the occurrence; the export row is a projection of
+    // it. A polar occurrence has no sunrise/sunset, so those fields export as
+    // null instead of failing the whole year.
+    final day = await PanchangDayResolver(service: service).resolve(
       date: occurrence,
-      latitude: latitude,
-      longitude: longitude,
+      place: PanchangPlace(latitude: latitude, longitude: longitude),
     );
-    final sunset = solarEventsService.sunset(
-      date: occurrence,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithi = await service.calculateTithi(
-      sunrise,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final masa = await service.calculateMasa(
-      sunrise,
-      rawTithi,
-      latitude: latitude,
-      longitude: longitude,
-    );
+    final sunrise = day.solar.sunrise;
+    final sunset = day.solar.sunset;
+    final masa = day.masa.amantaForMatching;
     // Nakshatra at sunrise for the occurrence record, when the rule needs it.
     final nakshatraAtSunrise = festival.nakshatraCondition != null
-        ? await service.calculateNakshatra(
-            sunrise,
-            latitude: latitude,
-            longitude: longitude,
-          )
+        ? day.limbs.nakshatra
         : null;
     final panchang = PanchangData.fromRawTithi(
       date: occurrence,
-      rawTithi: rawTithi,
+      rawTithi: day.tithi.rawAtSample,
       masa: masa,
       sunrise: sunrise,
       sunset: sunset,

@@ -49,6 +49,9 @@ as they migrate onto it.
 - The notification scheduler now computes each day through the resolver too,
   and no longer pre-reads sunrise at its call sites, so a polar location
   schedules the rest of the window instead of failing the run.
+- The festival year export projects the resolver's day as well, so its
+  sunrise/sunset/masa/nakshatra columns come from the same pipeline as the
+  calendar and the scheduler.
 
 ### Place timezone for solar events
 

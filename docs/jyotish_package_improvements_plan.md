@@ -164,9 +164,9 @@ keeps the Hive tithi cache, and its checkpoint instants are nullable, so
 `computePanchangData` renders a polar day instead of throwing. The
 notification scheduler also reads the resolver and no longer pre-reads sunrise
 at its call sites, so a polar location schedules the rest of the window
-instead of failing the run. Festival export and `HinduCalendarService` still
-assemble their own days; migrate them next, and delete each inline assembly
-as its caller moves.
+instead of failing the run. The festival year export projects the resolver's
+day too. `HinduCalendarService` still assembles its own day; migrate it next,
+then delete the inline assembly.
 
 **Missing solar events are data, not exceptions (Phase 2 acceptance
 criterion).** At polar latitudes the Sun may not rise or set on a civil day.
