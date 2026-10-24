@@ -21,6 +21,26 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Place timezone for solar events
+
+Sunrise/sunset reads that only know coordinates now use the selected place's
+IANA zone instead of the device zone.
+
+- `SolarEventsService.setPlaceTimezone()` publishes the place zone; an explicit
+  `timezoneId` argument still wins, and changing the zone clears the event
+  cache because entries are keyed by zone.
+- Published by `currentLocationProvider` in the UI isolate and from the
+  persisted `cached_timezone` Hive key in the notification background isolate
+  (`readLastKnownTimezoneId`), so scheduling matches the app.
+- Still device-seeded: `resolvePlaceTimezoneId` has no coordinate-to-zone
+  table, so the zone is correct for India-first use but not for an Indian
+  place viewed from abroad. The table is deferred to the Phase 2 place
+  context.
+- Lives in `lib/services/solar_events_service.dart`,
+  `lib/providers/location_provider.dart`,
+  `lib/core/location/cached_location.dart`, and
+  `lib/core/notifications/scheduling_parts.dart`.
+
 ### Native Hindu sunrise/sunset
 
 Panchang days now use the traditional Hindu solar-rise/set definition from

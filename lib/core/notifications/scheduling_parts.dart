@@ -49,6 +49,15 @@ Future<({double latitude, double longitude})> readLastKnownLatLng() async {
   return readCachedLatLng(locationBox);
 }
 
+/// Last-known place zone via the location settings box.
+///
+/// Used to publish the place context before scheduling in the background
+/// isolate, where no `LocationService` or Riverpod container exists.
+Future<String?> readLastKnownTimezoneId() async {
+  final locationBox = await StorageService().openLocationSettingsBox();
+  return readCachedTimezoneId(locationBox);
+}
+
 /// Reads the Hindu month system from a settings box (safe default).
 HinduMonthSystem readMonthSystem(Box<dynamic> settingsBox) {
   final index =

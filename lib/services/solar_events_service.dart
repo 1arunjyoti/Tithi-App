@@ -284,6 +284,15 @@ class SolarEventsService {
 
   SolarEventCalculator _calculator;
 
+  /// IANA zone of the selected place, published by the location layer.
+  ///
+  /// Bridge until Phase 2's canonical day carries an explicit place context:
+  /// detail sheets, notification scheduling, export, the Bengali calendar, and
+  /// the home widget call [sunrise]/[sunset] with coordinates only. Without a
+  /// default they resolve civil time in the device zone, which is wrong for a
+  /// place in another zone. An explicit `timezoneId` argument always wins.
+  String? _placeTimezoneId;
+
   /// FIFO cache keyed by event, civil day, place, offset, altitude, and
   /// convention/version. Bounded so a long-lived process cannot grow without
   /// limit.
@@ -293,6 +302,28 @@ class SolarEventsService {
 
   /// True once the native Swiss Ephemeris calculator has been installed.
   bool get usesNativeCalculator => _calculator.isNative;
+
+  /// IANA zone used when a caller does not supply one; null means device zone.
+  String? get placeTimezoneId => _placeTimezoneId;
+
+  /// Publishes the selected place's zone for callers that only pass lat/lon.
+  ///
+  /// Legacy aliases are canonicalized (`Asia/Calcutta` -> `Asia/Kolkata`), so
+  /// the cache key and the returned `TZDateTime` agree. Changing the zone
+  /// clears the cache: every cached instant was keyed by the previous zone.
+  void setPlaceTimezone(String? timezoneId) {
+    final canonical = canonicalTimezoneId(timezoneId ?? '');
+    final next = canonical.isEmpty ? null : canonical;
+    if (next == _placeTimezoneId) return;
+    _placeTimezoneId = next;
+    clearCache();
+  }
+
+  String? _effectiveTimezoneId(String? timezoneId) {
+    final raw = timezoneId?.trim();
+    if (raw != null && raw.isNotEmpty) return raw;
+    return _placeTimezoneId;
+  }
 
   DateTime sunrise({
     required DateTime date,
@@ -338,7 +369,8 @@ class SolarEventsService {
     double altitudeMeters = 0,
     String? timezoneId,
   }) {
-    final location = _effectiveLocation(timezoneId, date);
+    final effectiveTimezoneId = _effectiveTimezoneId(timezoneId);
+    final location = _effectiveLocation(effectiveTimezoneId, date);
     final wallDate = _wallDate(date, location);
     final dateOnly = location == null
         ? DateTime(wallDate.year, wallDate.month, wallDate.day)
@@ -351,21 +383,21 @@ class SolarEventsService {
         latitude: latitude,
         longitude: longitude,
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezoneId: effectiveTimezoneId,
       ),
       sunset: sunset(
         date: dateOnly,
         latitude: latitude,
         longitude: longitude,
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezoneId: effectiveTimezoneId,
       ),
       nextSunrise: sunrise(
         date: dateOnly.add(const Duration(days: 1)),
         latitude: latitude,
         longitude: longitude,
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezoneId: effectiveTimezoneId,
       ),
     );
   }
@@ -384,7 +416,8 @@ class SolarEventsService {
     double altitudeMeters = 0,
     String? timezoneId,
   }) {
-    final location = _effectiveLocation(timezoneId, date);
+    final effectiveTimezoneId = _effectiveTimezoneId(timezoneId);
+    final location = _effectiveLocation(effectiveTimezoneId, date);
     final wallDate = _wallDate(date, location);
     final dateOnly = location == null
         ? DateTime(wallDate.year, wallDate.month, wallDate.day)
@@ -394,7 +427,7 @@ class SolarEventsService {
       latitude: latitude,
       longitude: longitude,
       altitudeMeters: altitudeMeters,
-      timezoneId: timezoneId,
+      timezoneId: effectiveTimezoneId,
     );
     final dayLength = events.sunset.difference(events.sunrise);
     final nightLength = events.nextSunrise.difference(events.sunset);
@@ -456,13 +489,14 @@ class SolarEventsService {
     required double altitudeMeters,
     required String? timezoneId,
   }) {
+    final effectiveTimezoneId = _effectiveTimezoneId(timezoneId);
     final key = _cacheKey(
       kind,
       date,
       latitude,
       longitude,
       altitudeMeters,
-      timezoneId,
+      effectiveTimezoneId,
     );
     final cached = _cache[key];
     if (cached != null) return cached;
@@ -473,14 +507,14 @@ class SolarEventsService {
         latitude: latitude,
         longitude: longitude,
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezoneId: effectiveTimezoneId,
       ),
       _SolarEventKind.sunset => _calculator.set(
         date: date,
         latitude: latitude,
         longitude: longitude,
         altitudeMeters: altitudeMeters,
-        timezoneId: timezoneId,
+        timezoneId: effectiveTimezoneId,
       ),
     };
 

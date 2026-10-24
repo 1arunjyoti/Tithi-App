@@ -94,6 +94,17 @@ Phase 1 status: complete.
   Hindu convention is geocentric, so altitude does not move the event instant;
   the timezone is carried so events use the place zone. Timing/follow-on
   searches still pass latitude/longitude and are instant-equivalent.
+- Call sites that only know latitude/longitude (detail sheets, notification
+  scheduling, export, Bengali calendar, home widget, festival search) resolve
+  through `SolarEventsService.placeTimezoneId`, published by
+  `currentLocationProvider` in the UI isolate and from the persisted
+  `cached_timezone` key in the notification background isolate. An explicit
+  `timezoneId` argument still wins. This is a bridge, not the Phase 2 model.
+- Remaining source limitation: `resolvePlaceTimezoneId` still seeds the zone
+  from the device clock because the app ships no coordinate-to-zone table.
+  India-first that is correct (one zone), but a user abroad viewing an Indian
+  place gets the device zone. The place-lookup table is deferred with the
+  Phase 2 place context; `timezone_resolver.dart` documents the limitation.
 - The 82-case golden set was recaptured deliberately. The only semantic
   festival change is Delhi `2026-06-30`: the native sunrise moves past the
   Purnima -> Pratipada transition, so `[purnima]` becomes `[]` and the tithi is
@@ -144,6 +155,17 @@ The canonical resolver must produce:
 - Amanta masa, Adhika verdict, and display-system conversion;
 - all festival checkpoint values; and
 - a versioned calculation/provenance record.
+
+**Missing solar events are data, not exceptions (Phase 2 acceptance
+criterion).** At polar latitudes the Sun may not rise or set on a civil day.
+`SolarEventsService` already reports that as `SolarEventUnavailable` instead
+of a fabricated 06:00/18:00, but no production caller catches it, so such a
+day currently fails as a computation error. The canonical day must carry
+nullable sunrise, sunset, next sunrise, moonrise, and moonset, and the
+calendar grid, detail sheets, notification scheduling, and export must skip
+or label the missing event while still rendering the rest of the day. Do not
+add a defensive `try/catch` before the day model exists: it would invent a UI
+policy that this resolver then has to undo.
 
 Route the calendar grid, detail sheets, widgets, notifications, exports,
 search/countdowns, and event sheets through it. In particular, eliminate the

@@ -22,11 +22,14 @@ String canonicalTimezoneId(String raw) {
 
 /// Resolves the IANA time zone for a place.
 ///
-/// **Phase 0 limitation:** this seeds the answer from the device zone, because
-/// the app does not yet ship a coordinate-to-zone table. That is correct for
-/// the India-first audience (where the device is normally on
-/// `Asia/Kolkata`) but can be wrong for a place outside the device's zone.
-/// Phase 1 replaces this with a place lookup; callers must not treat the
+/// **Current limitation:** this seeds the answer from the device zone, because
+/// the app does not ship a coordinate-to-zone table. That is correct for the
+/// India-first audience (where the device is normally on `Asia/Kolkata`) but
+/// can be wrong for a place outside the device's zone - for example an Indian
+/// user abroad viewing an Indian city.
+///
+/// The place-lookup table is deferred to the Phase 2 place context (see
+/// `docs/jyotish_package_improvements_plan.md`); callers must not treat the
 /// result as proof that the selected place uses that zone.
 ///
 /// [deviceTimezone] is injectable so tests do not depend on the platform

@@ -219,6 +219,83 @@ void main() {
       },
     );
 
+    group('place timezone default', () {
+      late _RecordingCalculator calculator;
+      late SolarEventsService service;
+
+      setUp(() {
+        calculator = _RecordingCalculator();
+        service = SolarEventsService(calculator: calculator);
+      });
+
+      tearDown(() => service.setPlaceTimezone(null));
+
+      test('fills in the place zone when the caller omits one', () {
+        const lat = 28.6139;
+        const lon = 77.2090;
+        final date = DateTime(2026, 9, 4);
+
+        service.sunrise(date: date, latitude: lat, longitude: lon);
+        expect(calculator.timezones.last, isNull);
+
+        service.setPlaceTimezone('Asia/Calcutta');
+        expect(service.placeTimezoneId, 'Asia/Kolkata');
+
+        service.sunrise(date: date, latitude: lat, longitude: lon);
+        expect(calculator.timezones.last, 'Asia/Kolkata');
+
+        service.setPlaceTimezone(null);
+        service.sunrise(date: date, latitude: lat, longitude: lon);
+        expect(calculator.timezones.last, isNull);
+      });
+
+      test('an explicit timezoneId wins over the place default', () {
+        service.setPlaceTimezone('Asia/Kolkata');
+
+        service.sunrise(
+          date: DateTime(2026, 9, 4),
+          latitude: 28.6139,
+          longitude: 77.2090,
+          timezoneId: 'Europe/Oslo',
+        );
+
+        expect(calculator.timezones.last, 'Europe/Oslo');
+      });
+
+      test('forDate and checkpointTimeFor use the place default', () {
+        service.setPlaceTimezone('Asia/Kolkata');
+        const lat = 28.6139;
+        const lon = 77.2090;
+
+        service.forDate(
+          date: DateTime(2026, 9, 4, 18, 30),
+          latitude: lat,
+          longitude: lon,
+        );
+        expect(calculator.timezones.last, 'Asia/Kolkata');
+
+        service.checkpointTimeFor(
+          date: DateTime(2026, 9, 4),
+          timingOverride: 'nishita',
+          latitude: lat,
+          longitude: lon,
+        );
+        expect(calculator.timezones.last, 'Asia/Kolkata');
+      });
+
+      test('changing the place zone drops cached events', () {
+        const lat = 28.6139;
+        const lon = 77.2090;
+        final date = DateTime(2026, 9, 4);
+
+        service.sunrise(date: date, latitude: lat, longitude: lon);
+        expect(service.debugCacheSize, 1);
+
+        service.setPlaceTimezone('Asia/Kolkata');
+        expect(service.debugCacheSize, 0);
+      });
+    });
+
     test('native Swiss calculator uses the Hindu convention and rejects polar '
         'no-rise explicitly', () {
       final native = SolarEventsService();
@@ -302,6 +379,39 @@ class _CountingCalculator implements SolarEventCalculator {
     String? timezoneId,
   }) {
     setCalls++;
+    return DateTime(date.year, date.month, date.day, 18);
+  }
+}
+
+/// Records the timezone each call received, so the place default can be
+/// asserted without the native library.
+class _RecordingCalculator implements SolarEventCalculator {
+  final List<String?> timezones = <String?>[];
+
+  @override
+  bool get isNative => false;
+
+  @override
+  DateTime rise({
+    required DateTime date,
+    required double latitude,
+    required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
+  }) {
+    timezones.add(timezoneId);
+    return DateTime(date.year, date.month, date.day, 6);
+  }
+
+  @override
+  DateTime set({
+    required DateTime date,
+    required double latitude,
+    required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
+  }) {
+    timezones.add(timezoneId);
     return DateTime(date.year, date.month, date.day, 18);
   }
 }

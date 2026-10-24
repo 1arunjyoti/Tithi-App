@@ -7,7 +7,9 @@ import '../core/notifications/background_entrypoint.dart'
     show initNotificationWork;
 import '../core/notifications/notification_keys.dart';
 import '../core/notifications/scheduler.dart';
+import '../core/notifications/scheduling_parts.dart';
 import '../models/sankalpa.dart';
+import 'solar_events_service.dart';
 import 'storage_service.dart';
 
 // Phase 4: background entrypoint lives in
@@ -150,6 +152,20 @@ class NotificationService {
 
       // Initialize Hive box
       _box = await StorageService().openNotificationSettingsBox();
+
+      // The background isolate has no Riverpod container or LocationService,
+      // so publish the persisted place zone here before scheduling. This is
+      // the bridge until Phase 2's canonical day carries an explicit context;
+      // without it, scheduling in that isolate resolves civil time in the
+      // device zone instead of the selected place's zone.
+      try {
+        solarEventsService.setPlaceTimezone(await readLastKnownTimezoneId());
+      } catch (e) {
+        // No location box yet (fresh install / tests): device zone applies.
+        if (kDebugMode) {
+          debugPrint('Place timezone unavailable during init: $e');
+        }
+      }
 
       // Initialize notifications
       const androidSettings = AndroidInitializationSettings(
