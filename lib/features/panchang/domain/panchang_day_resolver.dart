@@ -30,6 +30,17 @@ import 'tithi_transitions.dart';
 typedef PanchangTithiSampler =
     Future<double> Function(DateTime instant, String samplePoint);
 
+/// Reads the Amanta masa (with the `Adhika_` prefix when intercalary) for
+/// [instant], whose raw tithi is [rawTithi].
+///
+/// Callers that cache one masa per date, place, and sunrise pass a sampler;
+/// the resolver otherwise computes it. The masa depends on the tithi sample,
+/// so a sampler must key on the same date the day is for.
+typedef PanchangMasaSampler = Future<String> Function(
+  DateTime instant,
+  double rawTithi,
+);
+
 /// Computes [PanchangDay] values from the Panchang and solar-event services.
 class PanchangDayResolver {
   PanchangDayResolver({
@@ -51,15 +62,32 @@ class PanchangDayResolver {
   /// during the transition search always bypass it: those instants are not
   /// sample points and would collide with a cached value.
   ///
-  /// [computeTransition] is false when the caller resolves the daytime
-  /// transition itself (the provider path caches it separately). The day then
-  /// reports no transition rather than paying for a search it discards.
+  /// [masaSampler] does the same for the masa, which is a costly Sankranti
+  /// search and is cached per date and place by the calendar services.
+  ///
+  /// [computeLimbs], [computeCheckpoints], and [computeTransition] let a
+  /// caller skip parts it does not read, because each costs ephemeris reads:
+  /// nakshatra/yoga/karana, the five checkpoint instants with their tithis, and
+  /// the daytime transition bisection. A skipped part is absent from the
+  /// returned day (empty limbs, null checkpoints and tithis, no transition), so
+  /// a partial day must not be persisted as if it were complete.
+  ///
+  /// [computeTransition] is also false when the caller resolves the transition
+  /// itself (the provider path caches it separately). It requires
+  /// [computeCheckpoints]: the search needs those anchors.
   Future<PanchangDay> resolve({
     required DateTime date,
     required PanchangPlace place,
     PanchangTithiSampler? tithiSampler,
+    PanchangMasaSampler? masaSampler,
+    bool computeLimbs = true,
+    bool computeCheckpoints = true,
     bool computeTransition = true,
   }) async {
+    assert(
+      computeCheckpoints || !computeTransition,
+      'The daytime transition search needs the checkpoint anchors.',
+    );
     final normalized = DateTime(date.year, date.month, date.day);
     final solar = _solarDay(normalized, place);
     final sampler =
@@ -82,24 +110,30 @@ class PanchangDayResolver {
         DateTime(normalized.year, normalized.month, normalized.day, 12);
 
     final rawTithi = await sampler(sampledAt, '');
-    final masaValue = await _service.calculateMasa(
-      sampledAt,
-      rawTithi,
-      latitude: place.latitude,
-      longitude: place.longitude,
-    );
+    final masaValue = masaSampler != null
+        ? await masaSampler(sampledAt, rawTithi)
+        : await _service.calculateMasa(
+            sampledAt,
+            rawTithi,
+            latitude: place.latitude,
+            longitude: place.longitude,
+          );
     final adhika = masaValue.startsWith('Adhika_');
     final amanta = adhika
         ? masaValue.substring('Adhika_'.length)
         : masaValue;
 
-    final limbs = await _limbs(sampledAt, place);
+    final limbs = computeLimbs
+        ? await _limbs(sampledAt, place)
+        : const PanchangLimbDay();
     final checkpoints = _checkpoints(solar);
-    final checkpointTithis = await _checkpointTithis(
-      checkpoints: checkpoints,
-      nextSunrise: solar.nextSunrise,
-      sampler: sampler,
-    );
+    final checkpointTithis = computeCheckpoints
+        ? await _checkpointTithis(
+            checkpoints: checkpoints,
+            nextSunrise: solar.nextSunrise,
+            sampler: sampler,
+          )
+        : const PanchangCheckpointTithis();
     final transition = computeTransition
         ? await _transition(
             solar: solar,
