@@ -11,6 +11,9 @@ import 'location_defaults.dart';
 const String kCachedLatKey = 'cached_lat';
 const String kCachedLngKey = 'cached_lng';
 
+/// Hive key for the persisted IANA zone of the last-known place.
+const String kCachedTimezoneKey = 'cached_timezone';
+
 /// Last-known coordinates from [box], falling back to Delhi defaults.
 ({double latitude, double longitude}) readCachedLatLng(Box<dynamic> box) {
   final lat =
@@ -22,4 +25,15 @@ const String kCachedLngKey = 'cached_lng';
           ?.toDouble() ??
       kDefaultLongitude;
   return (latitude: lat, longitude: lng);
+}
+
+/// Last-known IANA zone from [box], or null when the place never resolved one.
+///
+/// Mirrors [readCachedLatLng] so the background isolate can publish the same
+/// place context as the UI isolate without constructing `LocationService`.
+String? readCachedTimezoneId(Box<dynamic> box) {
+  final raw = box.get(kCachedTimezoneKey) as String?;
+  if (raw == null) return null;
+  final trimmed = raw.trim();
+  return trimmed.isEmpty ? null : trimmed;
 }
