@@ -56,6 +56,35 @@ final resolvedCoordinatesProvider =
       );
     });
 
+/// Coordinates plus the place metadata the solar seam can use.
+///
+/// Kept separate from [resolvedCoordinatesProvider] so existing callers and
+/// test overrides that only know latitude/longitude stay valid: the metadata
+/// comes from the location service's synchronous snapshot, which is null
+/// before the service is initialized. The native Hindu convention is
+/// geocentric, so altitude does not move the instant; the timezone is carried
+/// so returned events use the place's zone instead of the device zone. The
+/// panchang providers watch this provider and recompute when the resolved
+/// coordinates change.
+final resolvedSolarContextProvider =
+    Provider<
+      ({
+        double latitude,
+        double longitude,
+        double altitudeMeters,
+        String? timezoneId,
+      })
+    >((ref) {
+      final coords = ref.watch(resolvedCoordinatesProvider);
+      final location = ref.watch(locationServiceProvider).lastKnownLocation;
+      return (
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        altitudeMeters: location?.altitudeMeters ?? 0,
+        timezoneId: location?.timezoneId,
+      );
+    });
+
 /// Provider that tracks if the panchang service is initialized
 ///
 /// Holds the native ephemeris setup (asset file copy + Jyotish init — the
@@ -86,9 +115,9 @@ final panchangForDateProvider = FutureProvider.autoDispose
       await ref.watch(panchangInitProvider.future);
 
       final service = ref.read(panchangServiceProvider);
-      final coords = ref.watch(resolvedCoordinatesProvider);
-      final latitude = coords.latitude;
-      final longitude = coords.longitude;
+      final solar = ref.watch(resolvedSolarContextProvider);
+      final latitude = solar.latitude;
+      final longitude = solar.longitude;
       final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
       // Hindu/Bengali adaptive grids have already computed this record,
@@ -103,6 +132,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
             latitude: latitude,
             longitude: longitude,
             cacheBox: cacheBox,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           );
           final transition = await resolveDayTransition(
             normalizedDate: normalized,
@@ -147,6 +178,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
             latitude: latitude,
             longitude: longitude,
             cacheBox: cacheBox,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           );
           final transition = await resolveDayTransition(
             normalizedDate: normalized,
@@ -185,6 +218,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
         // NOTE: this fallback path is unfiltered for Vriddhi; it runs only
         // when the month map itself failed to load.
         includeTransition: true,
+        altitudeMeters: solar.altitudeMeters,
+        timezoneId: solar.timezoneId,
       );
       // Feed the stale-UI LRU so date taps render instantly next time.
       storePanchangUiSync(date, data);
@@ -259,14 +294,14 @@ class LiveTithiTickNotifier extends AutoDisposeNotifier<int> {
     // owns the date change.
     final transitionIndex = day.transitionTithiIndex;
     if (transitionIndex == null) return _tick;
-    final coords = ref.watch(resolvedCoordinatesProvider);
+    final solar = ref.watch(resolvedSolarContextProvider);
     final followOnEnd = ref
         .watch(
           tithiTimingsProvider((
             date: day.date,
             tithiIndex: transitionIndex,
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitude: solar.latitude,
+            longitude: solar.longitude,
           )),
         )
         .valueOrNull
@@ -274,8 +309,10 @@ class LiveTithiTickNotifier extends AutoDisposeNotifier<int> {
     if (followOnEnd == null) return _tick;
     final nextSunrise = solarEventsService.sunrise(
       date: day.date.add(const Duration(days: 1)),
-      latitude: coords.latitude,
-      longitude: coords.longitude,
+      latitude: solar.latitude,
+      longitude: solar.longitude,
+      altitudeMeters: solar.altitudeMeters,
+      timezoneId: solar.timezoneId,
     );
     if (followOnEnd.isAfter(transitionTime) &&
         followOnEnd.isAfter(now) &&
@@ -329,19 +366,21 @@ final livePanchangProvider = FutureProvider.autoDispose
         // Best-effort: a failing ephemeris lookup here must never take down
         // the hero — the first flip needs zero FFI, so degrade to it.
         try {
-          final coords = ref.watch(resolvedCoordinatesProvider);
+          final solar = ref.watch(resolvedSolarContextProvider);
           final timings = await ref.watch(
             tithiTimingsProvider((
               date: base.date,
               tithiIndex: base.transitionTithiIndex!,
-              latitude: coords.latitude,
-              longitude: coords.longitude,
+              latitude: solar.latitude,
+              longitude: solar.longitude,
             )).future,
           );
           final nextSunrise = solarEventsService.sunrise(
             date: base.date.add(const Duration(days: 1)),
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitude: solar.latitude,
+            longitude: solar.longitude,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           );
           if (timings != null &&
               timings.end.isAfter(base.tithiTransitionTime!) &&
@@ -379,9 +418,9 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
       final festivals = ref.read(festivalProvider);
       final monthSystem = ref.watch(hinduMonthSystemProvider);
 
-      final coords = ref.watch(resolvedCoordinatesProvider);
-      final latitude = coords.latitude;
-      final longitude = coords.longitude;
+      final solar = ref.watch(resolvedSolarContextProvider);
+      final latitude = solar.latitude;
+      final longitude = solar.longitude;
       final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
       // Generate dates for the entire month view (including previous/next month overflow)
@@ -423,6 +462,8 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
             latitude: latitude,
             longitude: longitude,
             cacheBox: cacheBox,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           ),
         );
       }
@@ -706,7 +747,9 @@ final yogaKaranaTimingsProvider = FutureProvider.family<
       }
       inner = outer;
       outer = outer.add(step);
-      if (outer.difference(sunrise).abs() >= const Duration(hours: 48)) break;
+      if (outer.difference(sunrise).abs() >= const Duration(hours: 48)) {
+        break;
+      }
     }
     if (!bracketed) return null;
     var guard = 0;

@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "profileId": "india_drik_lahiri_amanta",
   "source": {
-    "authority": "Tithi panchang-v1 engine characterization",
+    "authority": "Tithi panchang-v2 engine characterization",
     "retrievedOn": "2026-10-23",
     "kind": "engine-characterization",
-    "notes": "Captured before the Drik migration. This is a regression lock, not an external accuracy certification."
+    "notes": "Phase 1b recapture after the native Hindu sunrise convention changed the tithi sampled at sunrise on boundary days. Regression lock only; not an external accuracy certification."
   },
   "cases": [
     {
@@ -374,41 +374,39 @@
     },
     {
       "caseId": "delhi-2026-06-30",
-      "expectedFestivalIds": [
-        "purnima"
-      ],
-      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+      "expectedFestivalIds": [],
+      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition (about 05:27) is before the native Hindu sunrise (05:31), so Delhi starts in Krishna Pratipada and no longer lists Purnima."
     },
     {
       "caseId": "kolkata-2026-06-30",
       "expectedFestivalIds": [
         "purnima"
       ],
-      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+      "notes": "Sunrise-boundary case: this city's sunrise is before the Purnima->Pratipada transition, so Purnima is still listed."
     },
     {
       "caseId": "mumbai-2026-06-30",
       "expectedFestivalIds": [],
-      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+      "notes": "Sunrise-boundary case: this city's sunrise is after the Purnima->Pratipada transition, so it resolves to Krishna Pratipada and does not list Purnima."
     },
     {
       "caseId": "varanasi-2026-06-30",
       "expectedFestivalIds": [
         "purnima"
       ],
-      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+      "notes": "Sunrise-boundary case: this city's sunrise is before the Purnima->Pratipada transition, so Purnima is still listed."
     },
     {
       "caseId": "chennai-2026-06-30",
       "expectedFestivalIds": [],
-      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+      "notes": "Sunrise-boundary case: this city's sunrise is after the Purnima->Pratipada transition, so it resolves to Krishna Pratipada and does not list Purnima."
     },
     {
       "caseId": "guwahati-2026-06-30",
       "expectedFestivalIds": [
         "purnima"
       ],
-      "notes": "Sunrise-boundary case: the Purnima->Pratipada transition falls about one minute after sunrise, so Mumbai/Chennai resolve to Krishna Pratipada while the other cities resolve to Purnima."
+      "notes": "Sunrise-boundary case: this city's sunrise is before the Purnima->Pratipada transition, so Purnima is still listed."
     },
     {
       "caseId": "delhi-2026-02-24",

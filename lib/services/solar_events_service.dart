@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:jyotish/jyotish.dart';
+import 'package:timezone/timezone.dart' as tz;
 
+import '../core/location/timezone_resolver.dart';
 import '../models/panchang_profile.dart';
 import 'sunrise_calculator.dart';
 
@@ -31,36 +34,218 @@ class SolarEvents {
       'nextSunrise: $nextSunrise)';
 }
 
+/// Raised when the Sun does not rise or set on the requested civil day.
+///
+/// Polar day/night is a real astronomical state, not an error. Callers that
+/// render a day must decide how to present the missing event; the service no
+/// longer invents a 06:00 or 18:00 fallback.
+class SolarEventUnavailable implements Exception {
+  const SolarEventUnavailable({
+    required this.event,
+    required this.date,
+    required this.latitude,
+    required this.longitude,
+  });
+
+  final String event;
+  final DateTime date;
+  final double latitude;
+  final double longitude;
+
+  @override
+  String toString() =>
+      'SolarEventUnavailable($event on $date at '
+      '${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)})';
+}
+
 /// Strategy boundary for the solar-events seam.
 ///
-/// Phase 1a ships [NoaaSolarEventCalculator]. Phase 1b adds a Swiss Ephemeris
-/// implementation using `swe_rise_trans()` with `SE_BIT_HINDU_RISING`.
+/// [SwissSolarEventCalculator] is the production implementation. The NOAA
+/// delegate remains the labelled fallback for platforms where the native
+/// Swiss Ephemeris library is unavailable, and for parity tests.
 abstract interface class SolarEventCalculator {
+  /// True when this calculator uses the native Swiss Ephemeris backend.
+  bool get isNative => false;
+
   DateTime rise({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   });
 
   DateTime set({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   });
 }
 
-/// Behavior-preserving Phase 1a delegate over the shipped NOAA calculator.
+/// Swiss Ephemeris implementation using `swe_rise_trans()`.
 ///
-/// Do not present this as the Hindu rise/set convention. It is the labelled
-/// fallback until the native Swiss Ephemeris binding lands in Phase 1b.
-class NoaaSolarEventCalculator implements SolarEventCalculator {
-  const NoaaSolarEventCalculator();
+/// The Hindu convention is `SE_BIT_HINDU_RISING`: disc centre, no refraction,
+/// geocentric, and no ecliptic latitude. That is deliberately not the same as
+/// the old NOAA apparent-upper-limb calculation; fixtures move by about four
+/// minutes because of the 50 arcminute difference in the horizon definition.
+class SwissSolarEventCalculator implements SolarEventCalculator {
+  SwissSolarEventCalculator({required this.bindings});
+
+  final SwissEphBindings bindings;
+
+  @override
+  bool get isNative => true;
 
   @override
   DateTime rise({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
+  }) => _calculate(
+    date: date,
+    latitude: latitude,
+    longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
+    riseSetFlag: SwissEphBindings.SE_CALC_RISE,
+    event: 'sunrise',
+  );
+
+  @override
+  DateTime set({
+    required DateTime date,
+    required double latitude,
+    required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
+  }) => _calculate(
+    date: date,
+    latitude: latitude,
+    longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
+    riseSetFlag: SwissEphBindings.SE_CALC_SET,
+    event: 'sunset',
+  );
+
+  DateTime _calculate({
+    required DateTime date,
+    required double latitude,
+    required double longitude,
+    required double altitudeMeters,
+    required String? timezoneId,
+    required int riseSetFlag,
+    required String event,
+  }) {
+    final location = _locationFor(timezoneId, date);
+    final wallDate = _wallDate(date, location);
+    final midnight = location == null
+        ? DateTime(wallDate.year, wallDate.month, wallDate.day)
+        : tz.TZDateTime(location, wallDate.year, wallDate.month, wallDate.day);
+
+    final startJulianDay = _julianDayUtc(midnight.toUtc());
+    final result = bindings.riseTrans(
+      startJulianDay: startJulianDay,
+      planetId: SwissEphConstants.sun,
+      ephemerisFlag:
+          SwissEphBindings.SEFLG_SWIEPH |
+          SwissEphBindings.SEFLG_NONUT |
+          SwissEphBindings.SEFLG_TRUEPOS,
+      riseSetFlag: riseSetFlag | SwissEphBindings.SE_BIT_HINDU_RISING,
+      longitude: longitude,
+      latitude: latitude,
+      altitudeMeters: _normalizedAltitude(altitudeMeters),
+    );
+
+    if (result.isUnavailable) {
+      throw SolarEventUnavailable(
+        event: event,
+        date: wallDate,
+        latitude: latitude,
+        longitude: longitude,
+      );
+    }
+    if (!result.isSuccess) {
+      throw StateError(
+        'swe_rise_trans failed for $event: '
+                'status ${result.status} ${result.error ?? ''}'
+            .trim(),
+      );
+    }
+
+    final utc = bindings.julianDayToUtcDateTime(result.julianDay!);
+    if (location != null) return tz.TZDateTime.from(utc, location);
+    return utc.toLocal();
+  }
+
+  static double _normalizedAltitude(double altitudeMeters) {
+    if (!altitudeMeters.isFinite) return 0;
+    return altitudeMeters.clamp(-500.0, 25000.0).toDouble();
+  }
+
+  static tz.Location? _locationFor(String? timezoneId, DateTime date) {
+    final raw = timezoneId?.trim();
+    if (raw != null && raw.isNotEmpty) {
+      final canonical = canonicalTimezoneId(raw);
+      if (canonical.isNotEmpty) {
+        try {
+          return tz.getLocation(canonical);
+        } catch (_) {
+          // Timezone data may not be initialized in a small unit test; fall
+          // through to the zone carried by the date, then to device local.
+        }
+      }
+    }
+    if (date is tz.TZDateTime) return date.location;
+    return null;
+  }
+
+  static DateTime _wallDate(DateTime date, tz.Location? location) {
+    if (date is tz.TZDateTime) return date;
+    if (location == null) return date.isUtc ? date.toLocal() : date;
+    if (date.isUtc) return tz.TZDateTime.from(date, location);
+    return tz.TZDateTime(
+      location,
+      date.year,
+      date.month,
+      date.day,
+      date.hour,
+      date.minute,
+      date.second,
+      date.millisecond,
+      date.microsecond,
+    );
+  }
+
+  static double _julianDayUtc(DateTime utc) {
+    const unixEpochJulianDay = 2440587.5;
+    return unixEpochJulianDay +
+        utc.millisecondsSinceEpoch / Duration.millisecondsPerDay;
+  }
+}
+
+/// Behavior-preserving delegate over the shipped NOAA calculator.
+///
+/// Do not present this as the Hindu rise/set convention. It is the labelled
+/// fallback until the native Swiss Ephemeris binding is available on every
+/// target, and it is the parity reference for the seam.
+class NoaaSolarEventCalculator implements SolarEventCalculator {
+  const NoaaSolarEventCalculator();
+
+  @override
+  bool get isNative => false;
+
+  @override
+  DateTime rise({
+    required DateTime date,
+    required double latitude,
+    required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) => SunriseCalculator.calculateSunriseIST(
     date: date,
     latitude: latitude,
@@ -72,6 +257,8 @@ class NoaaSolarEventCalculator implements SolarEventCalculator {
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) => SunriseCalculator.calculateSunsetIST(
     date: date,
     latitude: latitude,
@@ -83,84 +270,102 @@ enum _SolarEventKind { sunrise, sunset }
 
 /// One cached entry point for every production sunrise/sunset read.
 ///
-/// Phase 1a is intentionally behavior-preserving: this service delegates to
-/// the same NOAA math the app used before, and the cache key includes the
-/// device offset so a timezone change cannot serve a stale instant. Phase 1b
-/// replaces the delegate with the native Hindu convention, bumps
-/// [kPanchangCalculationVersion], and invalidates this cache.
+/// The default convention is [SolarEventConvention.hindu]. Until
+/// [configureSwiss] succeeds, the service keeps the labelled NOAA fallback so
+/// app startup and platforms without a native library still work.
 class SolarEventsService {
   SolarEventsService({
     SolarEventCalculator? calculator,
-    this.convention = SolarEventConvention.apparentUpperLimb,
-  }) : _calculator = calculator ?? const NoaaSolarEventCalculator() {
-    if (convention != SolarEventConvention.apparentUpperLimb) {
-      throw UnsupportedError(
-        'Phase 1a implements only the '
-        '${SolarEventConvention.apparentUpperLimb.name} solar convention; '
-        'the ${SolarEventConvention.hindu.name} convention lands in Phase 1b.',
-      );
-    }
-  }
+    this.convention = SolarEventConvention.hindu,
+  }) : _calculator = calculator ?? const NoaaSolarEventCalculator();
 
-  /// Convention served by this instance. Phase 1a is NOAA only.
+  /// Convention served by this instance.
   final SolarEventConvention convention;
 
-  final SolarEventCalculator _calculator;
+  SolarEventCalculator _calculator;
 
-  /// FIFO cache keyed by event, civil day, place, device offset, and
-  /// convention. Bounded so a long-lived process cannot grow without limit.
+  /// FIFO cache keyed by event, civil day, place, offset, altitude, and
+  /// convention/version. Bounded so a long-lived process cannot grow without
+  /// limit.
   final Map<String, DateTime> _cache = <String, DateTime>{};
 
   static const int _maxCacheEntries = 4096;
+
+  /// True once the native Swiss Ephemeris calculator has been installed.
+  bool get usesNativeCalculator => _calculator.isNative;
 
   DateTime sunrise({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) => _resolve(
     _SolarEventKind.sunrise,
     date: date,
     latitude: latitude,
     longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
   );
 
   DateTime sunset({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) => _resolve(
     _SolarEventKind.sunset,
     date: date,
     latitude: latitude,
     longitude: longitude,
+    altitudeMeters: altitudeMeters,
+    timezoneId: timezoneId,
   );
 
   /// Bundles the day's sunrise/sunset with the next sunrise.
   ///
   /// The input is normalized to its local civil day first, matching
   /// `resolveTithiCheckpoints`. [nextSunrise] keeps the existing
-  /// `date + 1 day` arithmetic. Callers that need calendar-day arithmetic
-  /// across a DST transition (for example the home-widget payload) should ask
-  /// for that specific date instead.
+  /// `date + 1 day` arithmetic. When a timezone id is supplied, the returned
+  /// date and events carry that zone, so DST transitions are represented by
+  /// the zone's offset rather than the device offset.
   SolarEvents forDate({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) {
-    final local = date.isUtc ? date.toLocal() : date;
-    final dateOnly = DateTime(local.year, local.month, local.day);
+    final location = _effectiveLocation(timezoneId, date);
+    final wallDate = _wallDate(date, location);
+    final dateOnly = location == null
+        ? DateTime(wallDate.year, wallDate.month, wallDate.day)
+        : tz.TZDateTime(location, wallDate.year, wallDate.month, wallDate.day);
+
     return SolarEvents(
       date: dateOnly,
       sunrise: sunrise(
         date: dateOnly,
         latitude: latitude,
         longitude: longitude,
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       ),
-      sunset: sunset(date: dateOnly, latitude: latitude, longitude: longitude),
+      sunset: sunset(
+        date: dateOnly,
+        latitude: latitude,
+        longitude: longitude,
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
+      ),
       nextSunrise: sunrise(
         date: dateOnly.add(const Duration(days: 1)),
         latitude: latitude,
         longitude: longitude,
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       ),
     );
   }
@@ -176,12 +381,20 @@ class SolarEventsService {
     required String timingOverride,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) {
-    final dateOnly = DateTime(date.year, date.month, date.day);
+    final location = _effectiveLocation(timezoneId, date);
+    final wallDate = _wallDate(date, location);
+    final dateOnly = location == null
+        ? DateTime(wallDate.year, wallDate.month, wallDate.day)
+        : tz.TZDateTime(location, wallDate.year, wallDate.month, wallDate.day);
     final events = forDate(
       date: dateOnly,
       latitude: latitude,
       longitude: longitude,
+      altitudeMeters: altitudeMeters,
+      timezoneId: timezoneId,
     );
     final dayLength = events.sunset.difference(events.sunrise);
     final nightLength = events.nextSunrise.difference(events.sunset);
@@ -203,8 +416,33 @@ class SolarEventsService {
     }
   }
 
-  /// Drops every cached event. Phase 1b calls this after a convention or
-  /// calculation-version change.
+  /// Installs the native Swiss Ephemeris calculator.
+  ///
+  /// [PanchangService.init] calls this after the bundled ephemeris files are
+  /// copied and `Jyotish().initialize()` succeeds. Failure is non-fatal: the
+  /// service keeps the labelled NOAA fallback and [usesNativeCalculator] stays
+  /// false.
+  void configureSwiss({
+    required String ephemerisPath,
+    SwissEphBindings? bindings,
+  }) {
+    if (convention != SolarEventConvention.hindu) return;
+
+    try {
+      final native = bindings ?? SwissEphBindings();
+      native.setEphemerisPath(ephemerisPath);
+      _calculator = SwissSolarEventCalculator(bindings: native);
+      clearCache();
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('SolarEventsService: native setup failed: $error');
+      }
+      _calculator = const NoaaSolarEventCalculator();
+      clearCache();
+    }
+  }
+
+  /// Drops every cached event.
   void clearCache() => _cache.clear();
 
   @visibleForTesting
@@ -215,8 +453,17 @@ class SolarEventsService {
     required DateTime date,
     required double latitude,
     required double longitude,
+    required double altitudeMeters,
+    required String? timezoneId,
   }) {
-    final key = _cacheKey(kind, date, latitude, longitude);
+    final key = _cacheKey(
+      kind,
+      date,
+      latitude,
+      longitude,
+      altitudeMeters,
+      timezoneId,
+    );
     final cached = _cache[key];
     if (cached != null) return cached;
 
@@ -225,11 +472,15 @@ class SolarEventsService {
         date: date,
         latitude: latitude,
         longitude: longitude,
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       ),
       _SolarEventKind.sunset => _calculator.set(
         date: date,
         latitude: latitude,
         longitude: longitude,
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       ),
     };
 
@@ -245,19 +496,33 @@ class SolarEventsService {
     DateTime date,
     double latitude,
     double longitude,
+    double altitudeMeters,
+    String? timezoneId,
   ) {
-    final local = date.isUtc ? date.toLocal() : date;
-    final year = local.year.toString().padLeft(4, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final day = local.day.toString().padLeft(2, '0');
-    return '${kind.name}|$year-$month-$day|'
-        '${local.timeZoneOffset.inMinutes}|'
+    final location = _effectiveLocation(timezoneId, date);
+    final wallDate = _wallDate(date, location);
+    final year = wallDate.year.toString().padLeft(4, '0');
+    final month = wallDate.month.toString().padLeft(2, '0');
+    final day = wallDate.day.toString().padLeft(2, '0');
+    final zone = location?.name ?? '';
+    final offset = wallDate.timeZoneOffset.inMinutes;
+    return '${kind.name}|$year-$month-$day|$offset|$zone|'
         '${latitude.toStringAsFixed(6)}|${longitude.toStringAsFixed(6)}|'
-        '${convention.name}';
+        '${altitudeMeters.toStringAsFixed(1)}|'
+        '${convention.name}|$kPanchangCalculationVersion';
+  }
+
+  static tz.Location? _effectiveLocation(String? timezoneId, DateTime date) {
+    return SwissSolarEventCalculator._locationFor(timezoneId, date);
+  }
+
+  static DateTime _wallDate(DateTime date, tz.Location? location) {
+    return SwissSolarEventCalculator._wallDate(date, location);
   }
 }
 
 /// Process-wide instance used by production callers.
 ///
-/// Tests that need isolation construct their own [SolarEventsService].
+/// Tests that need isolation construct their own [SolarEventsService]. The
+/// global instance is configured natively from `PanchangService.init()`.
 final SolarEventsService solarEventsService = SolarEventsService();

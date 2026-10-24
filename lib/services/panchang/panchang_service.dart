@@ -32,6 +32,17 @@ class PanchangService {
 
   bool get isInitialized => _isInitialized;
 
+  /// Clears every in-memory calculation cache.
+  ///
+  /// Hive entries are invalidated by the version tag in
+  /// `locationSignature`; this handles the process-local caches that would
+  /// otherwise keep serving results from the previous solar convention.
+  static void clearCaches() {
+    _tithiCache.clear();
+    _sunLongitudeCache.clear();
+    solarEventsService.clearCache();
+  }
+
   Future<void> init() async {
     if (_isInitialized) return;
 
@@ -41,6 +52,12 @@ class PanchangService {
 
       // Initialize Jyotish/SwissEph with the path
       await Jyotish().initialize(ephemerisPath: _ephePath);
+
+      // Install the native Hindu rise/set calculator after the ephemeris
+      // files exist. Failure is non-fatal: the solar service keeps its
+      // labelled NOAA fallback.
+      solarEventsService.configureSwiss(ephemerisPath: _ephePath);
+      clearCaches();
 
       if (kDebugMode) {
         print("Swiss Ephemeris files copied to $_ephePath");

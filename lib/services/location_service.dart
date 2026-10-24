@@ -896,6 +896,20 @@ class LocationService {
 
   /// GET home location manually
   /// Returns null if not set
+  /// Synchronous place snapshot for consumers that cannot await.
+  ///
+  /// Returns null before [init] so tests that override coordinates do not
+  /// trigger Hive or a permission prompt. Once initialized this mirrors
+  /// [currentLocationProvider]: home/default when location is disabled, and
+  /// the most recent GPS fix otherwise (null until that fix arrives).
+  LocationData? get lastKnownLocation {
+    if (!_isInitialized) return null;
+    final enabled =
+        _box?.get(_keyLocationEnabled, defaultValue: false) as bool? ?? false;
+    if (!enabled) return getHomeLocation() ?? LocationData.defaultLocation;
+    return _memoryCachedLocation;
+  }
+
   LocationData? getHomeLocation() {
     _ensureInitialized();
     final lat = _box?.get(_keyHomeLat) as double?;

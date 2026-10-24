@@ -1,14 +1,31 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:tithi/models/panchang_profile.dart';
 import 'package:tithi/services/solar_events_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 
 void main() {
+  final libPath = Platform.environment['SWISSEPH_LIB_PATH'];
+  final libraryAvailable =
+      libPath != null && libPath.isNotEmpty && File(libPath).existsSync();
+  final ephemerisPath = '${Directory.current.path}/assets/ephe';
+  final nativeSkip = !libraryAvailable
+      ? 'Set SWISSEPH_LIB_PATH to a Swiss Ephemeris shared library.'
+      : !Directory(ephemerisPath).existsSync()
+      ? 'Bundled Swiss Ephemeris data files are missing.'
+      : null;
+
+  setUpAll(tz_data.initializeTimeZones);
+
   group('SolarEventsService', () {
     late SolarEventsService service;
 
     setUp(() {
-      service = SolarEventsService();
+      service = SolarEventsService(
+        convention: SolarEventConvention.apparentUpperLimb,
+      );
     });
 
     test('delegates to the NOAA calculator for representative cases', () {
@@ -193,16 +210,67 @@ void main() {
       );
     });
 
-    test('rejects the Hindu convention until Phase 1b', () {
-      expect(
-        () => SolarEventsService(convention: SolarEventConvention.hindu),
-        throwsA(isA<UnsupportedError>()),
+    test(
+      'defaults to the Hindu convention with the labelled NOAA fallback',
+      () {
+        final fallback = SolarEventsService();
+        expect(fallback.convention, SolarEventConvention.hindu);
+        expect(fallback.usesNativeCalculator, isFalse);
+      },
+    );
+
+    test('native Swiss calculator uses the Hindu convention and rejects polar '
+        'no-rise explicitly', () {
+      final native = SolarEventsService();
+      native.configureSwiss(ephemerisPath: ephemerisPath);
+      expect(native.usesNativeCalculator, isTrue);
+
+      final sunrise = native.sunrise(
+        date: DateTime(2026, 1, 6),
+        latitude: 28.6139,
+        longitude: 77.2090,
+        altitudeMeters: 216,
+        timezoneId: 'Asia/Kolkata',
+      );
+      expect(sunrise.year, 2026);
+      expect(sunrise.month, 1);
+      expect(sunrise.day, 6);
+      expect(sunrise.hour, 7);
+      expect(sunrise.minute, inInclusiveRange(18, 20));
+      expect(sunrise.timeZoneOffset, const Duration(hours: 5, minutes: 30));
+
+      final sunset = native.sunset(
+        date: DateTime(2026, 1, 6),
+        latitude: 28.6139,
+        longitude: 77.2090,
+        altitudeMeters: 216,
+        timezoneId: 'Asia/Kolkata',
+      );
+      expect(sunset.hour, 17);
+      expect(sunset.minute, inInclusiveRange(33, 36));
+
+      final events = native.forDate(
+        date: DateTime(2026, 1, 6),
+        latitude: 28.6139,
+        longitude: 77.2090,
+        altitudeMeters: 216,
+        timezoneId: 'Asia/Kolkata',
       );
       expect(
-        SolarEventsService().convention,
-        SolarEventConvention.apparentUpperLimb,
+        events.sunrise.timeZoneOffset,
+        const Duration(hours: 5, minutes: 30),
       );
-    });
+
+      expect(
+        () => native.sunrise(
+          date: DateTime(2026, 6, 21),
+          latitude: 69.6492,
+          longitude: 18.9553,
+          timezoneId: 'Europe/Oslo',
+        ),
+        throwsA(isA<SolarEventUnavailable>()),
+      );
+    }, skip: nativeSkip);
   });
 }
 
@@ -211,10 +279,15 @@ class _CountingCalculator implements SolarEventCalculator {
   int setCalls = 0;
 
   @override
+  bool get isNative => false;
+
+  @override
   DateTime rise({
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) {
     riseCalls++;
     return DateTime(date.year, date.month, date.day, 6);
@@ -225,6 +298,8 @@ class _CountingCalculator implements SolarEventCalculator {
     required DateTime date,
     required double latitude,
     required double longitude,
+    double altitudeMeters = 0,
+    String? timezoneId,
   }) {
     setCalls++;
     return DateTime(date.year, date.month, date.day, 18);

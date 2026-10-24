@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 
 import '../../../models/panchang_data.dart';
+import '../../../models/panchang_profile.dart';
 import '../../../core/format/date_only.dart';
 import '../../../services/storage_service.dart';
 import '../../../utils/date_utils.dart';
@@ -49,7 +50,8 @@ void storePanchangUiSync(DateTime date, PanchangData data) {
 String panchangDateKeyLocal(DateTime date) => panchangDateKey(date);
 
 String locationSignature(double latitude, double longitude) {
-  return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+  return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'
+      '_v$kPanchangCalculationVersion';
 }
 
 String buildCacheKey(
