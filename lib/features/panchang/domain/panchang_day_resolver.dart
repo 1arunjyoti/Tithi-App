@@ -23,10 +23,11 @@ import 'tithi_transitions.dart';
 /// Reads the raw tithi at [instant].
 ///
 /// [samplePoint] names the checkpoint the value is for (`''` for the day's
-/// own sample, then `madhyahna`, `aparahna`, `nishita`, `pradosha`,
-/// `nextSunrise`, `dominant`). Callers that cache key by that name; a sampler
-/// must not cache instants whose sample point is empty unless the instant is
-/// the day's sample point, because the cache key has no time component.
+/// own sample, then `madhyahna`, `aparahna`, `nishita`, `nishitaEnd`,
+/// `pradosha`, `moonrise`, `nextSunrise`, `dominant`). Callers that cache key
+/// by that name; a sampler must not cache instants whose sample point is empty
+/// unless the instant is the day's sample point, because the cache key has no
+/// time component.
 typedef PanchangTithiSampler =
     Future<double> Function(DateTime instant, String samplePoint);
 
@@ -67,10 +68,11 @@ class PanchangDayResolver {
   ///
   /// [computeLimbs], [computeCheckpoints], and [computeTransition] let a
   /// caller skip parts it does not read, because each costs ephemeris reads:
-  /// nakshatra/yoga/karana, the five checkpoint instants with their tithis, and
-  /// the daytime transition bisection. A skipped part is absent from the
-  /// returned day (empty limbs, null checkpoints and tithis, no transition), so
-  /// a partial day must not be persisted as if it were complete.
+  /// nakshatra/yoga/karana, the checkpoint instants with their tithis
+  /// (including the moonrise sample), and the daytime transition bisection. A
+  /// skipped part is absent from the returned day (empty limbs, null
+  /// checkpoints and tithis, no transition), so a partial day must not be
+  /// persisted as if it were complete.
   ///
   /// [computeTransition] is also false when the caller resolves the transition
   /// itself (the provider path caches it separately). It requires
@@ -131,6 +133,7 @@ class PanchangDayResolver {
         ? await _checkpointTithis(
             checkpoints: checkpoints,
             nextSunrise: solar.nextSunrise,
+            moonrise: solar.moonrise,
             sampler: sampler,
           )
         : const PanchangCheckpointTithis();
@@ -295,6 +298,7 @@ class PanchangDayResolver {
   static Future<PanchangCheckpointTithis> _checkpointTithis({
     required PanchangCheckpoints checkpoints,
     required DateTime? nextSunrise,
+    required DateTime? moonrise,
     required PanchangTithiSampler sampler,
   }) async {
     Future<double?> at(DateTime? instant, String name) async {
@@ -308,6 +312,7 @@ class PanchangDayResolver {
       nishita: await at(checkpoints.nishita, 'nishita'),
       nishitaEnd: await at(checkpoints.nishitaEnd, 'nishitaEnd'),
       pradosha: await at(checkpoints.pradosha, 'pradosha'),
+      moonrise: await at(moonrise, 'moonrise'),
       nextSunrise: await at(nextSunrise, 'nextSunrise'),
       dominant: await at(checkpoints.dominant, 'dominant'),
     );

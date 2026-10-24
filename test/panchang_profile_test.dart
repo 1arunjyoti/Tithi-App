@@ -27,6 +27,7 @@ void main() {
       expect(observance.vriddhi, VriddhiPolicy.both);
       expect(observance.dominantTithi, DominantTithiPolicy.grace);
       expect(observance.nishita, NishitaPolicy.windowEdges);
+      expect(observance.moonrise, MoonrisePolicy.fallbackToSunrise);
     });
 
     test('standard enum identifiers match shipped festival data spelling', () {
@@ -62,6 +63,7 @@ void main() {
         vriddhi: VriddhiPolicy.first,
         dominantTithi: DominantTithiPolicy.strict,
         nishita: NishitaPolicy.midpoint,
+        moonrise: MoonrisePolicy.requireRise,
       ),
       nodeConvention: NodeConvention.trueNode,
       regionalRuleSetId: 'bengali',
@@ -84,6 +86,7 @@ void main() {
       expect(decoded.calculationVersion, 7);
       expect(decoded.observance, custom.observance);
       expect(decoded.observance.nishita, NishitaPolicy.midpoint);
+      expect(decoded.observance.moonrise, MoonrisePolicy.requireRise);
     });
 
     test('stores ayanamsa by stable sidereal-mode constant', () {
@@ -139,6 +142,7 @@ void main() {
           'vriddhi': 'nope',
           'dominantTithi': 'nope',
           'nishita': 'nope',
+          'moonrise': 'nope',
         },
       });
 
@@ -228,6 +232,16 @@ void main() {
 
       expect(a, isNot(b));
     });
+
+    test('a changed moonrise policy is not equal', () {
+      const a = FestivalObservancePolicy();
+      const b = FestivalObservancePolicy(
+        moonrise: MoonrisePolicy.requireRise,
+      );
+
+      expect(a, isNot(b));
+      expect(a.hashCode, isNot(b.hashCode));
+    });
   });
 
   group('PanchangProfile cacheKey', () {
@@ -270,6 +284,11 @@ void main() {
         base.copyWith(
           observance: base.observance.copyWith(
             nishita: NishitaPolicy.midpoint,
+          ),
+        ),
+        base.copyWith(
+          observance: base.observance.copyWith(
+            moonrise: MoonrisePolicy.requireRise,
           ),
         ),
       ];

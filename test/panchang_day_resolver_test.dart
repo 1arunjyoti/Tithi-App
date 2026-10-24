@@ -217,6 +217,19 @@ void main() {
         day.checkpoints.pradosha,
         sunset.add(Duration(minutes: nightLength ~/ 10)),
       );
+
+      // Moonrise is a primary lunar anchor, so the checkpoint tithi is the
+      // tithi at the day's own rise - not a solar-derived instant.
+      final moonrise = day.solar.moonrise;
+      expect(moonrise, isNotNull);
+      expect(
+        day.checkpointTithis.moonrise,
+        await service.calculateTithi(
+          moonrise!,
+          latitude: place.latitude,
+          longitude: place.longitude,
+        ),
+      );
       expect(day.provenance.ephemeris, 'swiss');
     }, skip: skipReason);
 

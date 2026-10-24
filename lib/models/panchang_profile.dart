@@ -130,6 +130,23 @@ enum NishitaPolicy {
   midpoint,
 }
 
+/// What a `moonrise` observance does when the Moon does not rise on the civil
+/// day.
+///
+/// The Moon skips a rise on roughly one civil day a month (its rise drifts
+/// ~50 minutes later each day), and stays below the horizon all day at high
+/// latitudes. The day still needs an answer.
+enum MoonrisePolicy {
+  /// Use the day's own tithi - the sunrise sample, or civil noon when there is
+  /// no sunrise. Shipped default: a day without a moonrise keeps the result it
+  /// had before the checkpoint existed, instead of dropping the observance.
+  fallbackToSunrise,
+
+  /// A day without a moonrise cannot satisfy a `moonrise` rule, so the
+  /// observance moves to a day whose Moon does rise.
+  requireRise,
+}
+
 /// Festival-observance policy shared by a [PanchangProfile]. Defaults reproduce
 /// shipped conventions, so adoption alone changes nothing; Phase 2 wires this
 /// into the matcher and scheduler, replacing `timingOverrideCheckpoints`.
@@ -147,11 +164,14 @@ class FestivalObservancePolicy {
     this.vriddhi = VriddhiPolicy.both,
     this.dominantTithi = DominantTithiPolicy.grace,
     this.nishita = NishitaPolicy.windowEdges,
+    this.moonrise = MoonrisePolicy.fallbackToSunrise,
   });
 
   /// Target policy: every documented checkpoint, including moonrise.
   ///
-  /// Moonrise is the Phase 2 contract; the current matcher still omits it.
+  /// `moonrise` is a matching checkpoint: a festival rule may set
+  /// `timingOverride: moonrise` and is then tested against the tithi at the
+  /// Moon's rise instead of at sunrise.
   static const FestivalObservancePolicy standard = FestivalObservancePolicy();
 
   /// Checkpoints the matcher may evaluate.
@@ -169,12 +189,16 @@ class FestivalObservancePolicy {
   /// Which instant of the Nishita window decides a `nishita` observance.
   final NishitaPolicy nishita;
 
+  /// What a `moonrise` observance does when the Moon does not rise that day.
+  final MoonrisePolicy moonrise;
+
   FestivalObservancePolicy copyWith({
     Set<ObservanceCheckpoint>? checkpoints,
     KshayaPolicy? kshaya,
     VriddhiPolicy? vriddhi,
     DominantTithiPolicy? dominantTithi,
     NishitaPolicy? nishita,
+    MoonrisePolicy? moonrise,
   }) {
     return FestivalObservancePolicy(
       checkpoints: checkpoints ?? this.checkpoints,
@@ -182,6 +206,7 @@ class FestivalObservancePolicy {
       vriddhi: vriddhi ?? this.vriddhi,
       dominantTithi: dominantTithi ?? this.dominantTithi,
       nishita: nishita ?? this.nishita,
+      moonrise: moonrise ?? this.moonrise,
     );
   }
 
@@ -196,6 +221,7 @@ class FestivalObservancePolicy {
       'vriddhi': vriddhi.name,
       'dominantTithi': dominantTithi.name,
       'nishita': nishita.name,
+      'moonrise': moonrise.name,
     };
   }
 
@@ -236,6 +262,11 @@ class FestivalObservancePolicy {
         json['nishita'],
         NishitaPolicy.windowEdges,
       ),
+      moonrise: _enumByName(
+        MoonrisePolicy.values,
+        json['moonrise'],
+        MoonrisePolicy.fallbackToSunrise,
+      ),
     );
   }
 
@@ -246,7 +277,8 @@ class FestivalObservancePolicy {
         other.kshaya == kshaya &&
         other.vriddhi == vriddhi &&
         other.dominantTithi == dominantTithi &&
-        other.nishita == nishita;
+        other.nishita == nishita &&
+        other.moonrise == moonrise;
   }
 
   @override
@@ -256,13 +288,15 @@ class FestivalObservancePolicy {
     vriddhi,
     dominantTithi,
     nishita,
+    moonrise,
   );
 
   @override
   String toString() =>
       'FestivalObservancePolicy(checkpoints: $checkpoints, '
       'kshaya: ${kshaya.name}, vriddhi: ${vriddhi.name}, '
-      'dominantTithi: ${dominantTithi.name}, nishita: ${nishita.name})';
+      'dominantTithi: ${dominantTithi.name}, nishita: ${nishita.name}, '
+      'moonrise: ${moonrise.name})';
 }
 
 /// Versioned calculation contract for the Panchang.
@@ -356,6 +390,7 @@ class PanchangProfile {
       'vriddhi:${observance.vriddhi.name}',
       'dominant:${observance.dominantTithi.name}',
       'nishita:${observance.nishita.name}',
+      'moonrise:${observance.moonrise.name}',
       'nodes:${nodeConvention.name}',
       'rules:${regionalRuleSetId ?? '-'}',
     ].join('|');

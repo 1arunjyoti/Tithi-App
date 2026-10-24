@@ -182,12 +182,12 @@ class PanchangMasaDay {
       displayMasaName(amanta, paksha, system);
 }
 
-/// Raw tithi values sampled at the solar-anchored checkpoints.
+/// Raw tithi values sampled at the festival checkpoints.
 ///
 /// Festival rules match against these (a Madhyahna rule samples the tithi at
-/// midday, a Nishita rule at the opening of the Nishita window). Each is null
-/// when its checkpoint instant does not exist, so a polar day cannot silently
-/// match a timing rule it never reached.
+/// midday, a Nishita rule at the opening of the Nishita window, a Moonrise
+/// rule at the Moon's rise). Each is null when its checkpoint instant does not
+/// exist, so a polar day cannot silently match a timing rule it never reached.
 class PanchangCheckpointTithis {
   const PanchangCheckpointTithis({
     this.madhyahna,
@@ -195,6 +195,7 @@ class PanchangCheckpointTithis {
     this.nishita,
     this.nishitaEnd,
     this.pradosha,
+    this.moonrise,
     this.nextSunrise,
     this.dominant,
   });
@@ -210,6 +211,14 @@ class PanchangCheckpointTithis {
   final double? nishitaEnd;
 
   final double? pradosha;
+
+  /// Tithi at [PanchangSolarDay.moonrise]. Unlike the other entries this is a
+  /// primary lunar anchor rather than a derived solar offset, which is why the
+  /// instant lives on [PanchangSolarDay] and not on [PanchangCheckpoints].
+  /// Null on a civil day with no moonrise - about once a month, and whenever
+  /// the Moon stays below the horizon for the whole day.
+  final double? moonrise;
+
   final double? nextSunrise;
   final double? dominant;
 }
