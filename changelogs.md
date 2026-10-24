@@ -39,6 +39,13 @@ as they migrate onto it.
   migrated. Lives in `lib/features/panchang/domain/panchang_day.dart` and
   `panchang_day_resolver.dart`; do not add a fourth inline day assembly, route
   new callers through the resolver.
+- The provider path already uses it: `resolveTithiCheckpoints` is a thin
+  adapter over the resolver (keeping the Hive tithi cache) and its checkpoint
+  times are nullable, so `computePanchangData` returns a day with null
+  sunrise/sunset at polar latitudes instead of throwing.
+- `TithiCheckpoints` instant fields are nullable and carry
+  `tithiSample`/`tithiSampledAt`; a missing anchor means the anchored timing
+  rule never matched, not that it matched at 06:00.
 
 ### Place timezone for solar events
 

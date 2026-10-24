@@ -4,10 +4,10 @@ import 'package:hive/hive.dart';
 import '../../../models/festival.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../models/panchang_data.dart';
-import '../../../services/festival_matching_pipeline.dart';
 import '../../../services/panchang_service.dart';
-import '../../../services/solar_events_service.dart';
 import '../data/panchang_cache.dart';
+import 'panchang_day.dart';
+import 'panchang_day_resolver.dart';
 
 // ---------------------------------------------------------------------------
 // Shared computation helpers – formerly SMELL-03 block inside
@@ -113,25 +113,37 @@ Future<({int toIndex, DateTime at})?> findSunriseTithiTransition({
 /// All six intraday tithi checkpoints plus the instants they were sampled at.
 /// Pradosha samples its window midpoint (sunset + N/10), mirroring nishita
 /// (night midpoint = its window midpoint) and madhyahna (midday).
+///
+/// Every instant is nullable: at polar latitudes the Sun may not rise or set,
+/// so the anchor a checkpoint needs can be absent. [rawTithi] is always
+/// present - it is sampled at sunrise, or at civil noon when there is no
+/// sunrise, and [tithiSample] records which.
 typedef TithiCheckpoints = ({
-  DateTime sunriseTime,
-  DateTime sunsetTime,
-  DateTime nextSunriseTime,
-  DateTime madhyahnaTime,
-  DateTime aparahnaTime,
-  DateTime nishitaTime,
-  DateTime pradoshaTime,
-  DateTime dominantTime,
+  DateTime? sunriseTime,
+  DateTime? sunsetTime,
+  DateTime? nextSunriseTime,
+  DateTime? madhyahnaTime,
+  DateTime? aparahnaTime,
+  DateTime? nishitaTime,
+  DateTime? pradoshaTime,
+  DateTime? dominantTime,
   double rawTithi,
-  double rawTithiMadhyahna,
-  double rawTithiAparahna,
-  double rawTithiNishita,
-  double rawTithiPradosha,
-  double rawTithiNextSunrise,
-  double rawTithiDominant,
+  PanchangTithiSample tithiSample,
+  DateTime tithiSampledAt,
+  double? rawTithiMadhyahna,
+  double? rawTithiAparahna,
+  double? rawTithiNishita,
+  double? rawTithiPradosha,
+  double? rawTithiNextSunrise,
+  double? rawTithiDominant,
 });
 
-/// Resolves the five cached tithi checkpoints for [normalizedDate].
+/// Resolves the intraday tithi checkpoints for [normalizedDate].
+///
+/// Thin adapter over [PanchangDayResolver]: the canonical day computes the
+/// instants and the tithi at each one, while this function keeps the Hive
+/// tithi cache (one value per date, place, and sample point) that the month
+/// batch depends on for speed.
 Future<TithiCheckpoints> resolveTithiCheckpoints({
   required DateTime normalizedDate,
   required PanchangService service,
@@ -141,121 +153,47 @@ Future<TithiCheckpoints> resolveTithiCheckpoints({
   double altitudeMeters = 0,
   String? timezoneId,
 }) async {
-  final sunriseTime = solarEventsService.sunrise(
+  final resolver = PanchangDayResolver(service: service);
+  final day = await resolver.resolve(
     date: normalizedDate,
-    latitude: latitude,
-    longitude: longitude,
-    altitudeMeters: altitudeMeters,
-    timezoneId: timezoneId,
-  );
-  final sunsetTime = solarEventsService.sunset(
-    date: normalizedDate,
-    latitude: latitude,
-    longitude: longitude,
-    altitudeMeters: altitudeMeters,
-    timezoneId: timezoneId,
-  );
-  final nextSunriseTime = solarEventsService.sunrise(
-    date: normalizedDate.add(const Duration(days: 1)),
-    latitude: latitude,
-    longitude: longitude,
-    altitudeMeters: altitudeMeters,
-    timezoneId: timezoneId,
-  );
-
-  final madhyahnaTime = sunriseTime.add(
-    Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
-  );
-  final aparahnaTime = sunriseTime.add(
-    Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4),
-  );
-  final nishitaTime = sunsetTime.add(
-    Duration(minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2),
-  );
-  final pradoshaTime = sunsetTime.add(
-    Duration(minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 10),
-  );
-  final dominantTime = sunriseTime.add(kDominantTithiGrace);
-
-  final rawTithi = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    sunriseTime,
-  );
-  final rawTithiMadhyahna = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    madhyahnaTime,
-    suffix: 'madhyahna',
-  );
-  final rawTithiAparahna = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    aparahnaTime,
-    suffix: 'aparahna',
-  );
-  final rawTithiNishita = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    nishitaTime,
-    suffix: 'nishita',
-  );
-  final rawTithiPradosha = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    pradoshaTime,
-    suffix: 'pradosha',
-  );
-  final rawTithiNextSunrise = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    nextSunriseTime,
-    suffix: 'nextSunrise',
-  );
-  final rawTithiDominant = await resolveTithiPoint(
-    cacheBox,
-    normalizedDate,
-    latitude,
-    longitude,
-    service,
-    dominantTime,
-    suffix: 'dominant',
+    place: PanchangPlace(
+      latitude: latitude,
+      longitude: longitude,
+      altitudeMeters: altitudeMeters,
+      timezoneId: timezoneId,
+    ),
+    tithiSampler: (instant, samplePoint) => resolveTithiPoint(
+      cacheBox,
+      normalizedDate,
+      latitude,
+      longitude,
+      service,
+      instant,
+      suffix: samplePoint,
+    ),
+    // The provider resolves the daytime transition separately because it
+    // caches the result; the canonical day would compute it twice.
+    computeTransition: false,
   );
 
   return (
-    sunriseTime: sunriseTime,
-    sunsetTime: sunsetTime,
-    nextSunriseTime: nextSunriseTime,
-    madhyahnaTime: madhyahnaTime,
-    aparahnaTime: aparahnaTime,
-    nishitaTime: nishitaTime,
-    pradoshaTime: pradoshaTime,
-    dominantTime: dominantTime,
-    rawTithi: rawTithi,
-    rawTithiMadhyahna: rawTithiMadhyahna,
-    rawTithiAparahna: rawTithiAparahna,
-    rawTithiNishita: rawTithiNishita,
-    rawTithiPradosha: rawTithiPradosha,
-    rawTithiNextSunrise: rawTithiNextSunrise,
-    rawTithiDominant: rawTithiDominant,
+    sunriseTime: day.solar.sunrise,
+    sunsetTime: day.solar.sunset,
+    nextSunriseTime: day.solar.nextSunrise,
+    madhyahnaTime: day.checkpoints.madhyahna,
+    aparahnaTime: day.checkpoints.aparahna,
+    nishitaTime: day.checkpoints.nishita,
+    pradoshaTime: day.checkpoints.pradosha,
+    dominantTime: day.checkpoints.dominant,
+    rawTithi: day.tithi.rawAtSample,
+    tithiSample: day.tithi.sample,
+    tithiSampledAt: day.tithi.sampledAt,
+    rawTithiMadhyahna: day.checkpointTithis.madhyahna,
+    rawTithiAparahna: day.checkpointTithis.aparahna,
+    rawTithiNishita: day.checkpointTithis.nishita,
+    rawTithiPradosha: day.checkpointTithis.pradosha,
+    rawTithiNextSunrise: day.checkpointTithis.nextSunrise,
+    rawTithiDominant: day.checkpointTithis.dominant,
   );
 }
 
@@ -273,40 +211,52 @@ Future<({DateTime? at, int? index})> resolveDayTransition({
       buildCacheKey(normalizedDate, latitude, longitude, 'transitionTime');
   final transIndexKey =
       buildCacheKey(normalizedDate, latitude, longitude, 'transitionIndex');
+
+  // No solar window means no daytime transition to look for. The day still
+  // renders its single tithi instead of failing.
+  final sunrise = checkpoints.sunriseTime;
+  final nextSunrise = checkpoints.nextSunriseTime;
+  final madhyahna = checkpoints.madhyahnaTime;
+  final aparahna = checkpoints.aparahnaTime;
+  final nishita = checkpoints.nishitaTime;
+  final rawMadhyahna = checkpoints.rawTithiMadhyahna;
+  final rawAparahna = checkpoints.rawTithiAparahna;
+  final rawNishita = checkpoints.rawTithiNishita;
+  final rawNextSunrise = checkpoints.rawTithiNextSunrise;
+  if (sunrise == null ||
+      nextSunrise == null ||
+      madhyahna == null ||
+      aparahna == null ||
+      nishita == null ||
+      rawMadhyahna == null ||
+      rawAparahna == null ||
+      rawNishita == null ||
+      rawNextSunrise == null) {
+    return (at: null, index: null);
+  }
+
   final cachedTime = cacheBox.get(transTimeKey);
   final cachedIndex = cacheBox.get(transIndexKey);
   if (cachedTime is int && cachedIndex is int) {
     final at = DateTime.fromMillisecondsSinceEpoch(cachedTime);
     if (cachedIndex >= 1 &&
         cachedIndex <= 30 &&
-        at.isAfter(checkpoints.sunriseTime) &&
-        !at.isAfter(checkpoints.nextSunriseTime)) {
+        at.isAfter(sunrise) &&
+        !at.isAfter(nextSunrise)) {
       return (at: at, index: cachedIndex);
     }
   }
   try {
     final found = await findSunriseTithiTransition(
-      sunrise: checkpoints.sunriseTime,
-      nextSunrise: checkpoints.nextSunriseTime,
+      sunrise: sunrise,
+      nextSunrise: nextSunrise,
       rawTithiAtSunrise: checkpoints.rawTithi,
       segments: [
-        (time: checkpoints.sunriseTime, rawTithi: checkpoints.rawTithi),
-        (
-          time: checkpoints.madhyahnaTime,
-          rawTithi: checkpoints.rawTithiMadhyahna
-        ),
-        (
-          time: checkpoints.aparahnaTime,
-          rawTithi: checkpoints.rawTithiAparahna
-        ),
-        (
-          time: checkpoints.nishitaTime,
-          rawTithi: checkpoints.rawTithiNishita
-        ),
-        (
-          time: checkpoints.nextSunriseTime,
-          rawTithi: checkpoints.rawTithiNextSunrise
-        ),
+        (time: sunrise, rawTithi: checkpoints.rawTithi),
+        (time: madhyahna, rawTithi: rawMadhyahna),
+        (time: aparahna, rawTithi: rawAparahna),
+        (time: nishita, rawTithi: rawNishita),
+        (time: nextSunrise, rawTithi: rawNextSunrise),
       ],
       getRawTithi: (t) => service.calculateTithi(
         t,
@@ -370,21 +320,29 @@ Future<PanchangData> computePanchangData({
 
   var masa = cacheBox.get(masaCacheKey) as String?;
   masa ??= await service.calculateMasa(
-    sunriseTime,
+    checkpoints.tithiSampledAt,
     rawTithi,
     latitude: latitude,
     longitude: longitude,
   );
   await cacheBox.put(masaCacheKey, masa);
 
-  var masaNextSunrise = cacheBox.get(masaNextCacheKey) as String?;
-  masaNextSunrise ??= await service.calculateMasa(
-    nextSunriseTime,
-    rawTithiNextSunrise,
-    latitude: latitude,
-    longitude: longitude,
-  );
-  await cacheBox.put(masaNextCacheKey, masaNextSunrise);
+  // Next-sunrise masa only exists when there is a next sunrise. Without it the
+  // Kshaya comparison has nothing to compare, so leave the value empty rather
+  // than reusing the current month and inventing a match.
+  var masaNextSunrise = '';
+  if (nextSunriseTime != null && rawTithiNextSunrise != null) {
+    masaNextSunrise = cacheBox.get(masaNextCacheKey) as String? ?? '';
+    if (masaNextSunrise.isEmpty) {
+      masaNextSunrise = await service.calculateMasa(
+        nextSunriseTime,
+        rawTithiNextSunrise,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      await cacheBox.put(masaNextCacheKey, masaNextSunrise);
+    }
+  }
 
   String? nakshatraAtSunrise;
   if (festivals.any((f) => f.nakshatraCondition != null)) {
@@ -395,7 +353,7 @@ Future<PanchangData> computePanchangData({
       nakshatraAtSunrise = cachedNak;
     } else {
       nakshatraAtSunrise = await service.calculateNakshatra(
-        sunriseTime,
+        checkpoints.tithiSampledAt,
         latitude: latitude,
         longitude: longitude,
       );

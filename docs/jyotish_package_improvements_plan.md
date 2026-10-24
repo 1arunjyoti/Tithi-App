@@ -158,10 +158,13 @@ The canonical resolver must produce:
 
 **Status:** the canonical day and resolver exist as `PanchangDay` /
 `PanchangDayResolver` in `lib/features/panchang/domain/`, with nullable solar
-anchors, recorded tithi sample point, and provenance. No call site has been
-migrated yet: the provider path, notification scheduler, festival export, and
-`HinduCalendarService` still assemble their own days. Migrate them one at a
-time, and delete each inline assembly as its caller moves.
+anchors, recorded tithi sample point, and provenance. The provider path is
+migrated: `resolveTithiCheckpoints` is now an adapter over the resolver that
+keeps the Hive tithi cache, and its checkpoint instants are nullable, so
+`computePanchangData` renders a polar day instead of throwing. The
+notification scheduler, festival export, and `HinduCalendarService` still
+assemble their own days; migrate them next, and delete each inline assembly
+as its caller moves.
 
 **Missing solar events are data, not exceptions (Phase 2 acceptance
 criterion).** At polar latitudes the Sun may not rise or set on a civil day.
