@@ -21,6 +21,27 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Poila Boishakh on the right day
+
+The Bengali calendar no longer reports Boishakh 1 on the sankranti day itself,
+so 14 April 2026 reads Choitro 30, 1432 and Poila Boishakh 1433 is 15 April.
+
+- `BengaliCalendarService._resolveMonthStart` now returns
+  `({int index, DateTime start})`. When the Bengal rule puts month `N`'s start
+  after noon, the day belongs to month `N-1`, so the previous month is resolved
+  (one step only) instead of returning the noon date as day 1.
+- `calculateDate` takes the month name and Bangabda year from the resolved
+  index, not the noon rashi, and `_monthStartFor` caches under that index. Do
+  not derive either from `monthIndex` again; the sankranti civil day's rashi is
+  already the new month.
+- The bounded noon fallback is kept as an unreachable one-step guard. Do not
+  remove it: it protects the calendar grid from a mis-resolution.
+- Locked by `test/bengali_calendar_month_start_test.dart` (transition in both
+  directions, day continuity, one Boishakh 1 per year) and the golden cases
+  `kolkata/guwahati-2026-04-14` (`{1432, Choitro, 30}`, now
+  `external-verified`) plus new `*-2026-04-15` cases. Engine stays
+  `panchang-v3`.
+
 ### Festival scan on the canonical day
 
 The next-festival scan and the calendar grid now agree on which day a festival

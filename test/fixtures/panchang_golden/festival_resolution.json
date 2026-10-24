@@ -490,12 +490,22 @@
     {
       "caseId": "kolkata-2026-04-14",
       "expectedFestivalIds": [],
-      "notes": "Engine West Bengal rule yields Boishakh 1 on 2026-04-14; cross-check the sankranti rule before promoting this case to external-verified."
+      "notes": "Boishakh-1 boundary: the sankranti civil day belongs to Choitro (1432 Choitro 30), so no festival resolves."
+    },
+    {
+      "caseId": "kolkata-2026-04-15",
+      "expectedFestivalIds": [],
+      "notes": "Poila Boishakh 1433. No festival rule keys off the Bengali month, so the day resolves no festival."
     },
     {
       "caseId": "guwahati-2026-04-14",
       "expectedFestivalIds": [],
-      "notes": "Engine West Bengal rule yields Boishakh 1 on 2026-04-14; cross-check the sankranti rule before promoting this case to external-verified."
+      "notes": "Boishakh-1 boundary: the sankranti civil day belongs to Choitro (1432 Choitro 30), so no festival resolves."
+    },
+    {
+      "caseId": "guwahati-2026-04-15",
+      "expectedFestivalIds": [],
+      "notes": "Poila Boishakh 1433. No festival rule keys off the Bengali month, so the day resolves no festival."
     },
     {
       "caseId": "delhi-1800-01-01",
