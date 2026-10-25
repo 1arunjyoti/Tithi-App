@@ -76,6 +76,28 @@ void main() {
     expect(find.text('Retry'), findsOneWidget);
   });
 
+  testWidgets('shows the engine message when the native library failed',
+      (tester) async {
+    // Arrange
+    const message =
+        'Tithi could not start its calculation engine on this device: the '
+        'native Swiss Ephemeris library did not load, so sunrise, sunset and '
+        'moonrise would be approximate. Reinstall the app to restore it.';
+
+    // Act
+    await pumpBanner(
+      tester,
+      panchangInitProvider.overrideWith(
+        (ref) async => throw const EphemerisEngineException(message),
+      ),
+    );
+
+    // Assert
+    expect(find.text('Error loading data'), findsOneWidget);
+    expect(find.text(message), findsOneWidget);
+    expect(find.text('Retry'), findsOneWidget);
+  });
+
   testWidgets('hides internals behind generic copy for unknown errors',
       (tester) async {
     // Act

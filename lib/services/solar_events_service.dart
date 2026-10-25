@@ -285,6 +285,9 @@ class SolarEventsService {
 
   SolarEventCalculator _calculator;
 
+  /// Why the native calculator could not be installed, or null when it was.
+  Object? _nativeSetupError;
+
   /// IANA zone of the selected place, published by the location layer.
   ///
   /// Bridge until Phase 2's canonical day carries an explicit place context:
@@ -303,6 +306,12 @@ class SolarEventsService {
 
   /// True once the native Swiss Ephemeris calculator has been installed.
   bool get usesNativeCalculator => _calculator.isNative;
+
+  /// Why the native calculator could not be installed, or null when it was.
+  ///
+  /// Callers that must not run on the approximation read this instead of
+  /// treating [usesNativeCalculator] == false as a normal state.
+  Object? get nativeSetupError => _nativeSetupError;
 
   /// IANA zone used when a caller does not supply one; null means device zone.
   String? get placeTimezoneId => _placeTimezoneId;
@@ -478,24 +487,31 @@ class SolarEventsService {
   /// Installs the native Swiss Ephemeris calculator.
   ///
   /// [PanchangService.init] calls this after the bundled ephemeris files are
-  /// copied and `Jyotish().initialize()` succeeds. Failure is non-fatal: the
-  /// service keeps the labelled NOAA fallback and [usesNativeCalculator] stays
-  /// false.
+  /// copied and `Jyotish().initialize()` succeeds. Failure is non-fatal here so
+  /// the service stays usable with its labelled NOAA fallback; the error is
+  /// kept in [nativeSetupError] and `ensureNativeEngineInstalled` turns it into
+  /// a startup failure on the platforms that ship the native engine.
   void configureSwiss({
     required String ephemerisPath,
     SwissEphBindings? bindings,
   }) {
-    if (convention != SolarEventConvention.hindu) return;
+    if (convention != SolarEventConvention.hindu) {
+      // The NOAA convention is a deliberate profile choice, not a failure.
+      _nativeSetupError = null;
+      return;
+    }
 
     try {
       final native = bindings ?? SwissEphBindings();
       native.setEphemerisPath(ephemerisPath);
       _calculator = SwissSolarEventCalculator(bindings: native);
+      _nativeSetupError = null;
       clearCache();
     } catch (error) {
       if (kDebugMode) {
         debugPrint('SolarEventsService: native setup failed: $error');
       }
+      _nativeSetupError = error;
       _calculator = const NoaaSolarEventCalculator();
       clearCache();
     }

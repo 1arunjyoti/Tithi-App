@@ -608,6 +608,21 @@ observance decisions with native Swiss Ephemeris rise/set results.
 - The harness README and skip reason now name the real IST dependency: the day
   pipeline is anchored in the device zone because the harness does not pass
   `timezoneId`, while moonrise itself already uses the place zone.
+- `ensureNativeEngineInstalled`
+  (`lib/services/panchang_init/panchang_init.dart`) turns a failed
+  `configureSwiss` into a startup failure on `kNativeEnginePlatforms`
+  (Android, the only platform the package builds Swiss Ephemeris for). Both
+  services record `nativeSetupError` instead of only logging, and
+  `PanchangService.init` calls the guard after configuring them;
+  `EphemerisEngineException` reaches `PanchangInitErrorBanner`. Off Android the
+  labelled approximation stays the documented behaviour, so desktop and CI
+  still run.
+- `moonset` is locked for 83 of the 84 cases (fixture schema 3), so the
+  profile's limb/refraction policy is pinned by an instant and not only by
+  `riseSetBits`. `varanasi-2026-02-24` omits it as a genuine no-set day, and the
+  engine test applies the same neighbour-gap falsifier used for `moonrise`.
+- `test/moon_events_test.dart` asserts that `upperLimb` and `lowerLimb` moonset
+  differ by minutes, not seconds, on a real Delhi day.
 
 ## Phase 6 — platform, data, and licensing delivery
 

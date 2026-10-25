@@ -171,6 +171,52 @@ void main() {
           tolerance.eventSeconds,
         );
 
+        // Moonset is the other user-visible lunar anchor (the tithi sheet's
+        // chip pair). Locking the instant end-to-end is what pins the profile's
+        // limb policy to a number: the bit mapping alone cannot catch a
+        // convention drift.
+        final moonset = moonEventsService.moonset(
+          date: target,
+          latitude: c.location.latitude,
+          longitude: c.location.longitude,
+          altitudeMeters: c.location.altitudeMeters,
+          timezoneId: c.location.timezone,
+        );
+        _expectInstant(
+          failures,
+          c.id,
+          'moonset',
+          c.expected.moonset,
+          moonset,
+          tolerance.eventSeconds,
+        );
+
+        // A locked null must be a genuine no-set day, not a failed lookup.
+        // The Moon sets roughly 50 minutes later each day, so a skipped civil
+        // day still has a set on both neighbours and their gap exceeds 24 h.
+        if (c.expected.moonset == null) {
+          DateTime? setOn(int dayOffset) => moonEventsService.moonset(
+            date: DateTime(target.year, target.month, target.day + dayOffset),
+            latitude: c.location.latitude,
+            longitude: c.location.longitude,
+            altitudeMeters: c.location.altitudeMeters,
+            timezoneId: c.location.timezone,
+          );
+          final previous = setOn(-1);
+          final next = setOn(1);
+          if (previous == null || next == null) {
+            failures.add(
+              '${c.id}: no-set day, but a neighbouring day has no set '
+              '(prev=$previous, next=$next)',
+            );
+          } else if (next.difference(previous) <= const Duration(hours: 24)) {
+            failures.add(
+              '${c.id}: no-set day, but the neighbouring sets are only '
+              '${next.difference(previous)} apart',
+            );
+          }
+        }
+
         // A locked null must be a genuine no-rise day, not a failed lookup.
         // The Moon rises roughly 50 minutes later each day, so a skipped civil
         // day still has a rise on both neighbours and their gap exceeds 24 h.

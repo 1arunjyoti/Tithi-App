@@ -185,6 +185,44 @@ void main() {
       expect(lower & SwissEphBindings.SE_BIT_NO_REFRACTION, isZero);
     });
 
+    test('moonset moves when the profile uses the lower limb', () {
+      // Arrange: the bit test above proves the flag is passed, not that it
+      // changes an instant. Moonset is user-visible in the tithi sheet, so the
+      // limb choice must be locked by a number. The default profile is the
+      // standard one, i.e. the upper limb.
+      final upper = MoonEventsService()
+        ..configureSwiss(ephemerisPath: '${tempDir.path}/ephe');
+      final lower = MoonEventsService()
+        ..configureSwiss(
+          ephemerisPath: '${tempDir.path}/ephe',
+          profile: const PanchangProfile(lunarLimb: LunarLimb.lowerLimb),
+        );
+      final date = DateTime(2026, 1, 6);
+
+      // Act
+      final upperSet = upper.moonset(
+        date: date,
+        latitude: _delhiLat,
+        longitude: _delhiLng,
+        timezoneId: _delhiZone,
+      );
+      final lowerSet = lower.moonset(
+        date: date,
+        latitude: _delhiLat,
+        longitude: _delhiLng,
+        timezoneId: _delhiZone,
+      );
+
+      // Assert: the upper limb sets later (it is the last part to disappear).
+      // The gap is the Moon's semidiameter plus refraction - minutes, not
+      // seconds - so a silently ignored policy fails here.
+      expect(upperSet, isNotNull);
+      expect(lowerSet, isNotNull);
+      final delta = upperSet!.difference(lowerSet!);
+      expect(delta, greaterThan(Duration.zero));
+      expect(delta, lessThan(const Duration(minutes: 10)));
+    });
+
     test('returns null when the Moon does not rise that day', () {
       // Arrange: Mumbai 2026-09-04 is the shipped no-moonrise day (the golden
       // fixture omits moonrise for it).

@@ -59,15 +59,25 @@ class PanchangService {
       // Initialize Jyotish/SwissEph with the path
       await Jyotish().initialize(ephemerisPath: _ephePath);
 
-      // Install the native Hindu rise/set calculator after the ephemeris
-      // files exist. Failure is non-fatal: the solar service keeps its
-      // labelled NOAA fallback.
+      // Install the native rise/set calculators after the ephemeris files
+      // exist. Both record their own setup error instead of throwing, because
+      // the approximation is the documented behaviour on platforms that do not
+      // build Swiss Ephemeris; the guard below decides whether that is a
+      // failure or not.
       solarEventsService.configureSwiss(ephemerisPath: _ephePath);
       // Lunar rise/set uses a different convention (topocentric, real ecliptic
-      // latitude) so it is configured separately; failure leaves the labelled
-      // pure-Dart approximation in place.
+      // latitude) so it is configured separately.
       moonEventsService.configureSwiss(ephemerisPath: _ephePath);
       clearCaches();
+
+      // On a platform that ships the native engine, silently continuing on the
+      // 1-3 minute approximation would put an approximate moonrise into the
+      // `moonrise` festival checkpoint, so fail init instead.
+      ensureNativeEngineInstalled(
+        platform: defaultTargetPlatform,
+        solarSetupError: solarEventsService.nativeSetupError,
+        moonSetupError: moonEventsService.nativeSetupError,
+      );
 
       if (kDebugMode) {
         print("Swiss Ephemeris files copied to $_ephePath");

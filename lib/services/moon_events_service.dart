@@ -280,6 +280,9 @@ class MoonEventsService {
   MoonEventCalculator _calculator;
   PanchangProfile _profile;
 
+  /// Why the native calculator could not be installed, or null when it was.
+  Object? _nativeSetupError;
+
   /// IANA zone of the selected place, published by the location layer.
   String? _placeTimezoneId;
 
@@ -289,6 +292,12 @@ class MoonEventsService {
 
   /// True once the native Swiss Ephemeris calculator has been installed.
   bool get usesNativeCalculator => _calculator.isNative;
+
+  /// Why the native calculator could not be installed, or null when it was.
+  ///
+  /// Callers that must not run on the approximation read this instead of
+  /// treating [usesNativeCalculator] == false as a normal state.
+  Object? get nativeSetupError => _nativeSetupError;
 
   /// Lunar limb/refraction policy currently in force.
   PanchangProfile get profile => _profile;
@@ -413,8 +422,10 @@ class MoonEventsService {
   /// Installs the native Swiss Ephemeris calculator.
   ///
   /// [PanchangService.init] calls this once the bundled ephemeris files exist.
-  /// Failure is non-fatal: the service keeps the labelled approximation and
-  /// [usesNativeCalculator] stays false.
+  /// Failure is non-fatal here so the service stays usable with its labelled
+  /// approximation; the error is kept in [nativeSetupError] and
+  /// `ensureNativeEngineInstalled` turns it into a startup failure on the
+  /// platforms that ship the native engine.
   void configureSwiss({
     required String ephemerisPath,
     PanchangProfile profile = PanchangProfile.standard,
@@ -428,11 +439,13 @@ class MoonEventsService {
         profile: profile,
       );
       _profile = profile;
+      _nativeSetupError = null;
       clearCache();
     } catch (error) {
       if (kDebugMode) {
         debugPrint('MoonEventsService: native setup failed: $error');
       }
+      _nativeSetupError = error;
       _calculator = const ApproximateMoonEventCalculator();
       clearCache();
     }

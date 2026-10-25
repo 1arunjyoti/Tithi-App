@@ -25,8 +25,9 @@ the calculation baseline.
 ## Current baseline
 
 - Engine tag: `panchang-v3` (`kPanchangCalculationVersion = 3`).
-- Panchang schema: `2`. Schema 2 added `nakshatraStartsAt`, `nakshatraEndsAt`,
-  `nextNakshatra`, and `nextSankranti`; the festival file stays at schema 1.
+- Panchang schema: `3`. Schema 3 added `moonset`; schema 2 added
+  `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra`, and `nextSankranti`.
+  The festival file stays at schema 1.
 - Ayanamsa: Lahiri. Month system: Amanta. Timezone: `Asia/Kolkata`.
 - Sunrise/sunset: native Swiss Ephemeris `swe_rise_trans()` with
   `SE_BIT_HINDU_RISING` - disc centre, no refraction, geocentric, and no
@@ -50,6 +51,10 @@ the calculation baseline.
 - `moonrise` uses native `swe_rise_trans` (topocentric, true ecliptic
   latitude, `PanchangProfile.standard`), not the retired pure-Dart
   `MoonriseCalculator` series.
+- `moonset` comes from the same call with the set flag, so the locked values
+  also pin the profile's limb/refraction choice to an instant. `mumbai-2026-09-04`
+  omits `moonrise` and `varanasi-2026-02-24` omits `moonset`: on those civil
+  days the Moon genuinely does not rise (set) before local midnight.
 
 ## Coverage
 
@@ -123,8 +128,9 @@ flutter test test/panchang_golden_fixture_test.dart
 # Runs the real engine. Requires the native Swiss Ephemeris library and an
 # IST host: the harness normalizes each case's civil day in the device zone
 # (it does not pass the place timezone into the day pipeline) while the
-# fixture stores +05:30 wall-clock times. Moonrise is not the reason for the
-# requirement - it resolves the place zone from `location.timezone`.
+# fixture stores +05:30 wall-clock times. Moonrise and moonset are not the
+# reason for the requirement - each resolves the place zone from
+# `location.timezone`.
 $env:SWISSEPH_LIB_PATH = "C:\path\to\swisseph.dll"
 flutter test test/panchang_golden_engine_test.dart
 ```
@@ -150,10 +156,12 @@ Do not commit the DLL. It is a local test dependency.
 
 ## Schema notes
 
-- `sunrise`, `sunset`, `tithiEndsAt`, `moonrise`, `nakshatraStartsAt`,
-  `nakshatraEndsAt`, and `nextSankranti.at` are ISO-8601 timestamps with an
-  explicit `+05:30` offset. `tithiEndsAt` may fall on the next civil date for a
-  late transition; `nakshatraStartsAt` may fall on the previous civil date.
+- `sunrise`, `sunset`, `tithiEndsAt`, `moonrise`, `moonset`,
+  `nakshatraStartsAt`, `nakshatraEndsAt`, and `nextSankranti.at` are ISO-8601
+  timestamps with an explicit `+05:30` offset. `tithiEndsAt` may fall on the
+  next civil date for a late transition; `nakshatraStartsAt` may fall on the
+  previous civil date. `moonrise`/`moonset` are always on the case date; a
+  missing key is a genuine no-rise/no-set day.
 - `nakshatraAtSunrise` is the nakshatra prevailing at sunrise,
   `nakshatraStartsAt` its last ingress (at or before sunrise),
   `nakshatraEndsAt` the first instant of `nextNakshatra`. The span is always
@@ -168,6 +176,7 @@ Do not commit the DLL. It is a local test dependency.
 - `masa` keeps the engine's `Adhika_<Masa>` prefix; `adhika` mirrors it.
   `masaPurnimanta` is the Amanta→Purnimanta display conversion.
 - `bengaliDate` is present only on the Bengali transition cases.
-- `tolerance.eventSeconds` applies to sunrise/sunset/tithiEndsAt/moonrise and
-  to `nakshatraStartsAt`/`nakshatraEndsAt`/`nextSankranti.at`.
+- `tolerance.eventSeconds` applies to
+  sunrise/sunset/tithiEndsAt/moonrise/moonset and to
+  `nakshatraStartsAt`/`nakshatraEndsAt`/`nextSankranti.at`.
   `tolerance.longitudeArcseconds` applies to the Sun/Moon longitudes.
