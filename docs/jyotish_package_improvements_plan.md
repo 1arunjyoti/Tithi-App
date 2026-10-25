@@ -675,8 +675,9 @@ observance decisions with native Swiss Ephemeris rise/set results.
   pins "banner above the app, visible on a pushed route, retry clears it";
   `test/panchang_init_error_banner_test.dart` covers the banner copy and retry;
   `integration_test/native_ephemeris_smoke_test.dart` is the on-device check
-  that the assets install, `libswisseph.so` loads and both native calculators
-  are active (needs a connected Android device).
+  (green on `emulator-5554`, x86_64 / 16 KB pages): assets install and match the
+  manifest, `libswisseph.so` loads on the process ABI, both native calculators
+  are active, and a tithi is computed.
 - Licensing: the AGPLv3 option was chosen and recorded on 2026-10-25
   (`packages/jyotish/NOTICE`). The repository root `license`, the package
   `LICENSE` and the docs are AGPLv3; the upstream wrapper's MIT text is
@@ -700,18 +701,31 @@ observance decisions with native Swiss Ephemeris rise/set results.
   `flutter analyze`, the app suite and the package's own tests. Without that
   library the Jyotish-backed tests fail rather than skip, which is why the
   workflow builds it instead of tolerating the failure.
-- Known upstream issue, not fixed here: Flutter warns that `home_widget` and
-  `workmanager_android` apply the Kotlin Gradle Plugin themselves, which a
-  future Flutter will reject. Both are at their latest versions (`home_widget`
-  0.10.0 and `workmanager_android` 0.10.9 still apply it), so this needs an
-  upstream fix; do not silence the warning locally.
-- Deferred: running the on-device smoke test on each ABI (item 20/21), and real
-  native builds for Windows, Linux, macOS and iOS. What is verified today is the
-  build side: `flutter build apk --debug` completes with the package-root
-  CMake path and the APK contains `libswisseph.so` for `arm64-v8a` (~540 KB),
-  `armeabi-v7a` (~509 KB) and `x86_64` (~628 KB). The desktop and iOS targets
-  cannot be built or tested on the Windows development host, so they need
-  macOS/CI hardware and are treated as follow-ups rather than claimed support.
+- Known upstream issue, not fixed here: a real build prints "Your app uses the
+  following plugins that apply Kotlin Gradle Plugin (KGP): home_widget,
+  workmanager_android" and "Future versions of Flutter will fail to build if
+  your app uses plugins that apply KGP". The APK still builds today. Both
+  plugins are at their latest versions (`home_widget` 0.10.0 and
+  `workmanager_android` 0.10.9 still apply it in their own `build.gradle`), so
+  this needs an upstream fix; do not silence the warning locally.
+- Device verification (items 20/21):
+  `integration_test/native_ephemeris_smoke_test.dart` runs green on
+  `emulator-5554` (Android 17 / API 37, x86_64, **16 KB page size**). It asserts
+  that the `.se1` assets install, match `kEphemerisAssetSha256` on disk, both
+  native calculators are active, the process ABI is one the build ships a slice
+  for, and a real tithi calculation returns 1-30.
+- Per-ABI state: x86_64 is verified at runtime, on a 16 KB-page device, which
+  also exercises the `-Wl,-z,max-page-size=16384` link option. `arm64-v8a` and
+  `armeabi-v7a` are verified statically from `app-debug.apk`: ELF64/AArch64 and
+  ELF32/ARM respectively, every LOAD segment aligned to 0x4000, and all 16
+  `swe_*` symbols the bindings look up are exported. Their runtime check still
+  needs ARM hardware: this emulator's ARM translation does not cover the Flutter
+  engine (`libflutter.so is for EM_AARCH64 (183) instead of EM_X86_64 (62)`) and
+  its `abilist` has no `armeabi-v7a`.
+- Still deferred: real native builds for Windows, Linux, macOS and iOS. The
+  desktop and iOS targets cannot be built or tested on the Windows development
+  host, so they need macOS/CI hardware and are treated as follow-ups rather than
+  claimed support.
 
 
 ## Phase 7 — performance and cache rollout
