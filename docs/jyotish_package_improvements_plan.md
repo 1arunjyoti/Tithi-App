@@ -468,12 +468,15 @@ as the starting point for the shared ingress primitive.
   null. `test/root_solver_test.dart` pins that contract.
 - `wrapPairIndex` and `interpolateNewMoonInstant` were deleted as dead
   approximation code.
-- Still pending: yoga and karana boundaries have no consumer that needs a
-  transition instant (the day resolver reads them at sunrise/checkpoints), so
-  the primitive covers them but nothing calls it. Add call sites when a UI or
-  festival rule needs those instants rather than pre-emptively. The golden
-  fixture also does not lock nakshatra-edge or Sankranti instants yet; the
-  shared solver they use is already locked through `tithiEndsAt`.
+- Yoga and karana already had a consumer: the tithi detail sheet's
+  `yogaKaranaTimingsProvider` shows "until 3:42 PM". It used a provider-local
+  1-minute index bisection, so it was migrated to `resolveYogaKaranaSpan`
+  (`lib/features/panchang/domain/yoga_karana_span.dart`), which solves the
+  continuous Sun+Moon sum and elongation through `solveAngleCrossing`.
+  `test/yoga_karana_span_test.dart` covers both ends, the 360 wrap and the
+  failure paths.
+- The golden fixture still does not lock nakshatra-edge or Sankranti instants;
+  the shared solver they use is already locked through `tithiEndsAt`.
 
 Continue to separate three decisions in code and data:
 

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/async/keep_alive.dart';
 import '../features/panchang/data/panchang_cache.dart';
 import '../features/panchang/domain/tithi_transitions.dart';
+import '../features/panchang/domain/yoga_karana_span.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../services/festival_matching_pipeline.dart';
@@ -685,10 +686,9 @@ final nakshatraTimingsProvider = FutureProvider.family<
 ///
 /// Yoga uses the SUM of the sidereal longitudes (ayanamsa enters twice —
 /// the most ayanamsa-sensitive panchanga element) and karana the halved
-/// elongation; both indices come from a single Sun+Moon probe per instant
-/// via [PanchangService.calculateSunMoonLongitudes], and each end is
-/// bisected to ~1-minute precision (yoga spans ~24h like nakshatras,
-/// karanas ~12h, so the bracket steps differ).
+/// elongation. Both span ends go through [resolveYogaKaranaSpan], which uses
+/// the shared crossing primitive, so they are second-precise and the same code
+/// path as tithi, nakshatra and the new moon.
 ///
 /// Returns null when longitudes are unavailable or a search fails: callers
 /// hide the card instead of showing a wrong span - same hide-on-null
@@ -720,91 +720,29 @@ final yogaKaranaTimingsProvider = FutureProvider.family<
     longitude: params.longitude,
   );
 
-  Future<({int yoga, int karana})?> indexesAt(DateTime time) async {
-    final longs = await service.calculateSunMoonLongitudes(
+  final span = await resolveYogaKaranaSpan(
+    sunrise: sunrise,
+    longitudesAt: (time) => service.calculateSunMoonLongitudes(
       time,
       latitude: params.latitude,
       longitude: params.longitude,
-    );
-    if (longs == null) return null;
-    return (
-      yoga: yogaIndexFor(longs.sun, longs.moon),
-      karana: karanaIndexFor(longs.sun, longs.moon),
-    );
-  }
-
-  /// First instant after [sunrise] where [select] leaves [target]:
-  /// bracket in [step] increments (capped at 48h), then bisect to 1 min.
-  Future<DateTime?> spanEnd({
-    required int Function(({int yoga, int karana}) idx) select,
-    required int target,
-    required Duration step,
-  }) async {
-    DateTime inner = sunrise;
-    DateTime outer = sunrise.add(step);
-    var bracketed = false;
-    for (var i = 0; i < 48; i++) {
-      final idx = await indexesAt(outer);
-      if (idx == null) return null;
-      if (select(idx) != target) {
-        bracketed = true;
-        break;
-      }
-      inner = outer;
-      outer = outer.add(step);
-      if (outer.difference(sunrise).abs() >= const Duration(hours: 48)) {
-        break;
-      }
-    }
-    if (!bracketed) return null;
-    var guard = 0;
-    while (outer.difference(inner).inMinutes > 1 && guard++ < 60) {
-      final mid =
-          inner.add(Duration(minutes: outer.difference(inner).inMinutes ~/ 2));
-      final idx = await indexesAt(mid);
-      if (idx == null) return null;
-      if (select(idx) == target) {
-        inner = mid;
-      } else {
-        outer = mid;
-      }
-    }
-    return outer;
-  }
-
-  final atSunrise = await indexesAt(sunrise);
-  if (atSunrise == null) return null;
-
-  // Independent searches over the same stateless probe: run together.
-  final ends = await Future.wait([
-    spanEnd(
-      select: (idx) => idx.yoga,
-      target: atSunrise.yoga,
-      step: const Duration(hours: 2),
     ),
-    spanEnd(
-      select: (idx) => idx.karana,
-      target: atSunrise.karana,
-      step: const Duration(hours: 1),
-    ),
-  ]);
-  final yogaEnd = ends[0];
-  final karanaEnd = ends[1];
-  if (yogaEnd == null || karanaEnd == null) return null;
+  );
+  if (span == null) return null;
 
-  // Guard: spans reaching absurdly far are failed searches (same 2-day
-  // rule as the tithi/nakshatra timings).
-  if (yogaEnd.difference(normalized).inDays.abs() > 2 ||
-      karanaEnd.difference(normalized).inDays.abs() > 2) {
+  // Guard: spans reaching absurdly far are failed searches (same 2-day rule
+  // as the tithi/nakshatra timings).
+  if (span.yogaEnd.difference(normalized).inDays.abs() > 2 ||
+      span.karanaEnd.difference(normalized).inDays.abs() > 2) {
     return null;
   }
 
   return (
-    yogaIndex: atSunrise.yoga,
-    yoga: yogaNames[atSunrise.yoga],
-    yogaEnd: yogaEnd,
-    karanaIndex: atSunrise.karana,
-    karana: karanaNameForIndex(atSunrise.karana),
-    karanaEnd: karanaEnd,
+    yogaIndex: span.yogaIndex,
+    yoga: yogaNames[span.yogaIndex],
+    yogaEnd: span.yogaEnd,
+    karanaIndex: span.karanaIndex,
+    karana: karanaNameForIndex(span.karanaIndex),
+    karanaEnd: span.karanaEnd,
   );
 });
