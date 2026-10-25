@@ -13,7 +13,7 @@
     "authority": "Tithi panchang-v3 engine characterization",
     "retrievedOn": "2026-10-25",
     "kind": "engine-characterization",
-    "notes": "Phase 5b recapture: added `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra` and `nextSankranti` to all 84 cases and bumped `schemaVersion` 1 -> 2. Old result: the four fields did not exist, so the sunrise nakshatra's edges and the next solar ingress had no regression lock. New result: edges from the shared crossing solver through `resolveNakshatraSpan` (the same path `nakshatraTimingsProvider` uses), and the ingress from `findSankrantiInstant` (first solar sign crossing strictly after sunrise, searched within 40 days). Reason: Phase 3 moved every edge onto one solver and nothing locked the nakshatra span or the Sankranti instant, so a regression there could only surface as a wrong \"Rohini until 3:42 PM\" or a wrong Bengali month. No existing value changed. The ingress instants are engine characterization, not an accuracy claim: a cross-check of the Mesha ingress on 2026-04-14 gives 09:30:15 IST here against a published 09:39, the ~9 minute ayanamsa variant that the fixture already carries elsewhere. Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
+    "notes": "Phase 5c recapture: refreshed `tithiEndsAt` on all 84 cases and re-rendered the one timestamp that was not on the +05:30 convention. Old results: `tithiEndsAt` still came from the Phase 2 capture, when the transition was bisected to 1 minute, so the six cities stored different instants for the same global event - spreads of 10-50 s (2026-01-14: 12:23:24Z .. 12:24:14Z). That noise used most of the 60 s tolerance, so the field could barely detect a real regression. New results: every `tithiEndsAt` is the shared crossing solver output, and cases that share a sunrise tithi now agree to the second. `delhi-1800-01-01` `moonrise` was rendered at LMT `+05:53` (truncated from the zone's +05:53:28), the only value in the file outside the stated convention; the instant is unchanged, it is now written as `+05:30` like every other timestamp. Reason: the fixture is a regression lock, and a 50 s capture-era spread inside a 60 s tolerance is not a lock. No astronomical value changed; the 19 s move on the 1800 moonrise is the truncated-offset parse error, not a new calculation. Phase 5b recapture: added `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra` and `nextSankranti` to all 84 cases and bumped `schemaVersion` 1 -> 2. Old result: the four fields did not exist, so the sunrise nakshatra's edges and the next solar ingress had no regression lock. New result: edges from the shared crossing solver through `resolveNakshatraSpan` (the same path `nakshatraTimingsProvider` uses), and the ingress from `findSankrantiInstant` (first solar sign crossing strictly after sunrise, searched within 40 days). Reason: Phase 3 moved every edge onto one solver and nothing locked the nakshatra span or the Sankranti instant, so a regression there could only surface as a wrong \"Rohini until 3:42 PM\" or a wrong Bengali month. No existing value changed. The ingress instants are engine characterization, not an accuracy claim: a cross-check of the Mesha ingress on 2026-04-14 gives 09:30:15 IST here against a published 09:39, the ~9 minute ayanamsa variant that the fixture already carries elsewhere. Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
   },
   "tolerance": {
     "eventSeconds": 60,
@@ -42,7 +42,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2026-01-06T08:03:04+05:30",
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 4,
@@ -94,7 +94,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2026-01-06T08:02:51+05:30",
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 4,
@@ -146,7 +146,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2026-01-06T08:03:05+05:30",
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 4,
@@ -198,7 +198,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2026-01-06T08:02:58+05:30",
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 4,
@@ -250,7 +250,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2026-01-06T08:02:39+05:30",
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 4,
@@ -302,7 +302,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2026-01-06T08:02:38+05:30",
+        "tithiEndsAt": "2026-01-06T08:02:09+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 4,
@@ -355,7 +355,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-14T17:54:14+05:30",
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 12,
@@ -408,7 +408,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-14T17:53:47+05:30",
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 12,
@@ -461,7 +461,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-14T17:53:24+05:30",
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 12,
@@ -514,7 +514,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-14T17:53:33+05:30",
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 12,
@@ -567,7 +567,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-14T17:53:36+05:30",
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 12,
@@ -620,7 +620,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-14T17:54:07+05:30",
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 12,
@@ -672,7 +672,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-29T13:55:56+05:30",
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 12,
@@ -724,7 +724,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-29T13:56:33+05:30",
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 12,
@@ -776,7 +776,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-29T13:56:15+05:30",
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 12,
@@ -828,7 +828,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-29T13:56:25+05:30",
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 12,
@@ -880,7 +880,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-29T13:56:13+05:30",
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 12,
@@ -932,7 +932,7 @@
           "number": 11,
           "name": "Ekadashi"
         },
-        "tithiEndsAt": "2026-01-29T13:55:43+05:30",
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 12,
@@ -984,7 +984,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-02-15T17:05:33+05:30",
+        "tithiEndsAt": "2026-02-15T17:05:22+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -1036,7 +1036,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-02-15T17:06:12+05:30",
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -1088,7 +1088,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-02-15T17:05:29+05:30",
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -1140,7 +1140,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-02-15T17:05:44+05:30",
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -1192,7 +1192,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-02-15T17:06:03+05:30",
+        "tithiEndsAt": "2026-02-15T17:05:22+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -1244,7 +1244,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-02-15T17:05:38+05:30",
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -1296,7 +1296,7 @@
           "number": 1,
           "name": "Pratipada"
         },
-        "tithiEndsAt": "2026-03-04T16:50:10+05:30",
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 2,
@@ -1348,7 +1348,7 @@
           "number": 1,
           "name": "Pratipada"
         },
-        "tithiEndsAt": "2026-03-04T16:50:11+05:30",
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 2,
@@ -1400,7 +1400,7 @@
           "number": 1,
           "name": "Pratipada"
         },
-        "tithiEndsAt": "2026-03-04T16:50:16+05:30",
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 2,
@@ -1452,7 +1452,7 @@
           "number": 1,
           "name": "Pratipada"
         },
-        "tithiEndsAt": "2026-03-04T16:50:14+05:30",
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 2,
@@ -1504,7 +1504,7 @@
           "number": 1,
           "name": "Pratipada"
         },
-        "tithiEndsAt": "2026-03-04T16:49:45+05:30",
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 2,
@@ -1556,7 +1556,7 @@
           "number": 1,
           "name": "Pratipada"
         },
-        "tithiEndsAt": "2026-03-04T16:49:40+05:30",
+        "tithiEndsAt": "2026-03-04T16:49:26+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 2,
@@ -1609,7 +1609,7 @@
           "number": 9,
           "name": "Navami"
         },
-        "tithiEndsAt": "2026-03-27T10:08:07+05:30",
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 10,
@@ -1662,7 +1662,7 @@
           "number": 9,
           "name": "Navami"
         },
-        "tithiEndsAt": "2026-03-27T10:07:50+05:30",
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 10,
@@ -1715,7 +1715,7 @@
           "number": 9,
           "name": "Navami"
         },
-        "tithiEndsAt": "2026-03-27T10:07:27+05:30",
+        "tithiEndsAt": "2026-03-27T10:07:22+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 10,
@@ -1768,7 +1768,7 @@
           "number": 9,
           "name": "Navami"
         },
-        "tithiEndsAt": "2026-03-27T10:07:48+05:30",
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 10,
@@ -1821,7 +1821,7 @@
           "number": 9,
           "name": "Navami"
         },
-        "tithiEndsAt": "2026-03-27T10:08:02+05:30",
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 10,
@@ -1874,7 +1874,7 @@
           "number": 9,
           "name": "Navami"
         },
-        "tithiEndsAt": "2026-03-27T10:07:36+05:30",
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 10,
@@ -1926,7 +1926,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-05-20T11:08:00+05:30",
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 5,
@@ -1978,7 +1978,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-05-20T11:07:21+05:30",
+        "tithiEndsAt": "2026-05-20T11:07:16+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 5,
@@ -2030,7 +2030,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-05-20T11:08:09+05:30",
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 5,
@@ -2082,7 +2082,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-05-20T11:08:05+05:30",
+        "tithiEndsAt": "2026-05-20T11:07:16+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 5,
@@ -2134,7 +2134,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-05-20T11:08:04+05:30",
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 5,
@@ -2186,7 +2186,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-05-20T11:07:32+05:30",
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 5,
@@ -2239,7 +2239,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-06-15T08:24:12+05:30",
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2292,7 +2292,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-06-15T08:24:41+05:30",
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2345,7 +2345,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-06-15T08:24:37+05:30",
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2398,7 +2398,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-06-15T08:24:28+05:30",
+        "tithiEndsAt": "2026-06-15T08:24:11+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2451,7 +2451,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-06-15T08:24:20+05:30",
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2504,7 +2504,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-06-15T08:24:38+05:30",
+        "tithiEndsAt": "2026-06-15T08:24:11+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2556,7 +2556,7 @@
           "number": 8,
           "name": "Ashtami"
         },
-        "tithiEndsAt": "2026-09-05T00:14:26+05:30",
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 9,
@@ -2608,7 +2608,7 @@
           "number": 8,
           "name": "Ashtami"
         },
-        "tithiEndsAt": "2026-09-05T00:14:22+05:30",
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 9,
@@ -2661,7 +2661,7 @@
           "number": 8,
           "name": "Ashtami"
         },
-        "tithiEndsAt": "2026-09-05T00:14:36+05:30",
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 9,
@@ -2712,7 +2712,7 @@
           "number": 8,
           "name": "Ashtami"
         },
-        "tithiEndsAt": "2026-09-05T00:14:33+05:30",
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 9,
@@ -2764,7 +2764,7 @@
           "number": 8,
           "name": "Ashtami"
         },
-        "tithiEndsAt": "2026-09-05T00:14:31+05:30",
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 9,
@@ -2816,7 +2816,7 @@
           "number": 8,
           "name": "Ashtami"
         },
-        "tithiEndsAt": "2026-09-05T00:15:02+05:30",
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 9,
@@ -2868,7 +2868,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-11-09T12:32:53+05:30",
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2920,7 +2920,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-11-09T12:32:09+05:30",
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -2972,7 +2972,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-11-09T12:32:15+05:30",
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -3024,7 +3024,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-11-09T12:32:44+05:30",
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -3076,7 +3076,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-11-09T12:32:47+05:30",
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -3128,7 +3128,7 @@
           "number": 15,
           "name": "Amavasya"
         },
-        "tithiEndsAt": "2026-11-09T12:32:55+05:30",
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 1,
@@ -3228,7 +3228,7 @@
           "number": 15,
           "name": "Purnima"
         },
-        "tithiEndsAt": "2026-06-30T05:27:07+05:30",
+        "tithiEndsAt": "2026-06-30T05:26:41+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 1,
@@ -3328,7 +3328,7 @@
           "number": 15,
           "name": "Purnima"
         },
-        "tithiEndsAt": "2026-06-30T05:26:57+05:30",
+        "tithiEndsAt": "2026-06-30T05:26:41+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 1,
@@ -3428,7 +3428,7 @@
           "number": 15,
           "name": "Purnima"
         },
-        "tithiEndsAt": "2026-06-30T05:27:06+05:30",
+        "tithiEndsAt": "2026-06-30T05:26:41+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 1,
@@ -3480,7 +3480,7 @@
           "number": 7,
           "name": "Saptami"
         },
-        "tithiEndsAt": "2026-02-24T07:03:22+05:30",
+        "tithiEndsAt": "2026-02-24T07:02:38+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 8,
@@ -3532,7 +3532,7 @@
           "number": 7,
           "name": "Saptami"
         },
-        "tithiEndsAt": "2026-02-24T07:03:32+05:30",
+        "tithiEndsAt": "2026-02-24T07:02:38+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 8,
@@ -3586,7 +3586,7 @@
           "number": 6,
           "name": "Shashthi"
         },
-        "tithiEndsAt": "2026-10-17T05:54:54+05:30",
+        "tithiEndsAt": "2026-10-17T05:54:50+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 7,
@@ -3792,7 +3792,7 @@
           "number": 6,
           "name": "Shashthi"
         },
-        "tithiEndsAt": "2026-10-17T05:55:24+05:30",
+        "tithiEndsAt": "2026-10-17T05:54:50+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 7,
@@ -3851,7 +3851,7 @@
           "number": 7,
           "name": "Saptami"
         },
-        "tithiEndsAt": "2026-10-18T08:28:50+05:30",
+        "tithiEndsAt": "2026-10-18T08:28:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 8,
@@ -3910,7 +3910,7 @@
           "number": 7,
           "name": "Saptami"
         },
-        "tithiEndsAt": "2026-10-18T08:29:14+05:30",
+        "tithiEndsAt": "2026-10-18T08:28:39+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 8,
@@ -3968,7 +3968,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-10-29T22:10:46+05:30",
+        "tithiEndsAt": "2026-10-29T22:10:40+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 5,
@@ -4021,7 +4021,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-10-29T22:11:07+05:30",
+        "tithiEndsAt": "2026-10-29T22:10:39+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 5,
@@ -4074,7 +4074,7 @@
           "number": 4,
           "name": "Chaturthi"
         },
-        "tithiEndsAt": "2026-10-29T22:10:42+05:30",
+        "tithiEndsAt": "2026-10-29T22:10:39+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 5,
@@ -4127,7 +4127,7 @@
           "number": 12,
           "name": "Dwadashi"
         },
-        "tithiEndsAt": "2026-04-15T00:13:46+05:30",
+        "tithiEndsAt": "2026-04-15T00:12:52+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 13,
@@ -4185,7 +4185,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-04-15T22:32:23+05:30",
+        "tithiEndsAt": "2026-04-15T22:31:40+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -4243,7 +4243,7 @@
           "number": 12,
           "name": "Dwadashi"
         },
-        "tithiEndsAt": "2026-04-15T00:13:10+05:30",
+        "tithiEndsAt": "2026-04-15T00:12:51+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 13,
@@ -4301,7 +4301,7 @@
           "number": 13,
           "name": "Trayodashi"
         },
-        "tithiEndsAt": "2026-04-15T22:31:57+05:30",
+        "tithiEndsAt": "2026-04-15T22:31:39+05:30",
         "nextTithi": {
           "paksha": "Krishna",
           "number": 14,
@@ -4358,7 +4358,7 @@
           "number": 6,
           "name": "Shashthi"
         },
-        "tithiEndsAt": "1800-01-01T13:47:40+05:30",
+        "tithiEndsAt": "1800-01-01T13:47:17+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 7,
@@ -4379,7 +4379,7 @@
         "masa": "Pausha",
         "masaPurnimanta": "Pausha",
         "adhika": false,
-        "moonrise": "1800-01-01T11:51:04+05:53"
+        "moonrise": "1800-01-01T11:27:44+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -4410,7 +4410,7 @@
           "number": 3,
           "name": "Tritiya"
         },
-        "tithiEndsAt": "2399-12-31T09:55:03+05:30",
+        "tithiEndsAt": "2399-12-31T09:54:12+05:30",
         "nextTithi": {
           "paksha": "Shukla",
           "number": 4,

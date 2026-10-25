@@ -121,8 +121,10 @@ Notable cases:
 flutter test test/panchang_golden_fixture_test.dart
 
 # Runs the real engine. Requires the native Swiss Ephemeris library and an
-# IST host (the golden harness still samples moonrise in the device zone and
-# stores +05:30 timestamps).
+# IST host: the harness normalizes each case's civil day in the device zone
+# (it does not pass the place timezone into the day pipeline) while the
+# fixture stores +05:30 wall-clock times. Moonrise is not the reason for the
+# requirement - it resolves the place zone from `location.timezone`.
 $env:SWISSEPH_LIB_PATH = "C:\path\to\swisseph.dll"
 flutter test test/panchang_golden_engine_test.dart
 ```

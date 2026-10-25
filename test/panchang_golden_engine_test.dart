@@ -27,8 +27,9 @@ void main() {
       ? 'Set SWISSEPH_LIB_PATH to a host Swiss Ephemeris library to run the '
             'golden engine comparison.'
       : !istHost
-      ? 'Phase 0 solar calculator uses the device timezone; run on an IST '
-            'host (UTC+05:30) or after the Phase 1 solar-events seam lands.'
+      ? 'The golden harness normalizes each civil day in the device zone (it '
+            'does not pass the place timezone into the day pipeline); run on an '
+            'IST host (UTC+05:30).'
       : null;
 
   group('Panchang golden engine', () {
@@ -169,6 +170,34 @@ void main() {
           moonrise,
           tolerance.eventSeconds,
         );
+
+        // A locked null must be a genuine no-rise day, not a failed lookup.
+        // The Moon rises roughly 50 minutes later each day, so a skipped civil
+        // day still has a rise on both neighbours and their gap exceeds 24 h.
+        // Without this, a bug that returns null for every day would pass the
+        // null == null comparison above.
+        if (c.expected.moonrise == null) {
+          DateTime? riseOn(int dayOffset) => moonEventsService.moonrise(
+            date: DateTime(target.year, target.month, target.day + dayOffset),
+            latitude: c.location.latitude,
+            longitude: c.location.longitude,
+            altitudeMeters: c.location.altitudeMeters,
+            timezoneId: c.location.timezone,
+          );
+          final previous = riseOn(-1);
+          final next = riseOn(1);
+          if (previous == null || next == null) {
+            failures.add(
+              '${c.id}: no-rise day, but a neighbouring day has no rise '
+              '(prev=$previous, next=$next)',
+            );
+          } else if (next.difference(previous) <= const Duration(hours: 24)) {
+            failures.add(
+              '${c.id}: no-rise day, but the neighbouring rises are only '
+              '${next.difference(previous)} apart',
+            );
+          }
+        }
 
         final expectedTithi = c.expected.tithiAtSunrise;
         if (day.paksha != expectedTithi.paksha ||

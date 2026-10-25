@@ -102,6 +102,34 @@ void main() {
       }
     });
 
+    test('tithiEndsAt is one global instant across cities', () {
+      // A tithi boundary is an instant in the sky, not a place-local event, so
+      // cases that share the sunrise tithi must report the same end. The
+      // shared solver bisects to 1 s; a wider spread means a coarse or
+      // location-dependent path came back (the Phase 2 capture spread 50 s and
+      // consumed most of the 60 s tolerance).
+      final byKey = <String, List<({String id, DateTime end})>>{};
+      for (final c in fixture.panchang.cases) {
+        final end = c.expected.tithiEndsAt;
+        if (end == null) continue;
+        final tithi = c.expected.tithiAtSunrise;
+        final key = '${c.dateString}|${tithi.paksha}${tithi.number}';
+        byKey.putIfAbsent(key, () => []).add((id: c.id, end: end.instant));
+      }
+      expect(byKey, isNotEmpty);
+      for (final entry in byKey.entries) {
+        if (entry.value.length < 2) continue;
+        final instants = entry.value.map((e) => e.end).toList()..sort();
+        expect(
+          instants.last.difference(instants.first),
+          lessThanOrEqualTo(const Duration(seconds: 2)),
+          reason:
+              '${entry.key}: tithi end differs across cities '
+              '(${entry.value.map((e) => '${e.id}=${e.end.toIso8601String()}').join(', ')})',
+        );
+      }
+    });
+
     test('nakshatra span and next sankranti agree with the sunrise state', () {
       for (final c in fixture.panchang.cases) {
         final e = c.expected;

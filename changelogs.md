@@ -21,6 +21,29 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Tithi sheet and export times are second-precise, and the lock is tightened
+
+The tithi detail sheet and the festival export now show the same second-precise
+boundaries the day pipeline uses, instead of a value rounded to the minute.
+
+- `resolveTithiSpan` (`lib/features/panchang/domain/tithi_span.dart`) is the one
+  tithi-span resolver: outward scan from the festival day (2 h steps, ±2 days),
+  both edges through `solveAngleCrossing`, null for a Kshaya tithi or a failed
+  sample. `tithiTimingsProvider` and `FestivalExportService` both call it;
+  `PanchangService.calculateTithiStartTime` / `calculateTithiEndTime` /
+  `_findNearestTithiOccurrence` are deleted.
+- The 78 non-null `tithiEndsAt` values in the golden fixture were recaptured.
+  The old ones came from the 1-minute bisection and stored up to 50 s of
+  cross-city spread for one global instant; they now agree to the second.
+- `test/panchang_golden_fixture_test.dart` asserts that cross-city agreement
+  (≤ 2 s), so a location-dependent path cannot come back silently.
+- `test/panchang_golden_engine_test.dart` now proves a locked `moonrise: null`
+  is a real no-rise day: both neighbouring days must have a rise and their gap
+  must exceed 24 h.
+- `delhi-1800-01-01` `moonrise` is written at `+05:30` like every other
+  timestamp; it was the only value on truncated LMT `+05:53`, which parsed 20 s
+  off the unchanged instant.
+
 ### Nakshatra edges and Sankranti instants are locked in the golden fixture
 
 The Panchang regression lock now covers the sunrise nakshatra's edges and the
