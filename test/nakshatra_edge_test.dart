@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tithi/features/panchang/domain/tithi_transitions.dart';
+import 'package:tithi/features/panchang/domain/nakshatra_span.dart';
 
 // Phase 3: [bisectNakshatraEdge] is the wrapper the tithi sheet uses to show
 // "Rohini until 3:42 PM". It aims half a nakshatra past the sunrise index (or
@@ -109,6 +109,107 @@ void main() {
 
       // Assert
       expect(solved, isNull);
+    });
+  });
+
+  group('resolveNakshatraSpan', () {
+    /// Instant the Moon last entered [longitude], walking back from [origin].
+    DateTime crossingBefore(double longitude) {
+      final baseLongitude = longitudeAt(origin);
+      final delta = (baseLongitude - longitude) % 360;
+      return origin.subtract(
+        Duration(
+          microseconds: (delta / _moonRate * Duration.microsecondsPerDay)
+              .round(),
+        ),
+      );
+    }
+
+    test('resolves the sunrise span and both edges', () async {
+      // Arrange: index 4 at sunrise, 2 degrees in, so both edges are a clean
+      // distance from the bracket ends.
+      final expectedStart = crossingBefore(4 * _segment);
+      final expectedEnd = crossingOf(5 * _segment);
+
+      // Act
+      final span = await resolveNakshatraSpan(
+        sunrise: origin,
+        indexAt: indexAt,
+      );
+
+      // Assert
+      expect(span, isNotNull);
+      expect(span!.index, equals(4));
+      expect(span.nakshatra, equals('Mrigashira'));
+      expect(
+        span.start.difference(expectedStart).inSeconds.abs(),
+        lessThanOrEqualTo(1),
+      );
+      expect(
+        span.end.difference(expectedEnd).inSeconds.abs(),
+        lessThanOrEqualTo(1),
+      );
+      expect(span.start.isBefore(origin), isTrue);
+      expect(span.end.isAfter(origin), isTrue);
+    });
+
+    test('crosses the Revati to Ashwini wrap', () async {
+      // Arrange: the last nakshatra. Its end edge is the 360 -> 0 wrap, which
+      // the angle fold has to handle in both directions.
+      const double start = 26 * _segment + 2;
+      double longitudeAtRevati(DateTime instant) {
+        final days =
+            instant.difference(origin).inMicroseconds /
+            Duration.microsecondsPerDay;
+        return (start + _moonRate * days) % 360;
+      }
+
+      Future<int?> indexAtRevati(DateTime instant) async =>
+          (longitudeAtRevati(instant) / _segment).floor() % 27;
+
+      // Act
+      final span = await resolveNakshatraSpan(
+        sunrise: origin,
+        indexAt: indexAtRevati,
+      );
+
+      // Assert
+      expect(span, isNotNull);
+      expect(span!.index, equals(26));
+      expect(span.nakshatra, equals('Revati'));
+      expect(
+        await indexAtRevati(span.end),
+        equals(0),
+        reason: 'the end edge is the first instant in Ashwini',
+      );
+      expect(
+        await indexAtRevati(span.start.subtract(const Duration(seconds: 2))),
+        equals(25),
+        reason: 'the start edge is the first instant in Revati',
+      );
+    });
+
+    test('returns null when the sunrise sample fails', () async {
+      // Act
+      final span = await resolveNakshatraSpan(
+        sunrise: origin,
+        indexAt: (instant) async => null,
+      );
+
+      // Assert
+      expect(span, isNull);
+    });
+
+    test('returns null when no edge is reached', () async {
+      // Arrange: a frozen index never leaves the sunrise nakshatra, so both
+      // brackets must give up instead of returning the 48-hour cap.
+      final span = await resolveNakshatraSpan(
+        sunrise: origin,
+        indexAt: (instant) async => 4,
+      );
+
+      // Assert
+      expect(span, isNull);
     });
   });
 }

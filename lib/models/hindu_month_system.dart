@@ -120,6 +120,26 @@ int sunRashiIndex(double longitude) {
   return (l / 30).floor().clamp(0, 11);
 }
 
+/// The twelve sidereal rashis in Vedic order (index 0 = Mesha, 0-30 deg).
+///
+/// Canonical source for rashi-name lookup, kept next to [sunRashiIndex] and
+/// [masaNamesBySunRashi] so the model and tests can use it without an FFI
+/// dependency.
+const List<String> rashiNames = [
+  'Mesha', // 0-30
+  'Vrishabha', // 30-60
+  'Mithuna', // 60-90
+  'Karka', // 90-120
+  'Simha', // 120-150
+  'Kanya', // 150-180
+  'Tula', // 180-210
+  'Vrishchika', // 210-240
+  'Dhanu', // 240-270
+  'Makara', // 270-300
+  'Kumbha', // 300-330
+  'Meena', // 330-360
+];
+
 /// Pure Adhika verdict + naming for a bracketing new-moon pair.
 /// Adhika (intercalary) masa: no Surya Sankranti between the new moons,
 /// i.e. both instants share a rashi. The name comes from the first new moon.

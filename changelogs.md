@@ -21,6 +21,25 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Nakshatra edges and Sankranti instants are locked in the golden fixture
+
+The Panchang regression lock now covers the sunrise nakshatra's edges and the
+next solar ingress, so a solver change can no longer silently move "Rohini
+until 3:42 PM" or the Bengali month boundary.
+
+- `resolveNakshatraSpan` (`lib/features/panchang/domain/nakshatra_span.dart`)
+  owns the span math that used to be inline in `nakshatraTimingsProvider`; the
+  provider is a thin wrapper and `bisectNakshatraEdge` moved with it.
+- Fixture schema 2 adds `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra`
+  and `nextSankranti {rashi, at}` to all 84 cases. No existing value changed;
+  the recapture is recorded in the fixture `source.notes`.
+- `rashiNames` (`lib/models/hindu_month_system.dart`) is the canonical
+  Mesha..Meena list, kept next to `sunRashiIndex`.
+- Tests: `test/panchang_golden_engine_test.dart` recomputes both through the
+  production path; `test/panchang_golden_fixture_test.dart` checks the
+  successor nakshatra, the 18-30 h span, and that the ingress rashi follows the
+  locked sunrise Sun.
+
 ### Precise new-moon and Bengali month-start failures
 
 A new moon or Bengali month start that cannot be resolved now fails visibly
@@ -41,8 +60,9 @@ month.
   null). New tests: `test/bengali_month_start_test.dart`,
   `test/nakshatra_edge_test.dart`, plus widening/failure and descending cases
   in `test/root_solver_test.dart`.
-- Deferred: fixture values for nakshatra edges and Sankranti instants (their
-  solver is already locked via `tithiEndsAt`).
+- Deferred at the time: fixture values for nakshatra edges and Sankranti
+  instants. Closed by the schema-2 recapture above ("Nakshatra edges and
+  Sankranti instants are locked in the golden fixture").
 
 ### Yoga and karana spans use the shared solver
 

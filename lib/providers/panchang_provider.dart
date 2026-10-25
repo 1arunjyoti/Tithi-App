@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/async/keep_alive.dart';
 import '../features/panchang/data/panchang_cache.dart';
+import '../features/panchang/domain/nakshatra_span.dart';
 import '../features/panchang/domain/tithi_transitions.dart';
 import '../features/panchang/domain/yoga_karana_span.dart';
 import '../models/festival.dart';
@@ -26,14 +27,15 @@ export '../features/panchang/data/panchang_cache.dart'
         panchangMasaCacheSuffix,
         readPanchangCacheDouble,
         readPanchangCacheString;
+export '../features/panchang/domain/nakshatra_span.dart'
+    show bisectNakshatraEdge, resolveNakshatraSpan;
 export '../features/panchang/domain/tithi_transitions.dart'
     show
         TithiCheckpoints,
         findSunriseTithiTransition,
         resolveTithiCheckpoints,
         resolveDayTransition,
-        computePanchangData,
-        bisectNakshatraEdge;
+        computePanchangData;
 
 // Phase 2: cache keys, Hive box prep, and UI-sync LRU live in
 // features/panchang/data/panchang_cache.dart (re-exported above for
@@ -559,30 +561,15 @@ final tithiTimingsProvider =
     });
 
 // Phase 2: canonical implementation lives in
-// features/panchang/domain/tithi_transitions.dart as [bisectNakshatraEdge].
-// Kept as a thin alias so existing call-sites keep working.
-Future<DateTime?> _bisectNakshatraEdge({
-  required DateTime lo,
-  required DateTime hi,
-  required int sunriseIndex,
-  required bool findStart,
-  required Future<int?> Function(DateTime time) indexAt,
-}) =>
-    bisectNakshatraEdge(
-      lo: lo,
-      hi: hi,
-      sunriseIndex: sunriseIndex,
-      findStart: findStart,
-      indexAt: indexAt,
-    );
+// features/panchang/domain/nakshatra_span.dart as [resolveNakshatraSpan].
 
 /// Provider for the sunrise nakshatra's span on a specific date.
 ///
 /// Resolves the nakshatra prevailing at sunrise through [PanchangService]
-/// (Lahiri-sidereal Moon longitude folded into 27 segments of 13°20′) and
-/// bisects both its start (backward) and end (forward) to ~1-minute
-/// precision, so the sheet can show "Rohini until 3:42 PM" with elapsed
-/// progress.
+/// (Lahiri-sidereal Moon longitude folded into 27 segments of 13°20′) and both
+/// edges through [resolveNakshatraSpan], so the sheet can show "Rohini until
+/// 3:42 PM" with elapsed progress. The edges are solved by the shared crossing
+/// primitive to the second, not by a provider-local bisection.
 ///
 /// Returns null when the nakshatra can't be resolved or a boundary search
 /// fails: callers hide the card instead of showing a wrong span - same
@@ -607,78 +594,26 @@ final nakshatraTimingsProvider = FutureProvider.family<
     longitude: params.longitude,
   );
 
-  Future<int?> indexAt(DateTime time) async {
-    final name = await service.calculateNakshatra(
-      time,
-      latitude: params.latitude,
-      longitude: params.longitude,
-    );
-    if (name == null) return null;
-    final idx = hinduNakshatras.indexOf(name);
-    return idx >= 0 ? idx : null;
-  }
-
-  final sunriseIndex = await indexAt(sunrise);
-  if (sunriseIndex == null) return null;
-
-  // Bracket both edges in 2h steps (a nakshatra lasts ~19-26h, so the
-  // first bracket closes within ~13 probes; 48h caps runaway searches).
-  const step = Duration(hours: 2);
-  const cap = Duration(hours: 48);
-  Future<({DateTime inner, DateTime outer})?> bracket(int sign) async {
-    DateTime inner = sunrise;
-    DateTime outer = sunrise.add(step * sign);
-    for (var i = 0; i < 24; i++) {
-      final idx = await indexAt(outer);
-      if (idx == null) return null;
-      if (idx != sunriseIndex) return (inner: inner, outer: outer);
-      inner = outer;
-      outer = outer.add(step * sign);
-      if ((outer.difference(sunrise).inHours).abs() >= cap.inHours) break;
-    }
-    return null;
-  }
-
-  // The two edges are independent (all state is immutable or scoped to
-  // the stateless [indexAt] closure), so bracket and bisect them
-  // concurrently to halve the cold-open probe latency.
-  final brackets = await Future.wait([bracket(1), bracket(-1)]);
-  final endBracket = brackets[0];
-  final startBracket = brackets[1];
-  if (endBracket == null || startBracket == null) return null;
-
-  final edges = await Future.wait([
-    _bisectNakshatraEdge(
-      lo: endBracket.inner,
-      hi: endBracket.outer,
-      sunriseIndex: sunriseIndex,
-      findStart: false,
-      indexAt: indexAt,
-    ),
-    _bisectNakshatraEdge(
-      lo: startBracket.outer,
-      hi: startBracket.inner,
-      sunriseIndex: sunriseIndex,
-      findStart: true,
-      indexAt: indexAt,
-    ),
-  ]);
-  final end = edges[0];
-  final start = edges[1];
-  if (end == null || start == null) return null;
-
-  // Guard: a span reaching absurdly far from the day is a failed search,
-  // not a real nakshatra (same 2-day rule as the tithi timings).
-  if (start.difference(normalized).inDays.abs() > 2 ||
-      end.difference(normalized).inDays.abs() > 2) {
-    return null;
-  }
+  final span = await resolveNakshatraSpan(
+    sunrise: sunrise,
+    indexAt: (time) async {
+      final name = await service.calculateNakshatra(
+        time,
+        latitude: params.latitude,
+        longitude: params.longitude,
+      );
+      if (name == null) return null;
+      final idx = hinduNakshatras.indexOf(name);
+      return idx >= 0 ? idx : null;
+    },
+  );
+  if (span == null) return null;
 
   return (
-    index: sunriseIndex,
-    nakshatra: hinduNakshatras[sunriseIndex],
-    start: start,
-    end: end,
+    index: span.index,
+    nakshatra: span.nakshatra,
+    start: span.start,
+    end: span.end,
   );
 });
 

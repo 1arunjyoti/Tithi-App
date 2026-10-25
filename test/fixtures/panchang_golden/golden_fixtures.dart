@@ -147,7 +147,9 @@ List<String> validateGoldenStructure(GoldenFixtureSet set) {
   final panchang = set.panchang;
   final festivals = set.festivals;
 
-  check(panchang.schemaVersion == 1, 'panchang.schemaVersion must be 1');
+  // Panchang schema 2 added nakshatraStartsAt/nakshatraEndsAt/nextNakshatra/
+  // nextSankranti; the festival file did not change.
+  check(panchang.schemaVersion == 2, 'panchang.schemaVersion must be 2');
   check(festivals.schemaVersion == 1, 'festivals.schemaVersion must be 1');
   check(
     panchang.profileId == festivals.profileId,
@@ -270,6 +272,51 @@ List<String> validateGoldenStructure(GoldenFixtureSet set) {
     }
 
     check(e.nakshatraAtSunrise.isNotEmpty, '$path: empty nakshatraAtSunrise');
+    check(e.nextNakshatra.isNotEmpty, '$path: empty nextNakshatra');
+    check(
+      e.nextNakshatra != e.nakshatraAtSunrise,
+      '$path: nextNakshatra must differ from nakshatraAtSunrise',
+    );
+    _checkInstant(errors, path, 'nakshatraStartsAt', e.nakshatraStartsAt);
+    _checkInstant(errors, path, 'nakshatraEndsAt', e.nakshatraEndsAt);
+    check(
+      !e.nakshatraStartsAt.instant.isAfter(e.sunrise.instant),
+      '$path: nakshatraStartsAt ${e.nakshatraStartsAt.raw} must not be after '
+      'sunrise ${e.sunrise.raw}',
+    );
+    check(
+      e.nakshatraEndsAt.instant.isAfter(e.sunrise.instant),
+      '$path: nakshatraEndsAt ${e.nakshatraEndsAt.raw} must be after sunrise '
+      '${e.sunrise.raw}',
+    );
+    final nakshatraSpan = e.nakshatraEndsAt.instant.difference(
+      e.nakshatraStartsAt.instant,
+    );
+    // A nakshatra lasts 19-26 h; the band leaves room for the Moon's
+    // perigee/apogee spread (13.2-17.8 deg/day) without admitting a
+    // mis-bracketed edge.
+    check(
+      nakshatraSpan >= const Duration(hours: 18) &&
+          nakshatraSpan <= const Duration(hours: 30),
+      '$path: nakshatra span ${nakshatraSpan.inMinutes} min is outside 18-30 h',
+    );
+
+    final sankranti = e.nextSankranti;
+    check(sankranti.rashi.isNotEmpty, '$path: empty nextSankranti.rashi');
+    _checkInstant(errors, path, 'nextSankranti.at', sankranti.at);
+    check(
+      sankranti.at.instant.isAfter(e.sunrise.instant),
+      '$path: nextSankranti.at ${sankranti.at.raw} must be after sunrise '
+      '${e.sunrise.raw}',
+    );
+    // The Sun crosses one sign per ~30.4 days, so the first ingress after a
+    // sunrise is at most a sign away plus the solver's slack.
+    check(
+      sankranti.at.instant.difference(e.sunrise.instant) <=
+          const Duration(days: 40),
+      '$path: nextSankranti.at is implausibly far after sunrise',
+    );
+
     check(e.yogaAtSunrise.isNotEmpty, '$path: empty yogaAtSunrise');
     check(e.karanaAtSunrise.isNotEmpty, '$path: empty karanaAtSunrise');
     check(
@@ -630,6 +677,10 @@ class GoldenExpected {
     required this.tithiEndsAt,
     required this.nextTithi,
     required this.nakshatraAtSunrise,
+    required this.nakshatraStartsAt,
+    required this.nakshatraEndsAt,
+    required this.nextNakshatra,
+    required this.nextSankranti,
     required this.yogaAtSunrise,
     required this.karanaAtSunrise,
     required this.sunLongitude,
@@ -647,6 +698,19 @@ class GoldenExpected {
   final GoldenInstant? tithiEndsAt;
   final GoldenTithi? nextTithi;
   final String nakshatraAtSunrise;
+
+  /// Start of the sunrise nakshatra (its last ingress, at or before sunrise).
+  final GoldenInstant nakshatraStartsAt;
+
+  /// End of the sunrise nakshatra (the first instant of [nextNakshatra]).
+  final GoldenInstant nakshatraEndsAt;
+
+  /// Nakshatra that follows [nakshatraAtSunrise] in the canonical order.
+  final String nextNakshatra;
+
+  /// First solar sign ingress strictly after sunrise.
+  final GoldenSankranti nextSankranti;
+
   final String yogaAtSunrise;
   final String karanaAtSunrise;
   final double sunLongitude;
@@ -680,6 +744,19 @@ class GoldenExpected {
         map['nakshatraAtSunrise'],
         '$path.nakshatraAtSunrise',
       ),
+      nakshatraStartsAt: GoldenInstant.fromJson(
+        map['nakshatraStartsAt'],
+        '$path.nakshatraStartsAt',
+      ),
+      nakshatraEndsAt: GoldenInstant.fromJson(
+        map['nakshatraEndsAt'],
+        '$path.nakshatraEndsAt',
+      ),
+      nextNakshatra: _asString(map['nextNakshatra'], '$path.nextNakshatra'),
+      nextSankranti: GoldenSankranti.fromJson(
+        map['nextSankranti'],
+        '$path.nextSankranti',
+      ),
       yogaAtSunrise: _asString(map['yogaAtSunrise'], '$path.yogaAtSunrise'),
       karanaAtSunrise: _asString(
         map['karanaAtSunrise'],
@@ -696,6 +773,25 @@ class GoldenExpected {
       bengaliDate: bengaliDate == null
           ? null
           : GoldenBengaliDate.fromJson(bengaliDate, '$path.bengaliDate'),
+    );
+  }
+}
+
+/// First solar sign ingress after a case's sunrise.
+class GoldenSankranti {
+  const GoldenSankranti({required this.rashi, required this.at});
+
+  /// Sidereal rashi the Sun enters (canonical name, index 0 = Mesha).
+  final String rashi;
+
+  /// Instant of the ingress.
+  final GoldenInstant at;
+
+  factory GoldenSankranti.fromJson(Object? json, String path) {
+    final map = _asMap(json, path);
+    return GoldenSankranti(
+      rashi: _asString(map['rashi'], '$path.rashi'),
+      at: GoldenInstant.fromJson(map['at'], '$path.at'),
     );
   }
 }

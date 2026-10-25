@@ -25,6 +25,8 @@ the calculation baseline.
 ## Current baseline
 
 - Engine tag: `panchang-v3` (`kPanchangCalculationVersion = 3`).
+- Panchang schema: `2`. Schema 2 added `nakshatraStartsAt`, `nakshatraEndsAt`,
+  `nextNakshatra`, and `nextSankranti`; the festival file stays at schema 1.
 - Ayanamsa: Lahiri. Month system: Amanta. Timezone: `Asia/Kolkata`.
 - Sunrise/sunset: native Swiss Ephemeris `swe_rise_trans()` with
   `SE_BIT_HINDU_RISING` - disc centre, no refraction, geocentric, and no
@@ -39,8 +41,15 @@ the calculation baseline.
   `computePanchangData` pipeline, including the Vriddhi filter on a three-day
   window (`date - 1 .. date + 1`).
 - Yoga and karana are derived from the sidereal Sun/Moon longitudes at sunrise.
-- `moonrise` still uses `MoonriseCalculator` (upper-limb rise, local civil
-  day); the Phase 2 Moon migration owns its convention change.
+- Nakshatra edges come from the shared crossing solver through
+  `resolveNakshatraSpan` (`lib/features/panchang/domain/nakshatra_span.dart`),
+  the same path `nakshatraTimingsProvider` uses for the detail sheet.
+- The next Sankranti comes from `findSankrantiInstant`: the first solar sign
+  ingress strictly after sunrise, estimated with the mean solar rate
+  (0.9856 deg/day) and bracketed within ±3 days.
+- `moonrise` uses native `swe_rise_trans` (topocentric, true ecliptic
+  latitude, `PanchangProfile.standard`), not the retired pure-Dart
+  `MoonriseCalculator` series.
 
 ## Coverage
 
@@ -85,6 +94,11 @@ Notable cases:
   "Boishakh-1 boundary defect".
 - `delhi-1800-01-01` / `guwahati-2399-12-31`: bundled-ephemeris range
   boundaries.
+- `kolkata-2026-04-14`: cross-check for the Sankranti lock. The captured Mesha
+  ingress is 09:30:15 IST against a published 09:39 - the ~9 minute ayanamsa
+  variant - so the ingress instants are engine characterization, not an
+  accuracy claim. Every case carries its nakshatra edges and next ingress
+  (schema 2).
 
 ## Lock and update rules
 
@@ -134,9 +148,17 @@ Do not commit the DLL. It is a local test dependency.
 
 ## Schema notes
 
-- `sunrise`, `sunset`, `tithiEndsAt`, and `moonrise` are ISO-8601 timestamps
-  with an explicit `+05:30` offset. `tithiEndsAt` may fall on the next civil
-  date for a late transition.
+- `sunrise`, `sunset`, `tithiEndsAt`, `moonrise`, `nakshatraStartsAt`,
+  `nakshatraEndsAt`, and `nextSankranti.at` are ISO-8601 timestamps with an
+  explicit `+05:30` offset. `tithiEndsAt` may fall on the next civil date for a
+  late transition; `nakshatraStartsAt` may fall on the previous civil date.
+- `nakshatraAtSunrise` is the nakshatra prevailing at sunrise,
+  `nakshatraStartsAt` its last ingress (at or before sunrise),
+  `nakshatraEndsAt` the first instant of `nextNakshatra`. The span is always
+  18-30 h and always straddles sunrise.
+- `nextSankranti` is `{rashi, at}`: the first sidereal sign ingress strictly
+  after sunrise, within 40 days. `rashi` must be the sign after the one that
+  holds the sunrise Sun, and comes from the canonical `rashiNames` list.
 - `tithiAtSunrise` and `nextTithi` store `paksha`, the paksha-relative
   `number` (1–15), and the canonical `name` (`Purnima`/`Amavasya` for 15).
 - `tithiEndsAt` and `nextTithi` are both `null` when the sunrise tithi still
@@ -144,5 +166,6 @@ Do not commit the DLL. It is a local test dependency.
 - `masa` keeps the engine's `Adhika_<Masa>` prefix; `adhika` mirrors it.
   `masaPurnimanta` is the Amanta→Purnimanta display conversion.
 - `bengaliDate` is present only on the Bengali transition cases.
-- `tolerance.eventSeconds` applies to sunrise/sunset/tithiEndsAt/moonrise.
+- `tolerance.eventSeconds` applies to sunrise/sunset/tithiEndsAt/moonrise and
+  to `nakshatraStartsAt`/`nakshatraEndsAt`/`nextSankranti.at`.
   `tolerance.longitudeArcseconds` applies to the Sun/Moon longitudes.

@@ -413,31 +413,3 @@ Future<PanchangData> computePanchangData({
     transitionTithiIndex: transitionIndex,
   );
 }
-
-/// Bisects a nakshatra edge bracketed by [lo]/[hi] to [tolerance].
-///
-/// [sunriseIndex] is the nakshatra whose edge is being found. The solver aims
-/// half a nakshatra past the sunrise index (or before it, for [findStart]) so
-/// the bracket straddles the edge rather than starting exactly on it; both
-/// directions are then the same upward crossing, which is what
-/// [solveAngleCrossing] expects.
-Future<DateTime?> bisectNakshatraEdge({
-  required DateTime lo,
-  required DateTime hi,
-  required int sunriseIndex,
-  required bool findStart,
-  required Future<int?> Function(DateTime time) indexAt,
-  Duration tolerance = const Duration(seconds: 1),
-}) {
-  const segment = 360.0 / 27.0;
-  return solveAngleCrossing(
-    before: lo,
-    after: hi,
-    valueAt: (time) async {
-      final index = await indexAt(time);
-      return index == null ? null : index * segment;
-    },
-    target: (sunriseIndex + (findStart ? -0.5 : 0.5)) * segment,
-    tolerance: tolerance,
-  );
-}
