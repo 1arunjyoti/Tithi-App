@@ -19,6 +19,27 @@ const Duration kCrossingScanStep = Duration(days: 1);
 /// one crossing of the value (a lunation is 29.5 days, a solar year 365).
 const Duration kCrossingSearchWindow = Duration(days: 3);
 
+/// Windows [resolveNewMoonInstant] tries in order.
+///
+/// A mean-motion estimate is normally within a day of the true new moon, so
+/// the ±3 day window brackets it. The ±7 day retry covers an estimate that is
+/// several days off (for example a caller passing a stale tithi) without
+/// spanning two lunations, which would make "the first upward wrap" ambiguous.
+const List<Duration> kNewMoonSearchWindows = <Duration>[
+  kCrossingSearchWindow,
+  Duration(days: 7),
+];
+
+/// Thrown when a crossing the calendar cannot proceed without has no root.
+class CrossingResolutionException implements Exception {
+  const CrossingResolutionException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'CrossingResolutionException: $message';
+}
+
 /// The new-moon instant inside `estimate ± searchWindow`, to [tolerance].
 ///
 /// [elapsedDegreesAt] is the Sun-Moon separation in [0, 360) degrees. Returns
@@ -39,6 +60,33 @@ Future<DateTime?> findNewMoonInstant({
     scanStep: scanStep,
     tolerance: tolerance,
   );
+}
+
+/// The new-moon instant near [estimate], retrying with wider windows.
+///
+/// Unlike [findNewMoonInstant] this never degrades to a noon estimate. If
+/// every window in [windows] holds no upward wrap it returns null, and callers
+/// are expected to fail loudly instead of returning a time that can be half a
+/// day off: a new moon on the wrong side of a Sankranti flips the Adhika
+/// verdict for the whole lunation.
+Future<DateTime?> resolveNewMoonInstant({
+  required DateTime estimate,
+  required Future<double?> Function(DateTime instant) elapsedDegreesAt,
+  List<Duration> windows = kNewMoonSearchWindows,
+  Duration scanStep = kCrossingScanStep,
+  Duration tolerance = const Duration(seconds: 1),
+}) async {
+  for (final window in windows) {
+    final solved = await findNewMoonInstant(
+      estimate: estimate,
+      elapsedDegreesAt: elapsedDegreesAt,
+      searchWindow: window,
+      scanStep: scanStep,
+      tolerance: tolerance,
+    );
+    if (solved != null) return solved;
+  }
+  return null;
 }
 
 /// The instant the Sun enters `boundaryDegrees` (a Sankranti), to [tolerance].

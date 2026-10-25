@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
-import '../../features/panchang/domain/root_solver.dart';
 import '../../providers/panchang_provider.dart';
 import '../solar_events_service.dart';
 import 'bengali_calendar_data.dart';
+import 'bengali_month_start.dart';
 
 final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
   return BengaliCalendarService(ref);
@@ -88,12 +88,6 @@ class BengaliCalendarService {
       location: location,
     );
     return pos.longitude;
-  }
-
-  /// Relative longitude of [sunLng] past [boundary], in [0, 360).
-  /// Current sign -> [0, 30); previous sign -> [330, 360).
-  static double _relPastBoundary(double sunLng, double boundary) {
-    return (sunLng - boundary + 360) % 360;
   }
 
   /// Calculates the Bengali Date (West Bengal System) using Sun's position.
@@ -246,179 +240,32 @@ class BengaliCalendarService {
     return resolved;
   }
 
-  /// Finds Boishakh-1-style month start: bracket the sankranti between two
-  /// local noons (estimate from degrees-in-sign, +/-3d scan), bisect the
-  /// ~24h window to ~20s, then apply the Bengal rule (month starts the day
-  /// after the sankranti calendar date).
+  /// Finds Boishakh-1-style month start: solve the Sankranti to a second with
+  /// the shared crossing solver, then apply the Bengal rule (the month starts
+  /// the day after the Sankranti calendar date).
   ///
   /// Returns the month the civil day containing [noon] belongs to, which is
   /// not always [monthIndex]: the Sun enters the new sign before the Bengal
-  /// month starts, so the sankranti civil day belongs to the outgoing month.
+  /// month starts, so the Sankranti civil day belongs to the outgoing month.
   /// In that case the previous month's start is resolved and returned with
   /// its own index (e.g. 2026-04-14 is Choitro 30, 1432, not Boishakh 1).
+  ///
+  /// Delegates to [resolveBengaliMonthStart], which owns the estimate, the
+  /// 35-day guard scan and the loud failure when neither can find an ingress.
   Future<({int index, DateTime start})> _resolveMonthStart({
     required int monthIndex,
     required DateTime noon,
     required double sunLngNow,
     required GeographicLocation location,
     bool allowMonthBacktrack = true,
-  }) async {
-    final double boundary = monthIndex * 30.0;
-    final double degInSign = _relPastBoundary(sunLngNow, boundary);
-
-    // Guard: callers must pass a noon whose Sun is inside [boundary,
-    // boundary+30). A mismatched boundary (e.g. getMonthStart probing a
-    // neighbouring month) yields degInSign up to ~359, which would shoot
-    // the estimate ~a year off and poison the month grid (blank/huge
-    // months). Fall back to scanning around noon in that case.
-    final bool estimateValid = degInSign < 35;
-    // Mean sun motion ~0.9856 deg/day.
-    final estIngressNoon = estimateValid
-        ? noon.subtract(Duration(minutes: (degInSign / 0.9856 * 1440).round()))
-        : noon;
-    final estNoon = DateTime(
-      estIngressNoon.year,
-      estIngressNoon.month,
-      estIngressNoon.day,
-      12,
+  }) {
+    return resolveBengaliMonthStart(
+      monthIndex: monthIndex,
+      noon: noon,
+      sunLngNow: sunLngNow,
+      sunLongitudeAt: (instant) => _sunLongitude(instant, location),
+      allowMonthBacktrack: allowMonthBacktrack,
     );
-
-    // Bracket: consecutive noons straddling the boundary.
-    DateTime? beforeNoon;
-    DateTime? afterNoon;
-    for (int d = -3; d <= 3; d++) {
-      final a = estNoon.add(Duration(days: d));
-      final b = a.add(const Duration(days: 1));
-      final relA = _relPastBoundary(await _sunLongitude(a, location), boundary);
-      if (relA <= 180) continue; // already in the new sign
-      final relB = _relPastBoundary(await _sunLongitude(b, location), boundary);
-      if (relB <= 180 && relB < 32) {
-        beforeNoon = a;
-        afterNoon = b;
-        break;
-      }
-    }
-
-    // Fallback: full backward scan (up to one max-length month) from noon.
-    if (beforeNoon == null || afterNoon == null) {
-      DateTime cursor = noon;
-      double relCursor = _relPastBoundary(
-        await _sunLongitude(cursor, location),
-        boundary,
-      );
-      // If noon itself is somehow pre-ingress (shouldn't happen since
-      // monthIndex came from this noon), step forward instead.
-      if (relCursor > 180) {
-        for (int i = 1; i <= 35; i++) {
-          cursor = noon.add(Duration(days: i));
-          relCursor = _relPastBoundary(
-            await _sunLongitude(cursor, location),
-            boundary,
-          );
-          if (relCursor <= 180) {
-            afterNoon = cursor;
-            beforeNoon = cursor.subtract(const Duration(days: 1));
-            break;
-          }
-          // Let gestures/frames interleave during long FFI scans.
-          if (i % 8 == 0) await Future<void>.delayed(Duration.zero);
-        }
-      } else {
-        for (int i = 0; i < 35; i++) {
-          final prev = cursor.subtract(const Duration(days: 1));
-          final relPrev = _relPastBoundary(
-            await _sunLongitude(prev, location),
-            boundary,
-          );
-          if (relPrev > 180) {
-            beforeNoon = prev;
-            afterNoon = cursor;
-            break;
-          }
-          cursor = prev;
-          // Let gestures/frames interleave during long FFI scans.
-          if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
-        }
-      }
-    }
-
-    if (beforeNoon == null || afterNoon == null) {
-      // Last resort: historic approximation (Apr 14 anchor). Day numbers
-      // may be off by ~1 but never 5..32.
-      final approx = noon.subtract(Duration(days: degInSign ~/ 1));
-      return (
-        index: monthIndex,
-        start: DateTime(approx.year, approx.month, approx.day),
-      );
-    }
-
-    // Solve the ingress to the second with the shared crossing primitive. The
-    // bracket is one day wide, so this is ~17 samples instead of the old
-    // 12-round (~20 s) bisection, and the same code path as the panchang's
-    // new moon and tithi edges.
-    final ingress = await solveAngleCrossing(
-      before: beforeNoon,
-      after: afterNoon,
-      valueAt: (instant) => _sunLongitude(instant, location),
-      target: boundary,
-    );
-    if (ingress == null) {
-      // The bracket passed the sign test but a sample failed (or the solver
-      // rejected it). Keep the historic approximation instead of returning a
-      // month start a year away.
-      final approx = noon.subtract(Duration(days: degInSign ~/ 1));
-      return (
-        index: monthIndex,
-        start: DateTime(approx.year, approx.month, approx.day),
-      );
-    }
-
-    // Bengal rule: month starts the day after the sankranti calendar date.
-    final sankrantiDay = DateTime(ingress.year, ingress.month, ingress.day);
-    final monthStart = sankrantiDay.add(const Duration(days: 1));
-    // The sankranti is on this civil day, so the Bengal rule gives the day to
-    // the outgoing month. Resolve that month instead of returning day 1 of a
-    // month that begins tomorrow - the old noon fallback here produced two
-    // Boishakh 1s (2026-04-14 and 2026-04-15).
-    if (monthStart.isAfter(noon)) {
-      if (allowMonthBacktrack) {
-        // The last day of the outgoing month: noon the day before
-        // [monthStart], whose Sun is inside the previous boundary.
-        final prevNoon = DateTime(
-          monthStart.year,
-          monthStart.month,
-          monthStart.day,
-          12,
-        ).subtract(const Duration(days: 1));
-        final prevIndex = (monthIndex + 11) % 12;
-        return _resolveMonthStart(
-          monthIndex: prevIndex,
-          noon: prevNoon,
-          sunLngNow: await _sunLongitude(prevNoon, location),
-          location: location,
-          // One step is enough: the outgoing month's start is 29-32 days
-          // before [monthStart], so it cannot land on its own sankranti day.
-          allowMonthBacktrack: false,
-        );
-      }
-      // Unreachable from the step above; keep the grid bounded rather than
-      // recursing.
-      return (
-        index: monthIndex,
-        start: DateTime(noon.year, noon.month, noon.day),
-      );
-    }
-    // Sanity: the start of the month containing `noon` must lie within
-    // (noon - 32d, noon]. Anything else is a mis-resolution (e.g. a
-    // neighbouring-month probe) - return the noon-anchored fallback so the
-    // calendar grid stays bounded instead of going blank/huge.
-    if (noon.difference(monthStart).inDays >= 32) {
-      return (
-        index: monthIndex,
-        start: DateTime(noon.year, noon.month, noon.day),
-      );
-    }
-    return (index: monthIndex, start: monthStart);
   }
 
   /// returns the Gregorian Date for the 1st of the given Bengali Month/Year

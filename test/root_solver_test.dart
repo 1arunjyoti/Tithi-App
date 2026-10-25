@@ -117,6 +117,24 @@ void main() {
         isNull,
       );
     });
+
+    test('does not solve a descending crossing', () async {
+      // Arrange: residual goes +1 -> -1 across the bracket. The contract is
+      // upward-only, so this must return null rather than a root.
+      final origin = DateTime(2026, 10, 24);
+      final pivot = origin.add(const Duration(hours: 1));
+
+      // Act
+      final solved = await solveRoot(
+        before: origin,
+        after: origin.add(const Duration(hours: 2)),
+        residualAt: (instant) async =>
+            instant.isBefore(pivot) ? 1.0 : -1.0,
+      );
+
+      // Assert
+      expect(solved, isNull);
+    });
   });
 
   group('solveAngleCrossing', () {
@@ -206,6 +224,49 @@ void main() {
 
       // Act
       final solved = await findNewMoonInstant(
+        estimate: estimate,
+        elapsedDegreesAt: (instant) async => 120,
+      );
+
+      // Assert
+      expect(solved, isNull);
+    });
+  });
+
+  group('resolveNewMoonInstant', () {
+    test('widens the window when the estimate is days off', () async {
+      // Arrange: the true new moon is 5 days before the estimate, so the
+      // default ±3 day window starts after it and holds no wrap. The ±7 day
+      // retry must still find the exact instant instead of a noon estimate.
+      final trueNewMoon = DateTime(2026, 10, 10, 4, 30);
+      final estimate = trueNewMoon.add(const Duration(days: 5));
+      final sampler = _linearSampler(
+        origin: trueNewMoon,
+        startDegrees: 0,
+        degreesPerDay: 12.19,
+      );
+
+      // Act
+      final solved = await resolveNewMoonInstant(
+        estimate: estimate,
+        elapsedDegreesAt: sampler,
+      );
+
+      // Assert
+      expect(solved, isNotNull);
+      expect(
+        solved!.difference(trueNewMoon).inSeconds.abs(),
+        lessThanOrEqualTo(1),
+      );
+    });
+
+    test('returns null when every window fails', () async {
+      // Arrange: flat value, so widening cannot manufacture a crossing. The
+      // service turns this into a loud failure rather than a noon guess.
+      final estimate = DateTime(2026, 10, 10, 12);
+
+      // Act
+      final solved = await resolveNewMoonInstant(
         estimate: estimate,
         elapsedDegreesAt: (instant) async => 120,
       );

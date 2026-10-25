@@ -30,6 +30,11 @@ double signedAngleDelta(double value, double target) {
 /// verdict flicker when a coarse estimate landed on the far side of a
 /// Sankranti.
 ///
+/// Only upward crossings (negative -> positive residual) are solved. A
+/// descending crossing fails the up-front check and returns null; callers that
+/// need one must invert the sampler (e.g. sample `-value` or shift the target
+/// by 180 degrees) so the crossing is upward again.
+///
 /// [residualAt] may return null (a failed ephemeris read); that aborts the
 /// search instead of guessing.
 ///

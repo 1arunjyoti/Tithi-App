@@ -21,6 +21,30 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Precise new-moon and Bengali month-start failures
+
+A new moon or Bengali month start that cannot be resolved now fails visibly
+instead of silently shifting by half a day and potentially flipping the Adhika
+month.
+
+- `resolveNewMoonInstant` (`lib/features/panchang/domain/panchang_crossings.dart`)
+  retries the bracket at ±7 days; `_refineNewMoonInstant` then throws
+  `CrossingResolutionException`. The old "best of seven noons" fallback
+  (±12 h) is gone.
+- Bengali month starts now resolve through `resolveBengaliMonthStart`
+  (`lib/services/bengali_calendar/bengali_month_start.dart`), a pure function
+  over a Sun-longitude sampler. It routes through `findSankrantiInstant` (so
+  the tested helper is the production path), keeps the 35-day guard scan, and
+  throws `BengaliMonthStartException` instead of using the Apr-14
+  approximation.
+- `solveRoot` is documented as upward-only (a descending crossing returns
+  null). New tests: `test/bengali_month_start_test.dart`,
+  `test/nakshatra_edge_test.dart`, plus widening/failure and descending cases
+  in `test/root_solver_test.dart`.
+- Deferred: yoga/karana transition call sites, and fixture values for
+  nakshatra edges and Sankranti instants (their solver is already locked via
+  `tithiEndsAt`).
+
 ### Ephemeris install fails loudly instead of silently
 
 The app now verifies its bundled Swiss Ephemeris data and explains what to do
