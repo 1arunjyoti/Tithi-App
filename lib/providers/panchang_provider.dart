@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/async/keep_alive.dart';
 import '../features/panchang/data/panchang_cache.dart';
 import '../features/panchang/domain/nakshatra_span.dart';
+import '../features/panchang/domain/tithi_span.dart';
 import '../features/panchang/domain/tithi_transitions.dart';
 import '../features/panchang/domain/yoga_karana_span.dart';
 import '../models/festival.dart';
@@ -535,29 +536,25 @@ final tithiTimingsProvider =
         await service.init();
       }
 
-      // Calculate start and end times via binary search in the native service
-      final startTime = await service.calculateTithiStartTime(
-        params.date,
-        params.tithiIndex,
-        latitude: params.latitude,
-        longitude: params.longitude,
+      // The elapsed Moon-minus-Sun separation is the same quantity the day
+      // pipeline solves its tithi transitions with, so the sheet's span is
+      // second-precise instead of the retired 1-minute binary search. The
+      // Kshaya guard lives in [resolveTithiSpan].
+      return resolveTithiSpan(
+        date: params.date,
+        tithiIndex: params.tithiIndex,
+        elongationAt: (time) async {
+          final lons = await service.calculateSunMoonLongitudes(
+            time,
+            latitude: params.latitude,
+            longitude: params.longitude,
+          );
+          if (lons == null) return null;
+          var elapsed = lons.moon - lons.sun;
+          if (elapsed < 0) elapsed += 360;
+          return elapsed;
+        },
       );
-
-      final endTime = await service.calculateTithiEndTime(
-        params.date,
-        params.tithiIndex,
-        latitude: params.latitude,
-        longitude: params.longitude,
-      );
-
-      // Guard: a tithi lasts <26h, so a span starting/ending more than 2
-      // days from the festival day belongs to another lunation (Kshaya).
-      if (startTime.difference(params.date).inDays.abs() > 2 ||
-          endTime.difference(params.date).inDays.abs() > 2) {
-        return null;
-      }
-
-      return (start: startTime, end: endTime);
     });
 
 // Phase 2: canonical implementation lives in

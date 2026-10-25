@@ -585,6 +585,30 @@ observance decisions with native Swiss Ephemeris rise/set results.
   `test/moon_events_test.dart` pins the convention, the no-rise contract, the
   fallbacks and the resolver wiring.
 
+### Timing accuracy: what shipped
+
+- One tithi-span resolver, `resolveTithiSpan`
+  (`lib/features/panchang/domain/tithi_span.dart`): it scans outward from the
+  festival day (2 h steps, ±2 days), brackets both edges and solves them with
+  `solveAngleCrossing`, so a span is second-precise and a Kshaya tithi returns
+  null. `tithiTimingsProvider` and `FestivalExportService` share it;
+  `PanchangService`'s 1-minute `calculateTithiStartTime` /
+  `calculateTithiEndTime` and the ±15-day `_findNearestTithiOccurrence` scan
+  were removed.
+- The fixture's 78 non-null `tithiEndsAt` values were recaptured from the
+  current engine. The Phase 2 capture bisected to a minute, so six cities
+  stored instants up to 50 s apart for one global tithi end - most of the 60 s
+  tolerance. Cases that share a sunrise tithi now agree to the second, and
+  `test/panchang_golden_fixture_test.dart` enforces ≤ 2 s.
+- The one no-rise case (`mumbai-2026-09-04`) is now falsifiable: the engine
+  test requires a rise on both neighbouring days with a gap over 24 h, so a
+  lookup that returns null for every day fails.
+- `delhi-1800-01-01` `moonrise` was re-rendered from truncated LMT `+05:53` to
+  `+05:30`; the instant is unchanged (the old string parsed 20 s off).
+- The harness README and skip reason now name the real IST dependency: the day
+  pipeline is anchored in the device zone because the harness does not pass
+  `timezoneId`, while moonrise itself already uses the place zone.
+
 ## Phase 6 — platform, data, and licensing delivery
 
 - Verify every Android ABI shipped by the app with reproducible CMake builds.

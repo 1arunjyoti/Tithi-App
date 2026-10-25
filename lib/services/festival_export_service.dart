@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../features/countdown/domain/target_resolution.dart';
 import '../features/panchang/domain/panchang_day.dart';
 import '../features/panchang/domain/panchang_day_resolver.dart';
+import '../features/panchang/domain/tithi_span.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
@@ -174,25 +175,25 @@ class FestivalExportService {
         festival.tithi >= 1 &&
         festival.nakshatraCondition == null) {
       final observedIndex = festival.resolveTithiIndex(panchang.paksha);
-      begins = await service.calculateTithiStartTime(
-        occurrence,
-        observedIndex,
-        latitude: latitude,
-        longitude: longitude,
+      // Second-precise boundaries through the shared crossing solver; the
+      // Kshaya guard (no occurrence within two days) is part of the resolver.
+      final span = await resolveTithiSpan(
+        date: occurrence,
+        tithiIndex: observedIndex,
+        elongationAt: (time) async {
+          final lons = await service.calculateSunMoonLongitudes(
+            time,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          if (lons == null) return null;
+          var elapsed = lons.moon - lons.sun;
+          if (elapsed < 0) elapsed += 360;
+          return elapsed;
+        },
       );
-      ends = await service.calculateTithiEndTime(
-        occurrence,
-        observedIndex,
-        latitude: latitude,
-        longitude: longitude,
-      );
-      // Kshaya guard: a span further than 2 days out belongs to another
-      // lunation — report null rather than a wrong-month span.
-      if (begins.difference(occurrence).inDays.abs() > 2 ||
-          ends.difference(occurrence).inDays.abs() > 2) {
-        begins = null;
-        ends = null;
-      }
+      begins = span?.start;
+      ends = span?.end;
     }
 
     final isNakshatraObserved = festival.nakshatraCondition != null;
