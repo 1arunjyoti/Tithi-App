@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/foundation.dart'
     show FlutterError, TargetPlatform;
 import 'package:flutter/services.dart' show AssetBundle;
@@ -21,6 +22,21 @@ const List<String> kEphemerisAssets = <String>[
 
 /// Asset folder the files are loaded from.
 const String _assetDirectory = 'assets/ephe';
+
+/// SHA-256 of each bundled `.se1` file, as shipped in [kEphemerisAssets].
+///
+/// Size and the `SWISSEPH` header cannot tell a truncated file from a complete
+/// one once the cut lands past the header, and cannot tell this build's
+/// ephemeris from another. This map is the build manifest: the installer checks
+/// the asset before copying it and the installed copy on every launch.
+///
+/// `test/panchang_init_test.dart` recomputes these hashes from `assets/ephe/`,
+/// so replacing a data file without updating the manifest fails the suite.
+const Map<String, String> kEphemerisAssetSha256 = {
+  'seas_18.se1': '5fd9c2aa1654e37c09a6aeb558076e795409b7dc4bd948ebc0faa7d4a7686b5b',
+  'semo_18.se1': 'ecfa54dbf5bc0b5a9bc3e04ed28629a821e98625eacae38f4070593bba0e2980',
+  'sepl_18.se1': '0b7e416e3c1be9e6a0dd1d711dae7f7685793a0e7df13f76363a493dc27b6ea1',
+};
 
 /// Every Swiss Ephemeris `.se1` file starts with the ASCII header
 /// `SWISSEPH  1\r\n`. Only the first word is checked: the digit is a file
@@ -121,11 +137,18 @@ void ensureNativeEngineInstalled({
 /// Returns the directory Swiss Ephemeris should be pointed at.
 ///
 /// A file is copied only when the installed copy is missing or fails
-/// verification (size + `SWISSEPH` header). The old "exists, so keep it" check
-/// trusted a copy that a killed first launch or a corrupt install could have
-/// left truncated, and Swiss Ephemeris then failed later with an opaque
-/// `swe_calc` error far from the cause.
-Future<String> copyEphemerisFiles(AssetBundle bundle) async {
+/// verification (size + `SWISSEPH` header + SHA-256 from [sha256ByFile]). The
+/// old "exists, so keep it" check trusted a copy that a killed first launch or
+/// a corrupt install could have left truncated, and Swiss Ephemeris then failed
+/// later with an opaque `swe_calc` error far from the cause.
+///
+/// [sha256ByFile] is a parameter rather than a direct read of
+/// [kEphemerisAssetSha256] so tests can install synthetic bytes; production
+/// callers use the default.
+Future<String> copyEphemerisFiles(
+  AssetBundle bundle, {
+  Map<String, String> sha256ByFile = kEphemerisAssetSha256,
+}) async {
   final appDir = await getApplicationDocumentsDirectory();
   final epheDir = Directory(p.join(appDir.path, 'ephe'));
 
@@ -143,11 +166,26 @@ Future<String> copyEphemerisFiles(AssetBundle bundle) async {
   }
 
   for (final name in kEphemerisAssets) {
+    final expected = sha256ByFile[name];
+    if (expected == null) {
+      // Unreachable while kEphemerisAssets and kEphemerisAssetSha256 are in
+      // sync (a test enforces that). Fail loudly instead of silently skipping
+      // verification if someone adds a file to only one of them.
+      throw EphemerisAssetException(
+        'Tithi has no checksum for its "$name" ephemeris file, so the install '
+        'cannot be verified. This is a build configuration error: add $name to '
+        'kEphemerisAssetSha256 in lib/services/panchang_init/panchang_init.dart.',
+        file: name,
+      );
+    }
+
     final target = File(p.join(epheDir.path, name));
-    if (await _invalidReason(target) == null) continue;
+    if (await _invalidReason(target, expectedSha256: expected) == null) {
+      continue;
+    }
 
     final bytes = await _readAsset(bundle, name);
-    final assetProblem = _invalidBytesReason(bytes);
+    final assetProblem = _invalidBytesReason(bytes, expectedSha256: expected);
     if (assetProblem != null) {
       throw EphemerisAssetException(
         'The Swiss Ephemeris file "$name" bundled with the app is not usable '
@@ -157,7 +195,7 @@ Future<String> copyEphemerisFiles(AssetBundle bundle) async {
       );
     }
 
-    await _writeAtomically(target, bytes);
+    await _writeAtomically(target, bytes, expectedSha256: expected);
   }
 
   return epheDir.path;
@@ -188,8 +226,12 @@ Future<Uint8List> _readAsset(AssetBundle bundle, String name) async {
 ///
 /// The rename is atomic within a filesystem, so an interrupted write leaves
 /// either the previous file or no file - never a half-written one that would
-/// pass the next launch's size check.
-Future<void> _writeAtomically(File target, Uint8List bytes) async {
+/// pass the next launch's verification.
+Future<void> _writeAtomically(
+  File target,
+  Uint8List bytes, {
+  String? expectedSha256,
+}) async {
   final name = p.basename(target.path);
   final part = File('${target.path}.part');
   try {
@@ -206,7 +248,7 @@ Future<void> _writeAtomically(File target, Uint8List bytes) async {
     );
   }
 
-  final problem = await _invalidReason(target);
+  final problem = await _invalidReason(target, expectedSha256: expectedSha256);
   if (problem != null) {
     throw EphemerisAssetException(
       'The Swiss Ephemeris file "$name" was written to ${target.path} but did '
@@ -218,7 +260,11 @@ Future<void> _writeAtomically(File target, Uint8List bytes) async {
 }
 
 /// Returns why [file] is not a usable ephemeris file, or `null` when it is.
-Future<String?> _invalidReason(File file) async {
+///
+/// [expectedSha256] is the manifest entry for this file. When supplied, the
+/// whole file is hashed, which catches a copy that kept a valid size and header
+/// but lost or gained bytes in the middle.
+Future<String?> _invalidReason(File file, {String? expectedSha256}) async {
   final FileStat stat;
   try {
     stat = await file.stat();
@@ -242,6 +288,13 @@ Future<String?> _invalidReason(File file) async {
     } finally {
       await handle.close();
     }
+
+    if (expectedSha256 != null) {
+      final digest = await file.openRead().transform(sha256).single;
+      if (digest.toString() != expectedSha256) {
+        return 'its contents do not match the expected checksum';
+      }
+    }
   } on FileSystemException {
     return 'it cannot be read';
   }
@@ -249,12 +302,16 @@ Future<String?> _invalidReason(File file) async {
 }
 
 /// Same checks as [_invalidReason], applied to bytes still in memory.
-String? _invalidBytesReason(Uint8List bytes) {
+String? _invalidBytesReason(Uint8List bytes, {String? expectedSha256}) {
   if (bytes.length < _minSe1Bytes) return 'it is only ${bytes.length} bytes';
   for (var i = 0; i < _se1Magic.length; i++) {
     if (bytes[i] != _se1Magic[i]) {
       return 'it does not start with the Swiss Ephemeris header';
     }
+  }
+  if (expectedSha256 != null &&
+      sha256.convert(bytes).toString() != expectedSha256) {
+    return 'its checksum does not match the build manifest';
   }
   return null;
 }

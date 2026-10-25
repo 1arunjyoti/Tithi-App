@@ -21,6 +21,63 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Licensing resolved: AGPLv3, with install docs that match
+The project is now explicitly AGPLv3 end to end, and consumers are told how to
+get the fixed package instead of the unfixed upstream one.
+
+- Root `license`, `packages/jyotish/LICENSE` and the READMEs are AGPLv3; the
+  upstream wrapper's MIT text is kept in
+  `packages/jyotish/LICENSE-MIT-upstream` and still covers the upstream
+  portions of the code. The choice is recorded (2026-10-25) in
+  `packages/jyotish/NOTICE`.
+- `publish_to: none` stays because the `jyotish` name belongs to the upstream
+  pub.dev package, not because of the license; `packages/jyotish/README.md`
+  installs it as a git dependency on `1arunjyoti/Tithi-App` with
+  `path: packages/jyotish`.
+- The unused prebuilt `native/swisseph/swisseph-master/libswisseph.dylib` was
+  deleted: AGPL binary, unclear provenance, and no build target referenced it.
+
+### Ephemeris assets are checksum-verified before and after install
+A corrupted or mismatched `.se1` now fails on launch with a clear message
+instead of surfacing later as an opaque `swe_calc` error.
+
+- `kEphemerisAssetSha256` (`lib/services/panchang_init/panchang_init.dart`) is
+  the build manifest: the installer checks the bundled asset before copying it
+  and the installed copy on every launch, on top of the size + `SWISSEPH`
+  header check.
+- Replacing a file in `assets/ephe/` without updating the manifest fails
+  `test/panchang_init_test.dart`, which recomputes the hashes from disk.
+- `copyEphemerisFiles` takes `sha256ByFile` (defaults to the const manifest) so
+  tests can install synthetic bytes.
+
+### A failed ephemeris install is visible on every screen
+The error banner moved out of the home body and above the navigator, so pushed
+screens and dialogs show it too.
+
+- `PanchangInitFailureOverlay`
+  (`lib/widgets/panchang_init_failure_overlay.dart`) is mounted from
+  `MaterialApp.builder`: it returns the app untouched when init succeeds, and on
+  failure puts `PanchangInitErrorBanner` above it and removes the status-bar
+  inset the banner covers so an app bar does not pad twice.
+- The home-only `PanchangInitErrorBanner` in `lib/screens/home_screen.dart` is
+  gone; retry still invalidates `panchangInitProvider`.
+- Tests: `test/panchang_init_failure_overlay_test.dart`.
+
+### CI builds the native engine and gates analyze + tests
+Every push and PR now runs the analyzer and the full suite with a real Swiss
+Ephemeris library instead of failing on a host without one.
+
+- `.github/workflows/ci.yml` compiles the nine C sources from
+  `packages/jyotish/native/swisseph/swisseph-master/src` with
+  `gcc -shared -fPIC`, exports `SWISSEPH_LIB_PATH`, pins `TZ=Asia/Kolkata`,
+  then runs `flutter analyze`, `flutter test` and the package's own tests.
+- Keep that file list in sync with `SWISSEPH_SRC` in
+  `packages/jyotish/android/src/main/cpp/CMakeLists.txt`.
+- `swisseph_bindings.dart` no longer contains a hardcoded developer macOS path;
+  off Android the supported route is `SWISSEPH_LIB_PATH`, then the platform
+  loader.
+- The analyzer baseline is 0 issues, which is what lets the gate exist.
+
 ### A broken native engine fails startup instead of silently approximating
 
 If the native Swiss Ephemeris library does not load, the home screen now says

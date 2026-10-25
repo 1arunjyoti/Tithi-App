@@ -308,7 +308,8 @@ For issues or questions:
 
 ## License
 
-This example app follows the same license as the Jyotish library (MIT).
+This example app follows the same license as the Jyotish library (AGPLv3).
+See the package's [LICENSE](../LICENSE) and [NOTICE](../NOTICE).
 
 ## Credits
 

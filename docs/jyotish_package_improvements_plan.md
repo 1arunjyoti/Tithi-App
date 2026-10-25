@@ -650,30 +650,63 @@ observance decisions with native Swiss Ephemeris rise/set results.
   old form only worked while the package sat at `packages/jyotish` in this
   monorepo and broke as soon as it was consumed from the pub cache.
 - Asset validation: `lib/services/panchang_init/panchang_init.dart` verifies
-  each installed `.se1` file (at least 1 KB and a `SWISSEPH` header), re-copies
-  anything that fails, and writes through a sibling `.part` file plus rename so
-  an interrupted first launch cannot leave a truncated file that passes the
-  next launch's check. A missing or corrupt bundled asset throws
-  `EphemerisAssetException` with a user-facing recovery step.
-- Error surface: `PanchangInitErrorBanner`
-  (`lib/widgets/panchang_init_error_banner.dart`) is mounted at the top of the
-  home body and appears when `panchangInitProvider` fails. Without it the
-  calendar's deliberate error-to-empty-map behaviour made a broken install look
-  like a month with no festivals. Retry invalidates the provider.
-- Tests: `test/panchang_init_test.dart` covers valid, truncated, zero-byte and
-  wrong-header installs, atomicity, and both exception paths;
-  `test/panchang_init_error_banner_test.dart` covers the banner and retry;
+  each installed `.se1` file (at least 1 KB, a `SWISSEPH` header, and a SHA-256
+  match against `kEphemerisAssetSha256`), re-copies anything that fails, and
+  writes through a sibling `.part` file plus rename so an interrupted first
+  launch cannot leave a truncated file that passes the next launch's check. The
+  bundled asset is checked against the same manifest *before* it is copied, so a
+  corrupted build fails loudly instead of installing bad data. A missing,
+  corrupt or unlisted asset throws `EphemerisAssetException` with a user-facing
+  recovery step. `test/panchang_init_test.dart` recomputes the hashes from
+  `assets/ephe/`, so replacing a data file without updating the manifest fails
+  the suite instead of silently invalidating every device install.
+- Error surface: `PanchangInitFailureOverlay`
+  (`lib/widgets/panchang_init_failure_overlay.dart`) is mounted from
+  `MaterialApp.builder`, so `PanchangInitErrorBanner` sits above the navigator
+  and follows the user onto every pushed route. Without it the calendar's
+  deliberate error-to-empty-map behaviour made a broken install look like a
+  month with no festivals, and the ~25 other `panchangInitProvider` call sites
+  had no surface at all. On failure the overlay consumes the status-bar inset
+  it covers (`MediaQuery.removePadding`) so an app bar does not pad twice;
+  on success it returns the app untouched. Retry invalidates the provider.
+- Tests: `test/panchang_init_test.dart` covers valid, truncated, zero-byte,
+  wrong-header and wrong-checksum installs, atomicity, the missing-manifest
+  path, and both exception paths; `test/panchang_init_failure_overlay_test.dart`
+  pins "banner above the app, visible on a pushed route, retry clears it";
+  `test/panchang_init_error_banner_test.dart` covers the banner copy and retry;
   `integration_test/native_ephemeris_smoke_test.dart` is the on-device check
   that the assets install, `libswisseph.so` loads and both native calculators
   are active (needs a connected Android device).
-- Licensing: `packages/jyotish/NOTICE` records that the bundled Swiss
-  Ephemeris is AGPLv3-or-commercial from Astrodienst while the Dart/Kotlin
-  wrapper is MIT, and that no license choice has been recorded. `publish_to:
-  none` keeps the package off pub.dev until that decision is made, and the
-  README platform and license claims were corrected to match. This remains a
-  release blocker, not a code task.
-- Deferred: running the on-device smoke test on each ABI, and real native
-  builds for Windows, Linux, macOS and iOS. What is verified today is the
+- Licensing: the AGPLv3 option was chosen and recorded on 2026-10-25
+  (`packages/jyotish/NOTICE`). The repository root `license`, the package
+  `LICENSE` and the docs are AGPLv3; the upstream wrapper's MIT text is
+  preserved in `packages/jyotish/LICENSE-MIT-upstream` and still covers the
+  upstream portions of the code. `publish_to: none` stays, but for a naming
+  reason rather than a licensing one: the `jyotish` name on pub.dev belongs to
+  the upstream project, so the package is consumed as a git/path dependency.
+  `packages/jyotish/README.md` now documents that install route instead of
+  pointing at the unfixed upstream repository.
+- Removed the unused prebuilt `libswisseph.dylib` from
+  `native/swisseph/swisseph-master/`. It shipped an AGPL binary of unclear
+  provenance that no build target referenced; Android compiles the C sources
+  through CMake.
+- `packages/jyotish/lib/src/bindings/swisseph_bindings.dart` no longer contains
+  a hardcoded developer macOS path. Off Android the only supported route is
+  `SWISSEPH_LIB_PATH` (used by tests and desktop hosts), followed by the
+  platform's default loader path.
+- CI: `.github/workflows/ci.yml` builds the same nine Swiss Ephemeris C sources
+  the Android CMake target compiles into `libswisseph.so` on the Linux runner,
+  exports `SWISSEPH_LIB_PATH`, pins `TZ=Asia/Kolkata`, then runs
+  `flutter analyze`, the app suite and the package's own tests. Without that
+  library the Jyotish-backed tests fail rather than skip, which is why the
+  workflow builds it instead of tolerating the failure.
+- Known upstream issue, not fixed here: Flutter warns that `home_widget` and
+  `workmanager_android` apply the Kotlin Gradle Plugin themselves, which a
+  future Flutter will reject. Both are at their latest versions (`home_widget`
+  0.10.0 and `workmanager_android` 0.10.9 still apply it), so this needs an
+  upstream fix; do not silence the warning locally.
+- Deferred: running the on-device smoke test on each ABI (item 20/21), and real
+  native builds for Windows, Linux, macOS and iOS. What is verified today is the
   build side: `flutter build apk --debug` completes with the package-root
   CMake path and the APK contains `libswisseph.so` for `arm64-v8a` (~540 KB),
   `armeabi-v7a` (~509 KB) and `x86_64` (~628 KB). The desktop and iOS targets

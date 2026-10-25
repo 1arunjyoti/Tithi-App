@@ -11,7 +11,7 @@ PanchangData _panchang(DateTime date) {
     date: date,
     rawTithi: 8.5,
     masa: 'Chaitra',
-    allFestivals: const [],
+    allFestivals: [],
     sunrise: DateTime(date.year, date.month, date.day, 6, 30),
     sunset: DateTime(date.year, date.month, date.day, 18),
   );

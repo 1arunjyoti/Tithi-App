@@ -16,7 +16,6 @@ import '../widgets/paksha_hero_card.dart';
 import '../widgets/responsive_layout.dart';
 import '../core/anim/press_scale.dart';
 import '../widgets/home_widget_card.dart';
-import '../widgets/panchang_init_error_banner.dart';
 import '../providers/home_widget_provider.dart';
 
 /// Main home screen with calendar and event list
@@ -264,10 +263,6 @@ class _HomeBody extends ConsumerWidget {
           child: Column(
             children: [
               const SizedBox(height: 8),
-              // Surface a failed ephemeris install instead of letting the
-              // calendar silently render an empty month (it maps provider
-              // errors to `{}`). Collapses to zero height when init is fine.
-              const PanchangInitErrorBanner(),
 
               if (isScheduleView)
                 // Schedule View

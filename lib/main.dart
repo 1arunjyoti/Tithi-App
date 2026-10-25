@@ -23,6 +23,7 @@ import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'widgets/panchang_init_failure_overlay.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -282,7 +283,12 @@ class _TithiAppState extends ConsumerState<TithiApp>
           ),
           child: AnnotatedRegion<SystemUiOverlayStyle>(
             value: overlayStyle,
-            child: child!,
+            // A failed ephemeris install must be visible on every route, not
+            // just on the home screen: most panchangInitProvider consumers
+            // degrade to empty data instead of showing the error themselves.
+            child: PanchangInitFailureOverlay(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
