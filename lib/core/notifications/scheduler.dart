@@ -16,6 +16,7 @@ import '../../services/panchang_service.dart';
 import '../../services/shloka_service.dart';
 import '../../services/storage_service.dart';
 import '../../utils/date_utils.dart';
+import '../location/place_clock.dart';
 import 'festival_store.dart';
 import 'notification_keys.dart';
 import 'scheduling_parts.dart';
@@ -32,10 +33,48 @@ import 'scheduling_parts.dart';
 /// Constructed per call from the owning service
 /// (`NotificationScheduler(plugin: ..., box: ...)`); holds no global state.
 class NotificationScheduler {
-  NotificationScheduler({required this.plugin, required this.box});
+  NotificationScheduler({
+    required this.plugin,
+    required this.box,
+    this.clock = kDeviceClock,
+  });
 
   final FlutterLocalNotificationsPlugin plugin;
   final Box? box;
+
+  /// Clock for "now", every wall time, and the civil date the content covers.
+  ///
+  /// Device clock for live location, the selected place's clock for a place
+  /// picked on the map (see [PlaceClock]). Scheduling on `tz.local` regardless
+  /// is what made a reminder fire on the phone's morning for a panchang day
+  /// that had already ended at the place.
+  final PlaceClock clock;
+
+  tz.Location? get _zone => placeClockLocation(clock);
+
+  DateTime get _now => nowInPlaceClock(clock);
+
+  /// Zone-free civil date of "now" on [clock].
+  DateTime get _civilToday {
+    final now = _now;
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  /// A wall time on [clock]; the device zone when no place zone applies.
+  ///
+  /// Built from calendar fields (not `add(Duration(days: 1))`) so a DST
+  /// transition moves the wall time instead of shifting it by an hour.
+  /// Always a [tz.TZDateTime]: `zonedSchedule` requires one.
+  tz.TZDateTime _wallTime(int year, int month, int day, int hour, int minute) {
+    return tz.TZDateTime(
+      _zone ?? tz.local,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+    );
+  }
 
   /// Get notification time (default 8:00 AM)
   Future<({int hour, int minute})> getNotificationTime() async {
@@ -67,19 +106,18 @@ class NotificationScheduler {
     await shlokaService.init();
 
     final time = await getNotificationTime();
-    final now = tz.TZDateTime.now(tz.local);
+    final now = _now;
 
     final shlokas = shlokaService.getShlokasForNextNDays(7);
 
     for (int i = 0; i < shlokas.length; i++) {
-      var scheduledDate = tz.TZDateTime(
-        tz.local,
+      final scheduledDate = _wallTime(
         now.year,
         now.month,
-        now.day,
+        now.day + i,
         time.hour,
         time.minute,
-      ).add(Duration(days: i));
+      );
 
       // If the calculated time for "today" (i=0) has passed,
       // we might still want to show it if we just enabled it?
@@ -169,7 +207,7 @@ class NotificationScheduler {
     if (festivals.isEmpty) return;
 
     final time = await getNotificationTime();
-    final now = tz.TZDateTime.now(tz.local);
+    final now = _now;
     final today = DateTime(now.year, now.month, now.day);
 
     final notificationDetails = notificationChannel(
@@ -225,8 +263,7 @@ class NotificationScheduler {
       );
 
       if (wantOnDay) {
-        final onDay = tz.TZDateTime(
-          tz.local,
+        final onDay = _wallTime(
           date.year,
           date.month,
           date.day,
@@ -245,14 +282,13 @@ class NotificationScheduler {
         }
       }
       if (wantDayBefore) {
-        final eve = tz.TZDateTime(
-          tz.local,
+        final eve = _wallTime(
           date.year,
           date.month,
-          date.day,
+          date.day - 1,
           time.hour,
           time.minute,
-        ).subtract(const Duration(days: 1));
+        );
         if (!eve.isBefore(now)) {
           await plugin.zonedSchedule(
             id: NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
@@ -390,9 +426,8 @@ class NotificationScheduler {
     final time = await getNotificationTime();
 
     // Calculate next notification time
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
+    final now = _now;
+    var scheduledDate = _wallTime(
       now.year,
       now.month,
       now.day,
@@ -402,7 +437,13 @@ class NotificationScheduler {
 
     // If time has passed today, schedule for tomorrow
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = _wallTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        time.hour,
+        time.minute,
+      );
     }
 
     final notificationDetails = notificationChannel(
@@ -434,11 +475,14 @@ class NotificationScheduler {
     final generated = await buildDailyNotificationContent();
     await box?.put(NotificationKeys.dailyTitle, generated.title);
     await box?.put(NotificationKeys.dailyBody, generated.body);
-    await box?.put(NotificationKeys.dailyContentDate, panchangDateKey(DateTime.now()));
+    await box?.put(
+      NotificationKeys.dailyContentDate,
+      panchangDateKey(_civilToday),
+    );
   }
 
   Future<({String title, String body})> getDailyNotificationContent() async {
-    final todayKey = panchangDateKey(DateTime.now());
+    final todayKey = panchangDateKey(_civilToday);
     final cachedDate = box?.get(NotificationKeys.dailyContentDate) as String?;
     final cachedTitle = box?.get(NotificationKeys.dailyTitle) as String?;
     final cachedBody = box?.get(NotificationKeys.dailyBody) as String?;
@@ -518,7 +562,7 @@ class NotificationScheduler {
       final service = PanchangService();
       await service.init();
 
-      final today = DateTime.now();
+      final today = _civilToday;
       final date = DateTime(today.year, today.month, today.day);
 
       final festivals = await loadFestivalsForNotification();
@@ -642,9 +686,8 @@ class NotificationScheduler {
     // which had collision risk after ~125 sankalpas).
     final notificationId = _getOrCreateSankalpaNotificationId(sankalpa.id);
 
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
+    final now = _now;
+    var scheduledDate = _wallTime(
       now.year,
       now.month,
       now.day,
@@ -654,7 +697,13 @@ class NotificationScheduler {
 
     // If time passed, start tomorrow
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = _wallTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        sankalpa.reminderHour,
+        sankalpa.reminderMinute,
+      );
     }
 
     // Check if end date passed (if we used strict date checking)
@@ -663,10 +712,9 @@ class NotificationScheduler {
 
     // Sankalpa model logic: it has endDate.
     if (scheduledDate.isAfter(
-      tz.TZDateTime.from(
-        sankalpa.endDate,
-        tz.local,
-      ).add(const Duration(days: 1)),
+      tz.TZDateTime.from(sankalpa.endDate, _zone ?? tz.local).add(
+        const Duration(days: 1),
+      ),
     )) {
       // Allow one day grace or stop exactly? Let's stop if past end date.
       return;

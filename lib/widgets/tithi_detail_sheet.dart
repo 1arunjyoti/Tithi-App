@@ -894,7 +894,10 @@ class TithiDetailSheet extends ConsumerWidget {
                         icon: Icons.auto_awesome_outlined,
                         // This sheet opens for any date the user selects, so
                         // "today" is only right when it actually is.
-                        label: DateUtils.isSameDay(panchang.date, DateTime.now())
+                        label: DateUtils.isSameDay(
+                          panchang.date,
+                          ref.watch(todayDateProvider),
+                        )
                             ? l10n.aiAskAboutToday
                             : l10n.aiAskAboutDay,
                         supporting: l10n.aiOpensYourApp,

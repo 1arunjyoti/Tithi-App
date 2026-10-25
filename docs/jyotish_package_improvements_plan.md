@@ -164,11 +164,15 @@ viewing an Indian city gets `Asia/Kolkata`, not the device zone.
 - ODbL attribution is required wherever the data ships:
   `kTimezoneBoundaryAttribution` is shown on the About screen
   (`timezoneDataCredit`).
-- Two product questions remain open and are **not** decided here:
-  `selectedDateProvider` still defaults to the device's "today"
-  (`DateTime.now()`), and a reminder tied to a place-local panchang instant
-  (e.g. a 05:00 puja at the selected place) fires at that instant at the place,
-  not at 05:00 in the user's own zone.
+- Two product questions, now decided: the app runs on one **place clock**.
+  Live location (the "use current location" switch) means the device clock;
+  a place picked on the map means that place's clock, including its civil
+  midnight and its reminder wall times; with neither, the Delhi fallback's
+  clock. `PlaceClock` / `resolvePlaceClock` own that rule, and
+  `LocationService.placeClock` is the single synchronous source. Picking a
+  place turns live location off so the choice actually takes effect. No
+  reminder is anchored to a panchang instant yet (puja kala, nishita); when
+  one is added it should fire at the place instant.
 
 ## Phase 2 — one Panchang day and observance resolver
 

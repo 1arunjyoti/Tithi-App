@@ -21,6 +21,36 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Place clock: device vs selected place
+
+"Today", the midnight rollover and reminder times now follow one explicit clock:
+live location uses the phone's clock, a place picked on the map uses that
+place's clock.
+
+- `PlaceClock` / `resolvePlaceClock` (`lib/core/location/place_clock.dart`):
+  live location -> device; manual place -> its IANA zone; neither -> Delhi
+  (`Asia/Kolkata`). `LocationService.placeClock` is the synchronous source;
+  `placeClockProvider` (`lib/providers/location_provider.dart`) exposes it and
+  must never start location init (it would open Hive in every widget test).
+- Picking a place on the map now turns "use current location" off
+  (`setHomeLocation`). Before, the GPS fix silently won and the pick had no
+  effect. After any place or toggle change call `refreshPlaceContext(ref)`; it
+  also re-derives the notification clock and re-schedules reminders.
+- `todayDateProvider`, `selectedDateProvider`, `focusedMonthProvider`,
+  `heavyFocusedMonthProvider`, `jumpToToday()`, the midnight timer, the resume
+  sync and every `isSameDay(..., DateTime.now())` site read the clock, so the
+  day label, countdowns and highlights cannot disagree.
+- Reminders (`NotificationScheduler`) build their wall times and content date
+  on the clock instead of `tz.local`; the background isolate derives the same
+  clock from `location_enabled` + `home_timezone` (`readPlaceClock`). No
+  reminder is anchored to a panchang instant yet (puja kala, nishita); when one
+  is added it should fire at the place instant.
+- `solarEventsService.setPlaceTimezone(null)` now means "device zone" (live
+  location). `kPlaceContextVersion` 2 -> 3 because the same cache key can now
+  resolve instants in the other zone.
+- Hero location chip appends the zone abbreviation ("Varanasi · IST") only when
+  the place clock differs from the device's.
+
 ### Place timezone from coordinates
 
 A place now carries the time zone it actually observes, so viewing Varanasi from
@@ -47,10 +77,8 @@ New York uses IST instead of the device zone.
   `flutter_local_notifications ^22.3.2` (20.x converted its positional
   parameters to named ones). ODbL credit shown on the About screen
   (`timezoneDataCredit`, `kTimezoneBoundaryAttribution`).
-- Still open, deliberately: `selectedDateProvider` defaults to the device's
-  "today", and a reminder tied to a place-local panchang instant (a 05:00 puja
-  at the selected place) fires at that instant at the place, not at 05:00 in
-  the user's own zone.
+- Superseded by the place clock above: the civil day and reminder wall times
+  follow the selected place when it was picked manually, the device otherwise.
 
 ### Poila Boishakh on the right day
 

@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/location_service.dart';
+import '../services/notification_service.dart';
 import '../services/solar_events_service.dart';
 import '../core/location/location_defaults.dart';
+import '../core/location/place_clock.dart';
 
 /// Provider for LocationService instance
 final locationServiceProvider = Provider<LocationService>((ref) {
@@ -18,7 +20,33 @@ final locationServiceProvider = Provider<LocationService>((ref) {
 final locationInitProvider = FutureProvider<void>((ref) async {
   final service = ref.read(locationServiceProvider);
   await service.init();
+  // The clock reads the service synchronously (see [placeClockProvider]); it
+  // reports the device clock until the box is open, so refresh it now.
+  ref.invalidate(placeClockProvider);
 });
+
+/// Clock driving "today" and reminder wall times (see [PlaceClock]).
+///
+/// Reads the service synchronously and must never *start* location init:
+/// watching [locationInitProvider] here would make every widget that shows
+/// today's date open Hive, path_provider, and the geocoder.
+final placeClockProvider = Provider<PlaceClock>((ref) {
+  return ref.watch(locationServiceProvider).placeClock;
+});
+
+/// Re-reads the place, its zone, the clock, and re-schedules reminders.
+///
+/// One call site instead of four invalidations: forgetting the clock is how
+/// the day label and the reminder wall time drift apart again. Callers must
+/// already have persisted the new place (or toggle) before invoking this.
+void refreshPlaceContext(WidgetRef ref) {
+  ref.invalidate(currentLocationProvider);
+  ref.invalidate(homeLocationProvider);
+  ref.invalidate(placeClockProvider);
+  // Reminders are wall times on the same clock, so a place change has to
+  // re-schedule them too; `init` returns early once initialized.
+  unawaited(NotificationService().rescheduleAfterPlaceChange());
+}
 
 /// Gate for background work that must run AFTER the first-launch location
 /// permission flow (`LocationPermissionWrapper` in main.dart).
@@ -65,11 +93,11 @@ final currentLocationProvider = FutureProvider<LocationData?>((ref) async {
         await service.getCurrentLocation() ?? LocationData.defaultLocation;
   }
 
-  // Bridge until Phase 2's canonical day carries an explicit place context:
-  // publish the zone so call sites that only know latitude/longitude (detail
-  // sheets, notification scheduling, export, Bengali calendar, home widget)
-  // resolve civil time in the selected place's zone instead of the device's.
-  solarEventsService.setPlaceTimezone(location.timezoneId);
+  // Publish the clock's zone so call sites that only know latitude/longitude
+  // (detail sheets, notification scheduling, export, Bengali calendar, home
+  // widget) resolve civil time on the same clock as the day label. Null means
+  // "device zone", which is the live-location mode (see [PlaceClock]).
+  solarEventsService.setPlaceTimezone(service.placeClock.zoneId);
   return location;
 });
 

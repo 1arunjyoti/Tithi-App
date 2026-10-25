@@ -192,8 +192,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         addressLabel,
       );
 
-      ref.invalidate(currentLocationProvider);
-      ref.invalidate(homeLocationProvider);
+      // Re-reads the place, its zone and the clock in one call: the pick now
+      // also stops live location, so "today" moves to this place's day.
+      refreshPlaceContext(ref);
 
       if (mounted) {
         Navigator.pop(context);

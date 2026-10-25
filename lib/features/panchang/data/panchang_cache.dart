@@ -55,7 +55,11 @@ String panchangDateKeyLocal(DateTime date) => panchangDateKey(date);
 /// 2: the place zone is resolved from the coordinates (it used to be the
 /// device zone), so days cached while the device was in another zone hold
 /// instants in the wrong zone.
-const int kPlaceContextVersion = 2;
+/// 3: the place clock decides which zone a day is computed in (live location
+/// uses the device zone, a manually picked place uses its own), so a day
+/// cached under the previous policy can hold instants resolved in the other
+/// zone for the same key.
+const int kPlaceContextVersion = 3;
 
 String locationSignature(double latitude, double longitude) {
   return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'

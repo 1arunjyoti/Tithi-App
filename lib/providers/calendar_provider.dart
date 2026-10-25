@@ -2,15 +2,17 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
+import '../core/location/place_clock.dart';
 import '../models/festival_region.dart';
 import '../models/hindu_month_system.dart';
 import '../services/storage_service.dart';
+import 'location_provider.dart';
 
 /// Notifier that tracks "today's" date and is refreshed at midnight so that
 /// consumers (e.g. [todayPanchangProvider]) automatically reflect the new day.
 class TodayDateNotifier extends Notifier<DateTime> {
   @override
-  DateTime build() => DateTime.now();
+  DateTime build() => nowInPlaceClock(ref.watch(placeClockProvider));
 
   /// Update the tracked date (called by the midnight timer in [main.dart]).
   void setToday(DateTime date) => state = date;
@@ -23,7 +25,7 @@ final todayDateProvider =
 class SelectedDateNotifier extends Notifier<DateTime> {
   @override
   DateTime build() {
-    return DateTime.now();
+    return nowInPlaceClock(ref.watch(placeClockProvider));
   }
 
   void setDate(DateTime date) {
@@ -31,7 +33,7 @@ class SelectedDateNotifier extends Notifier<DateTime> {
   }
 
   void jumpToToday() {
-    state = DateTime.now();
+    state = nowInPlaceClock(ref.read(placeClockProvider));
   }
 }
 
@@ -43,7 +45,7 @@ final selectedDateProvider = NotifierProvider<SelectedDateNotifier, DateTime>(
 class FocusedMonthNotifier extends Notifier<DateTime> {
   @override
   DateTime build() {
-    return DateTime.now();
+    return nowInPlaceClock(ref.watch(placeClockProvider));
   }
 
   void setFocusedMonth(DateTime month) {
@@ -68,7 +70,7 @@ class HeavyMonthNotifier extends Notifier<DateTime> {
     // Owned here (not as a widget global) so the timer is cancelled when
     // the provider is disposed — no leaked Timer holding a stale ref.
     ref.onDispose(() => _timer?.cancel());
-    return DateTime.now();
+    return nowInPlaceClock(ref.watch(placeClockProvider));
   }
 
   void settle(DateTime month) {

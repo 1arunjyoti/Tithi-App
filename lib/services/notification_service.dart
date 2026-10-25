@@ -7,7 +7,8 @@ import '../core/notifications/background_entrypoint.dart'
     show initNotificationWork;
 import '../core/notifications/notification_keys.dart';
 import '../core/notifications/scheduler.dart';
-import '../core/notifications/scheduling_parts.dart';
+import '../core/location/cached_location.dart';
+import '../core/location/place_clock.dart';
 import '../models/sankalpa.dart';
 import 'solar_events_service.dart';
 import 'storage_service.dart';
@@ -45,6 +46,9 @@ class NotificationService {
   Box? _box;
   bool _isInitialized = false;
 
+  /// Place clock for this isolate, derived from the location box.
+  PlaceClock _clock = kDeviceClock;
+
   /// Legacy IANA aliases some devices/ROMs still report. Dart's timezone
   /// database only knows canonical names, so without this map Indian ROMs
   /// reporting Asia/Calcutta (renamed Asia/Kolkata in 2001) would trip the
@@ -56,8 +60,11 @@ class NotificationService {
   // Phase 6b: scheduling engine lives in core/notifications/scheduler.dart
   // as [NotificationScheduler], driven by this explicit seam (plugin + box).
   // Delegates below preserve the public API and the lifecycle guards.
-  NotificationScheduler get _scheduler =>
-      NotificationScheduler(plugin: _notifications, box: _box);
+  NotificationScheduler get _scheduler => NotificationScheduler(
+    plugin: _notifications,
+    box: _box,
+    clock: _clock,
+  );
 
   Future<({int hour, int minute})> getNotificationTime() {
     _ensureInitialized();
@@ -154,18 +161,8 @@ class NotificationService {
       _box = await StorageService().openNotificationSettingsBox();
 
       // The background isolate has no Riverpod container or LocationService,
-      // so publish the persisted place zone here before scheduling. This is
-      // the bridge until Phase 2's canonical day carries an explicit context;
-      // without it, scheduling in that isolate resolves civil time in the
-      // device zone instead of the selected place's zone.
-      try {
-        solarEventsService.setPlaceTimezone(await readLastKnownTimezoneId());
-      } catch (e) {
-        // No location box yet (fresh install / tests): device zone applies.
-        if (kDebugMode) {
-          debugPrint('Place timezone unavailable during init: $e');
-        }
-      }
+      // so derive the place clock from the location box here.
+      await _refreshClock();
 
       // Initialize notifications
       const androidSettings = AndroidInitializationSettings(
@@ -197,66 +194,108 @@ class NotificationService {
       // _getDailyNotificationContent(), so init stays cheap (no ephemeris
       // copy, no Jyotish native init, no tithi calc — PanchangService is not
       // a singleton) when notifications are disabled.
-
-      // SMELL-2: read flags directly from the box (synchronous Hive get) instead
-      // of calling await isEnabled() / await isShlokaEnabled(), which wrap the
-      // same synchronous read in an unnecessary Future.
-      final notificationsEnabled =
-          _box?.get(NotificationKeys.enabled, defaultValue: false) ?? false;
-      final shlokasEnabled =
-          _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ?? false;
-      final festivalsEnabled =
-          _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
-
-      if (kDebugMode) {
-        if (notificationsEnabled || festivalsEnabled) {
-          print(
-            'NotificationService ready - notifications ON'
-            '${shlokasEnabled ? ', shloka ON' : ''}'
-            '${festivalsEnabled ? ', festival ON' : ''}',
-          );
-        } else {
-          print(
-            'NotificationService ready - notifications OFF (nothing scheduled)',
-          );
-        }
-      }
-
-      // Only schedule if enabled. Scheduling failures must not fail init:
-      // a throwing init leaves _isInitialized false, so every later
-      // setEnabled/isEnabled throws ("not initialized") and the settings
-      // toggle snaps back to OFF permanently. Log and continue instead —
-      // the toggle and the periodic WorkManager task will retry scheduling.
-      if (notificationsEnabled) {
-        try {
-          await scheduleDailyNotification();
-        } catch (e) {
-          debugPrint('Failed to reschedule notifications during init: $e');
-        }
-      }
-      // Shloka reminders are independent of the daily master switch.
-      if (shlokasEnabled) {
-        try {
-          await _scheduleUpcomingShlokas();
-        } catch (e) {
-          debugPrint('Failed to reschedule shlokas during init: $e');
-        }
-      }
-      // Festival reminders are independent of the daily master switch so
-      // users can opt into festival-only notifications.
-      if (festivalsEnabled) {
-        try {
-          await _scheduleUpcomingFestivals();
-        } catch (e) {
-          debugPrint('Failed to reschedule festivals during init: $e');
-        }
-      }
+      await _rescheduleEnabled();
     } catch (e) {
       if (kDebugMode) {
         print('Error initializing NotificationService: $e');
       }
       rethrow;
     }
+  }
+
+  /// Re-schedules every enabled reminder.
+  ///
+  /// Shared by [init] and [rescheduleAfterPlaceChange] so the two cannot
+  /// drift. Scheduling failures must not fail init: a throwing init leaves
+  /// `_isInitialized` false, so every later setEnabled/isEnabled throws
+  /// ("not initialized") and the settings toggle snaps back to OFF
+  /// permanently. Log and continue instead - the toggle and the periodic
+  /// WorkManager task retry scheduling.
+  Future<void> _rescheduleEnabled() async {
+    // SMELL-2: read flags directly from the box (synchronous Hive get) instead
+    // of calling await isEnabled() / await isShlokaEnabled(), which wrap the
+    // same synchronous read in an unnecessary Future.
+    final notificationsEnabled =
+        _box?.get(NotificationKeys.enabled, defaultValue: false) ?? false;
+    final shlokasEnabled =
+        _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ?? false;
+    final festivalsEnabled =
+        _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
+
+    if (kDebugMode) {
+      if (notificationsEnabled || festivalsEnabled) {
+        print(
+          'NotificationService ready - notifications ON'
+          '${shlokasEnabled ? ', shloka ON' : ''}'
+          '${festivalsEnabled ? ', festival ON' : ''}',
+        );
+      } else {
+        print(
+          'NotificationService ready - notifications OFF (nothing scheduled)',
+        );
+      }
+    }
+
+    // Only schedule if enabled.
+    if (notificationsEnabled) {
+      try {
+        await scheduleDailyNotification();
+      } catch (e) {
+        debugPrint('Failed to reschedule notifications: $e');
+      }
+    }
+    // Shloka reminders are independent of the daily master switch.
+    if (shlokasEnabled) {
+      try {
+        await _scheduleUpcomingShlokas();
+      } catch (e) {
+        debugPrint('Failed to reschedule shlokas: $e');
+      }
+    }
+    // Festival reminders are independent of the daily master switch so
+    // users can opt into festival-only notifications.
+    if (festivalsEnabled) {
+      try {
+        await _scheduleUpcomingFestivals();
+      } catch (e) {
+        debugPrint('Failed to reschedule festivals: $e');
+      }
+    }
+  }
+
+  /// Re-derives [_clock] from the location box and republishes the place zone.
+  ///
+  /// The background isolate has no Riverpod container or `LocationService`, so
+  /// the box is the only source. Both isolates must agree: live location ->
+  /// device clock, a place picked on the map -> that place's zone, neither ->
+  /// Delhi. A missing box (fresh install, tests) means the device clock.
+  ///
+  /// `openLocationSettingsBox` returns the already-open box when there is one,
+  /// so this is a cheap re-read, not a Hive open per place change.
+  Future<void> _refreshClock() async {
+    try {
+      _clock = readPlaceClock(await StorageService().openLocationSettingsBox());
+    } catch (e) {
+      _clock = kDeviceClock;
+      if (kDebugMode) {
+        debugPrint('Place clock unavailable: $e');
+      }
+    }
+    solarEventsService.setPlaceTimezone(_clock.zoneId);
+  }
+
+  /// Re-derives the place clock and re-schedules after the home place changed.
+  ///
+  /// [init] returns early once initialized, so a place change mid-session
+  /// would otherwise keep the old clock until the next process start or the
+  /// 6-hourly WorkManager pass.
+  Future<void> rescheduleAfterPlaceChange() async {
+    // Nothing is scheduled before init, and init derives the clock itself, so
+    // a place change must never surface as an error just because notifications
+    // were never set up.
+    if (!_isInitialized) return;
+    await _refreshClock();
+    await _rescheduleEnabled();
   }
 
   /// Handle notification tap
