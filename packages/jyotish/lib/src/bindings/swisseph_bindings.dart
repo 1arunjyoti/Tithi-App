@@ -152,6 +152,9 @@ class SwissEphBindings {
   /// Use the centre of the body's disc instead of its upper limb.
   static const int SE_BIT_DISC_CENTER = 256;
 
+  /// Use the lower limb of the body's disc.
+  static const int SE_BIT_DISC_BOTTOM = 2048;
+
   /// Omit atmospheric refraction.
   static const int SE_BIT_NO_REFRACTION = 512;
 

@@ -1,6 +1,6 @@
 import '../../../models/festival.dart';
 import '../../../services/festival_matching_pipeline.dart';
-import '../../../services/moonrise_calculator.dart';
+import '../../../services/moon_events_service.dart';
 import '../../../services/panchang_service.dart';
 import '../../../services/solar_events_service.dart';
 import 'panchang_day.dart';
@@ -47,11 +47,14 @@ class PanchangDayResolver {
   PanchangDayResolver({
     required PanchangService service,
     SolarEventsService? solarEvents,
+    MoonEventsService? moonEvents,
   }) : _service = service,
-       _solar = solarEvents ?? solarEventsService;
+       _solar = solarEvents ?? solarEventsService,
+       _moon = moonEvents ?? moonEventsService;
 
   final PanchangService _service;
   final SolarEventsService _solar;
+  final MoonEventsService _moon;
 
   /// Resolves the canonical day for [date] at [place].
   ///
@@ -178,11 +181,17 @@ class PanchangDayResolver {
   /// The three solar reads are independent: a polar day can have a sunrise
   /// but no sunset (the day the polar night closes), so each is caught
   /// separately rather than one try/catch around all three.
+  ///
+  /// Lunar anchors come from [MoonEventsService] (native rise/set in
+  /// production). A null there is the normal monthly "no rise/set today", which
+  /// a `moonrise` observance already handles through [MoonrisePolicy].
   PanchangSolarDay _solarDay(DateTime normalized, PanchangPlace place) {
-    final moon = MoonriseCalculator.calculateMoonriseSet(
+    final moon = _moon.forDate(
       date: normalized,
       latitude: place.latitude,
       longitude: place.longitude,
+      altitudeMeters: place.altitudeMeters,
+      timezoneId: place.timezoneId,
     );
     return PanchangSolarDay(
       sunrise: _solarOrNull(

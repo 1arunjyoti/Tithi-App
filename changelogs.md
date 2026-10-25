@@ -21,6 +21,39 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Native moonrise and moonset
+
+Moonrise and moonset now come from Swiss Ephemeris instead of a truncated
+pure-Dart lunar series, so the instants that decide Karva Chauth's puja and
+paran are no longer 1-3 minutes out.
+
+- `MoonEventsService` (`lib/services/moon_events_service.dart`) mirrors the
+  solar seam: a `MoonEventCalculator` strategy, a bounded cache, a published
+  place zone, and a labelled `ApproximateMoonEventCalculator` fallback for
+  platforms without the native library. `moonEventsService` is the global.
+- The native calculator deliberately does **not** use `SE_BIT_HINDU_RISING`:
+  that bit drops ecliptic latitude and parallax, which move a lunar rise by up
+  to an hour. Rise/set is topocentric and apparent, with limb/refraction from
+  `PanchangProfile.lunarLimb` / `lunarRefraction` (`upperLimb` + `standard`
+  refraction by default). `SE_BIT_DISC_BOTTOM = 2048` was added to the
+  bindings for the lower-limb policy.
+- `swe_rise_trans` only searches forward, so a result is discarded unless it
+  falls on the requested civil day. That check is what keeps "no moonrise
+  today" as null instead of silently returning tomorrow's rise;
+  `findPreviousRise` / `findNextSet` keep the prevailing-event fallback.
+- Cost: one synchronous FFI call per event. Measured ~394 µs/day uncached and
+  ~11 µs/day cached, against ~898 µs/day for the approximation it replaces, so
+  the tithi sheet does not regress.
+- Wired through `PanchangService.init` / `clearCaches`,
+  `PanchangDayResolver` (injectable `moonEvents`), `event_detail_sheet`
+  (observance input), `tithi_detail_sheet` (chips) and
+  `SolarEventsService.checkpointTimeFor('moonrise')`, so no remaining code
+  path can return the approximation for an observance. `MoonriseCalculator`
+  survives only as the fallback delegate.
+- Golden fixture `moonrise` values were recaptured under the new convention:
+  83 values, 27 moved more than the 60 s tolerance, range -120 s to +120 s.
+  `source.notes` records old result, new result and reason.
+
 ### Precise crossing solver (tithi, nakshatra, new moon, Sankranti)
 
 Tithi and nakshatra edges, new moons and Sankranti ingresses are now solved to

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:tithi/models/panchang_profile.dart';
-import 'package:tithi/services/moonrise_calculator.dart';
+import 'package:tithi/services/moon_events_service.dart';
 import 'package:tithi/services/solar_events_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 
@@ -192,8 +192,9 @@ void main() {
           Duration(microseconds: nightMicros * 8 ~/ 15),
         ),
         'pradosha': sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10)),
-        // Moonrise is the day's own lunar anchor, not a solar offset.
-        'moonrise': MoonriseCalculator.calculateMoonrise(
+        // Moonrise is the day's own lunar anchor, not a solar offset, and it
+        // comes from the same lunar seam the canonical day uses.
+        'moonrise': moonEventsService.moonrise(
           date: date,
           latitude: lat,
           longitude: lon,

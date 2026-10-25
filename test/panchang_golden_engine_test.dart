@@ -11,7 +11,7 @@ import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/bengali_calendar_service.dart';
 import 'package:tithi/services/festival_matching_pipeline.dart';
-import 'package:tithi/services/moonrise_calculator.dart';
+import 'package:tithi/services/moon_events_service.dart';
 import 'package:tithi/services/panchang_service.dart';
 
 import 'fixtures/panchang_golden/golden_fixtures.dart';
@@ -149,10 +149,16 @@ void main() {
           tolerance.eventSeconds,
         );
 
-        final moonrise = MoonriseCalculator.calculateMoonrise(
+        // Lunar anchors come from the same seam the observance path uses, so
+        // the fixture locks the native rise/set convention (topocentric, real
+        // ecliptic latitude, profile limb/refraction) rather than the retired
+        // pure-Dart approximation.
+        final moonrise = moonEventsService.moonrise(
           date: target,
           latitude: c.location.latitude,
           longitude: c.location.longitude,
+          altitudeMeters: c.location.altitudeMeters,
+          timezoneId: c.location.timezone,
         );
         _expectInstant(
           failures,
