@@ -21,6 +21,33 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Precise crossing solver (tithi, nakshatra, new moon, Sankranti)
+
+Tithi and nakshatra edges, new moons and Sankranti ingresses are now solved to
+the second, and the Adhika-masa verdict no longer changes from day to day inside
+one lunation.
+
+- `solveRoot` / `solveAngleCrossing` (`lib/features/panchang/domain/root_solver.dart`):
+  one bisection for every cyclic crossing, 1 s default tolerance. It verifies
+  the bracket up front (residual `<= 0` before, `> 0` after) and returns null
+  instead of a plausible-looking wrong instant.
+- `findNewMoonInstant` / `findSankrantiInstant`
+  (`lib/features/panchang/domain/panchang_crossings.dart`): estimate -> daily
+  sample bracket -> solve. `_refineNewMoonInstant` used to stop at ~±3 h, which
+  is enough to put a new moon on the wrong side of a Sankranti.
+- `findSunriseTithiTransition` and `bisectNakshatraEdge`
+  (`lib/features/panchang/domain/tithi_transitions.dart`) use the same
+  primitive. Nakshatra edges target half a segment past (or before) the sunrise
+  index so both directions are upward crossings.
+- Bengali `_resolveMonthStart` replaces its 12-round (~20 s) bisection with the
+  shared solver and keeps its ±3-day bracket, 35-day fallback and historic
+  approximation.
+- Removed `wrapPairIndex` / `interpolateNewMoonInstant`
+  (`lib/models/hindu_month_system.dart`) as dead approximation code;
+  `newMoonDistance` stays as the last-resort fallback pick.
+- Yoga and karana still have no transition consumer. The primitive covers them,
+  but nothing asks for their boundary instants yet.
+
 ### Place clock: device vs selected place
 
 "Today", the midnight rollover and reminder times now follow one explicit clock:

@@ -432,6 +432,34 @@ new moon near Sankranti can therefore produce the wrong Adhika verdict. Reuse
 the Bengali calendar's stronger Sankranti bisection design (about 20 seconds)
 as the starting point for the shared ingress primitive.
 
+### Crossing solver: what shipped
+
+- `solveRoot` / `solveAngleCrossing` in
+  `lib/features/panchang/domain/root_solver.dart` are the shared primitive: one
+  bisection, 1 s default tolerance, bracket verified up front (residual `<= 0`
+  before, `> 0` after) and null instead of a plausible wrong instant.
+  `signedAngleDelta` provides the mod-360 fold that makes cyclic longitudes
+  solvable without unwrapping.
+- `findNewMoonInstant` / `findSankrantiInstant` in
+  `lib/features/panchang/domain/panchang_crossings.dart` bracket by daily
+  sampling around an estimate and then solve. `_refineNewMoonInstant` now
+  resolves the new moon to the second; the ~±3 h error is gone, so a new moon
+  cannot land on the wrong side of a nearby Sankranti. Its nearest-noon
+  fallback (`newMoonDistance`) is retained for a window with no wrap.
+- `findSunriseTithiTransition` and `bisectNakshatraEdge`
+  (`lib/features/panchang/domain/tithi_transitions.dart`) replaced their own
+  1-minute bisections. The nakshatra edge targets half a segment past (or
+  before) the sunrise index, so both directions are upward crossings.
+- Bengali `_resolveMonthStart` dropped its 12-round (~20 s) bisection for the
+  shared solver, keeping the ±3-day bracket, the 35-day fallback scan and the
+  historic approximation on solver failure.
+- `wrapPairIndex` and `interpolateNewMoonInstant` were deleted as dead
+  approximation code.
+- Still pending: yoga and karana boundaries have no consumer that needs a
+  transition instant (the day resolver reads them at sunrise/checkpoints), so
+  the primitive covers them but nothing calls it. Add call sites when a UI or
+  festival rule needs those instants rather than pre-emptively.
+
 Continue to separate three decisions in code and data:
 
 1. astronomical fact: an element's start/end instant;

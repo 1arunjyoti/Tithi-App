@@ -135,41 +135,12 @@ int sunRashiIndex(double longitude) {
 }
 
 /// Pure: distance of [rawTithi] (1..30) to the new-moon wrap point (30.0) on
-/// the 30-cycle. Used to pick the candidate instant nearest a true new moon
-/// without any ephemeris, so it is directly unit-testable.
+/// the 30-cycle. Used as the last-resort fallback when the shared crossing
+/// solver finds no wrap in its window, so it stays ephemeris-free and directly
+/// unit-testable.
 double newMoonDistance(double rawTithi) {
   final t = rawTithi % 30;
   return (30.0 - t) % 30;
-}
-
-/// Pure: index i such that the new moon falls between candidate tithis[i]
-/// (pre-wrap, high) and tithis[i+1] (post-wrap, low); -1 when no adjacent
-/// pair straddles the wrap. Pure (no ephemeris) so directly unit-testable.
-int wrapPairIndex(List<double> tithis) {
-  for (int i = 0; i + 1 < tithis.length; i++) {
-    if (tithis[i] > 20.0 && tithis[i + 1] < 10.0) return i;
-  }
-  return -1;
-}
-
-/// Pure: linear interpolation of the new-moon instant between [dayA] (tithi
-/// [tA], pre-wrap) and [dayB] (tithi [tB], post-wrap). Tithi rate varies
-/// smoothly, so over 24h this pins the instant to ~±2h for free — no extra
-/// ephemeris calls. Sampling the Sun there (instead of at noon) keeps
-/// same-day transit/new-moon coincidences on the correct side. Pure, so
-/// directly unit-testable.
-DateTime interpolateNewMoonInstant(
-  DateTime dayA,
-  double tA,
-  DateTime dayB,
-  double tB,
-) {
-  final before = (30.0 - tA).clamp(0.0, 30.0);
-  final after = tB.clamp(0.0, 30.0);
-  final total = before + after;
-  final frac = total <= 0 ? 0.5 : before / total;
-  final micros = (dayB.difference(dayA).inMicroseconds * frac).round();
-  return dayA.add(Duration(microseconds: micros));
 }
 
 extension HinduYearEraExt on HinduYearEra {
