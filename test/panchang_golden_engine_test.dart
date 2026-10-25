@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:tithi/features/panchang/domain/panchang_crossings.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/hindu_month_system.dart';
 import 'package:tithi/models/panchang_data.dart';
@@ -201,6 +202,58 @@ void main() {
           );
         }
 
+        // Nakshatra edges go through the same resolveNakshatraSpan the detail
+        // sheet calls, so the fixture locks the shared crossing solver rather
+        // than a test-local bisection that could drift from production.
+        final nakshatraSpan = await resolveNakshatraSpan(
+          sunrise: sunrise,
+          indexAt: (time) async {
+            final name = await service.calculateNakshatra(
+              time,
+              latitude: c.location.latitude,
+              longitude: c.location.longitude,
+            );
+            if (name == null) return null;
+            final index = hinduNakshatras.indexOf(name);
+            return index < 0 ? null : index;
+          },
+        );
+        if (nakshatraSpan == null) {
+          failures.add('${c.id}: nakshatra span unresolved');
+        } else {
+          if (nakshatraSpan.nakshatra != c.expected.nakshatraAtSunrise) {
+            failures.add(
+              '${c.id}: nakshatra span expected '
+              '${c.expected.nakshatraAtSunrise}, got '
+              '${nakshatraSpan.nakshatra}',
+            );
+          }
+          _expectInstant(
+            failures,
+            c.id,
+            'nakshatraStartsAt',
+            c.expected.nakshatraStartsAt,
+            nakshatraSpan.start,
+            tolerance.eventSeconds,
+          );
+          _expectInstant(
+            failures,
+            c.id,
+            'nakshatraEndsAt',
+            c.expected.nakshatraEndsAt,
+            nakshatraSpan.end,
+            tolerance.eventSeconds,
+          );
+          final nextNakshatra =
+              hinduNakshatras[(nakshatraSpan.index + 1) % 27];
+          if (nextNakshatra != c.expected.nextNakshatra) {
+            failures.add(
+              '${c.id}: nextNakshatra expected ${c.expected.nextNakshatra}, '
+              'got $nextNakshatra',
+            );
+          }
+        }
+
         final lons = await service.calculateSunMoonLongitudes(
           sunrise,
           latitude: c.location.latitude,
@@ -241,6 +294,44 @@ void main() {
             lons.moon,
             tolerance.longitudeArcseconds,
           );
+
+          // Sankranti: the first solar sign ingress strictly after sunrise.
+          // The estimate is the mean solar rate (0.9856 deg/day) applied to
+          // the degrees the Sun still needs in its current sign;
+          // findSankrantiInstant brackets ±3 days around it and solves the
+          // crossing with the shared root solver.
+          final rashiIndex = sunRashiIndex(lons.sun);
+          final degreesInSign = lons.sun - rashiIndex * 30;
+          final estimate = sunrise.add(
+            Duration(
+              minutes: ((30 - degreesInSign) / 0.9856 * 1440).round(),
+            ),
+          );
+          final ingress = await findSankrantiInstant(
+            estimate: estimate,
+            sunLongitudeAt: (instant) async =>
+                (await service.calculateSunMoonLongitudes(
+                  instant,
+                  latitude: c.location.latitude,
+                  longitude: c.location.longitude,
+                ))?.sun,
+            boundaryDegrees: (rashiIndex + 1) * 30.0,
+          );
+          _expectInstant(
+            failures,
+            c.id,
+            'nextSankranti.at',
+            c.expected.nextSankranti.at,
+            ingress,
+            tolerance.eventSeconds,
+          );
+          final expectedRashi = rashiNames[(rashiIndex + 1) % 12];
+          if (expectedRashi != c.expected.nextSankranti.rashi) {
+            failures.add(
+              '${c.id}: nextSankranti.rashi expected '
+              '${c.expected.nextSankranti.rashi}, got $expectedRashi',
+            );
+          }
         }
 
         if (day.masa != c.expected.masa) {

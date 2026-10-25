@@ -451,8 +451,9 @@ as the starting point for the shared ingress primitive.
 - `findSankrantiInstant` now has a production caller: the Bengali month start
   resolves its ingress through it, so the tested helper and the shipping path
   are the same code. The 35-day guard scan remains for a mismatched boundary.
-- `findSunriseTithiTransition` and `bisectNakshatraEdge`
-  (`lib/features/panchang/domain/tithi_transitions.dart`) replaced their own
+- `findSunriseTithiTransition` (`lib/features/panchang/domain/tithi_transitions.dart`)
+  and `bisectNakshatraEdge`
+  (`lib/features/panchang/domain/nakshatra_span.dart`) replaced their own
   1-minute bisections. The nakshatra edge targets half a segment past (or
   before) the sunrise index, so both directions are upward crossings;
   `test/nakshatra_edge_test.dart` pins that target math directly.
@@ -475,8 +476,14 @@ as the starting point for the shared ingress primitive.
   continuous Sun+Moon sum and elongation through `solveAngleCrossing`.
   `test/yoga_karana_span_test.dart` covers both ends, the 360 wrap and the
   failure paths.
-- The golden fixture still does not lock nakshatra-edge or Sankranti instants;
-  the shared solver they use is already locked through `tithiEndsAt`.
+- The golden fixture locks both the nakshatra span and the next Sankranti
+  (schema 2). `resolveNakshatraSpan`
+  (`lib/features/panchang/domain/nakshatra_span.dart`) is now the production
+  path - `nakshatraTimingsProvider` is a thin wrapper - so
+  `test/panchang_golden_engine_test.dart` compares the fixture against the same
+  code the detail sheet runs, not a test-local bisection. The ingress comes from
+  `findSankrantiInstant` with a mean-motion estimate
+  (`sunrise + (30 - degInSign) / 0.9856` days).
 
 Continue to separate three decisions in code and data:
 

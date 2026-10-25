@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "profileId": "india_drik_lahiri_amanta",
   "profile": {
     "engineVersion": "panchang-v3",
@@ -13,7 +13,7 @@
     "authority": "Tithi panchang-v3 engine characterization",
     "retrievedOn": "2026-10-25",
     "kind": "engine-characterization",
-    "notes": "Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
+    "notes": "Phase 5b recapture: added `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra` and `nextSankranti` to all 84 cases and bumped `schemaVersion` 1 -> 2. Old result: the four fields did not exist, so the sunrise nakshatra's edges and the next solar ingress had no regression lock. New result: edges from the shared crossing solver through `resolveNakshatraSpan` (the same path `nakshatraTimingsProvider` uses), and the ingress from `findSankrantiInstant` (first solar sign crossing strictly after sunrise, searched within 40 days). Reason: Phase 3 moved every edge onto one solver and nothing locked the nakshatra span or the Sankranti instant, so a regression there could only surface as a wrong \"Rohini until 3:42 PM\" or a wrong Bengali month. No existing value changed. The ingress instants are engine characterization, not an accuracy claim: a cross-check of the Mesha ingress on 2026-04-14 gives 09:30:15 IST here against a published 09:39, the ~9 minute ayanamsa variant that the fixture already carries elsewhere. Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
   },
   "tolerance": {
     "eventSeconds": 60,
@@ -49,6 +49,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:54+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Priti",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 261.5195153669854,
@@ -94,6 +101,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Priti",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 261.4790369523797,
@@ -139,6 +153,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Priti",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 261.51811277245804,
@@ -184,6 +205,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:54+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Priti",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 261.4982166094428,
@@ -229,6 +257,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:43+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:53+05:30"
+        },
         "yogaAtSunrise": "Priti",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 261.4895064751785,
@@ -274,6 +309,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Priti",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 261.47463630460504,
@@ -320,6 +362,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:32+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:45+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Ganda",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 269.67052917773344,
@@ -366,6 +415,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:45+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:53+05:30"
+        },
         "yogaAtSunrise": "Ganda",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 269.6305894918621,
@@ -412,6 +468,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:45+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Ganda",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 269.66994409361746,
@@ -458,6 +521,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:46+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Ganda",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 269.6495332563625,
@@ -504,6 +574,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:32+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:46+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Ganda",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 269.6417900686587,
@@ -550,6 +627,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:46+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
         "yogaAtSunrise": "Ganda",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 269.62588192342685,
@@ -595,6 +679,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 284.93170797965695,
@@ -640,6 +731,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 284.8933560905232,
@@ -685,6 +783,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:42+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 284.9333459744173,
@@ -730,6 +835,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:42+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 284.9115985362862,
@@ -775,6 +887,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 284.9065190512863,
@@ -820,6 +939,13 @@
           "name": "Dwadashi"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 284.8878288677273,
@@ -865,6 +991,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Vyatipata",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 302.1464055976412,
@@ -910,6 +1043,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Vyatipata",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 302.11036448918117,
@@ -955,6 +1095,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:15+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Vyatipata",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 302.15126972078656,
@@ -1000,6 +1147,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Vyatipata",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 302.1275828969224,
@@ -1045,6 +1199,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:15+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Vyatipata",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 302.1263950707389,
@@ -1090,6 +1251,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Vyatipata",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 302.1036489109963,
@@ -1135,6 +1303,13 @@
           "name": "Dwitiya"
         },
         "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:30+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Dhriti",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 319.24567762571746,
@@ -1180,6 +1355,13 @@
           "name": "Dwitiya"
         },
         "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:29+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Dhriti",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 319.21228611126617,
@@ -1225,6 +1407,13 @@
           "name": "Dwitiya"
         },
         "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:30+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Dhriti",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 319.2540960738572,
@@ -1270,6 +1459,13 @@
           "name": "Dwitiya"
         },
         "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:29+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Dhriti",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 319.2283241978238,
@@ -1315,6 +1511,13 @@
           "name": "Dwitiya"
         },
         "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:30+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Dhriti",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 319.2314664786054,
@@ -1360,6 +1563,13 @@
           "name": "Dwitiya"
         },
         "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:29+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Dhriti",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 319.20427478476006,
@@ -1406,6 +1616,13 @@
           "name": "Dashami"
         },
         "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:14+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 342.14558122244995,
@@ -1452,6 +1669,13 @@
           "name": "Dashami"
         },
         "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:14+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 342.11583026165266,
@@ -1498,6 +1722,13 @@
           "name": "Dashami"
         },
         "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 342.1588737998491,
@@ -1544,6 +1775,13 @@
           "name": "Dashami"
         },
         "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:14+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 342.1302441330015,
@@ -1590,6 +1828,13 @@
           "name": "Dashami"
         },
         "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 342.1393443981682,
@@ -1636,6 +1881,13 @@
           "name": "Dashami"
         },
         "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:04+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 342.10604338417926,
@@ -1681,6 +1933,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 34.788344735432304,
@@ -1726,6 +1985,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:52+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 34.765841481623625,
@@ -1771,6 +2037,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 34.81118092159409,
@@ -1816,6 +2089,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:35+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:52+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 34.77702563936418,
@@ -1861,6 +2141,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 34.797749058798956,
@@ -1906,6 +2193,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Vishti",
         "sunLongitude": 34.752588960477965,
@@ -1952,6 +2246,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 59.70615230683126,
@@ -1998,6 +2299,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 59.68522996067355,
@@ -2044,6 +2352,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:57+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:27+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 59.730989545243915,
@@ -2090,6 +2405,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 59.695711536938575,
@@ -2136,6 +2458,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 59.718850040662915,
@@ -2182,6 +2511,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:57+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:27+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
         "yogaAtSunrise": "Shula",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 59.671255655224684,
@@ -2227,6 +2563,13 @@
           "name": "Navami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:21+05:30"
+        },
         "yogaAtSunrise": "Harshana",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 137.2905533812397,
@@ -2272,6 +2615,13 @@
           "name": "Navami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:22+05:30"
+        },
         "yogaAtSunrise": "Harshana",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 137.26307915007226,
@@ -2318,6 +2668,13 @@
           "name": "Navami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:20+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:21+05:30"
+        },
         "yogaAtSunrise": "Harshana",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 137.3061309708969,
@@ -2362,6 +2719,13 @@
           "name": "Navami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:20+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:11+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:22+05:30"
+        },
         "yogaAtSunrise": "Harshana",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 137.27645924564092,
@@ -2407,6 +2771,13 @@
           "name": "Navami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:22+05:30"
+        },
         "yogaAtSunrise": "Harshana",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 137.28845838716563,
@@ -2452,6 +2823,13 @@
           "name": "Navami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:21+05:30"
+        },
         "yogaAtSunrise": "Harshana",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 137.25252414601255,
@@ -2497,6 +2875,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Saubhagya",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 202.41392897799494,
@@ -2542,6 +2927,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Saubhagya",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 202.37645028570455,
@@ -2587,6 +2979,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:23+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Saubhagya",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 202.4162781567909,
@@ -2632,6 +3031,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Saubhagya",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 202.39429240478057,
@@ -2677,6 +3083,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Saubhagya",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 202.39014350035325,
@@ -2722,6 +3135,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Saubhagya",
         "karanaAtSunrise": "Naga",
         "sunLongitude": 202.37070051839078,
@@ -2763,6 +3183,13 @@
         "tithiEndsAt": null,
         "nextTithi": null,
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 74.02286219106327,
@@ -2808,6 +3235,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:39+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Bava",
         "sunLongitude": 74.00194059747554,
@@ -2849,6 +3283,13 @@
         "tithiEndsAt": null,
         "nextTithi": null,
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 74.04755908804867,
@@ -2894,6 +3335,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:31+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Bava",
         "sunLongitude": 74.01241832211525,
@@ -2935,6 +3383,13 @@
         "tithiEndsAt": null,
         "nextTithi": null,
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:20+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Balava",
         "sunLongitude": 74.03540659807959,
@@ -2980,6 +3435,13 @@
           "name": "Pratipada"
         },
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Bava",
         "sunLongitude": 73.98802951009043,
@@ -3025,6 +3487,13 @@
           "name": "Ashtami"
         },
         "nakshatraAtSunrise": "Krittika",
+        "nakshatraStartsAt": "2026-02-23T16:33:34+05:30",
+        "nakshatraEndsAt": "2026-02-24T15:07:12+05:30",
+        "nextNakshatra": "Rohini",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 311.21791320444845,
@@ -3070,6 +3539,13 @@
           "name": "Ashtami"
         },
         "nakshatraAtSunrise": "Krittika",
+        "nakshatraStartsAt": "2026-02-23T16:33:34+05:30",
+        "nakshatraEndsAt": "2026-02-24T15:07:12+05:30",
+        "nextNakshatra": "Rohini",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
         "yogaAtSunrise": "Indra",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 311.199855555687,
@@ -3117,6 +3593,13 @@
           "name": "Saptami"
         },
         "nakshatraAtSunrise": "Jyeshtha",
+        "nakshatraStartsAt": "2026-10-15T04:03:04+05:30",
+        "nakshatraEndsAt": "2026-10-16T06:47:31+05:30",
+        "nextNakshatra": "Mula",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
         "yogaAtSunrise": "Shobhana",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 178.4555829369981,
@@ -3160,6 +3643,13 @@
         "tithiEndsAt": null,
         "nextTithi": null,
         "nakshatraAtSunrise": "Jyeshtha",
+        "nakshatraStartsAt": "2026-10-15T04:03:05+05:30",
+        "nakshatraEndsAt": "2026-10-16T06:47:31+05:30",
+        "nextNakshatra": "Mula",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
         "yogaAtSunrise": "Shobhana",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 178.42166108197432,
@@ -3203,6 +3693,13 @@
         "tithiEndsAt": null,
         "nextTithi": null,
         "nakshatraAtSunrise": "Jyeshtha",
+        "nakshatraStartsAt": "2026-10-15T04:03:04+05:30",
+        "nakshatraEndsAt": "2026-10-16T06:47:32+05:30",
+        "nextNakshatra": "Mula",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
         "yogaAtSunrise": "Shobhana",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 178.41421378611903,
@@ -3247,6 +3744,13 @@
         "tithiEndsAt": null,
         "nextTithi": null,
         "nakshatraAtSunrise": "Mula",
+        "nakshatraStartsAt": "2026-10-16T06:47:31+05:30",
+        "nakshatraEndsAt": "2026-10-17T09:47:01+05:30",
+        "nextNakshatra": "Purva Ashadha",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Gara",
         "sunLongitude": 179.44776087056596,
@@ -3295,6 +3799,13 @@
           "name": "Saptami"
         },
         "nakshatraAtSunrise": "Mula",
+        "nakshatraStartsAt": "2026-10-16T06:47:32+05:30",
+        "nakshatraEndsAt": "2026-10-17T09:47:01+05:30",
+        "nextNakshatra": "Purva Ashadha",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
         "yogaAtSunrise": "Atiganda",
         "karanaAtSunrise": "Taitila",
         "sunLongitude": 179.4136859845022,
@@ -3347,6 +3858,13 @@
           "name": "Ashtami"
         },
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-10-17T09:47:01+05:30",
+        "nakshatraEndsAt": "2026-10-18T12:48:51+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Sukarma",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 180.4062052278672,
@@ -3399,6 +3917,13 @@
           "name": "Ashtami"
         },
         "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-10-17T09:47:01+05:30",
+        "nakshatraEndsAt": "2026-10-18T12:48:52+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Sukarma",
         "karanaAtSunrise": "Vanija",
         "sunLongitude": 180.3989075701062,
@@ -3450,6 +3975,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-10-28T13:26:04+05:30",
+        "nakshatraEndsAt": "2026-10-29T11:11:33+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Parigha",
         "karanaAtSunrise": "Bava",
         "sunLongitude": 191.3926536763223,
@@ -3496,6 +4028,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-10-28T13:26:04+05:30",
+        "nakshatraEndsAt": "2026-10-29T11:11:33+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Parigha",
         "karanaAtSunrise": "Bava",
         "sunLongitude": 191.39706431891705,
@@ -3542,6 +4081,13 @@
           "name": "Panchami"
         },
         "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-10-28T13:26:04+05:30",
+        "nakshatraEndsAt": "2026-10-29T11:11:33+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
         "yogaAtSunrise": "Parigha",
         "karanaAtSunrise": "Bava",
         "sunLongitude": 191.37389938305728,
@@ -3588,6 +4134,13 @@
           "name": "Trayodashi"
         },
         "nakshatraAtSunrise": "Shatabhisha",
+        "nakshatraStartsAt": "2026-04-13T16:03:37+05:30",
+        "nakshatraEndsAt": "2026-04-14T16:05:58+05:30",
+        "nextNakshatra": "Purva Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
         "yogaAtSunrise": "Shukla",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 359.8305240332149,
@@ -3639,6 +4192,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Purva Bhadrapada",
+        "nakshatraStartsAt": "2026-04-14T16:05:58+05:30",
+        "nakshatraEndsAt": "2026-04-15T15:22:40+05:30",
+        "nextNakshatra": "Uttara Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Vrishabha",
+          "at": "2026-05-15T06:19:41+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Gara",
         "sunLongitude": 0.809862246920261,
@@ -3690,6 +4250,13 @@
           "name": "Trayodashi"
         },
         "nakshatraAtSunrise": "Shatabhisha",
+        "nakshatraStartsAt": "2026-04-13T16:03:37+05:30",
+        "nakshatraEndsAt": "2026-04-14T16:05:58+05:30",
+        "nextNakshatra": "Purva Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
         "yogaAtSunrise": "Shukla",
         "karanaAtSunrise": "Kaulava",
         "sunLongitude": 359.8194179198947,
@@ -3741,6 +4308,13 @@
           "name": "Chaturdashi"
         },
         "nakshatraAtSunrise": "Purva Bhadrapada",
+        "nakshatraStartsAt": "2026-04-14T16:05:58+05:30",
+        "nakshatraEndsAt": "2026-04-15T15:22:40+05:30",
+        "nextNakshatra": "Uttara Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Vrishabha",
+          "at": "2026-05-15T06:19:41+05:30"
+        },
         "yogaAtSunrise": "Brahma",
         "karanaAtSunrise": "Gara",
         "sunLongitude": 0.7986855906387405,
@@ -3791,6 +4365,13 @@
           "name": "Saptami"
         },
         "nakshatraAtSunrise": "Purva Bhadrapada",
+        "nakshatraStartsAt": "1799-12-31T15:28:18+05:30",
+        "nakshatraEndsAt": "1800-01-01T16:54:52+05:30",
+        "nextNakshatra": "Uttara Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "1800-01-11T15:58:51+05:30"
+        },
         "yogaAtSunrise": "Variyana",
         "karanaAtSunrise": "Taitila",
         "sunLongitude": 259.4416971652255,
@@ -3836,6 +4417,13 @@
           "name": "Chaturthi"
         },
         "nakshatraAtSunrise": "Shravana",
+        "nakshatraStartsAt": "2399-12-30T22:56:06+05:30",
+        "nakshatraEndsAt": "2400-01-01T01:38:26+05:30",
+        "nextNakshatra": "Dhanishta",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2400-01-20T12:56:05+05:30"
+        },
         "yogaAtSunrise": "Vyaghata",
         "karanaAtSunrise": "Gara",
         "sunLongitude": 249.34267566521726,

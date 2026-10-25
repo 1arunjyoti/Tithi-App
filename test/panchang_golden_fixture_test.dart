@@ -74,10 +74,20 @@ void main() {
         for (var i = 0; i < 60; i++) karanaNameForIndex(i),
       };
       for (final c in fixture.panchang.cases) {
+        final nakshatraIndex = hinduNakshatras.indexOf(
+          c.expected.nakshatraAtSunrise,
+        );
         expect(
           hinduNakshatras,
           contains(c.expected.nakshatraAtSunrise),
           reason: '${c.id}: nakshatra',
+        );
+        // The end edge belongs to the next nakshatra, so the pair must be
+        // adjacent in the canonical 27-fold order (Revati -> Ashwini wraps).
+        expect(
+          c.expected.nextNakshatra,
+          hinduNakshatras[(nakshatraIndex + 1) % hinduNakshatras.length],
+          reason: '${c.id}: nextNakshatra must follow nakshatraAtSunrise',
         );
         expect(
           yogaNames,
@@ -88,6 +98,46 @@ void main() {
           karanaNames,
           contains(c.expected.karanaAtSunrise),
           reason: '${c.id}: karana',
+        );
+      }
+    });
+
+    test('nakshatra span and next sankranti agree with the sunrise state', () {
+      for (final c in fixture.panchang.cases) {
+        final e = c.expected;
+        expect(
+          e.nakshatraStartsAt.instant.isAfter(e.sunrise.instant),
+          isFalse,
+          reason: '${c.id}: the sunrise nakshatra starts at or before sunrise',
+        );
+        expect(
+          e.nakshatraEndsAt.instant.isAfter(e.sunrise.instant),
+          isTrue,
+          reason: '${c.id}: the sunrise nakshatra ends after sunrise',
+        );
+        // A nakshatra lasts 19-26 h; the band absorbs the Moon's perigee
+        // (13.2 deg/day) to apogee (17.8 deg/day) spread.
+        expect(
+          e.nakshatraEndsAt.instant
+              .difference(e.nakshatraStartsAt.instant)
+              .inMinutes,
+          inInclusiveRange(18 * 60, 30 * 60),
+          reason: '${c.id}: nakshatra span',
+        );
+        expect(
+          e.nextSankranti.at.instant.isAfter(e.sunrise.instant),
+          isTrue,
+          reason: '${c.id}: the next sankranti is strictly after sunrise',
+        );
+        // The locked ingress must be the sign after the locked sunrise Sun,
+        // which also proves the rashi name came from the canonical list.
+        final rashiIndex = sunRashiIndex(e.sunLongitude);
+        expect(
+          e.nextSankranti.rashi,
+          rashiNames[(rashiIndex + 1) % rashiNames.length],
+          reason:
+              '${c.id}: ingress must be the sign after '
+              '${rashiNames[rashiIndex]}',
         );
       }
     });
