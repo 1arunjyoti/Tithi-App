@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "profileId": "india_drik_lahiri_amanta",
   "profile": {
     "engineVersion": "panchang-v3",
@@ -13,7 +13,7 @@
     "authority": "Tithi panchang-v3 engine characterization",
     "retrievedOn": "2026-10-25",
     "kind": "engine-characterization",
-    "notes": "Phase 5c recapture: refreshed `tithiEndsAt` on all 84 cases and re-rendered the one timestamp that was not on the +05:30 convention. Old results: `tithiEndsAt` still came from the Phase 2 capture, when the transition was bisected to 1 minute, so the six cities stored different instants for the same global event - spreads of 10-50 s (2026-01-14: 12:23:24Z .. 12:24:14Z). That noise used most of the 60 s tolerance, so the field could barely detect a real regression. New results: every `tithiEndsAt` is the shared crossing solver output, and cases that share a sunrise tithi now agree to the second. `delhi-1800-01-01` `moonrise` was rendered at LMT `+05:53` (truncated from the zone's +05:53:28), the only value in the file outside the stated convention; the instant is unchanged, it is now written as `+05:30` like every other timestamp. Reason: the fixture is a regression lock, and a 50 s capture-era spread inside a 60 s tolerance is not a lock. No astronomical value changed; the 19 s move on the 1800 moonrise is the truncated-offset parse error, not a new calculation. Phase 5b recapture: added `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra` and `nextSankranti` to all 84 cases and bumped `schemaVersion` 1 -> 2. Old result: the four fields did not exist, so the sunrise nakshatra's edges and the next solar ingress had no regression lock. New result: edges from the shared crossing solver through `resolveNakshatraSpan` (the same path `nakshatraTimingsProvider` uses), and the ingress from `findSankrantiInstant` (first solar sign crossing strictly after sunrise, searched within 40 days). Reason: Phase 3 moved every edge onto one solver and nothing locked the nakshatra span or the Sankranti instant, so a regression there could only surface as a wrong \"Rohini until 3:42 PM\" or a wrong Bengali month. No existing value changed. The ingress instants are engine characterization, not an accuracy claim: a cross-check of the Mesha ingress on 2026-04-14 gives 09:30:15 IST here against a published 09:39, the ~9 minute ayanamsa variant that the fixture already carries elsewhere. Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
+    "notes": "Phase 5d recapture: added `moonset` to 83 of the 84 cases and bumped `schemaVersion` 2 -> 3. Old result: the field did not exist, so the tithi sheet's moonset chip had no regression lock and the profile's lunar limb choice was only covered by a unit test on the rise/set bit mapping. New result: `moonset` comes from native `swe_rise_trans` under `PanchangProfile.standard` (upper limb, standard refraction, topocentric, true ecliptic latitude) through `moonEventsService.moonset`, the same call the detail sheet makes. `varanasi-2026-02-24` omits the key because the Moon does not set on that civil day - the set falls after local midnight - so the locked null is a genuine no-set day, not a failed lookup. Reason: moonset is user-visible next to moonrise, and locking it end-to-end is what pins the limb policy to a numeric instant. No existing value changed. Phase 5c recapture: refreshed `tithiEndsAt` on all 84 cases and re-rendered the one timestamp that was not on the +05:30 convention. Old results: `tithiEndsAt` still came from the Phase 2 capture, when the transition was bisected to 1 minute, so the six cities stored different instants for the same global event - spreads of 10-50 s (2026-01-14: 12:23:24Z .. 12:24:14Z). That noise used most of the 60 s tolerance, so the field could barely detect a real regression. New results: every `tithiEndsAt` is the shared crossing solver output, and cases that share a sunrise tithi now agree to the second. `delhi-1800-01-01` `moonrise` was rendered at LMT `+05:53` (truncated from the zone's +05:53:28), the only value in the file outside the stated convention; the instant is unchanged, it is now written as `+05:30` like every other timestamp. Reason: the fixture is a regression lock, and a 50 s capture-era spread inside a 60 s tolerance is not a lock. No astronomical value changed; the 19 s move on the 1800 moonrise is the truncated-offset parse error, not a new calculation. Phase 5b recapture: added `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra` and `nextSankranti` to all 84 cases and bumped `schemaVersion` 1 -> 2. Old result: the four fields did not exist, so the sunrise nakshatra's edges and the next solar ingress had no regression lock. New result: edges from the shared crossing solver through `resolveNakshatraSpan` (the same path `nakshatraTimingsProvider` uses), and the ingress from `findSankrantiInstant` (first solar sign crossing strictly after sunrise, searched within 40 days). Reason: Phase 3 moved every edge onto one solver and nothing locked the nakshatra span or the Sankranti instant, so a regression there could only surface as a wrong \"Rohini until 3:42 PM\" or a wrong Bengali month. No existing value changed. The ingress instants are engine characterization, not an accuracy claim: a cross-check of the Mesha ingress on 2026-04-14 gives 09:30:15 IST here against a published 09:39, the ~9 minute ayanamsa variant that the fixture already carries elsewhere. Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
   },
   "tolerance": {
     "eventSeconds": 60,
@@ -63,7 +63,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-06T20:54:59+05:30"
+        "moonrise": "2026-01-06T20:54:59+05:30",
+        "moonset": "2026-01-06T09:34:20+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -115,7 +116,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-06T20:15:27+05:30"
+        "moonrise": "2026-01-06T20:15:27+05:30",
+        "moonset": "2026-01-06T08:40:05+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -167,7 +169,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-06T21:23:40+05:30"
+        "moonrise": "2026-01-06T21:23:40+05:30",
+        "moonset": "2026-01-06T09:39:11+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -219,7 +222,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-06T20:34:49+05:30"
+        "moonrise": "2026-01-06T20:34:49+05:30",
+        "moonset": "2026-01-06T09:05:59+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -271,7 +275,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-06T20:59:00+05:30"
+        "moonrise": "2026-01-06T20:59:00+05:30",
+        "moonset": "2026-01-06T09:01:18+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -323,7 +328,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-06T19:57:17+05:30"
+        "moonrise": "2026-01-06T19:57:17+05:30",
+        "moonset": "2026-01-06T08:31:12+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -376,7 +382,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-14T03:29:48+05:30"
+        "moonrise": "2026-01-14T03:29:48+05:30",
+        "moonset": "2026-01-14T13:49:01+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -429,7 +436,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-14T02:28:42+05:30"
+        "moonrise": "2026-01-14T02:28:42+05:30",
+        "moonset": "2026-01-14T13:18:32+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -482,7 +490,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-14T03:25:09+05:30"
+        "moonrise": "2026-01-14T03:25:09+05:30",
+        "moonset": "2026-01-14T14:30:36+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -535,7 +544,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-14T02:57:33+05:30"
+        "moonrise": "2026-01-14T02:57:33+05:30",
+        "moonset": "2026-01-14T13:33:57+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -588,7 +598,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-14T02:41:54+05:30"
+        "moonrise": "2026-01-14T02:41:54+05:30",
+        "moonset": "2026-01-14T14:13:21+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -641,7 +652,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-14T02:23:09+05:30"
+        "moonrise": "2026-01-14T02:23:09+05:30",
+        "moonset": "2026-01-14T12:55:46+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -693,7 +705,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-29T14:00:43+05:30"
+        "moonrise": "2026-01-29T14:00:43+05:30",
+        "moonset": "2026-01-29T03:48:05+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -745,7 +758,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-29T13:31:17+05:30"
+        "moonrise": "2026-01-29T13:31:17+05:30",
+        "moonset": "2026-01-29T02:44:32+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -797,7 +811,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-29T14:45:07+05:30"
+        "moonrise": "2026-01-29T14:45:07+05:30",
+        "moonset": "2026-01-29T03:40:24+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -849,7 +864,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-29T13:46:15+05:30"
+        "moonrise": "2026-01-29T13:46:15+05:30",
+        "moonset": "2026-01-29T03:14:30+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -901,7 +917,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-29T14:28:59+05:30"
+        "moonrise": "2026-01-29T14:28:59+05:30",
+        "moonset": "2026-01-29T02:55:01+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -953,7 +970,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Magha",
         "adhika": false,
-        "moonrise": "2026-01-29T13:07:19+05:30"
+        "moonrise": "2026-01-29T13:07:19+05:30",
+        "moonset": "2026-01-29T02:40:07+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1005,7 +1023,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-15T05:36:39+05:30"
+        "moonrise": "2026-02-15T05:36:39+05:30",
+        "moonset": "2026-02-15T16:07:24+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1057,7 +1076,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-15T04:36:25+05:30"
+        "moonrise": "2026-02-15T04:36:25+05:30",
+        "moonset": "2026-02-15T15:34:19+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1109,7 +1129,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-15T05:32:40+05:30"
+        "moonrise": "2026-02-15T05:32:40+05:30",
+        "moonset": "2026-02-15T16:45:48+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1161,7 +1182,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-15T05:04:55+05:30"
+        "moonrise": "2026-02-15T05:04:55+05:30",
+        "moonset": "2026-02-15T15:50:52+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1213,7 +1235,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-15T04:49:55+05:30"
+        "moonrise": "2026-02-15T04:49:55+05:30",
+        "moonset": "2026-02-15T16:26:27+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1265,7 +1288,8 @@
         "masa": "Magha",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-15T04:30:47+05:30"
+        "moonrise": "2026-02-15T04:30:47+05:30",
+        "moonset": "2026-02-15T15:12:33+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1317,7 +1341,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-04T19:20:25+05:30"
+        "moonrise": "2026-03-04T19:20:25+05:30",
+        "moonset": "2026-03-04T07:03:03+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1369,7 +1394,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-04T18:33:48+05:30"
+        "moonrise": "2026-03-04T18:33:48+05:30",
+        "moonset": "2026-03-04T06:16:02+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1421,7 +1447,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-04T19:37:55+05:30"
+        "moonrise": "2026-03-04T19:37:55+05:30",
+        "moonset": "2026-03-04T07:18:38+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1473,7 +1500,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-04T18:56:16+05:30"
+        "moonrise": "2026-03-04T18:56:16+05:30",
+        "moonset": "2026-03-04T06:38:44+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1525,7 +1553,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-04T19:07:05+05:30"
+        "moonrise": "2026-03-04T19:07:05+05:30",
+        "moonset": "2026-03-04T06:47:03+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1577,7 +1606,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-04T18:19:52+05:30"
+        "moonrise": "2026-03-04T18:19:52+05:30",
+        "moonset": "2026-03-04T06:03:09+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1630,7 +1660,8 @@
         "masa": "Chaitra",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-27T13:01:09+05:30"
+        "moonrise": "2026-03-27T13:01:09+05:30",
+        "moonset": "2026-03-27T02:34:18+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1683,7 +1714,8 @@
         "masa": "Chaitra",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-27T12:28:51+05:30"
+        "moonrise": "2026-03-27T12:28:51+05:30",
+        "moonset": "2026-03-27T01:32:51+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1736,7 +1768,8 @@
         "masa": "Chaitra",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-27T13:41:14+05:30"
+        "moonrise": "2026-03-27T13:41:14+05:30",
+        "moonset": "2026-03-27T02:28:53+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1789,7 +1822,8 @@
         "masa": "Chaitra",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-27T12:45:03+05:30"
+        "moonrise": "2026-03-27T12:45:03+05:30",
+        "moonset": "2026-03-27T02:01:55+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1842,7 +1876,8 @@
         "masa": "Chaitra",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-27T13:22:43+05:30"
+        "moonrise": "2026-03-27T13:22:43+05:30",
+        "moonset": "2026-03-27T01:45:01+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1895,7 +1930,8 @@
         "masa": "Chaitra",
         "masaPurnimanta": "Chaitra",
         "adhika": false,
-        "moonrise": "2026-03-27T12:06:24+05:30"
+        "moonrise": "2026-03-27T12:06:24+05:30",
+        "moonset": "2026-03-27T01:27:44+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1947,7 +1983,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-05-20T08:38:22+05:30"
+        "moonrise": "2026-05-20T08:38:22+05:30",
+        "moonset": "2026-05-20T23:12:41+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -1999,7 +2036,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-05-20T08:07:20+05:30"
+        "moonrise": "2026-05-20T08:07:20+05:30",
+        "moonset": "2026-05-20T22:12:14+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2051,7 +2089,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-05-20T09:20:39+05:30"
+        "moonrise": "2026-05-20T09:20:39+05:30",
+        "moonset": "2026-05-20T23:08:48+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2103,7 +2142,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-05-20T08:22:59+05:30"
+        "moonrise": "2026-05-20T08:22:59+05:30",
+        "moonset": "2026-05-20T22:40:52+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2155,7 +2195,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-05-20T09:03:12+05:30"
+        "moonrise": "2026-05-20T09:03:12+05:30",
+        "moonset": "2026-05-20T22:25:44+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2207,7 +2248,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-05-20T07:44:03+05:30"
+        "moonrise": "2026-05-20T07:44:03+05:30",
+        "moonset": "2026-05-20T22:06:33+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2260,7 +2302,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-06-15T05:05:11+05:30"
+        "moonrise": "2026-06-15T05:05:11+05:30",
+        "moonset": "2026-06-15T19:58:10+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2313,7 +2356,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-06-15T04:35:25+05:30"
+        "moonrise": "2026-06-15T04:35:25+05:30",
+        "moonset": "2026-06-15T18:54:39+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2366,7 +2410,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-06-15T05:49:19+05:30"
+        "moonrise": "2026-06-15T05:49:19+05:30",
+        "moonset": "2026-06-15T19:50:26+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2419,7 +2464,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-06-15T04:50:32+05:30"
+        "moonrise": "2026-06-15T04:50:32+05:30",
+        "moonset": "2026-06-15T19:24:38+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2472,7 +2518,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-06-15T05:32:56+05:30"
+        "moonrise": "2026-06-15T05:32:56+05:30",
+        "moonset": "2026-06-15T19:04:58+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2525,7 +2572,8 @@
         "masa": "Adhika_Jyeshtha",
         "masaPurnimanta": "Adhika_Jyeshtha",
         "adhika": true,
-        "moonrise": "2026-06-15T04:11:31+05:30"
+        "moonrise": "2026-06-15T04:11:31+05:30",
+        "moonset": "2026-06-15T18:50:19+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2577,7 +2625,8 @@
         "masa": "Shravana",
         "masaPurnimanta": "Bhadrapada",
         "adhika": false,
-        "moonrise": "2026-09-04T23:24:00+05:30"
+        "moonrise": "2026-09-04T23:24:00+05:30",
+        "moonset": "2026-09-04T13:09:43+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2629,7 +2678,8 @@
         "masa": "Shravana",
         "masaPurnimanta": "Bhadrapada",
         "adhika": false,
-        "moonrise": "2026-09-04T22:54:20+05:30"
+        "moonrise": "2026-09-04T22:54:20+05:30",
+        "moonset": "2026-09-04T12:06:36+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2681,7 +2731,8 @@
         "moonLongitude": 43.51597686344314,
         "masa": "Shravana",
         "masaPurnimanta": "Bhadrapada",
-        "adhika": false
+        "adhika": false,
+        "moonset": "2026-09-04T13:02:35+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2733,7 +2784,8 @@
         "masa": "Shravana",
         "masaPurnimanta": "Bhadrapada",
         "adhika": false,
-        "moonrise": "2026-09-04T23:09:23+05:30"
+        "moonrise": "2026-09-04T23:09:23+05:30",
+        "moonset": "2026-09-04T12:36:23+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2785,7 +2837,8 @@
         "masa": "Shravana",
         "masaPurnimanta": "Bhadrapada",
         "adhika": false,
-        "moonrise": "2026-09-04T23:51:33+05:30"
+        "moonrise": "2026-09-04T23:51:33+05:30",
+        "moonset": "2026-09-04T12:17:33+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2837,7 +2890,8 @@
         "masa": "Shravana",
         "masaPurnimanta": "Bhadrapada",
         "adhika": false,
-        "moonrise": "2026-09-04T22:30:33+05:30"
+        "moonrise": "2026-09-04T22:30:33+05:30",
+        "moonset": "2026-09-04T12:01:59+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2889,7 +2943,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-11-09T06:35:13+05:30"
+        "moonrise": "2026-11-09T06:35:13+05:30",
+        "moonset": "2026-11-09T17:16:02+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2941,7 +2996,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-11-09T05:36:55+05:30"
+        "moonrise": "2026-11-09T05:36:55+05:30",
+        "moonset": "2026-11-09T16:43:04+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -2993,7 +3049,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-11-09T06:34:56+05:30"
+        "moonrise": "2026-11-09T06:34:56+05:30",
+        "moonset": "2026-11-09T17:53:40+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3045,7 +3102,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-11-09T06:04:33+05:30"
+        "moonrise": "2026-11-09T06:04:33+05:30",
+        "moonset": "2026-11-09T16:59:34+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3097,7 +3155,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-11-09T05:54:05+05:30"
+        "moonrise": "2026-11-09T05:54:05+05:30",
+        "moonset": "2026-11-09T17:34:20+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3149,7 +3208,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-11-09T05:29:42+05:30"
+        "moonrise": "2026-11-09T05:29:42+05:30",
+        "moonset": "2026-11-09T16:21:49+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3197,7 +3257,8 @@
         "masa": "Jyeshtha",
         "masaPurnimanta": "Ashadha",
         "adhika": false,
-        "moonrise": "2026-06-30T19:57:55+05:30"
+        "moonrise": "2026-06-30T19:57:55+05:30",
+        "moonset": "2026-06-30T05:20:07+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3249,7 +3310,8 @@
         "masa": "Jyeshtha",
         "masaPurnimanta": "Jyeshtha",
         "adhika": false,
-        "moonrise": "2026-06-30T18:56:17+05:30"
+        "moonrise": "2026-06-30T18:56:17+05:30",
+        "moonset": "2026-06-30T04:50:19+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3297,7 +3359,8 @@
         "masa": "Jyeshtha",
         "masaPurnimanta": "Ashadha",
         "adhika": false,
-        "moonrise": "2026-06-30T19:51:55+05:30"
+        "moonrise": "2026-06-30T19:51:55+05:30",
+        "moonset": "2026-06-30T06:03:19+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3349,7 +3412,8 @@
         "masa": "Jyeshtha",
         "masaPurnimanta": "Jyeshtha",
         "adhika": false,
-        "moonrise": "2026-06-30T19:25:24+05:30"
+        "moonrise": "2026-06-30T19:25:24+05:30",
+        "moonset": "2026-06-30T05:05:26+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3397,7 +3461,8 @@
         "masa": "Jyeshtha",
         "masaPurnimanta": "Ashadha",
         "adhika": false,
-        "moonrise": "2026-06-30T19:08:01+05:30"
+        "moonrise": "2026-06-30T19:08:01+05:30",
+        "moonset": "2026-06-30T05:46:40+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3449,7 +3514,8 @@
         "masa": "Jyeshtha",
         "masaPurnimanta": "Jyeshtha",
         "adhika": false,
-        "moonrise": "2026-06-30T18:51:23+05:30"
+        "moonrise": "2026-06-30T18:51:23+05:30",
+        "moonset": "2026-06-30T04:26:49+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3501,7 +3567,8 @@
         "masa": "Phalguna",
         "masaPurnimanta": "Phalguna",
         "adhika": false,
-        "moonrise": "2026-02-24T10:58:37+05:30"
+        "moonrise": "2026-02-24T10:58:37+05:30",
+        "moonset": "2026-02-24T00:30:02+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3607,7 +3674,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Ashwin",
         "adhika": false,
-        "moonrise": "2026-10-16T11:34:07+05:30"
+        "moonrise": "2026-10-16T11:34:07+05:30",
+        "moonset": "2026-10-16T21:40:42+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3657,7 +3725,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Ashwin",
         "adhika": false,
-        "moonrise": "2026-10-16T10:30:57+05:30"
+        "moonrise": "2026-10-16T10:30:57+05:30",
+        "moonset": "2026-10-16T21:11:17+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3707,7 +3776,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Ashwin",
         "adhika": false,
-        "moonrise": "2026-10-16T10:26:44+05:30"
+        "moonrise": "2026-10-16T10:26:44+05:30",
+        "moonset": "2026-10-16T20:47:36+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3758,7 +3828,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Ashwin",
         "adhika": false,
-        "moonrise": "2026-10-17T12:22:30+05:30"
+        "moonrise": "2026-10-17T12:22:30+05:30",
+        "moonset": "2026-10-17T22:35:26+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -3814,6 +3885,7 @@
         "masaPurnimanta": "Ashwin",
         "adhika": false,
         "moonrise": "2026-10-17T11:20:10+05:30",
+        "moonset": "2026-10-17T22:04:55+05:30",
         "bengaliDate": {
           "year": 1433,
           "month": "Ashshin",
@@ -3873,6 +3945,7 @@
         "masaPurnimanta": "Ashwin",
         "adhika": false,
         "moonrise": "2026-10-18T12:05:11+05:30",
+        "moonset": "2026-10-18T22:59:26+05:30",
         "bengaliDate": {
           "year": 1433,
           "month": "Kartik",
@@ -3932,6 +4005,7 @@
         "masaPurnimanta": "Ashwin",
         "adhika": false,
         "moonrise": "2026-10-18T11:59:46+05:30",
+        "moonset": "2026-10-18T22:37:25+05:30",
         "bengaliDate": {
           "year": 1433,
           "month": "Kartik",
@@ -3989,7 +4063,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-10-29T20:12:00+05:30"
+        "moonrise": "2026-10-29T20:12:00+05:30",
+        "moonset": "2026-10-29T09:56:55+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -4042,7 +4117,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-10-29T20:55:53+05:30"
+        "moonrise": "2026-10-29T20:55:53+05:30",
+        "moonset": "2026-10-29T09:49:32+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -4095,7 +4171,8 @@
         "masa": "Ashwin",
         "masaPurnimanta": "Kartika",
         "adhika": false,
-        "moonrise": "2026-10-29T19:57:19+05:30"
+        "moonrise": "2026-10-29T19:57:19+05:30",
+        "moonset": "2026-10-29T09:23:28+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -4149,6 +4226,7 @@
         "masaPurnimanta": "Vaishakha",
         "adhika": false,
         "moonrise": "2026-04-14T02:58:29+05:30",
+        "moonset": "2026-04-14T14:54:27+05:30",
         "bengaliDate": {
           "year": 1432,
           "month": "Choitro",
@@ -4207,6 +4285,7 @@
         "masaPurnimanta": "Vaishakha",
         "adhika": false,
         "moonrise": "2026-04-15T03:33:09+05:30",
+        "moonset": "2026-04-15T15:52:16+05:30",
         "bengaliDate": {
           "year": 1433,
           "month": "Boishakh",
@@ -4265,6 +4344,7 @@
         "masaPurnimanta": "Vaishakha",
         "adhika": false,
         "moonrise": "2026-04-14T02:47:32+05:30",
+        "moonset": "2026-04-14T14:38:29+05:30",
         "bengaliDate": {
           "year": 1432,
           "month": "Choitro",
@@ -4323,6 +4403,7 @@
         "masaPurnimanta": "Vaishakha",
         "adhika": false,
         "moonrise": "2026-04-15T03:20:12+05:30",
+        "moonset": "2026-04-15T15:38:25+05:30",
         "bengaliDate": {
           "year": 1433,
           "month": "Boishakh",
@@ -4379,7 +4460,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Pausha",
         "adhika": false,
-        "moonrise": "1800-01-01T11:27:44+05:30"
+        "moonrise": "1800-01-01T11:27:44+05:30",
+        "moonset": "1800-01-01T23:24:47+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",
@@ -4431,7 +4513,8 @@
         "masa": "Pausha",
         "masaPurnimanta": "Pausha",
         "adhika": false,
-        "moonrise": "2399-12-31T08:24:28+05:30"
+        "moonrise": "2399-12-31T08:24:28+05:30",
+        "moonset": "2399-12-31T19:43:56+05:30"
       },
       "source": {
         "authority": "Tithi panchang-v3 engine characterization",

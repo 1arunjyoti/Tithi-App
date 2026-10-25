@@ -22,9 +22,10 @@ class PanchangInitErrorBanner extends ConsumerWidget {
 
     final l10n = AppLocalizations.of(context);
     final error = init.error;
-    // Ephemeris failures carry a message written for the user; anything else
-    // is unexpected, so keep the generic copy rather than leaking internals.
-    final detail = error is EphemerisAssetException
+    // Panchang init failures carry a message written for the user; anything
+    // else is unexpected, so keep the generic copy rather than leaking
+    // internals.
+    final detail = error is PanchangInitException
         ? error.message
         : (l10n?.unexpectedErrorOccurred ??
               'An unexpected error occurred. Please try again.');

@@ -21,6 +21,37 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### A broken native engine fails startup instead of silently approximating
+
+If the native Swiss Ephemeris library does not load, the home screen now says
+so and offers a retry instead of quietly showing 1-3 minute approximations as
+real sunrise/sunset/moonrise times.
+
+- `ensureNativeEngineInstalled` (`lib/services/panchang_init/panchang_init.dart`)
+  throws `EphemerisEngineException` when `SolarEventsService` or
+  `MoonEventsService` failed to install its native calculator. It only throws on
+  `kNativeEnginePlatforms` (Android); the other platforms keep the documented
+  approximation.
+- `PanchangService.init` calls the guard after both `configureSwiss` calls;
+  each service now records `nativeSetupError` instead of only logging.
+- `PanchangInitErrorBanner` renders any `PanchangInitException`, so the engine
+  message replaces the generic error copy.
+- Tests: guard cases in `test/panchang_init_test.dart`, banner copy in
+  `test/panchang_init_error_banner_test.dart`.
+
+### Moonset is locked in the golden fixture
+
+The tithi sheet's moonset chip now has the same regression lock as moonrise.
+
+- Fixture schema 3 adds `moonset` to 83 of the 84 cases (native
+  `swe_rise_trans`, `PanchangProfile.standard`); `varanasi-2026-02-24` omits it
+  as a genuine no-set day and the engine test falsifies that null the same way
+  as the no-moonrise case. No existing value changed.
+- `test/moon_events_test.dart` asserts `upperLimb` vs `lowerLimb` moonset differ
+  by minutes, pinning the limb policy to an instant rather than only a bit.
+- `GoldenExpected.moonset` + `validateGoldenStructure` require an explicit
+  offset and the case's civil date.
+
 ### Tithi sheet and export times are second-precise, and the lock is tightened
 
 The tithi detail sheet and the festival export now show the same second-precise

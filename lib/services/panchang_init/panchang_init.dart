@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show FlutterError;
+import 'package:flutter/foundation.dart'
+    show FlutterError, TargetPlatform;
 import 'package:flutter/services.dart' show AssetBundle;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -32,15 +33,24 @@ final Uint8List _se1Magic = Uint8List.fromList('SWISSEPH'.codeUnits);
 /// Ephemeris can read.
 const int _minSe1Bytes = 1024;
 
+/// An init failure whose [message] is written for the user, not the developer.
+///
+/// The error banner surfaces [message] verbatim, so a subclass must not expose
+/// raw FFI or filesystem text.
+abstract interface class PanchangInitException implements Exception {
+  String get message;
+}
+
 /// Raised when the bundled ephemeris data cannot be installed.
 ///
 /// [message] is written for the user, not the developer: it names the file and
 /// the recovery step, because on a device the only available action is to
 /// reinstall. Callers surface it verbatim instead of inventing their own copy.
-class EphemerisAssetException implements Exception {
+class EphemerisAssetException implements PanchangInitException {
   const EphemerisAssetException(this.message, {this.file, this.cause});
 
   /// User-facing explanation of what failed and what to do about it.
+  @override
   final String message;
 
   /// Name of the offending `.se1` file, when one can be identified.
@@ -52,6 +62,58 @@ class EphemerisAssetException implements Exception {
   @override
   String toString() =>
       'EphemerisAssetException${file == null ? '' : '($file)'}: $message';
+}
+
+/// Raised when the native rise/set engine could not be installed.
+///
+/// The pure-Dart fallbacks are 1-3 minutes out, which is enough to move a
+/// `moonrise` observance's matching instant, so a platform that ships the
+/// native engine must not silently run on them.
+class EphemerisEngineException implements PanchangInitException {
+  const EphemerisEngineException(this.message, {this.cause});
+
+  /// User-facing explanation of what failed and what to do about it.
+  @override
+  final String message;
+
+  /// Underlying setup error, kept for logs and tests.
+  final Object? cause;
+
+  @override
+  String toString() => 'EphemerisEngineException: $message';
+}
+
+/// Platforms that ship the native engine and must never run on a fallback.
+///
+/// `packages/jyotish` builds Swiss Ephemeris for Android only; the other
+/// platforms are scaffolding that intentionally use the labelled
+/// approximations, so a fallback there is the documented behaviour rather than
+/// a failure.
+const Set<TargetPlatform> kNativeEnginePlatforms = {TargetPlatform.android};
+
+/// Throws [EphemerisEngineException] when [platform] requires the native engine
+/// but it could not be installed.
+///
+/// [solarSetupError] and [moonSetupError] are the errors recorded by
+/// `SolarEventsService.configureSwiss` and
+/// `MoonEventsService.configureSwiss`. Either one non-null means the app would
+/// otherwise present approximate sunrise, sunset or moonrise as real - and the
+/// moonrise instant is a festival matching checkpoint, so the approximation
+/// would reach observance assignment.
+void ensureNativeEngineInstalled({
+  required TargetPlatform platform,
+  required Object? solarSetupError,
+  required Object? moonSetupError,
+}) {
+  if (!kNativeEnginePlatforms.contains(platform)) return;
+  if (solarSetupError == null && moonSetupError == null) return;
+  throw EphemerisEngineException(
+    'Tithi could not start its calculation engine on this device: the native '
+    'Swiss Ephemeris library did not load, so sunrise, sunset and moonrise '
+    'would be approximate. Reinstall the app to restore it. If you build Tithi '
+    "from source, make sure the library is built for this device's CPU.",
+    cause: solarSetupError ?? moonSetupError,
+  );
 }
 
 /// Copies the bundled ephemeris files to the app's documents directory.

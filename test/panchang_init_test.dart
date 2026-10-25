@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show FlutterError;
+import 'package:flutter/foundation.dart' show FlutterError, TargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -194,6 +194,102 @@ void main() {
       expect(await target.readAsBytes(), before);
     });
   });
+
+  group('ensureNativeEngineInstalled', () {
+    test('throws on Android when the solar engine fell back', () {
+      // Act / Assert: a NOAA fallback moves sunrise, which far more rules read
+      // than the lunar one, so it must not pass as a normal startup.
+      expect(
+        () => ensureNativeEngineInstalled(
+          platform: TargetPlatform.android,
+          solarSetupError: StateError('swe_set_ephe_path failed'),
+          moonSetupError: null,
+        ),
+        throwsA(isA<EphemerisEngineException>()),
+      );
+    });
+
+    test('throws on Android when only the lunar engine fell back', () {
+      // Arrange: the approximation is 1-3 minutes out, which is enough to move
+      // a `moonrise` observance's matching instant.
+      final failure = StateError('libswisseph.so not found');
+
+      // Act / Assert
+      expect(
+        () => ensureNativeEngineInstalled(
+          platform: TargetPlatform.android,
+          solarSetupError: null,
+          moonSetupError: failure,
+        ),
+        throwsA(
+          isA<EphemerisEngineException>().having(
+            (error) => error.cause,
+            'cause',
+            same(failure),
+          ),
+        ),
+      );
+    });
+
+    test('does nothing on Android when both engines installed', () {
+      // Act / Assert
+      expect(
+        () => ensureNativeEngineInstalled(
+          platform: TargetPlatform.android,
+          solarSetupError: null,
+          moonSetupError: null,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('does not throw on platforms that do not ship the native engine', () {
+      // Arrange: desktop/web scaffolding builds no Swiss Ephemeris, so the
+      // labelled approximation is the documented behaviour there.
+      final failure = StateError('library not built for this platform');
+
+      // Act / Assert
+      for (final platform in TargetPlatform.values) {
+        if (kNativeEnginePlatforms.contains(platform)) continue;
+        expect(
+          () => ensureNativeEngineInstalled(
+            platform: platform,
+            solarSetupError: failure,
+            moonSetupError: failure,
+          ),
+          returnsNormally,
+          reason: '$platform',
+        );
+      }
+    });
+
+    test('names the failure and the recovery step', () {
+      // Act
+      final error = _captureEngineError(
+        () => ensureNativeEngineInstalled(
+          platform: TargetPlatform.android,
+          solarSetupError: StateError('opaque FFI failure'),
+          moonSetupError: null,
+        ),
+      );
+
+      // Assert: the banner shows this verbatim, so it must be actionable and
+      // must not leak the raw FFI text.
+      expect(error.message, contains('Swiss Ephemeris'));
+      expect(error.message, contains('Reinstall'));
+      expect(error.message, contains('approximate'));
+      expect(error.message, isNot(contains('opaque FFI failure')));
+    });
+  });
+}
+
+EphemerisEngineException _captureEngineError(void Function() body) {
+  try {
+    body();
+  } on EphemerisEngineException catch (error) {
+    return error;
+  }
+  fail('Expected an EphemerisEngineException');
 }
 
 Future<EphemerisAssetException> _captureEphemerisError(

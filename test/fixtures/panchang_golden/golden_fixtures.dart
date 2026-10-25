@@ -147,9 +147,10 @@ List<String> validateGoldenStructure(GoldenFixtureSet set) {
   final panchang = set.panchang;
   final festivals = set.festivals;
 
-  // Panchang schema 2 added nakshatraStartsAt/nakshatraEndsAt/nextNakshatra/
-  // nextSankranti; the festival file did not change.
-  check(panchang.schemaVersion == 2, 'panchang.schemaVersion must be 2');
+  // Panchang schema 3 added `moonset`; schema 2 added
+  // nakshatraStartsAt/nakshatraEndsAt/nextNakshatra/nextSankranti. The festival
+  // file did not change.
+  check(panchang.schemaVersion == 3, 'panchang.schemaVersion must be 3');
   check(festivals.schemaVersion == 1, 'festivals.schemaVersion must be 1');
   check(
     panchang.profileId == festivals.profileId,
@@ -230,6 +231,9 @@ List<String> validateGoldenStructure(GoldenFixtureSet set) {
     if (e.moonrise != null) {
       _checkInstant(errors, path, 'moonrise', e.moonrise!);
     }
+    if (e.moonset != null) {
+      _checkInstant(errors, path, 'moonset', e.moonset!);
+    }
 
     check(
       e.sunrise.localDate == c.dateString,
@@ -243,6 +247,12 @@ List<String> validateGoldenStructure(GoldenFixtureSet set) {
       check(
         e.moonrise!.localDate == c.dateString,
         '$path: moonrise ${e.moonrise!.raw} is not on ${c.dateString}',
+      );
+    }
+    if (e.moonset != null) {
+      check(
+        e.moonset!.localDate == c.dateString,
+        '$path: moonset ${e.moonset!.raw} is not on ${c.dateString}',
       );
     }
     if (e.tithiEndsAt != null) {
@@ -689,6 +699,7 @@ class GoldenExpected {
     required this.masaPurnimanta,
     required this.adhika,
     required this.moonrise,
+    required this.moonset,
     required this.bengaliDate,
   });
 
@@ -719,6 +730,10 @@ class GoldenExpected {
   final String masaPurnimanta;
   final bool adhika;
   final GoldenInstant? moonrise;
+
+  /// Moonset on the case's civil day, or null when the Moon does not set.
+  final GoldenInstant? moonset;
+
   final GoldenBengaliDate? bengaliDate;
 
   factory GoldenExpected.fromJson(Object? json, String path) {
@@ -726,6 +741,7 @@ class GoldenExpected {
     final tithiEndsAt = map['tithiEndsAt'];
     final nextTithi = map['nextTithi'];
     final moonrise = map['moonrise'];
+    final moonset = map['moonset'];
     final bengaliDate = map['bengaliDate'];
     return GoldenExpected(
       sunrise: GoldenInstant.fromJson(map['sunrise'], '$path.sunrise'),
@@ -770,6 +786,9 @@ class GoldenExpected {
       moonrise: moonrise == null
           ? null
           : GoldenInstant.fromJson(moonrise, '$path.moonrise'),
+      moonset: moonset == null
+          ? null
+          : GoldenInstant.fromJson(moonset, '$path.moonset'),
       bengaliDate: bengaliDate == null
           ? null
           : GoldenBengaliDate.fromJson(bengaliDate, '$path.bengaliDate'),
