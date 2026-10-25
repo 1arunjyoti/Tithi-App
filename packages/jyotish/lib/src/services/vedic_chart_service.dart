@@ -5,6 +5,7 @@ import '../models/planet.dart';
 import '../models/planet_position.dart';
 import '../models/vedic_chart.dart';
 import 'ephemeris_service.dart';
+import 'planetary_dignity.dart';
 
 /// Service for calculating Vedic astrology charts.
 class VedicChartService {
@@ -27,11 +28,14 @@ class VedicChartService {
       // Use default Lahiri ayanamsa (sidereal is now default)
       final flags = CalculationFlags.defaultFlags();
 
-      // Calculate Ascendant and house cusps
+      // Calculate Ascendant and house cusps. The chart always uses the
+      // selected sidereal frame, so the requested house system and ayanamsa
+      // both affect the cusps.
       final houses = await _calculateHouses(
         dateTime: dateTime,
         location: location,
         houseSystem: houseSystem,
+        flags: flags,
       );
 
       // Get list of planets to calculate
@@ -71,7 +75,7 @@ class VedicChartService {
         final position = entry.value;
 
         final house = houses.getHouseForLongitude(position.longitude);
-        final dignity = _calculateDignity(planet, position.longitude);
+        final dignity = dignityForLongitude(planet, position.longitude);
         final isCombust = PlanetPosition.calculateCombustion(
             planet, position.longitude, sunPosition.longitude);
 
@@ -80,15 +84,15 @@ class VedicChartService {
           house: house,
           dignity: dignity,
           isCombust: isCombust,
-          exaltationDegree: _getExaltationDegree(planet),
-          debilitationDegree: _getDebilitationDegree(planet),
+          exaltationDegree: exaltationDegreeFor(planet),
+          debilitationDegree: debilitationDegreeFor(planet),
         );
       }
 
       // Create Vedic info for Rahu
       final rahuHouse = houses.getHouseForLongitude(rahuPosition.longitude);
       final rahuDignity =
-          _calculateDignity(Planet.meanNode, rahuPosition.longitude);
+          dignityForLongitude(Planet.meanNode, rahuPosition.longitude);
       final rahuInfo = VedicPlanetInfo(
         position: rahuPosition,
         house: rahuHouse,
@@ -98,8 +102,7 @@ class VedicChartService {
 
       return VedicChart(
         dateTime: dateTime,
-        location:
-            '${location.latitude.toStringAsFixed(4)}°N, ${location.longitude.toStringAsFixed(4)}°E',
+        location: _locationLabel(location),
         latitude: location.latitude,
         longitudeCoord: location.longitude,
         houses: houses,
@@ -117,159 +120,72 @@ class VedicChartService {
   }
 
   /// Calculates house cusps using Swiss Ephemeris.
+  ///
+  /// The cusps are requested in the chart's sidereal frame directly. The old
+  /// path calculated Placidus cusps always, then subtracted ayanamsa from the
+  /// ascendant, MC and every cusp; that ignored [houseSystem] and could not
+  /// answer a requested system correctly.
   Future<HouseSystem> _calculateHouses({
     required DateTime dateTime,
     required GeographicLocation location,
     required String houseSystem,
+    required CalculationFlags flags,
   }) async {
-    // Calculate houses (returns tropical positions)
+    final code = houseSystem.toUpperCase();
+    final name = _houseSystemNames[code];
+    if (name == null) {
+      throw ArgumentError.value(
+        houseSystem,
+        'houseSystem',
+        'Unsupported Swiss Ephemeris house-system code. Supported: '
+            '${_houseSystemNames.keys.join(', ')}',
+      );
+    }
+
     final houseData = await _ephemerisService.calculateHouses(
       dateTime: dateTime,
       location: location,
-      houseSystem: 'P', // Placidus system
+      houseSystem: code,
+      flags: flags,
     );
-
-    // Get ayanamsa for sidereal correction
-    final ayanamsa = await _ephemerisService.getAyanamsa(
-      dateTime: dateTime,
-      mode: SiderealMode.lahiri, // Use Lahiri ayanamsa
-    );
-
-    // Convert tropical positions to sidereal
-    final tropicalAscendant = houseData['ascmc']![0];
-    final ascendant = (tropicalAscendant - ayanamsa + 360) % 360;
-
-    final tropicalMidheaven = houseData['ascmc']![1];
-    final midheaven = (tropicalMidheaven - ayanamsa + 360) % 360;
-
-    // Convert house cusps to sidereal
-    final tropicalCusps = houseData['cusps']!;
-    final cusps =
-        tropicalCusps.map((cusp) => (cusp - ayanamsa + 360) % 360).toList();
+    final cusps = houseData['cusps']!;
+    final ascmc = houseData['ascmc']!;
 
     return HouseSystem(
-      system: 'Placidus',
+      system: name,
       cusps: cusps,
-      ascendant: ascendant,
-      midheaven: midheaven,
+      ascendant: ascmc[0],
+      midheaven: ascmc[1],
     );
   }
+}
 
-  /// Calculates planetary dignity based on sign placement.
-  PlanetaryDignity _calculateDignity(Planet planet, double longitude) {
-    final signIndex = (longitude / 30).floor() % 12;
+/// Display names for the house systems supported by this package.
+///
+/// 'G' (Gauquelin) is deliberately absent: it writes 36 cusps, while this
+/// binding allocates the standard 13-element buffer.
+const Map<String, String> _houseSystemNames = {
+  'P': 'Placidus',
+  'K': 'Koch',
+  'O': 'Porphyry',
+  'R': 'Regiomontanus',
+  'C': 'Campanus',
+  'A': 'Equal (Ascendant)',
+  'D': 'Equal (MC)',
+  'E': 'Equal',
+  'V': 'Vehlow',
+  'W': 'Whole Sign',
+  'X': 'Meridian',
+  'H': 'Horizontal',
+  'T': 'Polich/Page',
+  'B': 'Alcabitius',
+  'M': 'Morinus',
+  'U': 'Krusinski',
+};
 
-    // Exaltation and debilitation degrees
-    final exaltationMap = _getExaltationSign(planet);
-    final debilitationMap = _getDebilitationSign(planet);
-
-    if (exaltationMap != null && signIndex == exaltationMap) {
-      return PlanetaryDignity.exalted;
-    }
-
-    if (debilitationMap != null && signIndex == debilitationMap) {
-      return PlanetaryDignity.debilitated;
-    }
-
-    // Own signs
-    final ownSigns = _getOwnSigns(planet);
-    if (ownSigns.contains(signIndex)) {
-      return PlanetaryDignity.ownSign;
-    }
-
-    // Moola Trikona
-    final moolaTrikona = _getMoolaTrikona(planet);
-    if (moolaTrikona != null && signIndex == moolaTrikona) {
-      return PlanetaryDignity.moolaTrikona;
-    }
-
-    // Friend, enemy, neutral would require more complex calculations
-    return PlanetaryDignity.neutralSign;
-  }
-
-  /// Gets exaltation sign index for a planet.
-  int? _getExaltationSign(Planet planet) {
-    const exaltations = {
-      Planet.sun: 0, // Aries
-      Planet.moon: 1, // Taurus
-      Planet.mercury: 5, // Virgo
-      Planet.venus: 11, // Pisces
-      Planet.mars: 9, // Capricorn
-      Planet.jupiter: 3, // Cancer
-      Planet.saturn: 6, // Libra
-      Planet.meanNode: 2, // Gemini (Rahu)
-    };
-    return exaltations[planet];
-  }
-
-  /// Gets debilitation sign index for a planet.
-  int? _getDebilitationSign(Planet planet) {
-    const debilitations = {
-      Planet.sun: 6, // Libra
-      Planet.moon: 7, // Scorpio
-      Planet.mercury: 11, // Pisces
-      Planet.venus: 5, // Virgo
-      Planet.mars: 3, // Cancer
-      Planet.jupiter: 9, // Capricorn
-      Planet.saturn: 0, // Aries
-      Planet.meanNode: 8, // Sagittarius (Rahu)
-    };
-    return debilitations[planet];
-  }
-
-  /// Gets exaltation degree for a planet.
-  double? _getExaltationDegree(Planet planet) {
-    const degrees = {
-      Planet.sun: 10.0, // 10° Aries
-      Planet.moon: 33.0, // 3° Taurus
-      Planet.mercury: 165.0, // 15° Virgo
-      Planet.venus: 357.0, // 27° Pisces
-      Planet.mars: 298.0, // 28° Capricorn
-      Planet.jupiter: 95.0, // 5° Cancer
-      Planet.saturn: 200.0, // 20° Libra
-    };
-    return degrees[planet];
-  }
-
-  /// Gets debilitation degree for a planet.
-  double? _getDebilitationDegree(Planet planet) {
-    const degrees = {
-      Planet.sun: 190.0, // 10° Libra
-      Planet.moon: 213.0, // 3° Scorpio
-      Planet.mercury: 345.0, // 15° Pisces
-      Planet.venus: 165.0, // 27° Virgo (actually 177° - 27° Virgo)
-      Planet.mars: 118.0, // 28° Cancer
-      Planet.jupiter: 278.0, // 5° Capricorn
-      Planet.saturn: 20.0, // 20° Aries
-    };
-    return degrees[planet];
-  }
-
-  /// Gets own signs for a planet.
-  List<int> _getOwnSigns(Planet planet) {
-    const ownSigns = {
-      Planet.sun: [4], // Leo
-      Planet.moon: [3], // Cancer
-      Planet.mercury: [2, 5], // Gemini, Virgo
-      Planet.venus: [1, 6], // Taurus, Libra
-      Planet.mars: [0, 7], // Aries, Scorpio
-      Planet.jupiter: [8, 11], // Sagittarius, Pisces
-      Planet.saturn: [9, 10], // Capricorn, Aquarius
-    };
-    return ownSigns[planet] ?? [];
-  }
-
-  /// Gets Moola Trikona sign for a planet.
-  int? _getMoolaTrikona(Planet planet) {
-    const moolaTrikona = {
-      Planet.sun: 4, // Leo
-      Planet.moon: 1, // Taurus
-      Planet.mercury: 5, // Virgo
-      Planet.venus: 6, // Libra
-      Planet.mars: 0, // Aries
-      Planet.jupiter: 8, // Sagittarius
-      Planet.saturn: 10, // Aquarius
-    };
-    return moolaTrikona[planet];
-  }
+String _locationLabel(GeographicLocation location) {
+  final latDirection = location.latitude < 0 ? 'S' : 'N';
+  final lonDirection = location.longitude < 0 ? 'W' : 'E';
+  return '${location.latitude.abs().toStringAsFixed(4)}°$latDirection, '
+      '${location.longitude.abs().toStringAsFixed(4)}°$lonDirection';
 }

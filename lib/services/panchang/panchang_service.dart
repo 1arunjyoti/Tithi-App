@@ -59,6 +59,13 @@ class PanchangService {
       // Initialize Jyotish/SwissEph with the path
       await Jyotish().initialize(ephemerisPath: _ephePath);
 
+      // A missing or truncated file does not make Swiss Ephemeris fail: it
+      // silently falls back to Moshier. Check the range the library actually
+      // opened before trusting the day pipeline.
+      if (kNativeEnginePlatforms.contains(defaultTargetPlatform)) {
+        ensureEphemerisRangeInstalled(await Jyotish().probeDataRange());
+      }
+
       // Install the native rise/set calculators after the ephemeris files
       // exist. Both record their own setup error instead of throwing, because
       // the approximation is the documented behaviour on platforms that do not
@@ -115,18 +122,12 @@ class PanchangService {
       longitude: longitude,
     );
 
-    final sun = await Jyotish().getPlanetPosition(
-      planet: Planet.sun,
-      dateTime: date,
-      location: location,
-    );
-    final moon = await Jyotish().getPlanetPosition(
-      planet: Planet.moon,
+    final positions = await Jyotish().getSunMoonPositions(
       dateTime: date,
       location: location,
     );
 
-    double diff = moon.longitude - sun.longitude;
+    double diff = positions.moon.longitude - positions.sun.longitude;
     if (diff < 0) {
       diff += 360;
     }
@@ -164,19 +165,13 @@ class PanchangService {
   }) async {
     if (!_isInitialized) return null;
     try {
-      // PERF-3: one parallel batch — the two FFI calls are independent.
-      final positions = await Jyotish().getMultiplePlanetPositions(
-        planets: [Planet.sun, Planet.moon],
+      // One batch, so sidereal/topocentric state is applied once for both
+      // bodies instead of once per independent FFI call.
+      final positions = await Jyotish().getSunMoonPositions(
         dateTime: date,
-        location: GeographicLocation(
-          latitude: latitude,
-          longitude: longitude,
-        ),
+        location: GeographicLocation(latitude: latitude, longitude: longitude),
       );
-      final sun = positions[Planet.sun];
-      final moon = positions[Planet.moon];
-      if (sun == null || moon == null) return null;
-      return (sun: sun.longitude, moon: moon.longitude);
+      return (sun: positions.sun.longitude, moon: positions.moon.longitude);
     } catch (e) {
       if (kDebugMode) {
         print('calculateSunMoonLongitudes failed: $e');
@@ -202,10 +197,7 @@ class PanchangService {
       final moon = await Jyotish().getPlanetPosition(
         planet: Planet.moon,
         dateTime: date,
-        location: GeographicLocation(
-          latitude: latitude,
-          longitude: longitude,
-        ),
+        location: GeographicLocation(latitude: latitude, longitude: longitude),
       );
       return nakshatraForLongitude(moon.longitude);
     } catch (e) {
@@ -248,8 +240,7 @@ class PanchangService {
     return verdict.adhika ? 'Adhika_${verdict.masa}' : verdict.masa;
   }
 
-  static DateTime _noon(DateTime dt) =>
-      DateTime(dt.year, dt.month, dt.day, 12);
+  static DateTime _noon(DateTime dt) => DateTime(dt.year, dt.month, dt.day, 12);
 
   /// Memoized verdicts per lunation. All dates (and all intraday checkpoints)
   /// of one lunation share a single verdict — that sharing is load-bearing
@@ -257,8 +248,11 @@ class PanchangService {
   /// adjacent days. Bounded; entries are deterministic so eviction only costs
   /// recomputation.
   static const int _maxLunationVerdicts = 8;
-  static final Map<String, ({DateTime n1, DateTime n2, bool adhika, String masa})>
-      _lunationVerdicts = {};
+  static final Map<
+    String,
+    ({DateTime n1, DateTime n2, bool adhika, String masa})
+  >
+  _lunationVerdicts = {};
 
   /// Adhika verdict for the lunation containing [date].
   /// Mean-motion estimate first (lunations are ~29.2-29.8d apart, so an
@@ -274,9 +268,7 @@ class PanchangService {
     final diffDegrees = (rawTithi - 1) * 12;
     final daysSinceNewMoon = diffDegrees / 12.19074;
     final estPrev = _noon(
-      date.subtract(
-        Duration(minutes: (daysSinceNewMoon * 1440).round()),
-      ),
+      date.subtract(Duration(minutes: (daysSinceNewMoon * 1440).round())),
     );
 
     for (final entry in _lunationVerdicts.values) {
@@ -365,8 +357,9 @@ class PanchangService {
     );
 
     if (_sunLongitudeCache.length >= _maxSunCacheSize) {
-      final toRemove =
-          _sunLongitudeCache.keys.take(_maxSunCacheSize ~/ 5).toList();
+      final toRemove = _sunLongitudeCache.keys
+          .take(_maxSunCacheSize ~/ 5)
+          .toList();
       for (final k in toRemove) {
         _sunLongitudeCache.remove(k);
       }

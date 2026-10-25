@@ -33,7 +33,7 @@ class SwissEphConstants {
   // Calculation flags
   static const int swissEph = 2; // Use Swiss Ephemeris
   static const int speed = 256; // Calculate speed
-  static const int sidereal = 64; // Sidereal calculation
+  static const int sidereal = 64 * 1024; // SEFLG_SIDEREAL
   static const int tropical = 0; // Tropical calculation (default)
   static const int equatorial = 2048; // Equatorial positions
   static const int topocentricFlag = 32 * 1024; // Topocentric positions

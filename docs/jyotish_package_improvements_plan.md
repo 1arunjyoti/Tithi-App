@@ -530,6 +530,38 @@ removing the stale claim that it does not work in the compiled library, and
 validating returned flags. Keep comparison tests against the established
 ecliptic-longitude path before making it the default.
 
+### Phase 4: what shipped
+
+- Houses and frames: `swe_houses_ex` is bound with `SEFLG_SIDEREAL`;
+  `calculateHouses` honours the requested code and "W" is the chart default,
+  with no ayanamsa subtraction from cusps/angles. Equatorial sidereal planet
+  requests are rejected instead of subtracting an ecliptic offset from RA.
+- Dignity and validation: `planetary_dignity.dart` fixes Venus to 177° and
+  Jupiter to 275°, evaluates degree-based moola-trikona before own-sign
+  dignity, and rejects non-finite longitudes. `GeographicLocation` rejects
+  non-finite and out-of-range DMS values; chart location strings use N/S/E/W.
+- Provenance and data range: `PlanetPosition.provenance` records requested and
+  returned flags, backend and warning; `requireSwissEphemeris` throws rather
+  than returning Moshier output; `probeDataRange()` reports each loaded file's
+  actual range from `swe_get_current_file_data()`. Initialization shares one
+  in-flight future per isolate and app startup asserts the expected years.
+- Cache and batching: `_PositionCacheKey` replaces rounded strings and carries
+  the exact instant, frame, ayanamsa, engine version and topocentric altitude;
+  geocentric entries omit location. `calculatePlanetPositions` and
+  `calculateSunMoon` replace `Future.wait`, applying global state once and
+  reusing one error buffer; the app's tithi and Sun/Moon paths use the pair.
+- Native sidereal: `CalculationFlags.nativeSidereal()` sets `SEFLG_SIDEREAL`,
+  verifies the returned flag and skips the Dart subtraction. It remains
+  opt-in; `native_sidereal_test.dart` compares it with the historical path.
+  `SiderealMode.label` no longer shadows `.name`, and `persistenceKey` exposes
+  the integer constant.
+- `jyotish-js/` is documented as an incomplete, private scaffold (its index
+  imports files that are not in the repository) and is outside the Dart API
+  and CI. The developer-specific macOS path is gone from `SwissEphBindings`.
+- Tests: `houses`, `planetary_dignity`, `geographic_location`,
+  `equatorial_frame`, `ephemeris_provenance`, `native_sidereal` and
+  `position_cache` suites in `packages/jyotish/test/`.
+
 ## Phase 5 — moonrise, moonset, and timing accuracy
 
 Replace the pure-Dart approximate moonrise/moonset implementation for all

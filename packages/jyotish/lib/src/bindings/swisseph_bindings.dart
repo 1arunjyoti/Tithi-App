@@ -32,6 +32,56 @@ class RiseTransResult {
   bool get isUnavailable => status == -2;
 }
 
+/// Result of a `swe_calc_ut()` call.
+///
+/// [returnedFlags] is the flag set Swiss Ephemeris reports for the calculation
+/// that actually ran. It can contain a different backend from the requested
+/// flags when a `.se1` file is missing and the library falls back to Moshier.
+@immutable
+class SwissCalculationResult {
+  const SwissCalculationResult({
+    required this.values,
+    required this.returnedFlags,
+    this.warning,
+  });
+
+  /// Six double results: longitude, latitude, distance and their speeds.
+  final List<double> values;
+
+  /// Flags returned by `swe_calc_ut()`.
+  final int returnedFlags;
+
+  /// Native warning text, present even on success when the library fell back.
+  final String? warning;
+}
+
+/// Raw file-range data from `swe_get_current_file_data()`.
+@immutable
+class SwissEphemerisFileData {
+  const SwissEphemerisFileData({
+    required this.ifno,
+    required this.path,
+    required this.startJulianDay,
+    required this.endJulianDay,
+    required this.denum,
+  });
+
+  /// 0 = planets, 1 = Moon, 2 = main asteroids.
+  final int ifno;
+
+  /// Loaded file path.
+  final String path;
+
+  /// First Julian day covered by the file.
+  final double startJulianDay;
+
+  /// Last Julian day covered by the file.
+  final double endJulianDay;
+
+  /// File denumeration reported by Swiss Ephemeris.
+  final int denum;
+}
+
 /// FFI bindings for Swiss Ephemeris C library.
 ///
 /// This class provides low-level bindings to the Swiss Ephemeris shared library.
@@ -97,9 +147,24 @@ class SwissEphBindings {
       ffi.Double Function(ffi.Double),
       double Function(double)>('swe_get_ayanamsa_ut');
 
-  late final _swe_houses = _lib.lookupFunction<
+  late final _swe_get_current_file_data = _lib.lookupFunction<
+      ffi.Pointer<ffi.Char> Function(
+        ffi.Int32,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Int32>,
+      ),
+      ffi.Pointer<ffi.Char> Function(
+        int,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Int32>,
+      )>('swe_get_current_file_data');
+
+  late final _swe_houses_ex = _lib.lookupFunction<
       ffi.Int32 Function(
         ffi.Double,
+        ffi.Int32,
         ffi.Double,
         ffi.Double,
         ffi.Int32,
@@ -108,12 +173,13 @@ class SwissEphBindings {
       ),
       int Function(
         double,
+        int,
         double,
         double,
         int,
         ffi.Pointer<ffi.Double>,
         ffi.Pointer<ffi.Double>,
-      )>('swe_houses');
+      )>('swe_houses_ex');
 
   late final _swe_rise_trans = _lib.lookupFunction<
       ffi.Int32 Function(
@@ -180,6 +246,9 @@ class SwissEphBindings {
 
   /// Disable nutation.
   static const int SEFLG_NONUT = 64;
+
+  /// Return sidereal positions.
+  static const int SEFLG_SIDEREAL = 64 * 1024;
 
   /// Return true/geometric positions rather than apparent positions.
   static const int SEFLG_TRUEPOS = 16;
@@ -364,11 +433,11 @@ class SwissEphBindings {
 
   /// Calculates planet position using Universal Time.
   ///
-  /// Returns a list of 6 doubles: [longitude, latitude, distance,
-  /// longitudeSpeed, latitudeSpeed, distanceSpeed]
-  ///
-  /// Returns null if calculation fails, with error message in [errorBuffer].
-  List<double>? calculateUT({
+  /// Returns the six doubles (longitude, latitude, distance, longitudeSpeed,
+  /// latitudeSpeed, distanceSpeed) together with the backend flags and native
+  /// warning text. Returns null if the calculation fails, leaving the message
+  /// in [errorBuffer].
+  SwissCalculationResult? calculateUT({
     required double julianDay,
     required int planetId,
     required int flags,
@@ -388,9 +457,62 @@ class SwissEphBindings {
         return null;
       }
 
-      return List.generate(6, (i) => resultPtr[i]);
+      final warning = errorBuffer.cast<Utf8>().toDartString().trim();
+      return SwissCalculationResult(
+        values: List.generate(6, (i) => resultPtr[i]),
+        returnedFlags: returnCode,
+        warning: warning.isEmpty ? null : warning,
+      );
     } finally {
       malloc.free(resultPtr);
+    }
+  }
+
+  /// Reports the file and date range Swiss Ephemeris actually loaded.
+  ///
+  /// [ifno] is 0 for planets, 1 for the Moon and 2 for main asteroids. The
+  /// struct is populated only after a `swe_calc_ut()` probe has opened the
+  /// corresponding file; call this after at least one calculation.
+  ///
+  /// Returns null when no file is loaded for [ifno] (for example when the
+  /// library is using Moshier).
+  SwissEphemerisFileData? getCurrentFileData({required int ifno}) {
+    if (ifno < 0 || ifno > 2) {
+      throw ArgumentError.value(ifno, 'ifno', 'Expected 0, 1 or 2');
+    }
+
+    final startPtr = malloc<ffi.Double>();
+    final endPtr = malloc<ffi.Double>();
+    final denumPtr = malloc<ffi.Int32>();
+
+    try {
+      final pathPtr = _swe_get_current_file_data(
+        ifno,
+        startPtr,
+        endPtr,
+        denumPtr,
+      );
+
+      if (pathPtr == ffi.nullptr) {
+        return null;
+      }
+
+      final path = pathPtr.cast<Utf8>().toDartString();
+      if (path.isEmpty) {
+        return null;
+      }
+
+      return SwissEphemerisFileData(
+        ifno: ifno,
+        path: path,
+        startJulianDay: startPtr.value,
+        endJulianDay: endPtr.value,
+        denum: denumPtr.value,
+      );
+    } finally {
+      malloc.free(startPtr);
+      malloc.free(endPtr);
+      malloc.free(denumPtr);
     }
   }
 
@@ -444,6 +566,10 @@ class SwissEphBindings {
   /// - 'cusps': List of 12 house cusps (0-11)
   /// - 'ascmc': List with ascendant, MC, ARMC, vertex, etc.
   ///
+  /// [flags] is passed to `swe_houses_ex`; use [SEFLG_SIDEREAL] after
+  /// `swe_set_sid_mode` for sidereal cusps. `0` returns tropical cusps and is
+  /// equivalent to the old `swe_houses` call.
+  ///
   /// House system codes:
   /// - 'P' = Placidus
   /// - 'K' = Koch
@@ -457,20 +583,28 @@ class SwissEphBindings {
     required double latitude,
     required double longitude,
     String houseSystem = 'P', // Placidus by default
+    int flags = 0,
   }) {
+    if (houseSystem.length != 1) {
+      throw ArgumentError.value(
+        houseSystem,
+        'houseSystem',
+        'Expected a single Swiss Ephemeris house-system code',
+      );
+    }
+
     // Allocate memory for cusps (13 elements, index 0 unused, 1-12 are house cusps)
     final cuspsPtr = malloc<ffi.Double>(13);
     // Allocate memory for ascmc (10 elements: ascendant, MC, ARMC, vertex, etc.)
     final ascmcPtr = malloc<ffi.Double>(10);
 
     try {
-      final systemCode = houseSystem.codeUnitAt(0);
-
-      final returnCode = _swe_houses(
+      final returnCode = _swe_houses_ex(
         julianDay,
+        flags,
         latitude,
         longitude,
-        systemCode,
+        houseSystem.toUpperCase().codeUnitAt(0),
         cuspsPtr,
         ascmcPtr,
       );

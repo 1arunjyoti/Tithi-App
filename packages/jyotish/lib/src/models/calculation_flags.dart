@@ -14,6 +14,11 @@ class CalculationFlags {
   /// [useEquatorial] - Use equatorial coordinates (default: false)
   /// [useHeliocentric] - Use heliocentric (Sun-centered) positions (default: false)
   /// [useTropical] - Use tropical zodiac, skip sidereal conversion (default: false)
+  /// [useNativeSidereal] - Ask Swiss Ephemeris for sidereal positions with
+  /// `SEFLG_SIDEREAL` instead of subtracting ayanamsa from the tropical
+  /// longitude in Dart (default: false, preserving historical output)
+  /// [requireSwissEphemeris] - Reject a Moshier fallback instead of returning
+  /// its position as if it were Swiss Ephemeris output (default: false)
   const CalculationFlags({
     this.useSwissEphemeris = true,
     this.calculateSpeed = true,
@@ -22,14 +27,32 @@ class CalculationFlags {
     this.useEquatorial = false,
     this.useHeliocentric = false,
     this.useTropical = false,
+    this.useNativeSidereal = false,
+    this.requireSwissEphemeris = false,
   });
 
   /// Creates default calculation flags (Lahiri sidereal, geocentric, with speed).
   factory CalculationFlags.defaultFlags() => const CalculationFlags();
 
   /// Creates flags for sidereal calculations with custom ayanamsa.
+  ///
+  /// Ayanamsa is subtracted from the tropical longitude in Dart, the
+  /// package's historical behaviour. Use [CalculationFlags.nativeSidereal] to
+  /// let Swiss Ephemeris apply it instead.
   factory CalculationFlags.sidereal(SiderealMode mode) => CalculationFlags(
         siderealMode: mode,
+      );
+
+  /// Creates flags that request sidereal positions from Swiss Ephemeris.
+  ///
+  /// The result comes from `swe_calc_ut(SEFLG_SIDEREAL)` after setting
+  /// [siderealMode]; no ayanamsa is subtracted in Dart. This is opt-in while
+  /// the two paths are compared, because it can differ from the historical
+  /// output by a small amount.
+  factory CalculationFlags.nativeSidereal(SiderealMode mode) =>
+      CalculationFlags(
+        siderealMode: mode,
+        useNativeSidereal: true,
       );
 
   /// Creates flags for sidereal calculations with Lahiri ayanamsa.
@@ -74,9 +97,32 @@ class CalculationFlags {
   /// For astronomical display rather than Vedic astrology
   final bool useTropical;
 
+  /// Let Swiss Ephemeris apply the ayanamsa via `SEFLG_SIDEREAL`.
+  ///
+  /// When false (default), the package keeps its historical behaviour:
+  /// calculate tropically, then subtract
+  /// `swe_get_ayanamsa_ut()` from the ecliptic longitude in Dart. The manual
+  /// path is only valid for ecliptic coordinates; native sidereal is the
+  /// authoritative frame.
+  final bool useNativeSidereal;
+
+  /// Reject a result produced by the Moshier analytical fallback.
+  ///
+  /// Swiss Ephemeris succeeds with Moshier when a requested `.se1` file is
+  /// missing; that is useful for a cache warm-up but must not be presented as
+  /// Swiss Ephemeris data. When true, [EphemerisService] throws
+  /// `EphemerisBackendException` instead of returning the fallback position.
+  final bool requireSwissEphemeris;
+
   /// Converts flags to Swiss Ephemeris integer flag value.
-  /// Note: We always calculate tropical and subtract ayanamsa manually
-  /// because SEFLG_SIDEREAL doesn't work properly in the compiled library.
+  ///
+  /// By default ecliptic planet positions are calculated tropically and
+  /// converted by subtracting ayanamsa in Dart, which preserves the package's
+  /// historical output. With [useNativeSidereal], `SEFLG_SIDEREAL` is set and
+  /// the engine applies the ayanamsa. Houses always use the native sidereal
+  /// flag through `swe_houses_ex`. Equatorial sidereal requests are rejected
+  /// rather than subtracted, because ayanamsa is an ecliptic offset, not an RA
+  /// offset.
   int toSwissEphFlag() {
     int flag = 0;
 
@@ -100,6 +146,10 @@ class CalculationFlags {
       flag |= SwissEphConstants.heliocentric;
     }
 
+    if (useNativeSidereal) {
+      flag |= SwissEphConstants.sidereal;
+    }
+
     return flag;
   }
 
@@ -111,12 +161,41 @@ class CalculationFlags {
     return 'CalculationFlags('
         'swissEph: $useSwissEphemeris, '
         'speed: $calculateSpeed, '
-        'ayanamsa: ${siderealMode.name}, '
+        'ayanamsa: ${siderealMode.label}, '
         'topocentric: $useTopocentric, '
         'equatorial: $useEquatorial, '
         'heliocentric: $useHeliocentric, '
-        'tropical: $useTropical)';
+        'tropical: $useTropical, '
+        'nativeSidereal: $useNativeSidereal, '
+        'requireSwiss: $requireSwissEphemeris)';
   }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CalculationFlags &&
+        other.useSwissEphemeris == useSwissEphemeris &&
+        other.calculateSpeed == calculateSpeed &&
+        other.siderealMode == siderealMode &&
+        other.useTopocentric == useTopocentric &&
+        other.useEquatorial == useEquatorial &&
+        other.useHeliocentric == useHeliocentric &&
+        other.useTropical == useTropical &&
+        other.useNativeSidereal == useNativeSidereal &&
+        other.requireSwissEphemeris == requireSwissEphemeris;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        useSwissEphemeris,
+        calculateSpeed,
+        siderealMode,
+        useTopocentric,
+        useEquatorial,
+        useHeliocentric,
+        useTropical,
+        useNativeSidereal,
+        requireSwissEphemeris,
+      );
 
   /// Creates a copy with optional parameter overrides.
   CalculationFlags copyWith({
@@ -127,6 +206,8 @@ class CalculationFlags {
     bool? useEquatorial,
     bool? useHeliocentric,
     bool? useTropical,
+    bool? useNativeSidereal,
+    bool? requireSwissEphemeris,
   }) {
     return CalculationFlags(
       useSwissEphemeris: useSwissEphemeris ?? this.useSwissEphemeris,
@@ -136,6 +217,9 @@ class CalculationFlags {
       useEquatorial: useEquatorial ?? this.useEquatorial,
       useHeliocentric: useHeliocentric ?? this.useHeliocentric,
       useTropical: useTropical ?? this.useTropical,
+      useNativeSidereal: useNativeSidereal ?? this.useNativeSidereal,
+      requireSwissEphemeris:
+          requireSwissEphemeris ?? this.requireSwissEphemeris,
     );
   }
 }
@@ -194,11 +278,25 @@ enum SiderealMode {
       SwissEphConstants.sidmGalcentMulaVerneau, 'Galactic Center Mula Verneau'),
   valensBow(SwissEphConstants.sidmValensBow, 'Valens Bow');
 
-  const SiderealMode(this.constant, this.name);
+  const SiderealMode(this.constant, this.label);
 
+  /// Swiss Ephemeris `SE_SIDM_*` integer.
   final int constant;
-  final String name;
+
+  /// Human-readable ayanamsa name for display only.
+  ///
+  /// This is deliberately not called `name`: the enum's built-in [Enum.name]
+  /// is the stable identifier that can be persisted. Cache and storage keys
+  /// should use [persistenceKey] (the integer constant) or `name`, never
+  /// [label], because labels may be reworded.
+  final String label;
+
+  /// Stable value for persistence and cache keys.
+  ///
+  /// The integer is assigned by Swiss Ephemeris and does not change when a
+  /// display label is edited or the enum is reordered.
+  int get persistenceKey => constant;
 
   @override
-  String toString() => name;
+  String toString() => label;
 }

@@ -54,6 +54,19 @@ class InitializationException extends JyotishException {
   });
 }
 
+/// Exception thrown when the actual ephemeris backend cannot satisfy the
+/// caller's required precision.
+///
+/// The usual cause is a missing `.se1` file: Swiss Ephemeris succeeds using its
+/// Moshier analytical fallback, which is not Swiss Ephemeris output.
+class EphemerisBackendException extends JyotishException {
+  EphemerisBackendException(
+    super.message, {
+    super.originalError,
+    super.stackTrace,
+  });
+}
+
 /// Exception thrown when invalid input is provided.
 class ValidationException extends JyotishException {
   ValidationException(

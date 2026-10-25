@@ -1,5 +1,6 @@
 {
   "name": "jyotish-js",
+  "private": true,
   "version": "1.0.0",
   "description": "A JavaScript library for Vedic astrology calculations including Ashtakoot Gun Milan (36-point compatibility matching)",
   "main": "dist/index.js",
