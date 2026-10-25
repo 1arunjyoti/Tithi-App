@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:jyotish/jyotish.dart';
+import '../../features/panchang/domain/panchang_crossings.dart';
 import '../../features/panchang/domain/panchang_day.dart';
 import '../../features/panchang/domain/panchang_day_projection.dart';
 import '../../features/panchang/domain/panchang_day_resolver.dart';
@@ -295,63 +296,42 @@ class PanchangService {
     return verdict;
   }
 
-  /// New-moon instant near [centerNoon]: sample tithi at noon ±3d, find the
-  /// adjacent pair straddling the 30→1 wrap, and interpolate between them
-  /// (free, ~±2h). Sampling the Sun AT the wrap — instead of at noon — keeps
-  /// same-day transit/new-moon coincidences (e.g. Simha sankranti and the new
-  /// moon both on 2031-08-17) on the correct side. Falls back to the nearest
-  /// noon when no wrap is in window (estimate error beyond ±3d).
+  /// New-moon instant near [centerNoon], resolved to the second.
+  ///
+  /// The elapsed Sun-Moon angle is monotone, so the wrap is a plain root: the
+  /// shared solver brackets it with daily samples and bisects to a second.
+  /// The previous version stopped at ~±3 h after two halving rounds and a
+  /// linear interpolation - enough to put a new moon on the wrong side of a
+  /// Sankranti and flip the Adhika verdict for the lunation. Falls back to the
+  /// noon closest to the new moon when the window holds no wrap (the estimate
+  /// is off by more than the search window).
   Future<DateTime> _refineNewMoonInstant(
     DateTime centerNoon,
     GeographicLocation location,
   ) async {
-    Future<double> tithiAt(DateTime at) => calculateTithi(
+    Future<double> rawTithiAt(DateTime at) => calculateTithi(
       at,
       latitude: location.latitude,
       longitude: location.longitude,
     );
 
-    final cands = <({DateTime at, double t})>[];
+    final solved = await findNewMoonInstant(
+      estimate: centerNoon,
+      elapsedDegreesAt: (at) async => (await rawTithiAt(at) - 1) * 12,
+    );
+    if (solved != null) return solved;
+
+    DateTime best = centerNoon;
+    double bestScore = double.infinity;
     for (int d = -3; d <= 3; d++) {
       final at = centerNoon.add(Duration(days: d));
-      cands.add((at: at, t: await tithiAt(at)));
-    }
-    final wrap = wrapPairIndex(cands.map((c) => c.t).toList());
-    if (wrap < 0) {
-      DateTime best = centerNoon;
-      double bestScore = double.infinity;
-      for (final c in cands) {
-        final score = newMoonDistance(c.t);
-        if (score < bestScore) {
-          bestScore = score;
-          best = c.at;
-        }
-      }
-      return best;
-    }
-    DateTime pre = cands[wrap].at;
-    DateTime post = cands[wrap + 1].at;
-    // Two bisection rounds halve the ±12h noon-grid window twice (~±3h).
-    // Linear interpolation alone can err ~±6h on skewed tithis (e.g. a long
-    // Amavasya), which still straddles same-day transit/new-moon coincidences
-    // like 2031-08-17. Side test is Kshaya/Adhika-tithi safe: near a new moon
-    // the tithi is always ~28-30 (pre) or ~0-2 (post), never mid-cycle.
-    for (int i = 0; i < 2; i++) {
-      final mid = DateTime.fromMicrosecondsSinceEpoch(
-        (pre.microsecondsSinceEpoch + post.microsecondsSinceEpoch) ~/ 2,
-      );
-      if (await tithiAt(mid) > 15.0) {
-        pre = mid;
-      } else {
-        post = mid;
+      final score = newMoonDistance(await rawTithiAt(at));
+      if (score < bestScore) {
+        bestScore = score;
+        best = at;
       }
     }
-    return interpolateNewMoonInstant(
-      pre,
-      await tithiAt(pre),
-      post,
-      await tithiAt(post),
-    );
+    return best;
   }
 
   /// OPT-7: Returns the Sun’s ecliptic longitude for [dt], using a bounded

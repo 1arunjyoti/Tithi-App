@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
+import '../../features/panchang/domain/root_solver.dart';
 import '../../providers/panchang_provider.dart';
 import '../solar_events_service.dart';
 import 'bengali_calendar_data.dart';
@@ -351,26 +352,29 @@ class BengaliCalendarService {
       );
     }
 
-    // Bisect to ~20s (24h / 2^12).
-    var lo = beforeNoon;
-    var hi = afterNoon;
-    for (int i = 0; i < 12; i++) {
-      final mid = DateTime.fromMillisecondsSinceEpoch(
-        (lo.millisecondsSinceEpoch + hi.millisecondsSinceEpoch) ~/ 2,
+    // Solve the ingress to the second with the shared crossing primitive. The
+    // bracket is one day wide, so this is ~17 samples instead of the old
+    // 12-round (~20 s) bisection, and the same code path as the panchang's
+    // new moon and tithi edges.
+    final ingress = await solveAngleCrossing(
+      before: beforeNoon,
+      after: afterNoon,
+      valueAt: (instant) => _sunLongitude(instant, location),
+      target: boundary,
+    );
+    if (ingress == null) {
+      // The bracket passed the sign test but a sample failed (or the solver
+      // rejected it). Keep the historic approximation instead of returning a
+      // month start a year away.
+      final approx = noon.subtract(Duration(days: degInSign ~/ 1));
+      return (
+        index: monthIndex,
+        start: DateTime(approx.year, approx.month, approx.day),
       );
-      final relMid = _relPastBoundary(
-        await _sunLongitude(mid, location),
-        boundary,
-      );
-      if (relMid > 180) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
     }
 
     // Bengal rule: month starts the day after the sankranti calendar date.
-    final sankrantiDay = DateTime(hi.year, hi.month, hi.day);
+    final sankrantiDay = DateTime(ingress.year, ingress.month, ingress.day);
     final monthStart = sankrantiDay.add(const Duration(days: 1));
     // The sankranti is on this civil day, so the Bengal rule gives the day to
     // the outgoing month. Resolve that month instead of returning day 1 of a

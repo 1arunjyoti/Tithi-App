@@ -8,6 +8,7 @@ import '../../../services/panchang_service.dart';
 import '../data/panchang_cache.dart';
 import 'panchang_day.dart';
 import 'panchang_day_resolver.dart';
+import 'root_solver.dart';
 
 // ---------------------------------------------------------------------------
 // Shared computation helpers – formerly SMELL-03 block inside
@@ -89,25 +90,24 @@ Future<({int toIndex, DateTime at})?> findSunriseTithiTransition({
   }
   if (lo == null || hi == null) return null;
   if (!hi.isAfter(sunrise)) return null;
-  DateTime low = lo;
-  DateTime high = hi;
 
-  var guard = 0;
-  while (high.difference(low).inMinutes > 1 && guard++ < 60) {
-    final mid =
-        low.add(Duration(minutes: high.difference(low).inMinutes ~/ 2));
-    if (norm(await getRawTithi(mid)) == from) {
-      low = mid;
-    } else {
-      high = mid;
-    }
-  }
+  // The boundary is the elapsed angle reaching `from * 12` degrees (tithi n
+  // spans [(n-1)*12, n*12); tithi 30 wraps to 0). Solved to the second instead
+  // of the old 1-minute bisection, so the sheet's countdown cannot be a minute
+  // stale.
+  final solved = await solveAngleCrossing(
+    before: lo,
+    after: hi,
+    valueAt: (time) async => (await getRawTithi(time) - 1) * 12,
+    target: (from % 30) * 12.0,
+  );
+  if (solved == null) return null;
 
-  if (!high.isAfter(sunrise) || high.isAfter(nextSunrise)) return null;
-  if (norm(await getRawTithi(high.add(const Duration(minutes: 2)))) != to) {
+  if (!solved.isAfter(sunrise) || solved.isAfter(nextSunrise)) return null;
+  if (norm(await getRawTithi(solved.add(const Duration(minutes: 2)))) != to) {
     return null;
   }
-  return (toIndex: to, at: high);
+  return (toIndex: to, at: solved);
 }
 
 /// All intraday tithi checkpoints plus the instants they were sampled at.
@@ -414,24 +414,30 @@ Future<PanchangData> computePanchangData({
   );
 }
 
-/// Bisects a nakshatra edge bracketed by [lo]/[hi] to ~1-minute precision.
+/// Bisects a nakshatra edge bracketed by [lo]/[hi] to [tolerance].
+///
+/// [sunriseIndex] is the nakshatra whose edge is being found. The solver aims
+/// half a nakshatra past the sunrise index (or before it, for [findStart]) so
+/// the bracket straddles the edge rather than starting exactly on it; both
+/// directions are then the same upward crossing, which is what
+/// [solveAngleCrossing] expects.
 Future<DateTime?> bisectNakshatraEdge({
   required DateTime lo,
   required DateTime hi,
   required int sunriseIndex,
   required bool findStart,
   required Future<int?> Function(DateTime time) indexAt,
-}) async {
-  var guard = 0;
-  while (hi.difference(lo).inMinutes > 1 && guard++ < 60) {
-    final mid = lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
-    final idx = await indexAt(mid);
-    if (idx == null) return null;
-    if (findStart ? idx == sunriseIndex : idx != sunriseIndex) {
-      hi = mid;
-    } else {
-      lo = mid;
-    }
-  }
-  return hi;
+  Duration tolerance = const Duration(seconds: 1),
+}) {
+  const segment = 360.0 / 27.0;
+  return solveAngleCrossing(
+    before: lo,
+    after: hi,
+    valueAt: (time) async {
+      final index = await indexAt(time);
+      return index == null ? null : index * segment;
+    },
+    target: (sunriseIndex + (findStart ? -0.5 : 0.5)) * segment,
+    tolerance: tolerance,
+  );
 }
