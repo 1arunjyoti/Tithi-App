@@ -522,6 +522,44 @@ observance decisions with native Swiss Ephemeris rise/set results.
   exists to avoid roughly 150 asynchronous samples per sheet; a direct native
   rise/set binding should avoid that regression.
 
+### Lunar rise/set: what shipped
+
+- `MoonEventsService` (`lib/services/moon_events_service.dart`) is the lunar
+  counterpart of `SolarEventsService`: `MoonEventCalculator` strategy,
+  `SwissMoonEventCalculator` production implementation,
+  `ApproximateMoonEventCalculator` labelled fallback, bounded cache, published
+  place zone, and the global `moonEventsService`. It returns null for a
+  missing event instead of throwing, because a no-rise day is a normal monthly
+  occurrence the observances already handle.
+- The convention is topocentric and apparent with the Moon's true ecliptic
+  latitude: `SE_BIT_GEOCTR_NO_ECL_LAT` and `SE_BIT_HINDU_RISING` are never
+  set. Limb and refraction come from `PanchangProfile.lunarLimb` /
+  `lunarRefraction` (`upperLimb` + `standard` by default), and
+  `SE_BIT_DISC_BOTTOM = 2048` was added to the bindings for the lower-limb
+  policy. `riseSetBits` is the single place that mapping lives.
+- `swe_rise_trans` only searches forward, so a result is discarded unless it
+  lands on the requested civil day. Without that check a no-rise day returns
+  tomorrow's rise, which would move a moonrise observance onto the wrong day.
+  `findPreviousRise` / `findNextSet` preserve the prevailing-event fallback by
+  walking a 48 h window in the direction the forward-only primitive allows.
+- Wired through `PanchangService.init` / `clearCaches`, `PanchangDayResolver`
+  (injectable `moonEvents`; `_solarDay` reads `forDate`),
+  `event_detail_sheet._pujaMoonrise` (the observance input),
+  `tithi_detail_sheet`'s chips and
+  `SolarEventsService.checkpointTimeFor('moonrise')` (vestigial but kept
+  consistent). `MoonriseCalculator` survives only as the fallback delegate.
+- Latency: the ~150-sample worry in the plan does not apply. `swe_rise_trans`
+  is one synchronous FFI call per event. Measured on the Windows host over 40
+  Delhi days: approximation ~898 µs/day for both events, native uncached
+  ~394 µs/day, native cached ~11 µs/day. The native path is both more accurate
+  and about twice as fast as the scan it replaces, so no async conversion or
+  precomputation was needed.
+- The golden fixture's `moonrise` values were recaptured under the new
+  convention (83 values; 27 moved more than the 60 s tolerance, spread of
+  ±120 s). `source.notes` records old result, new result and reason.
+  `test/moon_events_test.dart` pins the convention, the no-rise contract, the
+  fallbacks and the resolver wiring.
+
 ## Phase 6 — platform, data, and licensing delivery
 
 - Verify every Android ABI shipped by the app with reproducible CMake builds.

@@ -14,7 +14,7 @@ import '../services/auspicious_timings.dart';
 import '../services/inauspicious_timings.dart';
 import '../services/solar_events_service.dart';
 import '../services/moon_phase_service.dart';
-import '../services/moonrise_calculator.dart';
+import '../services/moon_events_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
 import '../features/tithi_sheet/providers/sheet_providers.dart';
@@ -147,7 +147,7 @@ class TithiDetailSheet extends ConsumerWidget {
     final hinduYear = ref
         .watch(hinduYearForSheetProvider(panchang.date))
         .valueOrNull;
-    final moonTimes = MoonriseCalculator.calculateMoonriseSet(
+    final moonTimes = moonEventsService.forDate(
       date: panchang.date,
       latitude: coords.latitude,
       longitude: coords.longitude,
@@ -158,14 +158,14 @@ class TithiDetailSheet extends ConsumerWidget {
     // carries its date (see [_moonChipText]).
     final moonrise =
         moonTimes.moonrise ??
-        MoonriseCalculator.findPreviousMoonrise(
+        moonEventsService.findPreviousRise(
           date: panchang.date,
           latitude: coords.latitude,
           longitude: coords.longitude,
         );
     final moonset =
         moonTimes.moonset ??
-        MoonriseCalculator.findNextMoonset(
+        moonEventsService.findNextSet(
           date: panchang.date,
           latitude: coords.latitude,
           longitude: coords.longitude,

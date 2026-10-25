@@ -4,7 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 
 import '../core/location/timezone_resolver.dart';
 import '../models/panchang_profile.dart';
-import 'moonrise_calculator.dart';
+import 'moon_events_service.dart';
 import 'sunrise_calculator.dart';
 
 /// Solar events for one civil day at one place.
@@ -459,13 +459,17 @@ class SolarEventsService {
           Duration(minutes: nightLength.inMinutes ~/ 10),
         );
       case 'moonrise':
-        // A lunar anchor, not a solar offset: reuse the same civil-day rise the
-        // canonical day records, so the forward scan and the day agree.
-        return MoonriseCalculator.calculateMoonriseSet(
+        // A lunar anchor, not a solar offset: read the same civil-day rise the
+        // canonical day records, so the forward scan and the day agree. Goes
+        // through the lunar seam (native in production) rather than the retired
+        // pure-Dart approximation, which is 1-3 minutes out.
+        return moonEventsService.moonrise(
           date: dateOnly,
           latitude: latitude,
           longitude: longitude,
-        ).moonrise;
+          altitudeMeters: altitudeMeters,
+          timezoneId: effectiveTimezoneId,
+        );
       default:
         return null;
     }

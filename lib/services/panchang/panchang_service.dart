@@ -8,6 +8,7 @@ import '../../features/panchang/domain/panchang_day_resolver.dart';
 import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
 import '../festival_matching_pipeline.dart';
+import '../moon_events_service.dart';
 import '../panchang_init/panchang_init.dart';
 import '../solar_events_service.dart';
 import '../../core/location/location_defaults.dart';
@@ -45,6 +46,7 @@ class PanchangService {
     _tithiCache.clear();
     _sunLongitudeCache.clear();
     solarEventsService.clearCache();
+    moonEventsService.clearCache();
   }
 
   Future<void> init() async {
@@ -61,6 +63,10 @@ class PanchangService {
       // files exist. Failure is non-fatal: the solar service keeps its
       // labelled NOAA fallback.
       solarEventsService.configureSwiss(ephemerisPath: _ephePath);
+      // Lunar rise/set uses a different convention (topocentric, real ecliptic
+      // latitude) so it is configured separately; failure leaves the labelled
+      // pure-Dart approximation in place.
+      moonEventsService.configureSwiss(ephemerisPath: _ephePath);
       clearCaches();
 
       if (kDebugMode) {
