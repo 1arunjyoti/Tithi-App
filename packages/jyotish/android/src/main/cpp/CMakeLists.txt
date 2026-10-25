@@ -7,13 +7,18 @@ project("swisseph")
 # Path: packages/jyotish/android/src/main/cpp/CMakeLists.txt
 # Source: packages/jyotish/native/swisseph/swisseph-master/src/
 
-# Build the path to the Swiss Ephemeris source directory
-# From cpp folder, go up 6 levels to reach packages/jyotish, then into native/swisseph/swisseph-master/src
-get_filename_component(JYOTISH_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../" ABSOLUTE)
-set(SWISSEPH_SOURCE_DIR "${JYOTISH_ROOT}/packages/jyotish/native/swisseph/swisseph-master/src")
+# Build the path to the Swiss Ephemeris source directory.
+#
+# CMAKE_CURRENT_SOURCE_DIR is <package>/android/src/main/cpp, so four levels up
+# is the package root. Resolve from there instead of from the repository root:
+# the repository-root form only worked while this package sat at
+# packages/jyotish in this monorepo, and broke as soon as the package was
+# consumed from the pub cache or vendored anywhere else.
+get_filename_component(JYOTISH_PACKAGE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../.." ABSOLUTE)
+set(SWISSEPH_SOURCE_DIR "${JYOTISH_PACKAGE_ROOT}/native/swisseph/swisseph-master/src")
 
 message(STATUS "CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
-message(STATUS "JYOTISH_ROOT: ${JYOTISH_ROOT}")
+message(STATUS "JYOTISH_PACKAGE_ROOT: ${JYOTISH_PACKAGE_ROOT}")
 message(STATUS "SWISSEPH_SOURCE_DIR: ${SWISSEPH_SOURCE_DIR}")
 
 # Check if source files exist

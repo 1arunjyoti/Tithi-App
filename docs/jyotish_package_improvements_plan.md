@@ -572,6 +572,51 @@ observance decisions with native Swiss Ephemeris rise/set results.
   publishing. `packages/jyotish/pubspec.yaml` has no `publish_to: none`, so
   the package is publishable.
 
+### Platform, data and licensing: what shipped
+
+- Platform claims now match reality: Android is the only platform with a real
+  native build, so it is the only one `packages/jyotish/pubspec.yaml` declares
+  (`android: ffiPlugin: true`). The `ios/`, `linux/`, `macos/` and `windows/`
+  directories remain as plugin scaffolding and build no Swiss Ephemeris. A
+  platform may only be added back with a CMake/podspec target that compiles the
+  library plus a smoke test that proves it loaded.
+- Android CMake path: `packages/jyotish/android/src/main/cpp/CMakeLists.txt`
+  resolves `native/swisseph/...` from the package root
+  (`CMAKE_CURRENT_SOURCE_DIR/../../../..`) instead of the repository root. The
+  old form only worked while the package sat at `packages/jyotish` in this
+  monorepo and broke as soon as it was consumed from the pub cache.
+- Asset validation: `lib/services/panchang_init/panchang_init.dart` verifies
+  each installed `.se1` file (at least 1 KB and a `SWISSEPH` header), re-copies
+  anything that fails, and writes through a sibling `.part` file plus rename so
+  an interrupted first launch cannot leave a truncated file that passes the
+  next launch's check. A missing or corrupt bundled asset throws
+  `EphemerisAssetException` with a user-facing recovery step.
+- Error surface: `PanchangInitErrorBanner`
+  (`lib/widgets/panchang_init_error_banner.dart`) is mounted at the top of the
+  home body and appears when `panchangInitProvider` fails. Without it the
+  calendar's deliberate error-to-empty-map behaviour made a broken install look
+  like a month with no festivals. Retry invalidates the provider.
+- Tests: `test/panchang_init_test.dart` covers valid, truncated, zero-byte and
+  wrong-header installs, atomicity, and both exception paths;
+  `test/panchang_init_error_banner_test.dart` covers the banner and retry;
+  `integration_test/native_ephemeris_smoke_test.dart` is the on-device check
+  that the assets install, `libswisseph.so` loads and both native calculators
+  are active (needs a connected Android device).
+- Licensing: `packages/jyotish/NOTICE` records that the bundled Swiss
+  Ephemeris is AGPLv3-or-commercial from Astrodienst while the Dart/Kotlin
+  wrapper is MIT, and that no license choice has been recorded. `publish_to:
+  none` keeps the package off pub.dev until that decision is made, and the
+  README platform and license claims were corrected to match. This remains a
+  release blocker, not a code task.
+- Deferred: running the on-device smoke test on each ABI, and real native
+  builds for Windows, Linux, macOS and iOS. What is verified today is the
+  build side: `flutter build apk --debug` completes with the package-root
+  CMake path and the APK contains `libswisseph.so` for `arm64-v8a` (~540 KB),
+  `armeabi-v7a` (~509 KB) and `x86_64` (~628 KB). The desktop and iOS targets
+  cannot be built or tested on the Windows development host, so they need
+  macOS/CI hardware and are treated as follow-ups rather than claimed support.
+
+
 ## Phase 7 — performance and cache rollout
 
 After correctness is demonstrated:

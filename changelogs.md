@@ -21,6 +21,34 @@ Format:
 
 ## 2026-10-23 - 0.7.20+20
 
+### Ephemeris install fails loudly instead of silently
+
+The app now verifies its bundled Swiss Ephemeris data and explains what to do
+when it is missing or corrupt, instead of showing an empty calendar.
+
+- `lib/services/panchang_init/panchang_init.dart` checks each installed `.se1`
+  file (at least 1 KB and a `SWISSEPH` header), re-copies anything that fails,
+  and writes through a `.part` file plus rename so an interrupted first launch
+  cannot leave a truncated file that looks valid on the next run. A missing or
+  corrupt bundled asset throws `EphemerisAssetException` with a reinstall
+  instruction instead of a bare `Unable to load asset`.
+- `PanchangInitErrorBanner` (`lib/widgets/panchang_init_error_banner.dart`) is
+  mounted at the top of the home body and shows that message with a Retry that
+  invalidates `panchangInitProvider`. The calendar still degrades to an empty
+  month by design; the banner is now the explanation.
+- Tests: `test/panchang_init_test.dart` (valid, truncated, zero-byte,
+  wrong-header, atomicity, missing/corrupt asset) and
+  `test/panchang_init_error_banner_test.dart` (message, generic fallback,
+  retry). `integration_test/native_ephemeris_smoke_test.dart` is the on-device
+  check that the assets install, `libswisseph.so` loads, and both native
+  rise/set calculators are active.
+- Package metadata: `packages/jyotish` declares Android as its only native
+  platform, has `publish_to: none`, an Android CMake path relative to the
+  package root (a debug APK now contains `libswisseph.so` for all three
+  declared ABIs), and a `NOTICE` recording the unresolved Swiss Ephemeris
+  AGPL-or-commercial license choice. Desktop and iOS native builds remain a
+  documented follow-up.
+
 ### Native moonrise and moonset
 
 Moonrise and moonset now come from Swiss Ephemeris instead of a truncated
