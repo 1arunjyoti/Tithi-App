@@ -11,6 +11,7 @@ import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
 import 'storage_service.dart';
 import '../core/location/location_defaults.dart';
+import '../core/location/place_clock.dart';
 import '../core/location/timezone_resolver.dart';
 
 /// Location data model
@@ -275,6 +276,25 @@ class LocationService {
   Future<bool> isLocationEnabled() async {
     _ensureInitialized();
     return _box?.get(_keyLocationEnabled, defaultValue: false) ?? false;
+  }
+
+  /// True once [init] completed; guards synchronous reads used by providers.
+  bool get isInitialized => _isInitialized;
+
+  /// Clock the app should use for "today" and reminder wall times.
+  ///
+  /// Live location -> device clock (the user is where the panchang is).
+  /// A place picked on the map -> that place's clock. No location and no home
+  /// -> the default place's clock (Delhi), matching the panchang already shown.
+  /// Before [init] the device clock is the only safe answer.
+  PlaceClock get placeClock {
+    if (!_isInitialized) return kDeviceClock;
+    final enabled =
+        _box?.get(_keyLocationEnabled, defaultValue: false) as bool? ?? false;
+    return resolvePlaceClock(
+      locationEnabled: enabled,
+      homeTimezoneId: _box?.get(_keyHomeTimezone) as String?,
+    );
   }
 
   /// Save user's location preference
@@ -901,6 +921,10 @@ class LocationService {
       timezoneKey: _keyHomeTimezone,
       sourceKey: _keyHomeTimezoneSource,
     );
+    // Picking a place by hand means "stop following me": live location would
+    // otherwise keep winning in `currentLocationProvider`, so the selected
+    // city - and the clock it implies - would never take effect.
+    await _box?.put(_keyLocationEnabled, false);
   }
 
   /// Persists a zone and its provenance; deletes both when there is no zone.

@@ -360,6 +360,7 @@ class ResetSettingsTile extends ConsumerWidget {
           ref.invalidate(currentLocationProvider);
           ref.invalidate(locationEnabledProvider);
           ref.invalidate(homeLocationProvider);
+          ref.invalidate(placeClockProvider);
 
           ref.invalidate(loadNotificationStateProvider);
           ref.read(notificationEnabledProvider.notifier).setEnabled(false);

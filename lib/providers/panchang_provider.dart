@@ -62,10 +62,10 @@ final resolvedCoordinatesProvider =
 /// test overrides that only know latitude/longitude stay valid: the metadata
 /// comes from the location service's synchronous snapshot, which is null
 /// before the service is initialized. The native Hindu convention is
-/// geocentric, so altitude does not move the instant; the timezone is carried
-/// so returned events use the place's zone instead of the device zone. The
-/// panchang providers watch this provider and recompute when the resolved
-/// coordinates change.
+/// geocentric, so altitude does not move the instant; the timezone comes from
+/// the place clock (null = device zone) so returned events use the same clock
+/// as the day label. The panchang providers watch this provider and recompute
+/// when the resolved coordinates change.
 final resolvedSolarContextProvider =
     Provider<
       ({
@@ -77,11 +77,16 @@ final resolvedSolarContextProvider =
     >((ref) {
       final coords = ref.watch(resolvedCoordinatesProvider);
       final location = ref.watch(locationServiceProvider).lastKnownLocation;
+      final clock = ref.watch(placeClockProvider);
       return (
         latitude: coords.latitude,
         longitude: coords.longitude,
         altitudeMeters: location?.altitudeMeters ?? 0,
-        timezoneId: location?.timezoneId,
+        // The clock decides the zone: null means the device zone (live
+        // location mode), otherwise the selected place's zone. Passing the
+        // raw place zone here would bypass that policy, because an explicit
+        // `timezoneId` always wins in the solar seam.
+        timezoneId: clock.zoneId,
       );
     });
 

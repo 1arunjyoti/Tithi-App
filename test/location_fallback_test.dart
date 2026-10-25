@@ -11,6 +11,8 @@ import 'package:http/testing.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:tithi/core/location/cached_location.dart';
+import 'package:tithi/core/location/place_clock.dart';
 import 'package:tithi/services/location_service.dart';
 import 'package:tithi/services/storage_service.dart';
 
@@ -567,6 +569,87 @@ void main() {
       final results = (outcome as PlaceSearchSuccess).results;
       expect(results, hasLength(1));
       expect(results.single.displayName, 'Good row');
+    });
+  });
+
+  group('Place clock policy', () {
+    test('live location uses the device clock', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setLocationEnabled(true);
+
+      // Assert
+      expect(service.placeClock.mode, PlaceClockMode.device);
+      expect(service.placeClock.zoneId, isNull);
+    });
+
+    test('a manual pick stops live location and uses the place clock', () async {
+      // Arrange: live tracking is on, so the pick must override it.
+      final service = LocationService();
+      await service.init();
+      await service.setLocationEnabled(true);
+
+      // Act
+      await service.setHomeLocation(40.7128, -74.0060, 'New York');
+
+      // Assert: the selected place now wins in currentLocationProvider, and
+      // its clock - not the phone's - drives "today".
+      expect(await service.isLocationEnabled(), isFalse);
+      expect(service.placeClock.mode, PlaceClockMode.place);
+      expect(service.placeClock.zoneId, 'America/New_York');
+    });
+
+    test('no location and no home falls back to the Delhi clock', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setLocationEnabled(false);
+      final clock = service.placeClock;
+
+      // Assert: the panchang shown is Delhi's, so the day label matches it.
+      expect(clock.mode, PlaceClockMode.place);
+      expect(clock.zoneId, 'Asia/Kolkata');
+    });
+
+    test('a place picked before init reports the device clock', () {
+      // Arrange: providers can read the clock before the box is open.
+      final service = LocationService();
+
+      // Act / Assert
+      expect(service.isInitialized, isFalse);
+      expect(service.placeClock.mode, PlaceClockMode.device);
+    });
+
+    test('the background isolate derives the same clock from the box', () async {
+      // Arrange: WorkManager has no LocationService, only the Hive box.
+      final service = LocationService();
+      await service.init();
+      await service.setHomeLocation(40.7128, -74.0060, 'New York');
+      final box = await StorageService().openLocationSettingsBox();
+
+      // Act
+      final isolateClock = readPlaceClock(box);
+
+      // Assert: both isolates agree, so the day label and the reminder wall
+      // time cannot land on different clocks.
+      expect(isolateClock, service.placeClock);
+      expect(isolateClock.zoneId, 'America/New_York');
+    });
+
+    test('the isolate sees the device clock while live location is on', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+      await service.setLocationEnabled(true);
+      final box = await StorageService().openLocationSettingsBox();
+
+      // Act / Assert
+      expect(readPlaceClock(box).mode, PlaceClockMode.device);
     });
   });
 }

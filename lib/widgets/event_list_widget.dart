@@ -70,7 +70,7 @@ class EventListWidget extends ConsumerWidget {
             // next 3 days (see upcomingFestivalWindowDays), not the whole
             // calendar.
             Text(
-              _rangeHint(selectedDate),
+              _rangeHint(selectedDate, ref.watch(todayDateProvider)),
               style: context.textTheme.labelSmall?.copyWith(
                 color: context.colors.onSurface.withValues(alpha: 0.6),
               ),
@@ -96,8 +96,8 @@ class EventListWidget extends ConsumerWidget {
   /// Coverage hint under the title: the rows span the selected day plus
   /// the next 3 days. Names "Today" when the selection is today so the
   /// default view reads naturally; browsed dates say "Selected day".
-  String _rangeHint(DateTime selectedDate) {
-    if (isSameDay(selectedDate, DateTime.now())) return 'Today + next 3 days';
+  String _rangeHint(DateTime selectedDate, DateTime today) {
+    if (isSameDay(selectedDate, today)) return 'Today + next 3 days';
     return 'Selected day + next 3 days';
   }
 
