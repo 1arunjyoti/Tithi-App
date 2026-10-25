@@ -41,9 +41,25 @@ month.
   null). New tests: `test/bengali_month_start_test.dart`,
   `test/nakshatra_edge_test.dart`, plus widening/failure and descending cases
   in `test/root_solver_test.dart`.
-- Deferred: yoga/karana transition call sites, and fixture values for
-  nakshatra edges and Sankranti instants (their solver is already locked via
-  `tithiEndsAt`).
+- Deferred: fixture values for nakshatra edges and Sankranti instants (their
+  solver is already locked via `tithiEndsAt`).
+
+### Yoga and karana spans use the shared solver
+
+The tithi detail sheet's "until 3:42 PM" yoga/karana times are now solved by
+the same crossing primitive as tithi and nakshatra, so they are second-precise
+instead of minute-rounded.
+
+- `resolveYogaKaranaSpan`
+  (`lib/features/panchang/domain/yoga_karana_span.dart`) solves the continuous
+  Sun+Moon sum (yoga, 27 segments) and elongation (karana, 60 segments of 6°)
+  through `solveAngleCrossing`, including the 360→0 wrap for the last segment.
+- `yogaKaranaTimingsProvider` (`lib/providers/panchang_provider.dart`) is now a
+  thin wrapper; the provider-local index bisection is gone.
+- `test/yoga_karana_span_test.dart` covers both ends, the wrap and the
+  hide-on-null failure paths.
+- Corrects the Phase 3 note that claimed yoga/karana had no consumer: the
+  tithi detail sheet has shown these spans all along.
 
 ### Ephemeris install fails loudly instead of silently
 
