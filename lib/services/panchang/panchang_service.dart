@@ -308,9 +308,12 @@ class PanchangService {
   /// shared solver brackets it with daily samples and bisects to a second.
   /// The previous version stopped at ~±3 h after two halving rounds and a
   /// linear interpolation - enough to put a new moon on the wrong side of a
-  /// Sankranti and flip the Adhika verdict for the lunation. Falls back to the
-  /// noon closest to the new moon when the window holds no wrap (the estimate
-  /// is off by more than the search window).
+  /// Sankranti and flip the Adhika verdict for the lunation.
+  ///
+  /// Throws [CrossingResolutionException] when no window holds a wrap. The old
+  /// code returned the best of seven noons (±12 h) here, which is exactly the
+  /// error class this method exists to remove; a wrong Adhika month is worse
+  /// than a visible failure.
   Future<DateTime> _refineNewMoonInstant(
     DateTime centerNoon,
     GeographicLocation location,
@@ -321,23 +324,17 @@ class PanchangService {
       longitude: location.longitude,
     );
 
-    final solved = await findNewMoonInstant(
+    final solved = await resolveNewMoonInstant(
       estimate: centerNoon,
       elapsedDegreesAt: (at) async => (await rawTithiAt(at) - 1) * 12,
     );
     if (solved != null) return solved;
 
-    DateTime best = centerNoon;
-    double bestScore = double.infinity;
-    for (int d = -3; d <= 3; d++) {
-      final at = centerNoon.add(Duration(days: d));
-      final score = newMoonDistance(await rawTithiAt(at));
-      if (score < bestScore) {
-        bestScore = score;
-        best = at;
-      }
-    }
-    return best;
+    throw CrossingResolutionException(
+      'No new moon within ±${kNewMoonSearchWindows.last.inDays} days of '
+      '${centerNoon.toIso8601String()}; refusing to fall back to a noon '
+      'estimate because it can flip the Adhika verdict.',
+    );
   }
 
   /// OPT-7: Returns the Sun’s ecliptic longitude for [dt], using a bounded

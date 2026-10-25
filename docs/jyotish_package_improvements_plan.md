@@ -442,23 +442,38 @@ as the starting point for the shared ingress primitive.
   solvable without unwrapping.
 - `findNewMoonInstant` / `findSankrantiInstant` in
   `lib/features/panchang/domain/panchang_crossings.dart` bracket by daily
-  sampling around an estimate and then solve. `_refineNewMoonInstant` now
-  resolves the new moon to the second; the ~±3 h error is gone, so a new moon
-  cannot land on the wrong side of a nearby Sankranti. Its nearest-noon
-  fallback (`newMoonDistance`) is retained for a window with no wrap.
+  sampling around an estimate and then solve. `_refineNewMoonInstant` resolves
+  the new moon to the second; the ~±3 h error is gone, so a new moon cannot
+  land on the wrong side of a nearby Sankranti. The old nearest-noon fallback
+  (`newMoonDistance`, ±12 h) was removed: `resolveNewMoonInstant` retries at
+  ±7 days and then throws `CrossingResolutionException`, because a wrong Adhika
+  month is worse than a visible failure.
+- `findSankrantiInstant` now has a production caller: the Bengali month start
+  resolves its ingress through it, so the tested helper and the shipping path
+  are the same code. The 35-day guard scan remains for a mismatched boundary.
 - `findSunriseTithiTransition` and `bisectNakshatraEdge`
   (`lib/features/panchang/domain/tithi_transitions.dart`) replaced their own
   1-minute bisections. The nakshatra edge targets half a segment past (or
-  before) the sunrise index, so both directions are upward crossings.
-- Bengali `_resolveMonthStart` dropped its 12-round (~20 s) bisection for the
-  shared solver, keeping the ±3-day bracket, the 35-day fallback scan and the
-  historic approximation on solver failure.
+  before) the sunrise index, so both directions are upward crossings;
+  `test/nakshatra_edge_test.dart` pins that target math directly.
+- Bengali month starts moved to
+  `lib/services/bengali_calendar/bengali_month_start.dart`
+  (`resolveBengaliMonthStart`), a pure function over a Sun-longitude sampler.
+  It dropped the 12-round (~20 s) bisection for the shared solver and removed
+  the historic Apr-14 approximation: a sampler that cannot produce an ingress
+  now throws `BengaliMonthStartException` instead of returning a day-off
+  month start. `test/bengali_month_start_test.dart` covers the normal,
+  Sankranti-civil-day, guard-scan and failure paths without FFI.
+- `solveRoot` is documented as upward-only; a descending crossing returns
+  null. `test/root_solver_test.dart` pins that contract.
 - `wrapPairIndex` and `interpolateNewMoonInstant` were deleted as dead
   approximation code.
 - Still pending: yoga and karana boundaries have no consumer that needs a
   transition instant (the day resolver reads them at sunrise/checkpoints), so
   the primitive covers them but nothing calls it. Add call sites when a UI or
-  festival rule needs those instants rather than pre-emptively.
+  festival rule needs those instants rather than pre-emptively. The golden
+  fixture also does not lock nakshatra-edge or Sankranti instants yet; the
+  shared solver they use is already locked through `tithiEndsAt`.
 
 Continue to separate three decisions in code and data:
 
