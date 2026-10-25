@@ -3,8 +3,33 @@
 A production-ready Flutter library for Vedic astrology calculations using Swiss Ephemeris. Provides high-precision sidereal planetary positions with Lahiri ayanamsa for authentic Jyotish (Vedic astrology) applications.
 
 [![GitHub](https://img.shields.io/badge/GitHub-rajsanjib%2Fjyotish--flutter--library-blue?logo=github)](https://github.com/rajsanjib/jyotish-flutter-library)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT (wrapper)](https://img.shields.io/badge/License-MIT%20(wrapper)-yellow.svg)](./LICENSE)
+[![Swiss Ephemeris: AGPL-3.0](https://img.shields.io/badge/Swiss%20Ephemeris-AGPL--3.0-orange.svg)](./NOTICE)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.0.0-blue?logo=flutter)](https://flutter.dev)
+
+## Platform support
+
+**Android only.** The package declares a single native platform because it is
+the only one with a real build:
+
+| Platform | Native Swiss Ephemeris | Status |
+| --- | --- | --- |
+| Android | Yes - `libswisseph.so` for `arm64-v8a`, `armeabi-v7a`, `x86_64` | Supported |
+| iOS, macOS, Linux, Windows | No - plugin scaffolding only | Not supported |
+
+The `ios/`, `macos/`, `linux/` and `windows/` directories contain Flutter
+plugin stubs. They compile no Swiss Ephemeris, so on those platforms
+`DynamicLibrary.open` fails and the host app falls back to its own
+approximations. Do not add a platform to `pubspec.yaml` until it has a CMake or
+podspec target that builds the library and a smoke test that proves it.
+
+## License
+
+The Dart and Kotlin wrapper is MIT (see [LICENSE](./LICENSE)). The bundled
+Swiss Ephemeris C sources and `.se1` data files are **not** MIT: they are
+dual-licensed by Astrodienst AG under AGPLv3 or a paid Professional license.
+Read [NOTICE](./NOTICE) before distributing anything that contains them. The
+package keeps `publish_to: none` until that license choice is recorded.
 
 ## Features
 
@@ -42,16 +67,6 @@ A production-ready Flutter library for Vedic astrology calculations using Swiss 
 🎯 **Easy to Use**: Simple, intuitive API designed for Vedic astrology
 
 🔒 **Production Ready**: Proper error handling, input validation, and resource management
-
-## Platform Support
-
-| Platform | Support |
-| -------- | ------- |
-| Android  | ✅      |
-| iOS      | ✅      |
-| macOS    | ✅      |
-| Linux    | ✅      |
-| Windows  | ✅      |
 
 ## Installation
 

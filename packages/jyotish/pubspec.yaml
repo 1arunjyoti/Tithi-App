@@ -4,6 +4,15 @@ version: 1.0.1
 homepage: https://github.com/rajsanjib/jyotish-flutter-library
 repository: https://github.com/rajsanjib/jyotish-flutter-library
 
+# Do not publish this package.
+#
+# It bundles Swiss Ephemeris (Astrodienst), whose free edition is AGPLv3, while
+# the Dart/Kotlin wrapper here is MIT - so a published artifact would misstate
+# the license of the native component. It is also a modified fork of
+# rajsanjib/jyotish-flutter-library. See NOTICE for the distribution
+# obligations before removing this line.
+publish_to: none
+
 environment:
   sdk: ">=3.0.0 <4.0.0"
   flutter: ">=3.0.0"
@@ -23,14 +32,13 @@ dev_dependencies:
 
 flutter:
   plugin:
+    # Android is the only platform with a real native build: its CMake target
+    # compiles Swiss Ephemeris into libswisseph.so for arm64-v8a, armeabi-v7a
+    # and x86_64. The ios/, linux/, macos/ and windows/ directories are
+    # plugin scaffolding only - they build no Swiss Ephemeris - so declaring
+    # them here would silently give consumers an approximation instead of the
+    # native engine. Add a platform back only once it has a build target and a
+    # smoke test.
     platforms:
       android:
-        ffiPlugin: true
-      ios:
-        ffiPlugin: true
-      linux:
-        ffiPlugin: true
-      macos:
-        ffiPlugin: true
-      windows:
         ffiPlugin: true

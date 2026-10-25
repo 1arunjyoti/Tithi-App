@@ -1,0 +1,55 @@
+# Third-party notices
+
+This package bundles a third-party native library and its data files. The MIT
+license in `LICENSE` covers only the Dart and Kotlin wrapper written for this
+project. It does not cover the components listed below.
+
+## Swiss Ephemeris
+
+- **What is bundled**
+  - C sources: `native/swisseph/swisseph-master/src/` (compiled into
+    `libswisseph.so` by `android/src/main/cpp/CMakeLists.txt`).
+  - A prebuilt macOS library: `native/swisseph/swisseph-master/libswisseph.dylib`
+    (unused by the Android-only build, but still distributed with the source
+    tree).
+  - Data files shipped by the app as assets and copied to the device at
+    runtime: `seas_18.se1`, `semo_18.se1`, `sepl_18.se1`.
+- **Copyright**: (C) 1997 - 2021 Astrodienst AG, Switzerland. All rights
+  reserved. Authors: Dieter Koch and Alois Treindl.
+- **License text**: `native/swisseph/swisseph-master/LICENSE` (preserved
+  verbatim; do not delete or edit it).
+
+### Dual licensing
+
+Swiss Ephemeris is offered under a choice of two licenses. The choice must be
+made **before distributing software that contains it**:
+
+1. **GNU Affero General Public License v3 (AGPLv3)** - free of charge. It
+   requires the whole software project that uses Swiss Ephemeris to be placed
+   under the AGPL or a compatible license, and it requires corresponding source
+   to be made available to users (including users interacting with the software
+   over a network).
+2. **Swiss Ephemeris Professional License** - a paid commercial license from
+   Astrodienst (https://www.astro.com/swisseph/).
+
+### Status in this repository: unresolved
+
+**No license choice has been recorded for this project yet.** This is a
+release blocker, not a formality:
+
+- The repository root `LICENSE` is Apache-2.0 and this package's `LICENSE` is
+  MIT. Neither is the AGPL, so an AGPLv3 distribution of the app would
+  contradict both files as they stand.
+- Until the choice is made, `packages/jyotish/pubspec.yaml` keeps
+  `publish_to: none` so the package cannot be published to pub.dev with a
+  misleading license.
+
+Deciding this is a legal and product decision, not a code change. Whichever
+option is chosen, record it here and make the top-level license files agree
+with it before the first public release.
+
+### Notice preservation
+
+The Swiss Ephemeris license requires its copyright notice and license text to
+be preserved on all copies. Keep `native/swisseph/swisseph-master/LICENSE` and
+this file in any redistribution, including application bundles.

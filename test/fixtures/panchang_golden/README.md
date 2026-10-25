@@ -31,9 +31,10 @@ the calculation baseline.
   ecliptic latitude. Values keep seconds internally; the fixture stores them
   at second precision. This replaces the Phase 0 NOAA apparent-upper-limb
   convention, which was minute-rounded.
-- Non-Android targets keep the labelled NOAA fallback until the native
-  library is built for them in Phase 6. The fallback is not the Hindu
-  convention and must not be presented as one.
+- Non-Android targets keep the labelled NOAA fallback. Phase 6 narrowed the
+  package to Android rather than building the native library for the other
+  platforms, so the fallback is the permanent behaviour there. It is not the
+  Hindu convention and must not be presented as one.
 - Tithi, nakshatra, masa, and festival matching come from the shipped
   `computePanchangData` pipeline, including the Vriddhi filter on a three-day
   window (`date - 1 .. date + 1`).
