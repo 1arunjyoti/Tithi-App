@@ -1,0 +1,85 @@
+name: CI
+
+# Phase 6 (#27): nothing above this line was enforced before. This workflow is
+# the gate: analyzer clean, full widget/unit suite green, and the bundled Swiss
+# Ephemeris actually loads on the host instead of every native test being
+# skipped.
+#
+# The host build compiles the same C sources the Android CMake target does. That
+# is what lets `flutter test` exercise the FFI bindings: without
+# SWISSEPH_LIB_PATH the app's Jyotish-backed tests fail with
+# "Failed to initialize Jyotish" (they do not skip).
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: Analyze and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # The suite asserts local-time formatting and day boundaries; a runner in
+      # UTC changes the expected strings. Pinned to the project's home zone.
+      TZ: Asia/Kolkata
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.4
+          channel: stable
+          cache: true
+
+      - name: Build Swiss Ephemeris for the host
+        run: |
+          set -euo pipefail
+          src=packages/jyotish/native/swisseph/swisseph-master/src
+          mkdir -p build/swisseph
+          # Mirrors packages/jyotish/android/src/main/cpp/CMakeLists.txt: keep
+          # the file list in sync with SWISSEPH_SRC there.
+          gcc -shared -fPIC -O2 -I "$src" \
+            "$src/swecl.c" "$src/swedate.c" "$src/swehel.c" \
+            "$src/swehouse.c" "$src/swejpl.c" "$src/swemmoon.c" \
+            "$src/swemplan.c" "$src/sweph.c" "$src/swephlib.c" \
+            -lm -o build/swisseph/libswisseph.so
+
+      - name: Flutter version
+        run: flutter --version
+
+      # The suite's local-time expectations were written for IST. A runner in
+      # UTC changes ten of them, so fail fast here instead of debugging them.
+      - name: Check test timezone
+        run: |
+          date
+          test "$(date +%Z)" = "IST"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Fails on infos too, which is why the Phase 6 analyzer baseline had to
+      # reach zero before this job could exist.
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        env:
+          SWISSEPH_LIB_PATH: ${{ github.workspace }}/build/swisseph/libswisseph.so
+        run: flutter test --reporter compact
+
+      - name: Package tests
+        working-directory: packages/jyotish
+        env:
+          SWISSEPH_LIB_PATH: ${{ github.workspace }}/build/swisseph/libswisseph.so
+        run: |
+          flutter pub get
+          flutter test --reporter compact

@@ -302,6 +302,12 @@ class SwissEphBindings {
       )>('swe_revjul');
 
   /// Loads the appropriate Swiss Ephemeris library for the platform.
+  ///
+  /// Android resolves `libswisseph.so` from the APK. Every other platform
+  /// builds no native engine in this package, so the supported route there is
+  /// [SWISSEPH_LIB_PATH] (tests and desktop hosts); without it, the platform's
+  /// default loader path is tried and the caller keeps its labelled
+  /// approximation.
   ffi.DynamicLibrary _loadLibrary() {
     // Try custom path first (from environment or development location)
     final customPath = Platform.environment['SWISSEPH_LIB_PATH'];
@@ -318,7 +324,6 @@ class SwissEphBindings {
     // Try development/local paths
     if (Platform.isMacOS) {
       final devPaths = [
-        '/Users/sanjibacharya/Developer/jyotish/native/swisseph/swisseph-master/libswisseph.dylib',
         '/usr/local/lib/libswisseph.dylib',
         'libswisseph.dylib',
       ];

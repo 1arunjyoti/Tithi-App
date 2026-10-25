@@ -2,8 +2,8 @@
 
 A production-ready Flutter library for Vedic astrology calculations using Swiss Ephemeris. Provides high-precision sidereal planetary positions with Lahiri ayanamsa for authentic Jyotish (Vedic astrology) applications.
 
-[![GitHub](https://img.shields.io/badge/GitHub-rajsanjib%2Fjyotish--flutter--library-blue?logo=github)](https://github.com/rajsanjib/jyotish-flutter-library)
-[![License: MIT (wrapper)](https://img.shields.io/badge/License-MIT%20(wrapper)-yellow.svg)](./LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-1arunjyoti%2FTithi--App-blue?logo=github)](https://github.com/1arunjyoti/Tithi-App)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](./LICENSE)
 [![Swiss Ephemeris: AGPL-3.0](https://img.shields.io/badge/Swiss%20Ephemeris-AGPL--3.0-orange.svg)](./NOTICE)
 [![Flutter](https://img.shields.io/badge/Flutter-%3E%3D3.0.0-blue?logo=flutter)](https://flutter.dev)
 
@@ -25,11 +25,16 @@ podspec target that builds the library and a smoke test that proves it.
 
 ## License
 
-The Dart and Kotlin wrapper is MIT (see [LICENSE](./LICENSE)). The bundled
-Swiss Ephemeris C sources and `.se1` data files are **not** MIT: they are
-dual-licensed by Astrodienst AG under AGPLv3 or a paid Professional license.
-Read [NOTICE](./NOTICE) before distributing anything that contains them. The
-package keeps `publish_to: none` until that license choice is recorded.
+Tithi and this wrapper are distributed under the **GNU Affero General Public
+License v3** (see [LICENSE](./LICENSE)). The bundled Swiss Ephemeris C sources
+and `.se1` data files are dual-licensed by Astrodienst AG under AGPLv3 or a
+paid Professional license; this project uses the AGPLv3 option. Read
+[NOTICE](./NOTICE) before distributing anything that contains them.
+
+The wrapper is a fork of `rajsanjib/jyotish-flutter-library`, whose MIT license
+is preserved in [LICENSE-MIT-upstream](./LICENSE-MIT-upstream). The package
+keeps `publish_to: none` because the `jyotish` name belongs to that upstream
+package; consume it as a path or git dependency.
 
 ## Features
 
@@ -70,14 +75,17 @@ package keeps `publish_to: none` until that license choice is recorded.
 
 ## Installation
 
-Add this to your package's `pubspec.yaml` file:
+This package is not published to pub.dev. The `jyotish` name on pub.dev
+belongs to the upstream project this is a fork of, and the fork is AGPLv3 (see
+[NOTICE](./NOTICE)). Consume it from the Tithi repository instead:
 
 ```yaml
 dependencies:
   jyotish:
     git:
-      url: https://github.com/rajsanjib/jyotish-flutter-library.git
-      ref: main # or specify a tag/branch
+      url: https://github.com/1arunjyoti/Tithi-App.git
+      path: packages/jyotish
+      ref: main # or a tag/branch that contains the fixes you need
 ```
 
 Then run:
@@ -88,15 +96,14 @@ flutter pub get
 
 ### Alternative Installation Methods
 
-You can also specify a specific version or branch:
-
 **Using a specific tag/version:**
 
 ```yaml
 dependencies:
   jyotish:
     git:
-      url: https://github.com/rajsanjib/jyotish-flutter-library.git
+      url: https://github.com/1arunjyoti/Tithi-App.git
+      path: packages/jyotish
       ref: v1.0.0 # Replace with desired version tag
 ```
 
@@ -106,8 +113,9 @@ dependencies:
 dependencies:
   jyotish:
     git:
-      url: https://github.com/rajsanjib/jyotish-flutter-library.git
-      ref: develop # or any other branch
+      url: https://github.com/1arunjyoti/Tithi-App.git
+      path: packages/jyotish
+      ref: feat/panchang-engine # or any other branch
 ```
 
 **For local development:**
@@ -456,9 +464,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This library is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Tithi is licensed under the GNU Affero General Public License v3. See the
+[LICENSE](LICENSE) file for the full text and [NOTICE](./NOTICE) for the
+Swiss Ephemeris terms.
 
-Swiss Ephemeris is licensed under GNU GPL v2 or Swiss Ephemeris Professional License.
+Swiss Ephemeris is dual-licensed by Astrodienst AG: this project uses the
+AGPLv3 option (not the Professional License), which is why the app itself is
+AGPLv3.
 
 ## Credits
 
@@ -469,9 +481,9 @@ This library uses:
 
 ## Support
 
-- Issues: [GitHub Issues](https://github.com/rajsanjib/jyotish-flutter-library/issues)
-- 📖 Documentation: [GitHub Wiki](https://github.com/rajsanjib/jyotish-flutter-library/wiki)
-- 💬 Discussions: [GitHub Discussions](https://github.com/rajsanjib/jyotish-flutter-library/discussions)
+- Issues: [GitHub Issues](https://github.com/1arunjyoti/Tithi-App/issues)
+- 📖 Documentation: [GitHub Wiki](https://github.com/1arunjyoti/Tithi-App/tree/main/packages/jyotish)
+- 💬 Discussions: [GitHub Discussions](https://github.com/1arunjyoti/Tithi-App/discussions)
 
 ## Changelog
 

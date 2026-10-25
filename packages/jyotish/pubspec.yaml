@@ -1,16 +1,15 @@
 name: jyotish
 description: A production-ready Flutter library for Vedic astrology (Jyotish) calculations using Swiss Ephemeris. Provides high-precision sidereal planetary positions with Lahiri ayanamsa, nakshatras, and complete birth chart analysis.
 version: 1.0.1
-homepage: https://github.com/rajsanjib/jyotish-flutter-library
-repository: https://github.com/rajsanjib/jyotish-flutter-library
+homepage: https://github.com/1arunjyoti/Tithi-App/tree/main/packages/jyotish
+repository: https://github.com/1arunjyoti/Tithi-App
 
-# Do not publish this package.
+# Not published to pub.dev.
 #
-# It bundles Swiss Ephemeris (Astrodienst), whose free edition is AGPLv3, while
-# the Dart/Kotlin wrapper here is MIT - so a published artifact would misstate
-# the license of the native component. It is also a modified fork of
-# rajsanjib/jyotish-flutter-library. See NOTICE for the distribution
-# obligations before removing this line.
+# The `jyotish` name on pub.dev belongs to the upstream package this is a fork
+# of, and the fork is AGPLv3 because it bundles Swiss Ephemeris (Astrodienst).
+# Consume it as a path or git dependency. See NOTICE for the distribution
+# obligations before changing this line.
 publish_to: none
 
 environment:

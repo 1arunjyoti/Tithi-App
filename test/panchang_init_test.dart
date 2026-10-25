@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/foundation.dart' show FlutterError, TargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,19 +10,23 @@ import 'package:tithi/services/panchang_init/panchang_init.dart';
 
 // Phase 6: the ephemeris copy used to trust "the file exists" and hand Swiss
 // Ephemeris whatever was on disk. These tests pin the replacement contract:
-// verify size + magic, re-copy anything that fails, write atomically, and
-// fail with an actionable message when the bundled asset itself is broken.
+// verify size + magic + checksum, re-copy anything that fails, write atomically,
+// and fail with an actionable message when the bundled asset itself is broken.
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   const channel = MethodChannel('plugins.flutter.io/path_provider');
   late Directory tempDir;
+  late Map<String, String> manifest;
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('tithi_panchang_init');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async => tempDir.path);
+    // The synthetic bundle below is not the shipped data, so the manifest has to
+    // describe it instead of the real assets/ephe files.
+    manifest = {for (final name in kEphemerisAssets) name: _sha256(_se1())};
   });
 
   tearDown(() async {
@@ -36,6 +41,9 @@ void main() {
 
   File installed(String name) => File(p.join(tempDir.path, 'ephe', name));
 
+  Future<String> copy(AssetBundle bundle) =>
+      copyEphemerisFiles(bundle, sha256ByFile: manifest);
+
   _FakeAssetBundle validBundle() => _FakeAssetBundle({
     for (final name in kEphemerisAssets) 'assets/ephe/$name': _se1(),
   });
@@ -46,7 +54,7 @@ void main() {
       final bundle = validBundle();
 
       // Act
-      final path = await copyEphemerisFiles(bundle);
+      final path = await copy(bundle);
 
       // Assert
       expect(path, p.join(tempDir.path, 'ephe'));
@@ -58,11 +66,11 @@ void main() {
 
     test('does not reload assets that already verify', () async {
       // Arrange
-      await copyEphemerisFiles(validBundle());
+      await copy(validBundle());
       final bundle = _FakeAssetBundle({});
 
       // Act
-      await copyEphemerisFiles(bundle);
+      await copy(bundle);
 
       // Assert: the second launch reads nothing from the bundle.
       expect(bundle.requested, isEmpty);
@@ -76,7 +84,7 @@ void main() {
       await target.writeAsBytes(_se1().sublist(0, 200));
 
       // Act
-      await copyEphemerisFiles(validBundle());
+      await copy(validBundle());
 
       // Assert
       expect(await target.length(), _se1().length);
@@ -89,7 +97,7 @@ void main() {
       await target.writeAsBytes(const <int>[]);
 
       // Act
-      await copyEphemerisFiles(validBundle());
+      await copy(validBundle());
 
       // Assert
       expect(await target.length(), _se1().length);
@@ -102,16 +110,31 @@ void main() {
       await target.writeAsBytes(Uint8List(_se1().length));
 
       // Act
-      await copyEphemerisFiles(validBundle());
+      await copy(validBundle());
 
       // Assert
       final bytes = await target.readAsBytes();
       expect(String.fromCharCodes(bytes.sublist(0, 8)), 'SWISSEPH');
     });
 
+    test('replaces a file with a valid size and header but wrong contents',
+        () async {
+      // Arrange: this is the case size + magic cannot see - a copy that kept
+      // its first kilobyte and lost or gained bytes further in.
+      final target = installed('seas_18.se1');
+      await target.parent.create(recursive: true);
+      await target.writeAsBytes(_corrupt(_se1()));
+
+      // Act
+      await copy(validBundle());
+
+      // Assert
+      expect(_sha256(await target.readAsBytes()), _sha256(_se1()));
+    });
+
     test('leaves no staging file behind after a copy', () async {
       // Act
-      await copyEphemerisFiles(validBundle());
+      await copy(validBundle());
 
       // Assert
       final leftovers = tempDir
@@ -130,9 +153,7 @@ void main() {
       });
 
       // Act / Assert
-      final error = await _captureEphemerisError(
-        () => copyEphemerisFiles(bundle),
-      );
+      final error = await _captureEphemerisError(() => copy(bundle));
       expect(error.file, 'sepl_18.se1');
       expect(error.message, contains('sepl_18.se1'));
       expect(error.message, contains('assets/ephe/sepl_18.se1'));
@@ -152,9 +173,7 @@ void main() {
       });
 
       // Act / Assert
-      final error = await _captureEphemerisError(
-        () => copyEphemerisFiles(bundle),
-      );
+      final error = await _captureEphemerisError(() => copy(bundle));
       expect(error.file, 'semo_18.se1');
       expect(error.message, contains('not usable'));
       expect(error.message, contains('Reinstall'));
@@ -168,17 +187,44 @@ void main() {
       });
 
       // Act / Assert
-      final error = await _captureEphemerisError(
-        () => copyEphemerisFiles(bundle),
-      );
+      final error = await _captureEphemerisError(() => copy(bundle));
       expect(error.file, 'seas_18.se1');
       expect(error.message, contains('64 bytes'));
+    });
+
+    test('throws when the bundled asset fails the checksum', () async {
+      // Arrange: valid size, valid header, one byte different - a wrong build
+      // or a corrupted copy inside the APK.
+      final bundle = _FakeAssetBundle({
+        for (final name in kEphemerisAssets) 'assets/ephe/$name': _se1(),
+        'assets/ephe/semo_18.se1': _corrupt(_se1()),
+      });
+
+      // Act / Assert
+      final error = await _captureEphemerisError(() => copy(bundle));
+      expect(error.file, 'semo_18.se1');
+      expect(error.message, contains('checksum'));
+      expect(error.message, contains('Reinstall'));
+      // Nothing is installed when the source itself is untrustworthy.
+      expect(installed('semo_18.se1').existsSync(), isFalse);
+    });
+
+    test('throws when the manifest has no entry for a declared asset',
+        () async {
+      // Arrange: a developer added a file to kEphemerisAssets only.
+      manifest = {'seas_18.se1': _sha256(_se1())};
+
+      // Act / Assert
+      final error = await _captureEphemerisError(() => copy(validBundle()));
+      expect(error.file, 'semo_18.se1');
+      expect(error.message, contains('checksum'));
+      expect(error.message, contains('kEphemerisAssetSha256'));
     });
 
     test('keeps a valid install untouched even if the bundle is broken',
         () async {
       // Arrange: a valid install, then a bad bundle (e.g. a corrupted build).
-      await copyEphemerisFiles(validBundle());
+      await copy(validBundle());
       final target = installed('sepl_18.se1');
       final before = await target.readAsBytes();
       final bundle = _FakeAssetBundle({
@@ -187,11 +233,35 @@ void main() {
       });
 
       // Act: a valid install short-circuits before the bundle is read.
-      await copyEphemerisFiles(bundle);
+      await copy(bundle);
 
       // Assert
       expect(bundle.requested, isEmpty);
       expect(await target.readAsBytes(), before);
+    });
+  });
+
+  group('shipped ephemeris manifest', () {
+    test('covers exactly the declared assets', () {
+      expect(
+        kEphemerisAssetSha256.keys.toSet(),
+        kEphemerisAssets.toSet(),
+      );
+    });
+
+    test('matches the bytes in assets/ephe', () async {
+      // Guards the build: replacing a .se1 without updating the manifest would
+      // make every device reinstall the old expected hash forever, or reject a
+      // good bundle. Runs against the real files, not the fake bundle.
+      for (final name in kEphemerisAssets) {
+        final file = File(p.join('assets', 'ephe', name));
+        expect(file.existsSync(), isTrue, reason: name);
+        expect(
+          _sha256(await file.readAsBytes()),
+          kEphemerisAssetSha256[name],
+          reason: '$name changed without updating kEphemerisAssetSha256',
+        );
+      }
     });
   });
 
@@ -314,6 +384,16 @@ Uint8List _se1({int length = 2048}) {
   }
   return bytes;
 }
+
+/// Flips one byte deep in the body, keeping the size and the header intact.
+Uint8List _corrupt(Uint8List bytes) {
+  final copy = Uint8List.fromList(bytes);
+  final index = copy.length ~/ 2;
+  copy[index] = copy[index] ^ 0xFF;
+  return copy;
+}
+
+String _sha256(Uint8List bytes) => sha256.convert(bytes).toString();
 
 class _FakeAssetBundle extends AssetBundle {
   _FakeAssetBundle(this.assets);

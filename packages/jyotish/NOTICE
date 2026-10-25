@@ -1,17 +1,15 @@
 # Third-party notices
 
-This package bundles a third-party native library and its data files. The MIT
-license in `LICENSE` covers only the Dart and Kotlin wrapper written for this
-project. It does not cover the components listed below.
+Tithi and the `jyotish` wrapper in this directory are distributed under the
+GNU Affero General Public License, version 3 (AGPLv3). See `LICENSE` at the
+repository root and in this directory. That choice is not optional: the app
+bundles Swiss Ephemeris, whose free edition is AGPLv3.
 
 ## Swiss Ephemeris
 
 - **What is bundled**
   - C sources: `native/swisseph/swisseph-master/src/` (compiled into
     `libswisseph.so` by `android/src/main/cpp/CMakeLists.txt`).
-  - A prebuilt macOS library: `native/swisseph/swisseph-master/libswisseph.dylib`
-    (unused by the Android-only build, but still distributed with the source
-    tree).
   - Data files shipped by the app as assets and copied to the device at
     runtime: `seas_18.se1`, `semo_18.se1`, `sepl_18.se1`.
 - **Copyright**: (C) 1997 - 2021 Astrodienst AG, Switzerland. All rights
@@ -19,37 +17,28 @@ project. It does not cover the components listed below.
 - **License text**: `native/swisseph/swisseph-master/LICENSE` (preserved
   verbatim; do not delete or edit it).
 
-### Dual licensing
+### License choice: AGPLv3
 
-Swiss Ephemeris is offered under a choice of two licenses. The choice must be
-made **before distributing software that contains it**:
+Swiss Ephemeris is dual-licensed: AGPLv3 (free of charge) or the paid Swiss
+Ephemeris Professional License. **This project uses the AGPLv3 option**,
+recorded on 2026-10-25. Consequences a maintainer must not break:
 
-1. **GNU Affero General Public License v3 (AGPLv3)** - free of charge. It
-   requires the whole software project that uses Swiss Ephemeris to be placed
-   under the AGPL or a compatible license, and it requires corresponding source
-   to be made available to users (including users interacting with the software
-   over a network).
-2. **Swiss Ephemeris Professional License** - a paid commercial license from
-   Astrodienst (https://www.astro.com/swisseph/).
+- Every distributed build must be accompanied by the complete corresponding
+  source of the app and of this wrapper, under the AGPLv3 (or a compatible
+  license). The wrapper is therefore AGPLv3 too, not MIT.
+- Section 13 applies to network use: if Tithi is ever offered as a service,
+  users interacting with it over a network must be offered the source.
+- The Swiss Ephemeris copyright notice and license text must be preserved in
+  every redistribution, including application bundles
+  (`native/swisseph/swisseph-master/LICENSE` and this file).
+- Any other distribution terms - a closed-source build, or the Apache-2.0/MIT
+  terms this repository used before the decision - would require the
+  Professional License from Astrodienst.
 
-### Status in this repository: unresolved
+### Upstream wrapper notice
 
-**No license choice has been recorded for this project yet.** This is a
-release blocker, not a formality:
-
-- The repository root `LICENSE` is Apache-2.0 and this package's `LICENSE` is
-  MIT. Neither is the AGPL, so an AGPLv3 distribution of the app would
-  contradict both files as they stand.
-- Until the choice is made, `packages/jyotish/pubspec.yaml` keeps
-  `publish_to: none` so the package cannot be published to pub.dev with a
-  misleading license.
-
-Deciding this is a legal and product decision, not a code change. Whichever
-option is chosen, record it here and make the top-level license files agree
-with it before the first public release.
-
-### Notice preservation
-
-The Swiss Ephemeris license requires its copyright notice and license text to
-be preserved on all copies. Keep `native/swisseph/swisseph-master/LICENSE` and
-this file in any redistribution, including application bundles.
+The Dart/Kotlin wrapper is a modified fork of
+`rajsanjib/jyotish-flutter-library`, which was released under the MIT license.
+That license is preserved in `LICENSE-MIT-upstream`; its permission notice
+continues to apply to the upstream portions of the code. The fork as a whole
+is distributed under the AGPLv3.
