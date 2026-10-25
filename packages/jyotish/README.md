@@ -178,6 +178,32 @@ void main() async {
 }
 ```
 
+### Provenance and loaded data range
+
+Every position records which backend actually produced it. A missing `.se1`
+file does not fail the calculation - Swiss Ephemeris falls back to Moshier - so
+check provenance before treating a result as Swiss Ephemeris output:
+
+```dart
+final position = await jyotish.getPlanetPosition(...);
+print(position.provenance?.backend);     // swiss, jpl, moshier or automatic
+print(position.provenance?.usedFallback); // true for Moshier
+```
+
+`CalculationFlags(requireSwissEphemeris: true)` throws
+`EphemerisBackendException` instead of returning a Moshier fallback.
+
+To verify the actual files and years an install loaded:
+
+```dart
+final range = await jyotish.probeDataRange();
+print(range.planets?.path);            // e.g. .../sepl_18.se1
+print(range.coversYears(1800, 2399));  // app policy, not a package default
+```
+
+The package reports what loaded and does not hardcode an asset range; each
+application decides which years its install must cover.
+
 ### Calculate Multiple Planets
 
 ```dart
@@ -205,6 +231,28 @@ final position = await jyotish.getPlanetPosition(
   flags: flags,
 );
 ```
+
+### Native sidereal frame
+
+By default the package preserves its historical output: it calculates a
+planet tropically, then subtracts `swe_get_ayanamsa_ut()` from the ecliptic
+longitude. To let Swiss Ephemeris apply the ayanamsa, opt in explicitly:
+
+```dart
+final flags = CalculationFlags.nativeSidereal(SiderealMode.lahiri);
+final sun = await jyotish.getPlanetPosition(
+  planet: Planet.sun,
+  dateTime: DateTime.now(),
+  location: location,
+  flags: flags,
+);
+```
+
+`useNativeSidereal` sets `SEFLG_SIDEREAL`, validates that the engine returned
+that frame, and skips the Dart subtraction. It cannot be combined with
+`useTropical: true`. Native and manual Lahiri longitudes agree to well under an
+arcminute in the package tests; the flag remains opt-in until app-level charts
+have adopted it.
 
 ### Advanced: Custom Calculation Flags
 
@@ -266,6 +314,12 @@ for (int i = 0; i < 12; i++) {
 }
 ```
 
+`calculateVedicChart` defaults to Whole Sign. Pass a Swiss Ephemeris
+house-system code to request another system, for example
+`houseSystem: 'P'` for Placidus. Cusps and angles are calculated in the
+sidereal frame directly by `swe_houses_ex`, not by subtracting ayanamsa from
+tropical cusps.
+
 **Vedic Features:**
 
 - ✨ Sidereal zodiac with Lahiri ayanamsa (authentic Vedic calculations)
@@ -303,11 +357,16 @@ final location = GeographicLocation.fromDMS(
 
 The main entry point for the library.
 
-- `initialize({String? ephemerisPath})`: Initialize the library
+- `initialize({String? ephemerisPath})`: Initialize the library; concurrent
+  calls in one isolate share one in-flight future, and every isolate must call
+  it itself
 - `getPlanetPosition(...)`: Calculate a single planet's position
-- `getMultiplePlanetPositions(...)`: Calculate multiple planets
+- `getMultiplePlanetPositions(...)`: Calculate multiple planets in one state-aware batch
+- `getSunMoonPositions(...)`: Calculate the Sun and Moon together for Panchang work
 - `getAllPlanetPositions(...)`: Calculate all major planets
-- `dispose()`: Clean up resources
+- `probeDataRange()`: Report the Swiss Ephemeris files and years actually loaded
+- `clearCache()`: Drop the in-memory position cache (keys already include all inputs)
+- `dispose()`: Clean up resources and cancel an in-flight initialization
 
 #### `Planet` (enum)
 
@@ -361,10 +420,19 @@ Controls calculation behavior.
 
 Factory constructors:
 
-- `CalculationFlags.defaultFlags()`: Tropical, geocentric
+- `CalculationFlags.defaultFlags()`: Sidereal (Lahiri), geocentric
 - `CalculationFlags.siderealLahiri()`: Sidereal with Lahiri ayanamsa
-- `CalculationFlags.sidereal(SiderealMode)`: Custom sidereal mode
+- `CalculationFlags.sidereal(SiderealMode)`: Custom sidereal mode, historical
+  path that subtracts ayanamsa from the tropical longitude in Dart
+- `CalculationFlags.nativeSidereal(SiderealMode)`: Opt in to
+  `SEFLG_SIDEREAL` so Swiss Ephemeris applies the ayanamsa
 - `CalculationFlags.topocentric()`: Topocentric calculations
+- `CalculationFlags(requireSwissEphemeris: true)`: Reject a Moshier fallback
+  instead of returning it as Swiss Ephemeris output
+
+`CalculationFlags` implements value equality. The default sidereal path is
+unchanged until the native and historical frames have been compared on real
+charts; see [Native sidereal frame](#native-sidereal-frame).
 
 #### `SiderealMode` (enum)
 
@@ -377,6 +445,10 @@ Popular modes:
 - `SiderealMode.krishnamurti`: KP astrology
 - `SiderealMode.raman`: Raman ayanamsa
 - 40+ other modes available
+
+`SiderealMode.name` is the stable enum identifier and `persistenceKey` is the
+Swiss Ephemeris integer. Both are safe in storage and cache keys. `label` is
+display text only: it may be reworded, so never persist it.
 
 ## Error Handling
 
@@ -454,13 +526,27 @@ print('Lahiri Ayanamsa: ${ayanamsa.toStringAsFixed(6)}°');
 ## Performance Considerations
 
 1. **Initialization**: Call `initialize()` once at app startup
-2. **Batch Calculations**: Use `getMultiplePlanetPositions()` for multiple planets
-3. **Caching**: Consider caching results if querying the same time repeatedly
-4. **Resource Management**: Always call `dispose()` when done
+2. **Batch Calculations**: Use `getMultiplePlanetPositions()` for multiple
+   planets, or `getSunMoonPositions()` when a Panchang needs both bodies. FFI
+   calls are synchronous, so these run as one ordered batch: global state is
+   applied once and one native error buffer is reused. `Future.wait` would not
+   make them parallel.
+3. **Caching**: Positions are cached in memory under a typed key containing the
+   instant, frame, ayanamsa, engine version, and — for topocentric requests —
+   latitude, longitude and altitude. Geocentric entries intentionally omit the
+   observer location. Use `clearCache()` only to release memory or force a
+   fresh native calculation; `Jyotish.clearCache()` exposes the same for facade
+   users.
+4. **Resource Management**: Always call `dispose()` when done; it clears the
+   cache and cancels an in-flight initialization.
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+The `jyotish-js/` directory is an incomplete, private TypeScript scaffold and
+is not part of this Dart package's API or CI. See its README before adding work
+there.
 
 ## License
 
@@ -491,7 +577,7 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Roadmap
 
-- [ ] House calculations
+- [x] House calculations
 - [ ] Aspect calculations
 - [ ] Transit calculations
 - [ ] Dasha system support

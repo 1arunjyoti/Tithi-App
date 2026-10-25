@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `CalculationFlags.nativeSidereal()` / `useNativeSidereal` for opt-in
+  `SEFLG_SIDEREAL` planetary positions.
+- `EphemerisService.calculatePlanetPositions` and `calculateSunMoon`, plus
+  `Jyotish.getSunMoonPositions`, for one state-aware Panchang batch.
+- `EphemerisService.clearCache()`.
+
+### Changed
+
+- Position cache uses typed keys including the exact instant, frame, ayanamsa,
+  engine version and topocentric altitude; geocentric entries omit location.
+- `getMultiplePlanetPositions` no longer uses `Future.wait`; FFI calls are
+  synchronous and now share one state setup and error buffer.
+- `SiderealMode.name` is the stable enum name again; display text moved to
+  `label`, and `persistenceKey` exposes the integer constant.
+
+### Fixed
+
+- Native sidereal and manual sidereal results can no longer share a cache entry.
+
 ## [1.0.1] - 2025-11-25
 
 ### Fixed

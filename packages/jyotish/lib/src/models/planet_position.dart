@@ -1,3 +1,4 @@
+import 'ephemeris_provenance.dart';
 import 'planet.dart';
 
 /// Represents the calculated position of a planet at a specific time.
@@ -11,6 +12,7 @@ class PlanetPosition {
     required DateTime dateTime,
     required List<double> results,
     double? sunLongitude,
+    EphemerisProvenance? provenance,
   }) {
     return PlanetPosition(
       planet: planet,
@@ -24,6 +26,7 @@ class PlanetPosition {
       isCombust: sunLongitude != null
           ? calculateCombustion(planet, results[0], sunLongitude)
           : false,
+      provenance: provenance,
     );
   }
 
@@ -38,6 +41,7 @@ class PlanetPosition {
   /// [latitudeSpeed] - Speed of latitude change in degrees/day.
   /// [distanceSpeed] - Speed of distance change in AU/day.
   /// [isCombust] - Whether the planet is combust (optional, defaults to false).
+  /// [provenance] - Backend that produced the position, when known.
   const PlanetPosition({
     required this.planet,
     required this.dateTime,
@@ -48,6 +52,7 @@ class PlanetPosition {
     required this.latitudeSpeed,
     required this.distanceSpeed,
     this.isCombust = false,
+    this.provenance,
   }) : isRetrograde = longitudeSpeed < 0;
 
   /// The planet this position is for.
@@ -80,6 +85,13 @@ class PlanetPosition {
   /// Whether the planet is combust (too close to the Sun).
   /// Only applicable to planets other than the Sun itself.
   final bool isCombust;
+
+  /// Which backend produced this position, when the calculation recorded it.
+  ///
+  /// A position created from bare numbers has no provenance; a position from
+  /// [EphemerisService] carries the requested and actual backend, including a
+  /// Moshier fallback warning.
+  final EphemerisProvenance? provenance;
 
   /// Calculates if a planet is combust (too close to the Sun).
   /// Uses traditional Vedic astrology combustion distances.
@@ -119,6 +131,7 @@ class PlanetPosition {
       latitudeSpeed: latitudeSpeed,
       distanceSpeed: distanceSpeed,
       isCombust: calculateCombustion(planet, longitude, sunLongitude),
+      provenance: provenance,
     );
   }
 
@@ -200,6 +213,8 @@ class PlanetPosition {
       'nakshatra': nakshatra,
       'nakshatraIndex': nakshatraIndex,
       'nakshatraPada': nakshatraPada,
+      if (provenance != null) 'ephemerisBackend': provenance!.backend.name,
+      if (provenance?.warning != null) 'ephemerisWarning': provenance!.warning,
     };
   }
 

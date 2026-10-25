@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart' show sha256;
-import 'package:flutter/foundation.dart'
-    show FlutterError, TargetPlatform;
+import 'package:flutter/foundation.dart' show FlutterError, TargetPlatform;
 import 'package:flutter/services.dart' show AssetBundle;
+import 'package:jyotish/jyotish.dart' show EphemerisDataRange;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -33,9 +33,12 @@ const String _assetDirectory = 'assets/ephe';
 /// `test/panchang_init_test.dart` recomputes these hashes from `assets/ephe/`,
 /// so replacing a data file without updating the manifest fails the suite.
 const Map<String, String> kEphemerisAssetSha256 = {
-  'seas_18.se1': '5fd9c2aa1654e37c09a6aeb558076e795409b7dc4bd948ebc0faa7d4a7686b5b',
-  'semo_18.se1': 'ecfa54dbf5bc0b5a9bc3e04ed28629a821e98625eacae38f4070593bba0e2980',
-  'sepl_18.se1': '0b7e416e3c1be9e6a0dd1d711dae7f7685793a0e7df13f76363a493dc27b6ea1',
+  'seas_18.se1':
+      '5fd9c2aa1654e37c09a6aeb558076e795409b7dc4bd948ebc0faa7d4a7686b5b',
+  'semo_18.se1':
+      'ecfa54dbf5bc0b5a9bc3e04ed28629a821e98625eacae38f4070593bba0e2980',
+  'sepl_18.se1':
+      '0b7e416e3c1be9e6a0dd1d711dae7f7685793a0e7df13f76363a493dc27b6ea1',
 };
 
 /// Every Swiss Ephemeris `.se1` file starts with the ASCII header
@@ -107,6 +110,13 @@ class EphemerisEngineException implements PanchangInitException {
 /// a failure.
 const Set<TargetPlatform> kNativeEnginePlatforms = {TargetPlatform.android};
 
+/// Years the bundled `.se1` files must cover.
+///
+/// This is an application policy, not a package default: `packages/jyotish`
+/// reports whatever range actually loaded and never hardcodes an asset range.
+const int kEphemerisExpectedStartYear = 1800;
+const int kEphemerisExpectedEndYear = 2399;
+
 /// Throws [EphemerisEngineException] when [platform] requires the native engine
 /// but it could not be installed.
 ///
@@ -129,6 +139,44 @@ void ensureNativeEngineInstalled({
     'would be approximate. Reinstall the app to restore it. If you build Tithi '
     "from source, make sure the library is built for this device's CPU.",
     cause: solarSetupError ?? moonSetupError,
+  );
+}
+
+/// Throws [EphemerisAssetException] when the loaded files do not cover the
+/// years Tithi promises.
+///
+/// A file can be present but still not be the 1800-2399 asset, and a missing
+/// file makes Swiss Ephemeris fall back to Moshier without failing. Checking
+/// the range the library actually loaded is the only way to tell the two apart
+/// after startup.
+void ensureEphemerisRangeInstalled(EphemerisDataRange range) {
+  if (range.coversYears(
+    kEphemerisExpectedStartYear,
+    kEphemerisExpectedEndYear,
+  )) {
+    return;
+  }
+
+  final missing = <String>[
+    if (range.planets == null) 'planetary (sepl_18.se1)',
+    if (range.moon == null) 'lunar (semo_18.se1)',
+  ];
+  final detail = missing.isEmpty
+      ? 'The loaded files do not cover '
+            '$kEphemerisExpectedStartYear-$kEphemerisExpectedEndYear CE.'
+      : 'The ${missing.join(' and ')} ephemeris data did not load.';
+
+  throw EphemerisAssetException(
+    'Tithi could not verify its '
+    '$kEphemerisExpectedStartYear-$kEphemerisExpectedEndYear ephemeris data. '
+    '$detail Reinstall the app to restore the bundled files. If you build '
+    'Tithi from source, make sure assets/ephe contains sepl_18.se1 and '
+    'semo_18.se1.',
+    file: range.planets == null
+        ? 'sepl_18.se1'
+        : range.moon == null
+        ? 'semo_18.se1'
+        : null,
   );
 }
 

@@ -19,6 +19,72 @@ Format:
 
 ---
 
+## 2026-10-25 - 0.7.20+21
+
+### Vedic charts honour the requested house system and sidereal frame
+`calculateVedicChart(houseSystem:)` now calculates and labels the system the
+caller asks for, with cusps and angles taken directly from the sidereal engine.
+
+- `swe_houses_ex` is bound with `SEFLG_SIDEREAL`; `EphemerisService.calculateHouses`
+  accepts optional `CalculationFlags`, sets the ayanamsa mode, and no longer
+  forces Placidus or subtracts ayanamsa from cusps/ascendant/MC. Without flags
+  the method keeps its historical tropical result.
+- `VedicChartService` validates the house code and labels the result (`Whole
+  Sign`, `Placidus`, ...). 'G' (Gauquelin) stays unsupported because it writes 36
+  cusps into the standard 13-element buffer.
+- Sidereal equatorial planet requests (`useEquatorial` without `useTropical`)
+  are rejected: ayanamsa is an ecliptic offset, not a right-ascension offset.
+- Dignity lives in `lib/src/services/planetary_dignity.dart`: Venus debilitation
+  is 177° (27° Virgo), Jupiter is 275° (5° Capricorn), and degree-based
+  moola-trikona is evaluated before generic own-sign dignity.
+- `GeographicLocation` rejects non-finite coordinates/altitude and invalid DMS
+  components; chart location strings now use N/S/E/W. Tests in
+  `packages/jyotish/test/{houses,planetary_dignity,geographic_location,equatorial_frame}_test.dart`.
+
+### Ephemeris provenance and loaded data ranges are visible
+A missing `.se1` file no longer hides behind a position that looks like Swiss
+Ephemeris output, and startup can verify the range the library actually opened.
+
+- `PlanetPosition.provenance` records the requested and actual backend, the
+  native return flags and any warning; `usedFallback` is true for Moshier.
+- `CalculationFlags(requireSwissEphemeris: true)` throws
+  `EphemerisBackendException` instead of returning a fallback, including when a
+  cached fallback is reused.
+- `Jyotish.probeDataRange()` / `EphemerisService.probeDataRange()` bind
+  `swe_get_current_file_data()` after a Sun/Moon probe and report each file's
+  actual 1800-2399 (or other) range. The package reports ranges; the app owns
+  the expected-year policy.
+- `Jyotish.initialize()` and `EphemerisService.initialize()` share one in-flight
+  future, allow retry after failure and cancel cleanly on `dispose()`. Each
+  isolate still initializes its own instance; native state is process-global.
+- App startup checks `kEphemerisExpectedStartYear/EndYear` and the on-device
+  smoke test asserts the loaded range and a Swiss provenance.
+
+### Ephemeris batches, typed cache and opt-in native sidereal
+Panchang Sun/Moon work runs as one batch, cached positions can no longer mix
+frames, and callers can ask Swiss Ephemeris for native sidereal longitude.
+
+- `EphemerisService.calculatePlanetPositions` and `calculateSunMoon` replace
+  the `Future.wait` pseudo-parallelism: global state is applied once, one
+  native error buffer is reused, and cached planets are skipped. Exposed as
+  `Jyotish.getSunMoonPositions`; `PanchangService.calculateTithi` and
+  `calculateSunMoonLongitudes` use it.
+- Position cache keys are typed (`_PositionCacheKey`): exact instant, flags,
+  ayanamsa and `EphemerisService.calculationVersion`; latitude/longitude/
+  altitude only for topocentric requests, so geocentric results ignore the
+  observer. `clearCache()` is exposed on the service and `Jyotish`;
+  `dispose()` clears it.
+- `CalculationFlags.useNativeSidereal` (plus `nativeSidereal()`) sets
+  `SEFLG_SIDEREAL`, checks the returned flag and skips the Dart ayanamsa
+  subtraction. The default remains the historical manual path until charts
+  adopt it; native + tropical is rejected.
+- `SiderealMode.label` replaces the shadowing `name` field, so `.name` is the
+  stable enum identifier again; `persistenceKey` exposes the Swiss integer.
+  Display labels are never persisted.
+- `jyotish-js/` is marked private and documented as an incomplete scaffold,
+  not part of the Dart API or CI.
+- Tests: `packages/jyotish/test/{native_sidereal,position_cache}_test.dart`.
+
 ## 2026-10-23 - 0.7.20+20
 
 ### Licensing resolved: AGPLv3, with install docs that match

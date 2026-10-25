@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:jyotish/jyotish.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -29,8 +30,9 @@ import 'package:tithi/services/solar_events_service.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('installs the ephemeris and starts the native engine',
-      (tester) async {
+  testWidgets('installs the ephemeris and starts the native engine', (
+    tester,
+  ) async {
     // Arrange / Act
     final service = PanchangService();
     await service.init();
@@ -40,6 +42,28 @@ void main() {
     expect(service.isInitialized, isTrue);
     expect(solarEventsService.usesNativeCalculator, isTrue);
     expect(moonEventsService.usesNativeCalculator, isTrue);
+
+    // Assert: the loaded files cover the range the app promises, and the
+    // position path reports Swiss Ephemeris as the actual backend.
+    final range = await Jyotish().probeDataRange();
+    expect(
+      range.coversYears(kEphemerisExpectedStartYear, kEphemerisExpectedEndYear),
+      isTrue,
+      reason: '$range',
+    );
+
+    final sun = await Jyotish().getPlanetPosition(
+      planet: Planet.sun,
+      dateTime: DateTime.utc(2024, 1, 1, 12),
+      location: GeographicLocation(latitude: 28.6139, longitude: 77.2090),
+    );
+    expect(sun.provenance, isNotNull);
+    expect(
+      sun.provenance!.isSwissEphemeris,
+      isTrue,
+      reason: '${sun.provenance}',
+    );
+    expect(sun.provenance!.usedFallback, isFalse);
 
     // Assert: every declared asset landed in the documents directory, passes
     // the size + header check, and matches the build manifest. This is the only

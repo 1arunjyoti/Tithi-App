@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/foundation.dart' show FlutterError, TargetPlatform;
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jyotish/jyotish.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:tithi/services/panchang_init/panchang_init.dart';
@@ -76,19 +77,21 @@ void main() {
       expect(bundle.requested, isEmpty);
     });
 
-    test('replaces a truncated file instead of trusting its existence',
-        () async {
-      // Arrange: a previous launch was killed mid-write.
-      final target = installed('seas_18.se1');
-      await target.parent.create(recursive: true);
-      await target.writeAsBytes(_se1().sublist(0, 200));
+    test(
+      'replaces a truncated file instead of trusting its existence',
+      () async {
+        // Arrange: a previous launch was killed mid-write.
+        final target = installed('seas_18.se1');
+        await target.parent.create(recursive: true);
+        await target.writeAsBytes(_se1().sublist(0, 200));
 
-      // Act
-      await copy(validBundle());
+        // Act
+        await copy(validBundle());
 
-      // Assert
-      expect(await target.length(), _se1().length);
-    });
+        // Assert
+        expect(await target.length(), _se1().length);
+      },
+    );
 
     test('replaces a zero-byte file', () async {
       // Arrange
@@ -117,20 +120,22 @@ void main() {
       expect(String.fromCharCodes(bytes.sublist(0, 8)), 'SWISSEPH');
     });
 
-    test('replaces a file with a valid size and header but wrong contents',
-        () async {
-      // Arrange: this is the case size + magic cannot see - a copy that kept
-      // its first kilobyte and lost or gained bytes further in.
-      final target = installed('seas_18.se1');
-      await target.parent.create(recursive: true);
-      await target.writeAsBytes(_corrupt(_se1()));
+    test(
+      'replaces a file with a valid size and header but wrong contents',
+      () async {
+        // Arrange: this is the case size + magic cannot see - a copy that kept
+        // its first kilobyte and lost or gained bytes further in.
+        final target = installed('seas_18.se1');
+        await target.parent.create(recursive: true);
+        await target.writeAsBytes(_corrupt(_se1()));
 
-      // Act
-      await copy(validBundle());
+        // Act
+        await copy(validBundle());
 
-      // Assert
-      expect(_sha256(await target.readAsBytes()), _sha256(_se1()));
-    });
+        // Assert
+        expect(_sha256(await target.readAsBytes()), _sha256(_se1()));
+      },
+    );
 
     test('leaves no staging file behind after a copy', () async {
       // Act
@@ -209,44 +214,45 @@ void main() {
       expect(installed('semo_18.se1').existsSync(), isFalse);
     });
 
-    test('throws when the manifest has no entry for a declared asset',
-        () async {
-      // Arrange: a developer added a file to kEphemerisAssets only.
-      manifest = {'seas_18.se1': _sha256(_se1())};
+    test(
+      'throws when the manifest has no entry for a declared asset',
+      () async {
+        // Arrange: a developer added a file to kEphemerisAssets only.
+        manifest = {'seas_18.se1': _sha256(_se1())};
 
-      // Act / Assert
-      final error = await _captureEphemerisError(() => copy(validBundle()));
-      expect(error.file, 'semo_18.se1');
-      expect(error.message, contains('checksum'));
-      expect(error.message, contains('kEphemerisAssetSha256'));
-    });
+        // Act / Assert
+        final error = await _captureEphemerisError(() => copy(validBundle()));
+        expect(error.file, 'semo_18.se1');
+        expect(error.message, contains('checksum'));
+        expect(error.message, contains('kEphemerisAssetSha256'));
+      },
+    );
 
-    test('keeps a valid install untouched even if the bundle is broken',
-        () async {
-      // Arrange: a valid install, then a bad bundle (e.g. a corrupted build).
-      await copy(validBundle());
-      final target = installed('sepl_18.se1');
-      final before = await target.readAsBytes();
-      final bundle = _FakeAssetBundle({
-        for (final name in kEphemerisAssets) 'assets/ephe/$name': _se1(),
-        'assets/ephe/sepl_18.se1': Uint8List(4096),
-      });
+    test(
+      'keeps a valid install untouched even if the bundle is broken',
+      () async {
+        // Arrange: a valid install, then a bad bundle (e.g. a corrupted build).
+        await copy(validBundle());
+        final target = installed('sepl_18.se1');
+        final before = await target.readAsBytes();
+        final bundle = _FakeAssetBundle({
+          for (final name in kEphemerisAssets) 'assets/ephe/$name': _se1(),
+          'assets/ephe/sepl_18.se1': Uint8List(4096),
+        });
 
-      // Act: a valid install short-circuits before the bundle is read.
-      await copy(bundle);
+        // Act: a valid install short-circuits before the bundle is read.
+        await copy(bundle);
 
-      // Assert
-      expect(bundle.requested, isEmpty);
-      expect(await target.readAsBytes(), before);
-    });
+        // Assert
+        expect(bundle.requested, isEmpty);
+        expect(await target.readAsBytes(), before);
+      },
+    );
   });
 
   group('shipped ephemeris manifest', () {
     test('covers exactly the declared assets', () {
-      expect(
-        kEphemerisAssetSha256.keys.toSet(),
-        kEphemerisAssets.toSet(),
-      );
+      expect(kEphemerisAssetSha256.keys.toSet(), kEphemerisAssets.toSet());
     });
 
     test('matches the bytes in assets/ephe', () async {
@@ -349,6 +355,58 @@ void main() {
       expect(error.message, contains('Reinstall'));
       expect(error.message, contains('approximate'));
       expect(error.message, isNot(contains('opaque FFI failure')));
+    });
+  });
+
+  group('ensureEphemerisRangeInstalled', () {
+    EphemerisFileRange file(int ifno, int startYear, int endYear) {
+      return EphemerisFileRange(
+        ifno: ifno,
+        path: '/tmp/file.se1',
+        startUtc: DateTime.utc(startYear),
+        endUtc: DateTime.utc(endYear, 12, 31),
+        denum: 0,
+      );
+    }
+
+    test('accepts the bundled 1800-2399 range', () {
+      final range = EphemerisDataRange(
+        planets: file(
+          0,
+          kEphemerisExpectedStartYear,
+          kEphemerisExpectedEndYear,
+        ),
+        moon: file(1, kEphemerisExpectedStartYear, kEphemerisExpectedEndYear),
+      );
+
+      expect(() => ensureEphemerisRangeInstalled(range), returnsNormally);
+    });
+
+    test('rejects a missing lunar file', () {
+      final range = EphemerisDataRange(
+        planets: file(
+          0,
+          kEphemerisExpectedStartYear,
+          kEphemerisExpectedEndYear,
+        ),
+      );
+
+      expect(
+        () => ensureEphemerisRangeInstalled(range),
+        throwsA(isA<EphemerisAssetException>()),
+      );
+    });
+
+    test('rejects a range that stops short', () {
+      final range = EphemerisDataRange(
+        planets: file(0, kEphemerisExpectedStartYear, 2398),
+        moon: file(1, kEphemerisExpectedStartYear, kEphemerisExpectedEndYear),
+      );
+
+      expect(
+        () => ensureEphemerisRangeInstalled(range),
+        throwsA(isA<EphemerisAssetException>()),
+      );
     });
   });
 }
