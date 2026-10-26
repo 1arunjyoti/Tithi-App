@@ -136,13 +136,13 @@ class PlanetPosition {
   }
 
   /// Gets the zodiac sign (0-11, where 0=Aries, 1=Taurus, etc.).
-  int get zodiacSignIndex => (longitude / 30).floor() % 12;
+  int get zodiacSignIndex => (_normalizedLongitude / 30).floor() % 12;
 
   /// Gets the zodiac sign name.
   String get zodiacSign => _zodiacSigns[zodiacSignIndex];
 
   /// Gets the position within the zodiac sign (0.0 - 30.0 degrees).
-  double get positionInSign => longitude % 30;
+  double get positionInSign => _normalizedLongitude % 30;
 
   /// Gets the position in degrees, minutes, and seconds within the sign.
   Map<String, dynamic> get positionInSignDMS {
@@ -161,15 +161,21 @@ class PlanetPosition {
 
   /// Gets the nakshatra (lunar mansion) index (0-26).
   /// Each nakshatra is 13°20' (13.333... degrees).
-  int get nakshatraIndex => (longitude / (360 / 27)).floor() % 27;
+  int get nakshatraIndex =>
+      (_normalizedLongitude / (360 / 27)).floor() % 27;
 
   /// Gets the nakshatra name.
   String get nakshatra => _nakshatras[nakshatraIndex];
 
   /// Gets the nakshatra pada (quarter, 1-4).
   int get nakshatraPada {
-    final posInNakshatra = longitude % (360 / 27);
+    final posInNakshatra = _normalizedLongitude % (360 / 27);
     return (posInNakshatra / (360 / 27 / 4)).floor() + 1;
+  }
+
+  double get _normalizedLongitude {
+    final normalized = longitude % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
   }
 
   /// Formats the position as a traditional notation (e.g., "15° Aries 30'").

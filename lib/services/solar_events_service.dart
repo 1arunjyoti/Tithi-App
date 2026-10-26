@@ -149,17 +149,19 @@ class SwissSolarEventCalculator implements SolarEventCalculator {
         : tz.TZDateTime(location, wallDate.year, wallDate.month, wallDate.day);
 
     final startJulianDay = _julianDayUtc(midnight.toUtc());
-    final result = bindings.riseTrans(
-      startJulianDay: startJulianDay,
-      planetId: SwissEphConstants.sun,
-      ephemerisFlag:
-          SwissEphBindings.SEFLG_SWIEPH |
-          SwissEphBindings.SEFLG_NONUT |
-          SwissEphBindings.SEFLG_TRUEPOS,
-      riseSetFlag: riseSetFlag | SwissEphBindings.SE_BIT_HINDU_RISING,
-      longitude: longitude,
-      latitude: latitude,
-      altitudeMeters: _normalizedAltitude(altitudeMeters),
+    final result = SwissEphBindings.withNativeLock(
+      () => bindings.riseTrans(
+        startJulianDay: startJulianDay,
+        planetId: SwissEphConstants.sun,
+        ephemerisFlag:
+            SwissEphBindings.SEFLG_SWIEPH |
+            SwissEphBindings.SEFLG_NONUT |
+            SwissEphBindings.SEFLG_TRUEPOS,
+        riseSetFlag: riseSetFlag | SwissEphBindings.SE_BIT_HINDU_RISING,
+        longitude: longitude,
+        latitude: latitude,
+        altitudeMeters: _normalizedAltitude(altitudeMeters),
+      ),
     );
 
     if (result.isUnavailable) {
@@ -503,7 +505,9 @@ class SolarEventsService {
 
     try {
       final native = bindings ?? SwissEphBindings();
-      native.setEphemerisPath(ephemerisPath);
+      SwissEphBindings.withNativeLock(
+        () => native.setEphemerisPath(ephemerisPath),
+      );
       _calculator = SwissSolarEventCalculator(bindings: native);
       _nativeSetupError = null;
       clearCache();

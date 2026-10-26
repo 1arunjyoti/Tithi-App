@@ -91,6 +91,35 @@ class SwissEphBindings {
   }
   late final ffi.DynamicLibrary _lib;
 
+  /// Runs one operation while holding the process-wide Swiss Ephemeris lock.
+  ///
+  /// Swiss Ephemeris stores sidereal mode, topocentric coordinates, and other
+  /// settings in native global state. The file lock coordinates Dart isolates
+  /// and separate processes that use this library.
+  static T withNativeLock<T>(T Function() action) {
+    final lockFile = File(
+      '${Directory.systemTemp.path}${Platform.pathSeparator}'
+      'tithi_jyotish_native.lock',
+    );
+    final handle = lockFile.openSync(mode: FileMode.append);
+    var locked = false;
+    try {
+      handle.lockSync(FileLock.exclusive);
+      locked = true;
+      return action();
+    } finally {
+      if (locked) {
+        handle.unlockSync();
+      }
+      handle.closeSync();
+    }
+  }
+
+  /// Async adapter for APIs that must preserve their existing Future contract.
+  static Future<T> withNativeLockAsync<T>(T Function() action) {
+    return Future<T>.sync(() => withNativeLock(action));
+  }
+
   // Function signatures
   late final _swe_set_ephe_path = _lib.lookupFunction<
       ffi.Void Function(ffi.Pointer<ffi.Char>),

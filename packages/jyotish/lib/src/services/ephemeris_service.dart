@@ -1,5 +1,6 @@
 import 'dart:ffi' as ffi;
 
+
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 
@@ -66,25 +67,25 @@ class EphemerisService {
 
   Future<void> _initialize(String? ephemerisPath) async {
     final epoch = _initializeEpoch;
-    final bindings = SwissEphBindings();
+    SwissEphBindings? bindings;
 
     try {
-      // Set ephemeris path if provided
-      if (ephemerisPath != null) {
-        bindings.setEphemerisPath(ephemerisPath);
-      }
-
-      // Test that the library is working
-      final version = bindings.getVersion();
+      final version = SwissEphBindings.withNativeLock(() {
+        bindings = SwissEphBindings();
+        if (ephemerisPath != null) {
+          bindings!.setEphemerisPath(ephemerisPath);
+        }
+        return bindings!.getVersion();
+      });
 
       if (epoch != _initializeEpoch) {
-        bindings.close();
+        SwissEphBindings.withNativeLock(() => bindings!.close());
         throw InitializationException(
           'Swiss Ephemeris initialization was cancelled by dispose().',
         );
       }
 
-      _bindings = bindings;
+      _bindings = bindings!;
       _isInitialized = true;
 
       if (kDebugMode) {
@@ -170,42 +171,44 @@ class EphemerisService {
     ];
 
     if (missing.isNotEmpty) {
-      final bindings = _bindings!;
-      final nativeSidereal = flags.useNativeSidereal && !flags.useTropical;
+      SwissEphBindings.withNativeLock(() {
+        final bindings = _bindings!;
+        final nativeSidereal = flags.useNativeSidereal && !flags.useTropical;
 
-      if (flags.useTopocentric) {
-        bindings.setTopocentric(
-          location.longitude,
-          location.latitude,
-          location.altitude,
-        );
-      }
-
-      double ayanamsa = 0.0;
-      if (!flags.useTropical) {
-        bindings.setSiderealMode(flags.siderealModeConstant, 0.0, 0.0);
-        if (!nativeSidereal) {
-          ayanamsa = bindings.getAyanamsaUT(julianDay);
-        }
-      }
-
-      final errorBuffer = malloc<ffi.Char>(256);
-      try {
-        for (final planet in missing) {
-          final position = _calculateOne(
-            bindings: bindings,
-            planet: planet,
-            dateTime: dateTime,
-            julianDay: julianDay,
-            flags: flags,
-            ayanamsa: ayanamsa,
-            errorBuffer: errorBuffer,
+        if (flags.useTopocentric) {
+          bindings.setTopocentric(
+            location.longitude,
+            location.latitude,
+            location.altitude,
           );
-          _store(keys[planet]!, position);
         }
-      } finally {
-        malloc.free(errorBuffer);
-      }
+
+        double ayanamsa = 0.0;
+        if (!flags.useTropical) {
+          bindings.setSiderealMode(flags.siderealModeConstant, 0.0, 0.0);
+          if (!nativeSidereal) {
+            ayanamsa = bindings.getAyanamsaUT(julianDay);
+          }
+        }
+
+        final errorBuffer = malloc<ffi.Char>(256);
+        try {
+          for (final planet in missing) {
+            final position = _calculateOne(
+              bindings: bindings,
+              planet: planet,
+              dateTime: dateTime,
+              julianDay: julianDay,
+              flags: flags,
+              ayanamsa: ayanamsa,
+              errorBuffer: errorBuffer,
+            );
+            _store(keys[planet]!, position);
+          }
+        } finally {
+          malloc.free(errorBuffer);
+        }
+      });
     }
 
     final result = <Planet, PlanetPosition>{};
@@ -400,34 +403,35 @@ class EphemerisService {
   /// the application decides which years its install must cover.
   Future<EphemerisDataRange> probeDataRange() async {
     _ensureInitialized();
-    final bindings = _bindings!;
-
-    final julianDay = bindings.julianDay(
-      year: 2000,
-      month: 1,
-      day: 1,
-      hour: 12.0,
-    );
-    final errorBuffer = malloc<ffi.Char>(256);
-    try {
-      for (final planet in [Planet.sun, Planet.moon]) {
-        errorBuffer.value = 0;
-        bindings.calculateUT(
-          julianDay: julianDay,
-          planetId: planet.swissEphId,
-          flags: SwissEphBindings.SEFLG_SWIEPH,
-          errorBuffer: errorBuffer,
-        );
+    return await SwissEphBindings.withNativeLockAsync<EphemerisDataRange>(() {
+      final bindings = _bindings!;
+      final julianDay = bindings.julianDay(
+        year: 2000,
+        month: 1,
+        day: 1,
+        hour: 12.0,
+      );
+      final errorBuffer = malloc<ffi.Char>(256);
+      try {
+        for (final planet in [Planet.sun, Planet.moon]) {
+          errorBuffer.value = 0;
+          bindings.calculateUT(
+            julianDay: julianDay,
+            planetId: planet.swissEphId,
+            flags: SwissEphBindings.SEFLG_SWIEPH,
+            errorBuffer: errorBuffer,
+          );
+        }
+      } finally {
+        malloc.free(errorBuffer);
       }
-    } finally {
-      malloc.free(errorBuffer);
-    }
 
-    return EphemerisDataRange(
-      planets: _readFileRange(0),
-      moon: _readFileRange(1),
-      asteroids: _readFileRange(2),
-    );
+      return EphemerisDataRange(
+        planets: _readFileRange(0),
+        moon: _readFileRange(1),
+        asteroids: _readFileRange(2),
+      );
+    });
   }
 
   EphemerisFileRange? _readFileRange(int ifno) {
@@ -462,7 +466,8 @@ class EphemerisService {
     final hour = utc.hour +
         (utc.minute / 60.0) +
         (utc.second / 3600.0) +
-        (utc.millisecond / 3600000.0);
+        (utc.millisecond / 3600000.0) +
+        (utc.microsecond / 3600000000.0);
 
     return _bindings!.julianDay(
       year: utc.year,
@@ -486,14 +491,11 @@ class EphemerisService {
     _ensureInitialized();
 
     try {
-      // Set sidereal mode
-      _bindings!.setSiderealMode(mode.constant, 0.0, 0.0);
-
-      // Convert DateTime to Julian Day
-      final julianDay = _dateTimeToJulianDay(dateTime);
-
-      // Get ayanamsa
-      return _bindings!.getAyanamsaUT(julianDay);
+      return await SwissEphBindings.withNativeLockAsync<double>(() {
+        _bindings!.setSiderealMode(mode.constant, 0.0, 0.0);
+        final julianDay = _dateTimeToJulianDay(dateTime);
+        return _bindings!.getAyanamsaUT(julianDay);
+      });
     } catch (e, stackTrace) {
       throw CalculationException(
         'Error calculating ayanamsa: ${e.toString()}',
@@ -541,30 +543,30 @@ class EphemerisService {
     }
 
     try {
-      // Convert DateTime to Julian Day
-      final julianDay = _dateTimeToJulianDay(dateTime);
-      final sidereal = flags != null && !flags.useTropical;
+      return await SwissEphBindings.withNativeLockAsync<Map<String, List<double>>>(
+        () {
+        final julianDay = _dateTimeToJulianDay(dateTime);
+        final sidereal = flags != null && !flags.useTropical;
 
-      if (sidereal) {
-        _bindings!.setSiderealMode(flags.siderealModeConstant, 0.0, 0.0);
-      }
+        if (sidereal) {
+          _bindings!.setSiderealMode(flags.siderealModeConstant, 0.0, 0.0);
+        }
 
-      // Calculate houses. The native sidereal flag applies the ayanamsa inside
-      // Swiss Ephemeris, so the cusps and ascmc values are used as returned -
-      // never by subtracting ayanamsa from the tropical result.
-      final result = _bindings!.calculateHouses(
-        julianDay: julianDay,
-        latitude: location.latitude,
-        longitude: location.longitude,
-        houseSystem: systemCode,
-        flags: sidereal ? SwissEphBindings.SEFLG_SIDEREAL : 0,
+        final result = _bindings!.calculateHouses(
+          julianDay: julianDay,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          houseSystem: systemCode,
+          flags: sidereal ? SwissEphBindings.SEFLG_SIDEREAL : 0,
+        );
+
+        if (result == null) {
+          throw CalculationException('Failed to calculate houses');
+        }
+
+        return result;
+        },
       );
-
-      if (result == null) {
-        throw CalculationException('Failed to calculate houses');
-      }
-
-      return result;
     } catch (e, stackTrace) {
       throw CalculationException(
         'Error calculating houses: ${e.toString()}',
@@ -596,7 +598,9 @@ class EphemerisService {
     final bindings = _bindings;
     _bindings = null;
     _isInitialized = false;
-    bindings?.close();
+    if (bindings != null) {
+      SwissEphBindings.withNativeLock(bindings.close);
+    }
   }
 
   /// Gets whether the service is initialized.

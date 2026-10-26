@@ -133,15 +133,17 @@ class SwissMoonEventCalculator implements MoonEventCalculator {
         ? DateTime(wallDate.year, wallDate.month, wallDate.day)
         : tz.TZDateTime(location, wallDate.year, wallDate.month, wallDate.day);
 
-    final result = bindings.riseTrans(
-      startJulianDay: _julianDayUtc(midnight.toUtc()),
-      planetId: SwissEphConstants.moon,
-      // Apparent position (no SEFLG_TRUEPOS): a rise/set is a phenomenon of
-      // the observed Moon, so light-time and nutation belong in the answer.
-      riseSetFlag: riseSetFlag | riseSetBits,
-      longitude: longitude,
-      latitude: latitude,
-      altitudeMeters: _normalizedAltitude(altitudeMeters),
+    final result = SwissEphBindings.withNativeLock(
+      () => bindings.riseTrans(
+        startJulianDay: _julianDayUtc(midnight.toUtc()),
+        planetId: SwissEphConstants.moon,
+        // Apparent position (no SEFLG_TRUEPOS): a rise/set is a phenomenon of
+        // the observed Moon, so light-time and nutation belong in the answer.
+        riseSetFlag: riseSetFlag | riseSetBits,
+        longitude: longitude,
+        latitude: latitude,
+        altitudeMeters: _normalizedAltitude(altitudeMeters),
+      ),
     );
 
     // -2 is the legitimate "no rise/set on this day" answer, not a failure.
@@ -433,7 +435,9 @@ class MoonEventsService {
   }) {
     try {
       final native = bindings ?? SwissEphBindings();
-      native.setEphemerisPath(ephemerisPath);
+      SwissEphBindings.withNativeLock(
+        () => native.setEphemerisPath(ephemerisPath),
+      );
       _calculator = SwissMoonEventCalculator(
         bindings: native,
         profile: profile,
