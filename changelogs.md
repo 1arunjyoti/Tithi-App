@@ -21,6 +21,15 @@ Format:
 
 ## 2026-10-25 - 0.7.20+21
 
+### Jyotish native-state and edge-case hardening
+Concurrent native calculations remain isolated, and boundary longitude/time inputs
+produce consistent results across package and app services.
+
+- All direct Swiss Ephemeris consumers, including eclipse and rise/set services,
+  use the process-wide native lock.
+- Julian-day conversion preserves microsecond precision, matching cache identity.
+- Zodiac, sign-position, and nakshatra accessors normalize negative longitudes.
+
 ### Vedic charts honour the requested house system and sidereal frame
 `calculateVedicChart(houseSystem:)` now calculates and labels the system the
 caller asks for, with cusps and angles taken directly from the sidereal engine.
