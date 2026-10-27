@@ -150,6 +150,7 @@ class FestivalExportService {
     final day = await PanchangDayResolver(service: service).resolve(
       date: occurrence,
       place: PanchangPlace(latitude: latitude, longitude: longitude),
+      computeSankranti: needsSankrantiSearchOn([festival], occurrence),
     );
     final sunrise = day.solar.sunrise;
     final sunset = day.solar.sunset;

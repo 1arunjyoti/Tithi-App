@@ -520,6 +520,7 @@ class NotificationScheduler {
     final day = await PanchangDayResolver(service: service).resolve(
       date: date,
       place: PanchangPlace(latitude: latitude, longitude: longitude),
+      computeSankranti: needsSankrantiSearchOn(festivals, date),
     );
 
     // Kshaya detection compares the sunrise masa with the next-sunrise masa;

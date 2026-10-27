@@ -421,6 +421,193 @@ void main() {
     });
   });
 
+  group('Default sunrise checkpoint', () {
+    // A rule without a timingOverride is decided at sunrise. The other
+    // checkpoint samples must not leak into the match: only rawTithi (the
+    // sunrise sample) counts.
+    Festival ramNavami({String? timingOverride}) => Festival.fromJson({
+      'id': 'ram_navami',
+      'name': 'Ram Navami',
+      'panchang_rules': {
+        'masa': 'Chaitra',
+        'paksha': 'Shukla',
+        'tithi': 9,
+        'conditions': 'Navami',
+        'timingOverride': ?timingOverride,
+      },
+    });
+
+    PanchangData at(
+      Festival festival, {
+      required double sunrise,
+      double? madhyahna,
+    }) => PanchangData.fromRawTithi(
+      date: DateTime(2026, 3, 26),
+      rawTithi: sunrise,
+      masa: 'Chaitra',
+      allFestivals: [festival],
+      rawTithiMadhyahna: madhyahna,
+      // No rawTithiDominant: the 60-minute grace window must not mask a
+      // failure of the sunrise default.
+    );
+
+    test('matches the sunrise tithi when no override is set', () {
+      // Sunrise is Navami, midday is already Dashami.
+      final panchang = at(ramNavami(), sunrise: 9.2, madhyahna: 10.4);
+
+      expect(panchang.festivals.map((f) => f.id), equals(['ram_navami']));
+    });
+
+    test('does not match a tithi that only prevails at another checkpoint', () {
+      // Sunrise is Ashtami; Navami arrives only by midday.
+      final panchang = at(ramNavami(), sunrise: 8.2, madhyahna: 9.4);
+
+      expect(panchang.festivals, isEmpty);
+    });
+
+    test('an unknown override still falls back to sunrise', () {
+      // A misspelled checkpoint must not silently match at a later sample.
+      final panchang = at(
+        ramNavami(timingOverride: 'not_a_checkpoint'),
+        sunrise: 8.2,
+        madhyahna: 9.4,
+      );
+
+      expect(panchang.festivals, isEmpty);
+    });
+  });
+
+  group('Extended checkpoint matching', () {
+    // Every value in timingOverrideCheckpoints must read its own sample in
+    // fromRawTithi. If a value is added to the set but the switch is not
+    // extended, the rule silently falls back to sunrise and the dominant
+    // grace is already suppressed for it - a silent date regression.
+    const checkpoints = [
+      'brahma_muhurta_start',
+      'arunodaya_start',
+      'arunodaya',
+      'purvahna',
+      'sayahna_start',
+      'sayahna_center',
+      'sayahna_end',
+      'madhyahna',
+      'aparahna',
+      'nishita',
+      'pradosh',
+      'pradosha',
+      'moonrise',
+      'chandrodaya',
+    ];
+
+    Festival navami(String timingOverride) => Festival.fromJson({
+      'id': 'navami_observance',
+      'name': 'Navami Observance',
+      'panchang_rules': {
+        'masa': 'Chaitra',
+        'paksha': 'Shukla',
+        'tithi': 9,
+        'conditions': 'Navami',
+        'timingOverride': timingOverride,
+      },
+    });
+
+    // Sunrise is Ashtami (8.2); only the selected checkpoint is Navami.
+    PanchangData atCheckpoint(String timingOverride) {
+      double? brahmaMuhurtaStart;
+      double? arunodaya;
+      double? purvahna;
+      double? sayahnaStart;
+      double? sayahnaCenter;
+      double? sayahnaEnd;
+      double? madhyahna;
+      double? aparahna;
+      double? nishita;
+      double? pradosha;
+      double? moonrise;
+      const navamiSample = 9.2;
+      switch (timingOverride) {
+        case 'brahma_muhurta_start':
+          brahmaMuhurtaStart = navamiSample;
+        case 'arunodaya_start' || 'arunodaya':
+          arunodaya = navamiSample;
+        case 'purvahna':
+          purvahna = navamiSample;
+        case 'sayahna_start':
+          sayahnaStart = navamiSample;
+        case 'sayahna_center':
+          sayahnaCenter = navamiSample;
+        case 'sayahna_end':
+          sayahnaEnd = navamiSample;
+        case 'madhyahna':
+          madhyahna = navamiSample;
+        case 'aparahna':
+          aparahna = navamiSample;
+        case 'nishita':
+          nishita = navamiSample;
+        case 'pradosh' || 'pradosha':
+          pradosha = navamiSample;
+        case 'moonrise' || 'chandrodaya':
+          moonrise = navamiSample;
+      }
+      return PanchangData.fromRawTithi(
+        date: DateTime(2026, 3, 26),
+        rawTithi: 8.2,
+        masa: 'Chaitra',
+        allFestivals: [navami(timingOverride)],
+        rawTithiBrahmaMuhurtaStart: brahmaMuhurtaStart,
+        rawTithiArunodaya: arunodaya,
+        rawTithiPurvahna: purvahna,
+        rawTithiSayahnaStart: sayahnaStart,
+        rawTithiSayahnaCenter: sayahnaCenter,
+        rawTithiSayahnaEnd: sayahnaEnd,
+        rawTithiMadhyahna: madhyahna,
+        rawTithiAparahna: aparahna,
+        rawTithiNishita: nishita,
+        rawTithiPradosha: pradosha,
+        rawTithiMoonrise: moonrise,
+      );
+    }
+
+    test('every accepted override reads its own sample', () {
+      for (final checkpoint in checkpoints) {
+        expect(
+          atCheckpoint(checkpoint).festivals.map((f) => f.id),
+          equals(['navami_observance']),
+          reason: checkpoint,
+        );
+      }
+    });
+  });
+
+  group('Pradosh checkpoint matching', () {
+    test('matches the tithi sampled at the Pradosh checkpoint', () {
+      final festival = Festival.fromJson({
+        'id': 'pradosh_vrata',
+        'name': 'Pradosh Vrata',
+        'panchang_rules': {
+          'masa': 'Ashwin',
+          'paksha': 'Krishna',
+          'tithi': 13,
+          'conditions': 'Trayodashi',
+          'timingOverride': 'pradosh',
+        },
+      });
+
+      final panchang = PanchangData.fromRawTithi(
+        date: DateTime(2026, 10),
+        rawTithi: 12.5,
+        masa: 'Ashwin',
+        allFestivals: [festival],
+        rawTithiPradosha: 28.1,
+      );
+
+      expect(
+        panchang.festivals.map((festival) => festival.id),
+        equals(['pradosh_vrata']),
+      );
+    });
+  });
+
   group('Moonrise checkpoint matching', () {
     // A `moonrise` rule is tested against the tithi at the Moon's rise, not at
     // sunrise. Karva Chauth is the shipped example of a moonrise observance
@@ -630,6 +817,202 @@ void main() {
           reason: 'segment $s (elong ${s * 12}-${s * 12 + 12}°)',
         );
       }
+    });
+  });
+
+  group('Sankranti solar matching', () {
+    Festival transitFestival({String? rashi = 'Makara', String? solarDate}) {
+      return Festival.fromJson({
+        'id': 'makar_sankranti',
+        'name': 'Makar Sankranti',
+        'panchang_rules': {
+          'masa': 'Pausha',
+          'paksha': '*',
+          'tithi': 0,
+          'conditions': 'Solar',
+          'sankranti': ?rashi,
+          'solarDate': ?solarDate,
+        },
+      });
+    }
+
+    PanchangData day({
+      required DateTime date,
+      required List<Festival> festivals,
+      String? sankrantiRashi,
+      DateTime? sankrantiInstant,
+      bool sankrantiComputed = false,
+    }) {
+      return PanchangData.fromRawTithi(
+        date: date,
+        rawTithi: 10.2,
+        masa: 'Pausha',
+        allFestivals: festivals,
+        sunrise: DateTime(date.year, date.month, date.day, 6, 30),
+        sunset: DateTime(date.year, date.month, date.day, 18),
+        sankrantiRashi: sankrantiRashi,
+        sankrantiInstant: sankrantiInstant,
+        sankrantiComputed: sankrantiComputed,
+      );
+    }
+
+    test('matches the ingress day when the rashi agrees', () {
+      // Arrange
+      final festival = transitFestival();
+
+      // Act: Sun enters Makara at 09:00 on Jan 14.
+      final panchang = day(
+        date: DateTime(2027, 1, 14),
+        festivals: [festival],
+        sankrantiRashi: 'Makara',
+        sankrantiInstant: DateTime(2027, 1, 14, 9),
+        sankrantiComputed: true,
+      );
+
+      // Assert
+      expect(panchang.festivals.map((f) => f.id), contains('makar_sankranti'));
+      expect(panchang.sankranti?.rashi, equals('Makara'));
+      expect(panchang.sankranti?.instant, equals(DateTime(2027, 1, 14, 9)));
+      expect(panchang.sankranti?.shifted, isFalse);
+    });
+
+    test('a different ingress rashi does not match', () {
+      // Arrange
+      final festival = transitFestival();
+
+      // Act
+      final panchang = day(
+        date: DateTime(2027, 1, 14),
+        festivals: [festival],
+        sankrantiRashi: 'Kumbha',
+        sankrantiInstant: DateTime(2027, 1, 14, 9),
+        sankrantiComputed: true,
+      );
+
+      // Assert
+      expect(panchang.festivals, isEmpty);
+    });
+
+    test('a computed day with no ingress does not fall back to solarDate', () {
+      // Arrange: the old fixed date must not resurrect the festival once the
+      // transit search ran, or both days would match.
+      final festival = transitFestival(solarDate: '01-14');
+
+      // Act
+      final panchang = day(
+        date: DateTime(2027, 1, 14),
+        festivals: [festival],
+        sankrantiComputed: true,
+      );
+
+      // Assert
+      expect(panchang.festivals, isEmpty);
+      expect(panchang.sankranti, isNull);
+    });
+
+    test('an uncomputed day falls back to the fixed solar date', () {
+      // Arrange: paths without the ingress search (unit tests, old caches)
+      // still match the shipped Gregorian date.
+      final festival = transitFestival(solarDate: '01-14');
+
+      // Act
+      final onDate = day(date: DateTime(2027, 1, 14), festivals: [festival]);
+      final offDate = day(date: DateTime(2027, 1, 15), festivals: [festival]);
+
+      // Assert
+      expect(onDate.festivals.map((f) => f.id), contains('makar_sankranti'));
+      expect(offDate.festivals, isEmpty);
+    });
+
+    test('fixed-date solar festivals keep matching when ingress ran', () {
+      // Arrange: a plain solar observance with no sankranti rashi.
+      final festival = transitFestival(rashi: null, solarDate: '01-14');
+
+      // Act
+      final panchang = day(
+        date: DateTime(2027, 1, 14),
+        festivals: [festival],
+        sankrantiRashi: 'Makara',
+        sankrantiInstant: DateTime(2027, 1, 14, 9),
+        sankrantiComputed: true,
+      );
+
+      // Assert
+      expect(panchang.festivals.map((f) => f.id), contains('makar_sankranti'));
+    });
+
+    test('rashi names accept Sanskrit and English spellings', () {
+      // Arrange + Act + Assert
+      expect(normalizeRashiName('Makara'), equals('Makara'));
+      expect(normalizeRashiName('capricorn'), equals('Makara'));
+      expect(normalizeRashiName(' Capricorn '), equals('Makara'));
+      expect(normalizeRashiName('bogus'), isNull);
+      expect(rashiIndexForName('Makara'), equals(9));
+      expect(rashiIndexForName('Capricorn'), equals(9));
+      expect(rashiIndexForLongitude(270), equals(9));
+      expect(rashiIndexForLongitude(269.9), equals(8));
+      expect(rashiIndexForLongitude(-90), equals(9));
+    });
+
+    test('the ingress search is gated to the fixed-date estimate', () {
+      // Arrange
+      final transit = transitFestival(solarDate: '01-14');
+
+      // Act + Assert: the gate keeps a 420-day scan cheap.
+      expect(needsSankrantiSearchOn([transit], DateTime(2027, 1, 14)), isTrue);
+      expect(needsSankrantiSearchOn([transit], DateTime(2027, 1, 16)), isTrue);
+      expect(needsSankrantiSearchOn([transit], DateTime(2027, 1, 17)), isFalse);
+      expect(needsSankrantiSearchOn([transit], DateTime(2027, 7, 15)), isFalse);
+      // A non-transit festival never needs the search.
+      expect(
+        needsSankrantiSearchOn([transitFestival(rashi: null)], DateTime(2027)),
+        isFalse,
+      );
+      // Without a fixed-date estimate there is nothing to gate on.
+      expect(needsSankrantiSearchOn([transitFestival()], DateTime(2027)), isTrue);
+    });
+
+    test('copyWith keeps the day\'s Sankranti and Bhadra data', () {
+      // Arrange: the single-day provider reuses the month entry through
+      // copyWith, and the Vriddhi filter rebuilds days the same way. Dropping
+      // these fields hid the punya kala card and left Bhadra untrimmed.
+      final panchang = day(
+        date: DateTime(2027, 1, 14),
+        festivals: [transitFestival()],
+        sankrantiRashi: 'Makara',
+        sankrantiInstant: DateTime(2027, 1, 14, 9),
+        sankrantiComputed: true,
+      ).copyWith(
+        tithiTransitionTime: DateTime(2027, 1, 14, 11),
+        transitionTithiIndex: 11,
+        bhadraWindows: [
+          (
+            start: DateTime(2027, 1, 14, 13),
+            end: DateTime(2027, 1, 14, 14),
+          ),
+        ],
+      );
+
+      // Act: a later copy that only changes the label (the live hero path).
+      final relabeled = panchang.copyWith(tithiNumber: 11, paksha: 'Shukla');
+
+      // Assert
+      expect(relabeled.sankranti?.instant, equals(DateTime(2027, 1, 14, 9)));
+      expect(relabeled.sankranti?.rashi, equals('Makara'));
+      expect(relabeled.sankrantiComputed, isTrue);
+      expect(relabeled.bhadraWindows, hasLength(1));
+      expect(relabeled.festivals.map((f) => f.id), contains('makar_sankranti'));
+    });
+
+    test('solarDateInYear rejects malformed and impossible dates', () {
+      // Arrange + Act + Assert
+      expect(solarDateInYear('01-14', 2027), equals(DateTime(2027, 1, 14)));
+      expect(solarDateInYear('02-29', 2028), equals(DateTime(2028, 2, 29)));
+      expect(solarDateInYear('02-29', 2027), isNull);
+      expect(solarDateInYear('02-30', 2027), isNull);
+      expect(solarDateInYear('1-14', 2027), equals(DateTime(2027, 1, 14)));
+      expect(solarDateInYear('bogus', 2027), isNull);
+      expect(solarDateInYear(null, 2027), isNull);
     });
   });
 }

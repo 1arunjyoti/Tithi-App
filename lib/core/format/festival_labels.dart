@@ -28,14 +28,10 @@ String festivalDisplayName({
 /// [timingOverride], defaulting to 'udaya' (sunrise) when absent; unknown
 /// values fall back to 'udaya' rather than rendering a wrong rule.
 String observanceRuleKey(Festival festival) {
-  const known = {
-    'udaya',
-    'madhyahna',
-    'aparahna',
-    'nishita',
-    'pradosha',
-    'moonrise',
-  };
+  // 'udaya' is the implicit sunrise rule; every other value comes from the
+  // single shared checkpoint set so a new checkpoint cannot render as sunrise
+  // just because this file forgot to list it.
+  const known = {'udaya', ...timingOverrideCheckpoints};
   final raw = festival.panchangRules.timingOverride;
   return raw != null && known.contains(raw) ? raw : 'udaya';
 }
@@ -44,6 +40,14 @@ String observanceRuleKey(Festival festival) {
 /// English fallback like the sheet widgets (nullable l10n).
 String observanceRuleLabel(String ruleKey, AppLocalizations? l10n) {
   return switch (ruleKey) {
+    'brahma_muhurta_start' =>
+      l10n?.brahmaMuhurta ??
+          'the tithi prevailing at Brahma Muhurta',
+    'arunodaya_start' || 'arunodaya' =>
+      'the tithi prevailing at Arunodaya',
+    'purvahna' => 'the tithi prevailing at Purvahna (forenoon)',
+    'sayahna_start' || 'sayahna_center' || 'sayahna_end' =>
+      'the tithi prevailing at Sayahna (late afternoon)',
     'madhyahna' =>
       l10n?.observanceRuleMadhyahna ??
           'the tithi prevailing at Madhyahna (midday)',
@@ -53,10 +57,10 @@ String observanceRuleLabel(String ruleKey, AppLocalizations? l10n) {
     'nishita' =>
       l10n?.observanceRuleNishita ??
           'the tithi prevailing at Nishita (midnight)',
-    'pradosha' =>
+    'pradosh' || 'pradosha' =>
       l10n?.observanceRulePradosha ??
           'the tithi prevailing at Pradosha (dusk)',
-    'moonrise' =>
+    'moonrise' || 'chandrodaya' =>
       l10n?.observanceRuleMoonrise ?? 'the tithi prevailing at moonrise',
     _ => l10n?.observanceRuleUdaya ?? 'the tithi prevailing at sunrise',
   };

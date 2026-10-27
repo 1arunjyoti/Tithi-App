@@ -409,7 +409,9 @@
       "masa": "Chaitra",
       "paksha": "Shukla",
       "tithi": 9,
-      "conditions": "Navami"
+      "conditions": "Navami",
+      "timingOverride":"madhyahna",
+      "puja_kala": "madhyahna"
     },
     "rituals": {
       "steps": [
@@ -838,7 +840,8 @@
       "paksha": "Shukla",
       "tithi": 3,
       "conditions": "Tritiya",
-      "timingOverride": "madhyahna"
+      "timingOverride": "pradosh",
+      "puja_kala": "pradosh"
     },
     "rituals": {
       "steps": [
@@ -1263,7 +1266,10 @@
       "masa": "Shravana",
       "paksha": "Shukla",
       "tithi": 15,
-      "conditions": "Purnima"
+      "conditions": "Purnima",
+      "timingOverride": "aparahna",
+      "puja_kala": "aparahna",
+      "avoid_bhadra": true
     },
     "rituals": {
       "steps": [
@@ -1574,7 +1580,8 @@
       "paksha": "Krishna",
       "tithi": 15,
       "conditions": "Amavasya",
-      "timingOverride": "nishita"
+      "timingOverride": "nishita",
+      "pujaKala": "nishita"
     },
     "rituals": {
       "steps": [
@@ -1995,7 +2002,8 @@
       "masa": "Bhadrapada",
       "paksha": "Shukla",
       "tithi": 3,
-      "conditions": "Tritiya"
+      "conditions": "Tritiya",
+      "timingOverride": "purvahna"
     },
     "rituals": {
       "steps": [
@@ -3087,7 +3095,9 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 15,
-      "conditions": "Purnima"
+      "conditions": "Purnima",
+      "timingOverride": "nishita",
+      "puja_kala": "nishita"
     },
     "rituals": {
       "steps": [
@@ -3128,7 +3138,8 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 15,
-      "conditions": "Purnima"
+      "conditions": "Purnima",
+      "timingOverride": "nishita"
     },
     "rituals": {
       "steps": [
@@ -3173,6 +3184,7 @@
       "paksha": "Krishna",
       "tithi": 4,
       "conditions": "Chaturthi",
+      "timingOverride": "moonrise",
       "pujaKala": "moonrise",
       "paranRule": "moonrise"
     },
@@ -3217,7 +3229,9 @@
       "masa": "Ashwin",
       "paksha": "Krishna",
       "tithi": 13,
-      "conditions": "Trayodashi"
+      "conditions": "Trayodashi",
+      "timingOverride": "pradosha",
+      "puja_kala": "pradosha"
     },
     "rituals": {
       "steps": [
@@ -3260,7 +3274,9 @@
       "masa": "Ashwin",
       "paksha": "Krishna",
       "tithi": 14,
-      "conditions": "Chaturdashi"
+      "conditions": "Chaturdashi",
+      "timingOverride": "nishita",
+      "puja_kala": "nishita"
     },
     "rituals": {
       "steps": [
@@ -3301,6 +3317,7 @@
       "paksha": "Krishna",
       "tithi": 15,
       "conditions": "Amavasya",
+      "timingOverride": "pradosha",
       "pujaKala": "pradosha"
     },
     "rituals": {
@@ -3384,7 +3401,9 @@
       "masa": "Ashwin",
       "paksha": "Krishna",
       "tithi": 15,
-      "conditions": "Amavasya"
+      "conditions": "Amavasya",
+      "timingOverride": "pradosha",
+      "pujaKala": "pradosha"
     },
     "rituals": {
       "steps": [
@@ -3470,7 +3489,8 @@
       "masa": "Kartika",
       "paksha": "Shukla",
       "tithi": 2,
-      "conditions": "Dwitiya"
+      "conditions": "Dwitiya",
+      "pujaKala": "aparahna"
     },
     "rituals": {
       "steps": [
@@ -3513,7 +3533,9 @@
       "masa": "Ashwin",
       "paksha": "Krishna",
       "tithi": 8,
-      "conditions": "Ashtami"
+      "conditions": "Ashtami",
+      "timingOverride": "pradosh",
+      "pujaKala": "moonrise"
     },
     "rituals": {
       "steps": [
@@ -3684,7 +3706,8 @@
       "masa": "Kartika",
       "paksha": "Shukla",
       "tithi": 12,
-      "conditions": "Dwadashi"
+      "conditions": "Dwadashi",
+      "puja_kala": "godhuli"
     },
     "rituals": {
       "steps": [
@@ -3770,7 +3793,9 @@
       "masa": "Kartika",
       "paksha": "Krishna",
       "tithi": 8,
-      "conditions": "Ashtami"
+      "conditions": "Ashtami",
+      "timingOverride": "nishita",
+      "puja_kala": "nishita"
     },
     "rituals": {
       "steps": [
@@ -3982,7 +4007,9 @@
       "paksha": "*",
       "tithi": 0,
       "conditions": "Solar",
-      "solarDate": "01-14"
+      "solarDate": "01-14",
+      "sankranti": "Makara",
+      "puja_kala": "punya_kala"
     },
     "rituals": {
       "steps": [
@@ -4023,7 +4050,9 @@
       "paksha": "*",
       "tithi": 0,
       "conditions": "Solar",
-      "solarDate": "01-14"
+      "solarDate": "01-14",
+      "sankranti": "Makara",
+      "puja_kala": "punya_kala"
     },
     "rituals": {
       "steps": [
@@ -4154,7 +4183,9 @@
       "masa": "Magha",
       "paksha": "Shukla",
       "tithi": 5,
-      "conditions": "Panchami"
+      "conditions": "Panchami",
+      "timingOverride": "purvahna",
+      "puja_kala": "purvahna"
     },
     "rituals": {
       "steps": [
@@ -4366,7 +4397,9 @@
       "masa": "Phalguna",
       "paksha": "Shukla",
       "tithi": 15,
-      "conditions": "Purnima"
+      "conditions": "Purnima",
+      "timingOverride": "pradosh",
+      "puja_kala": "pradosh"
     },
     "rituals": {
       "steps": [

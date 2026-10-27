@@ -64,6 +64,12 @@ enum LunarRefraction {
 /// `PanchangRules.timingOverride` and `PanchangRules.pujaKala`, so the profile
 /// and the shipped festival data cannot drift on spelling.
 enum ObservanceCheckpoint {
+  brahmaMuhurtaStart,
+  arunodaya,
+  purvahna,
+  sayahnaStart,
+  sayahnaCenter,
+  sayahnaEnd,
   sunrise,
   madhyahna,
   aparahna,
@@ -153,6 +159,12 @@ enum MoonrisePolicy {
 class FestivalObservancePolicy {
   const FestivalObservancePolicy({
     this.checkpoints = const {
+      ObservanceCheckpoint.brahmaMuhurtaStart,
+      ObservanceCheckpoint.arunodaya,
+      ObservanceCheckpoint.purvahna,
+      ObservanceCheckpoint.sayahnaStart,
+      ObservanceCheckpoint.sayahnaCenter,
+      ObservanceCheckpoint.sayahnaEnd,
       ObservanceCheckpoint.sunrise,
       ObservanceCheckpoint.madhyahna,
       ObservanceCheckpoint.aparahna,

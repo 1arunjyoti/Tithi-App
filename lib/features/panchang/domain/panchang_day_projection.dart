@@ -37,6 +37,12 @@ PanchangData projectPanchangDay(
     sunrise: day.solar.sunrise,
     sunset: day.solar.sunset,
     rawTithiMadhyahna: day.checkpointTithis.madhyahna,
+    rawTithiBrahmaMuhurtaStart: day.checkpointTithis.brahmaMuhurtaStart,
+    rawTithiArunodaya: day.checkpointTithis.arunodaya,
+    rawTithiPurvahna: day.checkpointTithis.purvahna,
+    rawTithiSayahnaStart: day.checkpointTithis.sayahnaStart,
+    rawTithiSayahnaCenter: day.checkpointTithis.sayahnaCenter,
+    rawTithiSayahnaEnd: day.checkpointTithis.sayahnaEnd,
     rawTithiAparahna: day.checkpointTithis.aparahna,
     rawTithiNishita: day.checkpointTithis.nishita,
     rawTithiNishitaEnd: day.checkpointTithis.nishitaEnd,
@@ -48,5 +54,9 @@ PanchangData projectPanchangDay(
     rawTithiDominant: day.checkpointTithis.dominant,
     tithiTransitionTime: tithiTransitionTime,
     transitionTithiIndex: transitionTithiIndex,
+    sankrantiRashi: day.sankranti?.rashi,
+    sankrantiInstant: day.sankranti?.instant,
+    sankrantiShifted: day.sankranti?.shifted ?? false,
+    sankrantiComputed: day.sankrantiComputed,
   );
 }

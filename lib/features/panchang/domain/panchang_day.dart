@@ -190,6 +190,12 @@ class PanchangMasaDay {
 /// exist, so a polar day cannot silently match a timing rule it never reached.
 class PanchangCheckpointTithis {
   const PanchangCheckpointTithis({
+    this.brahmaMuhurtaStart,
+    this.arunodaya,
+    this.purvahna,
+    this.sayahnaStart,
+    this.sayahnaCenter,
+    this.sayahnaEnd,
     this.madhyahna,
     this.aparahna,
     this.nishita,
@@ -200,6 +206,15 @@ class PanchangCheckpointTithis {
     this.dominant,
   });
 
+  /// Tithi at the opening of Brahma Muhurta (`sunrise - 2/15 night`).
+  final double? brahmaMuhurtaStart;
+
+  /// Tithi at Arunodaya (`sunrise - 1/15 night`).
+  final double? arunodaya;
+  final double? purvahna;
+  final double? sayahnaStart;
+  final double? sayahnaCenter;
+  final double? sayahnaEnd;
   final double? madhyahna;
   final double? aparahna;
 
@@ -229,6 +244,12 @@ class PanchangCheckpointTithis {
 /// still answer "which tithi is this" without inventing a Nishita window.
 class PanchangCheckpoints {
   const PanchangCheckpoints({
+    this.brahmaMuhurtaStart,
+    this.arunodaya,
+    this.purvahna,
+    this.sayahnaStart,
+    this.sayahnaCenter,
+    this.sayahnaEnd,
     this.madhyahna,
     this.aparahna,
     this.nishita,
@@ -237,6 +258,15 @@ class PanchangCheckpoints {
     this.dominant,
   });
 
+  /// Opening of Brahma Muhurta, `sunrise - 2/15 night`.
+  final DateTime? brahmaMuhurtaStart;
+
+  /// Opening of Arunodaya, `sunrise - 1/15 night`.
+  final DateTime? arunodaya;
+  final DateTime? purvahna;
+  final DateTime? sayahnaStart;
+  final DateTime? sayahnaCenter;
+  final DateTime? sayahnaEnd;
   final DateTime? madhyahna;
   final DateTime? aparahna;
 
@@ -253,6 +283,12 @@ class PanchangCheckpoints {
 
   /// True when no solar-anchored checkpoint could be derived.
   bool get isEmpty =>
+      brahmaMuhurtaStart == null &&
+      arunodaya == null &&
+      purvahna == null &&
+      sayahnaStart == null &&
+      sayahnaCenter == null &&
+      sayahnaEnd == null &&
       madhyahna == null &&
       aparahna == null &&
       nishita == null &&
@@ -303,6 +339,8 @@ class PanchangDay {
     required this.checkpoints,
     required this.checkpointTithis,
     required this.provenance,
+    this.sankranti,
+    this.sankrantiComputed = false,
   });
 
   /// Civil date (midnight in the place zone) the day describes.
@@ -316,6 +354,15 @@ class PanchangDay {
 
   /// Raw tithi at each checkpoint, for festival timing rules.
   final PanchangCheckpointTithis checkpointTithis;
+
+  /// Sankranti (solar-ingress) observance carried by this civil day, when
+  /// [sankrantiComputed] is true and an ingress lands here.
+  final PanchangSankranti? sankranti;
+
+  /// Whether the Sankranti search ran for this day. False means "unknown":
+  /// fixed-date solar festivals still match; true with a null [sankranti]
+  /// means no ingress observance falls on the day.
+  final bool sankrantiComputed;
 
   final PanchangProvenance provenance;
 

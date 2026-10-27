@@ -1,6 +1,30 @@
 import 'festival.dart';
 import 'hindu_month_system.dart';
 
+/// A Bhadra (Vishti karana) interval on one civil day.
+typedef BhadraWindow = ({DateTime start, DateTime end});
+
+/// A Sankranti (solar ingress) observance carried by one civil day.
+///
+/// [rashi] is the canonical rashi name the Sun entered, [instant] the transit
+/// moment, and [shifted] true when that moment fell after sunset so the
+/// observance moved to this (next) civil day.
+class PanchangSankranti {
+  const PanchangSankranti({
+    required this.rashi,
+    required this.instant,
+    required this.shifted,
+  });
+
+  final String rashi;
+  final DateTime instant;
+  final bool shifted;
+
+  @override
+  String toString() =>
+      'PanchangSankranti($rashi, $instant, shifted: $shifted)';
+}
+
 /// Panchang data for a specific date
 class PanchangData {
   final DateTime date;
@@ -34,6 +58,19 @@ class PanchangData {
   /// (normally the sunrise tithi's index + 1, wrapping 30 → 1).
   final int? transitionTithiIndex;
 
+  /// Sankranti observance carried by this day (see [PanchangSankranti]).
+  /// Null when no ingress observance falls on the day.
+  final PanchangSankranti? sankranti;
+
+  /// Whether [sankranti] was actually computed for this day. A false value
+  /// means "unknown" (callers fall back to a fixed solar date); true with a
+  /// null [sankranti] means "computed, and no ingress falls here".
+  final bool sankrantiComputed;
+
+  /// Bhadra (Vishti karana) windows that overlap this civil day, when a
+  /// Bhadra-sensitive festival is present. Empty otherwise.
+  final List<BhadraWindow> bhadraWindows;
+
   const PanchangData({
     required this.date,
     required this.rawTithi,
@@ -47,6 +84,9 @@ class PanchangData {
     this.nakshatra,
     this.tithiTransitionTime,
     this.transitionTithiIndex,
+    this.sankranti,
+    this.sankrantiComputed = false,
+    this.bhadraWindows = const [],
   });
 
   /// Check if this is Shukla Paksha (waxing moon)
@@ -163,6 +203,12 @@ class PanchangData {
     DateTime? sunrise,
     DateTime? sunset,
     double? rawTithiMadhyahna,
+    double? rawTithiBrahmaMuhurtaStart,
+    double? rawTithiArunodaya,
+    double? rawTithiPurvahna,
+    double? rawTithiSayahnaStart,
+    double? rawTithiSayahnaCenter,
+    double? rawTithiSayahnaEnd,
     double? rawTithiAparahna,
     double? rawTithiNishita,
     double? rawTithiNishitaEnd,
@@ -174,6 +220,11 @@ class PanchangData {
     double? rawTithiDominant,
     DateTime? tithiTransitionTime,
     int? transitionTithiIndex,
+    String? sankrantiRashi,
+    DateTime? sankrantiInstant,
+    bool sankrantiShifted = false,
+    bool sankrantiComputed = false,
+    List<BhadraWindow> bhadraWindows = const [],
   }) {
     final tithiIndex = rawTithi.floor();
 
@@ -193,11 +244,21 @@ class PanchangData {
 
     // Find matching festivals (pass month system for proper conversion)
     final matchingFestivals = allFestivals.where((f) {
-      // Solar festivals: matched by Gregorian date only
-      if (f.conditions == 'Solar' && f.panchangRules.solarDate != null) {
-        final dateStr =
-            "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-        return f.panchangRules.solarDate == dateStr;
+      // Solar festivals: matched by a Sankranti transit when the rule names a
+      // rashi (Makar Sankranti / Pongal), otherwise by the fixed Gregorian
+      // date. A computed day with no ingress must NOT fall back to the fixed
+      // date, or both the old and the true transit day would match.
+      if (f.conditions == 'Solar') {
+        final rule = f.panchangRules;
+        if (rule.sankrantiRashi != null && sankrantiComputed) {
+          return rule.sankrantiRashi == sankrantiRashi;
+        }
+        if (rule.solarDate != null) {
+          final dateStr =
+              "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+          return rule.solarDate == dateStr;
+        }
+        return false;
       }
 
       // Nakshatra override (e.g. Saraswati Avahan on Mula): masa + paksha +
@@ -236,11 +297,19 @@ class PanchangData {
       // timingOverride instead of hard-coding festival IDs.
       // BUG-04: pass `date` so weekday constraints are evaluated.
       double targetRawTithi = switch (f.panchangRules.timingOverride) {
+        'brahma_muhurta_start' =>
+          rawTithiBrahmaMuhurtaStart ?? rawTithi,
+        'arunodaya_start' || 'arunodaya' =>
+          rawTithiArunodaya ?? rawTithi,
+        'purvahna' => rawTithiPurvahna ?? rawTithi,
+        'sayahna_start' => rawTithiSayahnaStart ?? rawTithi,
+        'sayahna_center' => rawTithiSayahnaCenter ?? rawTithi,
+        'sayahna_end' => rawTithiSayahnaEnd ?? rawTithi,
         'madhyahna' => rawTithiMadhyahna ?? rawTithi,
         'aparahna' => rawTithiAparahna ?? rawTithi,
         'nishita' => rawTithiNishita ?? rawTithi,
-        'pradosha' => rawTithiPradosha ?? rawTithi,
-        'moonrise' => rawTithiMoonrise ?? rawTithi,
+        'pradosh' || 'pradosha' => rawTithiPradosha ?? rawTithi,
+        'moonrise' || 'chandrodaya' => rawTithiMoonrise ?? rawTithi,
         _ => rawTithi,
       };
 
@@ -368,6 +437,15 @@ class PanchangData {
       nakshatra: nakshatraAtSunrise,
       tithiTransitionTime: tithiTransitionTime,
       transitionTithiIndex: transitionTithiIndex,
+      sankranti: sankrantiInstant == null || sankrantiRashi == null
+          ? null
+          : PanchangSankranti(
+              rashi: sankrantiRashi,
+              instant: sankrantiInstant,
+              shifted: sankrantiShifted,
+            ),
+      sankrantiComputed: sankrantiComputed,
+      bhadraWindows: bhadraWindows,
     );
   }
 
@@ -380,6 +458,11 @@ class PanchangData {
   /// The [tithiNumber]/[tithiName]/[paksha] overrides serve the live hero:
   /// intraday the displayed label advances while festivals, masa and the
   /// sunrise record stay pinned.
+  ///
+  /// [sankranti]/[sankrantiComputed]/[bhadraWindows] are carried over by
+  /// default: they describe the day, not the label, and dropping them here
+  /// silently hid the Sankranti punya kala (the single-day provider reuses the
+  /// month entry through this method) and left Bhadra untrimmed.
   PanchangData copyWith({
     List<Festival>? festivals,
     String? nakshatra,
@@ -389,6 +472,9 @@ class PanchangData {
     int? tithiNumber,
     String? tithiName,
     String? paksha,
+    List<BhadraWindow>? bhadraWindows,
+    PanchangSankranti? sankranti,
+    bool? sankrantiComputed,
   }) {
     return PanchangData(
       date: date,
@@ -407,6 +493,9 @@ class PanchangData {
       transitionTithiIndex: clearTransition
           ? null
           : (transitionTithiIndex ?? this.transitionTithiIndex),
+      sankranti: sankranti ?? this.sankranti,
+      sankrantiComputed: sankrantiComputed ?? this.sankrantiComputed,
+      bhadraWindows: bhadraWindows ?? this.bhadraWindows,
     );
   }
 
