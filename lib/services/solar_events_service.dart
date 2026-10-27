@@ -417,6 +417,9 @@ class SolarEventsService {
   /// Intraday instant for a timing-override checkpoint.
   ///
   /// Mirrors the resolver's checkpoint arithmetic: madhyahna = midday,
+  /// brahma_muhurta_start = the opening of Brahma Muhurta
+  /// (`sunrise - 2/15 night`), arunodaya = the opening of Arunodaya
+  /// (`sunrise - 1/15 night`),
   /// aparahna = 3/4 day, nishita = the opening of the Nishita window
   /// (`sunset + 7/15 night`, the eighth of the fifteen night muhurtas),
   /// pradosha = sunset + night/10, moonrise = the Moon's rise on the civil day
@@ -451,6 +454,32 @@ class SolarEventsService {
     final nightLength = events.nextSunrise.difference(events.sunset);
     final nightMicros = nightLength.inMicroseconds;
     switch (timingOverride) {
+      // 🚪 Brahma-muhurta: 2 muhurtas before sunrise (Starts 2/15ths out, ends 1/15th out)
+      case 'brahma_muhurta_start':
+        return events.nextSunrise.subtract(
+          Duration(microseconds: nightMicros * 2 ~/ 15),
+        );
+
+      // 🌄 Arunodaya: 1 muhurta before sunrise (Starts 1/15th out, ends at sunrise)
+      case 'arunodaya_start':
+      case 'arunodaya':
+        return events.nextSunrise.subtract(
+          Duration(microseconds: nightMicros ~/ 15),
+        );
+      case 'purvahna':
+        return events.sunrise.add(
+          Duration(microseconds: dayLength.inMicroseconds ~/ 4),
+        );
+      case 'sayahna_start':
+        return events.sunrise.add(
+          Duration(microseconds: dayLength.inMicroseconds * 4 ~/ 5),
+        );
+      case 'sayahna_center':
+        return events.sunrise.add(
+          Duration(microseconds: dayLength.inMicroseconds * 9 ~/ 10),
+        );
+      case 'sayahna_end':
+        return events.sunset;
       case 'madhyahna':
         return events.sunrise.add(Duration(minutes: dayLength.inMinutes ~/ 2));
       case 'aparahna':
@@ -458,18 +487,14 @@ class SolarEventsService {
           Duration(minutes: dayLength.inMinutes * 3 ~/ 4),
         );
       case 'nishita':
-        return events.sunset.add(
-          Duration(microseconds: nightMicros * 7 ~/ 15),
-        );
+        return events.sunset.add(Duration(microseconds: nightMicros * 7 ~/ 15));
       case 'nishitaEnd':
-        return events.sunset.add(
-          Duration(microseconds: nightMicros * 8 ~/ 15),
-        );
-      case 'pradosha':
+        return events.sunset.add(Duration(microseconds: nightMicros * 8 ~/ 15));
+      case 'pradosh' || 'pradosha':
         return events.sunset.add(
           Duration(minutes: nightLength.inMinutes ~/ 10),
         );
-      case 'moonrise':
+      case 'moonrise' || 'chandrodaya':
         // A lunar anchor, not a solar offset: read the same civil-day rise the
         // canonical day records, so the forward scan and the day agree. Goes
         // through the lunar seam (native in production) rather than the retired

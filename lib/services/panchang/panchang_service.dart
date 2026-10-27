@@ -180,6 +180,31 @@ class PanchangService {
     }
   }
 
+  /// Sidereal (Lahiri) ecliptic longitude of the Sun in degrees, or null when
+  /// uninitialized or the ephemeris call fails.
+  ///
+  /// Used by the Sankranti search, which only needs the Sun and would
+  /// otherwise pay for a Moon read too. Shares the same bounded cache as the
+  /// Adhika month verdict.
+  Future<double?> calculateSunLongitude(
+    DateTime date, {
+    double latitude = kDefaultLatitude,
+    double longitude = kDefaultLongitude,
+  }) async {
+    if (!_isInitialized) return null;
+    try {
+      return await _getCachedSunLongitude(
+        date,
+        GeographicLocation(latitude: latitude, longitude: longitude),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('calculateSunLongitude failed: $e');
+      }
+      return null;
+    }
+  }
+
   /// Nakshatra prevailing at [date] (canonical name, e.g. 'Mula').
   ///
   /// Derived from the sidereal Moon longitude — the same Lahiri frame
@@ -376,9 +401,12 @@ class PanchangService {
   }) async {
     final baseDate = startDate ?? DateTime.now();
 
-    // Handle solar festivals (fixed Gregorian dates) directly to avoid 380-day iteration
+    // Handle solar festivals (fixed Gregorian dates) directly to avoid 380-day iteration.
+    // Transit-based solar festivals (Makar Sankranti/Pongal) skip this
+    // shortcut: their date is the ingress day, which the scan resolves.
     if (festival.conditions == 'Solar' &&
-        festival.panchangRules.solarDate != null) {
+        festival.panchangRules.solarDate != null &&
+        festival.panchangRules.sankrantiRashi == null) {
       final parts = festival.panchangRules.solarDate!.split('-');
       if (parts.length == 2) {
         final month = int.tryParse(parts[0]) ?? 1;
@@ -438,6 +466,7 @@ class PanchangService {
           computeLimbs: festival.nakshatraCondition != null,
           // The scan never shows the daytime transition.
           computeTransition: false,
+          computeSankranti: needsSankrantiSearchOn([festival], dayOnly),
         );
 
         // Kshaya and the dominant-grace wrap compare against the next

@@ -192,6 +192,7 @@ void main() {
           Duration(microseconds: nightMicros * 8 ~/ 15),
         ),
         'pradosha': sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10)),
+        'pradosh': sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10)),
         // Moonrise is the day's own lunar anchor, not a solar offset, and it
         // comes from the same lunar seam the canonical day uses.
         'moonrise': moonEventsService.moonrise(

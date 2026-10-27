@@ -226,5 +226,42 @@ void main() {
         );
       }
     });
+
+    test('Tulsi Vivah carries the Godhuli kala', () {
+      // Arrange + Act
+      final tulsi = loaded('tulsi_vivah');
+
+      // Assert
+      expect(normalizedPujaKala(tulsi), equals('godhuli'));
+      expect(tulsi.panchangRules.timingOverride, isNull);
+    });
+
+    test('Makar Sankranti and Pongal match the transit and show punya kala', () {
+      // Arrange + Act
+      final makar = loaded('makar_sankranti');
+      final pongal = loaded('pongal');
+
+      // Assert
+      for (final festival in [makar, pongal]) {
+        expect(
+          festival.panchangRules.sankrantiRashi,
+          equals('Makara'),
+          reason: '${festival.id} must follow the Sun into Makara',
+        );
+        expect(normalizedPujaKala(festival), equals('punya_kala'));
+        // The fixed date stays as the fallback when the ingress search is
+        // skipped, so both surfaces agree on the shipped date.
+        expect(festival.panchangRules.solarDate, equals('01-14'));
+      }
+    });
+
+    test('Raksha Bandhan avoids Bhadra', () {
+      // Arrange + Act
+      final rakhi = loaded('raksha_bandhan');
+
+      // Assert
+      expect(rakhi.panchangRules.avoidBhadra, isTrue);
+      expect(normalizedPujaKala(rakhi), equals('aparahna'));
+    });
   });
 }

@@ -1,9 +1,11 @@
 import '../../../models/festival.dart';
+import '../../../models/panchang_data.dart';
 import '../../../services/festival_matching_pipeline.dart';
 import '../../../services/moon_events_service.dart';
 import '../../../services/panchang_service.dart';
 import '../../../services/solar_events_service.dart';
 import 'panchang_day.dart';
+import 'panchang_crossings.dart';
 import 'tithi_transitions.dart';
 
 // Phase 2: the single computation pipeline for one Panchang day.
@@ -24,7 +26,7 @@ import 'tithi_transitions.dart';
 ///
 /// [samplePoint] names the checkpoint the value is for (`''` for the day's
 /// own sample, then `madhyahna`, `aparahna`, `nishita`, `nishitaEnd`,
-/// `pradosha`, `moonrise`, `nextSunrise`, `dominant`). Callers that cache key
+/// `arunodaya`, `pradosha`, `moonrise`, `nextSunrise`, `dominant`). Callers that cache key
 /// by that name; a sampler must not cache instants whose sample point is empty
 /// unless the instant is the day's sample point, because the cache key has no
 /// time component.
@@ -37,10 +39,8 @@ typedef PanchangTithiSampler =
 /// Callers that cache one masa per date, place, and sunrise pass a sampler;
 /// the resolver otherwise computes it. The masa depends on the tithi sample,
 /// so a sampler must key on the same date the day is for.
-typedef PanchangMasaSampler = Future<String> Function(
-  DateTime instant,
-  double rawTithi,
-);
+typedef PanchangMasaSampler =
+    Future<String> Function(DateTime instant, double rawTithi);
 
 /// Computes [PanchangDay] values from the Panchang and solar-event services.
 class PanchangDayResolver {
@@ -80,6 +80,11 @@ class PanchangDayResolver {
   /// [computeTransition] is also false when the caller resolves the transition
   /// itself (the provider path caches it separately). It requires
   /// [computeCheckpoints]: the search needs those anchors.
+  ///
+  /// [computeSankranti] adds the solar-ingress search. It reads the Sun at
+  /// three extra instants on ordinary days and root-solves the twelve ingress
+  /// days, so callers enable it only near a transit festival's fixed-date
+  /// estimate (see `needsSankrantiSearchOn`).
   Future<PanchangDay> resolve({
     required DateTime date,
     required PanchangPlace place,
@@ -88,6 +93,7 @@ class PanchangDayResolver {
     bool computeLimbs = true,
     bool computeCheckpoints = true,
     bool computeTransition = true,
+    bool computeSankranti = false,
   }) async {
     assert(
       computeCheckpoints || !computeTransition,
@@ -124,9 +130,7 @@ class PanchangDayResolver {
             longitude: place.longitude,
           );
     final adhika = masaValue.startsWith('Adhika_');
-    final amanta = adhika
-        ? masaValue.substring('Adhika_'.length)
-        : masaValue;
+    final amanta = adhika ? masaValue.substring('Adhika_'.length) : masaValue;
 
     final limbs = computeLimbs
         ? await _limbs(sampledAt, place)
@@ -149,6 +153,13 @@ class PanchangDayResolver {
             place: place,
           )
         : null;
+    final sankranti = computeSankranti
+        ? await _sankranti(
+            date: normalized,
+            solar: solar,
+            place: place,
+          )
+        : null;
 
     return PanchangDay(
       date: normalized,
@@ -165,6 +176,8 @@ class PanchangDayResolver {
       masa: PanchangMasaDay(amanta: amanta, adhika: adhika),
       checkpoints: checkpoints,
       checkpointTithis: checkpointTithis,
+      sankranti: sankranti,
+      sankrantiComputed: computeSankranti,
       provenance: PanchangProvenance(
         engineVersion: kPanchangEngineVersion,
         ayanamsa: kPanchangAyanamsa,
@@ -261,14 +274,19 @@ class PanchangDayResolver {
 
     DateTime? madhyahna;
     DateTime? aparahna;
+    DateTime? brahmaMuhurtaStart;
+    DateTime? arunodaya;
+    DateTime? purvahna;
+    DateTime? sayahnaStart;
+    DateTime? sayahnaCenter;
+    DateTime? sayahnaEnd;
     if (sunrise != null && sunset != null) {
       final dayLength = sunset.difference(sunrise);
-      madhyahna = sunrise.add(
-        Duration(minutes: dayLength.inMinutes ~/ 2),
+      purvahna = sunrise.add(
+        Duration(microseconds: dayLength.inMicroseconds ~/ 4),
       );
-      aparahna = sunrise.add(
-        Duration(minutes: dayLength.inMinutes * 3 ~/ 4),
-      );
+      madhyahna = sunrise.add(Duration(minutes: dayLength.inMinutes ~/ 2));
+      aparahna = sunrise.add(Duration(minutes: dayLength.inMinutes * 3 ~/ 4));
     }
 
     DateTime? nishita;
@@ -276,6 +294,12 @@ class PanchangDayResolver {
     DateTime? pradosha;
     if (sunset != null && nextSunrise != null) {
       final nightLength = nextSunrise.difference(sunset);
+      brahmaMuhurtaStart = nextSunrise.subtract(
+        Duration(microseconds: nightLength.inMicroseconds * 2 ~/ 15),
+      );
+      arunodaya = nextSunrise.subtract(
+        Duration(microseconds: nightLength.inMicroseconds ~/ 15),
+      );
       // Nishita is the eighth of the fifteen night muhurtas, i.e. the window
       // `sunset + 7/15 night` to `sunset + 8/15 night` - not the midpoint it
       // was sampled at before panchang-v3. Microseconds rather than whole
@@ -285,12 +309,22 @@ class PanchangDayResolver {
       final nightMicros = nightLength.inMicroseconds;
       nishita = sunset.add(Duration(microseconds: nightMicros * 7 ~/ 15));
       nishitaEnd = sunset.add(Duration(microseconds: nightMicros * 8 ~/ 15));
-      pradosha = sunset.add(
-        Duration(minutes: nightLength.inMinutes ~/ 10),
-      );
+      pradosha = sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10));
+    }
+    if (sunrise != null && sunset != null) {
+      final dayMicros = sunset.difference(sunrise).inMicroseconds;
+      sayahnaStart = sunrise.add(Duration(microseconds: dayMicros * 4 ~/ 5));
+      sayahnaCenter = sunrise.add(Duration(microseconds: dayMicros * 9 ~/ 10));
+      sayahnaEnd = sunset;
     }
 
     return PanchangCheckpoints(
+      brahmaMuhurtaStart: brahmaMuhurtaStart,
+      arunodaya: arunodaya,
+      purvahna: purvahna,
+      sayahnaStart: sayahnaStart,
+      sayahnaCenter: sayahnaCenter,
+      sayahnaEnd: sayahnaEnd,
       madhyahna: madhyahna,
       aparahna: aparahna,
       nishita: nishita,
@@ -316,6 +350,15 @@ class PanchangDayResolver {
     }
 
     return PanchangCheckpointTithis(
+      brahmaMuhurtaStart: await at(
+        checkpoints.brahmaMuhurtaStart,
+        'brahma_muhurta_start',
+      ),
+      arunodaya: await at(checkpoints.arunodaya, 'arunodaya'),
+      purvahna: await at(checkpoints.purvahna, 'purvahna'),
+      sayahnaStart: await at(checkpoints.sayahnaStart, 'sayahna_start'),
+      sayahnaCenter: await at(checkpoints.sayahnaCenter, 'sayahna_center'),
+      sayahnaEnd: await at(checkpoints.sayahnaEnd, 'sayahna_end'),
       madhyahna: await at(checkpoints.madhyahna, 'madhyahna'),
       aparahna: await at(checkpoints.aparahna, 'aparahna'),
       nishita: await at(checkpoints.nishita, 'nishita'),
@@ -324,6 +367,100 @@ class PanchangDayResolver {
       moonrise: await at(moonrise, 'moonrise'),
       nextSunrise: await at(nextSunrise, 'nextSunrise'),
       dominant: await at(checkpoints.dominant, 'dominant'),
+    );
+  }
+
+  /// Resolves the Sankranti observance carried by [date], if any.
+  ///
+  /// A transit is observed on the civil day it happens on, unless it happens
+  /// after sunset: then the punya kala moves to the next sunrise (Drik
+  /// convention), so the *next* day carries the observance. That means this
+  /// day must look both at its own ingress and at yesterday's after-sunset
+  /// ingress.
+  ///
+  /// Returns null when there is no ingress observance on [date]. Failures
+  /// (missing anchors or ephemeris reads) also return null, and the projection
+  /// leaves [PanchangDay.sankrantiComputed] true only when the search ran.
+  Future<PanchangSankranti?> _sankranti({
+    required DateTime date,
+    required PanchangSolarDay solar,
+    required PanchangPlace place,
+  }) async {
+    final sunrise = solar.sunrise;
+    final nextSunrise = solar.nextSunrise;
+    final sunset = solar.sunset;
+    if (sunrise == null || nextSunrise == null) return null;
+
+    Future<double?> sunAt(DateTime instant) => _service.calculateSunLongitude(
+      instant,
+      latitude: place.latitude,
+      longitude: place.longitude,
+    );
+
+    final sunAtSunrise = await sunAt(sunrise);
+    final sunAtNextSunrise = await sunAt(nextSunrise);
+    if (sunAtSunrise == null || sunAtNextSunrise == null) return null;
+    final rashiNow = rashiIndexForLongitude(sunAtSunrise);
+    final rashiNext = rashiIndexForLongitude(sunAtNextSunrise);
+
+    Future<DateTime?> transitOn(DateTime day, int enteredRashi) {
+      final noon = DateTime(day.year, day.month, day.day, 12);
+      return findSankrantiInstant(
+        estimate: noon,
+        boundaryDegrees: enteredRashi * 30.0,
+        sunLongitudeAt: sunAt,
+      );
+    }
+
+    if (rashiNow != rashiNext) {
+      // Ingress today. An after-sunset ingress belongs to tomorrow.
+      final instant = await transitOn(date, rashiNext);
+      if (instant == null) return null;
+      if (sunset == null || !instant.isBefore(sunset)) return null;
+      return PanchangSankranti(
+        rashi: kRashiNames[rashiNext],
+        instant: instant,
+        shifted: false,
+      );
+    }
+
+    // No ingress today: yesterday's after-sunset ingress may be observed
+    // today. Compare yesterday's sunrise rashi with today's.
+    final yesterday = date.subtract(const Duration(days: 1));
+    final previousSunrise = _solarOrNull(
+      () => _solar.sunrise(
+        date: yesterday,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        altitudeMeters: place.altitudeMeters,
+        timezoneId: place.timezoneId,
+      ),
+    );
+    if (previousSunrise == null) return null;
+    final sunAtPreviousSunrise = await sunAt(previousSunrise);
+    if (sunAtPreviousSunrise == null) return null;
+    if (rashiIndexForLongitude(sunAtPreviousSunrise) == rashiNow) return null;
+
+    final instant = await transitOn(yesterday, rashiNow);
+    if (instant == null) return null;
+    final previousSunset = _solarOrNull(
+      () => _solar.sunset(
+        date: yesterday,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        altitudeMeters: place.altitudeMeters,
+        timezoneId: place.timezoneId,
+      ),
+    );
+    // Before yesterday's sunset means it was observed yesterday, not today;
+    // without a sunset anchor the answer is unknown, so do not claim the day.
+    if (previousSunset == null || instant.isBefore(previousSunset)) {
+      return null;
+    }
+    return PanchangSankranti(
+      rashi: kRashiNames[rashiNow],
+      instant: instant,
+      shifted: true,
     );
   }
 

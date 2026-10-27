@@ -1098,10 +1098,14 @@ IconData _pujaKalaIcon(String kala) {
   return switch (kala) {
     'sunrise' => Icons.wb_sunny_rounded,
     'sunset' => Icons.nightlight_round,
-    'moonrise' => Icons.dark_mode_outlined,
+    'moonrise' || 'chandrodaya' => Icons.dark_mode_outlined,
     'sandhi_junction' => Icons.swap_horiz,
     'nishita' => Icons.dark_mode,
-    'pradosha' => Icons.wb_twilight,
+    'pradosh' || 'pradosha' => Icons.wb_twilight,
+    // Godhuli is the sunset-adjacent cow-dust hour; punya kala is the
+    // Sankranti merit window (a solar, daylight observance).
+    'godhuli' => Icons.wb_twilight,
+    'punya_kala' => Icons.brightness_5_outlined,
     _ => Icons.access_time,
   };
 }
@@ -1289,6 +1293,9 @@ class _EventPujaSamay extends ConsumerWidget {
           ),
           tithiEnd: timings?.end,
           clipToTithi: festival.panchangRules.clipToTithi,
+          sankrantiInstant: panchang.sankranti?.instant,
+          bhadraWindows: panchang.bhadraWindows,
+          avoidBhadra: festival.panchangRules.avoidBhadra,
         );
         if (span == null) return const SizedBox.shrink();
         final kalaName = pujaKalaLabel(kala, l10n);
@@ -1516,6 +1523,9 @@ class _EventParan extends ConsumerWidget {
             moonrise: moonrise,
             tithiEnd: null,
             clipToTithi: false,
+            sankrantiInstant: panchang.sankranti?.instant,
+            bhadraWindows: panchang.bhadraWindows,
+            avoidBhadra: festival.panchangRules.avoidBhadra,
           );
           if (span == null) return const SizedBox.shrink();
           return paranBlock(reason: reason, detail: '~${jm(span.end)}');
@@ -1542,6 +1552,9 @@ class _EventParan extends ConsumerWidget {
               moonrise: moonrise,
               tithiEnd: timings.end,
               clipToTithi: festival.panchangRules.clipToTithi,
+              sankrantiInstant: panchang.sankranti?.instant,
+              bhadraWindows: panchang.bhadraWindows,
+              avoidBhadra: festival.panchangRules.avoidBhadra,
             );
             if (span == null) return const SizedBox.shrink();
             return paranBlock(reason: reason, detail: '~${jm(span.end)}');

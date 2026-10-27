@@ -19,6 +19,76 @@ Format:
 
 ---
 
+## 2026-10-26 - 0.7.20+21
+
+### Sankranti transit matching and punya kala
+Makar Sankranti and Pongal now fall on the Sun's actual ingress day and show the traditional punya kala.
+
+- `sankranti: "Makara"` matches the ingress day; an after-sunset ingress moves the observance to the next day (Drik rule).
+- `puja_kala: "punya_kala"` shows 40 ghatis from the transit, clipped to daylight; a shifted observance starts at sunrise.
+- `solarDate` stays as the fallback for callers that skip the ingress search, and a computed day with no ingress never falls back.
+- The ingress search runs only when a festival declares `sankranti`, so ordinary months pay nothing.
+- Files: `panchang_day_resolver.dart` (`_sankranti`), `panchang_data.dart`, `puja_samay.dart`, `assets/festivals.json`.
+
+### Bhadra-free puja windows
+Raksha Bandhan's puja window now avoids Bhadra (Vishti karana).
+
+- `avoid_bhadra: true` trims the kalam to the Bhadra-free part, falls back to Pradosha when the target window is covered, and hides the card if neither has 12 usable minutes.
+- Bhadra windows are solved from karana crossings only when a matched festival asks, so other days pay nothing.
+- Files: `lib/features/panchang/domain/bhadra.dart`, `puja_samay.dart`, `tithi_transitions.dart`, `assets/festivals.json`.
+
+### Godhuli puja kala
+Tulsi Vivah now shows its Godhuli (cow-dust hour) window instead of aparahna.
+
+- `puja_kala: "godhuli"` spans sunset to sunset + one day-ghati (D/30).
+- Files: `assets/festivals.json` (`tulsi_vivah`), `puja_samay.dart`.
+
+## 2026-10-26 - 0.7.20+21
+
+### Purvahna and Aparahna observance windows
+Festival matching and Puja Samay cards now support the forenoon and afternoon
+observance checkpoints.
+
+- `purvahna` samples the tithi at one quarter of daylight after sunrise.
+- `pujaKala: "purvahna"` spans sunrise to midday; `"aparahna"` spans the
+  third-to-fourth fifths of daylight.
+- The canonical day resolver, cached transition path, labels, and authoring
+  documentation use the same checkpoint names.
+
+## 2026-10-26 - 0.7.20+21
+
+### Arunodaya timing checkpoint
+Festival rules may use `timingOverride: "brahma_muhurta_start"` or
+`"arunodaya_start"` for the two pre-sunrise checkpoints.
+
+- Brahma Muhurta starts at sunrise minus two fifteenths of the night; Arunodaya
+  starts at sunrise minus one fifteenth.
+- Matching, checkpoint sampling, labels, profile configuration, and festival
+  authoring documentation use the same checkpoint.
+
+### Sayahna and Chandrodaya checkpoints
+Festival rules may use the three Sayahna positions or `chandrodaya` for
+the Moonrise checkpoint.
+
+- Sayahna uses the fifth daylight part: start at `S + 4D/5`, center at
+  `S + 9D/10`, and end at sunset.
+- `chandrodaya` is an alias of the existing native Moonrise checkpoint.
+- The observance-rule banner reads its valid checkpoints from
+  `timingOverrideCheckpoints`, so the alias renders as moonrise instead of
+  falling back to sunrise.
+
+## 2026-10-26 - 0.7.20+21
+
+### Pradosh timing overrides
+Festival rules may use `timingOverride: "pradosh"` to evaluate the tithi at
+the Pradosh dusk checkpoint.
+
+- Keeps the existing `pradosha` spelling valid for shipped festival data.
+- Applies the alias consistently to festival matching, checkpoint resolution,
+  labels, and authoring documentation.
+- `pujaKala` accepts both spellings too, so a dusk Puja Samay card renders
+  whichever one the data uses.
+
 ## 2026-10-25 - 0.7.20+21
 
 ### Jyotish native-state and edge-case hardening
