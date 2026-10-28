@@ -306,9 +306,17 @@ class PanchangProvenance {
     required this.sunriseConvention,
     required this.ephemeris,
     required this.computedAt,
+    this.school = 'bisuddha',
   });
 
   final String engineVersion;
+
+  /// Calculation school that produced the longitudes
+  /// (`bisuddha` or `suryasiddhanta`).
+  final String school;
+
+  /// Sidereal frame of the longitudes. For the Surya Siddhanta school the
+  /// positions are sidereal by construction, so no ayanamsa applies.
   final String ayanamsa;
 
   /// Solar event convention actually used (`hindu` for the native
@@ -324,7 +332,7 @@ class PanchangProvenance {
   /// Stable string for cache keys: two days with the same key are computed by
   /// the same method and can be compared.
   String get cacheKey =>
-      '$engineVersion|$ayanamsa|$sunriseConvention|$ephemeris';
+      '$engineVersion|$school|$ayanamsa|$sunriseConvention|$ephemeris';
 }
 
 /// Canonical facts for one Panchang civil day at one place.

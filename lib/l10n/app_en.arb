@@ -1519,6 +1519,14 @@
   "@hinduMonthSystemSubtitle": {
     "description": "Hindu month system selection explanation"
   },
+  "panchangSchool": "Panjika System",
+  "@panchangSchool": {
+    "description": "Panchang calculation school setting and selection sheet title"
+  },
+  "panchangSchoolSubtitle": "Choose the calculation system behind every tithi, nakshatra and festival date",
+  "@panchangSchoolSubtitle": {
+    "description": "Panchang calculation school selection explanation"
+  },
   "festivalRegion": "Festival Region",
   "@festivalRegion": {
     "description": "Festival region setting and selection sheet title"

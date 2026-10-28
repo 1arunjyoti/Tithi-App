@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../features/panchang/data/panchang_cache.dart';
 import '../../features/panchang/domain/panchang_day.dart';
 import '../../features/panchang/domain/panchang_day_projection.dart';
 import '../../features/panchang/domain/panchang_day_resolver.dart';
@@ -201,7 +202,10 @@ class NotificationScheduler {
     final yearEraIndex = prefs.yearEraIndex;
     final tithiMode = prefs.tithiMode;
 
-    final service = PanchangService();
+    // The background isolate computes the same days the UI does, so it must
+    // use the same school and publish it to the cache signature first.
+    activePanchangSchool = prefs.panchangSchool;
+    final service = PanchangService(school: prefs.panchangSchool);
     await service.init();
     final festivals = await loadFestivalsForNotification();
     if (festivals.isEmpty) return;
@@ -560,7 +564,10 @@ class NotificationScheduler {
       final prefs = readCalendarPrefs(settingsBox);
       final monthSystem = prefs.monthSystem;
 
-      final service = PanchangService();
+      // The background isolate computes the same days the UI does, so it must
+    // use the same school and publish it to the cache signature first.
+    activePanchangSchool = prefs.panchangSchool;
+    final service = PanchangService(school: prefs.panchangSchool);
       await service.init();
 
       final today = _civilToday;

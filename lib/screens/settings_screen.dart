@@ -108,6 +108,8 @@ class SettingsScreen extends ConsumerWidget {
                           SettingsDivider(),
                           SecondaryCalendarSetting(),
                           SettingsDivider(),
+                          PanchangSchoolSetting(),
+                          SettingsDivider(),
                           HinduMonthSystemSetting(),
                           SettingsDivider(),
                           HinduYearEraSetting(),

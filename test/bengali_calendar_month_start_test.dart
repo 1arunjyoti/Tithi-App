@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
+import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/services/bengali_calendar_service.dart';
 import 'package:tithi/services/panchang_service.dart';
 
@@ -40,7 +42,12 @@ void main() {
     await PanchangService().init();
 
     container = ProviderContainer(
-      overrides: [panchangInitProvider.overrideWith((ref) async {})],
+      overrides: [
+        panchangInitProvider.overrideWith((ref) async {}),
+        // The Bengali calendar follows the persisted calculation school, so
+        // without this the provider chain would read the closed settings box.
+        panchangSchoolProvider.overrideWithValue(PanchangSchool.bisuddha),
+      ],
     );
     bengali = container.read(bengaliCalendarServiceProvider);
   });

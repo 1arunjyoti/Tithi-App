@@ -46,8 +46,11 @@ export '../features/panchang/domain/tithi_transitions.dart'
 // features/panchang/domain/tithi_transitions.dart (re-exported above).
 
 /// Provider for PanchangService (already exists, re-export)
+///
+/// Watches the calculation school so a settings change rebuilds the service
+/// rather than leaving every downstream provider on the previous theory.
 final panchangServiceProvider = Provider<PanchangService>((ref) {
-  return PanchangService();
+  return PanchangService(school: ref.watch(panchangSchoolProvider));
 });
 
 /// Synchronous coordinates provider with Delhi fallback baked in.

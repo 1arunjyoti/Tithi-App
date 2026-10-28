@@ -3291,7 +3291,7 @@
   },
   {
     "id": "lakshmi_puja",
-    "regions": ["all"],
+    "regions": ["north", "west", "central", "south"],
     "name": "Lakshmi Puja",
     "category": "major",
     "nameRegional": {
@@ -3507,6 +3507,55 @@
     }
   },
   {
+    "id": "kali_puja",
+    "regions": [
+      "east"
+    ],
+    "name": "Kali Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "काली पूजा",
+      "nameEnglish": "Kali Puja",
+      "nameHindi": "काली पूजा",
+      "nameBengali": "কালীপূজা",
+      "nameTelugu": "కాళీ పూజ",
+      "nameKannada": "ಕಾಳಿ ಪೂಜೆ",
+      "nameTamil": "காளி பூஜை",
+      "nameMalayalam": "കാളി പൂജ"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Kali Puja, or Shyama Puja, is the worship of Goddess Kali on the new moon of Kartika — the Diwali Amavasya — kept across West Bengal, Odisha and Assam instead of the Lakshmi Puja observed elsewhere",
+      "addtional_description": "Kali Puja falls on Dipanwita Amavasya, the 'Amavasya of lamps' — the new moon of Kartika that the rest of India keeps as Diwali. Where most of the country worships Lakshmi and Ganesha that evening, Bengal, Odisha and Assam worship Kali, and for Bengali households this is the most important night of the Diwali season rather than a secondary one. Shyama, 'the dark one', is the name by which Kali is invoked, and the Devi Mahatmya gives her origin in the battle with the asuras Chanda and Munda, after which she is named Chamunda.\n\nThe rite belongs to the deep night. Where Lakshmi Puja is fixed by the Amavasya prevailing at pradosha, dusk, Kali Puja is fixed by the Amavasya prevailing at nishita, the middle of the night — so in most years the two fall on the same day, but in some years Kali Puja comes one day before Diwali Puja. This is a difference of rule, not of calendar error: two rites of one new moon, dated by two different limbs of the night. In 2027, for instance, the midnight Amavasya falls on 28 October while the pradosh Amavasya falls on the 29th.\n\nThe night is kept with the goddess's image in the home and in community pandals, red hibiscus and blue lotus among the offerings, alpona at the threshold, and fireworks through the small hours after the midnight puja. Kalighat and Dakshineswar in Kolkata set their own temple hours by their own almanacs. Households that keep Lakshmi at Kojagari Purnima, a fortnight earlier, come to this Amavasya with Kali alone; households that keep both rites share the one new moon between the evening lamps and the night worship."
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Krishna",
+      "tithi": 15,
+      "conditions": "Amavasya",
+      "timingOverride": "nishita",
+      "pujaKala": "nishita"
+    },
+    "rituals": {
+      "steps": [
+        "Preparation: The image of Kali is installed at home or in the pandal, the threshold and courtyard are drawn with alpona, and the evening lamps of Diwali are lit as usual",
+        "Sankalpa and Shodashopachara: At the start of the night the family takes sankalpa and worships the goddess with the sixteen offerings",
+        "Nishita Puja: The principal worship is performed in the nishita window at the middle of the night — the hour the rite is fixed to — with red hibiscus (jaba), blue lotus, and the Kali mantra",
+        "Bali and Symbolic Offering: The older animal sacrifice is now largely replaced by the offering of a red pumpkin, sugarcane or ash gourd, cut in a single stroke before the goddess",
+        "Fireworks and Dhunuchi: After the midnight puja the night fills with fireworks, and dhunuchi naach with burning husk is performed in the pandals",
+        "Prasad: The offerings are distributed after the puja, and the fast kept through the day is broken"
+      ],
+      "mantra": "ॐ क्रीं कालिकायै नमः\n\n(Om kreem Kalikayai namah — the Kali bija mantra, invoking Kali by her name as the dark one)",
+      "fasting": "Many devotees keep a fast through the day of Amavasya and take food only after the nishita puja at midnight; others take a single meal before sunset and break the fast with the prasad"
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
     "id": "ahoi_ashtami",
     "regions": ["north"],
     "name": "Ahoi Ashtami",
@@ -3590,6 +3639,55 @@
       ],
       "mantra": "",
       "fasting": ""
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "jagaddhatri_puja",
+    "regions": [
+      "east"
+    ],
+    "name": "Jagaddhatri Puja",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "जगद्धात्री पूजा",
+      "nameEnglish": "Jagaddhatri Puja",
+      "nameHindi": "जगद्धात्री पूजा",
+      "nameBengali": "জগদ্ধাত্রী পূজা",
+      "nameTelugu": "జగద్ధాత్రి పూజ",
+      "nameKannada": "ಜಗದ್ಧಾತ್ರಿ ಪೂಜೆ",
+      "nameTamil": "ஜகத்தாத்ரி பூஜை",
+      "nameMalayalam": "ജഗദ്ധാത്രി പൂജ"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Jagaddhatri Puja is the worship of Goddess Jagaddhatri on Kartik Shukla Navami, celebrated across West Bengal and most grandly at Chandannagar and Krishnanagar",
+      "addtional_description": "Jagaddhatri Puja falls on the Navami of the bright fortnight of Kartika, one lunar month after Durga Puja. The name means 'Bearer of the World' — Jagat, the universe, and Dhatri, she who holds and sustains it — and the Goddess is understood as an aspect of Durga in her role as cosmic protectress. In her iconography she rides a lion and holds a conch, a discus, a bow and an arrow, and a snake is coiled at her feet; she is worshipped as the calm, sustaining power rather than the warrior.\n\nThe festival's heartland is Hooghly and Nadia. Chandannagar, is famous for its illumination — vast panels and gateways built from thousands of small bulbs and wired to animate, so that birds fly, trains cross and the year's news plays out in light. Krishnanagar is regarded as the festival's birthplace, its observance credited by tradition to Raja Krishnachandra Ray in the eighteenth century, and its idols — the revered old 'Burima' among them — are adorned with hundreds of kilograms of gold and silver ornament. Both towns observe Jagaddhatri with the scale Kolkata gives Durga Puja, and the state government keeps a public holiday in the two districts.\n\nThe ritual format differs by place. At Krishnanagar's Rajbari the old way is to perform the Saptami, Ashtami and Navami pujas one after another on Navami itself; Chandannagar's community pandals run four days like Durga Puja, opening on Saptami with the ghot brought from the Ganga, worshipping on Navami and carrying the images through the town on Dashami night. Belur Math and other monastic houses complete the whole puja on Navami alone.\n\nBecause the tithi rule is applied differently — Navami at sunrise, as Drik Panchang and Belur Math take it, or Navami covering the puja hours, as the Bengali Bisuddha Siddhanta panjika takes it — the published date can differ by a day in years when Navami begins shortly after sunrise. In 2026 Navami runs from 6:05 am on 18 November to 7:06 am on 19 November, so the Bengali panjika and Chandannagar keep the 18th while Drik and Belur Math keep the 19th. Local puja committees follow their own panjika, and its announcement is the final word."
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Shukla",
+      "tithi": 9,
+      "conditions": "Navami",
+      "timingOverride": "madhyahna",
+      "pujaKala": "madhyahna"
+    },
+    "rituals": {
+      "steps": [
+        "Ghata Sthapana: On Saptami the sacred ghot is brought from the river and installed, and the Goddess is invoked with the Bodhana",
+        "Alpona and Mandap: The pandal and the household courtyard are decorated with alpona, and the image is dressed and adorned",
+        "Shodashopachara Puja: On Navami the Goddess is worshipped with the sixteen offerings — snan, vastra, pushpa, dhupa, dipa, naivedya — with pushpanjali offered by devotees",
+        "Bhog: Khichuri, labra, payesh and seasonal fruit are offered and later distributed as prasad",
+        "Dhunuchi and Sandhi: Dhunuchi naach with burning coconut husk accompanies the puja, and sandhi puja marks the junction of the tithis",
+        "Bisarjan: On Dashami the images are carried in procession — at Chandannagar through the illuminated streets on bullock carts — and immersed"
+      ],
+      "mantra": "ॐ जगद्धात्र्यै नमः\n\n(Om Jagaddhatryai namah — salutation to her who bears and sustains the universe)",
+      "fasting": "Many devotees keep a partial fast through Navami, taking only fruit or a single meal, and break it after the puja and pushpanjali with the bhog prasad"
     },
     "media": {
       "audio_stotra": ""

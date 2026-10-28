@@ -92,7 +92,9 @@ final adaptiveCalendarDataProvider = FutureProvider.autoDispose
       DateTime nextMonthStart;
 
       if (args.adaptiveSystem == cp.AppCalendarSystem.bengali) {
-        final service = ref.read(bengaliCalendarServiceProvider);
+        // Watch, not read: the Bengali month boundaries move with the selected
+        // Panjika system, so this family must recompute when it changes.
+        final service = ref.watch(bengaliCalendarServiceProvider);
         final bDate = await service.calculateDate(args.focusedMonth);
         final monthIndex = service.bengaliMonths.indexOf(bDate.month);
         final year = bDate.year;

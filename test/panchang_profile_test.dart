@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jyotish/jyotish.dart';
 import 'package:tithi/models/hindu_month_system.dart';
 import 'package:tithi/models/panchang_profile.dart';
+import 'package:tithi/models/panchang_school.dart';
 
 void main() {
   group('PanchangProfile defaults', () {
@@ -256,6 +257,7 @@ void main() {
       const base = PanchangProfile(timezoneId: 'Asia/Kolkata');
 
       final variants = <PanchangProfile>[
+        base.copyWith(school: PanchangSchool.suryasiddhanta),
         base.copyWith(ayanamsa: SiderealMode.raman),
         base.copyWith(monthSystem: HinduMonthSystem.purnimant),
         base.copyWith(solarConvention: SolarEventConvention.apparentUpperLimb),
@@ -264,7 +266,9 @@ void main() {
         base.copyWith(timezoneId: 'Asia/Tokyo'),
         base.copyWith(nodeConvention: NodeConvention.trueNode),
         base.copyWith(regionalRuleSetId: 'bengali'),
-        base.copyWith(calculationVersion: 4),
+        // One past the shipped version, so the variant cannot collide with
+        // the base profile.
+        base.copyWith(calculationVersion: kPanchangCalculationVersion + 1),
         base.copyWith(
           observance: base.observance.copyWith(
             checkpoints: const {ObservanceCheckpoint.sunrise},
@@ -307,7 +311,7 @@ void main() {
       const profile = PanchangProfile();
 
       expect(profile.engineTag, 'panchang-v$kPanchangCalculationVersion');
-      expect(profile.cacheKey, startsWith('panchang-v3|'));
+      expect(profile.cacheKey, startsWith('panchang-v$kPanchangCalculationVersion|'));
     });
   });
 }

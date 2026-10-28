@@ -17,6 +17,20 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-10-28 - 0.7.20+21
+
+### Surya Siddhanta Panjika system
+Settings now offers Bisuddhasiddhanta and Suryasiddhanta; the selected system drives the Panchang and the Bengali calendar.
+
+- `PanchangSchool` (`lib/models/panchang_school.dart`) is persisted by name under `panchang_school`; missing/unknown values fall back to `bisuddha`, so existing installs keep the current behaviour.
+- All Sun/Moon reads go through `PanchangEphemeris` (`lib/services/panchang/ephemeris/`): Drik uses Swiss Ephemeris + Lahiri, Surya Siddhanta uses the pure-Dart mean-motion engine with only the manda correction.
+- `PanchangProfile.school` is part of `cacheKey`; `kPanchangCalculationVersion` is now **4** and `schemaVersion` **2**. `locationSignature` and the Bengali month/date caches also key on the school, so a switch cannot serve the other system's days.
+- The Surya Siddhanta engine is the literal classical text (`SuryaSiddhantaTuning.classical`). The text anchors the mean longitudes at 0 for the Kali epoch and gives no bija, so matching a printed panjika needs a calibrated tuning: `tool/surya_siddhanta_probe.dart fit` solves all six parameters and reaches ~1.4 degrees RMS against the modern ephemeris over 1900-2100.
+- The manda correction is applied as a **magnitude** with the quadrant choosing the sign. Feeding an already-signed jya into the quadrant rule inverts the equation over the half orbit from perigee back to apogee; that bug was worth up to 10 degrees for the Moon and is locked by `test/surya_siddhanta_engine_test.dart`.
+- Sunrise, sunset and sankranti still come from Swiss Ephemeris, so Surya Siddhanta mode is SS lunar limbs on modern solar events - not a faithful reproduction of a printed SS panjika's udaya-tithi boundaries.
+- The background notification isolate reads the same preference and sets `activePanchangSchool` before computing.
+- Not yet calibrated against Gupta Press: without supplied reference dates the Surya Siddhanta mode is internally consistent but will not match a printed panjika.
+
 ---
 
 ## 2026-10-26 - 0.7.20+21

@@ -3,8 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import '../core/location/place_clock.dart';
+import '../features/panchang/data/panchang_cache.dart';
 import '../models/festival_region.dart';
 import '../models/hindu_month_system.dart';
+import '../models/panchang_school.dart';
+import '../services/panchang/panchang_service.dart';
 import '../services/storage_service.dart';
 import 'location_provider.dart';
 
@@ -156,6 +159,7 @@ class CalendarPreferences {
   final HinduYearEra hinduYearEra;
   final TithiDisplayMode tithiDisplayMode;
   final FestivalRegion festivalRegion;
+  final PanchangSchool panchangSchool;
 
   const CalendarPreferences({
     required this.startOfWeek,
@@ -166,6 +170,7 @@ class CalendarPreferences {
     required this.hinduYearEra,
     required this.tithiDisplayMode,
     required this.festivalRegion,
+    required this.panchangSchool,
   });
 
   CalendarPreferences copyWith({
@@ -177,6 +182,7 @@ class CalendarPreferences {
     HinduYearEra? hinduYearEra,
     TithiDisplayMode? tithiDisplayMode,
     FestivalRegion? festivalRegion,
+    PanchangSchool? panchangSchool,
   }) {
     return CalendarPreferences(
       startOfWeek: startOfWeek ?? this.startOfWeek,
@@ -189,6 +195,7 @@ class CalendarPreferences {
       hinduYearEra: hinduYearEra ?? this.hinduYearEra,
       tithiDisplayMode: tithiDisplayMode ?? this.tithiDisplayMode,
       festivalRegion: festivalRegion ?? this.festivalRegion,
+      panchangSchool: panchangSchool ?? this.panchangSchool,
     );
   }
 }
@@ -203,11 +210,19 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   static const _tithiDisplayModeKey = 'tithi_display_mode';
   static const _festivalRegionKey = kFestivalRegionPrefKey;
 
+  /// Settings-box key for the calculation school, stored by `.name` so a
+  /// reordering of [PanchangSchool] cannot remap a saved preference.
+  static const panchangSchoolKey = 'panchang_school';
+
   @override
   CalendarPreferences build() {
     final box = StorageService().getSettingsBox();
     // SMELL-8: replaced 7 identical local parse functions with a single
     // generic helper. Each call is now one line instead of four.
+    final school = panchangSchoolFromName(box.get(panchangSchoolKey));
+    // The cache layer must agree with the persisted school before the first
+    // day is computed.
+    activePanchangSchool = school;
     return CalendarPreferences(
       startOfWeek: _parseEnum(box, _startOfWeekKey, StartingDayOfWeek.values, StartingDayOfWeek.sunday),
       primaryEventView: _parseEnum(box, _primaryEventViewKey, PrimaryEventView.values, PrimaryEventView.tithi),
@@ -217,6 +232,7 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
       hinduYearEra: _parseEnum(box, _hinduYearEraKey, HinduYearEra.values, HinduYearEra.shakaSamvat),
       tithiDisplayMode: _parseEnum(box, _tithiDisplayModeKey, TithiDisplayMode.values, TithiDisplayMode.continuous30),
       festivalRegion: _parseEnum(box, _festivalRegionKey, FestivalRegion.values, FestivalRegion.all),
+      panchangSchool: school,
     );
   }
 
@@ -280,6 +296,20 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   Future<void> setFestivalRegion(FestivalRegion region) async {
     await StorageService().getSettingsBox().put(_festivalRegionKey, region.index);
     state = state.copyWith(festivalRegion: region);
+  }
+
+  /// Switches the calculation school.
+  ///
+  /// Everything cached under the old school is dropped: the Hive day cache
+  /// notices the signature change on its next open, the UI day cache is cleared
+  /// here, and the process-local position caches are keyed by school already.
+  Future<void> setPanchangSchool(PanchangSchool school) async {
+    if (school == state.panchangSchool) return;
+    await StorageService().getSettingsBox().put(panchangSchoolKey, school.name);
+    activePanchangSchool = school;
+    clearPanchangUiCache();
+    PanchangService.clearCaches();
+    state = state.copyWith(panchangSchool: school);
   }
 }
 
@@ -355,4 +385,17 @@ final tithiDisplayModeProvider = Provider<TithiDisplayMode>((ref) {
 
 final festivalRegionProvider = Provider<FestivalRegion>((ref) {
   return ref.watch(calendarPreferencesProvider.select((p) => p.festivalRegion));
+});
+
+// --- Calculation School (Bisuddhasiddhanta / Suryasiddhanta) ---
+
+/// The school every Panchang read must use.
+///
+/// `panchangServiceProvider` watches this, so changing the setting rebuilds the
+/// service (and therefore every provider downstream of it) instead of leaving a
+/// service on the old theory.
+final panchangSchoolProvider = Provider<PanchangSchool>((ref) {
+  return ref.watch(
+    calendarPreferencesProvider.select((p) => p.panchangSchool),
+  );
 });

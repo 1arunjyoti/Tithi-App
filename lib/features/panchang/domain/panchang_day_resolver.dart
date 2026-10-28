@@ -1,5 +1,6 @@
 import '../../../models/festival.dart';
 import '../../../models/panchang_data.dart';
+import '../../../models/panchang_school.dart';
 import '../../../services/festival_matching_pipeline.dart';
 import '../../../services/moon_events_service.dart';
 import '../../../services/panchang_service.dart';
@@ -180,7 +181,10 @@ class PanchangDayResolver {
       sankrantiComputed: computeSankranti,
       provenance: PanchangProvenance(
         engineVersion: kPanchangEngineVersion,
-        ayanamsa: kPanchangAyanamsa,
+        school: _service.school.name,
+        ayanamsa: _service.school.usesSwissPositions
+            ? kPanchangAyanamsa
+            : 'suryasiddhanta-mean-motion',
         sunriseConvention: _solar.convention.name,
         ephemeris: _solar.usesNativeCalculator ? 'swiss' : 'noaa',
         computedAt: DateTime.now(),
