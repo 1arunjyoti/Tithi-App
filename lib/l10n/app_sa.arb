@@ -331,6 +331,8 @@
   "reminderTimeUpdateFailed": "स्मारकसमयः न परिवर्तितः ({error})। कृपया पुनः प्रयतध्वम्।",
   "hinduMonthSystem": "हिन्दूमासप्रणालिः",
   "hinduMonthSystemSubtitle": "कृष्णपक्षे मासानां नामकरणं कथं भवेत् तत् चिनुतु",
+  "panchangSchool": "पञ्जिकाप्रणालिः",
+  "panchangSchoolSubtitle": "प्रत्येकस्य तिथेः नक्षत्रस्य उत्सवदिनाङ्कस्य च गणनाप्रणालिं चिनुतु",
   "festivalRegion": "उत्सवक्षेत्रम्",
   "festivalRegionSubtitle": "एकस्मिन् दिने अनेके उत्सवाः भवेयुः चेत् कस्य क्षेत्रस्य उत्सवाः प्रथमं दृश्येयुः इति चिनुतु",
   "festivalRegionAll": "समग्रभारतम्",

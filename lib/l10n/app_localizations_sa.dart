@@ -1113,6 +1113,13 @@ class AppLocalizationsSa extends AppLocalizations {
       'कृष्णपक्षे मासानां नामकरणं कथं भवेत् तत् चिनुतु';
 
   @override
+  String get panchangSchool => 'पञ्जिकाप्रणालिः';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'प्रत्येकस्य तिथेः नक्षत्रस्य उत्सवदिनाङ्कस्य च गणनाप्रणालिं चिनुतु';
+
+  @override
   String get festivalRegion => 'उत्सवक्षेत्रम्';
 
   @override

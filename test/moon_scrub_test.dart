@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:tithi/l10n/app_localizations.dart';
 import 'package:tithi/models/panchang_data.dart';
+import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
+import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/moon_phase_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/screens/moon_phases_screen.dart';
@@ -36,6 +38,9 @@ class FakeAccessibilityNotifier extends AccessibilityNotifier {
   final container = ProviderContainer(
     overrides: [
       accessibilityProvider.overrideWith(FakeAccessibilityNotifier.new),
+      // PanchangService reads the persisted calculation school, so without
+      // this override the provider chain would touch the closed settings box.
+      panchangSchoolProvider.overrideWithValue(PanchangSchool.bisuddha),
       moonPhaseDataProvider.overrideWith(
         (ref) async => MoonPhaseData(
           nextAmavasya: now.add(const Duration(days: 22)),

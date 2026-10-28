@@ -2088,6 +2088,18 @@ abstract class AppLocalizations {
   /// **'Choose how months are named during Krishna Paksha'**
   String get hinduMonthSystemSubtitle;
 
+  /// Panchang calculation school setting and selection sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Panjika System'**
+  String get panchangSchool;
+
+  /// Panchang calculation school selection explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the calculation system behind every tithi, nakshatra and festival date'**
+  String get panchangSchoolSubtitle;
+
   /// Festival region setting and selection sheet title
   ///
   /// In en, this message translates to:

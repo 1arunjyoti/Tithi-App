@@ -1112,6 +1112,13 @@ class AppLocalizationsHi extends AppLocalizations {
       'चुनें कि कृष्ण पक्ष में महीनों का नामकरण कैसे हो';
 
   @override
+  String get panchangSchool => 'पंजिका प्रणाली';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'चुनें कि प्रत्येक तिथि, नक्षत्र और त्योहार की गणना किस पद्धति से हो';
+
+  @override
   String get festivalRegion => 'त्योहार क्षेत्र';
 
   @override

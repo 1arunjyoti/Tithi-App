@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
 import '../../models/panchang_data.dart';
+import '../../models/panchang_school.dart';
 import '../../services/storage_service.dart';
 import '../location/cached_location.dart';
 import 'notification_content.dart';
@@ -83,6 +84,7 @@ HinduMonthSystem readMonthSystem(Box<dynamic> settingsBox) {
   int yearEraIndex,
   int tithiMode,
   FestivalRegion festivalRegion,
+  PanchangSchool panchangSchool,
 })
 readCalendarPrefs(Box<dynamic> settingsBox) {
   return (
@@ -97,6 +99,11 @@ readCalendarPrefs(Box<dynamic> settingsBox) {
         (settingsBox.get('tithi_display_mode', defaultValue: 1) as int?) ?? 1,
     festivalRegion: parseFestivalRegion(
       settingsBox.get(kFestivalRegionPrefKey),
+    ),
+    // Stored by name, not index, so reordering the enum cannot remap a saved
+    // preference. Unknown or missing values fall back to Bisuddhasiddhanta.
+    panchangSchool: panchangSchoolFromName(
+      settingsBox.get('panchang_school'),
     ),
   );
 }

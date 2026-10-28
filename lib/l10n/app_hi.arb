@@ -331,6 +331,8 @@
   "reminderTimeUpdateFailed": "अनुस्मारक का समय अद्यतन नहीं हो सका ({error})। कृपया पुनः प्रयास करें।",
   "hinduMonthSystem": "हिन्दू मास प्रणाली",
   "hinduMonthSystemSubtitle": "चुनें कि कृष्ण पक्ष में महीनों का नामकरण कैसे हो",
+  "panchangSchool": "पंजिका प्रणाली",
+  "panchangSchoolSubtitle": "चुनें कि प्रत्येक तिथि, नक्षत्र और त्योहार की गणना किस पद्धति से हो",
   "festivalRegion": "त्योहार क्षेत्र",
   "festivalRegionSubtitle": "चुनें कि एक ही दिन कई त्योहार होने पर किस क्षेत्र के त्योहार पहले दिखें",
   "festivalRegionAll": "सम्पूर्ण भारत",

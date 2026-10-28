@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:jyotish/jyotish.dart';
 
 import 'hindu_month_system.dart';
+import 'panchang_school.dart';
 
 /// Settings-box key for the persisted [PanchangProfile] JSON map.
 ///
@@ -13,12 +14,16 @@ const String kPanchangProfilePrefKey = 'panchang_profile';
 /// Monotonic version of the calculation contract described by
 /// [PanchangProfile].
 ///
-/// Bump this whenever a profile change can move a Panchang output: ayanamsa,
-/// sunrise/sunset convention, Moon limb/refraction policy, checkpoint policy,
-/// node convention, or a new regional rule set. Cached Panchang and festival
-/// records must key on it and be discarded when it changes. Never reuse a
-/// version number once it has shipped.
-const int kPanchangCalculationVersion = 3;
+/// Bump this whenever a profile change can move a Panchang output: school,
+/// ayanamsa, sunrise/sunset convention, Moon limb/refraction policy, checkpoint
+/// policy, node convention, or a new regional rule set. Cached Panchang and
+/// festival records must key on it and be discarded when it changes. Never
+/// reuse a version number once it has shipped.
+///
+/// 4: the calculation school (Bisuddhasiddhanta / Suryasiddhanta) became
+/// selectable, so a day cached under one school must not be served for the
+/// other.
+const int kPanchangCalculationVersion = 4;
 
 /// Sentinel used by [PanchangProfile.copyWith] to distinguish "leave as is"
 /// from "set to null" for nullable fields.
@@ -323,6 +328,7 @@ class FestivalObservancePolicy {
 /// not necessarily what currently runs.
 class PanchangProfile {
   const PanchangProfile({
+    this.school = PanchangSchool.bisuddha,
     this.ayanamsa = SiderealMode.lahiri,
     this.monthSystem = HinduMonthSystem.amanta,
     this.solarConvention = SolarEventConvention.hindu,
@@ -335,12 +341,20 @@ class PanchangProfile {
     this.calculationVersion = kPanchangCalculationVersion,
   });
 
-  /// Target profile: Lahiri, Amanta, Hindu sunrise, traditional moonrise.
+  /// Target profile: Bisuddhasiddhanta, Lahiri, Amanta, Hindu sunrise,
+  /// traditional moonrise.
   static const PanchangProfile standard = PanchangProfile();
 
   /// Serialization schema for [toJson]. Bump only when the JSON shape changes;
   /// this is separate from [calculationVersion], which tracks semantics.
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
+
+  /// Calculation school: which planetary theory produces every longitude.
+  ///
+  /// This is the outermost switch in the contract. [ayanamsa] only applies to
+  /// [PanchangSchool.bisuddha]; the Surya Siddhanta engine is sidereal by
+  /// construction and ignores it.
+  final PanchangSchool school;
 
   /// Ayanamsa (sidereal zodiac) used for every longitude in the profile.
   final SiderealMode ayanamsa;
@@ -392,6 +406,7 @@ class PanchangProfile {
           ..sort();
     return <String>[
       engineTag,
+      'school:${school.name}',
       'ayanamsa:${ayanamsa.constant}',
       'months:${monthSystem.name}',
       'solar:${solarConvention.name}',
@@ -409,6 +424,7 @@ class PanchangProfile {
   }
 
   PanchangProfile copyWith({
+    PanchangSchool? school,
     SiderealMode? ayanamsa,
     HinduMonthSystem? monthSystem,
     SolarEventConvention? solarConvention,
@@ -421,6 +437,7 @@ class PanchangProfile {
     int? calculationVersion,
   }) {
     return PanchangProfile(
+      school: school ?? this.school,
       ayanamsa: ayanamsa ?? this.ayanamsa,
       monthSystem: monthSystem ?? this.monthSystem,
       solarConvention: solarConvention ?? this.solarConvention,
@@ -446,6 +463,7 @@ class PanchangProfile {
   Map<String, dynamic> toJson() => {
     'schema': schemaVersion,
     'calculationVersion': calculationVersion,
+    'school': school.name,
     'ayanamsa': ayanamsa.constant,
     'monthSystem': monthSystem.name,
     'solarConvention': solarConvention.name,
@@ -473,6 +491,7 @@ class PanchangProfile {
     final rawObservance = json['observance'];
 
     return PanchangProfile(
+      school: panchangSchoolFromName(json['school']),
       ayanamsa: _siderealModeFromConstant(json['ayanamsa']),
       monthSystem: _enumByName(
         HinduMonthSystem.values,
@@ -515,6 +534,7 @@ class PanchangProfile {
   @override
   bool operator ==(Object other) {
     return other is PanchangProfile &&
+        other.school == school &&
         other.ayanamsa == ayanamsa &&
         other.monthSystem == monthSystem &&
         other.solarConvention == solarConvention &&
@@ -529,6 +549,7 @@ class PanchangProfile {
 
   @override
   int get hashCode => Object.hash(
+    school,
     ayanamsa,
     monthSystem,
     solarConvention,

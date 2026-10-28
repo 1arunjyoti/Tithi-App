@@ -88,7 +88,9 @@ final bengaliDateForScheduleProvider = FutureProvider.autoDispose
       // Only calculate if Bengali is primary or secondary
       if (!showsCalendarSystem(ref, cp.AppCalendarSystem.bengali)) return null;
       return guarded(
-        () => ref.read(bengaliCalendarServiceProvider).calculateDate(date),
+        // Watch, not read: the Bengali date follows the selected Panjika
+        // system, so this provider must recompute when it changes.
+        () => ref.watch(bengaliCalendarServiceProvider).calculateDate(date),
       );
     });
 

@@ -331,6 +331,8 @@
   "reminderTimeUpdateFailed": "অনুস্মারকের সময় আপডেট করা যায়নি ({error})। আবার চেষ্টা করুন।",
   "hinduMonthSystem": "হিন্দু মাস পদ্ধতি",
   "hinduMonthSystemSubtitle": "কৃষ্ণ পক্ষে মাসের নামকরণ কীভাবে হবে তা বেছে নিন",
+  "panchangSchool": "পঞ্জিকা পদ্ধতি",
+  "panchangSchoolSubtitle": "প্রতিটি তিথি, নক্ষত্র ও উৎসবের তারিখের গণনা পদ্ধতি বেছে নিন",
   "festivalRegion": "উৎসব অঞ্চল",
   "festivalRegionSubtitle": "একই দিনে একাধিক উৎসব হলে কোন অঞ্চলের উৎসব আগে দেখাবে তা বেছে নিন",
   "festivalRegionAll": "সমগ্র ভারত",

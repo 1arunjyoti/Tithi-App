@@ -1111,6 +1111,13 @@ class AppLocalizationsBn extends AppLocalizations {
       'কৃষ্ণ পক্ষে মাসের নামকরণ কীভাবে হবে তা বেছে নিন';
 
   @override
+  String get panchangSchool => 'পঞ্জিকা পদ্ধতি';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'প্রতিটি তিথি, নক্ষত্র ও উৎসবের তারিখের গণনা পদ্ধতি বেছে নিন';
+
+  @override
   String get festivalRegion => 'উৎসব অঞ্চল';
 
   @override

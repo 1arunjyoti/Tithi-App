@@ -1,16 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
+import '../../models/panchang_school.dart';
+import '../../providers/calendar_provider.dart';
 import '../../providers/panchang_provider.dart';
+import '../panchang/ephemeris/panchang_ephemeris.dart';
 import '../solar_events_service.dart';
 import 'bengali_calendar_data.dart';
 import 'bengali_month_start.dart';
 
 final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
-  return BengaliCalendarService(ref);
+  // Watches the school so switching the Panjika system rebuilds the service
+  // and the Bengali month boundaries follow the selected panjika.
+  final school = ref.watch(panchangSchoolProvider);
+  return BengaliCalendarService(ref, ephemerisFor(school));
 });
 
 /// Bengali Calendar Service.
-/// Uses FFI-based Swiss Ephemeris for accurate calculations.
+///
+/// The solar month (rashi) and the sankranti instant come from [ephemeris],
+/// so the calendar follows the selected [PanchangSchool]: Bisuddhasiddhanta
+/// (Drik + Lahiri) or Suryasiddhanta.
 ///
 /// West Bengal rule (Bisuddha Siddhanta / Drik): each solar month begins the
 /// day AFTER its sankranti calendar date (sunrise-to-midnight -> next day,
@@ -19,7 +28,13 @@ final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
 class BengaliCalendarService {
   final Ref _ref;
 
-  BengaliCalendarService(this._ref);
+  /// Source of the Sun's sidereal longitude for the selected school.
+  final PanchangEphemeris _ephemeris;
+
+  BengaliCalendarService(this._ref, this._ephemeris);
+
+  /// Calculation school this instance follows.
+  PanchangSchool get school => _ephemeris.school;
 
   /// Bengali solar month names, Boishakh-first (guide Sec 3.1).
   List<String> get bengaliMonths => kBengaliMonths;
@@ -67,8 +82,10 @@ class BengaliCalendarService {
     int gregYear,
     double latitude,
     double longitude,
+    PanchangSchool school,
   ) {
-    return '${latitude.toStringAsFixed(1)}_${longitude.toStringAsFixed(1)}_${monthIndex}_$gregYear';
+    return '${latitude.toStringAsFixed(1)}_${longitude.toStringAsFixed(1)}'
+        '_${monthIndex}_${gregYear}_${school.name}';
   }
 
   static void _storeMonthStart(String key, DateTime monthStart) {
@@ -82,12 +99,12 @@ class BengaliCalendarService {
     DateTime instant,
     GeographicLocation location,
   ) async {
-    final pos = await Jyotish().getPlanetPosition(
-      planet: Planet.sun,
-      dateTime: instant,
-      location: location,
+    final positions = await _ephemeris.longitudesAt(
+      instant,
+      latitude: location.latitude,
+      longitude: location.longitude,
     );
-    return pos.longitude;
+    return positions.sun;
   }
 
   /// Calculates the Bengali Date (West Bengal System) using Sun's position.
@@ -118,6 +135,7 @@ class BengaliCalendarService {
       normalized,
       latitude,
       longitude,
+      school: school,
     );
     final cached = _dateCache.read(dateCacheKey);
     if (cached != null) return cached;
@@ -217,11 +235,11 @@ class BengaliCalendarService {
     }
 
     final hit = accept(
-      _monthStartCache[_cacheKey(monthIndex, noon.year, lat, lon)],
+      _monthStartCache[_cacheKey(monthIndex, noon.year, lat, lon, school)],
     );
     if (hit != null) return (index: monthIndex, start: hit);
     final prevHit = accept(
-      _monthStartCache[_cacheKey(monthIndex, noon.year - 1, lat, lon)],
+      _monthStartCache[_cacheKey(monthIndex, noon.year - 1, lat, lon, school)],
     );
     if (prevHit != null) return (index: monthIndex, start: prevHit);
 
@@ -234,7 +252,7 @@ class BengaliCalendarService {
     // Store under the resolved index: on the sankranti day that is the
     // outgoing month, and the next call for that month must hit this entry.
     _storeMonthStart(
-      _cacheKey(resolved.index, resolved.start.year, lat, lon),
+      _cacheKey(resolved.index, resolved.start.year, lat, lon, school),
       resolved.start,
     );
     return resolved;
@@ -280,7 +298,8 @@ class BengaliCalendarService {
 
     const lat = 22.5726;
     const lon = 88.3639;
-    final directHit = _monthStartCache[_cacheKey(monthIndex, gYear, lat, lon)];
+    final directHit =
+        _monthStartCache[_cacheKey(monthIndex, gYear, lat, lon, school)];
     if (directHit != null) return directHit;
 
     int gMonth = 4 + monthIndex;

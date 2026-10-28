@@ -7,16 +7,31 @@ import '../../features/panchang/domain/panchang_day_projection.dart';
 import '../../features/panchang/domain/panchang_day_resolver.dart';
 import '../../models/festival.dart';
 import '../../models/hindu_month_system.dart';
+import '../../models/panchang_school.dart';
 import '../festival_matching_pipeline.dart';
 import '../moon_events_service.dart';
 import '../panchang_init/panchang_init.dart';
 import '../solar_events_service.dart';
 import '../../core/location/location_defaults.dart';
+import 'ephemeris/panchang_ephemeris.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
 /// Uses FFI-based Swiss Ephemeris for accurate calculations
 class PanchangService {
-  PanchangService();
+  PanchangService({
+    PanchangSchool school = PanchangSchool.bisuddha,
+    PanchangEphemeris? ephemeris,
+  }) : school = ephemeris?.school ?? school,
+       _ephemeris = ephemeris ?? ephemerisFor(school);
+
+  /// Calculation school this instance computes in.
+  ///
+  /// Every longitude read goes through [_ephemeris], so the school is a
+  /// property of the service, not of each call site.
+  final PanchangSchool school;
+
+  final PanchangEphemeris _ephemeris;
+
 
   bool _isInitialized = false;
   late String _ephePath;
@@ -108,26 +123,25 @@ class PanchangService {
       throw Exception("PanchangService not initialized.");
     }
 
-    // Generate cache key
+    // Generate cache key. The school is part of it because the static cache is
+    // shared by every instance, and switching schools must not serve the other
+    // school's tithi.
     final cacheKey =
-        '${date.millisecondsSinceEpoch}_${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+        '${school.name}_${date.millisecondsSinceEpoch}_'
+        '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
 
     // Check cache first
     if (_tithiCache.containsKey(cacheKey)) {
       return _tithiCache[cacheKey]!;
     }
 
-    final location = GeographicLocation(
+    final positions = await _ephemeris.longitudesAt(
+      date,
       latitude: latitude,
       longitude: longitude,
     );
 
-    final positions = await Jyotish().getSunMoonPositions(
-      dateTime: date,
-      location: location,
-    );
-
-    double diff = positions.moon.longitude - positions.sun.longitude;
+    double diff = positions.moon - positions.sun;
     if (diff < 0) {
       diff += 360;
     }
@@ -152,7 +166,7 @@ class PanchangService {
     return tithi;
   }
 
-  /// Sidereal (Lahiri) ecliptic longitudes of the Sun and Moon in degrees.
+  /// Sidereal ecliptic longitudes of the Sun and Moon in degrees.
   ///
   /// Powers the yoga (sum) and karana (difference) computations, which each
   /// need both longitudes at the same instant. Returns null instead of
@@ -165,13 +179,13 @@ class PanchangService {
   }) async {
     if (!_isInitialized) return null;
     try {
-      // One batch, so sidereal/topocentric state is applied once for both
-      // bodies instead of once per independent FFI call.
-      final positions = await Jyotish().getSunMoonPositions(
-        dateTime: date,
-        location: GeographicLocation(latitude: latitude, longitude: longitude),
+      // One call, so the frame is applied once for both bodies instead of once
+      // per independent read.
+      return await _ephemeris.longitudesAt(
+        date,
+        latitude: latitude,
+        longitude: longitude,
       );
-      return (sun: positions.sun.longitude, moon: positions.moon.longitude);
     } catch (e) {
       if (kDebugMode) {
         print('calculateSunMoonLongitudes failed: $e');
@@ -180,7 +194,7 @@ class PanchangService {
     }
   }
 
-  /// Sidereal (Lahiri) ecliptic longitude of the Sun in degrees, or null when
+  /// Sidereal ecliptic longitude of the Sun in degrees, or null when
   /// uninitialized or the ephemeris call fails.
   ///
   /// Used by the Sankranti search, which only needs the Sun and would
@@ -207,8 +221,8 @@ class PanchangService {
 
   /// Nakshatra prevailing at [date] (canonical name, e.g. 'Mula').
   ///
-  /// Derived from the sidereal Moon longitude — the same Lahiri frame
-  /// [calculateTithi] uses: index = floor(longitude / (360/27)).
+  /// Derived from the sidereal Moon longitude in the service's school:
+  /// index = floor(longitude / (360/27)).
   /// Returns null instead of throwing when uninitialized or the ephemeris
   /// call fails, so one bad sample degrades to "nakshatra festivals don't
   /// match today" rather than breaking the whole day.
@@ -219,12 +233,12 @@ class PanchangService {
   }) async {
     if (!_isInitialized) return null;
     try {
-      final moon = await Jyotish().getPlanetPosition(
-        planet: Planet.moon,
-        dateTime: date,
-        location: GeographicLocation(latitude: latitude, longitude: longitude),
+      final positions = await _ephemeris.longitudesAt(
+        date,
+        latitude: latitude,
+        longitude: longitude,
       );
-      return nakshatraForLongitude(moon.longitude);
+      return nakshatraForLongitude(positions.moon);
     } catch (e) {
       if (kDebugMode) {
         print('calculateNakshatra failed: $e');
@@ -365,21 +379,22 @@ class PanchangService {
   }
 
   /// OPT-7: Returns the Sun’s ecliptic longitude for [dt], using a bounded
-  /// in-memory cache keyed by (date+hour) to avoid repeated FFI calls when
+  /// in-memory cache keyed by (school, date+hour) to avoid repeated reads when
   /// [calculateMasa] is invoked on adjacent new-moon dates.
   Future<double> _getCachedSunLongitude(
     DateTime dt,
     GeographicLocation location,
   ) async {
     final key =
-        '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}-${dt.hour.toString().padLeft(2, '0')}';
+        '${school.name}_${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}-${dt.hour.toString().padLeft(2, '0')}';
     if (_sunLongitudeCache.containsKey(key)) return _sunLongitudeCache[key]!;
 
-    final sun = await Jyotish().getPlanetPosition(
-      planet: Planet.sun,
-      dateTime: dt,
-      location: location,
+    final positions = await _ephemeris.longitudesAt(
+      dt,
+      latitude: location.latitude,
+      longitude: location.longitude,
     );
+    final sun = positions.sun;
 
     if (_sunLongitudeCache.length >= _maxSunCacheSize) {
       final toRemove = _sunLongitudeCache.keys
@@ -389,8 +404,8 @@ class PanchangService {
         _sunLongitudeCache.remove(k);
       }
     }
-    _sunLongitudeCache[key] = sun.longitude;
-    return sun.longitude;
+    _sunLongitudeCache[key] = sun;
+    return sun;
   }
 
   Future<DateTime?> findNextFestivalOccurrence(

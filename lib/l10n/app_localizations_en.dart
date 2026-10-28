@@ -1101,6 +1101,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose how months are named during Krishna Paksha';
 
   @override
+  String get panchangSchool => 'Panjika System';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'Choose the calculation system behind every tithi, nakshatra and festival date';
+
+  @override
   String get festivalRegion => 'Festival Region';
 
   @override
