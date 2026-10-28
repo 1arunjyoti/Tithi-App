@@ -76,7 +76,11 @@ void main() {
   });
 
   group('Surya Siddhanta mean longitudes', () {
-    const engine = SuryaSiddhantaEngine();
+    // Pinned to the text: the shipped default is calibrated to a printed
+    // panjika, and these tests assert what the Surya Siddhanta itself says.
+    const engine = SuryaSiddhantaEngine(
+      tuning: SuryaSiddhantaTuning.classical,
+    );
 
     test('start at zero at the epoch with the classical tuning', () {
       expect(engine.meanSunLongitude(0), closeTo(0, 1e-9));
@@ -127,7 +131,9 @@ void main() {
   });
 
   group('Surya Siddhanta true longitudes', () {
-    const engine = SuryaSiddhantaEngine();
+    const engine = SuryaSiddhantaEngine(
+      tuning: SuryaSiddhantaTuning.classical,
+    );
 
     test('apply the manda correction with the correct sign', () {
       // At kendra 90 the Sun's equation reaches its maximum, ~2.18 degrees,
@@ -211,6 +217,18 @@ void main() {
       final ephemeris = ephemerisFor(PanchangSchool.suryasiddhanta);
       expect(ephemeris.school, PanchangSchool.suryasiddhanta);
       expect(ephemeris, isA<SuryaSiddhantaEphemeris>());
+      // The shipped tuning is calibrated to a printed panjika, so its tag is
+      // the parameter signature rather than `ss-classical`. What matters here
+      // is that the frame is siddhantic and not the drik one.
+      expect(ephemeris.tag, startsWith('ss-'));
+      expect(ephemeris.tag, isNot('drik-lahiri'));
+    });
+
+    test('the literal text still tags as ss-classical', () {
+      final ephemeris = ephemerisFor(
+        PanchangSchool.suryasiddhanta,
+        tuning: SuryaSiddhantaTuning.classical,
+      );
       expect(ephemeris.tag, 'ss-classical');
     });
 
@@ -254,6 +272,61 @@ void main() {
       expect(PanchangSchool.suryasiddhanta.usesSwissPositions, isFalse);
     });
   });
+
+  group('calibrated tuning', () {
+    // kSuryaSiddhantaTuning is fitted to the 26 tithi and nakshatra end times
+    // in tool/reference/surya_siddhanta_delhi_2005_2026.csv, then checked
+    // against the 15 yoga end times in the matching _yoga file, which the fit
+    // never saw. At every boundary the named limb must end within half a
+    // printed minute, which is 0.005 degrees of Moon motion.
+    //
+    // These are a handful of those times, chosen to span 2005-2026 and to
+    // include both fitted and held-out rows. Re-check the whole set with
+    //   dart run tool/surya_siddhanta_probe.dart verify \
+    //     tool/reference/surya_siddhanta_delhi_2005_2026_yoga.csv
+    const engine = SuryaSiddhantaEngine();
+
+    // date, IST time, limb, ordinal, and the per-unit width of that limb.
+    const boundaries = <(String, String, String, int, double)>[
+      ('2005-10-20', '14:51', 'tithi', 18, 12),
+      ('2008-04-14', '10:39', 'nakshatra', 8, 360 / 27),
+      ('2018-02-08', '13:13', 'tithi', 23, 12),
+      ('2022-04-20', '04:28', 'nakshatra', 17, 360 / 27),
+      ('2026-02-10', '08:15', 'nakshatra', 16, 360 / 27),
+      // Held out of the fit:
+      ('2005-10-21', '00:09', 'yoga', 17, 360 / 27),
+      ('2023-04-19', '15:30', 'yoga', 27, 360 / 27),
+      ('2026-02-11', '02:04', 'yoga', 12, 360 / 27),
+    ];
+
+    for (final (date, time, limb, ordinal, width) in boundaries) {
+      test('$limb $ordinal ends at the printed $date $time', () {
+        final hhmm = time.split(':');
+        // Panjika times are IST; the engine works in real instants.
+        final instant = DateTime.utc(
+          int.parse(date.substring(0, 4)),
+          int.parse(date.substring(5, 7)),
+          int.parse(date.substring(8, 10)),
+          int.parse(hhmm[0]),
+          int.parse(hhmm[1]),
+        ).subtract(const Duration(hours: 5, minutes: 30));
+
+        final positions = engine.longitudesAt(instant);
+        final measured = switch (limb) {
+          'tithi' => _norm(positions.moon - positions.sun),
+          'nakshatra' => _norm(positions.moon),
+          _ => _norm(positions.sun + positions.moon),
+        };
+        final target = width * ordinal;
+        final residual = _signedDelta(measured - target);
+        expect(
+          residual.abs(),
+          lessThan(0.01),
+          reason: 'measured $measured, printed boundary $target',
+        );
+      });
+    }
+  });
 }
 
 double _norm(double degrees) {
@@ -283,7 +356,7 @@ double _sinDegrees(double degrees) {
 
 /// Ahargana at which the Sun's manda kendra is 90 degrees.
 double _aharganaWhereSunKendraIs90() {
-  const engine = SuryaSiddhantaEngine();
+  const engine = SuryaSiddhantaEngine(tuning: SuryaSiddhantaTuning.classical);
   // The kendra is (mean Sun - apogee), so the target is 90 degrees of kendra,
   // not 90 degrees of mean longitude.
   const target = 90.0;

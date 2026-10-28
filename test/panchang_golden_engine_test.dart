@@ -14,6 +14,7 @@ import 'package:tithi/services/bengali_calendar_service.dart';
 import 'package:tithi/services/festival_matching_pipeline.dart';
 import 'package:tithi/services/moon_events_service.dart';
 import 'package:tithi/services/panchang_service.dart';
+import 'package:tithi/services/storage_service.dart';
 
 import 'fixtures/panchang_golden/golden_fixtures.dart';
 
@@ -55,6 +56,11 @@ void main() {
 
       Hive.init(tempDir.path);
       cacheBox = await Hive.openBox<dynamic>('golden_cache');
+      // `bengaliCalendarServiceProvider` resolves the calculation school from
+      // preferences, so the settings box must exist before the container reads
+      // it - the default (no `panchang_school` key) is Bisuddhasiddhanta, which
+      // is what the golden fixtures were recorded under.
+      await Hive.openBox<dynamic>(StorageService.settingsBoxName);
 
       final json = await rootBundle.loadString(kFestivalCatalogPath);
       festivals = (jsonDecode(json) as List)

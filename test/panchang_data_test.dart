@@ -379,15 +379,19 @@ void main() {
 
     PanchangData at({
       required double sunrise,
+      double? sayahnaEnd,
       double? nishita,
       double? nishitaEnd,
+      double? previousNishita,
     }) => PanchangData.fromRawTithi(
       date: DateTime(2026, 9, 4),
       rawTithi: sunrise,
       masa: 'Shravana',
       allFestivals: [janmashtami()],
+      rawTithiSayahnaEnd: sayahnaEnd,
       rawTithiNishita: nishita,
       rawTithiNishitaEnd: nishitaEnd,
+      rawTithiPreviousNishita: previousNishita,
     );
 
     test('matches when Ashtami prevails at the window opening', () {
@@ -418,6 +422,37 @@ void main() {
       final panchang = at(sunrise: 23.5);
 
       expect(panchang.festivals.map((f) => f.id), equals(['janmashtami']));
+    });
+
+    test('matches a tithi that ends before the window opens', () {
+      // Surya Siddhanta, Delhi 2026-09-04: Ashtami ends 23:03 IST, the window
+      // opens 23:57. Neither edge holds Ashtami, so the observance vanished
+      // for the whole year. The night still carries it, and the previous
+      // night's opening carried Saptami - so this is the gap, not a repeat.
+      final panchang = at(
+        sunrise: 23.217,
+        sayahnaEnd: 23.6,
+        nishita: 24.042,
+        nishitaEnd: 24.076,
+        previousNishita: 22.4,
+      );
+
+      expect(panchang.festivals.map((f) => f.id), equals(['janmashtami']));
+    });
+
+    test('does not repeat the observance when it covered the previous night', () {
+      // The day after that gap: Ashtami is still current at sunset, so a
+      // sunset-only fallback would observe Janmashtami twice. It covered the
+      // previous night's opening, which means yesterday already matched.
+      final panchang = at(
+        sunrise: 23.4,
+        sayahnaEnd: 23.9,
+        nishita: 24.4,
+        nishitaEnd: 24.44,
+        previousNishita: 23.2,
+      );
+
+      expect(panchang.festivals, isEmpty);
     });
   });
 

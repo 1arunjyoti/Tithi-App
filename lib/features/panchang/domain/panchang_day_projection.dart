@@ -46,6 +46,7 @@ PanchangData projectPanchangDay(
     rawTithiAparahna: day.checkpointTithis.aparahna,
     rawTithiNishita: day.checkpointTithis.nishita,
     rawTithiNishitaEnd: day.checkpointTithis.nishitaEnd,
+    rawTithiPreviousNishita: day.checkpointTithis.previousNishita,
     rawTithiPradosha: day.checkpointTithis.pradosha,
     rawTithiMoonrise: day.checkpointTithis.moonrise,
     rawTithiNextSunrise: day.checkpointTithis.nextSunrise,

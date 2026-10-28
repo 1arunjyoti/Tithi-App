@@ -2,11 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:tithi/core/location/location_defaults.dart';
 import 'package:tithi/features/panchang/domain/panchang_day.dart';
 import 'package:tithi/features/panchang/domain/panchang_day_projection.dart';
 import 'package:tithi/features/panchang/domain/panchang_day_resolver.dart';
+import 'package:tithi/features/panchang/domain/tithi_transitions.dart';
 import 'package:tithi/models/festival.dart';
+import 'package:tithi/models/hindu_month_system.dart';
+import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/services/panchang_service.dart';
 
 // The forward scan used to carry its own copy of the festival-match rules
@@ -32,6 +36,7 @@ void main() {
 
   late PanchangService service;
   late Directory tempDir;
+  late Box<dynamic> cacheBox;
 
   setUpAll(() async {
     tempDir = await Directory.systemTemp.createTemp('tithi_occurrence_scan');
@@ -40,6 +45,12 @@ void main() {
         .setMockMethodCallHandler(channel, (call) async => tempDir.path);
     service = PanchangService();
     await service.init();
+    Hive.init(tempDir.path);
+    cacheBox = await Hive.openBox<dynamic>('occurrence_scan_cache');
+  });
+
+  tearDownAll(() async {
+    await cacheBox.close();
   });
 
   // Every non-polar case below is a Delhi golden case, and Delhi is the
@@ -116,6 +127,61 @@ void main() {
 
       expect(found, equals(DateTime(2026, 9, 14)));
       expect(await gridFestivals(ganesh, found!), equals(['ganesh_chaturthi']));
+    }, skip: skipReason);
+
+    test('finds a nishita observance whose tithi ends before the window', () async {
+      // Surya Siddhanta, Delhi 2026-09-04: Ashtami ends 23:03 IST, the
+      // Nishita window opens 23:57. No night of that lunation satisfies the
+      // window edges, so the observance used to vanish for the whole year -
+      // `findNextFestivalOccurrence` returned null. The night still carries
+      // Ashtami and the previous night's opening did not, so it is the gap.
+      final janmashtami = Festival.fromJson({
+        'id': 'janmashtami',
+        'name': 'Krishna Janmashtami',
+        'panchang_rules': {
+          'masa': 'Shravana',
+          'paksha': 'Krishna',
+          'tithi': 8,
+          'conditions': 'Ashtami',
+          'timingOverride': 'nishita',
+        },
+      });
+
+      final ssService = PanchangService(school: PanchangSchool.suryasiddhanta);
+      await ssService.init();
+      final found = await ssService.findNextFestivalOccurrence(
+        janmashtami,
+        startDate: DateTime(2026, 8),
+      );
+
+      expect(found, equals(DateTime(2026, 9, 4)));
+      // The grid must agree with the scan, or the date is found but the day
+      // is blank. `computePanchangData` is the real grid/detail path (it goes
+      // through `resolveTithiCheckpoints`), not `projectPanchangDay`, so both
+      // seams have to carry the previous-night sample.
+      final projected = await computePanchangData(
+        normalizedDate: found!,
+        service: ssService,
+        festivals: [janmashtami],
+        monthSystem: HinduMonthSystem.amanta,
+        latitude: delhiPlace.latitude,
+        longitude: delhiPlace.longitude,
+        cacheBox: cacheBox,
+      );
+      expect(projected.festivals.map((f) => f.id), equals(['janmashtami']));
+
+      // And the day before must NOT also list it: the same Ashtami ran at
+      // sunset but the observance belongs to the gap night only.
+      final previous = await computePanchangData(
+        normalizedDate: DateTime(2026, 9, 5),
+        service: ssService,
+        festivals: [janmashtami],
+        monthSystem: HinduMonthSystem.amanta,
+        latitude: delhiPlace.latitude,
+        longitude: delhiPlace.longitude,
+        cacheBox: cacheBox,
+      );
+      expect(previous.festivals, isEmpty);
     }, skip: skipReason);
 
     test('keeps a moonrise-puja festival on its sunrise date', () async {

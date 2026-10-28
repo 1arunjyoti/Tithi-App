@@ -196,13 +196,66 @@ class SuryaSiddhantaTuning {
   String toString() => 'SuryaSiddhantaTuning($tag)';
 }
 
+/// Tuning the app ships with.
+///
+/// This is the single place to paste a fitted tuning. `ephemerisFor` defaults
+/// to it, so the panchang, the Bengali calendar and the notification isolate
+/// all pick it up without another edit. Leaving it at
+/// [SuryaSiddhantaTuning.classical] means "not calibrated yet".
+///
+/// Fitted against 26 tithi and nakshatra end times for New Delhi between 2005
+/// and 2026 (`tool/reference/surya_siddhanta_delhi_2005_2026.csv`), then checked
+/// against 15 yoga end times that the fit never saw.
+///
+/// Every one of the 41 boundary times is reproduced to within 0.005 degrees,
+/// which is half a minute of the clock - the rounding limit of the source's own
+/// times. A drik (Swiss Ephemeris) moon misses the same boundaries by 1 to 3
+/// degrees. In other words the source is a siddhantic panjika, computed from
+/// mean motions plus the manda correction alone, and this engine is the same
+/// model rather than an approximation of it.
+///
+/// Provenance matters here: the reference is a Surya Siddhanta panjika for New
+/// Delhi whose sunrise is *modern* (the app's Delhi sunrise matches all 15 of
+/// its sunrises to 0 minutes), not a transcription of a printed Gupta Press
+/// page. So 0.005 degrees measures agreement with the same arithmetic. It
+/// validates the engine against a Surya Siddhanta source; it does not validate
+/// it against the printed page.
+///
+/// The fitted bijas come out near zero, which is the same statement from the
+/// other side: this source applies no drift correction, so its mean motions
+/// are the text's own. Do not read the near-zero bijas as "unfitted".
+///
+/// Do not confuse this with the app's `bisuddha` option. Bisuddha (Vishuddha)
+/// Siddhanta is the *drik* school - observationally corrected positions - and is
+/// what that option computes. The name's "shuddha" refers to the corrected drik
+/// system, not to an uncorrected Surya Siddhanta.
+///
+/// Caveats a maintainer must keep in mind:
+///
+/// - The calibration is measured over 2005-2026 only. Outside that span the
+///   engine follows the text's mean motions, which is what a siddhantic panjika
+///   does too, but no reference date has confirmed it.
+/// - Sunrise, sunset, moonrise and moonset still come from the Swiss Ephemeris,
+///   so the app reproduces a siddhantic panjika's *lunar* limbs on top of modern
+///   solar events. Siddhantic sunrise is deliberately not implemented: the
+///   reference source uses a modern sunrise, so implementing one would move the
+///   app away from it.
+const SuryaSiddhantaTuning kSuryaSiddhantaTuning = SuryaSiddhantaTuning(
+  sunEpochLongitude: -0.458494,
+  moonEpochLongitude: 2.817786,
+  moonApsisEpochLongitude: 89.831272,
+  sunBijaArcSecondsPerYear: 0.469058,
+  moonBijaArcSecondsPerYear: -0.031316,
+  moonApsisBijaArcSecondsPerYear: -1.059244,
+);
+
 /// Surya Siddhanta Sun and Moon positions, in sidereal degrees.
 ///
 /// The longitudes are already sidereal: the Sun's revolution count equals the
 /// number of sidereal years in a Mahayuga, so no ayanamsa is applied.
 class SuryaSiddhantaEngine {
   const SuryaSiddhantaEngine({
-    this.tuning = SuryaSiddhantaTuning.classical,
+    this.tuning = kSuryaSiddhantaTuning,
   });
 
   final SuryaSiddhantaTuning tuning;

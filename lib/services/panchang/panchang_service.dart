@@ -60,6 +60,7 @@ class PanchangService {
   static void clearCaches() {
     _tithiCache.clear();
     _sunLongitudeCache.clear();
+    _lunationVerdicts.clear();
     solarEventsService.clearCache();
     moonEventsService.clearCache();
   }
@@ -310,9 +311,16 @@ class PanchangService {
       date.subtract(Duration(minutes: (daysSinceNewMoon * 1440).round())),
     );
 
-    for (final entry in _lunationVerdicts.values) {
-      if ((entry.n1.difference(estPrev).inHours).abs() <= 72) {
-        return (adhika: entry.adhika, masa: entry.masa);
+    for (final entry in _lunationVerdicts.entries) {
+      // The map is static, so it outlives every PanchangService instance and
+      // every provider rebuild. Without the school prefix a verdict computed
+      // from drik longitudes would be served after a switch to Surya
+      // Siddhanta, which shows up as a wrong masa/adhika for up to
+      // [_maxLunationVerdicts] lunations - and masa is what the Hindu and
+      // Bengali month names come from.
+      if (!entry.key.startsWith('${school.name}_')) continue;
+      if ((entry.value.n1.difference(estPrev).inHours).abs() <= 72) {
+        return (adhika: entry.value.adhika, masa: entry.value.masa);
       }
     }
 
@@ -330,7 +338,7 @@ class PanchangService {
     );
 
     final key =
-        '${n1.year}-${n1.month.toString().padLeft(2, '0')}-${n1.day.toString().padLeft(2, '0')}';
+        '${school.name}_${n1.year}-${n1.month.toString().padLeft(2, '0')}-${n1.day.toString().padLeft(2, '0')}';
     if (_lunationVerdicts.length >= _maxLunationVerdicts) {
       _lunationVerdicts.remove(_lunationVerdicts.keys.first);
     }

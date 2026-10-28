@@ -194,6 +194,11 @@ class PanchangData {
   /// reads it, and falls back to [rawTithi] when the day has no moonrise -
   /// the same "checkpoint absent, use the day's own tithi" fallback as the
   /// other overrides.
+  ///
+  /// [rawTithiPreviousNishita] is the tithi at the PREVIOUS night's Nishita
+  /// opening. Only the gap fallback below reads it: a `nishita` rule whose
+  /// tithi ended between sunset and the window opening still matches today,
+  /// but only if that tithi did not already cover yesterday's window.
   factory PanchangData.fromRawTithi({
     required DateTime date,
     required double rawTithi,
@@ -212,6 +217,7 @@ class PanchangData {
     double? rawTithiAparahna,
     double? rawTithiNishita,
     double? rawTithiNishitaEnd,
+    double? rawTithiPreviousNishita,
     double? rawTithiPradosha,
     double? rawTithiMoonrise,
     double? rawTithiNextSunrise,
@@ -320,15 +326,46 @@ class PanchangData {
       // `sunset + 8/15 night`. The tithi at the opening decides, but a tithi
       // that arrives just after it and is still current at the close also
       // counts, so an observance is never lost because its tithi began a few
-      // minutes inside the window. The reverse (a tithi that ends inside the
-      // window) is already covered by the opening sample - that is the
-      // Janmashtami fix.
+      // minutes inside the window. A tithi that ends inside the window is
+      // covered by the opening sample.
       if (!isMatch &&
           f.panchangRules.timingOverride == 'nishita' &&
           rawTithiNishitaEnd != null) {
         final closeIndex = rawTithiNishitaEnd.floor();
         if (closeIndex != targetIndex) {
           isMatch = matchesTithiAt(rawTithiNishitaEnd);
+        }
+      }
+
+      // A window may move an observance; it must never delete one. When the
+      // tithi ends between sunset and the window opening, no night of that
+      // lunation satisfies the window and the festival disappears for the
+      // whole year - measured under Surya Siddhanta, which ends Krishna
+      // Ashtami at 23:03 IST on 2026-09-04, 54 min before the 23:57 window
+      // opening, so Janmashtami 2026 resolved to null (2025 and 2035 too).
+      //
+      // The fix cannot be "also accept the tithi at sunset": that is exactly
+      // true on the day AFTER a normal nishita match as well (a ~20 h tithi
+      // still runs at the next sunset), and it turned 23 of 96 nishita
+      // festival-years into two-day observances - Sharad Purnima 2020 on both
+      // Oct 30 and 31, Kali Puja 2025 on both Nov 20 and 21.
+      //
+      // The discriminator is whether this same tithi already covered the
+      // PREVIOUS night's window. If it did, yesterday was the observance and
+      // this day is the duplicate; if it did not, this is the gap and today
+      // carries the night. `rawTithiPreviousNishita` samples the tithi at
+      // `sunrise - 8/15 night`, which is the previous night's Nishita opening
+      // (the two nights differ by under two minutes).
+      if (!isMatch &&
+          f.panchangRules.timingOverride == 'nishita' &&
+          rawTithiSayahnaEnd != null &&
+          rawTithiPreviousNishita != null) {
+        final sunsetIndex = rawTithiSayahnaEnd.floor();
+        if (sunsetIndex != targetIndex) {
+          final prevIndex = rawTithiPreviousNishita.floor();
+          if (prevIndex != sunsetIndex) {
+            isMatch = matchesTithiAt(rawTithiSayahnaEnd);
+          }
         }
       }
 

@@ -113,7 +113,7 @@ class SuryaSiddhantaEphemeris extends PanchangEphemeris {
 /// ignores it because its frame is the Swiss Ephemeris Lahiri mode.
 PanchangEphemeris ephemerisFor(
   PanchangSchool school, {
-  SuryaSiddhantaTuning tuning = SuryaSiddhantaTuning.classical,
+  SuryaSiddhantaTuning tuning = kSuryaSiddhantaTuning,
 }) {
   return switch (school) {
     PanchangSchool.bisuddha => const DrikPanchangEphemeris(),
