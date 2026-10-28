@@ -200,6 +200,7 @@ class PanchangCheckpointTithis {
     this.aparahna,
     this.nishita,
     this.nishitaEnd,
+    this.previousNishita,
     this.pradosha,
     this.moonrise,
     this.nextSunrise,
@@ -224,6 +225,10 @@ class PanchangCheckpointTithis {
   /// Tithi at the Nishita window close, so a rule can see a boundary that
   /// falls inside the window.
   final double? nishitaEnd;
+
+  /// Tithi at the PREVIOUS night's Nishita opening
+  /// ([PanchangCheckpoints.previousNishita]).
+  final double? previousNishita;
 
   final double? pradosha;
 
@@ -254,6 +259,7 @@ class PanchangCheckpoints {
     this.aparahna,
     this.nishita,
     this.nishitaEnd,
+    this.previousNishita,
     this.pradosha,
     this.dominant,
   });
@@ -277,6 +283,16 @@ class PanchangCheckpoints {
   /// Closing of the Nishita window, `sunset + 8/15 night` (one muhurta after
   /// [nishita]). Null exactly when [nishita] is.
   final DateTime? nishitaEnd;
+
+  /// The PREVIOUS night's Nishita opening, i.e. `nishita` of the day before.
+  ///
+  /// Reconstructed from this day's sunrise as `sunrise - 8/15 night` (the two
+  /// nights differ by under two minutes), so it needs no extra solar call.
+  /// Only one rule reads it: a `nishita` observance whose tithi ends between
+  /// sunset and the window opening matches today only if the same tithi did
+  /// NOT already cover yesterday's window - otherwise the tithi is simply
+  /// still running and yesterday was the observance.
+  final DateTime? previousNishita;
 
   final DateTime? pradosha;
   final DateTime? dominant;

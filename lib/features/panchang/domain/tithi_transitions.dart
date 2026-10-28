@@ -149,6 +149,7 @@ typedef TithiCheckpoints = ({
   double? rawTithiAparahna,
   double? rawTithiNishita,
   double? rawTithiNishitaEnd,
+  double? rawTithiPreviousNishita,
   double? rawTithiPradosha,
   double? rawTithiMoonrise,
   double? rawTithiNextSunrise,
@@ -220,6 +221,7 @@ Future<TithiCheckpoints> resolveTithiCheckpoints({
     rawTithiAparahna: day.checkpointTithis.aparahna,
     rawTithiNishita: day.checkpointTithis.nishita,
     rawTithiNishitaEnd: day.checkpointTithis.nishitaEnd,
+    rawTithiPreviousNishita: day.checkpointTithis.previousNishita,
     rawTithiPradosha: day.checkpointTithis.pradosha,
     rawTithiMoonrise: day.checkpointTithis.moonrise,
     rawTithiNextSunrise: day.checkpointTithis.nextSunrise,
@@ -352,6 +354,7 @@ Future<PanchangData> computePanchangData({
   final rawTithiAparahna = checkpoints.rawTithiAparahna;
   final rawTithiNishita = checkpoints.rawTithiNishita;
   final rawTithiNishitaEnd = checkpoints.rawTithiNishitaEnd;
+  final rawTithiPreviousNishita = checkpoints.rawTithiPreviousNishita;
   final rawTithiPradosha = checkpoints.rawTithiPradosha;
   final rawTithiMoonrise = checkpoints.rawTithiMoonrise;
   final rawTithiNextSunrise = checkpoints.rawTithiNextSunrise;
@@ -452,6 +455,7 @@ Future<PanchangData> computePanchangData({
     rawTithiAparahna: rawTithiAparahna,
     rawTithiNishita: rawTithiNishita,
     rawTithiNishitaEnd: rawTithiNishitaEnd,
+    rawTithiPreviousNishita: rawTithiPreviousNishita,
     rawTithiPradosha: rawTithiPradosha,
     rawTithiMoonrise: rawTithiMoonrise,
     rawTithiNextSunrise: rawTithiNextSunrise,

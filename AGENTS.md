@@ -319,6 +319,7 @@ Rules:
 - Changelog (add a feature entry per implementation): changelogs.md
 - Festival data guide: docs/FESTIVALS_Modification_GUIDE.md
 - Festival artwork guide (compression script, 800px / 200 KB budget): docs/FESTIVAL_ARTWORK_GUIDE.md
+- Surya Siddhanta calibration guide (manual verification, `fit`, tuning): docs/SURYA_SIDDHANTA_CALIBRATION.md
 - Flutter Docs: https://flutter.dev/docs
 - Riverpod Docs: https://riverpod.dev/docs
 - Dart Lints: https://dart.dev/tools/linter-rules

@@ -295,6 +295,7 @@ class PanchangDayResolver {
 
     DateTime? nishita;
     DateTime? nishitaEnd;
+    DateTime? previousNishita;
     DateTime? pradosha;
     if (sunset != null && nextSunrise != null) {
       final nightLength = nextSunrise.difference(sunset);
@@ -314,6 +315,15 @@ class PanchangDayResolver {
       nishita = sunset.add(Duration(microseconds: nightMicros * 7 ~/ 15));
       nishitaEnd = sunset.add(Duration(microseconds: nightMicros * 8 ~/ 15));
       pradosha = sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10));
+      // Yesterday's Nishita opening, from this day's sunrise: nishita(D-1)
+      // = sunrise(D) - 8/15 * night(D-1). This night's length stands in for
+      // the previous one, which differs by under two minutes, so the sample
+      // costs no extra solar call. See PanchangCheckpoints.previousNishita.
+      if (sunrise != null) {
+        previousNishita = sunrise.subtract(
+          Duration(microseconds: nightMicros * 8 ~/ 15),
+        );
+      }
     }
     if (sunrise != null && sunset != null) {
       final dayMicros = sunset.difference(sunrise).inMicroseconds;
@@ -333,6 +343,7 @@ class PanchangDayResolver {
       aparahna: aparahna,
       nishita: nishita,
       nishitaEnd: nishitaEnd,
+      previousNishita: previousNishita,
       pradosha: pradosha,
       dominant: sunrise?.add(kDominantTithiGrace),
     );
@@ -367,6 +378,10 @@ class PanchangDayResolver {
       aparahna: await at(checkpoints.aparahna, 'aparahna'),
       nishita: await at(checkpoints.nishita, 'nishita'),
       nishitaEnd: await at(checkpoints.nishitaEnd, 'nishitaEnd'),
+      previousNishita: await at(
+        checkpoints.previousNishita,
+        'previous_nishita',
+      ),
       pradosha: await at(checkpoints.pradosha, 'pradosha'),
       moonrise: await at(moonrise, 'moonrise'),
       nextSunrise: await at(nextSunrise, 'nextSunrise'),
