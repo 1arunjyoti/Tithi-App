@@ -35,6 +35,8 @@ final bengaliDateForSheetProvider = FutureProvider.autoDispose
 final hinduInstantLabelProvider = FutureProvider.autoDispose
     .family<String?, ({DateTime instant, int tithiIndex})>((ref, arg) async {
       if (!isPrimarySystem(ref, AppCalendarSystem.hindu)) return null;
+      // Masa label follows the selected Panjika system.
+      ref.watch(panchangSchoolProvider);
       try {
         final service = ref.read(hinduCalendarServiceProvider);
         final monthSystem = ref.watch(hinduMonthSystemProvider);
@@ -100,6 +102,8 @@ final instantPrimaryLabelProvider = FutureProvider.autoDispose
 final hinduYearForSheetProvider = FutureProvider.autoDispose
     .family<({int year, String eraLabel})?, DateTime>((ref, date) async {
       if (!isPrimarySystem(ref, AppCalendarSystem.hindu)) return null;
+      // The era year is derived from the school's masa (New Year boundary).
+      ref.watch(panchangSchoolProvider);
       try {
         final service = ref.read(hinduCalendarServiceProvider);
         final yearEra = ref.watch(hinduYearEraProvider);

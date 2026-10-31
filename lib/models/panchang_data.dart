@@ -373,10 +373,15 @@ class PanchangData {
       // timingOverride additionally matches when its tithi begins within
       // ~60 min after sunrise (sampled as `rawTithiDominant` by callers).
       // Additive only — sunrise matches above are never removed, so the
-      // Bisuddha two-day Shashthi (Oct 16+17 2026) survives while Saptami
-      // extends onto the 17th. Override festivals keep their own
-      // checkpoint; nakshatra/Solar festivals returned earlier.
-      if (!isMatch && rawTithiDominant != null) {
+      // Bisuddha two-day Shashthi (Oct 16+17 2026) survives.
+      //
+      // Rules may opt out with `dominantTithi: 'strict'` (the Durga Puja
+      // days): their tithi timings already give the intended sunrise days,
+      // and the grace window would add a spurious extra day (Bisuddha
+      // Saptami on Oct 17, Surya Siddhanta Ashtami on Oct 18, 2026).
+      if (!isMatch &&
+          f.panchangRules.usesDominantGrace &&
+          rawTithiDominant != null) {
         if (f.panchangRules.timingOverride == null ||
             !timingOverrideCheckpoints.contains(
               f.panchangRules.timingOverride,

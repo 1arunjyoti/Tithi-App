@@ -109,8 +109,8 @@ enum VriddhiPolicy {
 /// How the dominant tithi is sampled around sunrise.
 enum DominantTithiPolicy {
   /// Sample a grace window after sunrise for festivals whose tithi begins
-  /// shortly after sunrise. Current shipped behaviour
-  /// (`kDominantTithiGrace`, 60 minutes).
+  /// shortly after sunrise. Current shipped behaviour, except rules that set
+  /// `PanchangRules.dominantTithi = 'strict'` (the Durga Puja days).
   grace,
 
   /// Match only the exact sunrise tithi.
