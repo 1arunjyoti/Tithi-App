@@ -17,6 +17,24 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-10-30 - 0.8.1+22
+
+### Panjika switch keeps the home screen alive
+Switching between Bisuddhasiddhanta and Suryasiddhanta now recomputes the home screen and calendar in place instead of leaving them blank until a restart.
+
+- `panchangInitProvider` now **watches** `panchangServiceProvider`: a school switch replaces the service with a new, uninitialized instance, so the init future must be invalidated with it. Reading the service kept serving the previous instance's completed init; downstream computations then threw `PanchangService not initialized`, the hero fell back to its skeleton and the festival card said "No festivals".
+- Calendar month/header providers, the tithi sheet, the schedule label and `upcomingFestivalsProvider` watch the school (or the shared init), so their cached families recompute. The tithi/nakshatra/yoga-karana timing families, the moon-phase providers and festival export await the shared init instead of calling `service.init()` themselves.
+- Sync caches are school-keyed: `festivalMonthPrecacheKey`, `secondaryCacheKey`, `monthPrecacheKey`, `adaptiveNavKey` and the persisted adaptive signature in `lib/features/calendar/data/calendar_caches.dart`, plus `headerCacheKey` in `header_builders.dart`. Without the suffix the instant stale fallback showed one school's labels, headers and nav targets under the other.
+- Regression: `test/panchang_school_switch_test.dart` initializes the first service, swaps the school and asserts the replacement is initialized; it fails if the init goes back to `read`.
+
+### Durga Puja 2026 keeps its two-sunrise days under both Panjika systems
+Durga Puja resolves to the reference dates instead of gaining an extra Saptami (Bisuddha) or Ashtami (Surya Siddhanta) day.
+
+- New per-rule `dominant_tithi` (`"grace"` default, `"strict"` opt-out) in `PanchangRules` (`lib/models/festival.dart`, Hive field 15 with `defaultValue: 'grace'`). `PanchangData.fromRawTithi` skips the 60-minute dominant-tithi grace window for `strict` rules; everything else is unchanged.
+- The five `*_durga_puja` entries in `assets/festivals.json` are `"dominant_tithi": "strict"` with `vriddhi` left at the default `"both"`. `saptami_durga_puja` no longer carries `vriddhi: "second"` — Surya Siddhanta Saptami is a real two-sunrise run and must stay on both days.
+- Result: Bisuddha Shashthi Oct 16 + 17, Saptami Oct 18 only; Surya Siddhanta Shashthi Oct 16 only, Saptami Oct 17 + 18. Ashtami Oct 19 through Dashami Oct 21 under both.
+- Regression: `test/durga_puja_2026_test.dart` pins both day maps from the supplied tithi boundaries and proves the grace path would have added the spurious day.
+
 ## 2026-10-28 - 0.7.20+21
 
 ### Surya Siddhanta Panjika system

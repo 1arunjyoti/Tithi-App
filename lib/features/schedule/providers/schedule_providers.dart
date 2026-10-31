@@ -46,6 +46,10 @@ final hinduDateForScheduleProvider = FutureProvider.autoDispose
       // Only calculate if Hindu is primary or secondary
       if (!showsCalendarSystem(ref, cp.AppCalendarSystem.hindu)) return null;
 
+      // The tithi and masa follow the selected Panjika system; watch it so the
+      // cached family instance recomputes after a school switch.
+      ref.watch(cp.panchangSchoolProvider);
+
       try {
         final service = ref.read(hinduCalendarServiceProvider);
         final monthSystem = ref.watch(cp.hinduMonthSystemProvider);

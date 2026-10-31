@@ -698,6 +698,11 @@ const timingOverrideCheckpoints = {
   'chandrodaya',
 };
 
+/// Normalized `PanchangRules.dominantTithi`: only `'strict'` is meaningful,
+/// every other value (including null and unknown) keeps the grace window.
+String normalizeDominantTithi(String? raw) =>
+    raw?.trim().toLowerCase() == 'strict' ? 'strict' : 'grace';
+
 @HiveType(typeId: 4)
 class PanchangRules {
   @HiveField(0)
@@ -793,6 +798,26 @@ class PanchangRules {
   @HiveField(14, defaultValue: false)
   final bool avoidBhadra;
 
+  /// Dominant-tithi sampling: `'grace'` (default, shipped Drik convention) or
+  /// `'strict'`.
+  ///
+  /// `'grace'` additionally matches a festival when its tithi begins within
+  /// [kDominantTithiGrace] after sunrise. `'strict'` matches only the tithi
+  /// prevailing at the festival's own checkpoint (sunrise by default).
+  ///
+  /// The five Durga Puja days use `'strict'`: their tithi timings already
+  /// produce the intended observance days, and the grace window would add an
+  /// extra one (Bisuddha Saptami beginning 05:54 on Oct 17 2026, ~17 min after
+  /// sunrise, put Saptami on both Oct 17 and 18). Under Surya Siddhanta the
+  /// same window added Ashtami on Oct 18. Vriddhi (`'both'` for these entries)
+  /// still keeps genuine two-sunrise runs, so the schools diverge correctly:
+  /// Bisuddha Shashthi Oct 16+17, Saptami Oct 18; Surya Siddhanta Shashthi
+  /// Oct 16, Saptami Oct 17+18.
+  /// defaultValue keeps pre-existing Hive boxes (written before field 15)
+  /// readable after upgrades instead of throwing on a null cast.
+  @HiveField(15, defaultValue: 'grace')
+  final String dominantTithi;
+
   const PanchangRules({
     required this.masa,
     required this.paksha,
@@ -809,7 +834,12 @@ class PanchangRules {
     this.clipToTithi = false,
     this.sankrantiRashi,
     this.avoidBhadra = false,
+    this.dominantTithi = 'grace',
   });
+
+  /// Whether the dominant-tithi grace window may add a match for this rule.
+  bool get usesDominantGrace =>
+      normalizeDominantTithi(dominantTithi) == 'grace';
 
   factory PanchangRules.fromJson(Map<String, dynamic> json) {
     return PanchangRules(
@@ -837,6 +867,9 @@ class PanchangRules {
       ),
       avoidBhadra:
           json['avoidBhadra'] ?? json['avoid_bhadra'] ?? false,
+      dominantTithi: normalizeDominantTithi(
+        json['dominantTithi'] ?? json['dominant_tithi'],
+      ),
     );
   }
 }

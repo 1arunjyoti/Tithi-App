@@ -104,9 +104,17 @@ final resolvedSolarContextProvider =
 /// flow resolves, same as [festivalInitProvider]: the month batch awaits
 /// both inits anyway, so nothing downstream is delayed beyond the gate,
 /// and the copy no longer contends with the permission dialog.
+///
+/// `watch`, not `read`: [panchangServiceProvider] is a *new instance* when the
+/// calculation school changes, and only this provider knows how to initialize
+/// it. Reading the service here left every downstream provider awaiting the
+/// previous instance's completed init, then computing on an uninitialized
+/// service — which throws and blanked the home screen until an app restart.
+/// Watching makes the school switch invalidate the init (and every consumer
+/// that awaits this future), so the replacement service is initialized once.
 final panchangInitProvider = FutureProvider<void>((ref) async {
   await ref.watch(locationPermissionGateProvider).future;
-  final service = ref.read(panchangServiceProvider);
+  final service = ref.watch(panchangServiceProvider);
   await service.init();
 });
 
@@ -534,10 +542,11 @@ final tithiTimingsProvider =
       ({DateTime start, DateTime end})?,
       ({DateTime date, int tithiIndex, double latitude, double longitude})
     >((ref, params) async {
+      // School-scoped: these families are cached for the process, so they must
+      // watch the shared init to recompute when the Panjika system replaces the
+      // service (and to never call into an uninitialized instance).
+      await ref.watch(panchangInitProvider.future);
       final service = ref.read(panchangServiceProvider);
-      if (!service.isInitialized) {
-        await service.init();
-      }
 
       // The elapsed Moon-minus-Sun separation is the same quantity the day
       // pipeline solves its tithi transitions with, so the sheet's span is
@@ -578,10 +587,11 @@ final nakshatraTimingsProvider = FutureProvider.family<
   ({int index, String nakshatra, DateTime start, DateTime end})?,
   ({DateTime date, double latitude, double longitude})
 >((ref, params) async {
+  // School-scoped: this family is cached for the process, so it must watch the
+  // shared init to recompute when the Panjika system replaces the service (and
+  // to never call into an uninitialized instance).
+  await ref.watch(panchangInitProvider.future);
   final service = ref.read(panchangServiceProvider);
-  if (!service.isInitialized) {
-    await service.init();
-  }
 
   final normalized = DateTime(
     params.date.year,
@@ -639,10 +649,11 @@ final yogaKaranaTimingsProvider = FutureProvider.family<
   })?,
   ({DateTime date, double latitude, double longitude})
 >((ref, params) async {
+  // School-scoped: this family is cached for the process, so it must watch the
+  // shared init to recompute when the Panjika system replaces the service (and
+  // to never call into an uninitialized instance).
+  await ref.watch(panchangInitProvider.future);
   final service = ref.read(panchangServiceProvider);
-  if (!service.isInitialized) {
-    await service.init();
-  }
 
   final normalized = DateTime(
     params.date.year,

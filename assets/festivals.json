@@ -2782,7 +2782,8 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 6,
-      "conditions": "Shashthi"
+      "conditions": "Shashthi",
+      "dominant_tithi": "strict"
     },
     "rituals": {
       "steps": [
@@ -2828,7 +2829,7 @@
       "paksha": "Shukla",
       "tithi": 7,
       "conditions": "Saptami",
-      "vriddhi": "second"
+      "dominant_tithi": "strict"
     },
     "rituals": {
       "steps": [
@@ -2873,7 +2874,8 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 8,
-      "conditions": "Ashtami"
+      "conditions": "Ashtami",
+      "dominant_tithi": "strict"
     },
     "rituals": {
       "steps": [
@@ -2961,7 +2963,8 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 9,
-      "conditions": "Navami"
+      "conditions": "Navami",
+      "dominant_tithi": "strict"
     },
     "rituals": {
       "steps": [
@@ -3006,7 +3009,8 @@
       "masa": "Ashwin",
       "paksha": "Shukla",
       "tithi": 10,
-      "conditions": "Dasami"
+      "conditions": "Dasami",
+      "dominant_tithi": "strict"
     },
     "rituals": {
       "steps": [
@@ -3822,43 +3826,44 @@
     }
   },
   {
-    "id": "kartik_purnima",
-    "regions": ["all"],
-    "name": "Kartik Purnima",
+    "id": "dev_diwali",
+    "name": "Dev Diwali",
     "category": "major",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Kartik Purnima",
-      "nameHindi": "कार्तिक पूर्णिमा",
-      "nameBengali": "কার্তিক পূর্ণিমা",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "देव दीपावली",
+      "nameEnglish": "Dev Diwali",
+      "nameHindi": "देव दीपावली",
+      "nameBengali": "দেব দীপাবলি",
+      "nameTelugu": "దేవ దీపావళి",
+      "nameKannada": "ದೇವ ದೀಪಾವಳಿ",
+      "nameTamil": "தேவ தீபாவளி",
+      "nameMalayalam": "ദേവ ദീപാവലി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Dev Diwali - Diwali of the Gods",
-      "addtional_description": ""
+      "description": "The Diwali of the Gods — Kartik Purnima, when Shiva destroyed the three cities of Tripurasura and the gods lit lamps in celebration; Varanasi's ghats glow with lakhs of earthen lamps at dusk",
+      "addtional_description": "Dev Diwali — also Dev Deepawali, Tripurari Purnima, or Tripurotsav — falls on Kartik Purnima, the full moon that closes the sacred month of Kartik, exactly fifteen days after the Diwali of humans. Its most famous celebration is in Varanasi, where at dusk the entire crescent of the Ganga's ghats, from Assi to Rajghat, is lit with lakhs of earthen lamps. The belief behind the name is that on this night the gods themselves descend to bathe in the Ganga at Kashi and keep their own festival of lights on its banks — and the city lights its ghats as a welcome to them.\n\nThe legend is Shiva's victory over Tripurasura. Three asura brothers — Tarakaksha, Kamalaksha and Vidyunmali — won a boon from Brahma: three invincible cities, one of gold in the heavens, one of silver in the sky, one of iron on the earth, built by the architect Maya. They would move independently and align only once in a thousand years — and only when they stood in a single line could they be destroyed, and only by a single arrow. Secure in this, they grew oppressive, and the gods, driven from their realms, went to Shiva. The task demanded that the whole cosmos be turned into a weapon: the earth became his chariot, the sun and moon its wheels, Brahma the charioteer, Mount Meru his bow, the serpent Vasuki the bowstring, and Vishnu himself the arrow. When the alignment came, on the Purnima of Kartik, Shiva loosed one arrow and burned the three cities to ash. The gods, delivered, lit lamps in celebration — and that first festival of lamps is held to be the origin of Dev Diwali. Shiva took the name Tripurari, 'the enemy of the three cities.'"
     },
     "panchang_rules": {
       "masa": "Kartika",
       "paksha": "Shukla",
       "tithi": 15,
-      "conditions": "Purnima"
+      "conditions": "Purnima",
+      "timingOverride": "pradosh"
     },
     "rituals": {
       "steps": [
-        "Ganga Snan",
-        "Deep Daan",
-        "Vishnu Puja",
-        "Ghat lighting"
+        "Kartik Snan: Before dawn, devotees take the final holy dip of the Kartik month in the Ganga, offering arghya to the rising sun and completing the month's vow with a sankalp of thanksgiving",
+        "Deep Daan: The gift of lamps is the central act — diyas floated on the Ganga or any water body, rows of five, eleven, twenty-one, fifty-one, or 108 lamps at a temple or ghat, lamps at the Tulsi and the door, each lit for the gods, the river, or the departed rather than for decoration",
+        "Pradosh Lamp-Lighting: At dusk, the lamps are lit from the water's edge up the steps of every ghat; in Varanasi the whole crescent from Assi to Rajghat glows at once, and the stone hazara lamp-pillars at Panchganga Ghat are lit on this night and no other",
+        "Ganga Aarti: The evening aarti at Dashashwamedh Ghat is performed at its grandest scale of the year, with chanting, drumming, conch-blowing, and burning braziers, while boats fill the river to watch the lit ghats",
+        "Akash Deep: The sky lamp hoisted on a bamboo pole — kept through the month of Kartik to guide the departed — is offered for the last time, closing the month of Kartik"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "शुभं करोति कल्याणमारोग्यं धनसंपदा । शत्रुबुद्धिविनाशाय दीपज्योतिर्नमोऽस्तुते ॥ (Shubham karoti kalyanam arogyam dhana-sampada, shatru-buddhi-vinashaya deepa-jyotir namostute — 'Salutation to the light of the lamp, which brings auspiciousness, welfare, health and wealth, and destroys the intellect of enemies')",
+      "fasting": "Devotees observe the Kartik Purnima vrat, often a partial fast broken after the evening lamp-offering; the month-long Kartik vrata — daily baths and lamps — concludes on this day"
     },
     "media": {
       "audio_stotra": ""
@@ -3996,7 +4001,7 @@
   },
   {
     "id": "dattatreya_jayanti",
-    "regions": ["all"],
+    "regions": ["west", "south", "central"],
     "name": "Dattatreya Jayanti",
     "category": "major",
     "nameRegional": {
@@ -4021,7 +4026,8 @@
       "masa": "Margashirsha",
       "paksha": "Shukla",
       "tithi": 15,
-      "conditions": "Purnima"
+      "conditions": "Purnima",
+      "timingOverride": "pradosh"
     },
     "rituals": {
       "steps": [
