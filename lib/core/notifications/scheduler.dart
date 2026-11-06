@@ -3,6 +3,10 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../features/panchang/data/panchang_cache.dart';
+import '../../features/panchang/domain/panchang_day.dart';
+import '../../features/panchang/domain/panchang_day_projection.dart';
+import '../../features/panchang/domain/panchang_day_resolver.dart';
 import '../../models/festival.dart';
 import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
@@ -12,8 +16,8 @@ import '../../services/festival_matching_pipeline.dart';
 import '../../services/panchang_service.dart';
 import '../../services/shloka_service.dart';
 import '../../services/storage_service.dart';
-import '../../services/sunrise_calculator.dart';
 import '../../utils/date_utils.dart';
+import '../location/place_clock.dart';
 import 'festival_store.dart';
 import 'notification_keys.dart';
 import 'scheduling_parts.dart';
@@ -30,10 +34,48 @@ import 'scheduling_parts.dart';
 /// Constructed per call from the owning service
 /// (`NotificationScheduler(plugin: ..., box: ...)`); holds no global state.
 class NotificationScheduler {
-  NotificationScheduler({required this.plugin, required this.box});
+  NotificationScheduler({
+    required this.plugin,
+    required this.box,
+    this.clock = kDeviceClock,
+  });
 
   final FlutterLocalNotificationsPlugin plugin;
   final Box? box;
+
+  /// Clock for "now", every wall time, and the civil date the content covers.
+  ///
+  /// Device clock for live location, the selected place's clock for a place
+  /// picked on the map (see [PlaceClock]). Scheduling on `tz.local` regardless
+  /// is what made a reminder fire on the phone's morning for a panchang day
+  /// that had already ended at the place.
+  final PlaceClock clock;
+
+  tz.Location? get _zone => placeClockLocation(clock);
+
+  DateTime get _now => nowInPlaceClock(clock);
+
+  /// Zone-free civil date of "now" on [clock].
+  DateTime get _civilToday {
+    final now = _now;
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  /// A wall time on [clock]; the device zone when no place zone applies.
+  ///
+  /// Built from calendar fields (not `add(Duration(days: 1))`) so a DST
+  /// transition moves the wall time instead of shifting it by an hour.
+  /// Always a [tz.TZDateTime]: `zonedSchedule` requires one.
+  tz.TZDateTime _wallTime(int year, int month, int day, int hour, int minute) {
+    return tz.TZDateTime(
+      _zone ?? tz.local,
+      year,
+      month,
+      day,
+      hour,
+      minute,
+    );
+  }
 
   /// Get notification time (default 8:00 AM)
   Future<({int hour, int minute})> getNotificationTime() async {
@@ -46,7 +88,7 @@ class NotificationScheduler {
   Future<void> cancelShlokaNotifications() async {
     // Cancel IDs 1000 to 1006 (7 days)
     for (int i = 0; i < 7; i++) {
-      await plugin.cancel(NotificationKeys.shlokaNotificationIdBase + i);
+      await plugin.cancel(id: NotificationKeys.shlokaNotificationIdBase + i);
     }
   }
 
@@ -65,19 +107,18 @@ class NotificationScheduler {
     await shlokaService.init();
 
     final time = await getNotificationTime();
-    final now = tz.TZDateTime.now(tz.local);
+    final now = _now;
 
     final shlokas = shlokaService.getShlokasForNextNDays(7);
 
     for (int i = 0; i < shlokas.length; i++) {
-      var scheduledDate = tz.TZDateTime(
-        tz.local,
+      final scheduledDate = _wallTime(
         now.year,
         now.month,
-        now.day,
+        now.day + i,
         time.hour,
         time.minute,
-      ).add(Duration(days: i));
+      );
 
       // If the calculated time for "today" (i=0) has passed,
       // we might still want to show it if we just enabled it?
@@ -99,11 +140,11 @@ class NotificationScheduler {
       );
 
       await plugin.zonedSchedule(
-        NotificationKeys.shlokaNotificationIdBase + i,
-        'Daily Wisdom',
-        '"${shlokas[i].text}"\n\n${shlokas[i].translation}',
-        scheduledDate,
-        notificationDetails,
+        id: NotificationKeys.shlokaNotificationIdBase + i,
+        title: 'Daily Wisdom',
+        body: '"${shlokas[i].text}"\n\n${shlokas[i].translation}',
+        scheduledDate: scheduledDate,
+        notificationDetails: notificationDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
     }
@@ -129,7 +170,7 @@ class NotificationScheduler {
     // IDs [NotificationKeys.festivalNotificationIdBase, +NotificationKeys.festivalWindowDays * 2):
     // two slots (on-day, day-before) per scanned day.
     for (int i = 0; i < NotificationKeys.festivalWindowDays * 2; i++) {
-      await plugin.cancel(NotificationKeys.festivalNotificationIdBase + i);
+      await plugin.cancel(id: NotificationKeys.festivalNotificationIdBase + i);
     }
   }
 
@@ -161,13 +202,16 @@ class NotificationScheduler {
     final yearEraIndex = prefs.yearEraIndex;
     final tithiMode = prefs.tithiMode;
 
-    final service = PanchangService();
+    // The background isolate computes the same days the UI does, so it must
+    // use the same school and publish it to the cache signature first.
+    activePanchangSchool = prefs.panchangSchool;
+    final service = PanchangService(school: prefs.panchangSchool);
     await service.init();
     final festivals = await loadFestivalsForNotification();
     if (festivals.isEmpty) return;
 
     final time = await getNotificationTime();
-    final now = tz.TZDateTime.now(tz.local);
+    final now = _now;
     final today = DateTime(now.year, now.month, now.day);
 
     final notificationDetails = notificationChannel(
@@ -181,11 +225,6 @@ class NotificationScheduler {
     final window = <DateTime, PanchangData>{};
     for (int i = -2; i < NotificationKeys.festivalWindowDays + 2; i++) {
       final date = today.add(Duration(days: i));
-      final sunrise = SunriseCalculator.calculateSunriseIST(
-        date: date,
-        latitude: latitude,
-        longitude: longitude,
-      );
       window[date] = await computePanchangForDate(
         date: date,
         service: service,
@@ -193,7 +232,6 @@ class NotificationScheduler {
         longitude: longitude,
         festivals: festivals,
         monthSystem: monthSystem,
-        sunriseTime: sunrise,
       );
     }
     // Shared pipeline: same Vriddhi trimming as the UI grid, so reminders
@@ -229,8 +267,7 @@ class NotificationScheduler {
       );
 
       if (wantOnDay) {
-        final onDay = tz.TZDateTime(
-          tz.local,
+        final onDay = _wallTime(
           date.year,
           date.month,
           date.day,
@@ -239,31 +276,30 @@ class NotificationScheduler {
         );
         if (!onDay.isBefore(now)) {
           await plugin.zonedSchedule(
-            NotificationKeys.festivalNotificationIdBase + i * 2,
-            festival.name,
-            'Today • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
-            onDay,
-            notificationDetails,
+            id: NotificationKeys.festivalNotificationIdBase + i * 2,
+            title: festival.name,
+            body: 'Today • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
+            scheduledDate: onDay,
+            notificationDetails: notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           );
         }
       }
       if (wantDayBefore) {
-        final eve = tz.TZDateTime(
-          tz.local,
+        final eve = _wallTime(
           date.year,
           date.month,
-          date.day,
+          date.day - 1,
           time.hour,
           time.minute,
-        ).subtract(const Duration(days: 1));
+        );
         if (!eve.isBefore(now)) {
           await plugin.zonedSchedule(
-            NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
-            festival.name,
-            'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
-            eve,
-            notificationDetails,
+            id: NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
+            title: festival.name,
+            body: 'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
+            scheduledDate: eve,
+            notificationDetails: notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           );
         }
@@ -389,14 +425,13 @@ class NotificationScheduler {
   Future<void> scheduleDailyNotification({String? title, String? body}) async {
 
     // Cancel existing notification first
-    await plugin.cancel(NotificationKeys.dailyNotificationId);
+    await plugin.cancel(id: NotificationKeys.dailyNotificationId);
 
     final time = await getNotificationTime();
 
     // Calculate next notification time
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
+    final now = _now;
+    var scheduledDate = _wallTime(
       now.year,
       now.month,
       now.day,
@@ -406,7 +441,13 @@ class NotificationScheduler {
 
     // If time has passed today, schedule for tomorrow
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = _wallTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        time.hour,
+        time.minute,
+      );
     }
 
     final notificationDetails = notificationChannel(
@@ -420,11 +461,11 @@ class NotificationScheduler {
     final resolvedBody = body ?? content.body;
 
     await plugin.zonedSchedule(
-      NotificationKeys.dailyNotificationId,
-      resolvedTitle,
-      resolvedBody,
-      scheduledDate,
-      notificationDetails,
+      id: NotificationKeys.dailyNotificationId,
+      title: resolvedTitle,
+      body: resolvedBody,
+      scheduledDate: scheduledDate,
+      notificationDetails: notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
     );
@@ -438,11 +479,14 @@ class NotificationScheduler {
     final generated = await buildDailyNotificationContent();
     await box?.put(NotificationKeys.dailyTitle, generated.title);
     await box?.put(NotificationKeys.dailyBody, generated.body);
-    await box?.put(NotificationKeys.dailyContentDate, panchangDateKey(DateTime.now()));
+    await box?.put(
+      NotificationKeys.dailyContentDate,
+      panchangDateKey(_civilToday),
+    );
   }
 
   Future<({String title, String body})> getDailyNotificationContent() async {
-    final todayKey = panchangDateKey(DateTime.now());
+    final todayKey = panchangDateKey(_civilToday);
     final cachedDate = box?.get(NotificationKeys.dailyContentDate) as String?;
     final cachedTitle = box?.get(NotificationKeys.dailyTitle) as String?;
     final cachedBody = box?.get(NotificationKeys.dailyBody) as String?;
@@ -463,6 +507,12 @@ class NotificationScheduler {
   /// Full panchang for [date] with the same intraday checkpoints the app UI
   /// uses, so festival matching (timingOverride, Kshaya) agrees with what
   /// the user sees. Shared by the daily content and the festival scanner.
+  /// Computes one notification day through the canonical Panchang day.
+  ///
+  /// Scheduling has no Hive panchang cache and runs in the background isolate,
+  /// so it reads the resolver directly. A polar day yields null solar anchors;
+  /// the window then has no sunrise-anchored content for that day instead of
+  /// failing the whole run.
   Future<PanchangData> computePanchangForDate({
     required DateTime date,
     required PanchangService service,
@@ -470,110 +520,37 @@ class NotificationScheduler {
     required double longitude,
     required List<Festival> festivals,
     required HinduMonthSystem monthSystem,
-    required DateTime sunriseTime,
   }) async {
-    final sunsetTime = SunriseCalculator.calculateSunsetIST(
+    final day = await PanchangDayResolver(service: service).resolve(
       date: date,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final nextSunriseTime = SunriseCalculator.calculateSunriseIST(
-      date: date.add(const Duration(days: 1)),
-      latitude: latitude,
-      longitude: longitude,
+      place: PanchangPlace(latitude: latitude, longitude: longitude),
+      computeSankranti: needsSankrantiSearchOn(festivals, date),
     );
 
-    final rawTithi = await service.calculateTithi(
-      sunriseTime,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final masa = await service.calculateMasa(
-      sunriseTime,
-      rawTithi,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    // Intraday checkpoints so timingOverride festivals (madhyahna,
-    // aparahna, nishita, pradosha) and Kshaya tithis match the app UI.
-    final rawTithiMadhyahna = await service.calculateTithi(
-      sunriseTime.add(
-        Duration(minutes: sunsetTime.difference(sunriseTime).inMinutes ~/ 2),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiAparahna = await service.calculateTithi(
-      sunriseTime.add(
-        Duration(
-          minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
-        ),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiNishita = await service.calculateTithi(
-      sunsetTime.add(
-        Duration(
-          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
-        ),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiPradosha = await service.calculateTithi(
-      sunsetTime.add(
-        Duration(
-          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 10,
-        ),
-      ),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithiNextSunrise = await service.calculateTithi(
-      nextSunriseTime,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final masaNextSunrise = await service.calculateMasa(
-      nextSunriseTime,
-      rawTithiNextSunrise,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    // Dominant-tithi grace checkpoint (same Drik rule as the UI batch).
-    final rawTithiDominant = await service.calculateTithi(
-      sunriseTime.add(kDominantTithiGrace),
-      latitude: latitude,
-      longitude: longitude,
-    );
+    // Kshaya detection compares the sunrise masa with the next-sunrise masa;
+    // without a next sunrise there is nothing to compare.
+    var masaNextSunrise = '';
+    final nextSunrise = day.solar.nextSunrise;
+    final rawTithiNextSunrise = day.checkpointTithis.nextSunrise;
+    if (nextSunrise != null && rawTithiNextSunrise != null) {
+      masaNextSunrise = await service.calculateMasa(
+        nextSunrise,
+        rawTithiNextSunrise,
+        latitude: latitude,
+        longitude: longitude,
+      );
+    }
+
     // Nakshatra at sunrise for nakshatra-conditioned festivals (Mula
     // Avahan). Gated so days without such festivals skip the extra call.
     final needsNakshatra = festivals.any((f) => f.nakshatraCondition != null);
-    final nakshatraAtSunrise = needsNakshatra
-        ? await service.calculateNakshatra(
-            sunriseTime,
-            latitude: latitude,
-            longitude: longitude,
-          )
-        : null;
 
-    return PanchangData.fromRawTithi(
-      date: date,
-      rawTithi: rawTithi,
-      masa: masa,
-      allFestivals: festivals,
+    return projectPanchangDay(
+      day,
+      festivals: festivals,
       monthSystem: monthSystem,
-      sunrise: sunriseTime,
-      sunset: sunsetTime,
-      rawTithiMadhyahna: rawTithiMadhyahna,
-      rawTithiAparahna: rawTithiAparahna,
-      rawTithiNishita: rawTithiNishita,
-      rawTithiPradosha: rawTithiPradosha,
-      rawTithiNextSunrise: rawTithiNextSunrise,
       masaNextSunrise: masaNextSunrise,
-      nakshatraAtSunrise: nakshatraAtSunrise,
-      rawTithiDominant: rawTithiDominant,
+      nakshatraAtSunrise: needsNakshatra ? day.limbs.nakshatra : null,
     );
   }
 
@@ -587,10 +564,13 @@ class NotificationScheduler {
       final prefs = readCalendarPrefs(settingsBox);
       final monthSystem = prefs.monthSystem;
 
-      final service = PanchangService();
+      // The background isolate computes the same days the UI does, so it must
+    // use the same school and publish it to the cache signature first.
+    activePanchangSchool = prefs.panchangSchool;
+    final service = PanchangService(school: prefs.panchangSchool);
       await service.init();
 
-      final today = DateTime.now();
+      final today = _civilToday;
       final date = DateTime(today.year, today.month, today.day);
 
       final festivals = await loadFestivalsForNotification();
@@ -600,11 +580,6 @@ class NotificationScheduler {
       final contextDays = <DateTime, PanchangData>{};
       for (int i = -1; i <= 1; i++) {
         final day = date.add(Duration(days: i));
-        final daySunrise = SunriseCalculator.calculateSunriseIST(
-          date: day,
-          latitude: latitude,
-          longitude: longitude,
-        );
         contextDays[day] = await computePanchangForDate(
           date: day,
           service: service,
@@ -612,7 +587,6 @@ class NotificationScheduler {
           longitude: longitude,
           festivals: festivals,
           monthSystem: monthSystem,
-          sunriseTime: daySunrise,
         );
       }
       final panchang =
@@ -676,7 +650,12 @@ class NotificationScheduler {
       description: 'Daily tithi and panchang notifications',
     );
 
-    await plugin.show(0, title, body, notificationDetails);
+    await plugin.show(
+      id: 0,
+      title: title,
+      body: body,
+      notificationDetails: notificationDetails,
+    );
 
     if (kDebugMode) {
       print('Showed test notification: $title');
@@ -715,9 +694,8 @@ class NotificationScheduler {
     // which had collision risk after ~125 sankalpas).
     final notificationId = _getOrCreateSankalpaNotificationId(sankalpa.id);
 
-    final now = tz.TZDateTime.now(tz.local);
-    var scheduledDate = tz.TZDateTime(
-      tz.local,
+    final now = _now;
+    var scheduledDate = _wallTime(
       now.year,
       now.month,
       now.day,
@@ -727,7 +705,13 @@ class NotificationScheduler {
 
     // If time passed, start tomorrow
     if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
+      scheduledDate = _wallTime(
+        now.year,
+        now.month,
+        now.day + 1,
+        sankalpa.reminderHour,
+        sankalpa.reminderMinute,
+      );
     }
 
     // Check if end date passed (if we used strict date checking)
@@ -736,10 +720,9 @@ class NotificationScheduler {
 
     // Sankalpa model logic: it has endDate.
     if (scheduledDate.isAfter(
-      tz.TZDateTime.from(
-        sankalpa.endDate,
-        tz.local,
-      ).add(const Duration(days: 1)),
+      tz.TZDateTime.from(sankalpa.endDate, _zone ?? tz.local).add(
+        const Duration(days: 1),
+      ),
     )) {
       // Allow one day grace or stop exactly? Let's stop if past end date.
       return;
@@ -752,11 +735,11 @@ class NotificationScheduler {
     );
 
     await plugin.zonedSchedule(
-      notificationId,
-      'Sankalpa Reminder',
-      sankalpa.title,
-      scheduledDate,
-      notificationDetails,
+      id: notificationId,
+      title: 'Sankalpa Reminder',
+      body: sankalpa.title,
+      scheduledDate: scheduledDate,
+      notificationDetails: notificationDetails,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time, // Repeat daily
       payload: 'sankalpa:${sankalpa.id}',
@@ -772,7 +755,7 @@ class NotificationScheduler {
   /// Cancel a sankalpa reminder
   Future<void> cancelSankalpaReminder(String id) async {
     final notificationId = _getOrCreateSankalpaNotificationId(id);
-    await plugin.cancel(notificationId);
+    await plugin.cancel(id: notificationId);
     if (kDebugMode) {
       print('Cancelled sankalpa notification: $id (ID: $notificationId)');
     }

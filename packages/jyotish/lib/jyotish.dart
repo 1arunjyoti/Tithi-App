@@ -17,10 +17,14 @@ export 'src/exceptions/jyotish_exception.dart';
 export 'src/jyotish_core.dart';
 // Models
 export 'src/models/calculation_flags.dart';
+export 'src/models/ephemeris_data_range.dart';
+export 'src/models/ephemeris_provenance.dart';
 export 'src/models/geographic_location.dart';
 export 'src/models/planet.dart';
 export 'src/models/planet_position.dart';
+export 'src/models/sun_moon_positions.dart';
 export 'src/models/vedic_chart.dart';
 // Services
 export 'src/services/ephemeris_service.dart';
+export 'src/services/planetary_dignity.dart';
 export 'src/services/vedic_chart_service.dart';

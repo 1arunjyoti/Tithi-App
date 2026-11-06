@@ -338,34 +338,11 @@ void main() {
       expect(verdict.adhika, isFalse);
     });
 
-    test('wrapPairIndex finds the 30→1 straddle', () {
-      // Arrange: mid-lunation sweep with the wrap between index 2 and 3
-      const tithis = [27.5, 28.6, 29.7, 0.8, 1.9, 3.0];
-
-      // Act
-      final index = wrapPairIndex(tithis);
-
-      // Assert
-      expect(index, equals(2));
-    });
-
-    test('wrapPairIndex returns -1 with no wrap in window', () {
-      expect(wrapPairIndex([5.0, 6.0, 7.0, 8.0]), equals(-1));
-      expect(wrapPairIndex([25.0, 26.0, 27.0]), equals(-1));
-    });
-
-    test('interpolateNewMoonInstant weights by wrap distance', () {
-      // Arrange: Aug 17 noon tithi 29.7, Aug 18 noon tithi 0.8
-      final dayA = DateTime(2031, 8, 17, 12);
-      final dayB = DateTime(2031, 8, 18, 12);
-
-      // Act
-      final instant = interpolateNewMoonInstant(dayA, 29.7, dayB, 0.8);
-
-      // Assert: 0.3 / (0.3 + 0.8) of the way — late Aug 17, before a
-      // hypothetical Aug 18 00:32 new moon within tolerance
-      expect(instant.day, equals(17));
-      expect(instant.hour, greaterThanOrEqualTo(18));
+    test('newMoonDistance is smallest just before the wrap', () {
+      // Arrange / Act / Assert: the fallback picks the noon nearest the new
+      // moon, which is the largest pre-wrap tithi in a mid-lunation sweep.
+      expect(newMoonDistance(29.7), lessThan(newMoonDistance(28.0)));
+      expect(newMoonDistance(28.0), lessThan(newMoonDistance(20.0)));
     });
   });
 }

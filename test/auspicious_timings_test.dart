@@ -121,7 +121,7 @@ void main() {
         sunset: DateTime(2026, 10, 3, 17, 36),
         nextSunrise: DateTime(2026, 10, 4, 5, 25),
         tithiNumber: 13,
-        tithiEnd: DateTime(2026, 10, 3, 19, 0),
+        tithiEnd: DateTime(2026, 10, 3, 19),
       );
 
       // Assert

@@ -82,13 +82,13 @@ Future<Map<DateTime, CalendarCellData>> buildCalendarCellData(
   final flagMonthSystem = includeFestivals
       ? ref.watch(cp.hinduMonthSystemProvider)
       : null;
-  final flagCoords = includeFestivals
-      ? ref.watch(resolvedCoordinatesProvider)
+  final flagSolar = includeFestivals
+      ? ref.watch(resolvedSolarContextProvider)
       : null;
   final flagCacheBox = includeFestivals
       ? await preparePanchangCacheBox(
-          flagCoords!.latitude,
-          flagCoords.longitude,
+          flagSolar!.latitude,
+          flagSolar.longitude,
         )
       : null;
 
@@ -132,9 +132,11 @@ Future<Map<DateTime, CalendarCellData>> buildCalendarCellData(
           service: flagService!,
           festivals: flagFestivals!,
           monthSystem: flagMonthSystem!,
-          latitude: flagCoords!.latitude,
-          longitude: flagCoords.longitude,
+          latitude: flagSolar!.latitude,
+          longitude: flagSolar.longitude,
           cacheBox: flagCacheBox!,
+          altitudeMeters: flagSolar.altitudeMeters,
+          timezoneId: flagSolar.timezoneId,
         );
       } catch (e) {
         logCalError('festival flag $normalizedDate', e);

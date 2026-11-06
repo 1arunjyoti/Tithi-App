@@ -43,25 +43,30 @@ final planetaryViewDateProvider =
 
 /// Provider for solar system data at the selected date.
 ///
-/// The date is day-normalized: the 30fps animation timer advances by
-/// microseconds, and positions move negligibly within a day — without this,
-/// every frame would miss the solar cache and redo the batched FFI call.
+/// The instant is rounded to the hour: positions move well under a degree in
+/// an hour (the Moon is the fastest at ~0.55°), so "Today" still tracks the
+/// live sky while the 30fps animation timer keeps hitting the solar cache
+/// instead of redoing the batched FFI call at every tick.
 final solarSystemDataProvider = FutureProvider<SolarSystemData>((ref) async {
   final service = ref.watch(planetaryViewServiceProvider);
   final viewDate = ref.watch(planetaryViewDateProvider);
-  final day = DateTime(viewDate.year, viewDate.month, viewDate.day);
+  final instant = DateTime(
+    viewDate.year,
+    viewDate.month,
+    viewDate.day,
+    viewDate.hour,
+  );
   final viewMode = ref.watch(solarSystemViewModeProvider);
   final locationData = ref.watch(currentLocationProvider);
 
   return locationData.maybeWhen(
     data: (location) => service.getSolarSystemData(
-      dateTime: day,
+      dateTime: instant,
       latitude: location?.latitude ?? kDefaultLatitude,
       longitude: location?.longitude ?? kDefaultLongitude,
       viewMode: viewMode,
     ),
-    orElse: () =>
-        service.getSolarSystemData(dateTime: day, viewMode: viewMode),
+    orElse: () => service.getSolarSystemData(dateTime: instant, viewMode: viewMode),
   );
 });
 

@@ -462,6 +462,10 @@ class AppLocalizationsBn extends AppLocalizations {
       '© ২০২৫ তিথি প্রকল্প\nসনাতন ধর্মের জন্য ভালোবাসা ❤️ দিয়ে তৈরি';
 
   @override
+  String get timezoneDataCredit =>
+      'সময় অঞ্চল সীমানা: © OpenStreetMap অবদানকারী (ODbL), Timezone Boundary Builder দ্বারা নির্মিত।';
+
+  @override
   String get moonPhases => 'চাঁদের কলা';
 
   @override
@@ -1105,6 +1109,13 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get hinduMonthSystemSubtitle =>
       'কৃষ্ণ পক্ষে মাসের নামকরণ কীভাবে হবে তা বেছে নিন';
+
+  @override
+  String get panchangSchool => 'পঞ্জিকা পদ্ধতি';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'প্রতিটি তিথি, নক্ষত্র ও উৎসবের তারিখের গণনা পদ্ধতি বেছে নিন';
 
   @override
   String get festivalRegion => 'উৎসব অঞ্চল';

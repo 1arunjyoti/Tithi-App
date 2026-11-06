@@ -1,0 +1,30 @@
+# Surya Siddhanta yoga boundaries (New Delhi) - held out from the fit on purpose.
+#
+# These are the yoga end times printed on the same 15 pages as
+# surya_siddhanta_delhi_2005_2026.csv. Yoga is the sum of the two longitudes, so
+# once the fit has pinned the Moon (nakshatra ends) and the elongation (tithi
+# ends), yoga is fully determined. A yoga match therefore confirms the absolute
+# frame instead of fitting to it.
+#
+# `dart run tool/surya_siddhanta_probe.dart verify <this file>` checks the
+# shipped kSuryaSiddhantaTuning against these times. Every row lands inside
+# half a minute, which is the rounding limit of the printed times - so a failure
+# here means the tuning or the engine changed, not that the source disagrees.
+#
+# Times are IST.
+date,ends,limb,ordinal
+2005-10-21,00:09,yoga,17
+2008-04-14,09:41,yoga,8
+2010-01-05,11:55,yoga,3
+2015-03-11,08:53,yoga,13
+2016-07-02,05:29,yoga,9
+2017-11-20,22:30,yoga,7
+2018-02-08,13:34,yoga,11
+2019-06-27,22:04,yoga,6
+2020-09-14,12:17,yoga,19
+2021-12-03,13:08,yoga,6
+2022-04-19,19:38,yoga,17
+2023-04-19,15:30,yoga,27
+2024-08-07,11:59,yoga,19
+2025-10-27,06:00,yoga,6
+2026-02-11,02:04,yoga,12

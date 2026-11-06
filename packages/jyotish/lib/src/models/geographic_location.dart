@@ -23,6 +23,12 @@ class GeographicLocation {
   /// [lonSeconds] - Longitude seconds (0-59.999...).
   /// [isEast] - True for East, false for West.
   /// [altitude] - Optional altitude in meters.
+  ///
+  /// Degrees, minutes and seconds must be non-negative and in range: latitude
+  /// 0--90°, longitude 0--180°, minutes 0--59, seconds 0--<60. The hemisphere
+  /// is carried by [isNorth] and [isEast], not by a negative degree value.
+  ///
+  /// Throws [ArgumentError] for an invalid component.
   factory GeographicLocation.fromDMS({
     required int latDegrees,
     required int latMinutes,
@@ -34,6 +40,13 @@ class GeographicLocation {
     required bool isEast,
     double altitude = 0.0,
   }) {
+    _validateDms('latDegrees', latDegrees, max: 90);
+    _validateDms('latMinutes', latMinutes, max: 59);
+    _validateDms('latSeconds', latSeconds, maxExclusive: 60);
+    _validateDms('lonDegrees', lonDegrees, max: 180);
+    _validateDms('lonMinutes', lonMinutes, max: 59);
+    _validateDms('lonSeconds', lonSeconds, maxExclusive: 60);
+
     final latitude = _dmsToDecimal(latDegrees, latMinutes, latSeconds, isNorth);
     final longitude = _dmsToDecimal(lonDegrees, lonMinutes, lonSeconds, isEast);
 
@@ -50,12 +63,21 @@ class GeographicLocation {
   /// [longitude] - Longitude in decimal degrees (-180.0 to 180.0).
   /// [altitude] - Optional altitude in meters above sea level (defaults to 0.0).
   ///
-  /// Throws [ArgumentError] if latitude or longitude is out of range.
+  /// Throws [ArgumentError] if a coordinate is non-finite or out of range.
   GeographicLocation({
     required this.latitude,
     required this.longitude,
     this.altitude = 0.0,
   }) {
+    if (!latitude.isFinite) {
+      throw ArgumentError.value(latitude, 'latitude', 'Must be finite');
+    }
+    if (!longitude.isFinite) {
+      throw ArgumentError.value(longitude, 'longitude', 'Must be finite');
+    }
+    if (!altitude.isFinite) {
+      throw ArgumentError.value(altitude, 'altitude', 'Must be finite');
+    }
     if (latitude < -90.0 || latitude > 90.0) {
       throw ArgumentError(
         'Latitude must be between -90.0 and 90.0, got $latitude',
@@ -89,8 +111,26 @@ class GeographicLocation {
     double seconds,
     bool isPositive,
   ) {
-    final decimal = degrees.abs() + (minutes / 60.0) + (seconds / 3600.0);
+    final decimal = degrees + (minutes / 60.0) + (seconds / 3600.0);
     return isPositive ? decimal : -decimal;
+  }
+
+  /// Rejects a DMS component outside `0..max` (or `0..<maxExclusive`).
+  static void _validateDms(
+    String name,
+    num value, {
+    num? max,
+    num? maxExclusive,
+  }) {
+    final finite = value is double ? value.isFinite : true;
+    final tooLow = value < 0;
+    final tooHigh = max != null
+        ? value > max
+        : maxExclusive != null && value >= maxExclusive;
+    if (!finite || tooLow || tooHigh) {
+      final upper = max != null ? '<= $max' : '< $maxExclusive';
+      throw ArgumentError.value(value, name, 'Expected 0 $upper');
+    }
   }
 
   /// Converts latitude to DMS format.

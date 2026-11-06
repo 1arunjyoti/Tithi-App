@@ -429,7 +429,7 @@ class AppTheme {
 
   /// Hero card decoration: linear gradient plus a hairline border.
   /// Shukla gets a warm hairline so the peach card stays defined on the
-  /// creamy scaffold; Krishna gets a faint light hairline so the dark plum
+  /// off-white scaffold; Krishna gets a faint light hairline so the dark plum
   /// card stays defined on the dark void; PureDark keeps its flat bordered
   /// card. No boxShadow: the hero card sits flat (see [glassmorphism], which
   /// every other home card uses), and a shadow painted inside the card's
@@ -507,9 +507,9 @@ class AppTheme {
   }
 
   /// Hairline used by sheet body cards and their chips. White cards on the
-  /// Shukla cream scaffold are only 3 RGB steps apart from the background,
-  /// so an explicit edge is what separates them; dark themes use the same
-  /// idea with a faint light hairline to lift cards off the void.
+  /// Shukla off-white scaffold are only a handful of RGB steps apart from the
+  /// background, so an explicit edge is what separates them; dark themes use
+  /// the same idea with a faint light hairline to lift cards off the void.
   static Color sheetHairline(
     BuildContext context, {
     bool highContrast = false,
@@ -573,6 +573,17 @@ class AppTheme {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Shukla (light) base surface.
+  //
+  // The scaffold is a neutral off-white rather than the old creamy #FFFDF7:
+  // a warm cream base under a bright orange primary makes the whole page read
+  // as a tinted, night-mode-ish surface. Warmth now comes from the hero card
+  // and the accent palette, not from the page background, so white cards keep
+  // a clean separation from the body.
+  // ---------------------------------------------------------------------------
+  static const Color shuklaBackground = Color(0xFFFAFAF6);
+
   /// OPT-3: static final fields so ThemeData + GoogleFonts text-theme objects
   /// are constructed exactly once (on first class access) rather than on every
   /// widget rebuild that calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
@@ -586,7 +597,7 @@ class AppTheme {
     const primaryColor = Color(0xFFFF9F1C); // Vibrant Orange
     const secondaryColor = Color(0xFFFFBF69); // Mellow Yellow-Orange
     const accentColor = Color(0xFFCBF3F0); // Soft Cyan for contrast
-    const backgroundColor = Color(0xFFFFFDF7); // Creamy White
+    const backgroundColor = shuklaBackground; // Neutral off-white
     const surfaceColor = Colors.white;
 
     final baseTextTheme = GoogleFonts.poppinsTextTheme();
@@ -980,7 +991,7 @@ class AppTheme {
           border ??
           Border.all(
             // Light mode previously used white @0.4, which is invisible
-            // against the cream scaffold — cards read as borderless blobs
+            // against the off-white scaffold — cards read as borderless blobs
             // while the hero (a warm accent hairline) was the only outlined
             // card. Derive the hairline from onSurface instead: dark ink on a
             // light scaffold, white ink on a dark one, so every glass card
@@ -1067,12 +1078,24 @@ class AppTheme {
         },
       );
 
-  /// Standard background decoration with gradient.
-  /// Returns a flat scaffold-colored background when Reduce Motion or High
-  /// Contrast is on, so all callers respect the setting without per-screen
-  /// branching.
+  /// Standard background decoration for full-screen bodies.
+  ///
+  /// Shukla paints a flat [shuklaBackground] surface. Every warm layer stacked
+  /// on the old body (the #FFFDF7 base, then the amber gradient wash) composited
+  /// the page back to cream, which read as a tinted, night-mode-ish background
+  /// under the orange primary. The light branch therefore returns the scaffold
+  /// color as-is; the ambient gradient is dark-theme only.
+  ///
+  /// Reduce Motion and High Contrast flatten to the scaffold color too, so no
+  /// caller needs to branch on the setting.
   static BoxDecoration backgroundDecoration(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Light: flat body (HC resolves to pure white via the scaffold color).
+    if (!isDark) {
+      return BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor);
+    }
+
     final isPureDark =
         Theme.of(context).scaffoldBackgroundColor == Colors.black;
 
@@ -1084,21 +1107,15 @@ class AppTheme {
       return BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor);
     }
 
-    return BoxDecoration(
+    return const BoxDecoration(
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: isDark
-            ? [
-                const Color(0xFF10002B),
-                const Color(0xFF240046),
-                const Color(0xFF10002B),
-              ]
-            : [
-                const Color(0xFFFFFDF7),
-                const Color(0xFFFFECB3).withValues(alpha: 0.3),
-                const Color(0xFFFFFDF7),
-              ],
+        colors: [
+          Color(0xFF10002B),
+          Color(0xFF240046),
+          Color(0xFF10002B),
+        ],
       ),
     );
   }

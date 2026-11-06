@@ -462,6 +462,10 @@ class AppLocalizationsEn extends AppLocalizations {
       '© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma';
 
   @override
+  String get timezoneDataCredit =>
+      'Time zone boundaries: © OpenStreetMap contributors (ODbL), built by Timezone Boundary Builder.';
+
+  @override
   String get moonPhases => 'Moon Phases';
 
   @override
@@ -1095,6 +1099,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get hinduMonthSystemSubtitle =>
       'Choose how months are named during Krishna Paksha';
+
+  @override
+  String get panchangSchool => 'Panjika System';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'Choose the calculation system behind every tithi, nakshatra and festival date';
 
   @override
   String get festivalRegion => 'Festival Region';

@@ -17,6 +17,12 @@ export '../models/festival.dart'
 /// - Sharad Navratri sequence days: the sequence advances, so each form is
 ///   observed on the FIRST day of the run → `'first'`.
 ///
+/// The five Durga Puja days also set `PanchangRules.dominantTithi = 'strict'`
+/// (`dominant_tithi` in the JSON): their sunrise timings already give the
+/// intended days, and the dominant-tithi grace would add an extra one
+/// (Bisuddha Saptami on Oct 17 2026, Surya Siddhanta Ashtami on Oct 18).
+/// Vriddhi still runs, so each school keeps its genuine two-sunrise day.
+///
 /// All consumers — the month grid, the single-day sheet, the export service,
 /// countdown/search (via `findNextFestivalOccurrence`), and notification
 /// scheduling — must go through this file so they can never disagree:
@@ -31,6 +37,10 @@ export '../models/festival.dart'
 /// begins within this long after sunrise counts for that Gregorian day.
 /// Single definition shared by the UI batch (checkpoint instant), the
 /// forward scanners, and the notification path so all agree.
+///
+/// Per-rule opt-out: `PanchangRules.dominantTithi == 'strict'`
+/// (`"dominant_tithi": "strict"`). Used by the five Durga Puja days, whose
+/// tithi timings leave no room for the grace day.
 const Duration kDominantTithiGrace = Duration(minutes: 60);
 
 /// Normalized Vriddhi preference: `'first'`, `'second'`, or `'both'`.

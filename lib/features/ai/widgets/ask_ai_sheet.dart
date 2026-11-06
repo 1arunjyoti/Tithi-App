@@ -222,7 +222,7 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
           monthSystem: monthSystem,
           timings: widget.timings,
           inauspicious: widget.inauspicious,
-          heading: isSameDay(widget.panchang!.date, DateTime.now())
+          heading: isSameDay(widget.panchang!.date, ref.read(todayDateProvider))
               ? "Today's panchang (calculated offline by Tithi)"
               : 'Panchang (calculated offline by Tithi)',
         ),

@@ -1,6 +1,30 @@
 import 'festival.dart';
 import 'hindu_month_system.dart';
 
+/// A Bhadra (Vishti karana) interval on one civil day.
+typedef BhadraWindow = ({DateTime start, DateTime end});
+
+/// A Sankranti (solar ingress) observance carried by one civil day.
+///
+/// [rashi] is the canonical rashi name the Sun entered, [instant] the transit
+/// moment, and [shifted] true when that moment fell after sunset so the
+/// observance moved to this (next) civil day.
+class PanchangSankranti {
+  const PanchangSankranti({
+    required this.rashi,
+    required this.instant,
+    required this.shifted,
+  });
+
+  final String rashi;
+  final DateTime instant;
+  final bool shifted;
+
+  @override
+  String toString() =>
+      'PanchangSankranti($rashi, $instant, shifted: $shifted)';
+}
+
 /// Panchang data for a specific date
 class PanchangData {
   final DateTime date;
@@ -34,6 +58,19 @@ class PanchangData {
   /// (normally the sunrise tithi's index + 1, wrapping 30 → 1).
   final int? transitionTithiIndex;
 
+  /// Sankranti observance carried by this day (see [PanchangSankranti]).
+  /// Null when no ingress observance falls on the day.
+  final PanchangSankranti? sankranti;
+
+  /// Whether [sankranti] was actually computed for this day. A false value
+  /// means "unknown" (callers fall back to a fixed solar date); true with a
+  /// null [sankranti] means "computed, and no ingress falls here".
+  final bool sankrantiComputed;
+
+  /// Bhadra (Vishti karana) windows that overlap this civil day, when a
+  /// Bhadra-sensitive festival is present. Empty otherwise.
+  final List<BhadraWindow> bhadraWindows;
+
   const PanchangData({
     required this.date,
     required this.rawTithi,
@@ -47,6 +84,9 @@ class PanchangData {
     this.nakshatra,
     this.tithiTransitionTime,
     this.transitionTithiIndex,
+    this.sankranti,
+    this.sankrantiComputed = false,
+    this.bhadraWindows = const [],
   });
 
   /// Check if this is Shukla Paksha (waxing moon)
@@ -143,6 +183,22 @@ class PanchangData {
   /// matching here would double-shift Krishna-paksha masas (e.g. Amanta
   /// Shravana Krishna misread as Purnimant and shifted to Ashadha),
   /// making Krishna festivals such as Janmashtami disappear.
+  ///
+  /// [rawTithiNishita] and [rawTithiNishitaEnd] are the tithi at the opening
+  /// and closing of the Nishita window (`sunset + 7/15 night` and
+  /// `+ 8/15 night`). A `nishita` rule matches when its tithi prevails at
+  /// either edge; callers that only know one instant pass it as
+  /// [rawTithiNishita] and leave [rawTithiNishitaEnd] null.
+  ///
+  /// [rawTithiMoonrise] is the tithi at the Moon's rise. A `moonrise` rule
+  /// reads it, and falls back to [rawTithi] when the day has no moonrise -
+  /// the same "checkpoint absent, use the day's own tithi" fallback as the
+  /// other overrides.
+  ///
+  /// [rawTithiPreviousNishita] is the tithi at the PREVIOUS night's Nishita
+  /// opening. Only the gap fallback below reads it: a `nishita` rule whose
+  /// tithi ended between sunset and the window opening still matches today,
+  /// but only if that tithi did not already cover yesterday's window.
   factory PanchangData.fromRawTithi({
     required DateTime date,
     required double rawTithi,
@@ -152,15 +208,29 @@ class PanchangData {
     DateTime? sunrise,
     DateTime? sunset,
     double? rawTithiMadhyahna,
+    double? rawTithiBrahmaMuhurtaStart,
+    double? rawTithiArunodaya,
+    double? rawTithiPurvahna,
+    double? rawTithiSayahnaStart,
+    double? rawTithiSayahnaCenter,
+    double? rawTithiSayahnaEnd,
     double? rawTithiAparahna,
     double? rawTithiNishita,
+    double? rawTithiNishitaEnd,
+    double? rawTithiPreviousNishita,
     double? rawTithiPradosha,
+    double? rawTithiMoonrise,
     double? rawTithiNextSunrise,
     String masaNextSunrise = '',
     String? nakshatraAtSunrise,
     double? rawTithiDominant,
     DateTime? tithiTransitionTime,
     int? transitionTithiIndex,
+    String? sankrantiRashi,
+    DateTime? sankrantiInstant,
+    bool sankrantiShifted = false,
+    bool sankrantiComputed = false,
+    List<BhadraWindow> bhadraWindows = const [],
   }) {
     final tithiIndex = rawTithi.floor();
 
@@ -180,11 +250,21 @@ class PanchangData {
 
     // Find matching festivals (pass month system for proper conversion)
     final matchingFestivals = allFestivals.where((f) {
-      // Solar festivals: matched by Gregorian date only
-      if (f.conditions == 'Solar' && f.panchangRules.solarDate != null) {
-        final dateStr =
-            "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-        return f.panchangRules.solarDate == dateStr;
+      // Solar festivals: matched by a Sankranti transit when the rule names a
+      // rashi (Makar Sankranti / Pongal), otherwise by the fixed Gregorian
+      // date. A computed day with no ingress must NOT fall back to the fixed
+      // date, or both the old and the true transit day would match.
+      if (f.conditions == 'Solar') {
+        final rule = f.panchangRules;
+        if (rule.sankrantiRashi != null && sankrantiComputed) {
+          return rule.sankrantiRashi == sankrantiRashi;
+        }
+        if (rule.solarDate != null) {
+          final dateStr =
+              "${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+          return rule.solarDate == dateStr;
+        }
+        return false;
       }
 
       // Nakshatra override (e.g. Saraswati Avahan on Mula): masa + paksha +
@@ -201,40 +281,107 @@ class PanchangData {
         );
       }
 
+      // Matches the festival's tithi rule against an arbitrary raw tithi.
+      // Amanta basis: both the stored festival rules and `masa` (from
+      // calculateMasa) are Amanta. `monthSystem` is display-only; passing it
+      // here would convert an already-Amanta masa a second time and drop
+      // every Krishna-paksha festival in Purnimant mode.
+      bool matchesTithiAt(double rawTithiValue) {
+        final index = rawTithiValue.floor();
+        final pakshaAt = index <= 15 ? 'Shukla' : 'Krishna';
+        final tithiNumAt = index <= 15 ? index : index - 15;
+        return f.matchesTithi(
+          pakshaAt,
+          tithiNumAt,
+          masa,
+          HinduMonthSystem.amanta,
+          date,
+        );
+      }
+
       // SMELL-05: Select the appropriate timing checkpoint generically via
       // timingOverride instead of hard-coding festival IDs.
       // BUG-04: pass `date` so weekday constraints are evaluated.
       double targetRawTithi = switch (f.panchangRules.timingOverride) {
+        'brahma_muhurta_start' =>
+          rawTithiBrahmaMuhurtaStart ?? rawTithi,
+        'arunodaya_start' || 'arunodaya' =>
+          rawTithiArunodaya ?? rawTithi,
+        'purvahna' => rawTithiPurvahna ?? rawTithi,
+        'sayahna_start' => rawTithiSayahnaStart ?? rawTithi,
+        'sayahna_center' => rawTithiSayahnaCenter ?? rawTithi,
+        'sayahna_end' => rawTithiSayahnaEnd ?? rawTithi,
         'madhyahna' => rawTithiMadhyahna ?? rawTithi,
         'aparahna' => rawTithiAparahna ?? rawTithi,
         'nishita' => rawTithiNishita ?? rawTithi,
-        'pradosha' => rawTithiPradosha ?? rawTithi,
+        'pradosh' || 'pradosha' => rawTithiPradosha ?? rawTithi,
+        'moonrise' || 'chandrodaya' => rawTithiMoonrise ?? rawTithi,
         _ => rawTithi,
       };
 
       final targetIndex = targetRawTithi.floor();
-      final targetPaksha = targetIndex <= 15 ? 'Shukla' : 'Krishna';
-      final targetTithiNum = targetIndex <= 15 ? targetIndex : targetIndex - 15;
-      // Match in Amanta: both the stored festival rules and `masa` (from
-      // calculateMasa) are Amanta. `monthSystem` is display-only; passing it
-      // here would convert an already-Amanta masa a second time and drop
-      // every Krishna-paksha festival in Purnimant mode.
-      bool isMatch = f.matchesTithi(
-        targetPaksha,
-        targetTithiNum,
-        masa,
-        HinduMonthSystem.amanta,
-        date,
-      );
+      bool isMatch = matchesTithiAt(targetRawTithi);
+
+      // Nishita is a window, not a point: `sunset + 7/15 night` to
+      // `sunset + 8/15 night`. The tithi at the opening decides, but a tithi
+      // that arrives just after it and is still current at the close also
+      // counts, so an observance is never lost because its tithi began a few
+      // minutes inside the window. A tithi that ends inside the window is
+      // covered by the opening sample.
+      if (!isMatch &&
+          f.panchangRules.timingOverride == 'nishita' &&
+          rawTithiNishitaEnd != null) {
+        final closeIndex = rawTithiNishitaEnd.floor();
+        if (closeIndex != targetIndex) {
+          isMatch = matchesTithiAt(rawTithiNishitaEnd);
+        }
+      }
+
+      // A window may move an observance; it must never delete one. When the
+      // tithi ends between sunset and the window opening, no night of that
+      // lunation satisfies the window and the festival disappears for the
+      // whole year - measured under Surya Siddhanta, which ends Krishna
+      // Ashtami at 23:03 IST on 2026-09-04, 54 min before the 23:57 window
+      // opening, so Janmashtami 2026 resolved to null (2025 and 2035 too).
+      //
+      // The fix cannot be "also accept the tithi at sunset": that is exactly
+      // true on the day AFTER a normal nishita match as well (a ~20 h tithi
+      // still runs at the next sunset), and it turned 23 of 96 nishita
+      // festival-years into two-day observances - Sharad Purnima 2020 on both
+      // Oct 30 and 31, Kali Puja 2025 on both Nov 20 and 21.
+      //
+      // The discriminator is whether this same tithi already covered the
+      // PREVIOUS night's window. If it did, yesterday was the observance and
+      // this day is the duplicate; if it did not, this is the gap and today
+      // carries the night. `rawTithiPreviousNishita` samples the tithi at
+      // `sunrise - 8/15 night`, which is the previous night's Nishita opening
+      // (the two nights differ by under two minutes).
+      if (!isMatch &&
+          f.panchangRules.timingOverride == 'nishita' &&
+          rawTithiSayahnaEnd != null &&
+          rawTithiPreviousNishita != null) {
+        final sunsetIndex = rawTithiSayahnaEnd.floor();
+        if (sunsetIndex != targetIndex) {
+          final prevIndex = rawTithiPreviousNishita.floor();
+          if (prevIndex != sunsetIndex) {
+            isMatch = matchesTithiAt(rawTithiSayahnaEnd);
+          }
+        }
+      }
 
       // Dominant-tithi grace (Drik convention): a festival with no
       // timingOverride additionally matches when its tithi begins within
       // ~60 min after sunrise (sampled as `rawTithiDominant` by callers).
       // Additive only — sunrise matches above are never removed, so the
-      // Bisuddha two-day Shashthi (Oct 16+17 2026) survives while Saptami
-      // extends onto the 17th. Override festivals keep their own
-      // checkpoint; nakshatra/Solar festivals returned earlier.
-      if (!isMatch && rawTithiDominant != null) {
+      // Bisuddha two-day Shashthi (Oct 16+17 2026) survives.
+      //
+      // Rules may opt out with `dominantTithi: 'strict'` (the Durga Puja
+      // days): their tithi timings already give the intended sunrise days,
+      // and the grace window would add a spurious extra day (Bisuddha
+      // Saptami on Oct 17, Surya Siddhanta Ashtami on Oct 18, 2026).
+      if (!isMatch &&
+          f.panchangRules.usesDominantGrace &&
+          rawTithiDominant != null) {
         if (f.panchangRules.timingOverride == null ||
             !timingOverrideCheckpoints.contains(
               f.panchangRules.timingOverride,
@@ -332,6 +479,15 @@ class PanchangData {
       nakshatra: nakshatraAtSunrise,
       tithiTransitionTime: tithiTransitionTime,
       transitionTithiIndex: transitionTithiIndex,
+      sankranti: sankrantiInstant == null || sankrantiRashi == null
+          ? null
+          : PanchangSankranti(
+              rashi: sankrantiRashi,
+              instant: sankrantiInstant,
+              shifted: sankrantiShifted,
+            ),
+      sankrantiComputed: sankrantiComputed,
+      bhadraWindows: bhadraWindows,
     );
   }
 
@@ -344,6 +500,11 @@ class PanchangData {
   /// The [tithiNumber]/[tithiName]/[paksha] overrides serve the live hero:
   /// intraday the displayed label advances while festivals, masa and the
   /// sunrise record stay pinned.
+  ///
+  /// [sankranti]/[sankrantiComputed]/[bhadraWindows] are carried over by
+  /// default: they describe the day, not the label, and dropping them here
+  /// silently hid the Sankranti punya kala (the single-day provider reuses the
+  /// month entry through this method) and left Bhadra untrimmed.
   PanchangData copyWith({
     List<Festival>? festivals,
     String? nakshatra,
@@ -353,6 +514,9 @@ class PanchangData {
     int? tithiNumber,
     String? tithiName,
     String? paksha,
+    List<BhadraWindow>? bhadraWindows,
+    PanchangSankranti? sankranti,
+    bool? sankrantiComputed,
   }) {
     return PanchangData(
       date: date,
@@ -371,6 +535,9 @@ class PanchangData {
       transitionTithiIndex: clearTransition
           ? null
           : (transitionTithiIndex ?? this.transitionTithiIndex),
+      sankranti: sankranti ?? this.sankranti,
+      sankrantiComputed: sankrantiComputed ?? this.sankrantiComputed,
+      bhadraWindows: bhadraWindows ?? this.bhadraWindows,
     );
   }
 

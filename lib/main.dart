@@ -12,6 +12,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:jyotish/jyotish.dart';
 import 'app/bootstrap.dart';
 import 'core/feedback/app_messages.dart';
+import 'core/location/place_clock.dart';
 import 'core/storage/hive_adapters.dart';
 import 'providers/location_provider.dart';
 import 'providers/panchang_provider.dart';
@@ -22,6 +23,7 @@ import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'widgets/panchang_init_failure_overlay.dart';
 
 // Conditional import for platform-specific features
 import 'platform/platform_init.dart';
@@ -66,7 +68,7 @@ void main() {
       ]);
 
       // Initialize timezone for notifications
-      bootstrap.initTimezones();
+      await bootstrap.initTimezones();
 
       runApp(const ProviderScope(child: TithiApp()));
 
@@ -107,14 +109,22 @@ class _TithiAppState extends ConsumerState<TithiApp>
   /// Schedules a one-shot timer that fires just after midnight so that
   /// [todayDateProvider] (and anything that depends on it) is refreshed
   /// to the new calendar date without requiring an app restart.
+  ///
+  /// The midnight is the *place clock's* midnight: with a manually selected
+  /// place the app's "today" is that place's day, so the timer must re-arm on
+  /// its boundary, not the phone's.
   void _scheduleMidnightRefresh() {
     _midnightTimer?.cancel();
-    final now = DateTime.now();
-    final midnight = DateTime(now.year, now.month, now.day + 1);
-    final delay = midnight.difference(now) + const Duration(seconds: 1);
+    final clock = ref.read(placeClockProvider);
+    final now = nowInPlaceClock(clock);
+    final midnight = nextMidnightInPlaceClock(clock);
+    var delay = midnight.difference(now) + const Duration(seconds: 1);
+    if (delay.isNegative) delay = const Duration(seconds: 1);
     _midnightTimer = Timer(delay, () {
       if (mounted) {
-        ref.read(todayDateProvider.notifier).setToday(DateTime.now());
+        ref
+            .read(todayDateProvider.notifier)
+            .setToday(nowInPlaceClock(ref.read(placeClockProvider)));
       }
       _scheduleMidnightRefresh(); // re-arm for the following midnight
     });
@@ -157,7 +167,7 @@ class _TithiAppState extends ConsumerState<TithiApp>
       // countdown derived from it) a day behind. Re-sync when the wall
       // date moved, and re-arm the midnight timer from now.
       final today = ref.read(todayDateProvider);
-      final now = DateTime.now();
+      final now = nowInPlaceClock(ref.read(placeClockProvider));
       if (today.year != now.year ||
           today.month != now.month ||
           today.day != now.day) {
@@ -176,6 +186,14 @@ class _TithiAppState extends ConsumerState<TithiApp>
     // Keeps the hero + timing home-screen widgets fed for the whole session,
     // even when the promo card on the home screen is dismissed.
     ref.watch(panchangWidgetSyncProvider);
+    // A place change moves "today" to another clock: re-anchor the date and
+    // re-arm the midnight timer against the new zone instead of waiting for
+    // the phone's next midnight.
+    ref.listen(placeClockProvider, (previous, next) {
+      if (previous == next) return;
+      ref.read(todayDateProvider.notifier).setToday(nowInPlaceClock(next));
+      _scheduleMidnightRefresh();
+    });
 
     return MaterialApp(
       title: 'Tithi',
@@ -224,6 +242,15 @@ class _TithiAppState extends ConsumerState<TithiApp>
       },
       locale: locale, // User-selected locale (null = system default)
       themeMode: themeMode,
+      // Instant palette swap. MaterialApp otherwise cross-fades ThemeData over
+      // 200ms, and ThemeData/ColorScheme.lerp flips `brightness` to dark at the
+      // halfway point while `scaffoldBackgroundColor` is still a mid grey.
+      // AppTheme.isPureDarkTheme() decides "pure dark vs Krishna" from
+      // `scaffold == Colors.black`, so during that window it takes the Krishna
+      // branch and paints plum cards / purple accents on the way from Shukla to
+      // Pure Dark (and back). The three palettes share no meaningful midpoint,
+      // so there is nothing worth interpolating: switch in one frame.
+      themeAnimationDuration: Duration.zero,
       theme: AppTheme.resolveAccessible(
         AppTheme.shuklaTheme,
         highContrast: accessibility.highContrast,
@@ -265,7 +292,12 @@ class _TithiAppState extends ConsumerState<TithiApp>
           ),
           child: AnnotatedRegion<SystemUiOverlayStyle>(
             value: overlayStyle,
-            child: child!,
+            // A failed ephemeris install must be visible on every route, not
+            // just on the home screen: most panchangInitProvider consumers
+            // degrade to empty data instead of showing the error themselves.
+            child: PanchangInitFailureOverlay(
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
@@ -403,6 +435,7 @@ class _LocationPermissionWrapperState
     } else {
       final locationService = ref.read(locationServiceProvider);
       await locationService.setLocationEnabled(false);
+      refreshPlaceContext(ref);
     }
   }
 
@@ -422,6 +455,7 @@ class _LocationPermissionWrapperState
         );
       }
       await locationService.setLocationEnabled(false);
+      refreshPlaceContext(ref);
       return;
     }
 
@@ -434,6 +468,7 @@ class _LocationPermissionWrapperState
     if (permission == LocationPermission.denied ||
         permission == LocationPermission.deniedForever) {
       await locationService.setLocationEnabled(false);
+      refreshPlaceContext(ref);
       if (mounted) {
         showAppMessage(
           context,
@@ -444,8 +479,8 @@ class _LocationPermissionWrapperState
       }
     } else {
       await locationService.setLocationEnabled(true);
-      // Trigger location fetch
-      ref.invalidate(currentLocationProvider);
+      // Trigger location fetch; the clock moves to the device's.
+      refreshPlaceContext(ref);
       if (mounted) {
         showAppMessage(
           context,

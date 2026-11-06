@@ -15,20 +15,6 @@ export '../features/solar_system/data/solar_models.dart'
 class PlanetaryViewService {
   PlanetaryViewService();
 
-  // Actual semi-major axis in AU (for reference and display)
-  static const Map<Planet, double> _distanceAU = {
-    Planet.sun: 0.0,
-    Planet.mercury: 0.39,
-    Planet.venus: 0.72,
-    Planet.earth: 1.00,
-    Planet.moon: 1.00, // Same as Earth (orbits Earth)
-    Planet.mars: 1.52,
-    Planet.jupiter: 5.20,
-    Planet.saturn: 9.58,
-    Planet.uranus: 19.22,
-    Planet.neptune: 30.05,
-  };
-
   // Orbital periods in Earth days
   static const Map<Planet, double> _orbitalPeriods = {
     Planet.sun: 0.0,
@@ -81,9 +67,10 @@ class PlanetaryViewService {
 
   /// Get solar system data for a given date.
   ///
-  /// Positions move negligibly within a day: results are cached by
-  /// day + view mode + rounded location (see solar_cache.dart), so date
-  /// scrubbing and animation replays skip the batched FFI call.
+  /// Positions move slowly, so results are cached by hour + view mode +
+  /// rounded location (see solar_cache.dart): date scrubbing and animation
+  /// replays skip the batched FFI call while "Today" still matches the live
+  /// sky instead of showing midnight.
   Future<SolarSystemData> getSolarSystemData({
     required DateTime dateTime,
     double latitude = kDefaultLatitude,
@@ -147,6 +134,21 @@ class PlanetaryViewService {
       earthPosition = positions[Planet.earth];
     }
 
+    // Heliocentric longitude of the Moon is Earth's longitude (it is measured
+    // from the Sun), so it cannot say which side of Earth the Moon is on.
+    // Fetch the geocentric Moon as well and use its longitude as the offset
+    // direction around Earth.
+    PlanetPosition? geocentricMoon;
+    if (viewMode == SolarSystemViewMode.heliocentric) {
+      final moonPositions = await Jyotish().getMultiplePlanetPositions(
+        planets: const [Planet.moon],
+        dateTime: dateTime,
+        location: location,
+        flags: CalculationFlags.astronomical(heliocentric: false),
+      );
+      geocentricMoon = moonPositions[Planet.moon];
+    }
+
     // Select orbit radii based on view mode (shared table; the static
     // background painter reads the same source so rings always match).
     final orbitRadii = orbitRadiiForViewMode(viewMode);
@@ -156,27 +158,42 @@ class PlanetaryViewService {
       final position = entry.value;
 
       // Calculate visual position
-      double orbitRadius = orbitRadii[planet] ?? 0.5;
-      double angleRad;
+      double orbitRadius;
       double visualX, visualY;
 
-      if (viewMode == SolarSystemViewMode.heliocentric &&
-          planet == Planet.moon &&
-          earthPosition != null) {
-        // Position Moon relative to Earth in heliocentric view
-        final earthAngle = earthPosition.longitude * math.pi / 180;
-        final earthOrbitRadius = orbitRadii[Planet.earth] ?? 0.28;
-        final earthX = math.cos(earthAngle) * earthOrbitRadius;
-        final earthY = math.sin(earthAngle) * earthOrbitRadius;
+      if (viewMode == SolarSystemViewMode.heliocentric) {
+        if (planet == Planet.moon &&
+            earthPosition != null &&
+            geocentricMoon != null) {
+          // Position Moon relative to Earth in heliocentric view
+          final earthPoint = projectHeliocentric(
+            longitude: earthPosition.longitude,
+            latitude: earthPosition.latitude,
+            distanceAU: earthPosition.distance,
+          );
 
-        // Moon orbits around Earth at a small offset
-        const moonOffset = 0.04; // Small offset for visibility
-        angleRad = position.longitude * math.pi / 180;
-        visualX = earthX + math.cos(angleRad) * moonOffset;
-        visualY = earthY + math.sin(angleRad) * moonOffset;
-        orbitRadius = earthOrbitRadius; // Same visual orbit as Earth
+          // Moon orbits around Earth at a small offset
+          const moonOffset = 0.04; // Small offset for visibility
+          final moonAngle = geocentricMoon.longitude * math.pi / 180;
+          visualX = earthPoint.x + math.cos(moonAngle) * moonOffset;
+          visualY = earthPoint.y + math.sin(moonAngle) * moonOffset;
+          orbitRadius = earthPoint.radius; // Same visual orbit as Earth
+        } else {
+          // Real heliocentric distance places the planet on its orbit; the
+          // shared scale keeps the layout readable while preserving the true
+          // distance ordering (and eccentricity) that NASA's Eyes shows.
+          final point = projectHeliocentric(
+            longitude: position.longitude,
+            latitude: position.latitude,
+            distanceAU: position.distance,
+          );
+          orbitRadius = point.radius;
+          visualX = point.x;
+          visualY = point.y;
+        }
       } else {
-        angleRad = position.longitude * math.pi / 180;
+        orbitRadius = orbitRadii[planet] ?? 0.5;
+        final angleRad = position.longitude * math.pi / 180;
         visualX = math.cos(angleRad) * orbitRadius;
         visualY = math.sin(angleRad) * orbitRadius;
       }
@@ -197,7 +214,7 @@ class PlanetaryViewService {
           visualX: visualX,
           visualY: visualY,
           orbitRadius: orbitRadius,
-          distanceAU: _distanceAU[planet],
+          distanceAU: position.distance,
           orbitalPeriodDays: _orbitalPeriods[planet],
         ),
       );

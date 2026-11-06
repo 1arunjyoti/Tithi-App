@@ -27,6 +27,12 @@ final gregorianCalendarCellDataProvider = FutureProvider.autoDispose
         cp.TithiDisplayMode displayMode,
       })
     >((ref, args) async {
+      // The labels come from the calculation service, and a Panjika-system
+      // switch replaces it. Watching the shared init invalidates this provider
+      // family (whose args do not include the school) so the corner labels are
+      // recomputed instead of keeping the previous school's tithis.
+      await ref.watch(panchangInitProvider.future);
+
       final firstDayOfMonth = DateTime(
         args.focusedMonth.year,
         args.focusedMonth.month,
@@ -86,13 +92,17 @@ final adaptiveCalendarDataProvider = FutureProvider.autoDispose
     >((ref, args) async {
       ref.keepAliveFor(const Duration(minutes: 5));
 
-      await ref.read(panchangInitProvider.future);
+      // Watch, not read: switching the Panjika system replaces the service, so
+      // the month slice must resolve its boundaries against the new one.
+      await ref.watch(panchangInitProvider.future);
 
       DateTime startDate;
       DateTime nextMonthStart;
 
       if (args.adaptiveSystem == cp.AppCalendarSystem.bengali) {
-        final service = ref.read(bengaliCalendarServiceProvider);
+        // Watch, not read: the Bengali month boundaries move with the selected
+        // Panjika system, so this family must recompute when it changes.
+        final service = ref.watch(bengaliCalendarServiceProvider);
         final bDate = await service.calculateDate(args.focusedMonth);
         final monthIndex = service.bengaliMonths.indexOf(bDate.month);
         final year = bDate.year;

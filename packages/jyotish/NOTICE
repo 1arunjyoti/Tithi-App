@@ -1,0 +1,44 @@
+# Third-party notices
+
+Tithi and the `jyotish` wrapper in this directory are distributed under the
+GNU Affero General Public License, version 3 (AGPLv3). See `LICENSE` at the
+repository root and in this directory. That choice is not optional: the app
+bundles Swiss Ephemeris, whose free edition is AGPLv3.
+
+## Swiss Ephemeris
+
+- **What is bundled**
+  - C sources: `native/swisseph/swisseph-master/src/` (compiled into
+    `libswisseph.so` by `android/src/main/cpp/CMakeLists.txt`).
+  - Data files shipped by the app as assets and copied to the device at
+    runtime: `seas_18.se1`, `semo_18.se1`, `sepl_18.se1`.
+- **Copyright**: (C) 1997 - 2021 Astrodienst AG, Switzerland. All rights
+  reserved. Authors: Dieter Koch and Alois Treindl.
+- **License text**: `native/swisseph/swisseph-master/LICENSE` (preserved
+  verbatim; do not delete or edit it).
+
+### License choice: AGPLv3
+
+Swiss Ephemeris is dual-licensed: AGPLv3 (free of charge) or the paid Swiss
+Ephemeris Professional License. **This project uses the AGPLv3 option**,
+recorded on 2026-10-25. Consequences a maintainer must not break:
+
+- Every distributed build must be accompanied by the complete corresponding
+  source of the app and of this wrapper, under the AGPLv3 (or a compatible
+  license). The wrapper is therefore AGPLv3 too, not MIT.
+- Section 13 applies to network use: if Tithi is ever offered as a service,
+  users interacting with it over a network must be offered the source.
+- The Swiss Ephemeris copyright notice and license text must be preserved in
+  every redistribution, including application bundles
+  (`native/swisseph/swisseph-master/LICENSE` and this file).
+- Any other distribution terms - a closed-source build, or the Apache-2.0/MIT
+  terms this repository used before the decision - would require the
+  Professional License from Astrodienst.
+
+### Upstream wrapper notice
+
+The Dart/Kotlin wrapper is a modified fork of
+`rajsanjib/jyotish-flutter-library`, which was released under the MIT license.
+That license is preserved in `LICENSE-MIT-upstream`; its permission notice
+continues to apply to the upstream portions of the code. The fork as a whole
+is distributed under the AGPLv3.

@@ -34,6 +34,11 @@ final upcomingFestivalsProvider =
       // date taps still rebuild in place via the watched selection.
       ref.keepAlive();
 
+      // Kept alive for the session, and it reads the UI day cache before
+      // subscribing to panchangForDateProvider. Watch the school directly so
+      // a Panjika switch always rebuilds the window (and its festival rows).
+      ref.watch(panchangSchoolProvider);
+
       final selected = ref.watch(selectedDateProvider);
       final region = ref.watch(festivalRegionProvider);
       final base = DateTime(selected.year, selected.month, selected.day);

@@ -14,6 +14,7 @@ Festival graceFestival(
   String conditions = 'Saptami',
   String? timingOverride,
   String vriddhi = 'both',
+  String dominantTithi = 'grace',
 }) {
   return Festival(
     id: id,
@@ -29,6 +30,7 @@ Festival graceFestival(
       conditions: conditions,
       timingOverride: timingOverride,
       vriddhi: vriddhi,
+      dominantTithi: dominantTithi,
     ),
     rituals: const Rituals(steps: []),
     media: const Media(),
@@ -77,6 +79,18 @@ void main() {
 
     test('no dominant checkpoint means strict sunrise matching', () {
       final day = graceDay(DateTime(2026, 10, 17), 6.95, null, [saptami]);
+      expect(day.festivals, isEmpty);
+    });
+
+    test('dominantTithi strict ignores the grace window', () {
+      final strict = graceFestival(
+        'saptami_strict',
+        tithi: 7,
+        dominantTithi: 'strict',
+      );
+      // Same samples as the grace case above: Shashthi at sunrise, Saptami
+      // 20 min later. Strict keeps only the sunrise tithi.
+      final day = graceDay(DateTime(2026, 10, 17), 6.95, 7.02, [strict]);
       expect(day.festivals, isEmpty);
     });
 
@@ -174,9 +188,11 @@ void main() {
     });
   });
 
-  group('Oct 2026 acceptance: grace + vriddhi day map', () {
-    // Shashthi owns sunrise Oct 16+17 (Bisuddha); Saptami begins ~20 min
-    // after sunrise Oct 17 (grace) and owns sunrise Oct 18.
+  group('Oct 2026 acceptance: strict Durga Saptami + vriddhi day map', () {
+    // Shashthi owns sunrise Oct 16+17 (Bisuddha). Saptami begins ~20 min
+    // after the Oct 17 sunrise, but its dataset rule is strict, so it only
+    // matches sunrise Oct 18. Navratri's sequence side still advances
+    // (vriddhi first), which is why Kalaratri keeps Oct 17.
     final katyayani = graceFestival(
       'katyayani',
       tithi: 6,
@@ -196,7 +212,7 @@ void main() {
     final pujaSaptami = graceFestival(
       'puja_saptami',
       tithi: 7,
-      vriddhi: 'second',
+      dominantTithi: 'strict',
     );
     final all = [katyayani, pujaShashthi, kalaratri, pujaSaptami];
 
@@ -223,13 +239,11 @@ void main() {
       };
     }
 
-    test('pre-filter: grace adds Saptami to the 17th, keeps Shashthi', () {
+    test('pre-filter: strict Saptami stays off the 17th', () {
       final days = buildMap();
       expect(
         days[DateTime(2026, 10, 17)]!.festivals.map((f) => f.id),
-        containsAll(
-          ['katyayani', 'puja_shashthi', 'kalaratri', 'puja_saptami'],
-        ),
+        equals(['katyayani', 'puja_shashthi', 'kalaratri']),
       );
     });
 
@@ -251,20 +265,24 @@ void main() {
   });
 
   group('Dataset', () {
-    test('Puja Saptami resolves to the last day of a run', () {
+    test('Puja Saptami is strict at sunrise, not vriddhi-trimmed', () {
       final file = File('assets/festivals.json');
       final decoded = jsonDecode(file.readAsStringSync()) as List;
       final entry = decoded.cast<Map<String, dynamic>>().firstWhere(
         (f) => f['id'] == 'saptami_durga_puja',
       );
       final rules = (entry['panchang_rules'] as Map).cast<String, dynamic>();
-      expect(rules['vriddhi'], equals('second'));
-      expect(
-        normalizeVriddhiPreference(
-          Festival.fromJson(entry).panchangRules.vriddhi,
-        ),
-        equals('second'),
-      );
+      expect(rules['dominant_tithi'], equals('strict'));
+      // Vriddhi stays at the default `both`: Surya Siddhanta Saptami is a
+      // genuine two-sunrise run (Oct 17+18) and must not be trimmed.
+      expect(rules.containsKey('vriddhi'), isFalse);
+
+      final festival = Festival.fromJson(entry);
+      expect(festival.panchangRules.usesDominantGrace, isFalse);
+      // Bisuddha Oct 17: Saptami begins 17 min after sunrise. The grace
+      // window would add it; strict leaves the day to Shashthi.
+      final day = graceDay(DateTime(2026, 10, 17), 6.95, 7.02, [festival]);
+      expect(day.festivals, isEmpty);
     });
   });
 }

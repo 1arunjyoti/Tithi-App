@@ -455,6 +455,12 @@ void main() {
       expect(observanceRuleKey(ruled(timingOverride: 'madhyahna')), equals('madhyahna'));
       expect(observanceRuleKey(ruled(timingOverride: 'aparahna')), equals('aparahna'));
       expect(observanceRuleKey(ruled(timingOverride: 'nishita')), equals('nishita'));
+      // Aliases are real checkpoints, not unknown values.
+      expect(observanceRuleKey(ruled(timingOverride: 'pradosh')), equals('pradosh'));
+      expect(
+        observanceRuleKey(ruled(timingOverride: 'chandrodaya')),
+        equals('chandrodaya'),
+      );
       // Unknown values fall back rather than rendering a wrong rule.
       expect(observanceRuleKey(ruled(timingOverride: 'bogus')), equals('udaya'));
     });

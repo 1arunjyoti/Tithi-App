@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/features/event_detail/domain/puja_samay.dart';
 import 'package:tithi/l10n/app_localizations.dart';
 import 'package:tithi/models/festival.dart';
+import 'package:tithi/models/panchang_data.dart';
 
 void main() {
   late AppLocalizations l10n;
@@ -106,6 +107,24 @@ void main() {
         normalizedPujaKala(festivalWith(rules(pujaKala: 'sandhi_junction'))),
         equals('sandhi_junction'),
       );
+      // Both Pradosh spellings are accepted, like `timingOverride`.
+      expect(
+        normalizedPujaKala(festivalWith(rules(pujaKala: 'pradosh'))),
+        equals('pradosh'),
+      );
+      expect(
+        normalizedPujaKala(festivalWith(rules(pujaKala: 'pradosha'))),
+        equals('pradosha'),
+      );
+      // Godhuli (Tulsi Vivah) and Sankranti punya kala are window kalas too.
+      expect(
+        normalizedPujaKala(festivalWith(rules(pujaKala: 'godhuli'))),
+        equals('godhuli'),
+      );
+      expect(
+        normalizedPujaKala(festivalWith(rules(pujaKala: 'punya_kala'))),
+        equals('punya_kala'),
+      );
       expect(
         normalizedParanRule(festivalWith(rules(paranRule: 'dwadashi_window'))),
         equals('dwadashi_window'),
@@ -131,7 +150,11 @@ void main() {
       expect(isPujaWindowKala('madhyahna'), isTrue);
       expect(isPujaWindowKala('nishita'), isTrue);
       expect(isPujaWindowKala('pradosha'), isTrue);
+      expect(isPujaWindowKala('pradosh'), isTrue);
       expect(isPujaWindowKala('moonrise'), isTrue);
+      expect(isPujaWindowKala('chandrodaya'), isTrue);
+      expect(isPujaWindowKala('godhuli'), isTrue);
+      expect(isPujaWindowKala('punya_kala'), isTrue);
       expect(isPujaWindowKala('sandhi_junction'), isTrue);
       expect(isPujaWindowKala('sunrise'), isFalse);
       expect(isPujaWindowKala('sunset'), isFalse);
@@ -144,6 +167,9 @@ void main() {
       expect(pujaKalaLabel('madhyahna', l10n), equals('Madhyahna'));
       expect(pujaKalaLabel('sandhi_junction', l10n), equals('Sandhi'));
       expect(pujaKalaLabel('moonrise', null), equals('Moonrise'));
+      expect(pujaKalaLabel('pradosh', null), equals('Pradosha'));
+      expect(pujaKalaLabel('godhuli', null), equals('Godhuli'));
+      expect(pujaKalaLabel('punya_kala', null), equals('Punya Kala'));
       expect(pujaKalaLabel('bogus', null), equals('bogus'));
     });
   });
@@ -202,6 +228,17 @@ void main() {
       expect(s?.instant, equals(DateTime(2026, 8, 22, 19, 12)));
       expect(s?.start, equals(DateTime(2026, 8, 22, 18)));
       expect(s?.end, equals(DateTime(2026, 8, 22, 20, 24)));
+    });
+
+    test('pradosh is an alias of pradosha', () {
+      // Arrange + Act
+      final alias = span('pradosh');
+      final canonical = span('pradosha');
+
+      // Assert: same window and instant, whichever spelling the data uses.
+      expect(alias?.instant, equals(canonical?.instant));
+      expect(alias?.start, equals(canonical?.start));
+      expect(alias?.end, equals(canonical?.end));
     });
 
     test('clipToTithi cuts the end at the tithi-sandhi', () {
@@ -364,6 +401,163 @@ void main() {
         resolvePujaInstant(kala: 'madhyahna', sunrise: at, sunset: at),
         isNull,
       );
+    });
+  });
+
+  group('Godhuli and punya kala windows', () {
+    // 6:00–18:00 day (D = 12h), 18:00–6:00 night.
+    final sunrise = DateTime(2026, 8, 22, 6);
+    final sunset = DateTime(2026, 8, 22, 18);
+    final nextSunrise = DateTime(2026, 8, 23, 6);
+    final date = DateTime(2026, 8, 22);
+
+    PujaKalaSpan? span(
+      String kala, {
+      DateTime? sankrantiInstant,
+      List<BhadraWindow> bhadraWindows = const [],
+      bool avoidBhadra = false,
+      bool clipToTithi = false,
+      DateTime? tithiEnd,
+    }) {
+      return resolvePujaKala(
+        kala: kala,
+        date: date,
+        sunrise: sunrise,
+        sunset: sunset,
+        nextSunrise: nextSunrise,
+        moonrise: null,
+        tithiEnd: tithiEnd,
+        clipToTithi: clipToTithi,
+        sankrantiInstant: sankrantiInstant,
+        bhadraWindows: bhadraWindows,
+        avoidBhadra: avoidBhadra,
+      );
+    }
+
+    test('godhuli runs from sunset for one day-ghati', () {
+      // Arrange + Act
+      final s = span('godhuli');
+
+      // Assert: [18:00, 18:24], instant at the midpoint.
+      expect(s?.start, equals(DateTime(2026, 8, 22, 18)));
+      expect(s?.end, equals(DateTime(2026, 8, 22, 18, 24)));
+      expect(s?.instant, equals(DateTime(2026, 8, 22, 18, 12)));
+    });
+
+    test('punya kala runs 40 ghatis from a daytime transit, clipped', () {
+      // Arrange + Act: transit at 10:00, 16 hours would end at 02:00 next day.
+      final s = span(
+        'punya_kala',
+        sankrantiInstant: DateTime(2026, 8, 22, 10),
+      );
+
+      // Assert: clipped to sunset, instant is the transit itself.
+      expect(s?.instant, equals(DateTime(2026, 8, 22, 10)));
+      expect(s?.start, equals(DateTime(2026, 8, 22, 10)));
+      expect(s?.end, equals(DateTime(2026, 8, 22, 18)));
+    });
+
+    test('an after-sunset transit shifts punya kala to this sunrise', () {
+      // Arrange: yesterday 20:00 transit, so today carries the observance.
+      final s = span(
+        'punya_kala',
+        sankrantiInstant: DateTime(2026, 8, 21, 20),
+      );
+
+      // Assert: window starts at sunrise and keeps the transit + 16h end.
+      expect(s?.start, equals(sunrise));
+      expect(s?.end, equals(DateTime(2026, 8, 22, 12)));
+      expect(s?.instant, equals(sunrise));
+    });
+
+    test('punya kala hides without a transit or with one after sunset', () {
+      // Arrange + Act + Assert
+      expect(span('punya_kala'), isNull);
+      expect(
+        span('punya_kala', sankrantiInstant: DateTime(2026, 8, 22, 20)),
+        isNull,
+      );
+    });
+
+    test('avoidBhadra trims aparahna to the Bhadra-free part', () {
+      // Arrange: aparahna [13:12, 15:36], Bhadra [13:00, 14:00].
+      final s = span(
+        'aparahna',
+        avoidBhadra: true,
+        bhadraWindows: [
+          (
+            start: DateTime(2026, 8, 22, 13),
+            end: DateTime(2026, 8, 22, 14),
+          ),
+        ],
+      );
+
+      // Assert: the free tail is used, instant at its midpoint.
+      expect(s?.start, equals(DateTime(2026, 8, 22, 14)));
+      expect(s?.end, equals(DateTime(2026, 8, 22, 15, 36)));
+      expect(s?.instant, equals(DateTime(2026, 8, 22, 14, 48)));
+    });
+
+    test('avoidBhadra falls back to Pradosha when the kala is covered', () {
+      // Arrange: Bhadra covers the whole aparahna window.
+      final s = span(
+        'aparahna',
+        avoidBhadra: true,
+        bhadraWindows: [
+          (
+            start: DateTime(2026, 8, 22, 12),
+            end: DateTime(2026, 8, 22, 16),
+          ),
+        ],
+      );
+
+      // Assert: classical Pradosha [18:00, 20:24].
+      expect(s?.start, equals(DateTime(2026, 8, 22, 18)));
+      expect(s?.end, equals(DateTime(2026, 8, 22, 20, 24)));
+    });
+
+    test('avoidBhadra hides when neither kala is usable', () {
+      // Arrange + Act: Bhadra spans aparahna and the Pradosha fallback.
+      final s = span(
+        'aparahna',
+        avoidBhadra: true,
+        bhadraWindows: [
+          (
+            start: DateTime(2026, 8, 22, 12),
+            end: DateTime(2026, 8, 22, 22),
+          ),
+        ],
+      );
+
+      // Assert
+      expect(s, isNull);
+    });
+
+    test('a sub-12-minute Bhadra-free sliver falls back', () {
+      // Arrange: only 11 minutes of aparahna remain outside Bhadra.
+      final s = span(
+        'aparahna',
+        avoidBhadra: true,
+        bhadraWindows: [
+          (
+            start: DateTime(2026, 8, 22, 13, 12),
+            end: DateTime(2026, 8, 22, 15, 25),
+          ),
+        ],
+      );
+
+      // Assert: not a usable muhurta, so Pradosha is shown instead.
+      expect(s?.start, equals(DateTime(2026, 8, 22, 18)));
+    });
+
+    test('avoidBhadra without windows leaves the kala whole', () {
+      // Arrange + Act: the scan is gated on a matched festival, so an empty
+      // list means "not computed", not "no Bhadra".
+      final s = span('aparahna', avoidBhadra: true);
+
+      // Assert
+      expect(s?.start, equals(DateTime(2026, 8, 22, 13, 12)));
+      expect(s?.end, equals(DateTime(2026, 8, 22, 15, 36)));
     });
   });
 

@@ -183,19 +183,22 @@ void main() {
       }
     });
 
-    test('Durga Puja Shashthi spans both, Saptami resolves to last', () {
+    test('Durga Puja days keep every sunrise and skip the grace window', () {
       for (final id in [
         'shashthi_durga_puja',
+        'saptami_durga_puja',
         'ashtami_durga_puja',
         'navami_durga_puja',
+        'dasami_durga_puja',
       ]) {
         final rules = rulesOf(id);
+        // Genuine two-sunrise runs stay intact: Bisuddha Shashthi (Oct 16+17)
+        // and Surya Siddhanta Saptami (Oct 17+18).
         expect(rules['vriddhi'] ?? 'both', equals('both'), reason: id);
+        // No dominant-tithi grace: it would add a spurious extra day to each
+        // school's run (see test/durga_puja_2026_test.dart).
+        expect(rules['dominant_tithi'], equals('strict'), reason: id);
       }
-      // Bisuddha one-day Saptami: with the dominant-tithi grace, Saptami
-      // matches 17+18 Oct 2026, so `second` keeps the 18th (see
-      // dominant_grace_test.dart for the full day map).
-      expect(rulesOf('saptami_durga_puja')['vriddhi'], equals('second'));
     });
   });
 }

@@ -8,9 +8,9 @@ import '../providers/calendar_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
-import '../services/moonrise_calculator.dart';
+import '../services/moon_events_service.dart';
 import '../services/share_service.dart';
-import '../services/sunrise_calculator.dart';
+import '../services/solar_events_service.dart';
 import '../utils/tithi_localization.dart';
 import '../features/ai/domain/ai_prompt.dart';
 import '../features/ai/providers/ai_providers.dart';
@@ -1066,20 +1066,24 @@ class _EventPanchang extends ConsumerWidget {
 /// Moonrise for a puja/paran instant, with the tithi sheet's
 /// prevailing-event fallback: on no-rise days the previous evening's rise
 /// (which the fast still waits for) instead of nothing. Never throws —
-/// lunar-theory failures hide the card instead of breaking the sheet.
+/// a missing lunar event hides the card instead of breaking the sheet.
+///
+/// This is an observance input (Karva Chauth's puja and paran both wait for
+/// moonrise), so it goes through [MoonEventsService] and gets the native
+/// rise/set in production. The pure-Dart approximation is 1-3 minutes off,
+/// which is enough to cross a tithi boundary.
 DateTime? _pujaMoonrise({
   required DateTime date,
   required double latitude,
   required double longitude,
 }) {
   try {
-    final times = MoonriseCalculator.calculateMoonriseSet(
-      date: date,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    return times.moonrise ??
-        MoonriseCalculator.findPreviousMoonrise(
+    return moonEventsService.moonrise(
+          date: date,
+          latitude: latitude,
+          longitude: longitude,
+        ) ??
+        moonEventsService.findPreviousRise(
           date: date,
           latitude: latitude,
           longitude: longitude,
@@ -1094,10 +1098,14 @@ IconData _pujaKalaIcon(String kala) {
   return switch (kala) {
     'sunrise' => Icons.wb_sunny_rounded,
     'sunset' => Icons.nightlight_round,
-    'moonrise' => Icons.dark_mode_outlined,
+    'moonrise' || 'chandrodaya' => Icons.dark_mode_outlined,
     'sandhi_junction' => Icons.swap_horiz,
     'nishita' => Icons.dark_mode,
-    'pradosha' => Icons.wb_twilight,
+    'pradosh' || 'pradosha' => Icons.wb_twilight,
+    // Godhuli is the sunset-adjacent cow-dust hour; punya kala is the
+    // Sankranti merit window (a solar, daylight observance).
+    'godhuli' => Icons.wb_twilight,
+    'punya_kala' => Icons.brightness_5_outlined,
     _ => Icons.access_time,
   };
 }
@@ -1273,7 +1281,7 @@ class _EventPujaSamay extends ConsumerWidget {
           date: panchang.date,
           sunrise: panchang.sunrise,
           sunset: panchang.sunset,
-          nextSunrise: SunriseCalculator.calculateSunriseIST(
+          nextSunrise: solarEventsService.sunrise(
             date: panchang.date.add(const Duration(days: 1)),
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -1285,6 +1293,9 @@ class _EventPujaSamay extends ConsumerWidget {
           ),
           tithiEnd: timings?.end,
           clipToTithi: festival.panchangRules.clipToTithi,
+          sankrantiInstant: panchang.sankranti?.instant,
+          bhadraWindows: panchang.bhadraWindows,
+          avoidBhadra: festival.panchangRules.avoidBhadra,
         );
         if (span == null) return const SizedBox.shrink();
         final kalaName = pujaKalaLabel(kala, l10n);
@@ -1456,7 +1467,7 @@ class _EventParan extends ConsumerWidget {
         );
       case 'next_sunrise':
         // Typical morning eat window: two hours from sunrise.
-        final rise = SunriseCalculator.calculateSunriseIST(
+        final rise = solarEventsService.sunrise(
           date: panchang.date.add(const Duration(days: 1)),
           latitude: coords.latitude,
           longitude: coords.longitude,
@@ -1495,7 +1506,7 @@ class _EventParan extends ConsumerWidget {
           if (panchang.sunrise == null || panchang.sunset == null) {
             return const SizedBox.shrink();
           }
-          nextSunrise = SunriseCalculator.calculateSunriseIST(
+          nextSunrise = solarEventsService.sunrise(
             date: panchang.date.add(const Duration(days: 1)),
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -1512,6 +1523,9 @@ class _EventParan extends ConsumerWidget {
             moonrise: moonrise,
             tithiEnd: null,
             clipToTithi: false,
+            sankrantiInstant: panchang.sankranti?.instant,
+            bhadraWindows: panchang.bhadraWindows,
+            avoidBhadra: festival.panchangRules.avoidBhadra,
           );
           if (span == null) return const SizedBox.shrink();
           return paranBlock(reason: reason, detail: '~${jm(span.end)}');
@@ -1538,6 +1552,9 @@ class _EventParan extends ConsumerWidget {
               moonrise: moonrise,
               tithiEnd: timings.end,
               clipToTithi: festival.panchangRules.clipToTithi,
+              sankrantiInstant: panchang.sankranti?.instant,
+              bhadraWindows: panchang.bhadraWindows,
+              avoidBhadra: festival.panchangRules.avoidBhadra,
             );
             if (span == null) return const SizedBox.shrink();
             return paranBlock(reason: reason, detail: '~${jm(span.end)}');
@@ -1554,12 +1571,12 @@ class _EventParan extends ConsumerWidget {
         // hides the line.
         if (content.observedIndex >= 30) return const SizedBox.shrink();
         final nextDay = panchang.date.add(const Duration(days: 1));
-        final rise = SunriseCalculator.calculateSunriseIST(
+        final rise = solarEventsService.sunrise(
           date: nextDay,
           latitude: coords.latitude,
           longitude: coords.longitude,
         );
-        final set = SunriseCalculator.calculateSunsetIST(
+        final set = solarEventsService.sunset(
           date: nextDay,
           latitude: coords.latitude,
           longitude: coords.longitude,

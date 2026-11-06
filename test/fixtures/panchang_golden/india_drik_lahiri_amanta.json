@@ -1,0 +1,4527 @@
+{
+  "schemaVersion": 3,
+  "profileId": "india_drik_lahiri_amanta",
+  "profile": {
+    "engineVersion": "panchang-v3",
+    "ayanamsa": "lahiri",
+    "monthSystem": "amanta",
+    "sunriseConvention": "hindu",
+    "timezone": "Asia/Kolkata",
+    "calculationVersion": 3
+  },
+  "source": {
+    "authority": "Tithi panchang-v3 engine characterization",
+    "retrievedOn": "2026-10-25",
+    "kind": "engine-characterization",
+    "notes": "Phase 5d recapture: added `moonset` to 83 of the 84 cases and bumped `schemaVersion` 2 -> 3. Old result: the field did not exist, so the tithi sheet's moonset chip had no regression lock and the profile's lunar limb choice was only covered by a unit test on the rise/set bit mapping. New result: `moonset` comes from native `swe_rise_trans` under `PanchangProfile.standard` (upper limb, standard refraction, topocentric, true ecliptic latitude) through `moonEventsService.moonset`, the same call the detail sheet makes. `varanasi-2026-02-24` omits the key because the Moon does not set on that civil day - the set falls after local midnight - so the locked null is a genuine no-set day, not a failed lookup. Reason: moonset is user-visible next to moonrise, and locking it end-to-end is what pins the limb policy to a numeric instant. No existing value changed. Phase 5c recapture: refreshed `tithiEndsAt` on all 84 cases and re-rendered the one timestamp that was not on the +05:30 convention. Old results: `tithiEndsAt` still came from the Phase 2 capture, when the transition was bisected to 1 minute, so the six cities stored different instants for the same global event - spreads of 10-50 s (2026-01-14: 12:23:24Z .. 12:24:14Z). That noise used most of the 60 s tolerance, so the field could barely detect a real regression. New results: every `tithiEndsAt` is the shared crossing solver output, and cases that share a sunrise tithi now agree to the second. `delhi-1800-01-01` `moonrise` was rendered at LMT `+05:53` (truncated from the zone's +05:53:28), the only value in the file outside the stated convention; the instant is unchanged, it is now written as `+05:30` like every other timestamp. Reason: the fixture is a regression lock, and a 50 s capture-era spread inside a 60 s tolerance is not a lock. No astronomical value changed; the 19 s move on the 1800 moonrise is the truncated-offset parse error, not a new calculation. Phase 5b recapture: added `nakshatraStartsAt`, `nakshatraEndsAt`, `nextNakshatra` and `nextSankranti` to all 84 cases and bumped `schemaVersion` 1 -> 2. Old result: the four fields did not exist, so the sunrise nakshatra's edges and the next solar ingress had no regression lock. New result: edges from the shared crossing solver through `resolveNakshatraSpan` (the same path `nakshatraTimingsProvider` uses), and the ingress from `findSankrantiInstant` (first solar sign crossing strictly after sunrise, searched within 40 days). Reason: Phase 3 moved every edge onto one solver and nothing locked the nakshatra span or the Sankranti instant, so a regression there could only surface as a wrong \"Rohini until 3:42 PM\" or a wrong Bengali month. No existing value changed. The ingress instants are engine characterization, not an accuracy claim: a cross-check of the Mesha ingress on 2026-04-14 gives 09:30:15 IST here against a published 09:39, the ~9 minute ayanamsa variant that the fixture already carries elsewhere. Phase 5 recapture of every `moonrise` value. Profile change: lunar rise/set moved from the truncated pure-Dart lunar series (MoonriseCalculator, ~0.3 deg longitude, bisected to 1 minute) to native `swe_rise_trans` (topocentric, true ecliptic latitude, PanchangProfile.standard = upper limb + standard refraction). Old results were whole-minute approximations; new results are native to the second and differ by -120 s to +120 s (27 of 83 cases moved more than the 60 s tolerance, the rest by under a minute). Reason: moonrise decides Karva Chauth's puja and paran, so the observance path may not use an approximation. No other field changed; sunrise, sunset, tithi ends and the tithi/nakshatra/yoga/karana/masa values are untouched. Prior history: Phase 2 recapture after panchang-v3 replaced the night-midpoint Nishita sample with the Nishita window (sunset + 7/15 night to + 8/15 night, microsecond edges), plus the Boishakh-1 month-start fix (2026-04-14 is Choitro 30, 1432 and 2026-04-15 cases were added). Regression lock only; not an external accuracy certification."
+  },
+  "tolerance": {
+    "eventSeconds": 60,
+    "longitudeArcseconds": 1
+  },
+  "cases": [
+    {
+      "id": "delhi-2026-01-06",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-06",
+      "tags": [
+        "kshaya",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-06T07:19:04+05:30",
+        "sunset": "2026-01-06T17:34:51+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:54+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Priti",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 261.5195153669854,
+        "moonLongitude": 117.13542150110919,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-06T20:54:59+05:30",
+        "moonset": "2026-01-06T09:34:20+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-01-06",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-06",
+      "tags": [
+        "kshaya",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-06T06:21:51+05:30",
+        "sunset": "2026-01-06T17:02:46+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Priti",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 261.4790369523797,
+        "moonLongitude": 116.58431374970013,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-06T20:15:27+05:30",
+        "moonset": "2026-01-06T08:40:05+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-01-06",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-06",
+      "tags": [
+        "kshaya",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-06T07:17:05+05:30",
+        "sunset": "2026-01-06T18:11:27+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Priti",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 261.51811277245804,
+        "moonLongitude": 117.11633779959686,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-06T21:23:40+05:30",
+        "moonset": "2026-01-06T09:39:11+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-01-06",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-06",
+      "tags": [
+        "kshaya",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-06T06:48:58+05:30",
+        "sunset": "2026-01-06T17:18:49+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:54+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Priti",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 261.4982166094428,
+        "moonLongitude": 116.84553414726184,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-06T20:34:49+05:30",
+        "moonset": "2026-01-06T09:05:59+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-01-06",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-06",
+      "tags": [
+        "kshaya",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-06T06:36:39+05:30",
+        "sunset": "2026-01-06T17:52:42+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2026-01-06T08:02:10+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:43+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:53+05:30"
+        },
+        "yogaAtSunrise": "Priti",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 261.4895064751785,
+        "moonLongitude": 116.72692579163947,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-06T20:59:00+05:30",
+        "moonset": "2026-01-06T09:01:18+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-01-06",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-06",
+      "tags": [
+        "kshaya",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-06T06:15:38+05:30",
+        "sunset": "2026-01-06T16:42:01+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2026-01-06T08:02:09+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Ashlesha",
+        "nakshatraStartsAt": "2026-01-05T13:24:53+05:30",
+        "nakshatraEndsAt": "2026-01-06T12:17:42+05:30",
+        "nextNakshatra": "Magha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Priti",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 261.47463630460504,
+        "moonLongitude": 116.52435502200001,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-06T19:57:17+05:30",
+        "moonset": "2026-01-06T08:31:12+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-01-14",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-14",
+      "tags": [
+        "sankranti",
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-14T07:19:14+05:30",
+        "sunset": "2026-01-14T17:41:12+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:32+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:45+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Ganda",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 269.67052917773344,
+        "moonLongitude": 216.89390481218834,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-14T03:29:48+05:30",
+        "moonset": "2026-01-14T13:49:01+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-01-14",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-14",
+      "tags": [
+        "sankranti",
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-14T06:22:47+05:30",
+        "sunset": "2026-01-14T17:08:21+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:45+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:53+05:30"
+        },
+        "yogaAtSunrise": "Ganda",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 269.6305894918621,
+        "moonLongitude": 216.4291928319551,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-14T02:28:42+05:30",
+        "moonset": "2026-01-14T13:18:32+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-01-14",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-14",
+      "tags": [
+        "sankranti",
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-14T07:18:24+05:30",
+        "sunset": "2026-01-14T18:16:37+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:45+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Ganda",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 269.66994409361746,
+        "moonLongitude": 216.88709665535055,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-14T03:25:09+05:30",
+        "moonset": "2026-01-14T14:30:36+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-01-14",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-14",
+      "tags": [
+        "sankranti",
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-14T06:49:33+05:30",
+        "sunset": "2026-01-14T17:24:43+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:46+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Ganda",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 269.6495332563625,
+        "moonLongitude": 216.6496014251719,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-14T02:57:33+05:30",
+        "moonset": "2026-01-14T13:33:57+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-01-14",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-14",
+      "tags": [
+        "sankranti",
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-14T06:38:36+05:30",
+        "sunset": "2026-01-14T17:57:13+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:32+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:46+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Ganda",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 269.6417900686587,
+        "moonLongitude": 216.55950841180425,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-14T02:41:54+05:30",
+        "moonset": "2026-01-14T14:13:21+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-01-14",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-14",
+      "tags": [
+        "sankranti",
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-14T06:16:07+05:30",
+        "sunset": "2026-01-14T16:48:02+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-14T17:53:16+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Anuradha",
+        "nakshatraStartsAt": "2026-01-14T00:06:33+05:30",
+        "nakshatraEndsAt": "2026-01-15T03:03:46+05:30",
+        "nextNakshatra": "Jyeshtha",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2026-01-14T15:04:54+05:30"
+        },
+        "yogaAtSunrise": "Ganda",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 269.62588192342685,
+        "moonLongitude": 216.37442312456346,
+        "masa": "Pausha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-14T02:23:09+05:30",
+        "moonset": "2026-01-14T12:55:46+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-01-29",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-29",
+      "tags": [
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-29T07:14:56+05:30",
+        "sunset": "2026-01-29T17:53:47+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 284.93170797965695,
+        "moonLongitude": 53.16412845817928,
+        "masa": "Magha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-29T14:00:43+05:30",
+        "moonset": "2026-01-29T03:48:05+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-01-29",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-29",
+      "tags": [
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-29T06:20:33+05:30",
+        "sunset": "2026-01-29T17:18:51+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 284.8933560905232,
+        "moonLongitude": 52.614999531656736,
+        "masa": "Magha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-29T13:31:17+05:30",
+        "moonset": "2026-01-29T02:44:32+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "provided-anchor",
+        "notes": "Matches the illustrative Kolkata anchor in the migration brief (Shukla Ekadashi). Sunrise/sunset are native Swiss Ephemeris Hindu values."
+      }
+    },
+    {
+      "id": "mumbai-2026-01-29",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-29",
+      "tags": [
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-29T07:17:15+05:30",
+        "sunset": "2026-01-29T18:26:01+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:42+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 284.9333459744173,
+        "moonLongitude": 53.18758449015894,
+        "masa": "Magha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-29T14:45:07+05:30",
+        "moonset": "2026-01-29T03:40:24+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-01-29",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-29",
+      "tags": [
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-29T06:46:25+05:30",
+        "sunset": "2026-01-29T17:36:08+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:42+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 284.9115985362862,
+        "moonLongitude": 52.876181391499244,
+        "masa": "Magha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-29T13:46:15+05:30",
+        "moonset": "2026-01-29T03:14:30+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-01-29",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-29",
+      "tags": [
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-29T06:39:13+05:30",
+        "sunset": "2026-01-29T18:04:51+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 284.9065190512863,
+        "moonLongitude": 52.80345395928066,
+        "masa": "Magha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-29T14:28:59+05:30",
+        "moonset": "2026-01-29T02:55:01+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-01-29",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-01-29",
+      "tags": [
+        "ekadashi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-01-29T06:12:43+05:30",
+        "sunset": "2026-01-29T16:59:45+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 11,
+          "name": "Ekadashi"
+        },
+        "tithiEndsAt": "2026-01-29T13:55:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-01-28T09:26:56+05:30",
+        "nakshatraEndsAt": "2026-01-29T07:31:41+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kumbha",
+          "at": "2026-02-13T04:06:09+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 284.8878288677273,
+        "moonLongitude": 52.535870969096834,
+        "masa": "Magha",
+        "masaPurnimanta": "Magha",
+        "adhika": false,
+        "moonrise": "2026-01-29T13:07:19+05:30",
+        "moonset": "2026-01-29T02:40:07+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-02-15",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-15",
+      "tags": [
+        "mahashivratri",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-15T07:03:33+05:30",
+        "sunset": "2026-02-15T18:07:17+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-02-15T17:05:22+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Vyatipata",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 302.1464055976412,
+        "moonLongitude": 273.30964951045394,
+        "masa": "Magha",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-15T05:36:39+05:30",
+        "moonset": "2026-02-15T16:07:24+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-02-15",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-15",
+      "tags": [
+        "mahashivratri",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-15T06:12:12+05:30",
+        "sunset": "2026-02-15T17:29:19+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Vyatipata",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 302.11036448918117,
+        "moonLongitude": 272.8628883005059,
+        "masa": "Magha",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-15T04:36:25+05:30",
+        "moonset": "2026-02-15T15:34:19+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-02-15",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-15",
+      "tags": [
+        "mahashivratri",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-15T07:10:29+05:30",
+        "sunset": "2026-02-15T18:34:52+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:15+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Vyatipata",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 302.15126972078656,
+        "moonLongitude": 273.3699695009666,
+        "masa": "Magha",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-15T05:32:40+05:30",
+        "moonset": "2026-02-15T16:45:48+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-02-15",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-15",
+      "tags": [
+        "mahashivratri",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-15T06:36:44+05:30",
+        "sunset": "2026-02-15T17:47:56+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Vyatipata",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 302.1275828969224,
+        "moonLongitude": 273.07628516014745,
+        "masa": "Magha",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-15T05:04:55+05:30",
+        "moonset": "2026-02-15T15:50:52+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-02-15",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-15",
+      "tags": [
+        "mahashivratri",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-15T06:35:03+05:30",
+        "sunset": "2026-02-15T18:11:06+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-02-15T17:05:22+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:15+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Vyatipata",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 302.1263950707389,
+        "moonLongitude": 273.06156151599293,
+        "masa": "Magha",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-15T04:49:55+05:30",
+        "moonset": "2026-02-15T16:26:27+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-02-15",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-15",
+      "tags": [
+        "mahashivratri",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-15T06:02:38+05:30",
+        "sunset": "2026-02-15T17:11:58+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-02-15T17:05:21+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Uttara Ashadha",
+        "nakshatraStartsAt": "2026-02-14T18:16:11+05:30",
+        "nakshatraEndsAt": "2026-02-15T19:48:16+05:30",
+        "nextNakshatra": "Shravana",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Vyatipata",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 302.1036489109963,
+        "moonLongitude": 272.7796785341078,
+        "masa": "Magha",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-15T04:30:47+05:30",
+        "moonset": "2026-02-15T15:12:33+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-03-04",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-04",
+      "tags": [
+        "holi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-04T06:47:10+05:30",
+        "sunset": "2026-03-04T18:18:58+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 2,
+          "name": "Dwitiya"
+        },
+        "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:30+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Dhriti",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 319.24567762571746,
+        "moonLongitude": 146.1945097444135,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-04T19:20:25+05:30",
+        "moonset": "2026-03-04T07:03:03+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-03-04",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-04",
+      "tags": [
+        "holi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-04T05:59:11+05:30",
+        "sunset": "2026-03-04T17:37:38+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 2,
+          "name": "Dwitiya"
+        },
+        "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:29+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Dhriti",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 319.21228611126617,
+        "moonLongitude": 145.7565641219918,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-04T18:33:48+05:30",
+        "moonset": "2026-03-04T06:16:02+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-03-04",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-04",
+      "tags": [
+        "holi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-04T06:59:16+05:30",
+        "sunset": "2026-03-04T18:41:22+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 2,
+          "name": "Dwitiya"
+        },
+        "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:30+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Dhriti",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 319.2540960738572,
+        "moonLongitude": 146.30487429675298,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-04T19:37:55+05:30",
+        "moonset": "2026-03-04T07:18:38+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-03-04",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-04",
+      "tags": [
+        "holi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-04T06:22:14+05:30",
+        "sunset": "2026-03-04T17:57:45+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 2,
+          "name": "Dwitiya"
+        },
+        "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:29+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Dhriti",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 319.2283241978238,
+        "moonLongitude": 145.96694875927494,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-04T18:56:16+05:30",
+        "moonset": "2026-03-04T06:38:44+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-03-04",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-04",
+      "tags": [
+        "holi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-04T06:26:45+05:30",
+        "sunset": "2026-03-04T18:14:40+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": "2026-03-04T16:49:25+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 2,
+          "name": "Dwitiya"
+        },
+        "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:30+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Dhriti",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 319.2314664786054,
+        "moonLongitude": 146.00816050493586,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-04T19:07:05+05:30",
+        "moonset": "2026-03-04T06:47:03+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-03-04",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-04",
+      "tags": [
+        "holi",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-04T05:47:40+05:30",
+        "sunset": "2026-03-04T17:22:14+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": "2026-03-04T16:49:26+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 2,
+          "name": "Dwitiya"
+        },
+        "nakshatraAtSunrise": "Purva Phalguni",
+        "nakshatraStartsAt": "2026-03-03T07:31:29+05:30",
+        "nakshatraEndsAt": "2026-03-04T07:38:57+05:30",
+        "nextNakshatra": "Uttara Phalguni",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Dhriti",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 319.20427478476006,
+        "moonLongitude": 145.65144722252523,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-04T18:19:52+05:30",
+        "moonset": "2026-03-04T06:03:09+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-03-27",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-27",
+      "tags": [
+        "ram_navami",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-27T06:21:07+05:30",
+        "sunset": "2026-03-27T18:32:26+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 9,
+          "name": "Navami"
+        },
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 10,
+          "name": "Dashami"
+        },
+        "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:14+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 342.14558122244995,
+        "moonLongitude": 88.12912899053373,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-27T13:01:09+05:30",
+        "moonset": "2026-03-27T02:34:18+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-03-27",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-27",
+      "tags": [
+        "ram_navami",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-27T05:37:50+05:30",
+        "sunset": "2026-03-27T17:46:23+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 9,
+          "name": "Navami"
+        },
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 10,
+          "name": "Dashami"
+        },
+        "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:14+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 342.11583026165266,
+        "moonLongitude": 87.71309639618062,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-27T12:28:51+05:30",
+        "moonset": "2026-03-27T01:32:51+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-03-27",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-27",
+      "tags": [
+        "ram_navami",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-27T06:40:27+05:30",
+        "sunset": "2026-03-27T18:47:35+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 9,
+          "name": "Navami"
+        },
+        "tithiEndsAt": "2026-03-27T10:07:22+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 10,
+          "name": "Dashami"
+        },
+        "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 342.1588737998491,
+        "moonLongitude": 88.31495087176853,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-27T13:41:14+05:30",
+        "moonset": "2026-03-27T02:28:53+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-03-27",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-27",
+      "tags": [
+        "ram_navami",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-27T05:58:48+05:30",
+        "sunset": "2026-03-27T18:08:35+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 9,
+          "name": "Navami"
+        },
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 10,
+          "name": "Dashami"
+        },
+        "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:14+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 342.1302441330015,
+        "moonLongitude": 87.91468054366908,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-27T12:45:03+05:30",
+        "moonset": "2026-03-27T02:01:55+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-03-27",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-27",
+      "tags": [
+        "ram_navami",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-27T06:12:02+05:30",
+        "sunset": "2026-03-27T18:16:46+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 9,
+          "name": "Navami"
+        },
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 10,
+          "name": "Dashami"
+        },
+        "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:05+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 342.1393443981682,
+        "moonLongitude": 88.04192944643819,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-27T13:22:43+05:30",
+        "moonset": "2026-03-27T01:45:01+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-03-27",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-03-27",
+      "tags": [
+        "ram_navami",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-03-27T05:23:36+05:30",
+        "sunset": "2026-03-27T17:33:43+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 9,
+          "name": "Navami"
+        },
+        "tithiEndsAt": "2026-03-27T10:07:23+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 10,
+          "name": "Dashami"
+        },
+        "nakshatraAtSunrise": "Punarvasu",
+        "nakshatraStartsAt": "2026-03-26T16:19:04+05:30",
+        "nakshatraEndsAt": "2026-03-27T15:24:10+05:30",
+        "nextNakshatra": "Pushya",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 342.10604338417926,
+        "moonLongitude": 87.57619818191779,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Chaitra",
+        "adhika": false,
+        "moonrise": "2026-03-27T12:06:24+05:30",
+        "moonset": "2026-03-27T01:27:44+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-05-20",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-05-20",
+      "tags": [
+        "adhika",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-05-20T05:32:00+05:30",
+        "sunset": "2026-05-20T19:03:38+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 34.788344735432304,
+        "moonLongitude": 79.59224072336292,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-05-20T08:38:22+05:30",
+        "moonset": "2026-05-20T23:12:41+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-05-20",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-05-20",
+      "tags": [
+        "adhika",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-05-20T04:58:21+05:30",
+        "sunset": "2026-05-20T18:07:58+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-05-20T11:07:16+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:52+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 34.765841481623625,
+        "moonLongitude": 79.24780583489041,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-05-20T08:07:20+05:30",
+        "moonset": "2026-05-20T22:12:14+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-05-20",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-05-20",
+      "tags": [
+        "adhika",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-05-20T06:06:09+05:30",
+        "sunset": "2026-05-20T19:04:01+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 34.81118092159409,
+        "moonLongitude": 79.94156699427174,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-05-20T09:20:39+05:30",
+        "moonset": "2026-05-20T23:08:48+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-05-20",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-05-20",
+      "tags": [
+        "adhika",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-05-20T05:15:05+05:30",
+        "sunset": "2026-05-20T18:34:24+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-05-20T11:07:16+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:35+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:52+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 34.77702563936418,
+        "moonLongitude": 79.41901560479016,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-05-20T08:22:59+05:30",
+        "moonset": "2026-05-20T22:40:52+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-05-20",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-05-20",
+      "tags": [
+        "adhika",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-05-20T05:46:04+05:30",
+        "sunset": "2026-05-20T18:24:54+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 34.797749058798956,
+        "moonLongitude": 79.73612423844565,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-05-20T09:03:12+05:30",
+        "moonset": "2026-05-20T22:25:44+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-05-20",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-05-20",
+      "tags": [
+        "adhika",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-05-20T04:38:32+05:30",
+        "sunset": "2026-05-20T18:00:51+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-05-20T11:07:15+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Ardra",
+        "nakshatraStartsAt": "2026-05-19T08:41:34+05:30",
+        "nakshatraEndsAt": "2026-05-20T06:11:53+05:30",
+        "nextNakshatra": "Punarvasu",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Vishti",
+        "sunLongitude": 34.752588960477965,
+        "moonLongitude": 79.04486941170893,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-05-20T07:44:03+05:30",
+        "moonset": "2026-05-20T22:06:33+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-06-15",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-15",
+      "tags": [
+        "kshaya",
+        "new-moon",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-15T05:27:12+05:30",
+        "sunset": "2026-06-15T19:16:05+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 59.70615230683126,
+        "moonLongitude": 57.9416376745005,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-06-15T05:05:11+05:30",
+        "moonset": "2026-06-15T19:58:10+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-06-15",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-15",
+      "tags": [
+        "kshaya",
+        "new-moon",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-15T04:55:41+05:30",
+        "sunset": "2026-06-15T18:18:21+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 59.68522996067355,
+        "moonLongitude": 57.60635443153825,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-06-15T04:35:25+05:30",
+        "moonset": "2026-06-15T18:54:39+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-06-15",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-15",
+      "tags": [
+        "kshaya",
+        "new-moon",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-15T06:04:37+05:30",
+        "sunset": "2026-06-15T19:13:18+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:57+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:27+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 59.730989545243915,
+        "moonLongitude": 58.339644911423534,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-06-15T05:49:19+05:30",
+        "moonset": "2026-06-15T19:50:26+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-06-15",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-15",
+      "tags": [
+        "kshaya",
+        "new-moon",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-15T05:11:28+05:30",
+        "sunset": "2026-06-15T18:45:41+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-06-15T08:24:11+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 59.695711536938575,
+        "moonLongitude": 57.774324109700615,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-06-15T04:50:32+05:30",
+        "moonset": "2026-06-15T19:24:38+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-06-15",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-15",
+      "tags": [
+        "kshaya",
+        "new-moon",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-15T05:46:20+05:30",
+        "sunset": "2026-06-15T18:32:25+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-06-15T08:24:10+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:58+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:26+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 59.718850040662915,
+        "moonLongitude": 58.145116019085776,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-06-15T05:32:56+05:30",
+        "moonset": "2026-06-15T19:04:58+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-06-15",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-15",
+      "tags": [
+        "kshaya",
+        "new-moon",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-15T04:34:38+05:30",
+        "sunset": "2026-06-15T18:12:26+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-06-15T08:24:11+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Mrigashira",
+        "nakshatraStartsAt": "2026-06-14T22:13:57+05:30",
+        "nakshatraEndsAt": "2026-06-15T19:08:27+05:30",
+        "nextNakshatra": "Ardra",
+        "nextSankranti": {
+          "rashi": "Mithuna",
+          "at": "2026-06-15T12:49:57+05:30"
+        },
+        "yogaAtSunrise": "Shula",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 59.671255655224684,
+        "moonLongitude": 57.38240998951494,
+        "masa": "Adhika_Jyeshtha",
+        "masaPurnimanta": "Adhika_Jyeshtha",
+        "adhika": true,
+        "moonrise": "2026-06-15T04:11:31+05:30",
+        "moonset": "2026-06-15T18:50:19+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-09-04",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-09-04",
+      "tags": [
+        "janmashtami",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-09-04T06:04:26+05:30",
+        "sunset": "2026-09-04T18:35:39+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 9,
+          "name": "Navami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:21+05:30"
+        },
+        "yogaAtSunrise": "Harshana",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 137.2905533812397,
+        "moonLongitude": 43.28850551796836,
+        "masa": "Shravana",
+        "masaPurnimanta": "Bhadrapada",
+        "adhika": false,
+        "moonrise": "2026-09-04T23:24:00+05:30",
+        "moonset": "2026-09-04T13:09:43+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "engine-characterization",
+        "notes": "Janmashtami defect fixed by panchang-v3: the tithi is now sampled at the Nishita window opening (sunset + 7/15 night = 23:57:19) instead of the night midpoint (00:20), where the raw tithi is 24.005 (Navami). Ashtami (raw 23.987) prevails at the opening, so this day resolves janmashtami. Old result: []. New result: [\"janmashtami\"]. See docs/jyotish_package_improvements_plan.md, Phase 2."
+      }
+    },
+    {
+      "id": "kolkata-2026-09-04",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-09-04",
+      "tags": [
+        "janmashtami",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-09-04T05:23:36+05:30",
+        "sunset": "2026-09-04T17:47:22+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 9,
+          "name": "Navami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:22+05:30"
+        },
+        "yogaAtSunrise": "Harshana",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 137.26307915007226,
+        "moonLongitude": 42.88738337155269,
+        "masa": "Shravana",
+        "masaPurnimanta": "Bhadrapada",
+        "adhika": false,
+        "moonrise": "2026-09-04T22:54:20+05:30",
+        "moonset": "2026-09-04T12:06:36+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-09-04",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-09-04",
+      "tags": [
+        "janmashtami",
+        "known-gap",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-09-04T06:27:36+05:30",
+        "sunset": "2026-09-04T18:47:18+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 9,
+          "name": "Navami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:20+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:21+05:30"
+        },
+        "yogaAtSunrise": "Harshana",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 137.3061309708969,
+        "moonLongitude": 43.51597686344314,
+        "masa": "Shravana",
+        "masaPurnimanta": "Bhadrapada",
+        "adhika": false,
+        "moonset": "2026-09-04T13:02:35+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "engine-characterization",
+        "notes": "Decided by seconds, recorded as-is: Ashtami ends at 00:14:06 and the Nishita window (sunset + 7/15 night to + 8/15 night) opens at 00:14:11, so Ashtami prevails at neither edge and panchang-v3 resolves no janmashtami on this date (Navami at the opening, raw 24.0001). The pre-v3 note claimed Ashtami still prevailed because it compared minute-rounded times from the Phase 0 capture (Ashtami end 00:14:36); the native Hindu sunrise/sunset moved the window edge past the boundary by ~6 s. Old result: [] (midpoint sample). New result: [] (window edges). Kept as a documented boundary case, not an external accuracy claim; see docs/jyotish_package_improvements_plan.md, Phase 2."
+      }
+    },
+    {
+      "id": "varanasi-2026-09-04",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-09-04",
+      "tags": [
+        "janmashtami",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-09-04T05:43:29+05:30",
+        "sunset": "2026-09-04T18:10:33+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 9,
+          "name": "Navami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:20+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:11+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:22+05:30"
+        },
+        "yogaAtSunrise": "Harshana",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 137.27645924564092,
+        "moonLongitude": 43.08272081991595,
+        "masa": "Shravana",
+        "masaPurnimanta": "Bhadrapada",
+        "adhika": false,
+        "moonrise": "2026-09-04T23:09:23+05:30",
+        "moonset": "2026-09-04T12:36:23+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-09-04",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-09-04",
+      "tags": [
+        "janmashtami",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-09-04T06:01:20+05:30",
+        "sunset": "2026-09-04T18:14:31+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 9,
+          "name": "Navami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:22+05:30"
+        },
+        "yogaAtSunrise": "Harshana",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 137.28845838716563,
+        "moonLongitude": 43.25791557861157,
+        "masa": "Shravana",
+        "masaPurnimanta": "Bhadrapada",
+        "adhika": false,
+        "moonrise": "2026-09-04T23:51:33+05:30",
+        "moonset": "2026-09-04T12:17:33+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-09-04",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-09-04",
+      "tags": [
+        "janmashtami",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-09-04T05:07:55+05:30",
+        "sunset": "2026-09-04T17:36:02+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "tithiEndsAt": "2026-09-05T00:14:06+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 9,
+          "name": "Navami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-09-04T00:29:21+05:30",
+        "nakshatraEndsAt": "2026-09-04T23:04:12+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Kanya",
+          "at": "2026-09-17T07:49:21+05:30"
+        },
+        "yogaAtSunrise": "Harshana",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 137.25252414601255,
+        "moonLongitude": 42.73330468239544,
+        "masa": "Shravana",
+        "masaPurnimanta": "Bhadrapada",
+        "adhika": false,
+        "moonrise": "2026-09-04T22:30:33+05:30",
+        "moonset": "2026-09-04T12:01:59+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-11-09",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-11-09",
+      "tags": [
+        "diwali",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-11-09T06:42:53+05:30",
+        "sunset": "2026-11-09T17:26:43+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Saubhagya",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 202.41392897799494,
+        "moonLongitude": 199.64436675564457,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-11-09T06:35:13+05:30",
+        "moonset": "2026-11-09T17:16:02+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-11-09",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-11-09",
+      "tags": [
+        "diwali",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-11-09T05:49:09+05:30",
+        "sunset": "2026-11-09T16:51:16+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Saubhagya",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 202.37645028570455,
+        "moonLongitude": 199.1798581448195,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-11-09T05:36:55+05:30",
+        "moonset": "2026-11-09T16:43:04+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-11-09",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-11-09",
+      "tags": [
+        "diwali",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-11-09T06:46:15+05:30",
+        "sunset": "2026-11-09T17:58:07+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:23+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Saubhagya",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 202.4162781567909,
+        "moonLongitude": 199.67347388559028,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-11-09T06:34:56+05:30",
+        "moonset": "2026-11-09T17:53:40+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-11-09",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-11-09",
+      "tags": [
+        "diwali",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-11-09T06:14:44+05:30",
+        "sunset": "2026-11-09T17:08:47+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Saubhagya",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 202.39429240478057,
+        "moonLongitude": 199.40102430650495,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-11-09T06:04:33+05:30",
+        "moonset": "2026-11-09T16:59:34+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "chennai-2026-11-09",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-11-09",
+      "tags": [
+        "diwali",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-11-09T06:08:47+05:30",
+        "sunset": "2026-11-09T17:36:30+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Saubhagya",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 202.39014350035325,
+        "moonLongitude": 199.34960079359803,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-11-09T05:54:05+05:30",
+        "moonset": "2026-11-09T17:34:20+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-11-09",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-11-09",
+      "tags": [
+        "diwali",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-11-09T05:40:55+05:30",
+        "sunset": "2026-11-09T16:32:30+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 15,
+          "name": "Amavasya"
+        },
+        "tithiEndsAt": "2026-11-09T12:32:07+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Swati",
+        "nakshatraStartsAt": "2026-11-08T05:52:24+05:30",
+        "nakshatraEndsAt": "2026-11-09T07:24:03+05:30",
+        "nextNakshatra": "Vishakha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Saubhagya",
+        "karanaAtSunrise": "Naga",
+        "sunLongitude": 202.37070051839078,
+        "moonLongitude": 199.10857330464364,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-11-09T05:29:42+05:30",
+        "moonset": "2026-11-09T16:21:49+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-06-30",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-30",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-30T05:30:43+05:30",
+        "sunset": "2026-06-30T19:18:49+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": null,
+        "nextTithi": null,
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 74.02286219106327,
+        "moonLongitude": 254.053583658869,
+        "masa": "Jyeshtha",
+        "masaPurnimanta": "Ashadha",
+        "adhika": false,
+        "moonrise": "2026-06-30T19:57:55+05:30",
+        "moonset": "2026-06-30T05:20:07+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
+      }
+    },
+    {
+      "id": "kolkata-2026-06-30",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-30",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-30T04:59:07+05:30",
+        "sunset": "2026-06-30T18:21:12+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 15,
+          "name": "Purnima"
+        },
+        "tithiEndsAt": "2026-06-30T05:26:41+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:39+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Bava",
+        "sunLongitude": 74.00194059747554,
+        "moonLongitude": 253.79212342499113,
+        "masa": "Jyeshtha",
+        "masaPurnimanta": "Jyeshtha",
+        "adhika": false,
+        "moonrise": "2026-06-30T18:56:17+05:30",
+        "moonset": "2026-06-30T04:50:19+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
+      }
+    },
+    {
+      "id": "mumbai-2026-06-30",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-30",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-30T06:08:02+05:30",
+        "sunset": "2026-06-30T19:16:12+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": null,
+        "nextTithi": null,
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 74.04755908804867,
+        "moonLongitude": 254.36225515135084,
+        "masa": "Jyeshtha",
+        "masaPurnimanta": "Ashadha",
+        "adhika": false,
+        "moonrise": "2026-06-30T19:51:55+05:30",
+        "moonset": "2026-06-30T06:03:19+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
+      }
+    },
+    {
+      "id": "varanasi-2026-06-30",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-30",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-30T05:14:57+05:30",
+        "sunset": "2026-06-30T18:48:29+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 15,
+          "name": "Purnima"
+        },
+        "tithiEndsAt": "2026-06-30T05:26:41+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:31+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Bava",
+        "sunLongitude": 74.01241832211525,
+        "moonLongitude": 253.92306201279257,
+        "masa": "Jyeshtha",
+        "masaPurnimanta": "Jyeshtha",
+        "adhika": false,
+        "moonrise": "2026-06-30T19:25:24+05:30",
+        "moonset": "2026-06-30T05:05:26+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
+      }
+    },
+    {
+      "id": "chennai-2026-06-30",
+      "location": {
+        "name": "Chennai",
+        "latitude": 13.0827,
+        "longitude": 80.2707,
+        "altitudeMeters": 6,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-30",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-30T05:49:40+05:30",
+        "sunset": "2026-06-30T18:35:25+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "tithiEndsAt": null,
+        "nextTithi": null,
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:20+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Balava",
+        "sunLongitude": 74.03540659807959,
+        "moonLongitude": 254.21036434855307,
+        "masa": "Jyeshtha",
+        "masaPurnimanta": "Ashadha",
+        "adhika": false,
+        "moonrise": "2026-06-30T19:08:01+05:30",
+        "moonset": "2026-06-30T05:46:40+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
+      }
+    },
+    {
+      "id": "guwahati-2026-06-30",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-06-30",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-06-30T04:38:06+05:30",
+        "sunset": "2026-06-30T18:15:13+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 15,
+          "name": "Purnima"
+        },
+        "tithiEndsAt": "2026-06-30T05:26:41+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 1,
+          "name": "Pratipada"
+        },
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-06-30T04:03:40+05:30",
+        "nakshatraEndsAt": "2026-07-01T06:51:19+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Karka",
+          "at": "2026-07-16T23:35:30+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Bava",
+        "sunLongitude": 73.98802951009043,
+        "moonLongitude": 253.61828788187893,
+        "masa": "Jyeshtha",
+        "masaPurnimanta": "Jyeshtha",
+        "adhika": false,
+        "moonrise": "2026-06-30T18:51:23+05:30",
+        "moonset": "2026-06-30T04:26:49+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Sunrise-boundary case: the Purnima->Pratipada transition is close to sunrise. Under the native Hindu convention Delhi's sunrise moves past the transition, so Delhi, Mumbai and Chennai resolve to Krishna Pratipada while Kolkata, Varanasi and Guwahati resolve to Purnima."
+      }
+    },
+    {
+      "id": "delhi-2026-02-24",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-24",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-24T06:55:22+05:30",
+        "sunset": "2026-02-24T18:13:43+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "tithiEndsAt": "2026-02-24T07:02:38+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "nakshatraAtSunrise": "Krittika",
+        "nakshatraStartsAt": "2026-02-23T16:33:34+05:30",
+        "nakshatraEndsAt": "2026-02-24T15:07:12+05:30",
+        "nextNakshatra": "Rohini",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 311.21791320444845,
+        "moonLongitude": 35.151454855992256,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-24T10:58:37+05:30",
+        "moonset": "2026-02-24T00:30:02+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-02-24",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-02-24",
+      "tags": [
+        "sunrise-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-02-24T06:29:32+05:30",
+        "sunset": "2026-02-24T17:53:23+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "tithiEndsAt": "2026-02-24T07:02:38+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "nakshatraAtSunrise": "Krittika",
+        "nakshatraStartsAt": "2026-02-23T16:33:34+05:30",
+        "nakshatraEndsAt": "2026-02-24T15:07:12+05:30",
+        "nextNakshatra": "Rohini",
+        "nextSankranti": {
+          "rashi": "Meena",
+          "at": "2026-03-15T01:00:20+05:30"
+        },
+        "yogaAtSunrise": "Indra",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 311.199855555687,
+        "moonLongitude": 34.896842629323146,
+        "masa": "Phalguna",
+        "masaPurnimanta": "Phalguna",
+        "adhika": false,
+        "moonrise": "2026-02-24T10:43:10+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-10-16",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-16",
+      "tags": [
+        "vriddhi",
+        "durga-puja",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-16T06:26:15+05:30",
+        "sunset": "2026-10-16T17:46:54+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 6,
+          "name": "Shashthi"
+        },
+        "tithiEndsAt": "2026-10-17T05:54:50+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "nakshatraAtSunrise": "Jyeshtha",
+        "nakshatraStartsAt": "2026-10-15T04:03:04+05:30",
+        "nakshatraEndsAt": "2026-10-16T06:47:31+05:30",
+        "nextNakshatra": "Mula",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
+        "yogaAtSunrise": "Shobhana",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 178.4555829369981,
+        "moonLongitude": 239.8243039717695,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-16T11:34:07+05:30",
+        "moonset": "2026-10-16T21:40:42+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-10-16",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-16",
+      "tags": [
+        "vriddhi",
+        "durga-puja",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-16T05:36:59+05:30",
+        "sunset": "2026-10-16T17:07:02+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 6,
+          "name": "Shashthi"
+        },
+        "tithiEndsAt": null,
+        "nextTithi": null,
+        "nakshatraAtSunrise": "Jyeshtha",
+        "nakshatraStartsAt": "2026-10-15T04:03:05+05:30",
+        "nakshatraEndsAt": "2026-10-16T06:47:31+05:30",
+        "nextNakshatra": "Mula",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
+        "yogaAtSunrise": "Shobhana",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 178.42166108197432,
+        "moonLongitude": 239.41715847930527,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-16T10:30:57+05:30",
+        "moonset": "2026-10-16T21:11:17+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-10-16",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-16",
+      "tags": [
+        "vriddhi",
+        "durga-puja",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-16T05:26:10+05:30",
+        "sunset": "2026-10-16T16:50:49+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 6,
+          "name": "Shashthi"
+        },
+        "tithiEndsAt": null,
+        "nextTithi": null,
+        "nakshatraAtSunrise": "Jyeshtha",
+        "nakshatraStartsAt": "2026-10-15T04:03:04+05:30",
+        "nakshatraEndsAt": "2026-10-16T06:47:32+05:30",
+        "nextNakshatra": "Mula",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
+        "yogaAtSunrise": "Shobhana",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 178.41421378611903,
+        "moonLongitude": 239.32775556594606,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-16T10:26:44+05:30",
+        "moonset": "2026-10-16T20:47:36+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-10-17",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-17",
+      "tags": [
+        "vriddhi",
+        "durga-puja",
+        "regional",
+        "bengali-transition",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-17T06:26:52+05:30",
+        "sunset": "2026-10-17T17:45:52+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "tithiEndsAt": null,
+        "nextTithi": null,
+        "nakshatraAtSunrise": "Mula",
+        "nakshatraStartsAt": "2026-10-16T06:47:31+05:30",
+        "nakshatraEndsAt": "2026-10-17T09:47:01+05:30",
+        "nextNakshatra": "Purva Ashadha",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Gara",
+        "sunLongitude": 179.44776087056596,
+        "moonLongitude": 251.6890005500229,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-17T12:22:30+05:30",
+        "moonset": "2026-10-17T22:35:26+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-10-17",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-17",
+      "tags": [
+        "vriddhi",
+        "durga-puja",
+        "regional",
+        "bengali-transition",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-17T05:37:24+05:30",
+        "sunset": "2026-10-17T17:06:12+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 6,
+          "name": "Shashthi"
+        },
+        "tithiEndsAt": "2026-10-17T05:54:50+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "nakshatraAtSunrise": "Mula",
+        "nakshatraStartsAt": "2026-10-16T06:47:32+05:30",
+        "nakshatraEndsAt": "2026-10-17T09:47:01+05:30",
+        "nextNakshatra": "Purva Ashadha",
+        "nextSankranti": {
+          "rashi": "Tula",
+          "at": "2026-10-17T19:48:24+05:30"
+        },
+        "yogaAtSunrise": "Atiganda",
+        "karanaAtSunrise": "Taitila",
+        "sunLongitude": 179.4136859845022,
+        "moonLongitude": 251.28252050980473,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-17T11:20:10+05:30",
+        "moonset": "2026-10-17T22:04:55+05:30",
+        "bengaliDate": {
+          "year": 1433,
+          "month": "Ashshin",
+          "day": 30
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Vriddhi case: Kolkata keeps Shashthi at both sunrises (Oct 16+17) while Delhi advances to Saptami on Oct 17."
+      }
+    },
+    {
+      "id": "kolkata-2026-10-18",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-18",
+      "tags": [
+        "bengali-transition",
+        "durga-puja",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-18T05:37:50+05:30",
+        "sunset": "2026-10-18T17:05:22+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "tithiEndsAt": "2026-10-18T08:28:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-10-17T09:47:01+05:30",
+        "nakshatraEndsAt": "2026-10-18T12:48:51+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Sukarma",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 180.4062052278672,
+        "moonLongitude": 263.11846655026625,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-18T12:05:11+05:30",
+        "moonset": "2026-10-18T22:59:26+05:30",
+        "bengaliDate": {
+          "year": 1433,
+          "month": "Kartik",
+          "day": 1
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "guwahati-2026-10-18",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-18",
+      "tags": [
+        "bengali-transition",
+        "durga-puja",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-18T05:27:14+05:30",
+        "sunset": "2026-10-18T16:48:56+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "tithiEndsAt": "2026-10-18T08:28:39+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 8,
+          "name": "Ashtami"
+        },
+        "nakshatraAtSunrise": "Purva Ashadha",
+        "nakshatraStartsAt": "2026-10-17T09:47:01+05:30",
+        "nakshatraEndsAt": "2026-10-18T12:48:52+05:30",
+        "nextNakshatra": "Uttara Ashadha",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Sukarma",
+        "karanaAtSunrise": "Vanija",
+        "sunLongitude": 180.3989075701062,
+        "moonLongitude": 263.0313722627352,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Ashwin",
+        "adhika": false,
+        "moonrise": "2026-10-18T11:59:46+05:30",
+        "moonset": "2026-10-18T22:37:25+05:30",
+        "bengaliDate": {
+          "year": 1433,
+          "month": "Kartik",
+          "day": 1
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "delhi-2026-10-29",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-29",
+      "tags": [
+        "moonrise-festival",
+        "karva-chauth",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-29T06:34:46+05:30",
+        "sunset": "2026-10-29T17:34:39+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-10-29T22:10:40+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-10-28T13:26:04+05:30",
+        "nakshatraEndsAt": "2026-10-29T11:11:33+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Parigha",
+        "karanaAtSunrise": "Bava",
+        "sunLongitude": 191.3926536763223,
+        "moonLongitude": 50.51002443483321,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-10-29T20:12:00+05:30",
+        "moonset": "2026-10-29T09:56:55+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "mumbai-2026-10-29",
+      "location": {
+        "name": "Mumbai",
+        "latitude": 19.076,
+        "longitude": 72.8777,
+        "altitudeMeters": 14,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-29",
+      "tags": [
+        "moonrise-festival",
+        "karva-chauth",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-29T06:41:07+05:30",
+        "sunset": "2026-10-29T18:03:04+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-10-29T22:10:39+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-10-28T13:26:04+05:30",
+        "nakshatraEndsAt": "2026-10-29T11:11:33+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Parigha",
+        "karanaAtSunrise": "Bava",
+        "sunLongitude": 191.39706431891705,
+        "moonLongitude": 50.574962878152405,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-10-29T20:55:53+05:30",
+        "moonset": "2026-10-29T09:49:32+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "varanasi-2026-10-29",
+      "location": {
+        "name": "Varanasi",
+        "latitude": 25.3176,
+        "longitude": 82.9739,
+        "altitudeMeters": 81,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-10-29",
+      "tags": [
+        "moonrise-festival",
+        "karva-chauth",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-10-29T06:07:42+05:30",
+        "sunset": "2026-10-29T17:15:38+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "tithiEndsAt": "2026-10-29T22:10:39+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 5,
+          "name": "Panchami"
+        },
+        "nakshatraAtSunrise": "Rohini",
+        "nakshatraStartsAt": "2026-10-28T13:26:04+05:30",
+        "nakshatraEndsAt": "2026-10-29T11:11:33+05:30",
+        "nextNakshatra": "Mrigashira",
+        "nextSankranti": {
+          "rashi": "Vrishchika",
+          "at": "2026-11-16T19:39:52+05:30"
+        },
+        "yogaAtSunrise": "Parigha",
+        "karanaAtSunrise": "Bava",
+        "sunLongitude": 191.37389938305728,
+        "moonLongitude": 50.23388533718287,
+        "masa": "Ashwin",
+        "masaPurnimanta": "Kartika",
+        "adhika": false,
+        "moonrise": "2026-10-29T19:57:19+05:30",
+        "moonset": "2026-10-29T09:23:28+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Recaptured for panchang-v2 with native Swiss Ephemeris SE_BIT_HINDU_RISING. Regression lock, not an external accuracy certification."
+      }
+    },
+    {
+      "id": "kolkata-2026-04-14",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-04-14",
+      "tags": [
+        "bengali-transition",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-04-14T05:21:15+05:30",
+        "sunset": "2026-04-14T17:52:46+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "tithiEndsAt": "2026-04-15T00:12:52+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "nakshatraAtSunrise": "Shatabhisha",
+        "nakshatraStartsAt": "2026-04-13T16:03:37+05:30",
+        "nakshatraEndsAt": "2026-04-14T16:05:58+05:30",
+        "nextNakshatra": "Purva Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
+        "yogaAtSunrise": "Shukla",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 359.8305240332149,
+        "moonLongitude": 313.98615363577676,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Vaishakha",
+        "adhika": false,
+        "moonrise": "2026-04-14T02:58:29+05:30",
+        "moonset": "2026-04-14T14:54:27+05:30",
+        "bengaliDate": {
+          "year": 1432,
+          "month": "Choitro",
+          "day": 30
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "Bengali date corrected from {1433, Boishakh, 1} to {1432, Choitro, 30}: West Bengal Poila Boishakh 1433 is 2026-04-15, because Mesha sankranti falls at 09:39 IST on 2026-04-14 and the Bengal rule gives the sankranti civil day to the outgoing month (Drik Panchang, Indian Express, Times of India; Prokerala and Hindupad give Choitro 1432 as Mar 16 - Apr 14). The Panchang fields remain engine characterization."
+      }
+    },
+    {
+      "id": "kolkata-2026-04-15",
+      "location": {
+        "name": "Kolkata",
+        "latitude": 22.5726,
+        "longitude": 88.3639,
+        "altitudeMeters": 9,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-04-15",
+      "tags": [
+        "bengali-transition",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-04-15T05:20:23+05:30",
+        "sunset": "2026-04-15T17:53:08+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-04-15T22:31:40+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Purva Bhadrapada",
+        "nakshatraStartsAt": "2026-04-14T16:05:58+05:30",
+        "nakshatraEndsAt": "2026-04-15T15:22:40+05:30",
+        "nextNakshatra": "Uttara Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Vrishabha",
+          "at": "2026-05-15T06:19:41+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Gara",
+        "sunLongitude": 0.809862246920261,
+        "moonLongitude": 327.5327145927738,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Vaishakha",
+        "adhika": false,
+        "moonrise": "2026-04-15T03:33:09+05:30",
+        "moonset": "2026-04-15T15:52:16+05:30",
+        "bengaliDate": {
+          "year": 1433,
+          "month": "Boishakh",
+          "day": 1
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "West Bengal Poila Boishakh 1433 is 2026-04-15 (Drik Panchang, Indian Express, Times of India): Mesha sankranti is 09:39 IST on 2026-04-14, so the month starts the next day. Pairs with kolkata-2026-04-14 and proves there is exactly one Boishakh 1. Panchang fields are engine characterization."
+      }
+    },
+    {
+      "id": "guwahati-2026-04-14",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-04-14",
+      "tags": [
+        "bengali-transition",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-04-14T05:04:56+05:30",
+        "sunset": "2026-04-14T17:42:10+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 12,
+          "name": "Dwadashi"
+        },
+        "tithiEndsAt": "2026-04-15T00:12:51+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "nakshatraAtSunrise": "Shatabhisha",
+        "nakshatraStartsAt": "2026-04-13T16:03:37+05:30",
+        "nakshatraEndsAt": "2026-04-14T16:05:58+05:30",
+        "nextNakshatra": "Purva Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Mesha",
+          "at": "2026-04-14T09:30:15+05:30"
+        },
+        "yogaAtSunrise": "Shukla",
+        "karanaAtSunrise": "Kaulava",
+        "sunLongitude": 359.8194179198947,
+        "moonLongitude": 313.83510169877013,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Vaishakha",
+        "adhika": false,
+        "moonrise": "2026-04-14T02:47:32+05:30",
+        "moonset": "2026-04-14T14:38:29+05:30",
+        "bengaliDate": {
+          "year": 1432,
+          "month": "Choitro",
+          "day": 30
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "Bengali date corrected from {1433, Boishakh, 1} to {1432, Choitro, 30}: West Bengal Poila Boishakh 1433 is 2026-04-15, because Mesha sankranti falls at 09:39 IST on 2026-04-14 and the Bengal rule gives the sankranti civil day to the outgoing month (Drik Panchang, Indian Express, Times of India; Prokerala and Hindupad give Choitro 1432 as Mar 16 - Apr 14). The Panchang fields remain engine characterization."
+      }
+    },
+    {
+      "id": "guwahati-2026-04-15",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2026-04-15",
+      "tags": [
+        "bengali-transition",
+        "regional",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2026-04-15T05:03:57+05:30",
+        "sunset": "2026-04-15T17:42:39+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Krishna",
+          "number": 13,
+          "name": "Trayodashi"
+        },
+        "tithiEndsAt": "2026-04-15T22:31:39+05:30",
+        "nextTithi": {
+          "paksha": "Krishna",
+          "number": 14,
+          "name": "Chaturdashi"
+        },
+        "nakshatraAtSunrise": "Purva Bhadrapada",
+        "nakshatraStartsAt": "2026-04-14T16:05:58+05:30",
+        "nakshatraEndsAt": "2026-04-15T15:22:40+05:30",
+        "nextNakshatra": "Uttara Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Vrishabha",
+          "at": "2026-05-15T06:19:41+05:30"
+        },
+        "yogaAtSunrise": "Brahma",
+        "karanaAtSunrise": "Gara",
+        "sunLongitude": 0.7986855906387405,
+        "moonLongitude": 327.3755708956512,
+        "masa": "Chaitra",
+        "masaPurnimanta": "Vaishakha",
+        "adhika": false,
+        "moonrise": "2026-04-15T03:20:12+05:30",
+        "moonset": "2026-04-15T15:38:25+05:30",
+        "bengaliDate": {
+          "year": 1433,
+          "month": "Boishakh",
+          "day": 1
+        }
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-24",
+        "kind": "external-verified",
+        "notes": "West Bengal Poila Boishakh 1433 is 2026-04-15 (Drik Panchang, Indian Express, Times of India): Mesha sankranti is 09:39 IST on 2026-04-14, so the month starts the next day. Pairs with guwahati-2026-04-14 and proves there is exactly one Boishakh 1. Panchang fields are engine characterization."
+      }
+    },
+    {
+      "id": "delhi-1800-01-01",
+      "location": {
+        "name": "Delhi",
+        "latitude": 28.6139,
+        "longitude": 77.209,
+        "altitudeMeters": 216,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "1800-01-01",
+      "tags": [
+        "ephemeris-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "1800-01-01T07:18:40+05:30",
+        "sunset": "1800-01-01T17:31:35+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 6,
+          "name": "Shashthi"
+        },
+        "tithiEndsAt": "1800-01-01T13:47:17+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 7,
+          "name": "Saptami"
+        },
+        "nakshatraAtSunrise": "Purva Bhadrapada",
+        "nakshatraStartsAt": "1799-12-31T15:28:18+05:30",
+        "nakshatraEndsAt": "1800-01-01T16:54:52+05:30",
+        "nextNakshatra": "Uttara Bhadrapada",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "1800-01-11T15:58:51+05:30"
+        },
+        "yogaAtSunrise": "Variyana",
+        "karanaAtSunrise": "Taitila",
+        "sunLongitude": 259.4416971652255,
+        "moonLongitude": 328.3493621336454,
+        "masa": "Pausha",
+        "masaPurnimanta": "Pausha",
+        "adhika": false,
+        "moonrise": "1800-01-01T11:27:44+05:30",
+        "moonset": "1800-01-01T23:24:47+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Exercises the lower bundled-ephemeris range boundary (1800)."
+      }
+    },
+    {
+      "id": "guwahati-2399-12-31",
+      "location": {
+        "name": "Guwahati",
+        "latitude": 26.1445,
+        "longitude": 91.7362,
+        "altitudeMeters": 55,
+        "timezone": "Asia/Kolkata"
+      },
+      "date": "2399-12-31",
+      "tags": [
+        "ephemeris-boundary",
+        "amanta-purnimanta"
+      ],
+      "expected": {
+        "sunrise": "2399-12-31T06:13:03+05:30",
+        "sunset": "2399-12-31T16:36:40+05:30",
+        "tithiAtSunrise": {
+          "paksha": "Shukla",
+          "number": 3,
+          "name": "Tritiya"
+        },
+        "tithiEndsAt": "2399-12-31T09:54:12+05:30",
+        "nextTithi": {
+          "paksha": "Shukla",
+          "number": 4,
+          "name": "Chaturthi"
+        },
+        "nakshatraAtSunrise": "Shravana",
+        "nakshatraStartsAt": "2399-12-30T22:56:06+05:30",
+        "nakshatraEndsAt": "2400-01-01T01:38:26+05:30",
+        "nextNakshatra": "Dhanishta",
+        "nextSankranti": {
+          "rashi": "Makara",
+          "at": "2400-01-20T12:56:05+05:30"
+        },
+        "yogaAtSunrise": "Vyaghata",
+        "karanaAtSunrise": "Gara",
+        "sunLongitude": 249.34267566521726,
+        "moonLongitude": 283.65519492721296,
+        "masa": "Pausha",
+        "masaPurnimanta": "Pausha",
+        "adhika": false,
+        "moonrise": "2399-12-31T08:24:28+05:30",
+        "moonset": "2399-12-31T19:43:56+05:30"
+      },
+      "source": {
+        "authority": "Tithi panchang-v3 engine characterization",
+        "retrievedOn": "2026-10-23",
+        "kind": "engine-characterization",
+        "notes": "Exercises the upper bundled-ephemeris range boundary (2399)."
+      }
+    }
+  ]
+}

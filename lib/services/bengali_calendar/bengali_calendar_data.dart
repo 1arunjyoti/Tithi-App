@@ -10,6 +10,8 @@
 /// Month index convention (0-based): 0 = Boishakh .. 11 = Choitro.
 library;
 
+import '../../models/panchang_school.dart';
+
 /// Transliterated Bengali solar month names (guide Sec 3.1).
 const List<String> kBengaliMonths = [
   'Boishakh',
@@ -152,13 +154,19 @@ class BengaliCalendarDateCache {
 }
 
 /// Stable key for a Bengali day at a specific calculation location.
+///
+/// [school] is part of the key because the solar month index and the
+/// sankranti instant both move when the calculation school changes: a
+/// Surya Siddhanta month can start a day or two away from the Drik one.
 String bengaliCalendarDateCacheKey(
   DateTime normalizedDate,
   double latitude,
-  double longitude,
-) {
+  double longitude, {
+  PanchangSchool school = PanchangSchool.bisuddha,
+}) {
   return '${normalizedDate.year}-${normalizedDate.month}-${normalizedDate.day}_'
-      '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+      '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'
+      '_${school.name}';
 }
 
 /// Season (0-5 into [kBengaliSeasons]) for a 0-based month index.

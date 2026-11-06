@@ -12,9 +12,9 @@ import '../providers/locale_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../services/auspicious_timings.dart';
 import '../services/inauspicious_timings.dart';
-import '../services/sunrise_calculator.dart';
+import '../services/solar_events_service.dart';
 import '../services/moon_phase_service.dart';
-import '../services/moonrise_calculator.dart';
+import '../services/moon_events_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
 import '../features/tithi_sheet/providers/sheet_providers.dart';
@@ -147,7 +147,7 @@ class TithiDetailSheet extends ConsumerWidget {
     final hinduYear = ref
         .watch(hinduYearForSheetProvider(panchang.date))
         .valueOrNull;
-    final moonTimes = MoonriseCalculator.calculateMoonriseSet(
+    final moonTimes = moonEventsService.forDate(
       date: panchang.date,
       latitude: coords.latitude,
       longitude: coords.longitude,
@@ -158,14 +158,14 @@ class TithiDetailSheet extends ConsumerWidget {
     // carries its date (see [_moonChipText]).
     final moonrise =
         moonTimes.moonrise ??
-        MoonriseCalculator.findPreviousMoonrise(
+        moonEventsService.findPreviousRise(
           date: panchang.date,
           latitude: coords.latitude,
           longitude: coords.longitude,
         );
     final moonset =
         moonTimes.moonset ??
-        MoonriseCalculator.findNextMoonset(
+        moonEventsService.findNextSet(
           date: panchang.date,
           latitude: coords.latitude,
           longitude: coords.longitude,
@@ -193,7 +193,7 @@ class TithiDetailSheet extends ConsumerWidget {
             date: panchang.date,
             sunrise: panchang.sunrise!,
             sunset: panchang.sunset!,
-            nextSunrise: SunriseCalculator.calculateSunriseIST(
+            nextSunrise: solarEventsService.sunrise(
               date: panchang.date.add(const Duration(days: 1)),
               latitude: coords.latitude,
               longitude: coords.longitude,
@@ -894,7 +894,10 @@ class TithiDetailSheet extends ConsumerWidget {
                         icon: Icons.auto_awesome_outlined,
                         // This sheet opens for any date the user selects, so
                         // "today" is only right when it actually is.
-                        label: DateUtils.isSameDay(panchang.date, DateTime.now())
+                        label: DateUtils.isSameDay(
+                          panchang.date,
+                          ref.watch(todayDateProvider),
+                        )
                             ? l10n.aiAskAboutToday
                             : l10n.aiAskAboutDay,
                         supporting: l10n.aiOpensYourApp,

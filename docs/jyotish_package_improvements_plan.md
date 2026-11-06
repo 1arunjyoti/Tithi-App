@@ -73,8 +73,43 @@ calendar/day assembly, detail sheets, widgets, notifications, export,
 `HinduCalendarService`, and Bengali calendar paths before any astronomical
 behavior changes.
 
-Then replace that provider's implementation with a native Swiss Ephemeris
-Sun rise/set binding.
+Phase 1 status: complete.
+
+- **1a (seam):** `SolarEventsService` in
+  `lib/services/solar_events_service.dart` is the single cached entry point;
+  every production caller above reads it, and the Phase 0 golden set passed
+  unchanged under `panchang-v1`.
+- **1b (native convention):** `SwissSolarEventCalculator` now calls
+  `swe_rise_trans()` with `SE_BIT_HINDU_RISING` (disc centre, no refraction,
+  geocentric, no ecliptic latitude). `PanchangService.init()` configures it
+  synchronously after the ephemeris files are copied and
+  `Jyotish().initialize()` completes; a failure keeps the labelled NOAA
+  fallback. Non-Android targets use that fallback until Phase 6 builds the
+  native library for them.
+- `kPanchangCalculationVersion` is `2` and `locationSignature` carries the
+  version, so Hive caches from the NOAA convention are misses. In-memory
+  Panchang/solar caches are cleared on initialization.
+- `resolvedSolarContextProvider` supplies latitude, longitude, altitude, and
+  IANA timezone to the main Panchang and calendar-flag compute paths. The
+  Hindu convention is geocentric, so altitude does not move the event instant;
+  the timezone is carried so events use the place zone. Timing/follow-on
+  searches still pass latitude/longitude and are instant-equivalent.
+- Call sites that only know latitude/longitude (detail sheets, notification
+  scheduling, export, Bengali calendar, home widget, festival search) resolve
+  through `SolarEventsService.placeTimezoneId`, published by
+  `currentLocationProvider` in the UI isolate and from the persisted
+  `cached_timezone` key in the notification background isolate. An explicit
+  `timezoneId` argument still wins.
+- Place zone resolution is coordinate-based, not device-based: see "Place
+  timezone lookup" below.
+- The 82-case golden set was recaptured deliberately. The only semantic
+  festival change is Delhi `2026-06-30`: the native sunrise moves past the
+  Purnima -> Pratipada transition, so `[purnima]` becomes `[]` and the tithi is
+  Krishna Pratipada. All sunrise/sunset values shift by roughly 3-5 minutes.
+- The Janmashtami nishita defect remains the Phase 2 change described below;
+  it is not part of the Phase 1b fixture recapture.
+
+The implementation requirements were:
 
 - Bind `swe_rise_trans()` and expose the required rise/set constants.
 - Implement `SE_BIT_HINDU_RISING` as Tithi's Hindu solar-rise and solar-set
@@ -103,6 +138,42 @@ moonrise checkpoints derived from sunrise, sunset, next sunrise, and moonrise.
 This migration can move boundary-day results, so ship it only with the Phase 0
 references and a visible methodology/version update.
 
+### Place timezone lookup
+
+**Fixed.** `resolvePlaceTimezone` (`lib/core/location/timezone_resolver.dart`)
+turns coordinates into the zone the *place* observes, so an Indian user abroad
+viewing an Indian city gets `Asia/Kolkata`, not the device zone.
+
+- Bundled boundaries: `timezone_finder` (MIT code, ODbL boundary data) is
+  compiled into the app on every target; no network and no asset loading. The
+  lookup is `findLocation(longitude, latitude)` - GeoJSON argument order.
+- tzdata must be loaded from `package:timezone/data/latest_all.dart`, not
+  `latest.dart`: `latest` omits 106 of the 419 boundary identifiers and a hit
+  throws `StateError`. Both `AppBootstrap.initTimezones` and the WorkManager
+  entrypoint use `latest_all`; `timezone` is therefore `^0.11.2` and
+  `flutter_local_notifications` moves to `^22.3.2` (its 20.x API converted
+  positional parameters to named ones).
+- Fallback order: boundary hit -> device zone -> `Asia/Kolkata`. The fallback
+  covers open ocean (the data stops ~22 km offshore), an identifier missing
+  from the loaded tzdb, and tzdata that was never initialized.
+- Provenance is persisted beside the zone: `home_timezone_source` /
+  `cached_timezone_source` hold `place`, `user`, or `device` (`TimezoneSource`,
+  values stable once shipped). `_backfillPlaceMetadata` re-resolves only
+  `device`-marked or legacy marker-less values, so a later upgrade heals old
+  device-seeded rows without overwriting an explicit override.
+- ODbL attribution is required wherever the data ships:
+  `kTimezoneBoundaryAttribution` is shown on the About screen
+  (`timezoneDataCredit`).
+- Two product questions, now decided: the app runs on one **place clock**.
+  Live location (the "use current location" switch) means the device clock;
+  a place picked on the map means that place's clock, including its civil
+  midnight and its reminder wall times; with neither, the Delhi fallback's
+  clock. `PlaceClock` / `resolvePlaceClock` own that rule, and
+  `LocationService.placeClock` is the single synchronous source. Picking a
+  place turns live location off so the choice actually takes effect. No
+  reminder is anchored to a panchang instant yet (puja kala, nishita); when
+  one is added it should fire at the place instant.
+
 ## Phase 2 — one Panchang day and observance resolver
 
 Create one application-domain Panchang computation pipeline. This is **new
@@ -118,24 +189,229 @@ The canonical resolver must produce:
 - all festival checkpoint values; and
 - a versioned calculation/provenance record.
 
+**Status:** the canonical day and resolver exist as `PanchangDay` /
+`PanchangDayResolver` in `lib/features/panchang/domain/`, with nullable solar
+anchors, recorded tithi sample point, and provenance. All four day-assembly
+call sites are migrated: `resolveTithiCheckpoints` is an adapter over the
+resolver that keeps the Hive tithi cache (its checkpoint instants are nullable,
+so `computePanchangData` renders a polar day instead of throwing); the
+notification scheduler reads the resolver and no longer pre-reads sunrise at
+its call sites; the festival year export projects the resolver's day; and
+`HinduCalendarService.calculateDate` resolves with limbs/checkpoints/transition
+turned off while keeping its shared Hive tithi and masa entries.
+
+The forward scan in `PanchangService.findNextFestivalOccurrence` is migrated
+too. It resolves one canonical day per candidate date and projects it through
+`projectPanchangDay` (`lib/features/panchang/domain/panchang_day_projection.dart`)
+into the same `PanchangData` the grid matches against, so the scan and the grid
+share one definition of "matches today"; the ~240-line inline copy of the
+sunrise/override/dominant/Kshaya rules is gone. Two consequences are deliberate:
+
+- the scan is now *stricter* for `timingOverride` festivals. The inline copy
+  returned a sunrise match that `PanchangData.fromRawTithi` rejects, so a
+  boundary date could differ between the countdown and the calendar;
+- a polar candidate day no longer throws. `solarEventsService.sunrise` used to
+  raise `SolarEventUnavailable` out of the search; the canonical day carries a
+  null sunrise, the tithi is sampled at civil noon, and the scan resolves.
+
+The moonrise checkpoint the migration blocked on exists (see "Moonrise
+checkpoint" below); migrating before it would have encoded the old sunrise
+fallback for `moonrise` rules. The engine version stays `panchang-v3` and no
+golden fixture moved.
+
+**Missing solar events are data, not exceptions (Phase 2 acceptance
+criterion).** At polar latitudes the Sun may not rise or set on a civil day.
+`SolarEventsService` already reports that as `SolarEventUnavailable` instead
+of a fabricated 06:00/18:00, but no production caller caught it, so such a
+day used to fail as a computation error. The canonical day carries nullable
+sunrise, sunset, next sunrise, moonrise, and moonset, and the
+calendar grid, detail sheets, notification scheduling, and export must skip
+or label the missing event while still rendering the rest of the day. Do not
+add a defensive `try/catch` before the day model exists: it would invent a UI
+policy that this resolver then has to undo.
+
 Route the calendar grid, detail sheets, widgets, notifications, exports,
-search/countdowns, and event sheets through it. In particular, eliminate the
-inline copy of sunrise/override/dominant/Kshaya matching in
-`PanchangService.findNextFestivalOccurrence`.
+search/countdowns, and event sheets through it. The inline copy of
+sunrise/override/dominant/Kshaya matching in
+`PanchangService.findNextFestivalOccurrence` was the last duplicate and is now
+removed; `test/festival_occurrence_scan_test.dart` locks the scan/grid parity.
 
 Current day assembly is duplicated in `tithi_transitions.dart`, notification
 scheduling, festival export, and `HinduCalendarService`; each duplicate is a
 future behavior-drift risk.
 
 Make the moonrise checkpoint real. `timingOverrideCheckpoints` and
-`PanchangData.fromRawTithi` currently omit `'moonrise'` (it falls through to the
-sunrise tithi), while `PanchangRules` documents it as valid. Shipped Karva
-Chauth uses `pujaKala`/`paranRule: moonrise`, so its puja window follows
-moonrise while its tithi match follows sunrise. Add `'moonrise'` to the
-checkpoint set, the matcher, and the scheduler, and record the chosen policy in
-`PanchangProfile`.
+`PanchangData.fromRawTithi` omitted `'moonrise'` (it fell through to the sunrise
+tithi) while `PanchangRules` documented it as valid; shipped Karva Chauth uses
+`pujaKala`/`paranRule: moonrise`, so its puja window followed moonrise while its
+tithi match followed sunrise. Implemented in the section below.
 
-## Phase 3 — precise transitions, masa, and Adhika masa
+### Nishita checkpoint: Janmashtami boundary defect
+
+**Fixed in `panchang-v3`** (`kPanchangCalculationVersion = 3`,
+`kPanchangEngineVersion = 'panchang-v3'`).
+
+The locked baseline exposed a real engine defect, not a fixture error.
+`delhi-2026-09-04` resolved no `janmashtami`, although
+`docs/Lunisolar_Shaka_Vikram_Reference.md` §6.3/§6.4 records 2026-09-04 for both
+Smarta and Vaishnava observance (Ashtami must prevail at Nishita Kaal).
+
+`panchang-v1`/`v2` sampled one instant: `nishitaTime = sunset + (nextSunrise -
+sunset) / 2`, and `PanchangData.fromRawTithi` mapped `timingOverride: nishita`
+to the tithi at that instant. Nishita Kaal is not a point. It is the eighth of
+the fifteen night muhurtas: the window `sunset + 7/15 night` to
+`sunset + 8/15 night`, about 46 minutes, centred on the night midpoint. The
+midpoint can therefore fall after the tithi boundary while the required tithi
+still prevails when the window opens.
+
+Shipped rule (`FestivalObservancePolicy.nishita = NishitaPolicy.windowEdges`):
+
+- the tithi at the window **opening** decides, so a required tithi that ends
+  between the opening and the midpoint still matches (the Delhi defect);
+- a tithi that only arrives before the window **closes** also matches, so an
+  observance is not lost because its tithi began a few minutes inside the
+  window;
+- the midpoint is never a fallback; `NishitaPolicy.midpoint` exists only to
+  reproduce pre-v3 results.
+
+Implementation map: `PanchangCheckpoints.nishita` / `.nishitaEnd` and
+`PanchangCheckpointTithis.nishita` / `.nishitaEnd` in
+`panchang_day_resolver.dart` (microsecond edges), `TithiCheckpoints`, the
+matcher in `PanchangData.fromRawTithi`, and
+`SolarEventsService.checkpointTimeFor` (`nishita` = opening, `nishitaEnd` =
+closing). `PanchangService.findNextFestivalOccurrence` projects the same
+canonical day, so both edges reach the scan unchanged.
+
+Result, re-measured with the native Hindu sunrise convention:
+
+| City | Nishita window | Tithi at opening | Tithi at close | Result |
+| --- | --- | --- | --- | --- |
+| Delhi | 23:57:19--00:43:16 | Ashtami (`23.987`) | Navami (`24.022`) | match |
+| Mumbai | 00:14:11--01:00:53 | Navami (`24.0001`) | Navami (`24.036`) | no match |
+| Kolkata | 23:12:25--23:58:51 | Ashtami (`23.953`) | Ashtami (`23.988`) | match |
+| Varanasi / Chennai / Guwahati | | Ashtami | Ashtami | match |
+
+The raw value is the engine's tithi index at the sampled instant; 24.0 is the
+Ashtami/Navami boundary.
+
+Mumbai is a documented knife edge, not a remaining defect. Ashtami ends at
+00:14:06 IST - a geocentric instant, identical for every city - and Mumbai's
+window opens at 00:14:11, roughly six seconds later, so neither edge holds
+Ashtami and the observance falls on 2026-09-05 under the window rule. The
+pre-v3 note claimed the window "opens with Ashtami" from minute-rounded Phase 0
+times (Ashtami end 00:14:36); the native Hindu sunrise/sunset moved the window
+edge past the boundary. No tolerance is applied: a guard band would decide a
+one-day outcome on sub-minute arithmetic. The fixture records the engine's
+answer as `engine-characterization` (still tagged `known-gap`) instead of
+asserting an observance date, and the case is the standing example of a
+boundary decided by seconds.
+
+Fixture diff: `delhi-2026-09-04` `[]` -> `["janmashtami"]`, with the
+`known-gap` tag and note removed; `mumbai-2026-09-04` keeps `[]` with its note
+rewritten to the measured boundaries; the profile block moves to `panchang-v3` /
+`calculationVersion: 3`. The other four cities are unchanged.
+
+### Moonrise checkpoint
+
+A `moonrise` rule was documented as valid in `PanchangRules` but silently fell
+through to the sunrise tithi: neither `timingOverrideCheckpoints` nor
+`PanchangData.fromRawTithi` had a `moonrise` case. Karva Chauth made the gap
+visible - its puja window and paran follow moonrise (`pujaKala`/`paranRule`),
+while its date was decided at sunrise.
+
+Implemented:
+
+- `PanchangCheckpointTithis.moonrise` is the tithi at
+  `PanchangSolarDay.moonrise`. It is the only checkpoint sampled at a primary
+  lunar anchor rather than a solar offset, so the instant stays on the solar
+  day and the sampled tithi travels with the checkpoint set.
+- `PanchangDayResolver._checkpointTithis` samples it under the `moonrise` cache
+  point. `TithiCheckpoints.rawTithiMoonrise`,
+  `PanchangData.fromRawTithi(rawTithiMoonrise:)`, the notification scheduler,
+  and `test/verify_dates.dart` carry it.
+- `timingOverrideCheckpoints` includes `moonrise`, so a moonrise rule is tested
+  only at the rise - no sunrise match and no dominant grace, exactly like the
+  other overrides - and keeps the Kshaya fallback.
+- `SolarEventsService.checkpointTimeFor('moonrise')` returns the day's rise. The
+  forward scan reads the checkpoint off the canonical day it already resolves,
+  so the scan and the grid sample the same instant.
+- `FestivalObservancePolicy.moonrise` records the no-rise policy:
+  `MoonrisePolicy.fallbackToSunrise` (shipped) uses the day's own tithi when the
+  Moon does not rise; `requireRise` would move the observance to a day whose
+  Moon does rise.
+
+No shipped festival rule sets `timingOverride: moonrise` yet, so no result
+moves and the engine version stays `panchang-v3`. The policy adds a
+`moonrise:` segment to `PanchangProfile.cacheKey`, so Panchang caches
+invalidate once. Promoting Karva Chauth's date rule from sunrise to moonrise is
+a data change that needs an external check and a fixture diff, and is not part
+of this step.
+
+### Boishakh-1 boundary defect
+
+**Fixed.** `kolkata-2026-04-14` / `guwahati-2026-04-14` now resolve
+`{1432, Choitro, 30}`, and the new `*-2026-04-15` cases resolve
+`{1433, Boishakh, 1}`. Engine version stays `panchang-v3`; this is a calendar
+resolution fix, not a Panchang calculation change.
+
+The locked baseline exposed a second real engine defect, found by checking the
+Bengali transition fixtures against external sources. For West Bengal, Poila
+Boishakh 1433 is **2026-04-15**: Mesha sankranti falls at 09:39 IST on
+2026-04-14, and the Bisuddha Siddhanta rule assigns the sankranti civil day to
+the outgoing month. Drik Panchang, Indian Express, and Times of India agree;
+Wikipedia records 14 or 15 April for India and 14 April for Bangladesh, so the
+West Bengal reading is the one this app must model. 2026-04-14 is Choitro 30,
+1432 (Prokerala's Bengali panjika for that date; Hindupad records Choitro 1432
+as Mar 16 - Apr 14).
+
+The engine used to yield Boishakh 1 on **both** 2026-04-14 and 2026-04-15. The
+cause was in `BengaliCalendarService._resolveMonthStart`:
+
+- `monthIndex` is derived from the Sun's longitude at local noon, so on
+  2026-04-14 noon it is already Boishakh (post-ingress);
+- the resolved `monthStart` is `sankrantiDay + 1` = 2026-04-15;
+- `if (monthStart.isAfter(noon)) return fallback;` then returned the noon date
+  itself, so 2026-04-14 claimed day 1 of the month that starts on 2026-04-15;
+- 2026-04-15 resolved normally to the same start, producing the duplicate.
+
+The noon-anchored fallback existed to keep the grid bounded, so it was not
+simply removed. The fix keeps the bound and corrects the answer:
+
+- `_resolveMonthStart` returns `({int index, DateTime start})`. When month `N`
+  starts after noon, it resolves month `N-1` at the noon before that start and
+  returns that month's index and start, one step only (the outgoing month's
+  start is 29-32 days earlier, so it cannot land on its own sankranti day).
+  The noon fallback remains as the unreachable one-step guard.
+- `_monthStartFor` caches under the resolved index, and `calculateDate` takes
+  the month name and Bangabda year from the resolved index instead of the
+  noon's rashi. Both were previously derived from `monthIndex`, so returning
+  the previous month's start alone would have produced Choitro day 30 labelled
+  Boishakh 1433.
+- `test/bengali_calendar_month_start_test.dart` locks the transition (forward
+  and reverse order, so the month-start cache cannot decide it), the
+  day-by-day continuity across April 2026, and exactly one Boishakh 1 in
+  2025-2027.
+
+Fixture diff (reviewed, per the update rules): both 2026-04-14 cases changed
+`bengaliDate` `{1433, Boishakh, 1}` -> `{1432, Choitro, 30}` and moved to
+`external-verified` with the citations above; `kolkata-2026-04-15` and
+`guwahati-2026-04-15` were added (`{1433, Boishakh, 1}`, full Panchang fields
+captured from the engine). `kolkata-2026-10-17` / `guwahati-2026-10-17` keep
+their values (Ashshin 30 -> Kartik 1).
+
+Acceptance criteria, all met:
+
+- `kolkata-2026-04-14` and `guwahati-2026-04-14` resolve
+  `{1432, Choitro, 30}`;
+- the new 2026-04-15 cases resolve `{1433, Boishakh, 1}`, proving the duplicate
+  day is gone and there is exactly one Boishakh 1 per year;
+- the existing `kolkata-2026-10-17` / `guwahati-2026-10-17` Bengali transition
+  cases keep their current values;
+- the fixture diff, source, and reason are recorded per the update rules, and
+  both 2026-04-14 records moved from `engine-characterization` to
+  `external-verified` with the citations above.
+
+## Phase 3 - precise transitions, masa, and Adhika masa
 
 Keep the existing astronomical definitions but replace coarse approximation
 where it determines a boundary:
@@ -155,6 +431,59 @@ This is mandatory for Adhika masa: the current new-moon solver stops at about
 new moon near Sankranti can therefore produce the wrong Adhika verdict. Reuse
 the Bengali calendar's stronger Sankranti bisection design (about 20 seconds)
 as the starting point for the shared ingress primitive.
+
+### Crossing solver: what shipped
+
+- `solveRoot` / `solveAngleCrossing` in
+  `lib/features/panchang/domain/root_solver.dart` are the shared primitive: one
+  bisection, 1 s default tolerance, bracket verified up front (residual `<= 0`
+  before, `> 0` after) and null instead of a plausible wrong instant.
+  `signedAngleDelta` provides the mod-360 fold that makes cyclic longitudes
+  solvable without unwrapping.
+- `findNewMoonInstant` / `findSankrantiInstant` in
+  `lib/features/panchang/domain/panchang_crossings.dart` bracket by daily
+  sampling around an estimate and then solve. `_refineNewMoonInstant` resolves
+  the new moon to the second; the ~±3 h error is gone, so a new moon cannot
+  land on the wrong side of a nearby Sankranti. The old nearest-noon fallback
+  (`newMoonDistance`, ±12 h) was removed: `resolveNewMoonInstant` retries at
+  ±7 days and then throws `CrossingResolutionException`, because a wrong Adhika
+  month is worse than a visible failure.
+- `findSankrantiInstant` now has a production caller: the Bengali month start
+  resolves its ingress through it, so the tested helper and the shipping path
+  are the same code. The 35-day guard scan remains for a mismatched boundary.
+- `findSunriseTithiTransition` (`lib/features/panchang/domain/tithi_transitions.dart`)
+  and `bisectNakshatraEdge`
+  (`lib/features/panchang/domain/nakshatra_span.dart`) replaced their own
+  1-minute bisections. The nakshatra edge targets half a segment past (or
+  before) the sunrise index, so both directions are upward crossings;
+  `test/nakshatra_edge_test.dart` pins that target math directly.
+- Bengali month starts moved to
+  `lib/services/bengali_calendar/bengali_month_start.dart`
+  (`resolveBengaliMonthStart`), a pure function over a Sun-longitude sampler.
+  It dropped the 12-round (~20 s) bisection for the shared solver and removed
+  the historic Apr-14 approximation: a sampler that cannot produce an ingress
+  now throws `BengaliMonthStartException` instead of returning a day-off
+  month start. `test/bengali_month_start_test.dart` covers the normal,
+  Sankranti-civil-day, guard-scan and failure paths without FFI.
+- `solveRoot` is documented as upward-only; a descending crossing returns
+  null. `test/root_solver_test.dart` pins that contract.
+- `wrapPairIndex` and `interpolateNewMoonInstant` were deleted as dead
+  approximation code.
+- Yoga and karana already had a consumer: the tithi detail sheet's
+  `yogaKaranaTimingsProvider` shows "until 3:42 PM". It used a provider-local
+  1-minute index bisection, so it was migrated to `resolveYogaKaranaSpan`
+  (`lib/features/panchang/domain/yoga_karana_span.dart`), which solves the
+  continuous Sun+Moon sum and elongation through `solveAngleCrossing`.
+  `test/yoga_karana_span_test.dart` covers both ends, the 360 wrap and the
+  failure paths.
+- The golden fixture locks both the nakshatra span and the next Sankranti
+  (schema 2). `resolveNakshatraSpan`
+  (`lib/features/panchang/domain/nakshatra_span.dart`) is now the production
+  path - `nakshatraTimingsProvider` is a thin wrapper - so
+  `test/panchang_golden_engine_test.dart` compares the fixture against the same
+  code the detail sheet runs, not a test-local bisection. The ingress comes from
+  `findSankrantiInstant` with a mean-motion estimate
+  (`sunrise + (30 - degInSign) / 0.9856` days).
 
 Continue to separate three decisions in code and data:
 
@@ -201,6 +530,38 @@ removing the stale claim that it does not work in the compiled library, and
 validating returned flags. Keep comparison tests against the established
 ecliptic-longitude path before making it the default.
 
+### Phase 4: what shipped
+
+- Houses and frames: `swe_houses_ex` is bound with `SEFLG_SIDEREAL`;
+  `calculateHouses` honours the requested code and "W" is the chart default,
+  with no ayanamsa subtraction from cusps/angles. Equatorial sidereal planet
+  requests are rejected instead of subtracting an ecliptic offset from RA.
+- Dignity and validation: `planetary_dignity.dart` fixes Venus to 177° and
+  Jupiter to 275°, evaluates degree-based moola-trikona before own-sign
+  dignity, and rejects non-finite longitudes. `GeographicLocation` rejects
+  non-finite and out-of-range DMS values; chart location strings use N/S/E/W.
+- Provenance and data range: `PlanetPosition.provenance` records requested and
+  returned flags, backend and warning; `requireSwissEphemeris` throws rather
+  than returning Moshier output; `probeDataRange()` reports each loaded file's
+  actual range from `swe_get_current_file_data()`. Initialization shares one
+  in-flight future per isolate and app startup asserts the expected years.
+- Cache and batching: `_PositionCacheKey` replaces rounded strings and carries
+  the exact instant, frame, ayanamsa, engine version and topocentric altitude;
+  geocentric entries omit location. `calculatePlanetPositions` and
+  `calculateSunMoon` replace `Future.wait`, applying global state once and
+  reusing one error buffer; the app's tithi and Sun/Moon paths use the pair.
+- Native sidereal: `CalculationFlags.nativeSidereal()` sets `SEFLG_SIDEREAL`,
+  verifies the returned flag and skips the Dart subtraction. It remains
+  opt-in; `native_sidereal_test.dart` compares it with the historical path.
+  `SiderealMode.label` no longer shadows `.name`, and `persistenceKey` exposes
+  the integer constant.
+- `jyotish-js/` is documented as an incomplete, private scaffold (its index
+  imports files that are not in the repository) and is outside the Dart API
+  and CI. The developer-specific macOS path is gone from `SwissEphBindings`.
+- Tests: `houses`, `planetary_dignity`, `geographic_location`,
+  `equatorial_frame`, `ephemeris_provenance`, `native_sidereal` and
+  `position_cache` suites in `packages/jyotish/test/`.
+
 ## Phase 5 — moonrise, moonset, and timing accuracy
 
 Replace the pure-Dart approximate moonrise/moonset implementation for all
@@ -218,6 +579,83 @@ observance decisions with native Swiss Ephemeris rise/set results.
   exists to avoid roughly 150 asynchronous samples per sheet; a direct native
   rise/set binding should avoid that regression.
 
+### Lunar rise/set: what shipped
+
+- `MoonEventsService` (`lib/services/moon_events_service.dart`) is the lunar
+  counterpart of `SolarEventsService`: `MoonEventCalculator` strategy,
+  `SwissMoonEventCalculator` production implementation,
+  `ApproximateMoonEventCalculator` labelled fallback, bounded cache, published
+  place zone, and the global `moonEventsService`. It returns null for a
+  missing event instead of throwing, because a no-rise day is a normal monthly
+  occurrence the observances already handle.
+- The convention is topocentric and apparent with the Moon's true ecliptic
+  latitude: `SE_BIT_GEOCTR_NO_ECL_LAT` and `SE_BIT_HINDU_RISING` are never
+  set. Limb and refraction come from `PanchangProfile.lunarLimb` /
+  `lunarRefraction` (`upperLimb` + `standard` by default), and
+  `SE_BIT_DISC_BOTTOM = 2048` was added to the bindings for the lower-limb
+  policy. `riseSetBits` is the single place that mapping lives.
+- `swe_rise_trans` only searches forward, so a result is discarded unless it
+  lands on the requested civil day. Without that check a no-rise day returns
+  tomorrow's rise, which would move a moonrise observance onto the wrong day.
+  `findPreviousRise` / `findNextSet` preserve the prevailing-event fallback by
+  walking a 48 h window in the direction the forward-only primitive allows.
+- Wired through `PanchangService.init` / `clearCaches`, `PanchangDayResolver`
+  (injectable `moonEvents`; `_solarDay` reads `forDate`),
+  `event_detail_sheet._pujaMoonrise` (the observance input),
+  `tithi_detail_sheet`'s chips and
+  `SolarEventsService.checkpointTimeFor('moonrise')` (vestigial but kept
+  consistent). `MoonriseCalculator` survives only as the fallback delegate.
+- Latency: the ~150-sample worry in the plan does not apply. `swe_rise_trans`
+  is one synchronous FFI call per event. Measured on the Windows host over 40
+  Delhi days: approximation ~898 µs/day for both events, native uncached
+  ~394 µs/day, native cached ~11 µs/day. The native path is both more accurate
+  and about twice as fast as the scan it replaces, so no async conversion or
+  precomputation was needed.
+- The golden fixture's `moonrise` values were recaptured under the new
+  convention (83 values; 27 moved more than the 60 s tolerance, spread of
+  ±120 s). `source.notes` records old result, new result and reason.
+  `test/moon_events_test.dart` pins the convention, the no-rise contract, the
+  fallbacks and the resolver wiring.
+
+### Timing accuracy: what shipped
+
+- One tithi-span resolver, `resolveTithiSpan`
+  (`lib/features/panchang/domain/tithi_span.dart`): it scans outward from the
+  festival day (2 h steps, ±2 days), brackets both edges and solves them with
+  `solveAngleCrossing`, so a span is second-precise and a Kshaya tithi returns
+  null. `tithiTimingsProvider` and `FestivalExportService` share it;
+  `PanchangService`'s 1-minute `calculateTithiStartTime` /
+  `calculateTithiEndTime` and the ±15-day `_findNearestTithiOccurrence` scan
+  were removed.
+- The fixture's 78 non-null `tithiEndsAt` values were recaptured from the
+  current engine. The Phase 2 capture bisected to a minute, so six cities
+  stored instants up to 50 s apart for one global tithi end - most of the 60 s
+  tolerance. Cases that share a sunrise tithi now agree to the second, and
+  `test/panchang_golden_fixture_test.dart` enforces ≤ 2 s.
+- The one no-rise case (`mumbai-2026-09-04`) is now falsifiable: the engine
+  test requires a rise on both neighbouring days with a gap over 24 h, so a
+  lookup that returns null for every day fails.
+- `delhi-1800-01-01` `moonrise` was re-rendered from truncated LMT `+05:53` to
+  `+05:30`; the instant is unchanged (the old string parsed 20 s off).
+- The harness README and skip reason now name the real IST dependency: the day
+  pipeline is anchored in the device zone because the harness does not pass
+  `timezoneId`, while moonrise itself already uses the place zone.
+- `ensureNativeEngineInstalled`
+  (`lib/services/panchang_init/panchang_init.dart`) turns a failed
+  `configureSwiss` into a startup failure on `kNativeEnginePlatforms`
+  (Android, the only platform the package builds Swiss Ephemeris for). Both
+  services record `nativeSetupError` instead of only logging, and
+  `PanchangService.init` calls the guard after configuring them;
+  `EphemerisEngineException` reaches `PanchangInitErrorBanner`. Off Android the
+  labelled approximation stays the documented behaviour, so desktop and CI
+  still run.
+- `moonset` is locked for 83 of the 84 cases (fixture schema 3), so the
+  profile's limb/refraction policy is pinned by an instant and not only by
+  `riseSetBits`. `varanasi-2026-02-24` omits it as a genuine no-set day, and the
+  engine test applies the same neighbour-gap falsifier used for `moonrise`.
+- `test/moon_events_test.dart` asserts that `upperLimb` and `lowerLimb` moonset
+  differ by minutes, not seconds, on a real Delhi day.
+
 ## Phase 6 — platform, data, and licensing delivery
 
 - Verify every Android ABI shipped by the app with reproducible CMake builds.
@@ -229,6 +667,98 @@ observance decisions with native Swiss Ephemeris rise/set results.
 - Review Swiss Ephemeris licensing and distribution obligations before
   publishing. `packages/jyotish/pubspec.yaml` has no `publish_to: none`, so
   the package is publishable.
+
+### Platform, data and licensing: what shipped
+
+- Platform claims now match reality: Android is the only platform with a real
+  native build, so it is the only one `packages/jyotish/pubspec.yaml` declares
+  (`android: ffiPlugin: true`). The `ios/`, `linux/`, `macos/` and `windows/`
+  directories remain as plugin scaffolding and build no Swiss Ephemeris. A
+  platform may only be added back with a CMake/podspec target that compiles the
+  library plus a smoke test that proves it loaded.
+- Android CMake path: `packages/jyotish/android/src/main/cpp/CMakeLists.txt`
+  resolves `native/swisseph/...` from the package root
+  (`CMAKE_CURRENT_SOURCE_DIR/../../../..`) instead of the repository root. The
+  old form only worked while the package sat at `packages/jyotish` in this
+  monorepo and broke as soon as it was consumed from the pub cache.
+- Asset validation: `lib/services/panchang_init/panchang_init.dart` verifies
+  each installed `.se1` file (at least 1 KB, a `SWISSEPH` header, and a SHA-256
+  match against `kEphemerisAssetSha256`), re-copies anything that fails, and
+  writes through a sibling `.part` file plus rename so an interrupted first
+  launch cannot leave a truncated file that passes the next launch's check. The
+  bundled asset is checked against the same manifest *before* it is copied, so a
+  corrupted build fails loudly instead of installing bad data. A missing,
+  corrupt or unlisted asset throws `EphemerisAssetException` with a user-facing
+  recovery step. `test/panchang_init_test.dart` recomputes the hashes from
+  `assets/ephe/`, so replacing a data file without updating the manifest fails
+  the suite instead of silently invalidating every device install.
+- Error surface: `PanchangInitFailureOverlay`
+  (`lib/widgets/panchang_init_failure_overlay.dart`) is mounted from
+  `MaterialApp.builder`, so `PanchangInitErrorBanner` sits above the navigator
+  and follows the user onto every pushed route. Without it the calendar's
+  deliberate error-to-empty-map behaviour made a broken install look like a
+  month with no festivals, and the ~25 other `panchangInitProvider` call sites
+  had no surface at all. On failure the overlay consumes the status-bar inset
+  it covers (`MediaQuery.removePadding`) so an app bar does not pad twice;
+  on success it returns the app untouched. Retry invalidates the provider.
+- Tests: `test/panchang_init_test.dart` covers valid, truncated, zero-byte,
+  wrong-header and wrong-checksum installs, atomicity, the missing-manifest
+  path, and both exception paths; `test/panchang_init_failure_overlay_test.dart`
+  pins "banner above the app, visible on a pushed route, retry clears it";
+  `test/panchang_init_error_banner_test.dart` covers the banner copy and retry;
+  `integration_test/native_ephemeris_smoke_test.dart` is the on-device check
+  (green on `emulator-5554`, x86_64 / 16 KB pages): assets install and match the
+  manifest, `libswisseph.so` loads on the process ABI, both native calculators
+  are active, and a tithi is computed.
+- Licensing: the AGPLv3 option was chosen and recorded on 2026-10-25
+  (`packages/jyotish/NOTICE`). The repository root `license`, the package
+  `LICENSE` and the docs are AGPLv3; the upstream wrapper's MIT text is
+  preserved in `packages/jyotish/LICENSE-MIT-upstream` and still covers the
+  upstream portions of the code. `publish_to: none` stays, but for a naming
+  reason rather than a licensing one: the `jyotish` name on pub.dev belongs to
+  the upstream project, so the package is consumed as a git/path dependency.
+  `packages/jyotish/README.md` now documents that install route instead of
+  pointing at the unfixed upstream repository.
+- Removed the unused prebuilt `libswisseph.dylib` from
+  `native/swisseph/swisseph-master/`. It shipped an AGPL binary of unclear
+  provenance that no build target referenced; Android compiles the C sources
+  through CMake.
+- `packages/jyotish/lib/src/bindings/swisseph_bindings.dart` no longer contains
+  a hardcoded developer macOS path. Off Android the only supported route is
+  `SWISSEPH_LIB_PATH` (used by tests and desktop hosts), followed by the
+  platform's default loader path.
+- CI: `.github/workflows/ci.yml` builds the same nine Swiss Ephemeris C sources
+  the Android CMake target compiles into `libswisseph.so` on the Linux runner,
+  exports `SWISSEPH_LIB_PATH`, pins `TZ=Asia/Kolkata`, then runs
+  `flutter analyze`, the app suite and the package's own tests. Without that
+  library the Jyotish-backed tests fail rather than skip, which is why the
+  workflow builds it instead of tolerating the failure.
+- Known upstream issue, not fixed here: a real build prints "Your app uses the
+  following plugins that apply Kotlin Gradle Plugin (KGP): home_widget,
+  workmanager_android" and "Future versions of Flutter will fail to build if
+  your app uses plugins that apply KGP". The APK still builds today. Both
+  plugins are at their latest versions (`home_widget` 0.10.0 and
+  `workmanager_android` 0.10.9 still apply it in their own `build.gradle`), so
+  this needs an upstream fix; do not silence the warning locally.
+- Device verification (items 20/21):
+  `integration_test/native_ephemeris_smoke_test.dart` runs green on
+  `emulator-5554` (Android 17 / API 37, x86_64, **16 KB page size**). It asserts
+  that the `.se1` assets install, match `kEphemerisAssetSha256` on disk, both
+  native calculators are active, the process ABI is one the build ships a slice
+  for, and a real tithi calculation returns 1-30.
+- Per-ABI state: x86_64 is verified at runtime, on a 16 KB-page device, which
+  also exercises the `-Wl,-z,max-page-size=16384` link option. `arm64-v8a` and
+  `armeabi-v7a` are verified statically from `app-debug.apk`: ELF64/AArch64 and
+  ELF32/ARM respectively, every LOAD segment aligned to 0x4000, and all 16
+  `swe_*` symbols the bindings look up are exported. Their runtime check still
+  needs ARM hardware: this emulator's ARM translation does not cover the Flutter
+  engine (`libflutter.so is for EM_AARCH64 (183) instead of EM_X86_64 (62)`) and
+  its `abilist` has no `armeabi-v7a`.
+- Still deferred: real native builds for Windows, Linux, macOS and iOS. The
+  desktop and iOS targets cannot be built or tested on the Windows development
+  host, so they need macOS/CI hardware and are treated as follow-ups rather than
+  claimed support.
+
 
 ## Phase 7 — performance and cache rollout
 

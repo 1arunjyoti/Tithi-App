@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/models/hindu_month_system.dart';
+import 'package:tithi/services/moonrise_calculator.dart';
 import 'package:tithi/services/panchang_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 
@@ -111,10 +112,15 @@ void main() {
           minutes: sunsetTime.difference(sunriseTime).inMinutes * 3 ~/ 4,
         ),
       );
+      // Nishita Kaal is the eighth of the fifteen night muhurtas: the window
+      // `sunset + 7/15 night` to `+ 8/15 night`. A nishita rule matches the
+      // tithi at either edge.
+      final nightMicros = nextSunriseTime.difference(sunsetTime).inMicroseconds;
       final nishitaTime = sunsetTime.add(
-        Duration(
-          minutes: nextSunriseTime.difference(sunsetTime).inMinutes ~/ 2,
-        ),
+        Duration(microseconds: nightMicros * 7 ~/ 15),
+      );
+      final nishitaEndTime = sunsetTime.add(
+        Duration(microseconds: nightMicros * 8 ~/ 15),
       );
 
       final rawTithi = await service.calculateTithi(
@@ -144,6 +150,23 @@ void main() {
         latitude: lat,
         longitude: lon,
       );
+      final rawTithiNishitaEnd = await service.calculateTithi(
+        nishitaEndTime,
+        latitude: lat,
+        longitude: lon,
+      );
+      final moonriseTime = MoonriseCalculator.calculateMoonrise(
+        date: date,
+        latitude: lat,
+        longitude: lon,
+      );
+      final rawTithiMoonrise = moonriseTime == null
+          ? null
+          : await service.calculateTithi(
+              moonriseTime,
+              latitude: lat,
+              longitude: lon,
+            );
 
       final data = PanchangData.fromRawTithi(
         date: date,
@@ -156,6 +179,8 @@ void main() {
         rawTithiMadhyahna: rawTithiMadhyahna,
         rawTithiAparahna: rawTithiAparahna,
         rawTithiNishita: rawTithiNishita,
+        rawTithiNishitaEnd: rawTithiNishitaEnd,
+        rawTithiMoonrise: rawTithiMoonrise,
       );
 
       if (date.month == 10 && (date.day == 20 || date.day == 21)) {

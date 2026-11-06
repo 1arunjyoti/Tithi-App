@@ -7,6 +7,7 @@ import '../../../core/location/cached_location.dart';
 import '../../../models/panchang_data.dart';
 import '../../../providers/calendar_provider.dart' as cp;
 import '../../../services/storage_service.dart';
+import '../../panchang/data/panchang_cache.dart';
 
 // Phase 3a: calendar sync caches extracted from widgets/calendar_widget.dart.
 // These file-level LRUs let cells show stale labels/dots instantly while the
@@ -27,8 +28,14 @@ final Set<String> precachedFestivalMonthKeys = {};
 DateTime normalizeMonthKey(DateTime month) =>
     DateTime(month.year, month.month);
 
+// Calculation-school suffix for every sync-cache key below. A Panjika switch
+// changes which tithi/masa a date resolves to, so the old entries must miss
+// instead of being served as the instant fallback (and the precache dedupe
+// sets must not treat the new school's month as already warmed).
+String get _schoolKeySuffix => '_s${activePanchangSchool.name}';
+
 String festivalMonthPrecacheKey(DateTime month) =>
-    '${month.year}-${month.month}';
+    '${month.year}-${month.month}$_schoolKeySuffix';
 
 // Debug-only error log: release builds keep the silent-fallback behavior
 // (stale cache / day number) so one bad FFI date never breaks the grid.
@@ -126,14 +133,17 @@ void storeAdaptiveNavTarget(String key, DateTime target) {
 }
 
 String adaptiveNavKey(cp.AppCalendarSystem system, DateTime focusedMonth) =>
-    '${system.index}_${focusedMonth.year}_${focusedMonth.month}_${focusedMonth.day}';
+    '${system.index}_${focusedMonth.year}_${focusedMonth.month}_${focusedMonth.day}$_schoolKeySuffix';
 
 String adaptiveCacheSignature() {
   try {
     if (!Hive.isBoxOpen(StorageService.locationSettingsBoxName)) return '';
     final box = Hive.box(StorageService.locationSettingsBoxName);
     final coords = readCachedLatLng(box);
-    return '${coords.latitude}_${coords.longitude}_v$adaptiveCacheCodeVersion';
+    // The school is part of the signature: labels and nav targets persisted
+    // under one Panjika must not load as truth under the other.
+    return '${coords.latitude}_${coords.longitude}_'
+        '${activePanchangSchool.name}_v$adaptiveCacheCodeVersion';
   } catch (_) {
     return '';
   }
@@ -247,7 +257,7 @@ String secondaryCacheKey(
   cp.AppCalendarSystem system,
   cp.TithiDisplayMode displayMode,
 ) {
-  return '${date.year}-${date.month}-${date.day}_${system.index}_${displayMode.index}';
+  return '${date.year}-${date.month}-${date.day}_${system.index}_${displayMode.index}$_schoolKeySuffix';
 }
 
 String? cachedSecondarySync(
@@ -293,5 +303,5 @@ String monthPrecacheKey(
   cp.AppCalendarSystem secondary,
   cp.TithiDisplayMode displayMode,
 ) {
-  return '${month.year}-${month.month}-${month.day}_${startOfWeek.index}_${primary.index}_${secondary.index}_${displayMode.index}';
+  return '${month.year}-${month.month}-${month.day}_${startOfWeek.index}_${primary.index}_${secondary.index}_${displayMode.index}$_schoolKeySuffix';
 }

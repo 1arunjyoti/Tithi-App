@@ -35,8 +35,10 @@ class EclipseService {
     // Find upcoming lunar eclipses
     var lunarJd = startJd;
     for (int i = 0; i < count ~/ 2 + 1; i++) {
-      final lunarResult = _bindings.findNextLunarEclipse(
-        startJulianDay: lunarJd,
+      final lunarResult = SwissEphBindings.withNativeLock(
+        () => _bindings.findNextLunarEclipse(
+          startJulianDay: lunarJd,
+        ),
       );
 
       if (lunarResult != null) {
@@ -55,8 +57,10 @@ class EclipseService {
     // Find upcoming solar eclipses
     var solarJd = startJd;
     for (int i = 0; i < count ~/ 2 + 1; i++) {
-      final solarResult = _bindings.findNextSolarEclipseGlobal(
-        startJulianDay: solarJd,
+      final solarResult = SwissEphBindings.withNativeLock(
+        () => _bindings.findNextSolarEclipseGlobal(
+          startJulianDay: solarJd,
+        ),
       );
 
       if (solarResult != null) {
@@ -92,10 +96,12 @@ class EclipseService {
     if (eclipse.type.isLunar) {
       // Lunar eclipses are visible from anywhere the Moon is above horizon
       final jd = _dateTimeToJulianDay(eclipse.maxEclipseTime);
-      final details = _bindings.getLunarEclipseDetails(
-        julianDay: jd,
-        latitude: latitude,
-        longitude: longitude,
+      final details = SwissEphBindings.withNativeLock(
+        () => _bindings.getLunarEclipseDetails(
+          julianDay: jd,
+          latitude: latitude,
+          longitude: longitude,
+        ),
       );
 
       if (details != null) {
@@ -109,10 +115,12 @@ class EclipseService {
     } else {
       // Solar eclipses need location-specific calculation
       final jd = _dateTimeToJulianDay(eclipse.maxEclipseTime);
-      final localResult = _bindings.findNextSolarEclipseLocal(
-        startJulianDay: jd - 1,
-        latitude: latitude,
-        longitude: longitude,
+      final localResult = SwissEphBindings.withNativeLock(
+        () => _bindings.findNextSolarEclipseLocal(
+          startJulianDay: jd - 1,
+          latitude: latitude,
+          longitude: longitude,
+        ),
       );
 
       if (localResult != null) {
@@ -165,29 +173,39 @@ class EclipseService {
     // [5] = penumbral begin
     // [6] = penumbral end
 
-    final maxEclipseTime = _bindings.julianDayToDateTime(times[0]);
+    final maxEclipseTime = _native(
+      () => _bindings.julianDayToDateTime(times[0]),
+    );
 
     // Get magnitude
-    final details = _bindings.getLunarEclipseDetails(
-      julianDay: times[0],
-      latitude: latitude,
-      longitude: longitude,
+    final details = _native(
+      () => _bindings.getLunarEclipseDetails(
+        julianDay: times[0],
+        latitude: latitude,
+        longitude: longitude,
+      ),
     );
 
     return Eclipse(
       type: type,
       maxEclipseTime: maxEclipseTime,
       partialStart: times[1] > 0
-          ? _bindings.julianDayToDateTime(times[1])
+          ? _native(() => _bindings.julianDayToDateTime(times[1]))
           : null,
-      partialEnd: times[2] > 0 ? _bindings.julianDayToDateTime(times[2]) : null,
-      totalStart: times[3] > 0 ? _bindings.julianDayToDateTime(times[3]) : null,
-      totalEnd: times[4] > 0 ? _bindings.julianDayToDateTime(times[4]) : null,
+      partialEnd: times[2] > 0
+          ? _native(() => _bindings.julianDayToDateTime(times[2]))
+          : null,
+      totalStart: times[3] > 0
+          ? _native(() => _bindings.julianDayToDateTime(times[3]))
+          : null,
+      totalEnd: times[4] > 0
+          ? _native(() => _bindings.julianDayToDateTime(times[4]))
+          : null,
       penumbralStart: times[5] > 0
-          ? _bindings.julianDayToDateTime(times[5])
+          ? _native(() => _bindings.julianDayToDateTime(times[5]))
           : null,
       penumbralEnd: times[6] > 0
-          ? _bindings.julianDayToDateTime(times[6])
+          ? _native(() => _bindings.julianDayToDateTime(times[6]))
           : null,
       magnitude: details?['umbralMagnitude'] as double?,
       visibleAtLocation: true, // Lunar eclipses visible from half the Earth
@@ -218,15 +236,21 @@ class EclipseService {
     }
 
     // Get eclipse center location
-    final location = _bindings.getSolarEclipseLocation(julianDay: times[0]);
+    final location = _native(
+      () => _bindings.getSolarEclipseLocation(julianDay: times[0]),
+    );
 
-    final maxEclipseTime = _bindings.julianDayToDateTime(times[0]);
+    final maxEclipseTime = _native(
+      () => _bindings.julianDayToDateTime(times[0]),
+    );
 
     // Check local visibility
-    final localResult = _bindings.findNextSolarEclipseLocal(
-      startJulianDay: times[0] - 0.5,
-      latitude: latitude,
-      longitude: longitude,
+    final localResult = _native(
+      () => _bindings.findNextSolarEclipseLocal(
+        startJulianDay: times[0] - 0.5,
+        latitude: latitude,
+        longitude: longitude,
+      ),
     );
 
     bool visibleLocally = false;
@@ -246,11 +270,17 @@ class EclipseService {
       type: type,
       maxEclipseTime: maxEclipseTime,
       partialStart: times[1] > 0
-          ? _bindings.julianDayToDateTime(times[1])
+          ? _native(() => _bindings.julianDayToDateTime(times[1]))
           : null,
-      partialEnd: times[2] > 0 ? _bindings.julianDayToDateTime(times[2]) : null,
-      totalStart: times[3] > 0 ? _bindings.julianDayToDateTime(times[3]) : null,
-      totalEnd: times[4] > 0 ? _bindings.julianDayToDateTime(times[4]) : null,
+      partialEnd: times[2] > 0
+          ? _native(() => _bindings.julianDayToDateTime(times[2]))
+          : null,
+      totalStart: times[3] > 0
+          ? _native(() => _bindings.julianDayToDateTime(times[3]))
+          : null,
+      totalEnd: times[4] > 0
+          ? _native(() => _bindings.julianDayToDateTime(times[4]))
+          : null,
       centerLatitude: location?['latitude'] as double?,
       centerLongitude: location?['longitude'] as double?,
       visibleAtLocation: visibleLocally,
@@ -262,12 +292,21 @@ class EclipseService {
   /// Convert DateTime to Julian Day
   double _dateTimeToJulianDay(DateTime dt) {
     final utc = dt.toUtc();
-    final hour = utc.hour + utc.minute / 60.0 + utc.second / 3600.0;
-    return _bindings.julianDay(
-      year: utc.year,
-      month: utc.month,
-      day: utc.day,
-      hour: hour,
+    final hour = utc.hour +
+        utc.minute / 60.0 +
+        utc.second / 3600.0 +
+        utc.millisecond / 3600000.0 +
+        utc.microsecond / 3600000000.0;
+    return _native(
+      () => _bindings.julianDay(
+        year: utc.year,
+        month: utc.month,
+        day: utc.day,
+        hour: hour,
+      ),
     );
   }
+
+  T _native<T>(T Function() action) =>
+      SwissEphBindings.withNativeLock(action);
 }

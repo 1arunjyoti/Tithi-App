@@ -98,9 +98,10 @@ class LocationSettingsSection extends ConsumerWidget {
               }
 
               await locationService.setLocationEnabled(val);
-              // Invalidate both providers to refresh state
+              // Invalidate both providers to refresh state; the clock moves
+              // with the toggle (live -> device, manual -> the place).
               ref.invalidate(locationEnabledProvider);
-              ref.invalidate(currentLocationProvider);
+              refreshPlaceContext(ref);
             },
     );
   }

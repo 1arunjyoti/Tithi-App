@@ -15,6 +15,8 @@ final bengaliDateForHeroProvider = FutureProvider.autoDispose
     .family<({int day, String month, int year})?, DateTime>((ref, date) async {
       if (!showsCalendarSystem(ref, AppCalendarSystem.bengali)) return null;
       return guarded(
-        () => ref.read(bengaliCalendarServiceProvider).calculateDate(date),
+        // Watch, not read: the Bengali date follows the selected Panjika
+        // system, so this provider must recompute when it changes.
+        () => ref.watch(bengaliCalendarServiceProvider).calculateDate(date),
       );
     });

@@ -2,9 +2,11 @@ import 'package:flutter/foundation.dart' show visibleForTesting;
 
 import 'exceptions/jyotish_exception.dart';
 import 'models/calculation_flags.dart';
+import 'models/ephemeris_data_range.dart';
 import 'models/geographic_location.dart';
 import 'models/planet.dart';
 import 'models/planet_position.dart';
+import 'models/sun_moon_positions.dart';
 import 'models/vedic_chart.dart';
 import 'services/ephemeris_service.dart';
 import 'services/vedic_chart_service.dart';
@@ -46,6 +48,8 @@ class Jyotish {
   EphemerisService? _ephemerisService;
   VedicChartService? _vedicChartService;
   bool _isInitialized = false;
+  Future<void>? _initializeFuture;
+  int _initializeEpoch = 0;
 
   /// Initializes the Swiss Ephemeris library.
   ///
@@ -54,18 +58,40 @@ class Jyotish {
   ///
   /// This method must be called before performing any calculations.
   ///
+  /// Concurrent calls in one isolate share a single in-flight future, and a
+  /// failed attempt can be retried. Swiss Ephemeris keeps process-global native
+  /// state but Dart singletons are per isolate, so a background isolate must
+  /// call `initialize()` itself; it does not inherit the foreground isolate's
+  /// initialization.
+  ///
   /// Throws [JyotishException] if initialization fails.
-  Future<void> initialize({String? ephemerisPath}) async {
+  Future<void> initialize({String? ephemerisPath}) {
     if (_isInitialized) {
-      return;
+      return Future.value();
     }
+    return _initializeFuture ??= _initialize(ephemerisPath);
+  }
+
+  Future<void> _initialize(String? ephemerisPath) async {
+    final epoch = _initializeEpoch;
+    final service = EphemerisService();
 
     try {
-      _ephemerisService = EphemerisService();
-      await _ephemerisService!.initialize(ephemerisPath: ephemerisPath);
-      _vedicChartService = VedicChartService(_ephemerisService!);
+      await service.initialize(ephemerisPath: ephemerisPath);
+
+      if (epoch != _initializeEpoch) {
+        service.dispose();
+        throw JyotishException(
+          'Jyotish initialization was cancelled by dispose().',
+        );
+      }
+
+      _ephemerisService = service;
+      _vedicChartService = VedicChartService(service);
       _isInitialized = true;
     } catch (e) {
+      _initializeFuture = null;
+      if (e is JyotishException) rethrow;
       throw JyotishException(
         'Failed to initialize Jyotish: ${e.toString()}',
         originalError: e,
@@ -109,8 +135,9 @@ class Jyotish {
 
   /// Calculates positions for multiple planets at once.
   ///
-  /// PERF-3: Runs all planet calculations in parallel via [Future.wait]
-  /// since each FFI call is independent.
+  /// FFI calls are synchronous on the isolate, so these are not "parallel"
+  /// calculations. The work is one ordered batch: global state is applied
+  /// once, one error buffer is reused, and already-cached planets are skipped.
   ///
   /// [planets] - List of planets to calculate positions for.
   /// [dateTime] - The date and time for the calculation.
@@ -129,19 +156,48 @@ class Jyotish {
   }) async {
     _ensureInitialized();
 
-    final entries = await Future.wait(
-      planets.map((planet) async => MapEntry(
-        planet,
-        await getPlanetPosition(
-          planet: planet,
-          dateTime: dateTime,
-          location: location,
-          flags: flags,
-        ),
-      )),
-    );
+    try {
+      return _ephemerisService!.calculatePlanetPositions(
+        planets: planets,
+        dateTime: dateTime,
+        location: location,
+        flags: flags ?? CalculationFlags.defaultFlags(),
+      );
+    } catch (e) {
+      throw JyotishException(
+        'Failed to calculate planet positions: ${e.toString()}',
+        originalError: e,
+      );
+    }
+  }
 
-    return Map.fromEntries(entries);
+  /// Calculates the Sun and Moon together for a Panchang instant.
+  ///
+  /// This is the paired form of [getMultiplePlanetPositions] and avoids setting
+  /// sidereal/topocentric state twice when tithi, yoga or karana need both
+  /// longitudes.
+  ///
+  /// Throws [JyotishException] if the library is not initialized or if either
+  /// calculation fails.
+  Future<SunMoonPositions> getSunMoonPositions({
+    required DateTime dateTime,
+    required GeographicLocation location,
+    CalculationFlags? flags,
+  }) async {
+    _ensureInitialized();
+
+    try {
+      return _ephemerisService!.calculateSunMoon(
+        dateTime: dateTime,
+        location: location,
+        flags: flags ?? CalculationFlags.defaultFlags(),
+      );
+    } catch (e) {
+      throw JyotishException(
+        'Failed to calculate the Sun and Moon: ${e.toString()}',
+        originalError: e,
+      );
+    }
   }
 
   /// Calculates positions for all major planets.
@@ -221,11 +277,45 @@ class Jyotish {
     }
   }
 
+  /// Reports the Swiss Ephemeris files and date ranges actually loaded.
+  ///
+  /// The package reports what is loaded and leaves the expected year range to
+  /// the application. A null [EphemerisDataRange.planets] or
+  /// [EphemerisDataRange.moon] means that file did not load and calculations
+  /// are falling back to Moshier.
+  Future<EphemerisDataRange> probeDataRange() async {
+    _ensureInitialized();
+
+    try {
+      return await _ephemerisService!.probeDataRange();
+    } catch (e) {
+      throw JyotishException(
+        'Failed to inspect the loaded ephemeris data range: ${e.toString()}',
+        originalError: e,
+      );
+    }
+  }
+
+  /// Clears the in-memory planetary position cache.
+  ///
+  /// Cache keys already include every input, so this is only needed to release
+  /// memory or force fresh native calculations. It is a no-op before
+  /// [initialize].
+  void clearCache() {
+    _ephemerisService?.clearCache();
+  }
+
   /// Disposes of resources used by the library.
   ///
   /// Call this method when you're done using the library to free up resources.
+  /// It also cancels an in-flight initialization; a later call to [initialize]
+  /// starts a fresh attempt.
   void dispose() {
+    _initializeEpoch++;
+    _initializeFuture = null;
     _ephemerisService?.dispose();
+    _ephemerisService = null;
+    _vedicChartService = null;
     _isInitialized = false;
   }
 

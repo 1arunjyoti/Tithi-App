@@ -10,6 +10,7 @@ import '../../../providers/panchang_provider.dart';
 import '../../../services/bengali_calendar_service.dart';
 import '../../../services/hindu_calendar_service.dart';
 import '../../../utils/tithi_localization.dart';
+import '../../panchang/data/panchang_cache.dart';
 import '../data/calendar_caches.dart';
 import '../data/calendar_models.dart';
 
@@ -45,7 +46,11 @@ String headerCacheKey(
   final dateKey = primary == cp.AppCalendarSystem.gregorian
       ? '${date.year}-${date.month}'
       : '${date.year}-${date.month}-${date.day}';
-  return '${locale}_${dateKey}_${primary.index}_${secondary.index}_${yearEra.index}_${monthSystem.index}_$selectedKey';
+  // The school suffix keeps a header computed under one Panjika system from
+  // being served as the instant stale fallback under the other.
+  return '${locale}_${dateKey}_${primary.index}_${secondary.index}_'
+      '${yearEra.index}_${monthSystem.index}_$selectedKey'
+      '_s${activePanchangSchool.name}';
 }
 
 HeaderData? cachedHeaderSync(

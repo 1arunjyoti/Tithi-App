@@ -141,7 +141,10 @@ class FestivalSearchDelegate extends SearchDelegate {
         if (ref.read(accessibilityProvider).hapticFeedback) {
           await HapticFeedback.lightImpact();
         }
-        // Try to find the next occurrence date so we can pass panchang context
+        // Try to find the next occurrence date so we can pass panchang context.
+        // Await the shared init: a Panjika switch replaces the service, and
+        // this scan would otherwise run on an uninitialized instance.
+        await ref.read(panchangInitProvider.future);
         final panchangService = ref.read(panchangServiceProvider);
         final coords = ref.read(resolvedCoordinatesProvider);
         // Same "today" as the countdowns (not wall-clock now): avoids a
@@ -245,6 +248,7 @@ class FestivalSearchDelegate extends SearchDelegate {
                 // Find next date (cached; resolved location, not Delhi).
                 // Resolution is Amanta-fixed; the sheet resolves its own
                 // display system when fetching panchang.
+                await ref.read(panchangInitProvider.future);
                 final panchangService = ref.read(panchangServiceProvider);
                 final coords = ref.read(resolvedCoordinatesProvider);
                 final nextDate = await resolveOccurrenceDate(

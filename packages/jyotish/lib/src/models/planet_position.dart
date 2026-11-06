@@ -1,3 +1,4 @@
+import 'ephemeris_provenance.dart';
 import 'planet.dart';
 
 /// Represents the calculated position of a planet at a specific time.
@@ -11,6 +12,7 @@ class PlanetPosition {
     required DateTime dateTime,
     required List<double> results,
     double? sunLongitude,
+    EphemerisProvenance? provenance,
   }) {
     return PlanetPosition(
       planet: planet,
@@ -24,6 +26,7 @@ class PlanetPosition {
       isCombust: sunLongitude != null
           ? calculateCombustion(planet, results[0], sunLongitude)
           : false,
+      provenance: provenance,
     );
   }
 
@@ -38,6 +41,7 @@ class PlanetPosition {
   /// [latitudeSpeed] - Speed of latitude change in degrees/day.
   /// [distanceSpeed] - Speed of distance change in AU/day.
   /// [isCombust] - Whether the planet is combust (optional, defaults to false).
+  /// [provenance] - Backend that produced the position, when known.
   const PlanetPosition({
     required this.planet,
     required this.dateTime,
@@ -48,6 +52,7 @@ class PlanetPosition {
     required this.latitudeSpeed,
     required this.distanceSpeed,
     this.isCombust = false,
+    this.provenance,
   }) : isRetrograde = longitudeSpeed < 0;
 
   /// The planet this position is for.
@@ -80,6 +85,13 @@ class PlanetPosition {
   /// Whether the planet is combust (too close to the Sun).
   /// Only applicable to planets other than the Sun itself.
   final bool isCombust;
+
+  /// Which backend produced this position, when the calculation recorded it.
+  ///
+  /// A position created from bare numbers has no provenance; a position from
+  /// [EphemerisService] carries the requested and actual backend, including a
+  /// Moshier fallback warning.
+  final EphemerisProvenance? provenance;
 
   /// Calculates if a planet is combust (too close to the Sun).
   /// Uses traditional Vedic astrology combustion distances.
@@ -119,17 +131,18 @@ class PlanetPosition {
       latitudeSpeed: latitudeSpeed,
       distanceSpeed: distanceSpeed,
       isCombust: calculateCombustion(planet, longitude, sunLongitude),
+      provenance: provenance,
     );
   }
 
   /// Gets the zodiac sign (0-11, where 0=Aries, 1=Taurus, etc.).
-  int get zodiacSignIndex => (longitude / 30).floor() % 12;
+  int get zodiacSignIndex => (_normalizedLongitude / 30).floor() % 12;
 
   /// Gets the zodiac sign name.
   String get zodiacSign => _zodiacSigns[zodiacSignIndex];
 
   /// Gets the position within the zodiac sign (0.0 - 30.0 degrees).
-  double get positionInSign => longitude % 30;
+  double get positionInSign => _normalizedLongitude % 30;
 
   /// Gets the position in degrees, minutes, and seconds within the sign.
   Map<String, dynamic> get positionInSignDMS {
@@ -148,15 +161,21 @@ class PlanetPosition {
 
   /// Gets the nakshatra (lunar mansion) index (0-26).
   /// Each nakshatra is 13°20' (13.333... degrees).
-  int get nakshatraIndex => (longitude / (360 / 27)).floor() % 27;
+  int get nakshatraIndex =>
+      (_normalizedLongitude / (360 / 27)).floor() % 27;
 
   /// Gets the nakshatra name.
   String get nakshatra => _nakshatras[nakshatraIndex];
 
   /// Gets the nakshatra pada (quarter, 1-4).
   int get nakshatraPada {
-    final posInNakshatra = longitude % (360 / 27);
+    final posInNakshatra = _normalizedLongitude % (360 / 27);
     return (posInNakshatra / (360 / 27 / 4)).floor() + 1;
+  }
+
+  double get _normalizedLongitude {
+    final normalized = longitude % 360;
+    return normalized < 0 ? normalized + 360 : normalized;
   }
 
   /// Formats the position as a traditional notation (e.g., "15° Aries 30'").
@@ -200,6 +219,8 @@ class PlanetPosition {
       'nakshatra': nakshatra,
       'nakshatraIndex': nakshatraIndex,
       'nakshatraPada': nakshatraPada,
+      if (provenance != null) 'ephemerisBackend': provenance!.backend.name,
+      if (provenance?.warning != null) 'ephemerisWarning': provenance!.warning,
     };
   }
 

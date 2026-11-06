@@ -1,7 +1,11 @@
 import 'dart:math';
 
-/// Calculates sunrise and sunset times for a given date and location.
-/// Uses the NOAA Solar Calculator algorithm for accurate results.
+/// NOAA Solar Calculator implementation of sunrise and sunset.
+///
+/// App code reads solar events through the cached `SolarEventsService`, not
+/// this class. This remains the Phase 1b fallback and the parity reference for
+/// the seam; it is deliberately still minute-rounded and device-timezone
+/// dependent.
 ///
 /// SMELL-4: The shared solar-geometry calculation has been extracted into a
 /// single private [_computeSunTime] method. Both [calculateSunriseIST] and
@@ -41,52 +45,6 @@ class SunriseCalculator {
         longitude: longitude,
         isSunrise: false,
       );
-
-  /// Intraday instant for a timing-override checkpoint, mirroring
-  /// `resolveTithiCheckpoints` (madhyahna = midday, aparahna = 3/4 day,
-  /// nishita = night midpoint, pradosha = sunset + night/10). Null for
-  /// unknown overrides.
-  ///
-  /// Shared by the forward-scan occurrence finder and the UI batch
-  /// (`PanchangData.fromRawTithi`) so both agree on which tithi an override
-  /// festival observes. Single definition - keep it that way.
-  static DateTime? checkpointTimeFor(
-    DateTime day,
-    String timingOverride,
-    double latitude,
-    double longitude,
-  ) {
-    final dateOnlyDay = DateTime(day.year, day.month, day.day);
-    final sunrise = calculateSunriseIST(
-      date: dateOnlyDay,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final sunset = calculateSunsetIST(
-      date: dateOnlyDay,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final nextSunrise = calculateSunriseIST(
-      date: dateOnlyDay.add(const Duration(days: 1)),
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final dayLength = sunset.difference(sunrise);
-    final nightLength = nextSunrise.difference(sunset);
-    switch (timingOverride) {
-      case 'madhyahna':
-        return sunrise.add(Duration(minutes: dayLength.inMinutes ~/ 2));
-      case 'aparahna':
-        return sunrise.add(Duration(minutes: dayLength.inMinutes * 3 ~/ 4));
-      case 'nishita':
-        return sunset.add(Duration(minutes: nightLength.inMinutes ~/ 2));
-      case 'pradosha':
-        return sunset.add(Duration(minutes: nightLength.inMinutes ~/ 10));
-      default:
-        return null;
-    }
-  }
 
   // ---------------------------------------------------------------------------
   // Shared solar-geometry engine (SMELL-4 refactor)

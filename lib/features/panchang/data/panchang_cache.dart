@@ -1,6 +1,8 @@
 import 'package:hive/hive.dart';
 
 import '../../../models/panchang_data.dart';
+import '../../../models/panchang_profile.dart';
+import '../../../models/panchang_school.dart';
 import '../../../core/format/date_only.dart';
 import '../../../services/storage_service.dart';
 import '../../../utils/date_utils.dart';
@@ -23,6 +25,13 @@ const int panchangUiCacheMax = 100;
 PanchangData? cachedPanchangUiSync(DateTime date) {
   return panchangUiCache[dateOnly(date)];
 }
+
+/// Drops every process-local UI day.
+///
+/// Called when the calculation school changes: the UI cache is keyed by date
+/// only, so a day computed by the other school would otherwise be served
+/// unchanged.
+void clearPanchangUiCache() => panchangUiCache.clear();
 
 void storePanchangUiSync(DateTime date, PanchangData data) {
   final normalizedDate = dateOnly(date);
@@ -48,8 +57,42 @@ void storePanchangUiSync(DateTime date, PanchangData data) {
 
 String panchangDateKeyLocal(DateTime date) => panchangDateKey(date);
 
-String locationSignature(double latitude, double longitude) {
-  return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}';
+/// Bumped when a cached day's *inputs* change without a calculation-version
+/// bump, so old entries become misses.
+///
+/// 2: the place zone is resolved from the coordinates (it used to be the
+/// device zone), so days cached while the device was in another zone hold
+/// instants in the wrong zone.
+/// 3: the place clock decides which zone a day is computed in (live location
+/// uses the device zone, a manually picked place uses its own), so a day
+/// cached under the previous policy can hold instants resolved in the other
+/// zone for the same key.
+const int kPlaceContextVersion = 3;
+
+/// Calculation school currently in force for cache signatures.
+///
+/// The Panchang caches are already process-wide statics, so the school that
+/// produced an entry has to live next to them. [CalendarPreferencesNotifier]
+/// sets this when the persisted preference changes, and the notification
+/// isolate sets it after reading preferences, before it computes anything.
+///
+/// Keeping it out of every call site avoids threading a parameter through the
+/// dozen cache-key builders that all sit below the settings layer.
+PanchangSchool get activePanchangSchool => _activePanchangSchool;
+set activePanchangSchool(PanchangSchool school) => _activePanchangSchool =
+    school;
+PanchangSchool _activePanchangSchool = PanchangSchool.bisuddha;
+
+String locationSignature(
+  double latitude,
+  double longitude, {
+  PanchangSchool? school,
+}) {
+  final resolved = school ?? _activePanchangSchool;
+  return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'
+      '_v$kPanchangCalculationVersion'
+      '_p$kPlaceContextVersion'
+      '_s${resolved.name}';
 }
 
 String buildCacheKey(
