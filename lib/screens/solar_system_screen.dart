@@ -782,7 +782,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   context,
                   icon: Icons.straighten_outlined,
                   label: l10n.distance,
-                  value: '${planetData.distanceAU!.toStringAsFixed(2)} AU',
+                  value:
+                      '${planetData.distanceAU! < 0.1 ? planetData.distanceAU!.toStringAsFixed(4) : planetData.distanceAU!.toStringAsFixed(2)} AU',
                 ),
                 if (planetData.orbitalPeriodDays != null &&
                     planetData.orbitalPeriodDays! > 0)
