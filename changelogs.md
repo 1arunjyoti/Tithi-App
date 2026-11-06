@@ -17,6 +17,23 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-06 - 0.8.1+23
+
+### Shukla body uses a neutral off-white instead of warm cream
+The light theme's page background is a flat `#FAFAF6`, so the orange primary reads as an accent on a neutral surface instead of tinting the whole screen.
+
+- `AppTheme.shuklaBackground` is the single source: `scaffoldBackgroundColor` and the app bar background build from it, and `backgroundDecoration` returns it flat for light mode.
+- The light ambient gradient is gone (the amber wash composited the body back to cream at any visible alpha); the violet gradient is now dark-theme only. Hero peach cards and the accent palette still carry the warmth.
+- Dark (Krishna / Pure Dark) themes unchanged; high-contrast light still flattens to pure white via the scaffold color.
+- Where: `lib/theme/app_theme.dart`.
+
+### Theme switching no longer flashes the Krishna palette
+Picking a theme now swaps in one frame; the app never paints plum/purple "in between" on the way from Shukla to Dark (or when the OS flips auto mode).
+
+- MaterialApp was cross-fading `ThemeData` over 200ms; `ThemeData.lerp` flips `brightness` to dark at t=0.5 while `scaffoldBackgroundColor` is still mid-grey, so `AppTheme.isPureDarkTheme()` (scaffold == black) failed and every brightness-aware helper fell through to the Krishna branch.
+- `themeAnimationDuration: Duration.zero` on the root `MaterialApp` (main.dart) — the three palettes have no meaningful midpoint.
+- Constraint: keep theme variant detection out of interpolated `ThemeData`; if a theme animation is ever reintroduced, it needs an explicit palette id instead of `scaffoldBackgroundColor == Colors.black`.
+
 ## 2026-10-30 - 0.8.1+22
 
 ### Panjika switch keeps the home screen alive

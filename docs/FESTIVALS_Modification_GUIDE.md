@@ -1,5 +1,8 @@
 # Festival Data Editing Guide
 
+> **Start here:** See the concise [Festival Data Quick Guide](FESTIVALS_QUICK_GUIDE.md)
+> for the standard workflow and the rules most contributors need.
+
 This guide explains how to add or edit festivals in `festivals.json`.
 
 ## Calendar System

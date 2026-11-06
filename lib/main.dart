@@ -242,6 +242,15 @@ class _TithiAppState extends ConsumerState<TithiApp>
       },
       locale: locale, // User-selected locale (null = system default)
       themeMode: themeMode,
+      // Instant palette swap. MaterialApp otherwise cross-fades ThemeData over
+      // 200ms, and ThemeData/ColorScheme.lerp flips `brightness` to dark at the
+      // halfway point while `scaffoldBackgroundColor` is still a mid grey.
+      // AppTheme.isPureDarkTheme() decides "pure dark vs Krishna" from
+      // `scaffold == Colors.black`, so during that window it takes the Krishna
+      // branch and paints plum cards / purple accents on the way from Shukla to
+      // Pure Dark (and back). The three palettes share no meaningful midpoint,
+      // so there is nothing worth interpolating: switch in one frame.
+      themeAnimationDuration: Duration.zero,
       theme: AppTheme.resolveAccessible(
         AppTheme.shuklaTheme,
         highContrast: accessibility.highContrast,
