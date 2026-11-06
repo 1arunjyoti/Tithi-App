@@ -5,6 +5,83 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
 
+/// Result of a Swiss Ephemeris rise/set search.
+@immutable
+class RiseTransResult {
+  const RiseTransResult({
+    required this.status,
+    this.julianDay,
+    this.error,
+  });
+
+  /// Raw `swe_rise_trans` return code.
+  ///
+  /// `0` means success, `-1` is an error, and `-2` means the body does not
+  /// rise or set on the requested day (for example, a polar day or night).
+  final int status;
+
+  /// Event time as a UT Julian day, present when [status] is `0`.
+  final double? julianDay;
+
+  /// Native error text, empty when the native call succeeded.
+  final String? error;
+
+  bool get isSuccess => status == 0 && julianDay != null;
+
+  /// True when the body is circumpolar for the requested day.
+  bool get isUnavailable => status == -2;
+}
+
+/// Result of a `swe_calc_ut()` call.
+///
+/// [returnedFlags] is the flag set Swiss Ephemeris reports for the calculation
+/// that actually ran. It can contain a different backend from the requested
+/// flags when a `.se1` file is missing and the library falls back to Moshier.
+@immutable
+class SwissCalculationResult {
+  const SwissCalculationResult({
+    required this.values,
+    required this.returnedFlags,
+    this.warning,
+  });
+
+  /// Six double results: longitude, latitude, distance and their speeds.
+  final List<double> values;
+
+  /// Flags returned by `swe_calc_ut()`.
+  final int returnedFlags;
+
+  /// Native warning text, present even on success when the library fell back.
+  final String? warning;
+}
+
+/// Raw file-range data from `swe_get_current_file_data()`.
+@immutable
+class SwissEphemerisFileData {
+  const SwissEphemerisFileData({
+    required this.ifno,
+    required this.path,
+    required this.startJulianDay,
+    required this.endJulianDay,
+    required this.denum,
+  });
+
+  /// 0 = planets, 1 = Moon, 2 = main asteroids.
+  final int ifno;
+
+  /// Loaded file path.
+  final String path;
+
+  /// First Julian day covered by the file.
+  final double startJulianDay;
+
+  /// Last Julian day covered by the file.
+  final double endJulianDay;
+
+  /// File denumeration reported by Swiss Ephemeris.
+  final int denum;
+}
+
 /// FFI bindings for Swiss Ephemeris C library.
 ///
 /// This class provides low-level bindings to the Swiss Ephemeris shared library.
@@ -13,6 +90,35 @@ class SwissEphBindings {
     _lib = _loadLibrary();
   }
   late final ffi.DynamicLibrary _lib;
+
+  /// Runs one operation while holding the process-wide Swiss Ephemeris lock.
+  ///
+  /// Swiss Ephemeris stores sidereal mode, topocentric coordinates, and other
+  /// settings in native global state. The file lock coordinates Dart isolates
+  /// and separate processes that use this library.
+  static T withNativeLock<T>(T Function() action) {
+    final lockFile = File(
+      '${Directory.systemTemp.path}${Platform.pathSeparator}'
+      'tithi_jyotish_native.lock',
+    );
+    final handle = lockFile.openSync(mode: FileMode.append);
+    var locked = false;
+    try {
+      handle.lockSync(FileLock.exclusive);
+      locked = true;
+      return action();
+    } finally {
+      if (locked) {
+        handle.unlockSync();
+      }
+      handle.closeSync();
+    }
+  }
+
+  /// Async adapter for APIs that must preserve their existing Future contract.
+  static Future<T> withNativeLockAsync<T>(T Function() action) {
+    return Future<T>.sync(() => withNativeLock(action));
+  }
 
   // Function signatures
   late final _swe_set_ephe_path = _lib.lookupFunction<
@@ -70,9 +176,24 @@ class SwissEphBindings {
       ffi.Double Function(ffi.Double),
       double Function(double)>('swe_get_ayanamsa_ut');
 
-  late final _swe_houses = _lib.lookupFunction<
+  late final _swe_get_current_file_data = _lib.lookupFunction<
+      ffi.Pointer<ffi.Char> Function(
+        ffi.Int32,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Int32>,
+      ),
+      ffi.Pointer<ffi.Char> Function(
+        int,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Int32>,
+      )>('swe_get_current_file_data');
+
+  late final _swe_houses_ex = _lib.lookupFunction<
       ffi.Int32 Function(
         ffi.Double,
+        ffi.Int32,
         ffi.Double,
         ffi.Double,
         ffi.Int32,
@@ -81,12 +202,85 @@ class SwissEphBindings {
       ),
       int Function(
         double,
+        int,
         double,
         double,
         int,
         ffi.Pointer<ffi.Double>,
         ffi.Pointer<ffi.Double>,
-      )>('swe_houses');
+      )>('swe_houses_ex');
+
+  late final _swe_rise_trans = _lib.lookupFunction<
+      ffi.Int32 Function(
+        ffi.Double, // tjd_ut
+        ffi.Int32, // ipl
+        ffi.Pointer<ffi.Char>, // starname
+        ffi.Int32, // epheflag
+        ffi.Int32, // rsmi
+        ffi.Pointer<ffi.Double>, // geopos [lon, lat, altitude]
+        ffi.Double, // atpress
+        ffi.Double, // attemp
+        ffi.Pointer<ffi.Double>, // tret
+        ffi.Pointer<ffi.Char>, // serr
+      ),
+      int Function(
+        double,
+        int,
+        ffi.Pointer<ffi.Char>,
+        int,
+        int,
+        ffi.Pointer<ffi.Double>,
+        double,
+        double,
+        ffi.Pointer<ffi.Double>,
+        ffi.Pointer<ffi.Char>,
+      )>('swe_rise_trans');
+
+  // ============== Rise/set constants ==============
+
+  /// Search for a rise event in [riseTrans].
+  static const int SE_CALC_RISE = 1;
+
+  /// Search for a set event in [riseTrans].
+  static const int SE_CALC_SET = 2;
+
+  /// Use the centre of the body's disc instead of its upper limb.
+  static const int SE_BIT_DISC_CENTER = 256;
+
+  /// Use the lower limb of the body's disc.
+  static const int SE_BIT_DISC_BOTTOM = 2048;
+
+  /// Omit atmospheric refraction.
+  static const int SE_BIT_NO_REFRACTION = 512;
+
+  /// Use a geocentric position and ignore ecliptic latitude.
+  static const int SE_BIT_GEOCTR_NO_ECL_LAT = 128;
+
+  /// Swiss Ephemeris' Hindu rising/setting convention:
+  /// disc centre, no refraction, geocentric, ecliptic latitude ignored.
+  static const int SE_BIT_HINDU_RISING =
+      SE_BIT_DISC_CENTER | SE_BIT_NO_REFRACTION | SE_BIT_GEOCTR_NO_ECL_LAT;
+
+  /// JPL ephemeris backend.
+  static const int SEFLG_JPLEPH = 1;
+
+  /// Swiss Ephemeris backend.
+  static const int SEFLG_SWIEPH = 2;
+
+  /// Moshier analytical ephemeris backend.
+  static const int SEFLG_MOSEPH = 4;
+
+  /// Mask selecting one of the supported ephemeris backends.
+  static const int SEFLG_EPHMASK = SEFLG_JPLEPH | SEFLG_SWIEPH | SEFLG_MOSEPH;
+
+  /// Disable nutation.
+  static const int SEFLG_NONUT = 64;
+
+  /// Return sidereal positions.
+  static const int SEFLG_SIDEREAL = 64 * 1024;
+
+  /// Return true/geometric positions rather than apparent positions.
+  static const int SEFLG_TRUEPOS = 16;
 
   // ============== Eclipse Functions ==============
 
@@ -206,6 +400,12 @@ class SwissEphBindings {
       )>('swe_revjul');
 
   /// Loads the appropriate Swiss Ephemeris library for the platform.
+  ///
+  /// Android resolves `libswisseph.so` from the APK. Every other platform
+  /// builds no native engine in this package, so the supported route there is
+  /// [SWISSEPH_LIB_PATH] (tests and desktop hosts); without it, the platform's
+  /// default loader path is tried and the caller keeps its labelled
+  /// approximation.
   ffi.DynamicLibrary _loadLibrary() {
     // Try custom path first (from environment or development location)
     final customPath = Platform.environment['SWISSEPH_LIB_PATH'];
@@ -222,7 +422,6 @@ class SwissEphBindings {
     // Try development/local paths
     if (Platform.isMacOS) {
       final devPaths = [
-        '/Users/sanjibacharya/Developer/jyotish/native/swisseph/swisseph-master/libswisseph.dylib',
         '/usr/local/lib/libswisseph.dylib',
         'libswisseph.dylib',
       ];
@@ -263,11 +462,11 @@ class SwissEphBindings {
 
   /// Calculates planet position using Universal Time.
   ///
-  /// Returns a list of 6 doubles: [longitude, latitude, distance,
-  /// longitudeSpeed, latitudeSpeed, distanceSpeed]
-  ///
-  /// Returns null if calculation fails, with error message in [errorBuffer].
-  List<double>? calculateUT({
+  /// Returns the six doubles (longitude, latitude, distance, longitudeSpeed,
+  /// latitudeSpeed, distanceSpeed) together with the backend flags and native
+  /// warning text. Returns null if the calculation fails, leaving the message
+  /// in [errorBuffer].
+  SwissCalculationResult? calculateUT({
     required double julianDay,
     required int planetId,
     required int flags,
@@ -287,9 +486,62 @@ class SwissEphBindings {
         return null;
       }
 
-      return List.generate(6, (i) => resultPtr[i]);
+      final warning = errorBuffer.cast<Utf8>().toDartString().trim();
+      return SwissCalculationResult(
+        values: List.generate(6, (i) => resultPtr[i]),
+        returnedFlags: returnCode,
+        warning: warning.isEmpty ? null : warning,
+      );
     } finally {
       malloc.free(resultPtr);
+    }
+  }
+
+  /// Reports the file and date range Swiss Ephemeris actually loaded.
+  ///
+  /// [ifno] is 0 for planets, 1 for the Moon and 2 for main asteroids. The
+  /// struct is populated only after a `swe_calc_ut()` probe has opened the
+  /// corresponding file; call this after at least one calculation.
+  ///
+  /// Returns null when no file is loaded for [ifno] (for example when the
+  /// library is using Moshier).
+  SwissEphemerisFileData? getCurrentFileData({required int ifno}) {
+    if (ifno < 0 || ifno > 2) {
+      throw ArgumentError.value(ifno, 'ifno', 'Expected 0, 1 or 2');
+    }
+
+    final startPtr = malloc<ffi.Double>();
+    final endPtr = malloc<ffi.Double>();
+    final denumPtr = malloc<ffi.Int32>();
+
+    try {
+      final pathPtr = _swe_get_current_file_data(
+        ifno,
+        startPtr,
+        endPtr,
+        denumPtr,
+      );
+
+      if (pathPtr == ffi.nullptr) {
+        return null;
+      }
+
+      final path = pathPtr.cast<Utf8>().toDartString();
+      if (path.isEmpty) {
+        return null;
+      }
+
+      return SwissEphemerisFileData(
+        ifno: ifno,
+        path: path,
+        startJulianDay: startPtr.value,
+        endJulianDay: endPtr.value,
+        denum: denumPtr.value,
+      );
+    } finally {
+      malloc.free(startPtr);
+      malloc.free(endPtr);
+      malloc.free(denumPtr);
     }
   }
 
@@ -343,6 +595,10 @@ class SwissEphBindings {
   /// - 'cusps': List of 12 house cusps (0-11)
   /// - 'ascmc': List with ascendant, MC, ARMC, vertex, etc.
   ///
+  /// [flags] is passed to `swe_houses_ex`; use [SEFLG_SIDEREAL] after
+  /// `swe_set_sid_mode` for sidereal cusps. `0` returns tropical cusps and is
+  /// equivalent to the old `swe_houses` call.
+  ///
   /// House system codes:
   /// - 'P' = Placidus
   /// - 'K' = Koch
@@ -356,20 +612,28 @@ class SwissEphBindings {
     required double latitude,
     required double longitude,
     String houseSystem = 'P', // Placidus by default
+    int flags = 0,
   }) {
+    if (houseSystem.length != 1) {
+      throw ArgumentError.value(
+        houseSystem,
+        'houseSystem',
+        'Expected a single Swiss Ephemeris house-system code',
+      );
+    }
+
     // Allocate memory for cusps (13 elements, index 0 unused, 1-12 are house cusps)
     final cuspsPtr = malloc<ffi.Double>(13);
     // Allocate memory for ascmc (10 elements: ascendant, MC, ARMC, vertex, etc.)
     final ascmcPtr = malloc<ffi.Double>(10);
 
     try {
-      final systemCode = houseSystem.codeUnitAt(0);
-
-      final returnCode = _swe_houses(
+      final returnCode = _swe_houses_ex(
         julianDay,
+        flags,
         latitude,
         longitude,
-        systemCode,
+        houseSystem.toUpperCase().codeUnitAt(0),
         cuspsPtr,
         ascmcPtr,
       );
@@ -618,6 +882,55 @@ class SwissEphBindings {
     }
   }
 
+  /// Find the next rise or set of a body.
+  ///
+  /// [startJulianDay] is a UT Julian day. For the Hindu convention pass
+  /// [SE_BIT_HINDU_RISING] in [riseSetFlag] together with [SE_CALC_RISE] or
+  /// [SE_CALC_SET]. The native function filters the ephemeris flags to its
+  /// supported subset, so callers only need to select a backend.
+  RiseTransResult riseTrans({
+    required double startJulianDay,
+    required int planetId,
+    required int riseSetFlag,
+    required double longitude,
+    required double latitude,
+    double altitudeMeters = 0,
+    int ephemerisFlag = SEFLG_SWIEPH,
+  }) {
+    final geoposPtr = calloc<ffi.Double>(3);
+    final tretPtr = calloc<ffi.Double>(1);
+    final errorBuffer = calloc<ffi.Char>(256);
+
+    try {
+      geoposPtr[0] = longitude;
+      geoposPtr[1] = latitude;
+      geoposPtr[2] = altitudeMeters;
+
+      final status = _swe_rise_trans(
+        startJulianDay,
+        planetId,
+        ffi.nullptr,
+        ephemerisFlag,
+        riseSetFlag,
+        geoposPtr,
+        0,
+        0,
+        tretPtr,
+        errorBuffer,
+      );
+
+      return RiseTransResult(
+        status: status,
+        julianDay: status == 0 ? tretPtr[0] : null,
+        error: errorBuffer.cast<Utf8>().toDartString(),
+      );
+    } finally {
+      calloc.free(geoposPtr);
+      calloc.free(tretPtr);
+      calloc.free(errorBuffer);
+    }
+  }
+
   /// Convert Julian day to calendar date.
   /// Returns map with 'year', 'month', 'day', 'hour'.
   Map<String, dynamic> julianDayToDate(double julianDay) {
@@ -666,5 +979,18 @@ class SwissEphBindings {
       minutes,
       seconds,
     );
+  }
+
+  /// Convert a UT Julian day to a UTC [DateTime] without dropping the
+  /// sub-second part.
+  ///
+  /// [julianDayToDateTime] floors to whole seconds, which is fine for display
+  /// but loses precision when a value is fed back into another calculation.
+  DateTime julianDayToUtcDateTime(double julianDay) {
+    const unixEpochJulianDay = 2440587.5;
+    final milliseconds =
+        ((julianDay - unixEpochJulianDay) * Duration.millisecondsPerDay)
+            .round();
+    return DateTime.fromMillisecondsSinceEpoch(milliseconds, isUtc: true);
   }
 }

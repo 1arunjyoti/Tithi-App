@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/models/panchang_data.dart';
+import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
@@ -11,7 +12,7 @@ PanchangData _panchang(DateTime date) {
     date: date,
     rawTithi: 8.5,
     masa: 'Chaitra',
-    allFestivals: const [],
+    allFestivals: [],
     sunrise: DateTime(date.year, date.month, date.day, 6, 30),
     sunset: DateTime(date.year, date.month, date.day, 18),
   );
@@ -22,12 +23,13 @@ void main() {
     'upcoming events use cached adaptive records without panchang FFI',
     () async {
       // Arrange
-      // The provider now also watches the region preference, whose notifier
-      // opens the settings Hive box. Override it so this stays a pure cache
-      // test with no storage setup.
+      // The provider now also watches the region and calculation-school
+      // preferences, whose notifier opens the settings Hive box. Override both
+      // so this stays a pure cache test with no storage setup.
       final container = ProviderContainer(
         overrides: [
           festivalRegionProvider.overrideWithValue(FestivalRegion.all),
+          panchangSchoolProvider.overrideWithValue(PanchangSchool.bisuddha),
         ],
       );
       addTearDown(container.dispose);

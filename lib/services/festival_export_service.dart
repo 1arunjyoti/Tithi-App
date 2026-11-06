@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import '../features/countdown/domain/target_resolution.dart';
+import '../features/panchang/domain/panchang_day.dart';
+import '../features/panchang/domain/panchang_day_resolver.dart';
+import '../features/panchang/domain/tithi_span.dart';
 import '../models/festival.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import 'hindu_calendar_service.dart';
 import 'panchang_service.dart';
-import 'sunrise_calculator.dart';
 
 /// Exports the full festival dataset with computed Panchang details as JSON.
 ///
@@ -142,38 +144,24 @@ class FestivalExportService {
       return buildEntry(festival: festival);
     }
 
-    final sunrise = SunriseCalculator.calculateSunriseIST(
+    // One canonical day for the occurrence; the export row is a projection of
+    // it. A polar occurrence has no sunrise/sunset, so those fields export as
+    // null instead of failing the whole year.
+    final day = await PanchangDayResolver(service: service).resolve(
       date: occurrence,
-      latitude: latitude,
-      longitude: longitude,
+      place: PanchangPlace(latitude: latitude, longitude: longitude),
+      computeSankranti: needsSankrantiSearchOn([festival], occurrence),
     );
-    final sunset = SunriseCalculator.calculateSunsetIST(
-      date: occurrence,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final rawTithi = await service.calculateTithi(
-      sunrise,
-      latitude: latitude,
-      longitude: longitude,
-    );
-    final masa = await service.calculateMasa(
-      sunrise,
-      rawTithi,
-      latitude: latitude,
-      longitude: longitude,
-    );
+    final sunrise = day.solar.sunrise;
+    final sunset = day.solar.sunset;
+    final masa = day.masa.amantaForMatching;
     // Nakshatra at sunrise for the occurrence record, when the rule needs it.
     final nakshatraAtSunrise = festival.nakshatraCondition != null
-        ? await service.calculateNakshatra(
-            sunrise,
-            latitude: latitude,
-            longitude: longitude,
-          )
+        ? day.limbs.nakshatra
         : null;
     final panchang = PanchangData.fromRawTithi(
       date: occurrence,
-      rawTithi: rawTithi,
+      rawTithi: day.tithi.rawAtSample,
       masa: masa,
       sunrise: sunrise,
       sunset: sunset,
@@ -188,25 +176,25 @@ class FestivalExportService {
         festival.tithi >= 1 &&
         festival.nakshatraCondition == null) {
       final observedIndex = festival.resolveTithiIndex(panchang.paksha);
-      begins = await service.calculateTithiStartTime(
-        occurrence,
-        observedIndex,
-        latitude: latitude,
-        longitude: longitude,
+      // Second-precise boundaries through the shared crossing solver; the
+      // Kshaya guard (no occurrence within two days) is part of the resolver.
+      final span = await resolveTithiSpan(
+        date: occurrence,
+        tithiIndex: observedIndex,
+        elongationAt: (time) async {
+          final lons = await service.calculateSunMoonLongitudes(
+            time,
+            latitude: latitude,
+            longitude: longitude,
+          );
+          if (lons == null) return null;
+          var elapsed = lons.moon - lons.sun;
+          if (elapsed < 0) elapsed += 360;
+          return elapsed;
+        },
       );
-      ends = await service.calculateTithiEndTime(
-        occurrence,
-        observedIndex,
-        latitude: latitude,
-        longitude: longitude,
-      );
-      // Kshaya guard: a span further than 2 days out belongs to another
-      // lunation — report null rather than a wrong-month span.
-      if (begins.difference(occurrence).inDays.abs() > 2 ||
-          ends.difference(occurrence).inDays.abs() > 2) {
-        begins = null;
-        ends = null;
-      }
+      begins = span?.start;
+      ends = span?.end;
     }
 
     final isNakshatraObserved = festival.nakshatraCondition != null;

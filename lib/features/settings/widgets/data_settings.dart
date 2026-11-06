@@ -91,10 +91,10 @@ class ExportFestivalsSetting extends ConsumerWidget {
 
     try {
       await ref.read(festivalInitProvider.future);
+      // Shared init: a Panjika switch replaces the service instance, so
+      // initializing it here directly could race the app-wide init.
+      await ref.read(panchangInitProvider.future);
       final service = ref.read(panchangServiceProvider);
-      if (!service.isInitialized) {
-        await service.init();
-      }
       final festivals = ref.read(festivalProvider);
       if (festivals.isEmpty) {
         if (!context.mounted) return;
@@ -360,6 +360,7 @@ class ResetSettingsTile extends ConsumerWidget {
           ref.invalidate(currentLocationProvider);
           ref.invalidate(locationEnabledProvider);
           ref.invalidate(homeLocationProvider);
+          ref.invalidate(placeClockProvider);
 
           ref.invalidate(loadNotificationStateProvider);
           ref.read(notificationEnabledProvider.notifier).setEnabled(false);

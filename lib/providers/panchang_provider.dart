@@ -4,12 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/async/keep_alive.dart';
 import '../features/panchang/data/panchang_cache.dart';
+import '../features/panchang/domain/nakshatra_span.dart';
+import '../features/panchang/domain/tithi_span.dart';
 import '../features/panchang/domain/tithi_transitions.dart';
+import '../features/panchang/domain/yoga_karana_span.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../services/festival_matching_pipeline.dart';
 import '../services/panchang_service.dart';
-import '../services/sunrise_calculator.dart';
+import '../services/solar_events_service.dart';
 import 'festival_provider.dart';
 import 'location_provider.dart';
 import 'calendar_provider.dart';
@@ -25,14 +28,15 @@ export '../features/panchang/data/panchang_cache.dart'
         panchangMasaCacheSuffix,
         readPanchangCacheDouble,
         readPanchangCacheString;
+export '../features/panchang/domain/nakshatra_span.dart'
+    show bisectNakshatraEdge, resolveNakshatraSpan;
 export '../features/panchang/domain/tithi_transitions.dart'
     show
         TithiCheckpoints,
         findSunriseTithiTransition,
         resolveTithiCheckpoints,
         resolveDayTransition,
-        computePanchangData,
-        bisectNakshatraEdge;
+        computePanchangData;
 
 // Phase 2: cache keys, Hive box prep, and UI-sync LRU live in
 // features/panchang/data/panchang_cache.dart (re-exported above for
@@ -42,8 +46,11 @@ export '../features/panchang/domain/tithi_transitions.dart'
 // features/panchang/domain/tithi_transitions.dart (re-exported above).
 
 /// Provider for PanchangService (already exists, re-export)
+///
+/// Watches the calculation school so a settings change rebuilds the service
+/// rather than leaving every downstream provider on the previous theory.
 final panchangServiceProvider = Provider<PanchangService>((ref) {
-  return PanchangService();
+  return PanchangService(school: ref.watch(panchangSchoolProvider));
 });
 
 /// Synchronous coordinates provider with Delhi fallback baked in.
@@ -56,6 +63,40 @@ final resolvedCoordinatesProvider =
       );
     });
 
+/// Coordinates plus the place metadata the solar seam can use.
+///
+/// Kept separate from [resolvedCoordinatesProvider] so existing callers and
+/// test overrides that only know latitude/longitude stay valid: the metadata
+/// comes from the location service's synchronous snapshot, which is null
+/// before the service is initialized. The native Hindu convention is
+/// geocentric, so altitude does not move the instant; the timezone comes from
+/// the place clock (null = device zone) so returned events use the same clock
+/// as the day label. The panchang providers watch this provider and recompute
+/// when the resolved coordinates change.
+final resolvedSolarContextProvider =
+    Provider<
+      ({
+        double latitude,
+        double longitude,
+        double altitudeMeters,
+        String? timezoneId,
+      })
+    >((ref) {
+      final coords = ref.watch(resolvedCoordinatesProvider);
+      final location = ref.watch(locationServiceProvider).lastKnownLocation;
+      final clock = ref.watch(placeClockProvider);
+      return (
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        altitudeMeters: location?.altitudeMeters ?? 0,
+        // The clock decides the zone: null means the device zone (live
+        // location mode), otherwise the selected place's zone. Passing the
+        // raw place zone here would bypass that policy, because an explicit
+        // `timezoneId` always wins in the solar seam.
+        timezoneId: clock.zoneId,
+      );
+    });
+
 /// Provider that tracks if the panchang service is initialized
 ///
 /// Holds the native ephemeris setup (asset file copy + Jyotish init — the
@@ -63,9 +104,17 @@ final resolvedCoordinatesProvider =
 /// flow resolves, same as [festivalInitProvider]: the month batch awaits
 /// both inits anyway, so nothing downstream is delayed beyond the gate,
 /// and the copy no longer contends with the permission dialog.
+///
+/// `watch`, not `read`: [panchangServiceProvider] is a *new instance* when the
+/// calculation school changes, and only this provider knows how to initialize
+/// it. Reading the service here left every downstream provider awaiting the
+/// previous instance's completed init, then computing on an uninitialized
+/// service — which throws and blanked the home screen until an app restart.
+/// Watching makes the school switch invalidate the init (and every consumer
+/// that awaits this future), so the replacement service is initialized once.
 final panchangInitProvider = FutureProvider<void>((ref) async {
   await ref.watch(locationPermissionGateProvider).future;
-  final service = ref.read(panchangServiceProvider);
+  final service = ref.watch(panchangServiceProvider);
   await service.init();
 });
 
@@ -86,9 +135,9 @@ final panchangForDateProvider = FutureProvider.autoDispose
       await ref.watch(panchangInitProvider.future);
 
       final service = ref.read(panchangServiceProvider);
-      final coords = ref.watch(resolvedCoordinatesProvider);
-      final latitude = coords.latitude;
-      final longitude = coords.longitude;
+      final solar = ref.watch(resolvedSolarContextProvider);
+      final latitude = solar.latitude;
+      final longitude = solar.longitude;
       final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
       // Hindu/Bengali adaptive grids have already computed this record,
@@ -103,6 +152,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
             latitude: latitude,
             longitude: longitude,
             cacheBox: cacheBox,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           );
           final transition = await resolveDayTransition(
             normalizedDate: normalized,
@@ -147,6 +198,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
             latitude: latitude,
             longitude: longitude,
             cacheBox: cacheBox,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           );
           final transition = await resolveDayTransition(
             normalizedDate: normalized,
@@ -185,6 +238,8 @@ final panchangForDateProvider = FutureProvider.autoDispose
         // NOTE: this fallback path is unfiltered for Vriddhi; it runs only
         // when the month map itself failed to load.
         includeTransition: true,
+        altitudeMeters: solar.altitudeMeters,
+        timezoneId: solar.timezoneId,
       );
       // Feed the stale-UI LRU so date taps render instantly next time.
       storePanchangUiSync(date, data);
@@ -259,23 +314,25 @@ class LiveTithiTickNotifier extends AutoDisposeNotifier<int> {
     // owns the date change.
     final transitionIndex = day.transitionTithiIndex;
     if (transitionIndex == null) return _tick;
-    final coords = ref.watch(resolvedCoordinatesProvider);
+    final solar = ref.watch(resolvedSolarContextProvider);
     final followOnEnd = ref
         .watch(
           tithiTimingsProvider((
             date: day.date,
             tithiIndex: transitionIndex,
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitude: solar.latitude,
+            longitude: solar.longitude,
           )),
         )
         .valueOrNull
         ?.end;
     if (followOnEnd == null) return _tick;
-    final nextSunrise = SunriseCalculator.calculateSunriseIST(
+    final nextSunrise = solarEventsService.sunrise(
       date: day.date.add(const Duration(days: 1)),
-      latitude: coords.latitude,
-      longitude: coords.longitude,
+      latitude: solar.latitude,
+      longitude: solar.longitude,
+      altitudeMeters: solar.altitudeMeters,
+      timezoneId: solar.timezoneId,
     );
     if (followOnEnd.isAfter(transitionTime) &&
         followOnEnd.isAfter(now) &&
@@ -329,19 +386,21 @@ final livePanchangProvider = FutureProvider.autoDispose
         // Best-effort: a failing ephemeris lookup here must never take down
         // the hero — the first flip needs zero FFI, so degrade to it.
         try {
-          final coords = ref.watch(resolvedCoordinatesProvider);
+          final solar = ref.watch(resolvedSolarContextProvider);
           final timings = await ref.watch(
             tithiTimingsProvider((
               date: base.date,
               tithiIndex: base.transitionTithiIndex!,
-              latitude: coords.latitude,
-              longitude: coords.longitude,
+              latitude: solar.latitude,
+              longitude: solar.longitude,
             )).future,
           );
-          final nextSunrise = SunriseCalculator.calculateSunriseIST(
+          final nextSunrise = solarEventsService.sunrise(
             date: base.date.add(const Duration(days: 1)),
-            latitude: coords.latitude,
-            longitude: coords.longitude,
+            latitude: solar.latitude,
+            longitude: solar.longitude,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           );
           if (timings != null &&
               timings.end.isAfter(base.tithiTransitionTime!) &&
@@ -379,9 +438,9 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
       final festivals = ref.read(festivalProvider);
       final monthSystem = ref.watch(hinduMonthSystemProvider);
 
-      final coords = ref.watch(resolvedCoordinatesProvider);
-      final latitude = coords.latitude;
-      final longitude = coords.longitude;
+      final solar = ref.watch(resolvedSolarContextProvider);
+      final latitude = solar.latitude;
+      final longitude = solar.longitude;
       final cacheBox = await preparePanchangCacheBox(latitude, longitude);
 
       // Generate dates for the entire month view (including previous/next month overflow)
@@ -423,6 +482,8 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
             latitude: latitude,
             longitude: longitude,
             cacheBox: cacheBox,
+            altitudeMeters: solar.altitudeMeters,
+            timezoneId: solar.timezoneId,
           ),
         );
       }
@@ -481,61 +542,43 @@ final tithiTimingsProvider =
       ({DateTime start, DateTime end})?,
       ({DateTime date, int tithiIndex, double latitude, double longitude})
     >((ref, params) async {
+      // School-scoped: these families are cached for the process, so they must
+      // watch the shared init to recompute when the Panjika system replaces the
+      // service (and to never call into an uninitialized instance).
+      await ref.watch(panchangInitProvider.future);
       final service = ref.read(panchangServiceProvider);
-      if (!service.isInitialized) {
-        await service.init();
-      }
 
-      // Calculate start and end times via binary search in the native service
-      final startTime = await service.calculateTithiStartTime(
-        params.date,
-        params.tithiIndex,
-        latitude: params.latitude,
-        longitude: params.longitude,
+      // The elapsed Moon-minus-Sun separation is the same quantity the day
+      // pipeline solves its tithi transitions with, so the sheet's span is
+      // second-precise instead of the retired 1-minute binary search. The
+      // Kshaya guard lives in [resolveTithiSpan].
+      return resolveTithiSpan(
+        date: params.date,
+        tithiIndex: params.tithiIndex,
+        elongationAt: (time) async {
+          final lons = await service.calculateSunMoonLongitudes(
+            time,
+            latitude: params.latitude,
+            longitude: params.longitude,
+          );
+          if (lons == null) return null;
+          var elapsed = lons.moon - lons.sun;
+          if (elapsed < 0) elapsed += 360;
+          return elapsed;
+        },
       );
-
-      final endTime = await service.calculateTithiEndTime(
-        params.date,
-        params.tithiIndex,
-        latitude: params.latitude,
-        longitude: params.longitude,
-      );
-
-      // Guard: a tithi lasts <26h, so a span starting/ending more than 2
-      // days from the festival day belongs to another lunation (Kshaya).
-      if (startTime.difference(params.date).inDays.abs() > 2 ||
-          endTime.difference(params.date).inDays.abs() > 2) {
-        return null;
-      }
-
-      return (start: startTime, end: endTime);
     });
 
 // Phase 2: canonical implementation lives in
-// features/panchang/domain/tithi_transitions.dart as [bisectNakshatraEdge].
-// Kept as a thin alias so existing call-sites keep working.
-Future<DateTime?> _bisectNakshatraEdge({
-  required DateTime lo,
-  required DateTime hi,
-  required int sunriseIndex,
-  required bool findStart,
-  required Future<int?> Function(DateTime time) indexAt,
-}) =>
-    bisectNakshatraEdge(
-      lo: lo,
-      hi: hi,
-      sunriseIndex: sunriseIndex,
-      findStart: findStart,
-      indexAt: indexAt,
-    );
+// features/panchang/domain/nakshatra_span.dart as [resolveNakshatraSpan].
 
 /// Provider for the sunrise nakshatra's span on a specific date.
 ///
 /// Resolves the nakshatra prevailing at sunrise through [PanchangService]
-/// (Lahiri-sidereal Moon longitude folded into 27 segments of 13°20′) and
-/// bisects both its start (backward) and end (forward) to ~1-minute
-/// precision, so the sheet can show "Rohini until 3:42 PM" with elapsed
-/// progress.
+/// (Lahiri-sidereal Moon longitude folded into 27 segments of 13°20′) and both
+/// edges through [resolveNakshatraSpan], so the sheet can show "Rohini until
+/// 3:42 PM" with elapsed progress. The edges are solved by the shared crossing
+/// primitive to the second, not by a provider-local bisection.
 ///
 /// Returns null when the nakshatra can't be resolved or a boundary search
 /// fails: callers hide the card instead of showing a wrong span - same
@@ -544,94 +587,43 @@ final nakshatraTimingsProvider = FutureProvider.family<
   ({int index, String nakshatra, DateTime start, DateTime end})?,
   ({DateTime date, double latitude, double longitude})
 >((ref, params) async {
+  // School-scoped: this family is cached for the process, so it must watch the
+  // shared init to recompute when the Panjika system replaces the service (and
+  // to never call into an uninitialized instance).
+  await ref.watch(panchangInitProvider.future);
   final service = ref.read(panchangServiceProvider);
-  if (!service.isInitialized) {
-    await service.init();
-  }
 
   final normalized = DateTime(
     params.date.year,
     params.date.month,
     params.date.day,
   );
-  final sunrise = SunriseCalculator.calculateSunriseIST(
+  final sunrise = solarEventsService.sunrise(
     date: normalized,
     latitude: params.latitude,
     longitude: params.longitude,
   );
 
-  Future<int?> indexAt(DateTime time) async {
-    final name = await service.calculateNakshatra(
-      time,
-      latitude: params.latitude,
-      longitude: params.longitude,
-    );
-    if (name == null) return null;
-    final idx = hinduNakshatras.indexOf(name);
-    return idx >= 0 ? idx : null;
-  }
-
-  final sunriseIndex = await indexAt(sunrise);
-  if (sunriseIndex == null) return null;
-
-  // Bracket both edges in 2h steps (a nakshatra lasts ~19-26h, so the
-  // first bracket closes within ~13 probes; 48h caps runaway searches).
-  const step = Duration(hours: 2);
-  const cap = Duration(hours: 48);
-  Future<({DateTime inner, DateTime outer})?> bracket(int sign) async {
-    DateTime inner = sunrise;
-    DateTime outer = sunrise.add(step * sign);
-    for (var i = 0; i < 24; i++) {
-      final idx = await indexAt(outer);
-      if (idx == null) return null;
-      if (idx != sunriseIndex) return (inner: inner, outer: outer);
-      inner = outer;
-      outer = outer.add(step * sign);
-      if ((outer.difference(sunrise).inHours).abs() >= cap.inHours) break;
-    }
-    return null;
-  }
-
-  // The two edges are independent (all state is immutable or scoped to
-  // the stateless [indexAt] closure), so bracket and bisect them
-  // concurrently to halve the cold-open probe latency.
-  final brackets = await Future.wait([bracket(1), bracket(-1)]);
-  final endBracket = brackets[0];
-  final startBracket = brackets[1];
-  if (endBracket == null || startBracket == null) return null;
-
-  final edges = await Future.wait([
-    _bisectNakshatraEdge(
-      lo: endBracket.inner,
-      hi: endBracket.outer,
-      sunriseIndex: sunriseIndex,
-      findStart: false,
-      indexAt: indexAt,
-    ),
-    _bisectNakshatraEdge(
-      lo: startBracket.outer,
-      hi: startBracket.inner,
-      sunriseIndex: sunriseIndex,
-      findStart: true,
-      indexAt: indexAt,
-    ),
-  ]);
-  final end = edges[0];
-  final start = edges[1];
-  if (end == null || start == null) return null;
-
-  // Guard: a span reaching absurdly far from the day is a failed search,
-  // not a real nakshatra (same 2-day rule as the tithi timings).
-  if (start.difference(normalized).inDays.abs() > 2 ||
-      end.difference(normalized).inDays.abs() > 2) {
-    return null;
-  }
+  final span = await resolveNakshatraSpan(
+    sunrise: sunrise,
+    indexAt: (time) async {
+      final name = await service.calculateNakshatra(
+        time,
+        latitude: params.latitude,
+        longitude: params.longitude,
+      );
+      if (name == null) return null;
+      final idx = hinduNakshatras.indexOf(name);
+      return idx >= 0 ? idx : null;
+    },
+  );
+  if (span == null) return null;
 
   return (
-    index: sunriseIndex,
-    nakshatra: hinduNakshatras[sunriseIndex],
-    start: start,
-    end: end,
+    index: span.index,
+    nakshatra: span.nakshatra,
+    start: span.start,
+    end: span.end,
   );
 });
 
@@ -639,10 +631,9 @@ final nakshatraTimingsProvider = FutureProvider.family<
 ///
 /// Yoga uses the SUM of the sidereal longitudes (ayanamsa enters twice —
 /// the most ayanamsa-sensitive panchanga element) and karana the halved
-/// elongation; both indices come from a single Sun+Moon probe per instant
-/// via [PanchangService.calculateSunMoonLongitudes], and each end is
-/// bisected to ~1-minute precision (yoga spans ~24h like nakshatras,
-/// karanas ~12h, so the bracket steps differ).
+/// elongation. Both span ends go through [resolveYogaKaranaSpan], which uses
+/// the shared crossing primitive, so they are second-precise and the same code
+/// path as tithi, nakshatra and the new moon.
 ///
 /// Returns null when longitudes are unavailable or a search fails: callers
 /// hide the card instead of showing a wrong span - same hide-on-null
@@ -658,105 +649,46 @@ final yogaKaranaTimingsProvider = FutureProvider.family<
   })?,
   ({DateTime date, double latitude, double longitude})
 >((ref, params) async {
+  // School-scoped: this family is cached for the process, so it must watch the
+  // shared init to recompute when the Panjika system replaces the service (and
+  // to never call into an uninitialized instance).
+  await ref.watch(panchangInitProvider.future);
   final service = ref.read(panchangServiceProvider);
-  if (!service.isInitialized) {
-    await service.init();
-  }
 
   final normalized = DateTime(
     params.date.year,
     params.date.month,
     params.date.day,
   );
-  final sunrise = SunriseCalculator.calculateSunriseIST(
+  final sunrise = solarEventsService.sunrise(
     date: normalized,
     latitude: params.latitude,
     longitude: params.longitude,
   );
 
-  Future<({int yoga, int karana})?> indexesAt(DateTime time) async {
-    final longs = await service.calculateSunMoonLongitudes(
+  final span = await resolveYogaKaranaSpan(
+    sunrise: sunrise,
+    longitudesAt: (time) => service.calculateSunMoonLongitudes(
       time,
       latitude: params.latitude,
       longitude: params.longitude,
-    );
-    if (longs == null) return null;
-    return (
-      yoga: yogaIndexFor(longs.sun, longs.moon),
-      karana: karanaIndexFor(longs.sun, longs.moon),
-    );
-  }
-
-  /// First instant after [sunrise] where [select] leaves [target]:
-  /// bracket in [step] increments (capped at 48h), then bisect to 1 min.
-  Future<DateTime?> spanEnd({
-    required int Function(({int yoga, int karana}) idx) select,
-    required int target,
-    required Duration step,
-  }) async {
-    DateTime inner = sunrise;
-    DateTime outer = sunrise.add(step);
-    var bracketed = false;
-    for (var i = 0; i < 48; i++) {
-      final idx = await indexesAt(outer);
-      if (idx == null) return null;
-      if (select(idx) != target) {
-        bracketed = true;
-        break;
-      }
-      inner = outer;
-      outer = outer.add(step);
-      if (outer.difference(sunrise).abs() >= const Duration(hours: 48)) break;
-    }
-    if (!bracketed) return null;
-    var guard = 0;
-    while (outer.difference(inner).inMinutes > 1 && guard++ < 60) {
-      final mid =
-          inner.add(Duration(minutes: outer.difference(inner).inMinutes ~/ 2));
-      final idx = await indexesAt(mid);
-      if (idx == null) return null;
-      if (select(idx) == target) {
-        inner = mid;
-      } else {
-        outer = mid;
-      }
-    }
-    return outer;
-  }
-
-  final atSunrise = await indexesAt(sunrise);
-  if (atSunrise == null) return null;
-
-  // Independent searches over the same stateless probe: run together.
-  final ends = await Future.wait([
-    spanEnd(
-      select: (idx) => idx.yoga,
-      target: atSunrise.yoga,
-      step: const Duration(hours: 2),
     ),
-    spanEnd(
-      select: (idx) => idx.karana,
-      target: atSunrise.karana,
-      step: const Duration(hours: 1),
-    ),
-  ]);
-  final yogaEnd = ends[0];
-  final karanaEnd = ends[1];
-  if (yogaEnd == null || karanaEnd == null) return null;
+  );
+  if (span == null) return null;
 
-  // Guard: spans reaching absurdly far are failed searches (same 2-day
-  // rule as the tithi/nakshatra timings).
-  if (yogaEnd.difference(normalized).inDays.abs() > 2 ||
-      karanaEnd.difference(normalized).inDays.abs() > 2) {
+  // Guard: spans reaching absurdly far are failed searches (same 2-day rule
+  // as the tithi/nakshatra timings).
+  if (span.yogaEnd.difference(normalized).inDays.abs() > 2 ||
+      span.karanaEnd.difference(normalized).inDays.abs() > 2) {
     return null;
   }
 
   return (
-    yogaIndex: atSunrise.yoga,
-    yoga: yogaNames[atSunrise.yoga],
-    yogaEnd: yogaEnd,
-    karanaIndex: atSunrise.karana,
-    karana: karanaNameForIndex(atSunrise.karana),
-    karanaEnd: karanaEnd,
+    yogaIndex: span.yogaIndex,
+    yoga: yogaNames[span.yogaIndex],
+    yogaEnd: span.yogaEnd,
+    karanaIndex: span.karanaIndex,
+    karana: karanaNameForIndex(span.karanaIndex),
+    karanaEnd: span.karanaEnd,
   );
 });

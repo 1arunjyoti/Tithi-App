@@ -5,15 +5,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+// `latest_all` (not `latest`) because place lookups can return any of the
+// 419 zone identifiers in the timezone boundary data; 106 of them are absent
+// from the reduced `latest` set and `getLocation` would throw on a hit.
+import 'package:timezone/data/latest_all.dart' as tz_data;
 
 import 'tile_orphan.dart';
 
+import '../core/location/timezone_resolver.dart';
 import '../core/storage/hive_adapters.dart';
 import '../providers/version_provider.dart' as version_warmup;
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../utils/tithi_localization.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
 
 /// Phase-1 app startup pipeline extracted from `main.dart`.
 ///
@@ -45,9 +49,14 @@ class AppBootstrap {
     return storageService;
   }
 
-  /// Timezone DB (required before any `tz.TZDateTime` scheduling).
-  void initTimezones() {
+  /// Timezone DB (required before any `tz.TZDateTime` scheduling) and the
+  /// place-boundary index (required before the first coordinate lookup).
+  ///
+  /// Decoding the boundary index here keeps the first place resolution
+  /// (location init or a pick) off the UI thread's critical path.
+  Future<void> initTimezones() async {
     tz_data.initializeTimeZones();
+    await warmPlaceTimezoneIndex();
   }
 
   /// Version/package metadata warm-up before first drawer animation.

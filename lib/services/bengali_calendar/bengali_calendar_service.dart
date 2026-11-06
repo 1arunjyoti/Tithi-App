@@ -1,15 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jyotish/jyotish.dart';
+import '../../models/panchang_school.dart';
+import '../../providers/calendar_provider.dart';
 import '../../providers/panchang_provider.dart';
-import '../sunrise_calculator.dart';
+import '../panchang/ephemeris/panchang_ephemeris.dart';
+import '../solar_events_service.dart';
 import 'bengali_calendar_data.dart';
+import 'bengali_month_start.dart';
 
 final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
-  return BengaliCalendarService(ref);
+  // Watches the school so switching the Panjika system rebuilds the service
+  // and the Bengali month boundaries follow the selected panjika.
+  final school = ref.watch(panchangSchoolProvider);
+  return BengaliCalendarService(ref, ephemerisFor(school));
 });
 
 /// Bengali Calendar Service.
-/// Uses FFI-based Swiss Ephemeris for accurate calculations.
+///
+/// The solar month (rashi) and the sankranti instant come from [ephemeris],
+/// so the calendar follows the selected [PanchangSchool]: Bisuddhasiddhanta
+/// (Drik + Lahiri) or Suryasiddhanta.
 ///
 /// West Bengal rule (Bisuddha Siddhanta / Drik): each solar month begins the
 /// day AFTER its sankranti calendar date (sunrise-to-midnight -> next day,
@@ -18,7 +28,13 @@ final bengaliCalendarServiceProvider = Provider<BengaliCalendarService>((ref) {
 class BengaliCalendarService {
   final Ref _ref;
 
-  BengaliCalendarService(this._ref);
+  /// Source of the Sun's sidereal longitude for the selected school.
+  final PanchangEphemeris _ephemeris;
+
+  BengaliCalendarService(this._ref, this._ephemeris);
+
+  /// Calculation school this instance follows.
+  PanchangSchool get school => _ephemeris.school;
 
   /// Bengali solar month names, Boishakh-first (guide Sec 3.1).
   List<String> get bengaliMonths => kBengaliMonths;
@@ -66,8 +82,10 @@ class BengaliCalendarService {
     int gregYear,
     double latitude,
     double longitude,
+    PanchangSchool school,
   ) {
-    return '${latitude.toStringAsFixed(1)}_${longitude.toStringAsFixed(1)}_${monthIndex}_$gregYear';
+    return '${latitude.toStringAsFixed(1)}_${longitude.toStringAsFixed(1)}'
+        '_${monthIndex}_${gregYear}_${school.name}';
   }
 
   static void _storeMonthStart(String key, DateTime monthStart) {
@@ -81,18 +99,12 @@ class BengaliCalendarService {
     DateTime instant,
     GeographicLocation location,
   ) async {
-    final pos = await Jyotish().getPlanetPosition(
-      planet: Planet.sun,
-      dateTime: instant,
-      location: location,
+    final positions = await _ephemeris.longitudesAt(
+      instant,
+      latitude: location.latitude,
+      longitude: location.longitude,
     );
-    return pos.longitude;
-  }
-
-  /// Relative longitude of [sunLng] past [boundary], in [0, 360).
-  /// Current sign -> [0, 30); previous sign -> [330, 360).
-  static double _relPastBoundary(double sunLng, double boundary) {
-    return (sunLng - boundary + 360) % 360;
+    return positions.sun;
   }
 
   /// Calculates the Bengali Date (West Bengal System) using Sun's position.
@@ -109,7 +121,7 @@ class BengaliCalendarService {
     var normalized = DateTime(date.year, date.month, date.day);
     final hasTime = date.hour != 0 || date.minute != 0 || date.second != 0;
     if (hasTime) {
-      final sunrise = SunriseCalculator.calculateSunriseIST(
+      final sunrise = solarEventsService.sunrise(
         date: normalized,
         latitude: latitude,
         longitude: longitude,
@@ -123,6 +135,7 @@ class BengaliCalendarService {
       normalized,
       latitude,
       longitude,
+      school: school,
     );
     final cached = _dateCache.read(dateCacheKey);
     if (cached != null) return cached;
@@ -152,7 +165,7 @@ class BengaliCalendarService {
     // Aries starts at 0 degrees.
     final int monthIndex = (lng / 30).floor() % 12;
 
-    final monthStart = await _monthStartFor(
+    final month = await _monthStartFor(
       monthIndex: monthIndex,
       noon: noon,
       sunLngNow: lng,
@@ -161,7 +174,7 @@ class BengaliCalendarService {
     );
 
     // Day within the solar month (1-based).
-    int day = normalized.difference(monthStart).inDays + 1;
+    int day = normalized.difference(month.start).inDays + 1;
     // Defensive: never wrap to 1 (that hid the old Boishakh 5..32 drift).
     // A value outside 1..32 means resolution failed; clamp to the edge so
     // the error stays visible instead of silently restarting the month.
@@ -172,11 +185,16 @@ class BengaliCalendarService {
     // Dec->Jan: Jan tail days still resolve to the December start, hence the
     // previous gregorian year). Boishakh..Poush (0..8) -> start.year - 593,
     // Magh..Choitro (9..11) -> start.year - 594.
-    final int bengaliYear = monthStart.year - (monthIndex <= 8 ? 593 : 594);
+    //
+    // [month.index] can differ from the noon's rashi: on the sankranti civil
+    // day the Sun is already in the new sign while the Bengal rule still puts
+    // the day in the outgoing month (see `_resolveMonthStart`).
+    final int bengaliYear =
+        month.start.year - (month.index <= 8 ? 593 : 594);
 
     final result = (
       day: day,
-      month: bengaliMonths[monthIndex],
+      month: bengaliMonths[month.index],
       year: bengaliYear,
     );
     _dateCache.store(dateCacheKey, result);
@@ -189,7 +207,11 @@ class BengaliCalendarService {
   /// (Poush Dec->Jan) miss on [noon.year], so the previous-year entry is
   /// tried too and accepted only when [normalized] falls inside its
   /// 29..32-day span (month index already matches by construction).
-  Future<DateTime> _monthStartFor({
+  ///
+  /// The returned [index] can be the month before [monthIndex] when [noon]
+  /// falls on the sankranti civil day: the Bengal rule gives that day to the
+  /// outgoing month, so the answer is the previous month's start.
+  Future<({int index, DateTime start})> _monthStartFor({
     required int monthIndex,
     required DateTime noon,
     required double sunLngNow,
@@ -213,13 +235,13 @@ class BengaliCalendarService {
     }
 
     final hit = accept(
-      _monthStartCache[_cacheKey(monthIndex, noon.year, lat, lon)],
+      _monthStartCache[_cacheKey(monthIndex, noon.year, lat, lon, school)],
     );
-    if (hit != null) return hit;
+    if (hit != null) return (index: monthIndex, start: hit);
     final prevHit = accept(
-      _monthStartCache[_cacheKey(monthIndex, noon.year - 1, lat, lon)],
+      _monthStartCache[_cacheKey(monthIndex, noon.year - 1, lat, lon, school)],
     );
-    if (prevHit != null) return prevHit;
+    if (prevHit != null) return (index: monthIndex, start: prevHit);
 
     final resolved = await _resolveMonthStart(
       monthIndex: monthIndex,
@@ -227,140 +249,41 @@ class BengaliCalendarService {
       sunLngNow: sunLngNow,
       location: location,
     );
-    _storeMonthStart(_cacheKey(monthIndex, resolved.year, lat, lon), resolved);
+    // Store under the resolved index: on the sankranti day that is the
+    // outgoing month, and the next call for that month must hit this entry.
+    _storeMonthStart(
+      _cacheKey(resolved.index, resolved.start.year, lat, lon, school),
+      resolved.start,
+    );
     return resolved;
   }
 
-  /// Finds Boishakh-1-style month start: bracket the sankranti between two
-  /// local noons (estimate from degrees-in-sign, +/-3d scan), bisect the
-  /// ~24h window to ~20s, then apply the Bengal rule (month starts the day
-  /// after the sankranti calendar date).
-  Future<DateTime> _resolveMonthStart({
+  /// Finds Boishakh-1-style month start: solve the Sankranti to a second with
+  /// the shared crossing solver, then apply the Bengal rule (the month starts
+  /// the day after the Sankranti calendar date).
+  ///
+  /// Returns the month the civil day containing [noon] belongs to, which is
+  /// not always [monthIndex]: the Sun enters the new sign before the Bengal
+  /// month starts, so the Sankranti civil day belongs to the outgoing month.
+  /// In that case the previous month's start is resolved and returned with
+  /// its own index (e.g. 2026-04-14 is Choitro 30, 1432, not Boishakh 1).
+  ///
+  /// Delegates to [resolveBengaliMonthStart], which owns the estimate, the
+  /// 35-day guard scan and the loud failure when neither can find an ingress.
+  Future<({int index, DateTime start})> _resolveMonthStart({
     required int monthIndex,
     required DateTime noon,
     required double sunLngNow,
     required GeographicLocation location,
-  }) async {
-    final double boundary = monthIndex * 30.0;
-    final double degInSign = _relPastBoundary(sunLngNow, boundary);
-
-    // Guard: callers must pass a noon whose Sun is inside [boundary,
-    // boundary+30). A mismatched boundary (e.g. getMonthStart probing a
-    // neighbouring month) yields degInSign up to ~359, which would shoot
-    // the estimate ~a year off and poison the month grid (blank/huge
-    // months). Fall back to scanning around noon in that case.
-    final bool estimateValid = degInSign < 35;
-    // Mean sun motion ~0.9856 deg/day.
-    final estIngressNoon = estimateValid
-        ? noon.subtract(Duration(minutes: (degInSign / 0.9856 * 1440).round()))
-        : noon;
-    final estNoon = DateTime(
-      estIngressNoon.year,
-      estIngressNoon.month,
-      estIngressNoon.day,
-      12,
+    bool allowMonthBacktrack = true,
+  }) {
+    return resolveBengaliMonthStart(
+      monthIndex: monthIndex,
+      noon: noon,
+      sunLngNow: sunLngNow,
+      sunLongitudeAt: (instant) => _sunLongitude(instant, location),
+      allowMonthBacktrack: allowMonthBacktrack,
     );
-
-    // Bracket: consecutive noons straddling the boundary.
-    DateTime? beforeNoon;
-    DateTime? afterNoon;
-    for (int d = -3; d <= 3; d++) {
-      final a = estNoon.add(Duration(days: d));
-      final b = a.add(const Duration(days: 1));
-      final relA = _relPastBoundary(await _sunLongitude(a, location), boundary);
-      if (relA <= 180) continue; // already in the new sign
-      final relB = _relPastBoundary(await _sunLongitude(b, location), boundary);
-      if (relB <= 180 && relB < 32) {
-        beforeNoon = a;
-        afterNoon = b;
-        break;
-      }
-    }
-
-    // Fallback: full backward scan (up to one max-length month) from noon.
-    if (beforeNoon == null || afterNoon == null) {
-      DateTime cursor = noon;
-      double relCursor = _relPastBoundary(
-        await _sunLongitude(cursor, location),
-        boundary,
-      );
-      // If noon itself is somehow pre-ingress (shouldn't happen since
-      // monthIndex came from this noon), step forward instead.
-      if (relCursor > 180) {
-        for (int i = 1; i <= 35; i++) {
-          cursor = noon.add(Duration(days: i));
-          relCursor = _relPastBoundary(
-            await _sunLongitude(cursor, location),
-            boundary,
-          );
-          if (relCursor <= 180) {
-            afterNoon = cursor;
-            beforeNoon = cursor.subtract(const Duration(days: 1));
-            break;
-          }
-          // Let gestures/frames interleave during long FFI scans.
-          if (i % 8 == 0) await Future<void>.delayed(Duration.zero);
-        }
-      } else {
-        for (int i = 0; i < 35; i++) {
-          final prev = cursor.subtract(const Duration(days: 1));
-          final relPrev = _relPastBoundary(
-            await _sunLongitude(prev, location),
-            boundary,
-          );
-          if (relPrev > 180) {
-            beforeNoon = prev;
-            afterNoon = cursor;
-            break;
-          }
-          cursor = prev;
-          // Let gestures/frames interleave during long FFI scans.
-          if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
-        }
-      }
-    }
-
-    if (beforeNoon == null || afterNoon == null) {
-      // Last resort: historic approximation (Apr 14 anchor). Day numbers
-      // may be off by ~1 but never 5..32.
-      final approx = noon.subtract(Duration(days: degInSign ~/ 1));
-      return DateTime(approx.year, approx.month, approx.day);
-    }
-
-    // Bisect to ~20s (24h / 2^12).
-    var lo = beforeNoon;
-    var hi = afterNoon;
-    for (int i = 0; i < 12; i++) {
-      final mid = DateTime.fromMillisecondsSinceEpoch(
-        (lo.millisecondsSinceEpoch + hi.millisecondsSinceEpoch) ~/ 2,
-      );
-      final relMid = _relPastBoundary(
-        await _sunLongitude(mid, location),
-        boundary,
-      );
-      if (relMid > 180) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-
-    // Bengal rule: month starts the day after the sankranti calendar date.
-    final sankrantiDay = DateTime(hi.year, hi.month, hi.day);
-    final monthStart = sankrantiDay.add(const Duration(days: 1));
-    // Sanity: the start of the month containing `noon` must lie within
-    // (noon - 32d, noon]. Anything else is a mis-resolution (e.g. a
-    // neighbouring-month probe) — return the noon-anchored fallback so the
-    // calendar grid stays bounded instead of going blank/huge.
-    if (monthStart.isAfter(noon)) {
-      final fallback = DateTime(noon.year, noon.month, noon.day);
-      return fallback;
-    }
-    if (noon.difference(monthStart).inDays >= 32) {
-      final fallback = DateTime(noon.year, noon.month, noon.day);
-      return fallback;
-    }
-    return monthStart;
   }
 
   /// returns the Gregorian Date for the 1st of the given Bengali Month/Year
@@ -375,7 +298,8 @@ class BengaliCalendarService {
 
     const lat = 22.5726;
     const lon = 88.3639;
-    final directHit = _monthStartCache[_cacheKey(monthIndex, gYear, lat, lon)];
+    final directHit =
+        _monthStartCache[_cacheKey(monthIndex, gYear, lat, lon, school)];
     if (directHit != null) return directHit;
 
     int gMonth = 4 + monthIndex;

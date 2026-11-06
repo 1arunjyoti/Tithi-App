@@ -21,7 +21,9 @@ final bengaliDateForSheetProvider = FutureProvider.autoDispose
     .family<({int day, String month, int year})?, DateTime>((ref, date) async {
       if (!isPrimarySystem(ref, AppCalendarSystem.bengali)) return null;
       return guarded(
-        () => ref.read(bengaliCalendarServiceProvider).calculateDate(date),
+        // Watch, not read: the Bengali date follows the selected Panjika
+        // system, so this provider must recompute when it changes.
+        () => ref.watch(bengaliCalendarServiceProvider).calculateDate(date),
       );
     });
 
@@ -33,6 +35,8 @@ final bengaliDateForSheetProvider = FutureProvider.autoDispose
 final hinduInstantLabelProvider = FutureProvider.autoDispose
     .family<String?, ({DateTime instant, int tithiIndex})>((ref, arg) async {
       if (!isPrimarySystem(ref, AppCalendarSystem.hindu)) return null;
+      // Masa label follows the selected Panjika system.
+      ref.watch(panchangSchoolProvider);
       try {
         final service = ref.read(hinduCalendarServiceProvider);
         final monthSystem = ref.watch(hinduMonthSystemProvider);
@@ -59,7 +63,7 @@ final bengaliInstantLabelProvider = FutureProvider.autoDispose
       if (!isPrimarySystem(ref, AppCalendarSystem.bengali)) return null;
       try {
         final b = await ref
-            .read(bengaliCalendarServiceProvider)
+            .watch(bengaliCalendarServiceProvider)
             .calculateDate(instant);
         final useBn = resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
         if (useBn) {
@@ -98,6 +102,8 @@ final instantPrimaryLabelProvider = FutureProvider.autoDispose
 final hinduYearForSheetProvider = FutureProvider.autoDispose
     .family<({int year, String eraLabel})?, DateTime>((ref, date) async {
       if (!isPrimarySystem(ref, AppCalendarSystem.hindu)) return null;
+      // The era year is derived from the school's masa (New Year boundary).
+      ref.watch(panchangSchoolProvider);
       try {
         final service = ref.read(hinduCalendarServiceProvider);
         final yearEra = ref.watch(hinduYearEraProvider);

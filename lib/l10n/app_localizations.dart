@@ -948,6 +948,12 @@ abstract class AppLocalizations {
   /// **'© 2025 Tithi Project\nMade with ❤️ for Sanatan Dharma'**
   String get applicationLegalese;
 
+  /// Attribution required by the ODbL licence of the bundled time zone boundary data
+  ///
+  /// In en, this message translates to:
+  /// **'Time zone boundaries: © OpenStreetMap contributors (ODbL), built by Timezone Boundary Builder.'**
+  String get timezoneDataCredit;
+
   /// Title for moon phases screen
   ///
   /// In en, this message translates to:
@@ -2081,6 +2087,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose how months are named during Krishna Paksha'**
   String get hinduMonthSystemSubtitle;
+
+  /// Panchang calculation school setting and selection sheet title
+  ///
+  /// In en, this message translates to:
+  /// **'Panjika System'**
+  String get panchangSchool;
+
+  /// Panchang calculation school selection explanation
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the calculation system behind every tithi, nakshatra and festival date'**
+  String get panchangSchoolSubtitle;
 
   /// Festival region setting and selection sheet title
   ///

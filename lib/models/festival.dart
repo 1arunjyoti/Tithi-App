@@ -147,6 +147,100 @@ String karanaNameForIndex(int index) {
   return 'Naga';
 }
 
+/// The twelve sidereal rashis in transit order (Mesha = index 0).
+///
+/// The index is also the Sankranti boundary: rashi `n` starts at sidereal
+/// solar longitude `n * 30` degrees, so entering Makara (index 9) is the
+/// 270-degree crossing that defines Makar Sankranti.
+const List<String> kRashiNames = [
+  'Mesha',
+  'Vrishabha',
+  'Mithuna',
+  'Karka',
+  'Simha',
+  'Kanya',
+  'Tula',
+  'Vrishchika',
+  'Dhanu',
+  'Makara',
+  'Kumbha',
+  'Meena',
+];
+
+/// English zodiac names accepted in festival data alongside [kRashiNames].
+const Map<String, String> _rashiAliases = {
+  'aries': 'Mesha',
+  'taurus': 'Vrishabha',
+  'gemini': 'Mithuna',
+  'cancer': 'Karka',
+  'leo': 'Simha',
+  'virgo': 'Kanya',
+  'libra': 'Tula',
+  'scorpio': 'Vrishchika',
+  'sagittarius': 'Dhanu',
+  'capricorn': 'Makara',
+  'aquarius': 'Kumbha',
+  'pisces': 'Meena',
+};
+
+/// Canonical rashi name for [raw], accepting Sanskrit and English spellings
+/// case-insensitively. Unknown values return null.
+String? normalizeRashiName(String? raw) {
+  final value = raw?.trim().toLowerCase();
+  if (value == null || value.isEmpty) return null;
+  for (final name in kRashiNames) {
+    if (name.toLowerCase() == value) return name;
+  }
+  return _rashiAliases[value];
+}
+
+/// 0-11 rashi index for [raw], or null when unknown.
+int? rashiIndexForName(String? raw) {
+  final name = normalizeRashiName(raw);
+  return name == null ? null : kRashiNames.indexOf(name);
+}
+
+/// 0-11 sidereal rashi index for a Sun longitude in degrees.
+int rashiIndexForLongitude(double sunLongitude) {
+  final normalized = _normalizeAngle(sunLongitude);
+  return (normalized / 30).floor().clamp(0, 11);
+}
+
+/// Gregorian date encoded by a `"MM-DD"` [solarDate] in [year], or null when
+/// the string is malformed or the date does not exist in that year.
+DateTime? solarDateInYear(String? solarDate, int year) {
+  if (solarDate == null) return null;
+  final parts = solarDate.split('-');
+  if (parts.length != 2) return null;
+  final month = int.tryParse(parts[0]);
+  final day = int.tryParse(parts[1]);
+  if (month == null || day == null) return null;
+  final candidate = DateTime(year, month, day);
+  if (candidate.month != month || candidate.day != day) return null;
+  return candidate;
+}
+
+/// Whether a Sankranti ingress search is worth running on [day] for
+/// [festivals].
+///
+/// A transit-based solar festival keeps `solarDate` as the ingress estimate:
+/// the ingress moves by at most a day or two across the leap cycle. The search
+/// therefore runs only within ±2 days of that date, so a 420-day occurrence
+/// scan pays for it on a handful of days instead of every day. A rule without
+/// a usable `solarDate` always searches.
+bool needsSankrantiSearchOn(List<Festival> festivals, DateTime day) {
+  final dayOnly = DateTime(day.year, day.month, day.day);
+  for (final festival in festivals) {
+    final rule = festival.panchangRules;
+    if (rule.sankrantiRashi == null) continue;
+    final estimate = solarDateInYear(rule.solarDate, dayOnly.year);
+    if (estimate == null || dayOnly.difference(estimate).inDays.abs() <= 2) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// Canonical region tags for `Festival.regions`.
 ///
 /// `all` is the pan-India tag and is exclusive: a festival is either
@@ -578,17 +672,36 @@ class Purpose {
   }
 }
 
-/// timingOverride values resolved at their own intraday checkpoint instead
-/// of sunrise (madhyahna, aparahna, nishita, pradosha). Shared by the UI
+/// timingOverride values resolved at their own checkpoint instead of sunrise
+/// (arunodaya, madhyahna, aparahna, nishita, pradosh/pradosha, moonrise).
+/// Shared by the UI
 /// batch (panchang_data), the matching pipeline, and the notification
 /// scheduler so all three agree on which festivals skip sunrise matching
 /// and the dominant-tithi grace.
+///
+/// Adding a value here is a matching change: the festival stops being tested
+/// against the sunrise tithi and is tested only at its checkpoint.
 const timingOverrideCheckpoints = {
+  'brahma_muhurta_start',
+  'arunodaya_start',
+  'arunodaya',
+  'purvahna',
+  'sayahna_start',
+  'sayahna_center',
+  'sayahna_end',
   'madhyahna',
   'aparahna',
   'nishita',
+  'pradosh',
   'pradosha',
+  'moonrise',
+  'chandrodaya',
 };
+
+/// Normalized `PanchangRules.dominantTithi`: only `'strict'` is meaningful,
+/// every other value (including null and unknown) keeps the grace window.
+String normalizeDominantTithi(String? raw) =>
+    raw?.trim().toLowerCase() == 'strict' ? 'strict' : 'grace';
 
 @HiveType(typeId: 4)
 class PanchangRules {
@@ -618,7 +731,11 @@ class PanchangRules {
 
   /// SMELL-05: Which timing checkpoint to use when evaluating this festival.
   /// Replaces the hardcoded switch on festival ID in PanchangData.fromRawTithi.
-  /// Valid values: 'madhyahna', 'aparahna', 'nishita', 'pradosha'.
+  /// Valid values: 'brahma_muhurta_start', 'arunodaya_start', 'arunodaya',
+  /// 'purvahna',
+  /// 'madhyahna', 'aparahna', 'nishita', 'pradosh',
+  /// 'pradosha',
+  /// 'moonrise' (see [timingOverrideCheckpoints]).
   /// Null (default) = use sunrise tithi.
   @HiveField(8)
   final String? timingOverride;
@@ -638,7 +755,8 @@ class PanchangRules {
   /// Puja kala (optional string enum): the ritual time window shown in the
   /// Puja Samay card — e.g. 'madhyahna' for Ganesh Chaturthi, 'nishita' for
   /// Janmashtami, 'moonrise' for Karva Chauth.
-  /// Valid values: 'madhyahna', 'nishita', 'pradosha', 'moonrise',
+  /// Valid values: 'purvahna', 'madhyahna', 'aparahna', 'nishita',
+  /// 'pradosh' (or 'pradosha'), 'moonrise' (or 'chandrodaya'),
   /// 'sunrise', 'sunset', 'sandhi_junction' (the festival tithi's end).
   /// Null (default) = no Puja Samay card.
   @HiveField(10)
@@ -660,6 +778,46 @@ class PanchangRules {
   @HiveField(12, defaultValue: false)
   final bool clipToTithi;
 
+  /// Solar-ingress (Sankranti) observance: the rashi the Sun must enter for
+  /// this festival to fall on the day. Null = not a transit-based festival.
+  ///
+  /// When set, a `conditions: "Solar"` rule matches the civil day whose
+  /// Sankranti observance lands on it (the transit day, moved to the next day
+  /// when the transit happens after sunset), instead of the fixed
+  /// [solarDate]. Accepts the canonical Sanskrit names in [kRashiNames] and
+  /// the English zodiac names (e.g. 'Capricorn').
+  @HiveField(13)
+  final String? sankrantiRashi;
+
+  /// Avoid Bhadra (Vishti karana) in the puja window. Non-nullable, default
+  /// false. Set on Raksha Bandhan: the rakhi is not tied while Vishti
+  /// prevails, so the displayed kalam is trimmed to the Bhadra-free part and
+  /// falls back to Pradosha when the whole target window is covered.
+  /// defaultValue keeps pre-existing Hive boxes (written before field 14)
+  /// readable after upgrades instead of throwing on a null cast.
+  @HiveField(14, defaultValue: false)
+  final bool avoidBhadra;
+
+  /// Dominant-tithi sampling: `'grace'` (default, shipped Drik convention) or
+  /// `'strict'`.
+  ///
+  /// `'grace'` additionally matches a festival when its tithi begins within
+  /// [kDominantTithiGrace] after sunrise. `'strict'` matches only the tithi
+  /// prevailing at the festival's own checkpoint (sunrise by default).
+  ///
+  /// The five Durga Puja days use `'strict'`: their tithi timings already
+  /// produce the intended observance days, and the grace window would add an
+  /// extra one (Bisuddha Saptami beginning 05:54 on Oct 17 2026, ~17 min after
+  /// sunrise, put Saptami on both Oct 17 and 18). Under Surya Siddhanta the
+  /// same window added Ashtami on Oct 18. Vriddhi (`'both'` for these entries)
+  /// still keeps genuine two-sunrise runs, so the schools diverge correctly:
+  /// Bisuddha Shashthi Oct 16+17, Saptami Oct 18; Surya Siddhanta Shashthi
+  /// Oct 16, Saptami Oct 17+18.
+  /// defaultValue keeps pre-existing Hive boxes (written before field 15)
+  /// readable after upgrades instead of throwing on a null cast.
+  @HiveField(15, defaultValue: 'grace')
+  final String dominantTithi;
+
   const PanchangRules({
     required this.masa,
     required this.paksha,
@@ -674,7 +832,14 @@ class PanchangRules {
     this.pujaKala,
     this.paranRule,
     this.clipToTithi = false,
+    this.sankrantiRashi,
+    this.avoidBhadra = false,
+    this.dominantTithi = 'grace',
   });
+
+  /// Whether the dominant-tithi grace window may add a match for this rule.
+  bool get usesDominantGrace =>
+      normalizeDominantTithi(dominantTithi) == 'grace';
 
   factory PanchangRules.fromJson(Map<String, dynamic> json) {
     return PanchangRules(
@@ -695,6 +860,16 @@ class PanchangRules {
       paranRule: json['paranRule'] ?? json['paran_rule'],
       clipToTithi:
           json['clipToTithi'] ?? json['clip_to_tithi'] ?? false,
+      sankrantiRashi: normalizeRashiName(
+        json['sankranti'] ??
+            json['sankrantiRashi'] ??
+            json['sankranti_rashi'],
+      ),
+      avoidBhadra:
+          json['avoidBhadra'] ?? json['avoid_bhadra'] ?? false,
+      dominantTithi: normalizeDominantTithi(
+        json['dominantTithi'] ?? json['dominant_tithi'],
+      ),
     );
   }
 }

@@ -1,6 +1,8 @@
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
+import '../../../models/panchang_data.dart' show BhadraWindow;
 import '../../../services/auspicious_timings.dart';
+import '../../panchang/domain/bhadra.dart' show bhadraFreeWindow;
 
 // Puja-kala window + paran instant resolution for the event sheet's Puja
 // Samay card. Pure: every ephemeris input is passed in (the sheet watches
@@ -10,12 +12,19 @@ import '../../../services/auspicious_timings.dart';
 /// back to null rather than rendering a wrong window.
 String? normalizedPujaKala(Festival festival) {
   const known = {
+    'purvahna',
+    'aparahna',
     'madhyahna',
     'nishita',
+    // Both spellings are accepted, matching `timingOverride`.
+    'pradosh',
     'pradosha',
     'moonrise',
+    'chandrodaya',
     'sunrise',
     'sunset',
+    'godhuli',
+    'punya_kala',
     'sandhi_junction',
   };
   final raw = festival.panchangRules.pujaKala;
@@ -38,22 +47,32 @@ String? normalizedParanRule(Festival festival) {
 /// Window kalas render the two-cell span card; sunrise/sunset resolve to a
 /// single instant ([resolvePujaInstant]).
 bool isPujaWindowKala(String kala) =>
+    kala == 'purvahna' ||
     kala == 'madhyahna' ||
+    kala == 'aparahna' ||
     kala == 'nishita' ||
+    kala == 'pradosh' ||
     kala == 'pradosha' ||
     kala == 'moonrise' ||
+    kala == 'chandrodaya' ||
+    kala == 'godhuli' ||
+    kala == 'punya_kala' ||
     kala == 'sandhi_junction';
 
 /// Display name for a kala, reusing the sheet's existing labels with an
 /// English fallback like the sheet widgets (nullable l10n).
 String pujaKalaLabel(String kala, AppLocalizations? l10n) {
   return switch (kala) {
+    'purvahna' => 'Purvahna',
+    'aparahna' => 'Aparahna',
     'madhyahna' => l10n?.madhyahna ?? 'Madhyahna',
     'nishita' => l10n?.nishita ?? 'Nishita',
-    'pradosha' => l10n?.pradosha ?? 'Pradosha',
+    'pradosh' || 'pradosha' => l10n?.pradosha ?? 'Pradosha',
     'sunrise' => l10n?.sunrise ?? 'Sunrise',
     'sunset' => l10n?.sunset ?? 'Sunset',
-    'moonrise' => l10n?.moonrise ?? 'Moonrise',
+    'moonrise' || 'chandrodaya' => l10n?.moonrise ?? 'Moonrise',
+    'godhuli' => l10n?.godhuli ?? 'Godhuli',
+    'punya_kala' => 'Punya Kala',
     'sandhi_junction' => l10n?.sandhiJunction ?? 'Sandhi',
     _ => kala,
   };
@@ -71,6 +90,10 @@ String pujaKalaLabel(String kala, AppLocalizations? l10n) {
 ///   (flanking junction, gandantha-style).
 typedef PujaKalaSpan = ({DateTime instant, DateTime start, DateTime end});
 
+/// Traditional Sankranti punya-kala length: 40 ghatis (16 hours) from the
+/// transit instant, clipped to the observance day's daylight.
+const int kSankrantiPunyaKalaGhatis = 40;
+
 PujaKalaSpan? resolvePujaKala({
   required String kala,
   required DateTime date,
@@ -80,12 +103,21 @@ PujaKalaSpan? resolvePujaKala({
   required DateTime? moonrise,
   required DateTime? tithiEnd,
   required bool clipToTithi,
+  DateTime? sankrantiInstant,
+  List<BhadraWindow> bhadraWindows = const [],
+  bool avoidBhadra = false,
 }) {
   DateTime midpoint(DateTime s, DateTime e) =>
       s.add(Duration(microseconds: e.difference(s).inMicroseconds ~/ 2));
 
   switch (kala) {
-    case 'madhyahna' || 'nishita' || 'pradosha':
+    case 'purvahna' ||
+          'madhyahna' ||
+          'aparahna' ||
+          'nishita' ||
+          'pradosh' ||
+          'pradosha' ||
+          'godhuli':
       if (sunrise == null || sunset == null || nextSunrise == null) {
         return null;
       }
@@ -96,8 +128,29 @@ PujaKalaSpan? resolvePujaKala({
         nextSunrise: nextSunrise,
       );
       final window = switch (kala) {
+        'purvahna' => (
+          start: sunrise,
+          end: sunrise.add(
+            Duration(
+              microseconds: sunset.difference(sunrise).inMicroseconds ~/ 2,
+            ),
+          ),
+        ),
         'madhyahna' => timings.madhyahnaWindow,
+        'aparahna' => (
+          start: sunrise.add(
+            Duration(
+              microseconds: sunset.difference(sunrise).inMicroseconds * 3 ~/ 5,
+            ),
+          ),
+          end: sunrise.add(
+            Duration(
+              microseconds: sunset.difference(sunrise).inMicroseconds * 4 ~/ 5,
+            ),
+          ),
+        ),
         'nishita' => timings.nishita,
+        'godhuli' => timings.godhuli,
         _ => timings.pradosha,
       };
       final instant = kala == 'madhyahna'
@@ -109,8 +162,58 @@ PujaKalaSpan? resolvePujaKala({
         clipToTithi: clipToTithi,
         tithiEnd: tithiEnd,
       );
-      return (instant: instant, start: clipped.start, end: clipped.end);
-    case 'moonrise':
+      if (!avoidBhadra || bhadraWindows.isEmpty) {
+        return (instant: instant, start: clipped.start, end: clipped.end);
+      }
+      // Bhadra-sensitive observance (Raksha Bandhan): use the Bhadra-free
+      // part of the target kalam, falling back to Pradosha when the whole
+      // kalam is covered. A sliver under 12 minutes is not a usable muhurta.
+      const minimum = Duration(minutes: 12);
+      var adjusted = bhadraFreeWindow(
+        start: clipped.start,
+        end: clipped.end,
+        windows: bhadraWindows,
+      );
+      if (adjusted == null ||
+          adjusted.end.difference(adjusted.start) < minimum) {
+        final fallback = clipPujaWindow(
+          start: timings.pradosha.start,
+          end: timings.pradosha.end,
+          clipToTithi: clipToTithi,
+          tithiEnd: tithiEnd,
+        );
+        adjusted = bhadraFreeWindow(
+          start: fallback.start,
+          end: fallback.end,
+          windows: bhadraWindows,
+        );
+      }
+      if (adjusted == null ||
+          adjusted.end.difference(adjusted.start) < minimum) {
+        return null;
+      }
+      return (
+        instant: midpoint(adjusted.start, adjusted.end),
+        start: adjusted.start,
+        end: adjusted.end,
+      );
+    case 'punya_kala':
+      if (sankrantiInstant == null || sunrise == null || sunset == null) {
+        return null;
+      }
+      // 40 ghatis from the transit, clipped to daylight. When the transit was
+      // after sunset the observance moved to this day, so the window starts at
+      // sunrise (the transit instant itself is before it).
+      final start = sankrantiInstant.isBefore(sunrise)
+          ? sunrise
+          : sankrantiInstant;
+      var end = sankrantiInstant.add(
+        const Duration(minutes: kSankrantiPunyaKalaGhatis * 24),
+      );
+      if (end.isAfter(sunset)) end = sunset;
+      if (!end.isAfter(start)) return null;
+      return (instant: start, start: start, end: end);
+    case 'moonrise' || 'chandrodaya':
       if (moonrise == null) return null;
       final end = moonrise.add(const Duration(minutes: 48));
       final clipped = clipPujaWindow(

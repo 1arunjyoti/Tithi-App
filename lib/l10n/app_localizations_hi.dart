@@ -463,6 +463,10 @@ class AppLocalizationsHi extends AppLocalizations {
       '© २०२५ तिथि प्रोजेक्ट\nसनातन धर्म के लिए ❤️ से बनाया गया';
 
   @override
+  String get timezoneDataCredit =>
+      'समय क्षेत्र सीमाएँ: © OpenStreetMap योगदानकर्ता (ODbL), Timezone Boundary Builder द्वारा निर्मित।';
+
+  @override
   String get moonPhases => 'चंद्र कलाएँ';
 
   @override
@@ -1106,6 +1110,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get hinduMonthSystemSubtitle =>
       'चुनें कि कृष्ण पक्ष में महीनों का नामकरण कैसे हो';
+
+  @override
+  String get panchangSchool => 'पंजिका प्रणाली';
+
+  @override
+  String get panchangSchoolSubtitle =>
+      'चुनें कि प्रत्येक तिथि, नक्षत्र और त्योहार की गणना किस पद्धति से हो';
 
   @override
   String get festivalRegion => 'त्योहार क्षेत्र';

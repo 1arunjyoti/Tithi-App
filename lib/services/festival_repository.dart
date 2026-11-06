@@ -15,6 +15,9 @@ class FestivalRepository {
   FestivalRepository._internal();
   static const String boxName = 'festivals';
   static const String settingsBoxName = 'festival_settings';
+  // Increment when existing festival records need to be re-seeded even if
+  // the asset fingerprint is unchanged.
+  static const int _festivalSeedVersion = 2;
 
   /// Cached festival list to avoid repeated toList() calls
   List<Festival>? _cachedFestivals;
@@ -126,6 +129,6 @@ class FestivalRepository {
       hash = ((hash * 31) + rune) & 0x7fffffff;
     }
     // Mix in content length to reduce collision probability.
-    return hash ^ ((jsonContent.length & 0x3fff) << 17);
+    return hash ^ ((jsonContent.length & 0x3fff) << 17) ^ _festivalSeedVersion;
   }
 }

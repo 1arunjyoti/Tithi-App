@@ -4,6 +4,7 @@ import '../../../providers/calendar_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../../../models/hindu_month_system.dart';
+import '../../../models/panchang_school.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class PrimaryCalendarSetting extends ConsumerWidget {
@@ -100,8 +101,63 @@ class HinduMonthSystemSetting extends ConsumerWidget {
   }
 }
 
-class HinduYearEraSetting extends ConsumerWidget {
-  const HinduYearEraSetting({super.key});
+/// Calculation school selector: Bisuddhasiddhanta (Drik + Lahiri) or
+/// Suryasiddhanta (traditional mean-motion theory).
+///
+/// This is not a display preference. Changing it changes the ephemeris, so the
+/// provider rebuilds [PanchangService] and every cached day is dropped.
+class PanchangSchoolSetting extends ConsumerWidget {
+  const PanchangSchoolSetting({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final school = ref.watch(panchangSchoolProvider);
+    final l10n = AppLocalizations.of(context);
+    return SettingsActionTile(
+      icon: Icons.auto_stories_rounded,
+      title: l10n?.panchangSchool ?? 'Panjika System',
+      trailing: Text(
+        school.label,
+        style: context.textTheme.bodyMedium?.copyWith(
+          color: context.colors.primary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      onTap: () => _showPanchangSchoolPicker(context, ref),
+    );
+  }
+
+  Future<void> _showPanchangSchoolPicker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final currentSchool = ref.read(panchangSchoolProvider);
+
+    await SettingsBottomSheet.show(
+      context: context,
+      title: l10n?.panchangSchool ?? 'Panjika System',
+      subtitle: l10n?.panchangSchoolSubtitle ??
+          'Choose the calculation system behind every tithi, nakshatra and '
+              'festival date',
+      children: PanchangSchool.values.map((school) {
+        return SettingsPickerItem(
+          title: school.label,
+          subtitle: school.description,
+          isSelected: school == currentSchool,
+          onTap: () async {
+            await ref
+                .read(calendarPreferencesProvider.notifier)
+                .setPanchangSchool(school);
+            if (context.mounted) Navigator.pop(context);
+          },
+        );
+      }).toList(),
+    );
+  }
+}
+
+class HinduYearEraSetting extends ConsumerWidget {  const HinduYearEraSetting({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

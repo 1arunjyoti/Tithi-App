@@ -1,8 +1,16 @@
 name: jyotish
 description: A production-ready Flutter library for Vedic astrology (Jyotish) calculations using Swiss Ephemeris. Provides high-precision sidereal planetary positions with Lahiri ayanamsa, nakshatras, and complete birth chart analysis.
 version: 1.0.1
-homepage: https://github.com/rajsanjib/jyotish-flutter-library
-repository: https://github.com/rajsanjib/jyotish-flutter-library
+homepage: https://github.com/1arunjyoti/Tithi-App/tree/main/packages/jyotish
+repository: https://github.com/1arunjyoti/Tithi-App
+
+# Not published to pub.dev.
+#
+# The `jyotish` name on pub.dev belongs to the upstream package this is a fork
+# of, and the fork is AGPLv3 because it bundles Swiss Ephemeris (Astrodienst).
+# Consume it as a path or git dependency. See NOTICE for the distribution
+# obligations before changing this line.
+publish_to: none
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -23,14 +31,13 @@ dev_dependencies:
 
 flutter:
   plugin:
+    # Android is the only platform with a real native build: its CMake target
+    # compiles Swiss Ephemeris into libswisseph.so for arm64-v8a, armeabi-v7a
+    # and x86_64. The ios/, linux/, macos/ and windows/ directories are
+    # plugin scaffolding only - they build no Swiss Ephemeris - so declaring
+    # them here would silently give consumers an approximation instead of the
+    # native engine. Add a platform back only once it has a build target and a
+    # smoke test.
     platforms:
       android:
-        ffiPlugin: true
-      ios:
-        ffiPlugin: true
-      linux:
-        ffiPlugin: true
-      macos:
-        ffiPlugin: true
-      windows:
         ffiPlugin: true

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
 import '../../models/panchang_data.dart';
+import '../../models/panchang_school.dart';
 import '../../services/storage_service.dart';
 import '../location/cached_location.dart';
 import 'notification_content.dart';
@@ -49,6 +50,15 @@ Future<({double latitude, double longitude})> readLastKnownLatLng() async {
   return readCachedLatLng(locationBox);
 }
 
+/// Last-known place zone via the location settings box.
+///
+/// Used to publish the place context before scheduling in the background
+/// isolate, where no `LocationService` or Riverpod container exists.
+Future<String?> readLastKnownTimezoneId() async {
+  final locationBox = await StorageService().openLocationSettingsBox();
+  return readCachedTimezoneId(locationBox);
+}
+
 /// Reads the Hindu month system from a settings box (safe default).
 HinduMonthSystem readMonthSystem(Box<dynamic> settingsBox) {
   final index =
@@ -74,6 +84,7 @@ HinduMonthSystem readMonthSystem(Box<dynamic> settingsBox) {
   int yearEraIndex,
   int tithiMode,
   FestivalRegion festivalRegion,
+  PanchangSchool panchangSchool,
 })
 readCalendarPrefs(Box<dynamic> settingsBox) {
   return (
@@ -88,6 +99,11 @@ readCalendarPrefs(Box<dynamic> settingsBox) {
         (settingsBox.get('tithi_display_mode', defaultValue: 1) as int?) ?? 1,
     festivalRegion: parseFestivalRegion(
       settingsBox.get(kFestivalRegionPrefKey),
+    ),
+    // Stored by name, not index, so reordering the enum cannot remap a saved
+    // preference. Unknown or missing values fall back to Bisuddhasiddhanta.
+    panchangSchool: panchangSchoolFromName(
+      settingsBox.get('panchang_school'),
     ),
   );
 }

@@ -9,6 +9,10 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:timezone/data/latest_all.dart' as tz_data;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:tithi/core/location/cached_location.dart';
+import 'package:tithi/core/location/place_clock.dart';
 import 'package:tithi/services/location_service.dart';
 import 'package:tithi/services/storage_service.dart';
 
@@ -67,6 +71,20 @@ void main() {
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async => tempDir.path);
+    // The place lookup needs the full tzdb: `latest` omits 106 of the zone
+    // identifiers the bundled boundaries can return.
+    if (!tz.timeZoneDatabase.isInitialized) {
+      tz_data.initializeTimeZones();
+    }
+    // Device zone used when a coordinate has no boundary polygon (or when the
+    // lookup is unavailable). A real place coordinate must ignore it.
+    const timezoneChannel = MethodChannel('flutter_timezone');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          timezoneChannel,
+          (call) async =>
+              call.method == 'getLocalTimezone' ? 'Asia/Kolkata' : null,
+        );
     Hive.init(tempDir.path);
     await StorageService().init();
   });
@@ -112,6 +130,181 @@ void main() {
       // Assert
       expect(location, isNotNull);
       expect(fake.currentPositionCalls, equals(1));
+    });
+  });
+
+  group('LocationData metadata persistence', () {
+    test('GPS fix stores altitude and resolved timezone', () async {
+      // Arrange
+      final fake = _MountainFixFake();
+      GeolocatorPlatform.instance = fake;
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      final location = await service.getCurrentLocation();
+
+      // Assert
+      expect(location, isNotNull);
+      expect(location!.altitudeMeters, equals(216.0));
+      expect(location.timezoneId, equals('Asia/Kolkata'));
+    });
+
+    test('home location persists altitude and resolves a zone', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setHomeLocation(
+        28.6139,
+        77.2090,
+        'Delhi',
+        altitudeMeters: 216,
+      );
+      final home = service.getHomeLocation();
+
+      // Assert
+      expect(home, isNotNull);
+      expect(home!.altitudeMeters, equals(216.0));
+      expect(home.timezoneId, equals('Asia/Kolkata'));
+    });
+
+    test(
+      'home location clears stale altitude when the new pick has none',
+      () async {
+        // Arrange
+        final service = LocationService();
+        await service.init();
+        await service.setHomeLocation(
+          28.6139,
+          77.2090,
+          'Delhi',
+          altitudeMeters: 216,
+        );
+
+        // Act: a later pick without elevation must not inherit Delhi's height.
+        await service.setHomeLocation(19.0760, 72.8777, 'Mumbai');
+        final home = service.getHomeLocation();
+
+        // Assert
+        expect(home, isNotNull);
+        expect(home!.altitudeMeters, isNull);
+        expect(home.timezoneId, equals('Asia/Kolkata'));
+      },
+    );
+
+    test('explicit timezone override wins over the place lookup', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act: New York coordinates, but the caller insists on IST.
+      await service.setHomeLocation(
+        40.7128,
+        -74.0060,
+        'New York',
+        timezoneId: 'America/New_York',
+      );
+      final home = service.getHomeLocation();
+
+      // Assert
+      expect(home, isNotNull);
+      expect(home!.timezoneId, equals('America/New_York'));
+      expect(
+        Hive.box(StorageService.locationSettingsBoxName)
+            .get('home_timezone_source'),
+        equals('user'),
+        reason:
+            'An explicit override must be marked so no migration retries it.',
+      );
+    });
+
+    test('home location uses the place zone, not the device zone', () async {
+      // Arrange: the platform reports Asia/Kolkata (setUp).
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setHomeLocation(40.7128, -74.0060, 'New York');
+      final home = service.getHomeLocation();
+
+      // Assert
+      expect(home, isNotNull);
+      expect(home!.timezoneId, equals('America/New_York'));
+      expect(
+        Hive.box(StorageService.locationSettingsBoxName)
+            .get('home_timezone_source'),
+        equals('place'),
+      );
+    });
+
+    test(
+      'init backfills a zone for coordinates written before Phase 0',
+      () async {
+        // Arrange: write coordinates, then drop the zone to mimic an old box.
+        final first = LocationService();
+        await first.init();
+        await first.setHomeLocation(28.6139, 77.2090, 'Delhi');
+        final box = Hive.box(StorageService.locationSettingsBoxName);
+        await box.delete('home_timezone');
+        await box.delete('home_timezone_source');
+        await first.dispose();
+
+        // Act: a fresh service must resolve and persist the missing zone.
+        final second = LocationService();
+        await second.init();
+        final home = second.getHomeLocation();
+
+        // Assert
+        expect(home, isNotNull);
+        expect(home!.timezoneId, equals('Asia/Kolkata'));
+      },
+    );
+
+    test('init re-resolves a legacy zone that has no source marker', () async {
+      // Arrange: pre-lookup boxes stored the device zone (here IST) next to
+      // the coordinates and have no provenance marker.
+      final first = LocationService();
+      await first.init();
+      final box = Hive.box(StorageService.locationSettingsBoxName);
+      await box.put('home_lat', 40.7128);
+      await box.put('home_lng', -74.0060);
+      await box.put('home_address', 'New York');
+      await box.put('home_timezone', 'Asia/Kolkata');
+      await first.dispose();
+
+      // Act
+      final second = LocationService();
+      await second.init();
+
+      // Assert
+      expect(second.getHomeLocation()!.timezoneId, equals('America/New_York'));
+      expect(
+        Hive.box(StorageService.locationSettingsBoxName)
+            .get('home_timezone_source'),
+        equals('place'),
+      );
+    });
+
+    test('init keeps a user-chosen zone for the same place', () async {
+      // Arrange: a deliberate override that differs from the place's zone.
+      final first = LocationService();
+      await first.init();
+      final box = Hive.box(StorageService.locationSettingsBoxName);
+      await box.put('home_lat', 28.6139);
+      await box.put('home_lng', 77.2090);
+      await box.put('home_address', 'Delhi');
+      await box.put('home_timezone', 'America/New_York');
+      await box.put('home_timezone_source', 'user');
+      await first.dispose();
+
+      // Act
+      final second = LocationService();
+      await second.init();
+
+      // Assert: the migration must not overwrite an explicit choice.
+      expect(second.getHomeLocation()!.timezoneId, equals('America/New_York'));
     });
   });
 
@@ -378,6 +571,87 @@ void main() {
       expect(results.single.displayName, 'Good row');
     });
   });
+
+  group('Place clock policy', () {
+    test('live location uses the device clock', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setLocationEnabled(true);
+
+      // Assert
+      expect(service.placeClock.mode, PlaceClockMode.device);
+      expect(service.placeClock.zoneId, isNull);
+    });
+
+    test('a manual pick stops live location and uses the place clock', () async {
+      // Arrange: live tracking is on, so the pick must override it.
+      final service = LocationService();
+      await service.init();
+      await service.setLocationEnabled(true);
+
+      // Act
+      await service.setHomeLocation(40.7128, -74.0060, 'New York');
+
+      // Assert: the selected place now wins in currentLocationProvider, and
+      // its clock - not the phone's - drives "today".
+      expect(await service.isLocationEnabled(), isFalse);
+      expect(service.placeClock.mode, PlaceClockMode.place);
+      expect(service.placeClock.zoneId, 'America/New_York');
+    });
+
+    test('no location and no home falls back to the Delhi clock', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+
+      // Act
+      await service.setLocationEnabled(false);
+      final clock = service.placeClock;
+
+      // Assert: the panchang shown is Delhi's, so the day label matches it.
+      expect(clock.mode, PlaceClockMode.place);
+      expect(clock.zoneId, 'Asia/Kolkata');
+    });
+
+    test('a place picked before init reports the device clock', () {
+      // Arrange: providers can read the clock before the box is open.
+      final service = LocationService();
+
+      // Act / Assert
+      expect(service.isInitialized, isFalse);
+      expect(service.placeClock.mode, PlaceClockMode.device);
+    });
+
+    test('the background isolate derives the same clock from the box', () async {
+      // Arrange: WorkManager has no LocationService, only the Hive box.
+      final service = LocationService();
+      await service.init();
+      await service.setHomeLocation(40.7128, -74.0060, 'New York');
+      final box = await StorageService().openLocationSettingsBox();
+
+      // Act
+      final isolateClock = readPlaceClock(box);
+
+      // Assert: both isolates agree, so the day label and the reminder wall
+      // time cannot land on different clocks.
+      expect(isolateClock, service.placeClock);
+      expect(isolateClock.zoneId, 'America/New_York');
+    });
+
+    test('the isolate sees the device clock while live location is on', () async {
+      // Arrange
+      final service = LocationService();
+      await service.init();
+      await service.setLocationEnabled(true);
+      final box = await StorageService().openLocationSettingsBox();
+
+      // Act / Assert
+      expect(readPlaceClock(box).mode, PlaceClockMode.device);
+    });
+  });
 }
 
 class _ImmediateFixFake extends TimeoutThenFixFake {
@@ -431,5 +705,28 @@ class _AlwaysTimingOutFake extends TimeoutThenFixFake {
     currentPositionCalls++;
     requestedSettings.add(locationSettings);
     throw TimeoutException('GPS fix timed out');
+  }
+}
+
+/// Immediate fix that reports a real altitude (216 m, Delhi).
+class _MountainFixFake extends _ImmediateFixFake {
+  @override
+  Future<Position> getCurrentPosition({
+    LocationSettings? locationSettings,
+  }) async {
+    currentPositionCalls++;
+    requestedSettings.add(locationSettings);
+    return Position(
+      longitude: 77.2,
+      latitude: 28.6,
+      timestamp: DateTime.now(),
+      accuracy: 20,
+      altitude: 216,
+      altitudeAccuracy: 1,
+      heading: 0,
+      headingAccuracy: 1,
+      speed: 0,
+      speedAccuracy: 1,
+    );
   }
 }

@@ -265,6 +265,18 @@ docs/                         # Guides (festivals, artwork, Bengali calendar, er
 
 ---
 
+## License
+
+Tithi is licensed under the **GNU Affero General Public License v3** - see
+[license](license). The app bundles Swiss Ephemeris, which Astrodienst AG
+dual-licenses as AGPLv3 or a paid Professional license; this project uses the
+AGPLv3 option, which is why the whole app is AGPLv3. See
+[packages/jyotish/NOTICE](packages/jyotish/NOTICE) for the bundled-component
+terms and [packages/jyotish/LICENSE-MIT-upstream](packages/jyotish/LICENSE-MIT-upstream)
+for the MIT text of the upstream wrapper this package forked.
+
+---
+
 <div align="center">
 <sub>Built with 🪔 using Flutter — offline-first, privacy-first.</sub>
 </div>

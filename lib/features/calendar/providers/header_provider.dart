@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/locale/app_locale.dart';
 import '../../../providers/calendar_provider.dart' as cp;
 import '../../../providers/locale_provider.dart';
+import '../../../providers/panchang_provider.dart';
 import '../data/calendar_models.dart';
 import '../domain/header_builders.dart';
 
@@ -15,6 +16,11 @@ import '../domain/header_builders.dart';
 final calendarHeaderDataProvider = FutureProvider.autoDispose<HeaderData>((
   ref,
 ) async {
+  // The masa/Bengali month in the header is calculated by the service the
+  // Panjika setting selects. Watch the shared init so a school switch rebuilds
+  // the label instead of leaving the previous school's month on screen.
+  await ref.watch(panchangInitProvider.future);
+
   final date = ref.watch(cp.focusedMonthProvider);
   final primary = ref.watch(cp.primaryCalendarSystemProvider);
   final secondary = ref.watch(cp.secondaryCalendarSystemProvider);

@@ -90,6 +90,22 @@ void main() {
       }
     });
 
+    test('normalizes negative longitudes for zodiac calculations', () {
+      final position = PlanetPosition(
+        planet: Planet.sun,
+        dateTime: DateTime.utc(2024),
+        longitude: -0.1,
+        latitude: 0,
+        distance: 1,
+        longitudeSpeed: 0,
+        latitudeSpeed: 0,
+        distanceSpeed: 0,
+      );
+
+      expect(position.zodiacSign, 'Pisces');
+      expect(position.positionInSign, closeTo(29.9, 0.0001));
+    });
+
     test('detects retrograde motion', () {
       final retrograde = PlanetPosition(
         planet: Planet.mercury,

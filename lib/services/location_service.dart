@@ -11,6 +11,8 @@ import 'package:nominatim_geocoding/nominatim_geocoding.dart';
 
 import 'storage_service.dart';
 import '../core/location/location_defaults.dart';
+import '../core/location/place_clock.dart';
+import '../core/location/timezone_resolver.dart';
 
 /// Location data model
 class LocationData {
@@ -19,11 +21,28 @@ class LocationData {
   final String? cityName;
   final DateTime timestamp;
 
+  /// Height above mean sea level in metres, when known.
+  ///
+  /// A GPS fix supplies the platform's reported altitude (WGS84 ellipsoidal).
+  /// Manually picked places leave this null until an elevation lookup exists.
+  /// Consumers must treat null as 0 m, and Phase 1 must normalize ellipsoidal
+  /// to orthometric height before passing it to `swe_set_topo`.
+  final double? altitudeMeters;
+
+  /// IANA zone identifier persisted for this place, e.g. `Asia/Kolkata`.
+  ///
+  /// Resolved from the coordinates when the place is set (see
+  /// [resolvePlaceTimezone]); null means it has not been resolved yet and
+  /// callers fall back to the device zone.
+  final String? timezoneId;
+
   const LocationData({
     required this.latitude,
     required this.longitude,
     this.cityName,
     required this.timestamp,
+    this.altitudeMeters,
+    this.timezoneId,
   });
 
   /// Default location (Delhi, India) when location is not available
@@ -32,11 +51,14 @@ class LocationData {
     longitude: kDefaultLongitude,
     cityName: 'Delhi',
     timestamp: DateTime.now(),
+    altitudeMeters: kDefaultAltitudeMeters,
+    timezoneId: kDefaultTimezoneId,
   );
 
   @override
   String toString() =>
-      'LocationData($latitude, $longitude, $cityName, $timestamp)';
+      'LocationData($latitude, $longitude, $cityName, $timestamp, '
+      'altitude: $altitudeMeters, tz: $timezoneId)';
 }
 
 /// Why a place lookup produced no results. Lets the UI say something true
@@ -154,11 +176,17 @@ class LocationService {
   static const String _keyCachedLat = 'cached_lat';
   static const String _keyCachedLng = 'cached_lng';
   static const String _keyCachedAtMs = 'cached_at_ms';
+  static const String _keyCachedAltitude = 'cached_altitude';
+  static const String _keyCachedTimezone = 'cached_timezone';
+  static const String _keyCachedTimezoneSource = 'cached_timezone_source';
   static const String _keyLastBackgroundAtMs = 'last_background_at_ms';
   // Home location keys
   static const String _keyHomeLat = 'home_lat';
   static const String _keyHomeLng = 'home_lng';
   static const String _keyHomeAddress = 'home_address';
+  static const String _keyHomeAltitude = 'home_altitude';
+  static const String _keyHomeTimezone = 'home_timezone';
+  static const String _keyHomeTimezoneSource = 'home_timezone_source';
 
   /// Contactable User-Agent required by the OSM Nominatim usage policy.
   /// Names the app and gives a contact point instead of a library default.
@@ -214,6 +242,10 @@ class LocationService {
       // even if Nominatim is unreachable).
       await _loadOfflineCities();
 
+      // Phase 0 migration: older boxes have coordinates but no zone. Resolve
+      // and persist it once so locations become self-describing.
+      await _backfillPlaceMetadata();
+
       _isInitialized = true;
 
       if (kDebugMode) {
@@ -244,6 +276,25 @@ class LocationService {
   Future<bool> isLocationEnabled() async {
     _ensureInitialized();
     return _box?.get(_keyLocationEnabled, defaultValue: false) ?? false;
+  }
+
+  /// True once [init] completed; guards synchronous reads used by providers.
+  bool get isInitialized => _isInitialized;
+
+  /// Clock the app should use for "today" and reminder wall times.
+  ///
+  /// Live location -> device clock (the user is where the panchang is).
+  /// A place picked on the map -> that place's clock. No location and no home
+  /// -> the default place's clock (Delhi), matching the panchang already shown.
+  /// Before [init] the device clock is the only safe answer.
+  PlaceClock get placeClock {
+    if (!_isInitialized) return kDeviceClock;
+    final enabled =
+        _box?.get(_keyLocationEnabled, defaultValue: false) as bool? ?? false;
+    return resolvePlaceClock(
+      locationEnabled: enabled,
+      homeTimezoneId: _box?.get(_keyHomeTimezone) as String?,
+    );
   }
 
   /// Save user's location preference
@@ -367,14 +418,31 @@ class LocationService {
       // Preserve last known label when both lookups fail.
       cityName ??= (await _getCachedLocation())?.cityName;
 
+      // The platform reports ellipsoidal altitude in metres. The field is
+      // non-nullable, so a device without an altitude component reports 0;
+      // Phase 1 validates against SEI_ECL_GEOALT_MIN..MAX.
+      final double altitudeMeters = position.altitude;
+      final timezone = await resolvePlaceTimezone(
+        position.latitude,
+        position.longitude,
+      );
+
       // Cache the location
-      await _cacheLocation(position.latitude, position.longitude, cityName);
+      await _cacheLocation(
+        position.latitude,
+        position.longitude,
+        cityName,
+        altitudeMeters: altitudeMeters,
+        timezone: timezone,
+      );
 
       return LocationData(
         latitude: position.latitude,
         longitude: position.longitude,
         cityName: cityName,
         timestamp: DateTime.now(),
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezone.id,
       );
     } catch (e) {
       if (kDebugMode) {
@@ -726,6 +794,8 @@ class LocationService {
     final lng = _box?.get(_keyCachedLng) as double?;
     final city = _box?.get(_keyCachedCity) as String?;
     final cachedAtMs = _box?.get(_keyCachedAtMs) as int?;
+    final altitudeMeters = _box?.get(_keyCachedAltitude) as double?;
+    final timezoneId = _box?.get(_keyCachedTimezone) as String?;
 
     if (lat != null && lng != null) {
       return LocationData(
@@ -735,24 +805,42 @@ class LocationService {
         timestamp: cachedAtMs != null
             ? DateTime.fromMillisecondsSinceEpoch(cachedAtMs)
             : DateTime.now(),
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       );
     }
 
     return null;
   }
 
-  /// Cache location for offline use
+  /// Cache location for offline use.
+  ///
+  /// Null metadata keys are removed rather than left stale from an earlier
+  /// fix, so a place without altitude never inherits the previous place's
+  /// height.
   Future<void> _cacheLocation(
     double latitude,
     double longitude,
-    String? cityName,
-  ) async {
+    String? cityName, {
+    double? altitudeMeters,
+    PlaceTimezone? timezone,
+  }) async {
     await _box?.put(_keyCachedLat, latitude);
     await _box?.put(_keyCachedLng, longitude);
     await _box?.put(_keyCachedAtMs, DateTime.now().millisecondsSinceEpoch);
     if (cityName != null) {
       await _box?.put(_keyCachedCity, cityName);
     }
+    if (altitudeMeters == null) {
+      await _box?.delete(_keyCachedAltitude);
+    } else {
+      await _box?.put(_keyCachedAltitude, altitudeMeters);
+    }
+    await _writePlaceTimezone(
+      timezone: timezone,
+      timezoneKey: _keyCachedTimezone,
+      sourceKey: _keyCachedTimezoneSource,
+    );
     // Fresh GPS fetch satisfied any pending background-based refresh.
     await _box?.delete(_keyLastBackgroundAtMs);
   }
@@ -764,6 +852,9 @@ class LocationService {
     await _box?.delete(_keyCachedLng);
     await _box?.delete(_keyCachedCity);
     await _box?.delete(_keyCachedAtMs);
+    await _box?.delete(_keyCachedAltitude);
+    await _box?.delete(_keyCachedTimezone);
+    await _box?.delete(_keyCachedTimezoneSource);
     if (kDebugMode) {
       print('Location cache cleared');
     }
@@ -789,8 +880,20 @@ class LocationService {
     return elapsed > _backgroundRefreshThreshold;
   }
 
-  /// SET home location manually
-  Future<void> setHomeLocation(double lat, double lng, String address) async {
+  /// SET home location manually.
+  ///
+  /// [altitudeMeters] is orthometric height when the caller knows it; null
+  /// means unknown. When [timezoneId] is omitted (the picker's normal path)
+  /// the zone is resolved from [lat]/[lng], so the place - not the device -
+  /// decides the civil day. An explicit [timezoneId] is recorded as a user
+  /// override and is never re-resolved.
+  Future<void> setHomeLocation(
+    double lat,
+    double lng,
+    String address, {
+    double? altitudeMeters,
+    String? timezoneId,
+  }) async {
     _ensureInitialized();
     // SEC-3: validate coordinate ranges before persisting.
     if (lat < -90 || lat > 90) {
@@ -799,18 +902,73 @@ class LocationService {
     if (lng < -180 || lng > 180) {
       throw ArgumentError.value(lng, 'lng', 'Longitude must be in [-180, 180]');
     }
+
+    final explicitZone = canonicalTimezoneId(timezoneId ?? '');
+    final PlaceTimezone timezone = explicitZone.isNotEmpty
+        ? (id: explicitZone, source: TimezoneSource.user)
+        : await resolvePlaceTimezone(lat, lng);
+
     await _box?.put(_keyHomeLat, lat);
     await _box?.put(_keyHomeLng, lng);
     await _box?.put(_keyHomeAddress, address);
+    if (altitudeMeters == null) {
+      await _box?.delete(_keyHomeAltitude);
+    } else {
+      await _box?.put(_keyHomeAltitude, altitudeMeters);
+    }
+    await _writePlaceTimezone(
+      timezone: timezone,
+      timezoneKey: _keyHomeTimezone,
+      sourceKey: _keyHomeTimezoneSource,
+    );
+    // Picking a place by hand means "stop following me": live location would
+    // otherwise keep winning in `currentLocationProvider`, so the selected
+    // city - and the clock it implies - would never take effect.
+    await _box?.put(_keyLocationEnabled, false);
+  }
+
+  /// Persists a zone and its provenance; deletes both when there is no zone.
+  ///
+  /// The marker is what lets [_backfillPlaceMetadata] retry a device-seeded
+  /// value without clobbering a place lookup or an explicit user override.
+  Future<void> _writePlaceTimezone({
+    required PlaceTimezone? timezone,
+    required String timezoneKey,
+    required String sourceKey,
+  }) async {
+    final id = canonicalTimezoneId(timezone?.id ?? '');
+    if (timezone == null || id.isEmpty) {
+      await _box?.delete(timezoneKey);
+      await _box?.delete(sourceKey);
+      return;
+    }
+    await _box?.put(timezoneKey, id);
+    await _box?.put(sourceKey, timezone.source.storageValue);
   }
 
   /// GET home location manually
   /// Returns null if not set
+  /// Synchronous place snapshot for consumers that cannot await.
+  ///
+  /// Returns null before [init] so tests that override coordinates do not
+  /// trigger Hive or a permission prompt. Once initialized this mirrors
+  /// [currentLocationProvider]: home/default when location is disabled, and
+  /// the most recent GPS fix otherwise (null until that fix arrives).
+  LocationData? get lastKnownLocation {
+    if (!_isInitialized) return null;
+    final enabled =
+        _box?.get(_keyLocationEnabled, defaultValue: false) as bool? ?? false;
+    if (!enabled) return getHomeLocation() ?? LocationData.defaultLocation;
+    return _memoryCachedLocation;
+  }
+
   LocationData? getHomeLocation() {
     _ensureInitialized();
     final lat = _box?.get(_keyHomeLat) as double?;
     final lng = _box?.get(_keyHomeLng) as double?;
     final address = _box?.get(_keyHomeAddress) as String?;
+    final altitudeMeters = _box?.get(_keyHomeAltitude) as double?;
+    final timezoneId = _box?.get(_keyHomeTimezone) as String?;
 
     if (lat != null && lng != null) {
       return LocationData(
@@ -818,9 +976,66 @@ class LocationService {
         longitude: lng,
         cityName: address, // Using address as "city name" for UI display
         timestamp: DateTime.now(),
+        altitudeMeters: altitudeMeters,
+        timezoneId: timezoneId,
       );
     }
     return null;
+  }
+
+  /// Phase 0 migration for settings boxes written before altitude/timezone.
+  ///
+  /// Resolves and persists a zone for coordinates that have none, and retries
+  /// values the app itself seeded from the device zone before the coordinate
+  /// lookup existed. A `place` or `user` marker is left alone: re-resolving
+  /// those would either repeat work or overwrite an explicit override.
+  /// Altitude is left null: the app has no elevation lookup, and a bogus
+  /// value is worse than an explicit unknown. Best-effort throughout.
+  Future<void> _backfillPlaceMetadata() async {
+    final box = _box;
+    if (box == null) return;
+
+    Future<void> backfillZone({
+      required double? latitude,
+      required double? longitude,
+      required String timezoneKey,
+      required String sourceKey,
+    }) async {
+      if (latitude == null || longitude == null) return;
+      final existing = box.get(timezoneKey) as String?;
+      final source = TimezoneSource.parse(box.get(sourceKey));
+      // Missing marker means a legacy box: the old code always seeded from
+      // the device zone, so those values are safe to re-resolve.
+      final retryable =
+          existing == null ||
+          existing.isEmpty ||
+          source == null ||
+          source == TimezoneSource.device;
+      if (!retryable) return;
+      try {
+        final timezone = await resolvePlaceTimezone(latitude, longitude);
+        await _writePlaceTimezone(
+          timezone: timezone,
+          timezoneKey: timezoneKey,
+          sourceKey: sourceKey,
+        );
+      } catch (_) {
+        // The location still works without a persisted zone.
+      }
+    }
+
+    await backfillZone(
+      latitude: box.get(_keyCachedLat) as double?,
+      longitude: box.get(_keyCachedLng) as double?,
+      timezoneKey: _keyCachedTimezone,
+      sourceKey: _keyCachedTimezoneSource,
+    );
+    await backfillZone(
+      latitude: box.get(_keyHomeLat) as double?,
+      longitude: box.get(_keyHomeLng) as double?,
+      timezoneKey: _keyHomeTimezone,
+      sourceKey: _keyHomeTimezoneSource,
+    );
   }
 
   void _ensureInitialized() {

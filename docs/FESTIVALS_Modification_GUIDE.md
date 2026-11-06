@@ -1,5 +1,8 @@
 # Festival Data Editing Guide
 
+> **Start here:** See the concise [Festival Data Quick Guide](FESTIVALS_QUICK_GUIDE.md)
+> for the standard workflow and the rules most contributors need.
+
 This guide explains how to add or edit festivals in `festivals.json`.
 
 ## Calendar System
@@ -39,11 +42,14 @@ This guide explains how to add or edit festivals in `festivals.json`.
     "solarDate": "MM-DD",
     "weekday": "Monday",
     "endTithi": 15,
-    "timingOverride": "madhyahna|aparahna|nishita|pradosha",
+    "timingOverride": "brahma_muhurta_start|arunodaya_start|purvahna|madhyahna|aparahna|sayahna_start|sayahna_center|sayahna_end|nishita|pradosh|pradosha|chandrodaya",
     "vriddhi": "first|second|both",
-    "pujaKala": "madhyahna|nishita|pradosha|moonrise|sunrise|sunset|sandhi_junction",
+    "dominant_tithi": "grace|strict",
+    "pujaKala": "purvahna|madhyahna|aparahna|nishita|pradosh|pradosha|moonrise|chandrodaya|godhuli|punya_kala|sunrise|sunset|sandhi_junction",
     "paranRule": "moonrise|next_sunrise|after_puja_kala|dwadashi_window",
-    "clipToTithi": false
+    "clipToTithi": false,
+    "sankranti": "Makara|Capricorn|...",
+    "avoidBhadra": false
   },
   "rituals": {
     "steps": ["Step one", "Step two"],
@@ -176,8 +182,11 @@ duplication is load-bearing, not a mistake:
 
 - Sequence side (Navratri day-forms): `"vriddhi": "first"` — the sequence
   advances from the run head.
-- Puja side: default `"both"`, or `"second"` where Bengal keeps the later
-  day (`saptami_durga_puja`).
+- Puja side: `"dominant_tithi": "strict"` with the default `"both"` vriddhi —
+  only the sunrise tithi counts, and a genuine two-sunrise run is kept whole.
+  This is what makes the schools diverge correctly in 2026: Bisuddha Shashthi
+  Oct 16+17 / Saptami Oct 18; Surya Siddhanta Shashthi Oct 16 / Saptami
+  Oct 17+18.
 - Never "fix" the duplication by deleting one side, and never change one
   side's tithi without checking the other.
 
@@ -348,6 +357,31 @@ Rules:
 - No Kshaya fallback, no grace window, no `timingOverride` path; export
   reports a null tithi span for Solar festivals.
 
+#### Sankranti (transit-based Solar)
+
+A fixed `"MM-DD"` is only a fallback: the Sun's actual ingress moves by a
+day across the leap cycle. Set `sankranti` to the rashi the Sun must enter
+(canonical `Makara` or English `Capricorn`; both parse) to match the
+ingress day instead:
+
+```json
+{ "id": "makar_sankranti",
+  "panchang_rules": { "masa": "Pausha", "paksha": "*", "tithi": 0,
+    "conditions": "Solar", "solarDate": "01-14",
+    "sankranti": "Makara", "puja_kala": "punya_kala" } }
+```
+
+- The observance day is the civil day of the ingress, moved to the next day
+  when the ingress happens after sunset (Drik rule). `PanchangSankranti.shifted`
+  records the move.
+- Keep `solarDate` as the fallback for callers that skip the ingress search
+  (unit tests, old caches). Once the search runs, a computed day with no
+  ingress does **not** fall back — otherwise both days would match.
+- The search is gated: it runs only when the festival list contains a
+  `sankranti` rule, so ordinary months pay nothing.
+- `puja_kala: "punya_kala"` shows 40 ghatis (16 h) from the transit,
+  clipped to daylight; an after-sunset transit starts the window at sunrise.
+
 ### Timing Override
 
 Most festivals match on the sunrise (udaya) tithi. Festivals decided at
@@ -356,13 +390,20 @@ instead of sunrise):
 
 | Value | Checkpoint | Example |
 | ----- | ---------- | ------- |
+| `"brahma_muhurta_start"` | Brahma Muhurta opening (sunrise − 2/15 night-length) | Pre-dawn observance |
+| `"arunodaya_start"` | Arunodaya opening (sunrise − 1/15 night-length) | Dawn observance |
+| `"purvahna"` | Forenoon checkpoint (sunrise + 1/4 daylight) | Vasant Panchami / Saraswati Puja |
+| `"sayahna_start"` | Sayahna opening (sunrise + 4/5 daylight) | Late-afternoon observance |
+| `"sayahna_center"` | Sayahna center (sunrise + 9/10 daylight) | Late-afternoon observance |
+| `"sayahna_end"` | Sayahna end (sunset) | Late-afternoon observance |
 | `"madhyahna"` | Midday (sunrise + half day-length) | Ganesh Chaturthi |
 | `"aparahna"` | Afternoon (sunrise + 3/4 day-length) | Dussehra / Vijayadashami |
 | `"nishita"` | Midnight (sunset + half night-length) | Maha Shivaratri |
+| `"pradosh"` | Dusk (Pradosh Kaal) | Pradosh Vrata |
 
 Omitted (or any other value) = sunrise. Spelling matters: `"nishita"`,
 not `"nishitha"`/`"nisitha"` — a misspelled value silently falls back to
-sunrise.
+sunrise. The legacy spelling `"pradosha"` is also accepted.
 
 ### Dominant-Tithi Grace (60 Minutes After Sunrise)
 
@@ -405,10 +446,11 @@ Example (Oct 2026: Shashthi at sunrise on the 16th *and* 17th):
   "panchang_rules": { "masa": "Ashwin", "paksha": "Shukla",
     "tithi": 6, "conditions": "Shashthi", "vriddhi": "first" } }
 
-// Bengali observance spans both days → no field needed (Oct 16 + 17)
+// Bengali observance spans both days → no `vriddhi` field needed (Oct 16 + 17)
 { "id": "shashthi_durga_puja",
   "panchang_rules": { "masa": "Ashwin", "paksha": "Shukla",
-    "tithi": 6, "conditions": "Shashthi" } }
+    "tithi": 6, "conditions": "Shashthi",
+    "dominant_tithi": "strict" } }
 ```
 
 Trimming runs through the shared pipeline
@@ -416,6 +458,30 @@ Trimming runs through the shared pipeline
 sheet, export, countdown/search and notifications always agree. Non-consecutive
 matches are separate runs and are never trimmed; single-day matches are
 untouched.
+
+### Dominant-tithi grace (`dominant_tithi`)
+
+By default a festival with no `timingOverride` also matches when its tithi
+begins within 60 minutes after sunrise. That covers references that read a
+tithi "arriving" shortly after sunrise, but it is additive: it can add a day
+the tradition does not observe.
+
+The five Durga Puja days set `"dominant_tithi": "strict"` so only the tithi
+actually prevailing at sunrise counts. With vriddhi left at `"both"`, genuine
+two-sunrise runs survive and the two schools diverge correctly:
+
+| 2026 (Kolkata) | Shashthi | Saptami |
+| -------------- | -------- | ------- |
+| Bisuddhasiddhanta | Oct 16 + 17 | Oct 18 |
+| Suryasiddhanta | Oct 16 | Oct 17 + 18 |
+
+Without `strict` the grace window added Saptami on Oct 17 (Bisuddha Saptami
+begins 05:54, ~17 min after sunrise) and Ashtami on Oct 18 (Surya Siddhanta
+Ashtami begins 05:39, ~2 min after sunrise). `test/durga_puja_2026_test.dart`
+pins both maps and the grace variant.
+
+Only set `strict` when the reference is a sunrise (udaya) rule. Festivals with
+a `timingOverride` are already exempt from grace.
 
 ### Kshaya (Skipped Tithi Owning No Sunrise)
 
@@ -590,12 +656,15 @@ carries the same ordering metadata as the source data.
 | `solarDate` | string | — | Exact zero-padded `"MM-DD"` for `Solar` festivals; missing/other shapes never match |
 | `weekday` | string | — | Full `"Monday"`…`"Sunday"` (case-sensitive; unknown = ignored); 0 shipped entries use it |
 | `endTithi` | int | — | Inclusive tithi *range* (`tithi`…`endTithi`); 0 shipped entries use it |
-| `timingOverride` | string | sunrise | `madhyahna` / `aparahna` / `nishita` / `pradosha` (dusk-window midpoint) checkpoint |
+| `timingOverride` | string | sunrise | `arunodaya` / `purvahna` / `madhyahna` / `aparahna` / `nishita` / `pradosh` (or legacy `pradosha`) (dusk-window midpoint) checkpoint |
 | `vriddhi` | string | `"both"` | `first` / `second` / `both` run trimming |
-| `pujaKala` | string | — (null = no Puja Samay card) | Ritual window: `madhyahna` / `nishita` / `pradosha` (day-view windows), `moonrise` (48-min grace from the rise), `sandhi_junction` (48-min span centered on the festival tithi's end), or exact instants `sunrise` / `sunset` (Chhath arghya). Unknown values hide the card. |
+| `dominant_tithi` | string | `"grace"` | `grace` (default: a tithi beginning within 60 min after sunrise also matches) / `strict` (match only the sunrise/checkpoint tithi). Unknown values fall back to `grace`. Set `strict` on the five Durga Puja days. |
+| `pujaKala` | string | — (null = no Puja Samay card) | Ritual window: `purvahna` / `madhyahna` / `aparahna` / `nishita` / `pradosh` (or `pradosha`) / `godhuli` (sunset + one day-ghati) (day-view windows), `moonrise` (48-min grace from the rise), `punya_kala` (Sankranti: 40 ghatis from the transit, clipped to daylight), `sandhi_junction` (48-min span centered on the festival tithi's end), or exact instants `sunrise` / `sunset` (Chhath arghya). Unknown values hide the card. |
 | `paranRule` | string | — (null = no fast, or breaking isn't critical) | Fast-breaking range shown under Fasting / Vrat: `moonrise` (+48 min) / `next_sunrise` (+2 h) / `after_puja_kala` (~puja end) / `dwadashi_window` ([next sunrise + D/4, Dwadashi end]). Unknown values hide the line. |
 | `clipToTithi` | bool | `false` | Non-nullable: absent == `false`. When `true`, the puja window end cuts at the festival tithi's end. Set only on Pradosh Vrata (kalam must stay inside Trayodashi). |
-| `puja_kala` / `paran_rule` / `clip_to_tithi` | same | same | Snake_case twins of the three rows above — both spellings parse (camelCase first). Precedent: `additional_description` / `addtional_description`. Shipped data already uses `puja_kala` on Ganesh Chaturthi. |
+| `sankranti` | string | — | Solar-ingress observance (rashi name, Sanskrit or English). See Sankranti above; requires `conditions: "Solar"`. |
+| `avoidBhadra` | bool | `false` | Non-nullable: absent == `false`. Trims the puja window to the Bhadra-free part (Vishti karana), falling back to Pradosha when the target kalam is covered; hides the card if neither has ≥ 12 usable minutes. Set on Raksha Bandhan. Windows are computed only when a matched festival sets it. |
+| `puja_kala` / `paran_rule` / `clip_to_tithi` / `sankranti_rashi` / `avoid_bhadra` | same | same | Snake_case twins of the rows above — both spellings parse (camelCase first). Precedent: `additional_description` / `addtional_description`. Shipped data already uses `puja_kala` on Ganesh Chaturthi. |
 
 Top-level (outside `panchang_rules`):
 
@@ -614,10 +683,10 @@ adding a `HiveField`, regenerate adapters with `build_runner`).
 ### Verification checklist
 
 1. `flutter analyze` on touched files — clean.
-2. `flutter test test/festival_data_test.dart test/festival_region_test.dart test/vriddhi_filter_test.dart test/dominant_grace_test.dart test/nakshatra_matching_test.dart test/panchang_data_test.dart test/festival_export_test.dart test/display_priority_test.dart` — all green.
+2. `flutter test test/festival_data_test.dart test/festival_region_test.dart test/vriddhi_filter_test.dart test/dominant_grace_test.dart test/durga_puja_2026_test.dart test/nakshatra_matching_test.dart test/panchang_data_test.dart test/festival_export_test.dart test/display_priority_test.dart` — all green.
    Note: the `Dataset` groups in those files assert live annotations
-   (`vriddhi`, `Mula Nakshatra`, `displayPriority`, Amanta months,
-   `regions`). If you intentionally change an annotation, update the
+   (`vriddhi`, `dominant_tithi`, `Mula Nakshatra`, `displayPriority`, Amanta
+   months, `regions`). If you intentionally change an annotation, update the
    corresponding expectation — a red dataset test means the data drifted,
    not (only) that the test is stale.
 3. Relaunch and check the affected date on **all surfaces that show it**:

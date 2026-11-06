@@ -13,6 +13,7 @@ import '../models/panchang_data.dart';
 import '../core/anim/press_scale.dart';
 import '../core/format/date_only.dart';
 import '../core/locale/app_locale.dart';
+import '../core/location/place_clock.dart';
 import '../core/navigation/app_routes.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/calendar_provider.dart';
@@ -104,7 +105,7 @@ class PakshaHeroCard extends ConsumerWidget {
     // the selected date carries a time component).
     final selected = ref.watch(selectedDateProvider);
     final day = dateOnly(selected);
-    final isToday = isSameDay(day, DateTime.now());
+    final isToday = isSameDay(day, ref.watch(todayDateProvider));
 
     // Live record: on today the displayed label advances intraday when a
     // tithi boundary passes (see livePanchangProvider); browsed dates and
@@ -459,7 +460,7 @@ class _HeroBody extends ConsumerWidget {
 /// Header: tag + day, full width with the location pill capped so a long
 /// city name truncates instead of squeezing the tag into a RenderFlex
 /// overflow. Text wraps instead of eclipsing at any width.
-class _HeroHeader extends StatelessWidget {
+class _HeroHeader extends ConsumerWidget {
   const _HeroHeader({
     required this.tagLabel,
     required this.cityName,
@@ -475,15 +476,22 @@ class _HeroHeader extends StatelessWidget {
   final double maxWidth;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Location pill lives in the header's top-right corner, not with the
-    // chips below.
+    // chips below. The zone abbreviation is appended only when the place
+    // clock differs from the device's: that is exactly when "Today" and the
+    // reminder wall times are the place's, not the phone's, and the label
+    // keeps that from reading as an off-by-one bug.
     final city = cityName;
-    final locationChip = city == null
+    final zoneLabel = placeClockZoneLabel(ref.watch(placeClockProvider));
+    final cityWithZone = city == null
+        ? null
+        : (zoneLabel == null ? city : '$city · $zoneLabel');
+    final locationChip = cityWithZone == null
         ? null
         : HeroChip(
             icon: Icons.location_on_rounded,
-            text: city,
+            text: cityWithZone,
             highContrast: highContrast,
             hint: (AppLocalizations.of(context) ?? AppLocalizationsEn())
                 .setHomeLocation,
