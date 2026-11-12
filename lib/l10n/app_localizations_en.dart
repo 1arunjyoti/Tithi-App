@@ -880,6 +880,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allFestivals => 'All Festivals';
 
   @override
+  String get navToday => 'Today';
+
+  @override
+  String get navFestivals => 'Festivals';
+
+  @override
+  String get navCountdowns => 'Countdowns';
+
+  @override
   String get festivalFilterAll => 'All';
 
   @override

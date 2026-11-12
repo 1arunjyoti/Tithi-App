@@ -998,9 +998,9 @@ class AppTheme {
             // carries the same visible edge in all themes.
             color: isDark
                 ? Colors.white.withValues(alpha: 0.14)
-                : Theme.of(context).colorScheme.onSurface.withValues(
-                    alpha: 0.12,
-                  ),
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.12),
             width: 1.5,
           ),
       boxShadow: [
@@ -1012,6 +1012,66 @@ class AppTheme {
         ),
       ],
     );
+  }
+
+  /// Detached overlay surface for a floating navigation capsule.
+  ///
+  /// [glassmorphism] is built for cards that sit *on* the page: its Pure Dark
+  /// branch returns an opaque `#1E1E1E` fill. A bar painted *over* scrolling
+  /// content must stay translucent in every palette, otherwise it reads as a
+  /// docked footer with a background of its own. Here the edge comes from the
+  /// backdrop blur the widget applies
+  /// ([floatingOverlayBlurs]) instead of from an opaque fill.
+  ///
+  /// The fill carries a tonal lift, because "translucent" alone is not enough
+  /// to read as *above* the page. In the dark palettes Pure Dark paints a
+  /// black page behind `#1E1E1E` cards, so the bare `surface` at 62% came out
+  /// darker than the cards it floats over: the capsule read as a hole cut in
+  /// the screen. Mixing a little white into the surface first puts the film
+  /// above both the page and the card fill while staying see-through. Light
+  /// mode is already the brightest tone, so it takes a hint of the primary
+  /// instead.
+  ///
+  /// High Contrast drops the film entirely: a solid surface with a strong
+  /// border is legible over any content the user scrolls under it.
+  static BoxDecoration floatingOverlayDecoration(
+    BuildContext context, {
+    double borderRadius = 32,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
+
+    if (highContrastOf(context)) {
+      return BoxDecoration(
+        color: isDark ? Colors.black : Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.7),
+          width: 1.5,
+        ),
+      );
+    }
+
+    final fill = isDark
+        ? Color.alphaBlend(Colors.white.withValues(alpha: 0.10), scheme.surface)
+        : Color.alphaBlend(
+            scheme.primary.withValues(alpha: 0.04),
+            Colors.white,
+          );
+
+    return BoxDecoration(
+      // Never the opaque card fill: the content underneath must stay visible
+      // through the film (blurred by the widget, not by this decoration).
+      color: fill.withValues(alpha: isDark ? 0.72 : 0.78),
+      borderRadius: BorderRadius.circular(borderRadius),
+    );
+  }
+
+  /// Whether an overlay using [floatingOverlayDecoration] should add a real
+  /// backdrop blur. High Contrast gets the solid fill instead: legibility over
+  /// arbitrary content beats the effect.
+  static bool floatingOverlayBlurs(BuildContext context) {
+    return !highContrastOf(context);
   }
 
   /// Returns [normal] unless Reduce Motion / OS disableAnimations is on,
@@ -1111,11 +1171,7 @@ class AppTheme {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Color(0xFF10002B),
-          Color(0xFF240046),
-          Color(0xFF10002B),
-        ],
+        colors: [Color(0xFF10002B), Color(0xFF240046), Color(0xFF10002B)],
       ),
     );
   }

@@ -17,6 +17,69 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-12 - 0.8.1+24
+
+### Borderless floating navigation
+The floating navbar now blends into the page without a visible outline.
+
+- Normal palettes keep the translucent fill and blur without a border.
+- High Contrast retains its strong border for legibility.
+- Shared decoration lives in `lib/theme/app_theme.dart`.
+
+### Festivals card uses the mounted Festivals tab
+The home card's "View all" action now opens the same Festivals screen chrome as the bottom navigation tab.
+
+- In the narrow shell, the action selects `HomeTab.festivals`, preserving the mounted list and its scroll position.
+- Standalone and wide layouts keep pushing `AllFestivalsScreen` as before.
+- The selector is passed from `HomeScreen` to `EventListWidget` (`lib/screens/home_screen.dart`, `lib/widgets/event_list_widget.dart`).
+
+### Drawer is reachable from every tab
+Festivals and Countdowns now have the hamburger (and the edge swipe) too, so Sankalpas, Moon Phases, Settings and the rest are one tap away from any destination instead of a detour through Today.
+
+- Both tab screens take `onSelectTab` + `onDrawerStateChanged` like `HomeScreen`; a non-null `onSelectTab` means "hosted as a shell tab", which adds one `AppDrawer` to that Scaffold and puts `AppDrawerButton` (`lib/widgets/app_drawer_button.dart`, shared with `HomeScreen`) in the leading slot. Pushed full-page, the leading slot stays `HapticBackButton`.
+- Each tab hosts its own drawer, so `HomeShell` clears `_drawerOpen` on a tab switch: a missed close callback must not leave the capsule hidden on the tab just opened.
+- Covered by the `drawer` group in `test/all_festivals_screen_test.dart` (hosted opens the drawer and reports it; pushed has no drawer and no hamburger).
+
+### Drawer destinations switch the shell tab instead of pushing a copy
+Picking "Festival Countdowns" in the drawer now selects the Countdowns tab: the capsule highlights it, back returns through Today, and the tab keeps the state it already had.
+
+- `AppDrawer.onSelectTab` (`lib/widgets/app_drawer.dart`) is set by `HomeShell` through `HomeScreen.onSelectTab`; the entry pops the drawer and selects `HomeTab.countdowns`. When it is null (the wide sidebar, and every screen that pushes the drawer on its own) the entry keeps pushing `FestivalCountdownScreen`.
+- `HomeTab` (`lib/core/navigation/home_tab.dart`) names the shell destinations so the drawer and the shell never hardcode a tab index.
+- Covered by `test/app_drawer_test.dart` (select path asserts no route was pushed; null path asserts a push still starts).
+
+### Re-tapping the selected destination returns its tab to the top
+Tapping Today, Festivals or Countdowns while it is already selected scrolls that tab back to its first item, the way every other tab bar behaves.
+
+- `HomeShell._select` bumps `tabRevealProvider(tab)` (`lib/core/navigation/home_tab.dart`), a `StateProvider.family<int, HomeTab>` counter, instead of ignoring the re-tap. Each tab watches its own entry and scrolls itself, because the three tabs disagree on what "the top" is.
+- `_HomeBodyState` owns the calendar `CustomScrollView`'s controller; the schedule view keeps its own, so a re-tap there is a no-op. `AllFestivalsScreen` uses its `ItemScrollController` (`ScrollablePositionedList` owns its offset and exposes no `ScrollController`). `FestivalCountdownScreen` is a `ConsumerStatefulWidget` now and shares one controller across its three list variants (only one is mounted at a time).
+- Animations use `AppTheme.animationDuration(context, 260ms)`, so Reduce Motion jumps straight to the top.
+
+### Jump to today joins the floating nav bar
+On narrow screens the calendar's "jump to today" action now floats beside the navigation capsule on the same baseline, instead of hovering above it, so the two controls read as one bar and nothing floats in the content's way.
+
+- `JumpToTodayButton` (`lib/widgets/jump_to_today_button.dart`) is the single 56dp icon-only action for both hosts; `jumpToTodayVisibleProvider` is the single rule (another month focused, or another day selected) and `goToToday` moves month, date and `tappedCalendarDateProvider` together.
+- "Today" is `todayDateProvider` (the app's place-clock day, refreshed at midnight and on a place change), not `DateTime.now()`. That matches the calendar's own seeding *and* makes the rule re-evaluate at a midnight rollover, when the calendar is left showing yesterday.
+- It sits *outside* the capsule: `FloatingNavBar.trailingAction` is a sibling in the bar's row, and the capsule is `Flexible`, so the action takes width from the capsule (labels shrink/ellipsize) rather than from the screen gutters. `showTrailingAction` collapses the slot via `AnimatedSize` so the bar re-centres instead of jumping.
+- Shown only on the Today tab; `HomeScreen.showJumpToToday: false` from the shell prevents a second live copy (the wide layout still uses the Scaffold FAB slot).
+
+### Floating bottom navigation capsule
+Narrow screens now get a Google-Photos-style floating pill with three top-level tabs (Today / Festivals / Countdowns) that keeps each tab's state instead of pushing and popping screens.
+
+- `HomeShell` (`lib/screens/home_shell.dart`) owns the tab index: the tabs are stacked, each one wrapped in an `AnimatedTabLayer` (`TickerMode` keeps offscreen tabs from ticking), tabs mount on first visit only (`AllFestivalsScreen` resolves ~100 occurrences through the ephemeris and must not run at startup), and back returns to Today before leaving the app (`PopScope`).
+- Switching tabs is a transition, not a swap. The incoming tab fades in and slides 24dp from the side the switch is heading towards; the outgoing one slides out the other way but stays fully opaque, acting as the backdrop, so no frame of the switch shows the route behind the pair (fading both left the composite ~25% transparent at the midpoint and cost a second full-screen layer per frame). 250ms through `AppTheme.animationDuration`, so Reduce Motion collapses it. The tabs are a plain `Stack` rather than an `IndexedStack` because both have to be on screen at once; the contract the `IndexedStack` gave is kept - only the visible tab is painted, hit-testable, focusable (`ExcludeFocus`) and exposed to accessibility services, and every tab stays in the tree with its scroll offset, search text and filters intact. `AnimatedTabLayer` (`lib/widgets/animated_tab_layer.dart`) never rebuilds the tab's content while it animates, a switch that interrupts another one continues from where it had got to instead of snapping (a tab demoted mid-slide fades out, one whose exit already finished snaps, since it is covered by then), and the exit is complete when the slide ends - tracked on the offset controller, not on opacity.
+- The bar (`lib/widgets/floating_nav_bar.dart`) is presentation-only: every destination paints its label, and the selected one adds its icon inside an accent-filled pill. The capsule is content-sized (`Center` + `Row(mainAxisSize: min)`), so it is only as wide as the three options need, centred, and clamped to `screen - 2 * margin`. Widths are resolved per destination (`_resolveSlots`) from one `TextPainter` per label per build: the parts that cannot shrink (horizontal padding, the selected icon) are reserved first, then the remainder is split by measured label width, so a clamped bar can never hand a pill less than its own padding/icon (the previous flex weights could overflow at large text scales). A still-too-narrow bar drops the icon before it eats label space, and the last slot absorbs the rounding remainder.
+- Each destination is a single semantics node (`button`, `selected`, label) that owns its tap action, with `excludeSemantics` so the painted label is announced once. The action must be declared on that node: excluding descendants also drops the inner `GestureDetector`'s own semantics action.
+- The capsule is deliberately slim: 56dp tall around a 44dp pill, so only 6dp of film sits above and below it and the bar reads as the pill's backing rather than a band of empty air. The tap target is the whole capsule (each slot is its full height), so the pill does not have to be the 48dp minimum. The corner radius is `height / 2` (a stadium) and is passed to both the clip and `AppTheme.floatingOverlayDecoration`; `height` / `_pillHeight` are the two knobs, and `reserve` (tab scroll padding, FAB and snackbar lift) follows `height` automatically.
+- Rebuilds stay local. `HomeShell` caches each tab's widget instance (mounted tabs keep state but do not rebuild on a tab switch), memoizes the snackbar `ThemeData`, and watches `jumpToTodayVisibleProvider` in a `Consumer` around the bar, so selecting a date no longer rebuilds all three tabs.
+- `FloatingNavBar.capsuleKey` marks the painted capsule (the bar's own box spans the screen so it can centre the capsule) — use it, not `FloatingNavBar`, to measure or assert width.
+- All transitions route through `AppTheme.animationDuration`.
+- The capsule is a real overlay: `AppTheme.floatingOverlayDecoration` keeps the film translucent in every palette (Pure Dark's `glassmorphism` would be opaque and read as a docked footer) and the widget adds a `BackdropFilter` blur, skipped under High Contrast.
+- The film carries a tonal lift (10% white into `colorScheme.surface` dark, 4% primary into white light) so it reads above both the page and the card fill: Pure Dark's bare surface at 62% came out darker than its `#1E1E1E` cards, reading as a hole.
+- Nothing shrinks the tab viewport. Each tab takes a `bottomContentInset` (`HomeShell` passes `FloatingNavBar.reserve`) for scroll padding only, so content scrolls *under* the pill; the home FAB is lifted by the same value, and floating snackbars get it via a `snackBarTheme.insetPadding` override in the shell.
+- Narrow screens only: at >= 900dp (`ResponsiveLayout.tabletBreakpoint`) the shell returns `HomeScreen` unchanged, keeping the 280px sidebar as the only navigation.
+- The bar hides while `HomeScreen`'s drawer is open (`HomeScreen.onDrawerStateChanged`), since the drawer paints inside that Scaffold, below the shell's overlay.
+- Labels are single short nouns (`navToday` / `navFestivals` / `navCountdowns`) in en/hi/bn/sa. They are always painted; when the capsule is clamped to a narrow screen (or the app's 1.3x large-text scale), each label shrinks inside its measured share and ellipsizes instead of overflowing.
+
 ## 2026-11-06 - 0.8.1+23
 
 ### Shukla body uses a neutral off-white instead of warm cream

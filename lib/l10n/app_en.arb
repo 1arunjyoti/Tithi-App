@@ -1207,6 +1207,18 @@
   "@allFestivals": {
     "description": "Title for all festivals screen"
   },
+  "navToday": "Today",
+  "@navToday": {
+    "description": "Floating navigation bar label for the home tab. Keep it a single short word: the selected pill grows with it."
+  },
+  "navFestivals": "Festivals",
+  "@navFestivals": {
+    "description": "Floating navigation bar label for the all-festivals tab. Keep it short."
+  },
+  "navCountdowns": "Countdowns",
+  "@navCountdowns": {
+    "description": "Floating navigation bar label for the festival countdowns tab. Keep it short."
+  },
   "festivalFilterAll": "All",
   "@festivalFilterAll": {
     "description": "Filter chip: show every festival"

@@ -881,6 +881,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get allFestivals => 'সব উৎসব';
 
   @override
+  String get navToday => 'আজ';
+
+  @override
+  String get navFestivals => 'উৎসব';
+
+  @override
+  String get navCountdowns => 'কাউন্টডাউন';
+
+  @override
   String get festivalFilterAll => 'সব';
 
   @override

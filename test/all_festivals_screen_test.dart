@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:tithi/core/navigation/home_tab.dart';
 import 'package:tithi/features/countdown/domain/target_resolution.dart'
     show collectRecurringOccurrences;
 import 'package:tithi/models/festival.dart';
@@ -658,6 +659,120 @@ void main() {
       // Assert
       expect(haptics, hasLength(1));
       expect(haptics.single.arguments, 'HapticFeedbackType.lightImpact');
+    });
+  });
+
+  group('drawer', () {
+    /// Hosts the tab the way `HomeShell` does: with the tab-switch callback
+    /// that also tells the screen it may own a drawer.
+    Future<void> pumpHosted(
+      WidgetTester tester, {
+      ValueChanged<HomeTab>? onSelectTab,
+      List<String>? drawerStates,
+    }) async {
+      final today = todayOnly();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            allFestivalOccurrencesProvider.overrideWith(
+              (ref) => Future.value([
+                (festival: fixture(id: 'row', name: 'A Festival'), date: today),
+              ]),
+            ),
+            accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
+          ],
+          child: MaterialApp(
+            // The drawer header's icon + two text lines is wider than 280dp in
+            // the square test font (Ahem) and would overflow there only.
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: const TextScaler.linear(0.8)),
+              child: child!,
+            ),
+            home: AllFestivalsScreen(
+              onSelectTab: onSelectTab,
+              onDrawerStateChanged: (open) => drawerStates?.add('$open'),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('hosted as a tab it opens the drawer from its own app bar', (
+      tester,
+    ) async {
+      // Arrange
+      final reported = <String>[];
+      await pumpHosted(tester, onSelectTab: (_) {}, drawerStates: reported);
+
+      // Assert: the tab has its own hamburger instead of Today's...
+      expect(find.byIcon(Icons.menu_rounded), findsOneWidget);
+
+      // Act
+      await tester.tap(find.byIcon(Icons.menu_rounded));
+      await tester.pumpAndSettle();
+
+      // Assert: ...and it opens this tab's drawer (a hamburger with no drawer
+      // would assert on tap), reporting it so the shell can hide the capsule.
+      final scaffold = tester.state<ScaffoldState>(find.byType(Scaffold));
+      expect(scaffold.isDrawerOpen, isTrue);
+      expect(reported, contains('true'));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('pushed as a full page it keeps the back slot, no hamburger', (
+      tester,
+    ) async {
+      // Arrange / Act: no shell, so no drawer to open.
+      await pumpHosted(tester);
+
+      // Assert
+      expect(find.byIcon(Icons.menu_rounded), findsNothing);
+      expect(tester.state<ScaffoldState>(find.byType(Scaffold)).hasDrawer,
+          isFalse);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('re-tap to top', () {
+    testWidgets('the reveal counter returns the list to its first row', (
+      tester,
+    ) async {
+      // Arrange: more rows than fit on screen, scrolled down.
+      final today = todayOnly();
+      final occurrences = List.generate(
+        12,
+        (i) => (
+          festival: fixture(id: 'f$i', name: 'Festival $i'),
+          date: today.add(Duration(days: i)),
+        ),
+      );
+      await pumpScreen(tester, occurrences: occurrences);
+      expect(find.text('Festival 0'), findsOneWidget);
+
+      await tester.drag(
+        find.byType(FestivalRowTile).first,
+        const Offset(0, -600),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Festival 0'), findsNothing);
+
+      // Act: the shell reports a tap on the already-selected Festivals
+      // destination. The tab cannot be scrolled from outside - the list owns
+      // its offset - so it watches the counter instead.
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(AllFestivalsScreen)),
+        listen: false,
+      );
+      container.read(tabRevealProvider(HomeTab.festivals).notifier).state++;
+      await tester.pumpAndSettle();
+
+      // Assert: back at the top (asserted by content: the package re-anchors
+      // its layout instead of moving the scroll offset).
+      expect(find.text('Festival 0'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }
