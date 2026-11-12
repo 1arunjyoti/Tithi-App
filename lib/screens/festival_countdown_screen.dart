@@ -12,15 +12,81 @@ import '../theme/app_theme.dart';
 import '../core/anim/press_scale.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
+import '../core/navigation/home_tab.dart';
 import '../core/feedback/app_messages.dart';
 import '../widgets/festival_countdown_card.dart';
+import '../widgets/app_drawer.dart';
+import '../widgets/app_drawer_button.dart';
 import '../widgets/home_widget_card.dart';
 
-class FestivalCountdownScreen extends ConsumerWidget {
-  const FestivalCountdownScreen({super.key});
+class FestivalCountdownScreen extends ConsumerStatefulWidget {
+  const FestivalCountdownScreen({
+    super.key,
+    this.bottomContentInset = 0,
+    this.onSelectTab,
+    this.onDrawerStateChanged,
+  });
+
+  /// Scroll padding that lets the last tile rest above a floating navigation
+  /// bar. Zero when this screen is pushed as a full page.
+  final double bottomContentInset;
+
+  /// Non-null when this screen is one tab of `HomeShell`.
+  ///
+  /// The shell already keeps the drawer's other destinations mounted, so this
+  /// screen hosts its own copy of `AppDrawer` and the app bar's hamburger
+  /// opens it - the drawer must not be reachable only from the Today tab.
+  /// Pushed full-page (null), the leading slot stays the back arrow.
+  final ValueChanged<HomeTab>? onSelectTab;
+
+  /// Reports this tab's drawer opening/closing, so the shell can retract the
+  /// floating capsule while it is out (the drawer paints inside this Scaffold,
+  /// below the shell's overlay).
+  final ValueChanged<bool>? onDrawerStateChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FestivalCountdownScreen> createState() =>
+      _FestivalCountdownScreenState();
+}
+
+class _FestivalCountdownScreenState
+    extends ConsumerState<FestivalCountdownScreen> {
+  /// Owns the list's offset so a re-tap of the Countdowns destination can
+  /// return to the top. Shared by all three list variants below: only one is
+  /// ever mounted at a time, so they can take turns attaching to it.
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Re-tapping the already-selected Countdowns destination returns the list to
+  /// its first row (the header widget card).
+  void _revealTop() {
+    if (!_scrollController.hasClients) return;
+    final ScrollPosition position = _scrollController.position;
+    if (!position.hasContentDimensions ||
+        position.pixels <= position.minScrollExtent) {
+      return;
+    }
+    _scrollController.animateTo(
+      position.minScrollExtent,
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 260),
+      ),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<int>(tabRevealProvider(HomeTab.countdowns), (previous, next) {
+      if (previous == next) return;
+      _revealTop();
+    });
     final l10n = AppLocalizations.of(context);
     // Keep widget in sync
     ref.watch(homeWidgetSyncProvider);
@@ -30,9 +96,15 @@ class FestivalCountdownScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
+      drawer: widget.onSelectTab == null
+          ? null
+          : AppDrawer(onSelectTab: widget.onSelectTab),
+      onDrawerChanged: widget.onDrawerStateChanged,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: const HapticBackButton(),
+        leading: widget.onSelectTab == null
+            ? const HapticBackButton()
+            : const AppDrawerButton(),
         title: Text(l10n?.festivalCountdowns ?? 'Festival Countdowns'),
         backgroundColor: Colors.transparent,
         actions: [
@@ -95,7 +167,13 @@ class FestivalCountdownScreen extends ConsumerWidget {
                   // "no countdowns yet" illustration.
                   if (hasMissing) {
                     return ListView(
-                      padding: const EdgeInsets.all(16),
+                      controller: _scrollController,
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        16 + widget.bottomContentInset,
+                      ),
                       children: [
                         const HomeWidgetCard(),
                         const SizedBox(height: 10),
@@ -108,7 +186,13 @@ class FestivalCountdownScreen extends ConsumerWidget {
                     );
                   }
                   return ListView(
-                    padding: const EdgeInsets.all(16),
+                    controller: _scrollController,
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      16 + widget.bottomContentInset,
+                    ),
                     children: const [
                       _EmptyCountdowns(),
                       SizedBox(height: 20),
@@ -119,7 +203,13 @@ class FestivalCountdownScreen extends ConsumerWidget {
 
                 final hasUndatedNote = undatedEntries.isNotEmpty;
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                  controller: _scrollController,
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    16,
+                    16,
+                    32 + widget.bottomContentInset,
+                  ),
                   itemBuilder: (context, index) {
                     // Header widget card at index 0
                     if (index == 0) {

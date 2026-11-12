@@ -9,6 +9,7 @@ import '../models/panchang_data.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/festival_provider.dart';
+import '../core/navigation/home_tab.dart';
 import '../screens/all_festivals_screen.dart';
 import '../core/navigation/app_routes.dart';
 import '../theme/app_theme.dart';
@@ -25,9 +26,13 @@ export '../features/event_list/providers/event_providers.dart'
 
 /// Home "Festivals & Events" card (redesign): one glass card holding the
 /// selected day + next 3 days' festivals — selected day first, upcoming
-/// after — with a "View all N festivals" button pushing [AllFestivalsScreen].
+/// after — with a "View all N festivals" button opening [AllFestivalsScreen].
 class EventListWidget extends ConsumerWidget {
-  const EventListWidget({super.key});
+  const EventListWidget({super.key, this.onSelectTab});
+
+  /// Selects the mounted Festivals tab when the card lives inside
+  /// [HomeShell]. Null keeps the standalone pushed-screen behavior.
+  final ValueChanged<HomeTab>? onSelectTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -86,7 +91,7 @@ class EventListWidget extends ConsumerWidget {
               error: (error, _) => _buildErrorBody(context, error),
             ),
             const SizedBox(height: 4),
-            _ViewAllButton(totalCount: totalCount),
+            _ViewAllButton(totalCount: totalCount, onSelectTab: onSelectTab),
           ],
         ),
       ),
@@ -189,9 +194,9 @@ class EventListWidget extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
-        AppLocalizations.of(context)?.couldNotLoadFestivalsWithError(
-              error.toString(),
-            ) ??
+        AppLocalizations.of(
+              context,
+            )?.couldNotLoadFestivalsWithError(error.toString()) ??
             'Could not load festivals: $error',
         style: TextStyle(
           fontSize: 13.5,
@@ -223,7 +228,9 @@ class _OverflowLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final gold = AppTheme.festivalAccent(context);
     final names = hidden.map((e) => e.festival.name).join(' • ');
-    final label = hidden.length == 1 ? '+1 more: $names' : '+${hidden.length} more: $names';
+    final label = hidden.length == 1
+        ? '+1 more: $names'
+        : '+${hidden.length} more: $names';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       child: Text(
@@ -244,16 +251,18 @@ class _OverflowLine extends StatelessWidget {
 /// Always visible — even with an empty window — since the full list lives
 /// behind it.
 class _ViewAllButton extends ConsumerWidget {
-  const _ViewAllButton({required this.totalCount});
+  const _ViewAllButton({required this.totalCount, this.onSelectTab});
 
   final int totalCount;
+  final ValueChanged<HomeTab>? onSelectTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gold = AppTheme.festivalAccent(context);
     final l10n = AppLocalizations.of(context);
     final label = totalCount > 0
-        ? (l10n?.viewAllFestivalsCount(totalCount) ?? 'View all $totalCount festivals')
+        ? (l10n?.viewAllFestivalsCount(totalCount) ??
+              'View all $totalCount festivals')
         : (l10n?.viewAllFestivals ?? 'View all festivals');
     return Semantics(
       button: true,
@@ -267,9 +276,12 @@ class _ViewAllButton extends ConsumerWidget {
             if (ref.read(accessibilityProvider).hapticFeedback) {
               HapticFeedback.lightImpact();
             }
-            // Fade through (not shared-X slide): the pop back to home
-            // fades instead of sliding out over the home card.
-            AppRoutes.pushFadeThrough(context, const AllFestivalsScreen());
+            final select = onSelectTab;
+            if (select != null) {
+              select(HomeTab.festivals);
+            } else {
+              AppRoutes.pushFadeThrough(context, const AllFestivalsScreen());
+            }
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),

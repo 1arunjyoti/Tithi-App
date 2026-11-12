@@ -1722,6 +1722,24 @@ abstract class AppLocalizations {
   /// **'All Festivals'**
   String get allFestivals;
 
+  /// Floating navigation bar label for the home tab. Keep it a single short word: the selected pill grows with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get navToday;
+
+  /// Floating navigation bar label for the all-festivals tab. Keep it short.
+  ///
+  /// In en, this message translates to:
+  /// **'Festivals'**
+  String get navFestivals;
+
+  /// Floating navigation bar label for the festival countdowns tab. Keep it short.
+  ///
+  /// In en, this message translates to:
+  /// **'Countdowns'**
+  String get navCountdowns;
+
   /// Filter chip: show every festival
   ///
   /// In en, this message translates to:

@@ -22,7 +22,7 @@ import 'providers/calendar_provider.dart';
 import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'screens/home_shell.dart';
 import 'widgets/panchang_init_failure_overlay.dart';
 
 // Conditional import for platform-specific features
@@ -496,7 +496,7 @@ class _LocationPermissionWrapperState
     // Show HomeScreen as soon as location service is initialized
     // Permission dialog will appear in background if first launch
     if (_showHomeScreen) {
-      return const HomeScreen();
+      return const HomeShell();
     }
 
     // Only show loading screen while waiting for location service init

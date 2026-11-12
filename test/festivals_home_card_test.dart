@@ -10,6 +10,7 @@ import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
+import 'package:tithi/core/navigation/home_tab.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/theme/app_theme.dart';
@@ -19,8 +20,7 @@ import 'package:tithi/widgets/festival_row_tile.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
-  AccessibilityState build() =>
-      const AccessibilityState(hapticFeedback: false);
+  AccessibilityState build() => const AccessibilityState(hapticFeedback: false);
 }
 
 class _FixedDateNotifier extends SelectedDateNotifier {
@@ -100,6 +100,7 @@ void main() {
     required Map<DateTime, PanchangData> days,
     required List<Festival> all,
     List<Override> extraOverrides = const [],
+    ValueChanged<HomeTab>? onSelectTab,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -115,9 +116,11 @@ void main() {
           festivalProvider.overrideWithValue(all),
           accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
         ],
-        child: const MaterialApp(
+        child: MaterialApp(
           home: Scaffold(
-            body: SingleChildScrollView(child: EventListWidget()),
+            body: SingleChildScrollView(
+              child: EventListWidget(onSelectTab: onSelectTab),
+            ),
           ),
         ),
       ),
@@ -333,6 +336,25 @@ void main() {
       expect(find.text('Distant Festival'), findsOneWidget);
       expect(find.textContaining('Mon, 14 Sep'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('hosted view-all selects the Festivals tab', (tester) async {
+      // Arrange
+      HomeTab? selectedTab;
+      await pumpCard(
+        tester,
+        days: const {},
+        all: [festA],
+        onSelectTab: (tab) => selectedTab = tab,
+      );
+
+      // Act
+      await tester.tap(find.textContaining('View all'));
+      await tester.pump();
+
+      // Assert
+      expect(selectedTab, HomeTab.festivals);
+      expect(find.byType(AllFestivalsScreen), findsNothing);
     });
 
     testWidgets('tapping a row opens its detail sheet', (tester) async {

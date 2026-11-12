@@ -14,8 +14,11 @@ import '../theme/app_theme.dart';
 import '../features/sheets/sheet_launcher.dart';
 import '../widgets/festival_filter_sheet.dart';
 import '../widgets/festival_row_tile.dart';
+import '../widgets/app_drawer_button.dart';
+import '../widgets/app_drawer.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
+import '../core/navigation/home_tab.dart';
 import '../core/async/keep_alive.dart';
 import '../core/format/date_only.dart';
 import '../features/countdown/domain/target_resolution.dart';
@@ -91,7 +94,29 @@ final allFestivalOccurrencesProvider =
 /// the row's occurrence date, so the sheet can backfill that day's panchang
 /// (timings, puja/paran windows).
 class AllFestivalsScreen extends ConsumerStatefulWidget {
-  const AllFestivalsScreen({super.key});
+  const AllFestivalsScreen({
+    super.key,
+    this.bottomContentInset = 0,
+    this.onSelectTab,
+    this.onDrawerStateChanged,
+  });
+
+  /// Scroll padding that lets the last row rest above a floating navigation
+  /// bar. Zero when this screen is pushed as a full page.
+  final double bottomContentInset;
+
+  /// Non-null when this screen is one tab of `HomeShell`.
+  ///
+  /// The shell already keeps the drawer's other destinations mounted, so this
+  /// screen hosts its own copy of `AppDrawer` and the app bar's hamburger
+  /// opens it - the drawer must not be reachable only from the Today tab.
+  /// Pushed full-page (null), the leading slot stays the back arrow.
+  final ValueChanged<HomeTab>? onSelectTab;
+
+  /// Reports this tab's drawer opening/closing, so the shell can retract the
+  /// floating capsule while it is out (the drawer paints inside this Scaffold,
+  /// below the shell's overlay).
+  final ValueChanged<bool>? onDrawerStateChanged;
 
   @override
   ConsumerState<AllFestivalsScreen> createState() => _AllFestivalsScreenState();
@@ -188,17 +213,45 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     return out;
   }
 
+  /// Re-tapping the already-selected Festivals destination returns the list to
+  /// its first row.
+  ///
+  /// The offset belongs to the [ItemScrollController]: `ScrollablePositionedList`
+  /// builds its scrollable with `primary: true` and never exposes a
+  /// `ScrollController`, so this is the only way to move it.
+  void _revealTop() {
+    if (!_itemScrollController.isAttached) return;
+    _itemScrollController.scrollTo(
+      index: 0,
+      duration: AppTheme.animationDuration(
+        context,
+        const Duration(milliseconds: 260),
+      ),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(tabRevealProvider(HomeTab.festivals), (previous, next) {
+      if (previous == next) return;
+      _revealTop();
+    });
     final l10n = AppLocalizations.of(context);
     final occurrencesAsync = ref.watch(allFestivalOccurrencesProvider);
     final today = dateOnly(ref.watch(todayDateProvider));
 
     return Scaffold(
       extendBodyBehindAppBar: true,
+      drawer: widget.onSelectTab == null
+          ? null
+          : AppDrawer(onSelectTab: widget.onSelectTab),
+      onDrawerChanged: widget.onDrawerStateChanged,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: const HapticBackButton(),
+        leading: widget.onSelectTab == null
+            ? const HapticBackButton()
+            : const AppDrawerButton(),
         title: Text(l10n?.allFestivals ?? 'All Festivals'),
         backgroundColor: Colors.transparent,
         actions: [
@@ -267,7 +320,9 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                     // of flashing a skeleton.
                     skipLoadingOnReload: true,
                     data: (items) => _buildList(context, items, today),
-                    loading: () => const _OccurrencesLoading(),
+                    loading: () => _OccurrencesLoading(
+                      bottomInset: widget.bottomContentInset,
+                    ),
                     error: (error, _) => _OccurrencesError(
                       message: l10n?.couldNotLoadFestivals ?? 'Could not load festivals. Please try again.',
                       onRetry: () =>
@@ -352,7 +407,12 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     }
     return ScrollablePositionedList.separated(
       itemScrollController: _itemScrollController,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        32 + widget.bottomContentInset,
+      ),
       itemCount: visible.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
@@ -398,13 +458,15 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
 }
 
 class _OccurrencesLoading extends StatelessWidget {
-  const _OccurrencesLoading();
+  const _OccurrencesLoading({required this.bottomInset});
+
+  final double bottomInset;
 
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 32 + bottomInset),
       itemCount: 6,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, _) => Container(
