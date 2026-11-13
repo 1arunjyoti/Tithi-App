@@ -14,6 +14,7 @@ import '../theme/app_theme.dart';
 import '../features/sheets/sheet_launcher.dart';
 import '../widgets/festival_filter_sheet.dart';
 import '../widgets/festival_row_tile.dart';
+import '../widgets/major_festival_card.dart';
 import '../widgets/app_drawer_button.dart';
 import '../widgets/app_drawer.dart';
 import '../core/anim/stagger_entrance.dart';
@@ -173,10 +174,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   }
 
   Future<void> _openFilters() async {
-    final result = await showFestivalFilterSheet(
-      context,
-      initial: _filters,
-    );
+    final result = await showFestivalFilterSheet(context, initial: _filters);
     if (!mounted || result == null || result == _filters) return;
     setState(() => _filters = result);
   }
@@ -280,6 +278,9 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
             ),
           ),
           SafeArea(
+            // Background paints behind the gesture handle; the list adds the
+            // system inset to its own bottom padding instead.
+            bottom: false,
             child: Column(
               children: [
                 Padding(
@@ -291,7 +292,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                       onChanged: _onSearchChanged,
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
-                        hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
+                        hintText:
+                            l10n?.searchFestivalsHint ?? 'Search festivals',
                         prefixIcon: Icon(
                           Icons.search_rounded,
                           color: context.colors.onSurface.withValues(
@@ -324,7 +326,9 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                       bottomInset: widget.bottomContentInset,
                     ),
                     error: (error, _) => _OccurrencesError(
-                      message: l10n?.couldNotLoadFestivals ?? 'Could not load festivals. Please try again.',
+                      message:
+                          l10n?.couldNotLoadFestivals ??
+                          'Could not load festivals. Please try again.',
                       onRetry: () =>
                           ref.invalidate(allFestivalOccurrencesProvider),
                     ),
@@ -411,7 +415,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         16,
         0,
         16,
-        32 + widget.bottomContentInset,
+        32 + widget.bottomContentInset + AppTheme.navigationBarInset(context),
       ),
       itemCount: visible.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -426,31 +430,43 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         // StaggerEntrance is position-matched (no key): filter reorder
         // reuses states and shows instantly; only fresh mounts animate.
         // Transform-only, so the post-frame jumpTo target never shifts.
+        //
+        // Featured is a curated flag in the catalog, not a category and not a
+        // date heuristic. 96 of the 110 records are `category: 'major'`, so
+        // promoting the category made the list a wall of identical tall cards;
+        // featuring whichever major came next made importance depend on the
+        // calendar (a minor fast a few weeks before Diwali took the card) and
+        // split a celebration that runs for days. `"featured": true` lives on
+        // ~20 records in assets/festivals.json, so a whole celebration run can
+        // carry the card and a quiet fortnight stays rows.
+        final isFeatured = item.festival.featured;
+        final key = ValueKey(
+          '${item.festival.id}@'
+          '${item.date?.toIso8601String() ?? 'undated'}',
+        );
+        final child = isFeatured
+            ? MajorFestivalCard(
+                key: key,
+                item: item,
+                onTap: () => _showDetails(context, item.festival, item.date),
+              )
+            : FestivalRowTile(
+                key: key,
+                festival: item.festival,
+                date: item.date,
+                daysAway: daysAway,
+                onTap: () => _showDetails(context, item.festival, item.date),
+              );
         return StaggerEntrance(
           index: index,
           maxStaggered: 10,
-          child: RepaintBoundary(
-            child: FestivalRowTile(
-              key: ValueKey(
-                '${item.festival.id}@'
-                '${item.date?.toIso8601String() ?? 'undated'}',
-              ),
-              festival: item.festival,
-              date: item.date,
-              daysAway: daysAway,
-              onTap: () => _showDetails(context, item.festival, item.date),
-            ),
-          ),
+          child: RepaintBoundary(child: child),
         );
       },
     );
   }
 
-  void _showDetails(
-    BuildContext context,
-    Festival festival,
-    DateTime? date,
-  ) {
+  void _showDetails(BuildContext context, Festival festival, DateTime? date) {
     // Haptics belong to FestivalRowTile, which already fires them before
     // invoking this callback; firing them here too double-buzzes the tap.
     showEventDetailSheet(context, festival: festival, date: date);
@@ -466,7 +482,12 @@ class _OccurrencesLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(16, 0, 16, 32 + bottomInset),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        0,
+        16,
+        32 + bottomInset + AppTheme.navigationBarInset(context),
+      ),
       itemCount: 6,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, _) => Container(

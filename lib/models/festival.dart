@@ -274,6 +274,16 @@ List<String> normalizeFestivalRegions(Object? raw) {
   return tags.isEmpty ? const ['all'] : List<String>.unmodifiable(tags);
 }
 
+/// Hive layout generation of [Festival].
+///
+/// Bump when the meaning or type of a stored field changes; a purely additive
+/// optional field (defaulted or nullable) does not need a bump because older
+/// records still decode. `StorageService` compares this with the value stored
+/// beside the cached catalog and discards the cache instead of decoding it with
+/// the wrong adapter — Hive decodes every record while *opening* a non-lazy
+/// box, so a mismatch would otherwise surface as a startup crash.
+const int kFestivalCacheSchemaVersion = 1;
+
 /// Festival model matching festivals.json structure
 @HiveType(typeId: 0)
 class Festival {
@@ -326,6 +336,33 @@ class Festival {
   @HiveField(10, defaultValue: <String>['all'])
   final List<String> regions;
 
+  /// The persisted half of the curated flagship flag. Read [featured], never
+  /// this.
+  ///
+  /// Nullable on purpose. A `bool` here turns two ordinary situations into a
+  /// `Null is not a subtype of bool` crash on read: a Hive box written before
+  /// field 11 existed decodes it as null, and a hot reload into a running app
+  /// leaves the field null on [Festival] instances that were constructed
+  /// earlier (hot reload patches the class, it does not re-run the adapter).
+  /// The getter below folds both into "not featured".
+  @HiveField(11)
+  final bool? featuredFlag;
+
+  /// Whether this festival is a flagship, curated in `assets/festivals.json`.
+  ///
+  /// This is an editorial fact, deliberately not derived: [category] marks 96
+  /// of the 110 records `major` (so promoting it promoted almost every
+  /// festival), [displayPriority] only orders festivals that share a day, and
+  /// artwork exists for 7 records. The all-festivals list gives its large card
+  /// to [featured] entries and nothing else.
+  ///
+  /// To feature a festival, add `"featured": true` to its record. No code
+  /// change is needed: [Festival.fromJson] reads it and the export service
+  /// round-trips it. Keep the set small (~20) — the point is that a flagship
+  /// is rare. [HiveField] 11 must stay last; adding a field means the next
+  /// index, never a reuse.
+  bool get featured => featuredFlag ?? false;
+
   const Festival({
     required this.id,
     required this.name,
@@ -338,6 +375,7 @@ class Festival {
     required this.media,
     this.displayPriority,
     this.regions = const ['all'],
+    this.featuredFlag,
   });
 
   factory Festival.fromJson(Map<String, dynamic> json) {
@@ -360,6 +398,9 @@ class Festival {
       media: Media.fromJson(json['media'] ?? {}),
       displayPriority: priority,
       regions: normalizeFestivalRegions(json['regions']),
+      // A stray non-bool (a string "true", a number) must not crash the seed:
+      // only a real JSON true features the festival.
+      featuredFlag: json['featured'] == true,
     );
   }
 

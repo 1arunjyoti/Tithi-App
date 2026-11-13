@@ -54,11 +54,19 @@ class AboutScreen extends ConsumerWidget {
             ),
           ),
           SafeArea(
+            // The page background paints behind the gesture handle; the list
+            // pads its own last row clear of it instead.
+            bottom: false,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
                 child: ListView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    24,
+                    24,
+                    24 + AppTheme.navigationBarInset(context),
+                  ),
                   children: [
                     _AboutHeroCard(versionAsync: versionAsync),
                     const SizedBox(height: 20),
@@ -254,7 +262,8 @@ class AboutScreen extends ConsumerWidget {
     if (!context.mounted) return;
     showAppMessage(
       context,
-      l10n?.unableToOpenPrivacyPolicy ?? 'Unable to open the privacy policy website.',
+      l10n?.unableToOpenPrivacyPolicy ??
+          'Unable to open the privacy policy website.',
       kind: AppMessageKind.error,
     );
   }

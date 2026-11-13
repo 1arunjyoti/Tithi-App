@@ -113,6 +113,9 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
             ),
           ),
           SafeArea(
+            // The page background paints behind the gesture handle; each tab
+            // list pads its own last row clear of it instead.
+            bottom: false,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
@@ -541,7 +544,12 @@ class _UpcomingDatesTab extends ConsumerWidget {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            0,
+            16,
+            8 + AppTheme.navigationBarInset(context),
+          ),
           itemCount: dates.length,
           itemBuilder: (context, index) {
             final date = dates[index];
@@ -587,10 +595,11 @@ class _UpcomingDatesTab extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: (isDark
-                              ? AppTheme.moonGlowDark
-                              : AppTheme.moonGlowLight)
-                          .withValues(alpha: 0.3),
+                      color:
+                          (isDark
+                                  ? AppTheme.moonGlowDark
+                                  : AppTheme.moonGlowLight)
+                              .withValues(alpha: 0.3),
                     ),
                     child: Text(
                       daysUntil == 0

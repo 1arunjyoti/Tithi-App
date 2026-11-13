@@ -58,12 +58,15 @@ void main() {
       // Optimized Display Mode (90Hz/120Hz), Android only.
       await initPlatformFeatures();
 
-      // Independent warm-ups run concurrently: version metadata, Hive +
-      // adapters + core boxes, and font preloads (bounded internally).
+      // Storage is required before the first frame, and it self-heals a
+      // festivals cache written by an older model
+      // (StorageService.openFestivalsBox). Version metadata and font preloads
+      // only improve first paint: they run alongside it and swallow their own
+      // failures, because a warm-up must never keep `runApp` from happening.
       registerHiveAdapters();
       await Future.wait([
-        bootstrap.warmVersionInfo(),
         bootstrap.initStorage(),
+        bootstrap.warmVersionInfo(),
         bootstrap.warmFonts(),
       ]);
 
@@ -264,18 +267,9 @@ class _TithiAppState extends ConsumerState<TithiApp>
       builder: (context, child) {
         final scale = accessibility.largeText ? 1.3 : 1.0;
         final mediaQuery = MediaQuery.of(context);
-        final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-        final overlayStyle = isDarkTheme
-            ? const SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.light,
-                statusBarBrightness: Brightness.dark,
-              )
-            : const SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.dark,
-                statusBarBrightness: Brightness.light,
-              );
+        final overlayStyle = AppTheme.systemUiOverlayStyle(
+          Theme.of(context).brightness,
+        );
         return MediaQuery(
           data: mediaQuery.copyWith(
             textScaler: TextScaler.linear(scale),

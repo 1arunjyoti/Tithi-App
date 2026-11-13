@@ -31,13 +31,12 @@ class EclipseList extends StatelessWidget {
       maxWidth: 900,
       child: ListView(
         addRepaintBoundaries: false,
-        padding: ResponsiveLayout.responsivePadding(context),
+        padding: ResponsiveLayout.responsivePadding(context).add(
+          EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
+        ),
         children: [
           if (solarEclipses.isNotEmpty) ...[
-            EclipseSectionHeader(
-              title: l10n.solarEclipses,
-              emoji: '☀️',
-            ),
+            EclipseSectionHeader(title: l10n.solarEclipses, emoji: '☀️'),
             const SizedBox(height: 12),
             for (final e in solarEclipses)
               StaggerEntrance(
@@ -47,10 +46,7 @@ class EclipseList extends StatelessWidget {
             const SizedBox(height: 24),
           ],
           if (lunarEclipses.isNotEmpty) ...[
-            EclipseSectionHeader(
-              title: l10n.lunarEclipses,
-              emoji: '🌙',
-            ),
+            EclipseSectionHeader(title: l10n.lunarEclipses, emoji: '🌙'),
             const SizedBox(height: 12),
             for (final e in lunarEclipses)
               StaggerEntrance(

@@ -387,6 +387,7 @@
     "regions": ["all"],
     "name": "Ram Navami",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Ram Navami",
@@ -1244,6 +1245,7 @@
     "regions": ["all"],
     "name": "Raksha Bandhan",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Raksha Bandhan",
@@ -1420,6 +1422,7 @@
     "regions": ["all"],
     "name": "Krishna Janmashtami",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "कृष्ण जन्माष्टमी",
       "nameEnglish": "Krishna Janmashtami",
@@ -1651,6 +1654,7 @@
     "regions": ["all"],
     "name": "Ganesh Chaturthi",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "गणेश चतुर्थी",
       "nameEnglish": "Ganesh Chaturthi",
@@ -2257,6 +2261,7 @@
     "regions": ["all"],
     "name": "Sharad Navratri Begins",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "शारदीय नवरात्रि",
       "nameEnglish": "Sharad Navratri Begins",
@@ -2759,6 +2764,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Shashthi",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- षष्ठी",
@@ -2805,6 +2811,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Saptami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- सप्तमी",
@@ -2851,6 +2858,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Mahashtami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- महाष्टमी",
@@ -2940,6 +2948,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Maha Navami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- महानवमी",
@@ -2986,6 +2995,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Dasami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- विजयादशमी",
@@ -3032,6 +3042,7 @@
     "regions": ["all"],
     "name": "Dussehra / Vijayadashami",
     "category": "major",
+    "featured": true,
     "displayPriority": 3,
     "nameRegional": {
       "nameSanskrith": "विजयादशमी",
@@ -3383,6 +3394,7 @@
     "regions": ["all"],
     "name": "Diwali",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Diwali",
@@ -4265,6 +4277,7 @@
     "regions": ["all"],
     "name": "Basant Panchami",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Basant Panchami",
@@ -4433,6 +4446,7 @@
     "regions": ["all"],
     "name": "Maha Shivaratri",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Maha Shivaratri",
@@ -4523,6 +4537,7 @@
     "regions": ["all"],
     "name": "Holi",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Holi",

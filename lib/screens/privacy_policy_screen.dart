@@ -42,11 +42,19 @@ class PrivacyPolicyScreen extends ConsumerWidget {
           ),
 
           SafeArea(
+            // The page background paints behind the gesture handle; the list
+            // pads its own last row clear of it instead.
+            bottom: false,
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 800),
                 child: ListView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    24,
+                    24,
+                    24 + AppTheme.navigationBarInset(context),
+                  ),
                   children: [
                     _buildPolicyCard(
                       context,

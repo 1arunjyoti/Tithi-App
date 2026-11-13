@@ -15,6 +15,7 @@ import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
+import 'package:tithi/widgets/major_festival_card.dart';
 import 'package:tithi/widgets/festival_row_tile.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
@@ -52,6 +53,7 @@ void main() {
     String category = 'major',
     bool recurring = false,
     List<String> regions = const ['all'],
+    bool featured = false,
   }) => Festival(
     id: id,
     name: name,
@@ -69,6 +71,7 @@ void main() {
     rituals: const Rituals(steps: []),
     media: const Media(),
     regions: regions,
+    featuredFlag: featured,
   );
 
   Future<void> pumpScreen(
@@ -328,9 +331,13 @@ void main() {
     ) async {
       // Arrange
       final today = todayOnly();
-      final soon = fixture(id: 'soon', name: 'Soon Festival');
-      final later = fixture(id: 'later', name: 'Later Festival');
-      final now = fixture(id: 'now', name: 'Now Festival');
+      final soon = fixture(id: 'soon', name: 'Soon Festival', category: 'vrat');
+      final later = fixture(
+        id: 'later',
+        name: 'Later Festival',
+        category: 'vrat',
+      );
+      final now = fixture(id: 'now', name: 'Now Festival', category: 'vrat');
       final undated = fixture(
         id: 'undated',
         name: 'Undated Festival',
@@ -492,12 +499,98 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('features the curated flag, not every major', (tester) async {
+      // Arrange: a flagship major, an ordinary major and a vrat, deliberately
+      // out of order (the flagship is the furthest away).
+      final today = todayOnly();
+      final flagship = fixture(
+        id: 'flagship',
+        name: 'Flagship Major',
+        featured: true,
+      );
+      final ordinary = fixture(id: 'ordinary', name: 'Ordinary Major');
+      final vrat = fixture(id: 'vrat', name: 'Some Vrat', category: 'vrat');
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: ordinary, date: today.add(const Duration(days: 2))),
+          (festival: vrat, date: today.add(const Duration(days: 3))),
+          (festival: flagship, date: today.add(const Duration(days: 5))),
+        ]),
+      );
+
+      // Assert: one card, and it is the featured entry. `category: 'major'`
+      // covers 96 of the catalog's 110 festivals, so it cannot decide this,
+      // and "next from today" would have featured Ordinary Major instead.
+      expect(find.byType(MajorFestivalCard), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(MajorFestivalCard),
+          matching: find.text('Flagship Major'),
+        ),
+        findsOneWidget,
+      );
+      expect(find.byType(FestivalRowTile), findsNWidgets(2));
+      expect(
+        find.descendant(
+          of: find.byType(FestivalRowTile),
+          matching: find.text('Ordinary Major'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('features a flagship regardless of its date', (tester) async {
+      // Arrange: both entries are in the past, so the list does not scroll
+      // and the old "next major from today" rule had nothing left to feature.
+      final today = todayOnly();
+      final pastFlagship = fixture(
+        id: 'past_flagship',
+        name: 'Past Flagship',
+        featured: true,
+      );
+      final pastMajor = fixture(id: 'past_major', name: 'Past Major');
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (
+            festival: pastFlagship,
+            date: today.subtract(const Duration(days: 3)),
+          ),
+          (festival: pastMajor, date: today.subtract(const Duration(days: 2))),
+        ]),
+      );
+
+      // Assert: importance is a property of the festival, not of the calendar.
+      // Durga Puja's first days would otherwise lose the card as soon as the
+      // list moved past them.
+      expect(find.byType(MajorFestivalCard), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(MajorFestivalCard),
+          matching: find.text('Past Flagship'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(FestivalRowTile),
+          matching: find.text('Past Major'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('filter sheet narrows by category and composes with search', (
       tester,
     ) async {
       // Arrange: one festival per category, dated in order.
       final today = todayOnly();
-      final major = fixture(id: 'alpha', name: 'Alpha Major');
+      // Featured so the composed list still renders the card; this test is
+      // about the filters, not about which entry earns the card.
+      final major = fixture(id: 'alpha', name: 'Alpha Major', featured: true);
       final vrat = fixture(id: 'beta', name: 'Beta Vrat', category: 'vrat');
       final recurring = fixture(
         id: 'gamma',
@@ -519,7 +612,9 @@ void main() {
       expect(find.text('Alpha Major'), findsOneWidget);
       expect(find.text('Beta Vrat'), findsOneWidget);
       expect(find.text('Gamma Recurring'), findsOneWidget);
-
+      expect(find.byType(MajorFestivalCard), findsOneWidget);
+      // The other categories keep the compact row.
+      expect(find.byType(FestivalRowTile), findsNWidgets(2));
       // Vrat: category vrat + recurring (Ekadashi/Purnima convention).
       await applyFilters(tester, category: 'Vrat');
       expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
@@ -637,7 +732,11 @@ void main() {
         ),
       );
 
-      final festival = fixture(id: 'haptic', name: 'Haptic Festival');
+      final festival = fixture(
+        id: 'haptic',
+        name: 'Haptic Festival',
+        category: 'vrat',
+      );
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -730,8 +829,10 @@ void main() {
 
       // Assert
       expect(find.byIcon(Icons.menu_rounded), findsNothing);
-      expect(tester.state<ScaffoldState>(find.byType(Scaffold)).hasDrawer,
-          isFalse);
+      expect(
+        tester.state<ScaffoldState>(find.byType(Scaffold)).hasDrawer,
+        isFalse,
+      );
       expect(tester.takeException(), isNull);
     });
   });
@@ -745,7 +846,7 @@ void main() {
       final occurrences = List.generate(
         12,
         (i) => (
-          festival: fixture(id: 'f$i', name: 'Festival $i'),
+          festival: fixture(id: 'f$i', name: 'Festival $i', category: 'vrat'),
           date: today.add(Duration(days: i)),
         ),
       );

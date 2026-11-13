@@ -61,5 +61,13 @@ void main() {
       isNotEmpty,
       reason: 'derived providers rebuild off the same fix',
     );
+
+    // The Hive adapter persists the curated flag (field 11), so the featured
+    // card decision survives a restart instead of only being right on the
+    // first JSON parse.
+    final diwali = Hive.box<Festival>(
+      'festivals',
+    ).values.firstWhere((festival) => festival.id == 'diwali');
+    expect(diwali.featured, isTrue);
   });
 }

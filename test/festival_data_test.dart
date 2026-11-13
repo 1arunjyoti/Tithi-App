@@ -14,10 +14,7 @@ List<Map<String, dynamic>> _loadFestivalJson() {
   return (decoded as List).cast<Map<String, dynamic>>();
 }
 
-Map<String, dynamic> _rulesOf(
-  List<Map<String, dynamic>> festivals,
-  String id,
-) {
+Map<String, dynamic> _rulesOf(List<Map<String, dynamic>> festivals, String id) {
   final entry = festivals.firstWhere(
     (f) => f['id'] == id,
     orElse: () => throw StateError('festival $id not found in dataset'),
@@ -196,10 +193,7 @@ void main() {
 
     test('Shivaratri and Lakshmi Puja carry night kalas', () {
       // Arrange + Act + Assert
-      expect(
-        normalizedPujaKala(loaded('maha_shivaratri')),
-        equals('nishita'),
-      );
+      expect(normalizedPujaKala(loaded('maha_shivaratri')), equals('nishita'));
       expect(normalizedPujaKala(loaded('lakshmi_puja')), equals('pradosha'));
     });
 
@@ -236,24 +230,27 @@ void main() {
       expect(tulsi.panchangRules.timingOverride, isNull);
     });
 
-    test('Makar Sankranti and Pongal match the transit and show punya kala', () {
-      // Arrange + Act
-      final makar = loaded('makar_sankranti');
-      final pongal = loaded('pongal');
+    test(
+      'Makar Sankranti and Pongal match the transit and show punya kala',
+      () {
+        // Arrange + Act
+        final makar = loaded('makar_sankranti');
+        final pongal = loaded('pongal');
 
-      // Assert
-      for (final festival in [makar, pongal]) {
-        expect(
-          festival.panchangRules.sankrantiRashi,
-          equals('Makara'),
-          reason: '${festival.id} must follow the Sun into Makara',
-        );
-        expect(normalizedPujaKala(festival), equals('punya_kala'));
-        // The fixed date stays as the fallback when the ingress search is
-        // skipped, so both surfaces agree on the shipped date.
-        expect(festival.panchangRules.solarDate, equals('01-14'));
-      }
-    });
+        // Assert
+        for (final festival in [makar, pongal]) {
+          expect(
+            festival.panchangRules.sankrantiRashi,
+            equals('Makara'),
+            reason: '${festival.id} must follow the Sun into Makara',
+          );
+          expect(normalizedPujaKala(festival), equals('punya_kala'));
+          // The fixed date stays as the fallback when the ingress search is
+          // skipped, so both surfaces agree on the shipped date.
+          expect(festival.panchangRules.solarDate, equals('01-14'));
+        }
+      },
+    );
 
     test('Raksha Bandhan avoids Bhadra', () {
       // Arrange + Act
@@ -262,6 +259,81 @@ void main() {
       // Assert
       expect(rakhi.panchangRules.avoidBhadra, isTrue);
       expect(normalizedPujaKala(rakhi), equals('aparahna'));
+    });
+  });
+
+  group('Curated featured flag in the shipped catalog', () {
+    test('flags a small curated set and nothing else', () {
+      // Arrange
+      final festivals = _loadFestivalJson();
+      final flagged = [
+        for (final entry in festivals)
+          if (entry['featured'] != null)
+            (id: entry['id'] as String, featured: entry['featured']),
+      ];
+
+      // Assert: only a real `true` counts, and the set stays rare. "major"
+      // covers 96 of the 110 records, which is exactly why the featured card
+      // cannot use the category; if this set grows past a quarter of the
+      // catalog, "featured" has stopped meaning anything.
+      expect(flagged, isNotEmpty);
+      expect(flagged.where((f) => f.featured != true), isEmpty);
+      expect(flagged.length, lessThanOrEqualTo(festivals.length ~/ 4));
+    });
+
+    test('covers the flagship observances, not just the artwork entries', () {
+      // Arrange
+      final featured = {
+        for (final entry in _loadFestivalJson())
+          if (entry['featured'] == true) entry['id'] as String,
+      };
+
+      // Assert: the set is an editorial fact, so it is neither the 7 records
+      // that ship artwork nor the 96 in the major category.
+      expect(featured, containsAll(['diwali', 'holi', 'dussehra']));
+      // Karva Chauth is categorised `vrat` and is still featured - the
+      // clearest proof the flag is independent of `category`.
+      expect(featured, contains('karva_chauth'));
+      expect(featured, isNot(contains('hanuman_jayanti')));
+      expect(featured.length, greaterThan(7));
+    });
+
+    test('keeps a multi-day celebration whole', () {
+      // Arrange
+      final featured = {
+        for (final entry in _loadFestivalJson())
+          if (entry['featured'] == true) entry['id'] as String,
+      };
+
+      // Assert: Durga Puja runs for days. Featuring one day and dropping the
+      // rest is what "the next major from today" did, and it looked broken.
+      expect(
+        featured,
+        containsAll([
+          'shashthi_durga_puja',
+          'saptami_durga_puja',
+          'ashtami_durga_puja',
+          'navami_durga_puja',
+          'dasami_durga_puja',
+        ]),
+      );
+    });
+
+    test('parses into Festival.featured and defaults to false', () {
+      // Arrange
+      final festivals = _loadFestivalJson();
+
+      // Act
+      final diwali = Festival.fromJson(
+        festivals.firstWhere((entry) => entry['id'] == 'diwali'),
+      );
+      final unflagged = Festival.fromJson(
+        festivals.firstWhere((entry) => entry['id'] == 'hanuman_jayanti'),
+      );
+
+      // Assert
+      expect(diwali.featured, isTrue);
+      expect(unflagged.featured, isFalse);
     });
   });
 }
