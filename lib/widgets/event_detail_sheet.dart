@@ -8,7 +8,6 @@ import '../providers/calendar_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
-import '../services/moon_events_service.dart';
 import '../services/share_service.dart';
 import '../services/solar_events_service.dart';
 import '../utils/tithi_localization.dart';
@@ -16,6 +15,7 @@ import '../features/ai/domain/ai_prompt.dart';
 import '../features/ai/providers/ai_providers.dart';
 import '../features/ai/widgets/ask_ai_sheet.dart';
 import '../features/event_detail/domain/event_content.dart';
+import '../features/event_detail/domain/puja_moonrise.dart';
 import '../features/event_detail/domain/puja_samay.dart';
 import '../features/event_detail/providers/event_detail_providers.dart';
 import '../features/sheets/sheet_launcher.dart';
@@ -1063,36 +1063,6 @@ class _EventPanchang extends ConsumerWidget {
   }
 }
 
-/// Moonrise for a puja/paran instant, with the tithi sheet's
-/// prevailing-event fallback: on no-rise days the previous evening's rise
-/// (which the fast still waits for) instead of nothing. Never throws —
-/// a missing lunar event hides the card instead of breaking the sheet.
-///
-/// This is an observance input (Karva Chauth's puja and paran both wait for
-/// moonrise), so it goes through [MoonEventsService] and gets the native
-/// rise/set in production. The pure-Dart approximation is 1-3 minutes off,
-/// which is enough to cross a tithi boundary.
-DateTime? _pujaMoonrise({
-  required DateTime date,
-  required double latitude,
-  required double longitude,
-}) {
-  try {
-    return moonEventsService.moonrise(
-          date: date,
-          latitude: latitude,
-          longitude: longitude,
-        ) ??
-        moonEventsService.findPreviousRise(
-          date: date,
-          latitude: latitude,
-          longitude: longitude,
-        );
-  } catch (_) {
-    return null;
-  }
-}
-
 /// Thematic icon per puja kala, mirroring the tithi sheet's sun/moon chips.
 IconData _pujaKalaIcon(String kala) {
   return switch (kala) {
@@ -1286,7 +1256,7 @@ class _EventPujaSamay extends ConsumerWidget {
             latitude: coords.latitude,
             longitude: coords.longitude,
           ),
-          moonrise: _pujaMoonrise(
+          moonrise: pujaMoonrise(
             date: panchang.date,
             latitude: coords.latitude,
             longitude: coords.longitude,
@@ -1455,7 +1425,7 @@ class _EventParan extends ConsumerWidget {
     switch (paranRule) {
       case 'moonrise':
         // 48-minute grace window from the rise itself.
-        final rise = _pujaMoonrise(
+        final rise = pujaMoonrise(
           date: panchang.date,
           latitude: coords.latitude,
           longitude: coords.longitude,
@@ -1496,7 +1466,7 @@ class _EventParan extends ConsumerWidget {
         DateTime? moonrise;
         DateTime? nextSunrise;
         if (kala == 'moonrise') {
-          moonrise = _pujaMoonrise(
+          moonrise = pujaMoonrise(
             date: panchang.date,
             latitude: coords.latitude,
             longitude: coords.longitude,

@@ -36,6 +36,9 @@ class EclipseScreen extends ConsumerWidget {
             ),
           ),
           SafeArea(
+            // The page background paints behind the gesture handle; the list
+            // adds the system inset to its own bottom padding instead.
+            bottom: false,
             child: eclipsesAsync.when(
               data: (eclipses) => EclipseList(eclipses: eclipses),
               loading: () =>
@@ -65,5 +68,4 @@ class EclipseScreen extends ConsumerWidget {
       ),
     );
   }
-
 }

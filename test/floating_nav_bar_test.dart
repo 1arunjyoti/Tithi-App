@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
+import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/floating_nav_bar.dart';
 
 /// PressScale reads the accessibility box for its haptic gate; the real
@@ -29,6 +30,7 @@ Widget _harness({
   Widget? trailingAction,
   bool showTrailingAction = true,
   double textScale = 1.0,
+  bool highContrast = false,
   List<FloatingNavDestination> destinations = _destinations,
 }) {
   return ProviderScope(
@@ -40,7 +42,10 @@ Widget _harness({
           builder: (context) {
             final media = MediaQuery.of(context);
             return MediaQuery(
-              data: media.copyWith(textScaler: TextScaler.linear(textScale)),
+              data: media.copyWith(
+                textScaler: TextScaler.linear(textScale),
+                highContrast: highContrast,
+              ),
               child: Column(
                 children: [
                   const Expanded(child: SizedBox.shrink()),
@@ -67,6 +72,46 @@ Finder _targets() => find.descendant(
   of: find.byType(FloatingNavBar),
   matching: find.byType(GestureDetector),
 );
+
+/// The 44dp pills, one per destination, in destination order.
+Finder _pills() => find.descendant(
+  of: find.byType(FloatingNavBar),
+  matching: find.byType(AnimatedContainer),
+);
+
+/// The DecoratedBox wrapping the capsule's clip: the surface that carries the
+/// cast shadow (outside the clip, or the clip would slice it off).
+DecoratedBox _shadowedCapsule(WidgetTester tester) {
+  return tester.widget<DecoratedBox>(
+    find
+        .ancestor(
+          of: find.byKey(FloatingNavBar.capsuleKey),
+          matching: find.byType(DecoratedBox),
+        )
+        .first,
+  );
+}
+
+/// Painted decoration of the pill at [index].
+BoxDecoration _pillDecoration(WidgetTester tester, int index) {
+  return tester.widget<AnimatedContainer>(_pills().at(index)).decoration!
+      as BoxDecoration;
+}
+
+/// Painted label colour of the destination at [index].
+Color? _pillLabelColor(WidgetTester tester, int index) {
+  return tester
+      .widget<AnimatedDefaultTextStyle>(
+        find
+            .descendant(
+              of: _pills().at(index),
+              matching: find.byType(AnimatedDefaultTextStyle),
+            )
+            .first,
+      )
+      .style
+      .color;
+}
 
 void main() {
   group('FloatingNavBar', () {
@@ -455,6 +500,79 @@ void main() {
       // The handle must be released inside the test body: the framework
       // verifies that no handle outlives the test before tearDowns run.
       semantics.dispose();
+    });
+
+    testWidgets('the selected pill is an accent tint, not a solid block', (
+      tester,
+    ) async {
+      // Arrange / Act
+      await tester.pumpWidget(_harness(selected: 0, onSelected: (_) {}));
+
+      // Assert: the fill carries the accent hue as a wash, and the label/icon
+      // use the accent itself - a solid accent block would outshine the page
+      // behind the film.
+      final context = tester.element(find.byType(FloatingNavBar));
+      final accent = AppTheme.festivalAccent(context);
+      final fill = _pillDecoration(tester, 0).color!;
+      expect(fill.withValues(alpha: 1), accent);
+      expect(fill.a, lessThan(0.5));
+      expect(_pillLabelColor(tester, 0), accent);
+    });
+
+    testWidgets('high contrast keeps the solid accent and its on-ink', (
+      tester,
+    ) async {
+      // Arrange / Act
+      await tester.pumpWidget(
+        _harness(selected: 0, onSelected: (_) {}, highContrast: true),
+      );
+
+      // Assert: legibility wins over the tint - solid accent, on-accent ink.
+      final context = tester.element(find.byType(FloatingNavBar));
+      expect(_pillDecoration(tester, 0).color!.a, 1.0);
+      expect(_pillLabelColor(tester, 0), AppTheme.onFestivalAccent(context));
+    });
+
+    testWidgets('the capsule is translucent and casts a shadow under it', (
+      tester,
+    ) async {
+      // Arrange / Act
+      await tester.pumpWidget(_harness(selected: 0, onSelected: (_) {}));
+
+      // Assert: the film lets the (blurred) page through...
+      final context = tester.element(find.byType(FloatingNavBar));
+      final film = AppTheme.floatingOverlayDecoration(context, borderRadius: 0);
+      expect(film.color!.a, lessThan(0.8));
+      expect(film.color!.a, greaterThan(0.5));
+      // ...the backdrop filter that makes it a film is still applied...
+      expect(find.byType(BackdropFilter), findsOneWidget);
+      // ...and the shadow is painted *around* the clip, not inside it: a
+      // shadow in the film's decoration would be sliced off at the edges.
+      final shadows =
+          (_shadowedCapsule(tester).decoration as BoxDecoration).boxShadow!;
+      expect(shadows, hasLength(2));
+      expect(shadows.every((shadow) => shadow.color.a < 0.5), isTrue);
+    });
+
+    testWidgets('high contrast drops the blur and the shadow', (tester) async {
+      // Arrange / Act
+      await tester.pumpWidget(
+        _harness(selected: 0, onSelected: (_) {}, highContrast: true),
+      );
+
+      // Assert: legibility over arbitrary content, and the strong border is
+      // the separation - a soft shadow would blur the edge that mode needs.
+      final context = tester.element(find.byType(FloatingNavBar));
+      expect(AppTheme.floatingOverlayBlurs(context), isFalse);
+      expect(find.byType(BackdropFilter), findsNothing);
+      expect(
+        (_shadowedCapsule(tester).decoration as BoxDecoration).boxShadow,
+        isEmpty,
+      );
+      expect(
+        AppTheme.floatingOverlayDecoration(context, borderRadius: 0).color!.a,
+        1.0,
+      );
     });
   });
 }

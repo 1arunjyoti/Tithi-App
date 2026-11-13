@@ -106,6 +106,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             ),
           ),
           SafeArea(
+            // The page background and the time panel paint behind the gesture
+            // handle; the panel pads its own controls clear of it instead.
+            bottom: false,
             child: Stack(
             children: [
               // Main content column
@@ -301,7 +304,10 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           tablet: 24.0,
           desktop: 32.0,
         ),
-        16,
+        // The panel now runs to the bottom edge of the screen (the body no
+        // longer insets it), so its own controls carry the gesture-bar
+        // clearance while the rounded surface paints behind the handle.
+        16 + AppTheme.navigationBarInset(context),
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.8),
@@ -519,7 +525,10 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   Widget _buildZoomControls(BuildContext context, ThemeData theme) {
     final l10n = AppLocalizations.of(context)!;
     return Positioned(
-      bottom: 210, // Move up slightly to clear slider area more comfortably
+      // Offset from the stack's bottom, which now runs to the screen edge, so
+      // the gesture inset is added back to keep the same visual clearance from
+      // the time panel.
+      bottom: 210 + AppTheme.navigationBarInset(context),
       right: ResponsiveLayout.value(
         context,
         mobile: 16.0,

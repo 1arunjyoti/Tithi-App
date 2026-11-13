@@ -18,6 +18,7 @@ This guide explains how to add or edit festivals in `festivals.json`.
   "name": "Festival Name",
   "category": "major|vrat|recurring",
   "displayPriority": 1,
+  "featured": true,
   "nameRegional": {
     "nameSanskrith": "",
     "nameEnglish": "English name",
@@ -70,7 +71,9 @@ mostly the terse Navratri sequence markers). `displayPriority`
 its day with others and needs an explicit order (see Display Priority).
 `regions` (top-level, next to `id`) is optional and defaults to
 `["all"]`; only set it for festivals rooted in specific zones (see
-Festival Region). `category` in use: `major` (94 entries), `vrat` (12),
+Festival Region). `featured` (top-level, sibling of `id`) is optional and
+marks a flagship for the All Festivals featured card (see Featured Flag).
+`category` in use: `major` (96 entries), `vrat` (12),
 `recurring` (2) - the sheet shows fasting/rituals/mantra sections only
 when those fields are non-empty, so an entry with empty
 `steps`/`mantra`/`fasting` renders fewer sections by design, not by bug.
@@ -640,9 +643,50 @@ zones. It composes with the category filter and with search, and the
 default selection filters nothing.
 
 The yearly JSON export (`festival_export_service.dart`) emits `regions`
-(normalized, always present — `["all"]` for pan-India) and
-`displayPriority` (null when unranked) per festival, so an exported year
-carries the same ordering metadata as the source data.
+(normalized, always present — `["all"]` for pan-India), `displayPriority`
+(null when unranked) and `featured` (the flagship flag) per festival, so an
+exported year carries the same ordering and importance metadata as the
+source data.
+
+### Featured Flag (Flagship Card)
+
+`featured` (optional top-level bool, sibling of `id`) marks a flagship
+observance. The All Festivals screen gives `"featured": true` entries the
+large featured card and every other entry — `major` included — the compact
+row (`AllFestivalsScreen`, `lib/widgets/major_festival_card.dart`).
+
+- 20 of the 110 records set it today. Omit it for everything else; absence
+  is `false`.
+- It is deliberately curated, because nothing else can stand in for
+  importance: 96 records are already `major`, `displayPriority` only
+  orders entries that share a day (7 records), and only 7 ship artwork
+  (6 of them the same `durga_puja.webp`).
+- It is date-independent: a past flagship keeps its card, and a run like
+  Durga Puja Shashthi→Dasami stays featured as a whole instead of
+  splitting at the first day.
+- It is independent of `category` — `karva_chauth` is `vrat` and featured.
+- Adding one is a data edit only: `Festival.fromJson` reads it, the export
+  round-trips it, and the UI reads the `Festival.featured` getter
+  (`lib/models/festival.dart`). No code change, no provider change.
+- Field 11 is stored as the nullable `featuredFlag` behind that getter
+  (`featured == featuredFlag ?? false`). Never read the storage field
+  directly: null is also how an instance kept alive across a hot reload
+  looks, and a non-nullable field crashes the list on it.
+- Do not confuse it with the region ordering tiers (tier 0/1/2 in
+  `sortedFestivalsForRegion`, same-day display order only). They are
+  unrelated.
+- Keep the set small. `test/festival_data_test.dart` fails if a value
+  other than `true` appears or the set grows past a quarter of the
+  catalog, and `test/festival_first_launch_test.dart` proves field 11
+  survives a Hive round-trip.
+- Changing how field 11 is stored is safe on upgrade: bump
+  `kFestivalCacheSchemaVersion` (`lib/models/festival.dart`), and
+  `StorageService.openFestivalsBox()` deletes the cached box before
+  opening it, then `FestivalRepository.init()` reseeds from this file.
+  The stored marker is `StorageService.festivalsSchemaKey` in
+  `festival_settings`. A decode failure still self-heals without the
+  bump, but the pre-check is what keeps an upgrade from logging a
+  decode error.
 
 ### Full Field Reference (`panchang_rules`)
 
@@ -671,7 +715,7 @@ Top-level (outside `panchang_rules`):
 | Field | Type | Default | Purpose |
 | ----- | ---- | ------- | ------- |
 | `displayPriority` | int | — (null = no override) | Same-day order + headline pick; lower shows first (see Display Priority) |
-
+| `featured` | bool | `false` | `true` gives the festival the All Festivals featured card; curated, not derived (see Featured Flag) |
 ## After Editing
 
 No manual version bump needed: `FestivalRepository` fingerprints
@@ -685,10 +729,10 @@ adding a `HiveField`, regenerate adapters with `build_runner`).
 1. `flutter analyze` on touched files — clean.
 2. `flutter test test/festival_data_test.dart test/festival_region_test.dart test/vriddhi_filter_test.dart test/dominant_grace_test.dart test/durga_puja_2026_test.dart test/nakshatra_matching_test.dart test/panchang_data_test.dart test/festival_export_test.dart test/display_priority_test.dart` — all green.
    Note: the `Dataset` groups in those files assert live annotations
-   (`vriddhi`, `dominant_tithi`, `Mula Nakshatra`, `displayPriority`, Amanta
-   months, `regions`). If you intentionally change an annotation, update the
-   corresponding expectation — a red dataset test means the data drifted,
-   not (only) that the test is stale.
+   (`vriddhi`, `dominant_tithi`, `Mula Nakshatra`, `displayPriority`,
+   `featured`, Amanta months, `regions`). If you intentionally change an
+   annotation, update the corresponding expectation - a red dataset test means
+   the data drifted, not (only) that the test is stale.
 3. Relaunch and check the affected date on **all surfaces that show it**:
    calendar dot, event sheet (incl. Begins/Ends), countdown/search, and —
    for boundary weeks — the notification content. They share one pipeline,

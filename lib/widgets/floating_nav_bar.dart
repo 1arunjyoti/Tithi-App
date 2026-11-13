@@ -22,7 +22,7 @@ class FloatingNavDestination {
 /// content's bottom edge instead of occupying a `bottomNavigationBar` slot.
 ///
 /// The destinations always paint their label; the selected one adds its icon
-/// inside an accent-filled pill. The capsule itself is content-sized: as wide
+/// inside an accent-tinted pill. The capsule itself is content-sized: as wide
 /// as the destinations need (plus the edge insets) and no wider, clamped to
 /// the space the host gives it so it never overflows. Presentation only: the
 /// caller owns the index ([selectedIndex] / [onSelected]) and the tab bodies.
@@ -116,9 +116,10 @@ class FloatingNavBar extends StatelessWidget {
   static const double _iconGap = 8;
   static const double _iconWidth = _iconExtent + _iconGap;
 
-  /// Height of the accent pill inside the [height] capsule. The touch target
-  /// is the whole capsule (see [_DestinationButton]), so the pill is free to be
-  /// shorter than the 48dp minimum: it only has to hold the icon and the label.
+  /// Height of the accent-tinted pill inside the [height] capsule. The touch
+  /// target is the whole capsule (see [_DestinationButton]), so the pill is
+  /// free to be shorter than the 48dp minimum: it only has to hold the icon
+  /// and the label.
   static const double _pillHeight = 44;
 
   /// The label typography, without a colour: the same style paints every
@@ -214,16 +215,25 @@ class FloatingNavBar extends StatelessWidget {
       labelWidths: labelWidths,
       labelStyle: labelStyle,
     );
-    return ClipRRect(
-      key: capsuleKey,
-      borderRadius: BorderRadius.circular(_radius),
-      // Real backdrop blur, not the app's painted "glass": this capsule is
-      // an overlay, so whatever scrolls underneath has to stay readable
-      // through it. High Contrast skips the blur and uses the solid fill
-      // from [AppTheme.floatingOverlayDecoration] instead.
-      child: AppTheme.floatingOverlayBlurs(context)
-          ? BackdropFilter(filter: _blur, child: surface)
-          : surface,
+    // The shadow sits *outside* the clip: painting it in the film's own
+    // decoration would be sliced off at the capsule's edges. Same radius, so
+    // the silhouette the shadow traces is the capsule's.
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(_radius),
+        boxShadow: AppTheme.floatingOverlayShadows(context),
+      ),
+      child: ClipRRect(
+        key: capsuleKey,
+        borderRadius: BorderRadius.circular(_radius),
+        // Real backdrop blur, not the app's painted "glass": this capsule is
+        // an overlay, so whatever scrolls underneath has to stay readable
+        // through it. High Contrast skips the blur and uses the solid fill
+        // from [AppTheme.floatingOverlayDecoration] instead.
+        child: AppTheme.floatingOverlayBlurs(context)
+            ? BackdropFilter(filter: _blur, child: surface)
+            : surface,
+      ),
     );
   }
 
@@ -237,8 +247,11 @@ class FloatingNavBar extends StatelessWidget {
     // Palette lookups once per build, not once per destination: they each hit
     // the theme and two of them branch on High Contrast.
     final scheme = Theme.of(context).colorScheme;
-    final fill = AppTheme.festivalAccent(context);
-    final ink = AppTheme.onFestivalAccent(context);
+    // Tinted pill, not a solid accent block: the selected destination should
+    // read as chosen without outshining the content behind the film. High
+    // Contrast gets the solid accent back (see [AppTheme.accentTint]).
+    final fill = AppTheme.accentTint(context);
+    final ink = AppTheme.onAccentTint(context);
     final muted = scheme.onSurface.withValues(
       alpha: AppTheme.contrastAlpha(context, 0.66),
     );
@@ -453,8 +466,8 @@ class _DestinationButton extends StatelessWidget {
   final bool selected;
   final TextStyle labelStyle;
 
-  /// Accent fill and ink of the selected pill, and the muted label colour of
-  /// the other destinations. Resolved by the bar once per build.
+  /// Accent-tinted fill and ink of the selected pill, and the muted label
+  /// colour of the other destinations. Resolved by the bar once per build.
   final Color fill;
   final Color ink;
   final Color muted;

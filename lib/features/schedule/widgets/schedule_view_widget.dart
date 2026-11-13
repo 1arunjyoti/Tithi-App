@@ -267,6 +267,14 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
                 );
               }, childCount: _daysAfter),
             ),
+
+            // The scroll view draws behind the gesture handle, so the last day
+            // needs its own padding to stay scrollable clear of it.
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 24 + MediaQuery.viewPaddingOf(context).bottom,
+              ),
+            ),
           ],
         ),
 

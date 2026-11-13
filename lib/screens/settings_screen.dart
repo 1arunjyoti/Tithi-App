@@ -69,11 +69,19 @@ class SettingsScreen extends ConsumerWidget {
             ),
 
             SafeArea(
+              // The page background paints behind the gesture handle; the
+              // list pads its own last row clear of it instead.
+              bottom: false,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: ListView(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      24,
+                      24,
+                      24 + AppTheme.navigationBarInset(context),
+                    ),
                     children: [
                       SettingsSectionHeader(l10n?.appearance ?? 'APPEARANCE'),
                       _buildThemeSection(context),
@@ -159,7 +167,9 @@ class SettingsScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 32),
 
-                      SettingsSectionHeader(l10n?.aiAssistSection ?? 'AI ASSIST'),
+                      SettingsSectionHeader(
+                        l10n?.aiAssistSection ?? 'AI ASSIST',
+                      ),
                       const SettingsGroupCard(children: [AiSection()]),
                       const SizedBox(height: 32),
 
@@ -213,44 +223,45 @@ class SettingsScreen extends ConsumerWidget {
               primaryColor: theme.primaryColor,
             ),
             padding: const EdgeInsets.all(16),
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            alignment: WrapAlignment.spaceEvenly,
-            children: [
-              ThemeOptionButton(
-                label: l10n?.themeAuto ?? 'Auto',
-                icon: Icons.brightness_auto_rounded,
-                isSelected: autoMode,
-                onTap: () =>
-                    ref.read(themeOverrideProvider.notifier).setOverride(null),
-              ),
-              ThemeOptionButton(
-                label: l10n?.themeShukla ?? 'Shukla',
-                icon: Icons.light_mode_rounded,
-                isSelected: currentOverride == 'Shukla',
-                onTap: () => ref
-                    .read(themeOverrideProvider.notifier)
-                    .setOverride('Shukla'),
-              ),
-              ThemeOptionButton(
-                label: l10n?.themeDark ?? 'Dark',
-                icon: Icons.contrast,
-                isSelected: currentOverride == 'PureDark',
-                onTap: () => ref
-                    .read(themeOverrideProvider.notifier)
-                    .setOverride('PureDark'),
-              ),
-              ThemeOptionButton(
-                label: l10n?.themePurple ?? 'Purple',
-                icon: Icons.bubble_chart,
-                isSelected: currentOverride == 'Krishna',
-                onTap: () => ref
-                    .read(themeOverrideProvider.notifier)
-                    .setOverride('Krishna'),
-              ),
-            ],
-          ),
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.spaceEvenly,
+              children: [
+                ThemeOptionButton(
+                  label: l10n?.themeAuto ?? 'Auto',
+                  icon: Icons.brightness_auto_rounded,
+                  isSelected: autoMode,
+                  onTap: () => ref
+                      .read(themeOverrideProvider.notifier)
+                      .setOverride(null),
+                ),
+                ThemeOptionButton(
+                  label: l10n?.themeShukla ?? 'Shukla',
+                  icon: Icons.light_mode_rounded,
+                  isSelected: currentOverride == 'Shukla',
+                  onTap: () => ref
+                      .read(themeOverrideProvider.notifier)
+                      .setOverride('Shukla'),
+                ),
+                ThemeOptionButton(
+                  label: l10n?.themeDark ?? 'Dark',
+                  icon: Icons.contrast,
+                  isSelected: currentOverride == 'PureDark',
+                  onTap: () => ref
+                      .read(themeOverrideProvider.notifier)
+                      .setOverride('PureDark'),
+                ),
+                ThemeOptionButton(
+                  label: l10n?.themePurple ?? 'Purple',
+                  icon: Icons.bubble_chart,
+                  isSelected: currentOverride == 'Krishna',
+                  onTap: () => ref
+                      .read(themeOverrideProvider.notifier)
+                      .setOverride('Krishna'),
+                ),
+              ],
+            ),
           ),
         );
       },

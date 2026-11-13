@@ -129,6 +129,9 @@ class _FestivalCountdownScreenState
             ),
           ),
           SafeArea(
+            // Background paints behind the gesture handle; each list adds the
+            // system inset to its own bottom padding instead.
+            bottom: false,
             // skipLoadingOnReload: pin/unpin/delete rebuilds the targets
             // provider; without this the list is replaced by the loading
             // shimmer on every toggle (the full-screen "flash"). The
@@ -172,7 +175,9 @@ class _FestivalCountdownScreenState
                         16,
                         16,
                         16,
-                        16 + widget.bottomContentInset,
+                        16 +
+                            widget.bottomContentInset +
+                            AppTheme.navigationBarInset(context),
                       ),
                       children: [
                         const HomeWidgetCard(),
@@ -191,7 +196,9 @@ class _FestivalCountdownScreenState
                       16,
                       16,
                       16,
-                      16 + widget.bottomContentInset,
+                      16 +
+                          widget.bottomContentInset +
+                          AppTheme.navigationBarInset(context),
                     ),
                     children: const [
                       _EmptyCountdowns(),
@@ -208,7 +215,9 @@ class _FestivalCountdownScreenState
                     16,
                     16,
                     16,
-                    32 + widget.bottomContentInset,
+                    32 +
+                        widget.bottomContentInset +
+                        AppTheme.navigationBarInset(context),
                   ),
                   itemBuilder: (context, index) {
                     // Header widget card at index 0
@@ -306,10 +315,7 @@ class _FestivalCountdownScreenState
         .removeFestival(festivalId);
     if (!context.mounted) return;
 
-    showAppMessage(
-      context,
-      l10n?.countdownRemoved ?? 'Countdown removed',
-    );
+    showAppMessage(context, l10n?.countdownRemoved ?? 'Countdown removed');
   }
 }
 
@@ -319,7 +325,9 @@ class CountdownFestivalSearchDelegate extends SearchDelegate<Festival?> {
   final WidgetRef ref;
 
   @override
-  String? get searchFieldLabel => AppLocalizations.of(ref.context)?.searchFestivalName ?? 'Search festival name';
+  String? get searchFieldLabel =>
+      AppLocalizations.of(ref.context)?.searchFestivalName ??
+      'Search festival name';
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -378,7 +386,9 @@ class CountdownFestivalSearchDelegate extends SearchDelegate<Festival?> {
 
     if (results.isEmpty) {
       final l10n = AppLocalizations.of(context);
-      return Center(child: Text(l10n?.noFestivalsFound ?? 'No festivals found'));
+      return Center(
+        child: Text(l10n?.noFestivalsFound ?? 'No festivals found'),
+      );
     }
 
     return ListView.builder(
@@ -587,7 +597,8 @@ class _UndatedCountdowns extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return _UnresolvableCard(
       icon: Icons.event_busy_rounded,
-      message: l10n?.couldNotFindUpcomingOccurrence ??
+      message:
+          l10n?.couldNotFindUpcomingOccurrence ??
           'Could not find upcoming occurrence within a year.',
       entries: entries,
       onRemove: onRemove,

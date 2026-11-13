@@ -146,6 +146,21 @@ String localizedTithiName(
   };
 }
 
+/// "Shukla Chaturthi" for a full 1-30 tithi index.
+///
+/// [localizedTithiName] takes a paksha-relative number (1-15), while app-wide
+/// tithi indices run 1-30 (16-30 are Krishna paksha). This is the one
+/// conversion, so a row and the featured card can never disagree about which
+/// paksha an index belongs to - including the edges: 15 is Purnima, 30 is
+/// Amavasya.
+String localizedPakshaTithiName(int tithiIndex, AppLocalizations l10n) {
+  final isKrishna = tithiIndex > 15;
+  final withinPaksha = ((tithiIndex - 1) % 15) + 1;
+  final paksha = isKrishna ? 'Krishna' : 'Shukla';
+  return '${isKrishna ? l10n.themeKrishna : l10n.themeShukla} '
+      '${localizedTithiName(withinPaksha, paksha, l10n)}';
+}
+
 /// Vimshottari lord name for a Vedic-order nakshatra index (0-26) in the UI
 /// language. The 9-graha sequence repeats three times, so only the
 /// index-mod-9 lord matters.

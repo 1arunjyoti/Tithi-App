@@ -325,6 +325,12 @@ class _HomeBodyState extends ConsumerState<_HomeBody> {
         ),
 
         SafeArea(
+          // The page background (the `Positioned.fill` layer above) paints
+          // edge-to-edge, so only the content is inset from the sides and the
+          // status bar. The navigation area is handled by the scroll padding
+          // below instead: insetting the viewport here would stop the last
+          // card above the gesture handle and leave a bare background band.
+          bottom: false,
           child: Column(
             children: [
               const SizedBox(height: 8),
@@ -429,8 +435,16 @@ class _HomeBodyState extends ConsumerState<_HomeBody> {
                       ),
 
                       // Bottom padding for the FAB and the floating capsule.
+                      // The system inset is part of it: the viewport now runs
+                      // behind the gesture handle, so the last card needs this
+                      // much padding to rest clear of it.
                       SliverToBoxAdapter(
-                        child: SizedBox(height: 40 + widget.bottomInset),
+                        child: SizedBox(
+                          height:
+                              40 +
+                              widget.bottomInset +
+                              AppTheme.navigationBarInset(context),
+                        ),
                       ),
                     ],
                   ),

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -17,6 +19,7 @@ import '../core/storage/hive_adapters.dart';
 import '../providers/version_provider.dart' as version_warmup;
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
 
 /// Phase-1 app startup pipeline extracted from `main.dart`.
@@ -31,11 +34,19 @@ class AppBootstrap {
   /// `WidgetsFlutterBinding.ensureInitialized`.
   Future<void> initSystem() async {
     await initializeLocalizedDateFormatting();
+    // Android 15+ enforces edge-to-edge, but below that the Flutter engine only
+    // lays the view out behind the system bars once Dart opts in. Ask for it
+    // explicitly so the page background reaches the gesture / 3-button area on
+    // every supported version (`MainActivity` handles API < 29, where the
+    // engine ignores this mode).
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    // Transparent bars with no contrast scrim; the launch window uses the
+    // platform brightness, then `MaterialApp` re-applies the theme-aware style.
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+      AppTheme.systemUiOverlayStyle(
+        WidgetsBinding.instance.platformDispatcher.platformBrightness,
       ),
     );
   }
@@ -60,7 +71,18 @@ class AppBootstrap {
   }
 
   /// Version/package metadata warm-up before first drawer animation.
-  Future<void> warmVersionInfo() => version_warmup.warmVersionInfo();
+  ///
+  /// Best-effort: when the platform channel is unavailable the drawer falls
+  /// back to its placeholder version, which must not cost the user the app.
+  /// Self-swallowing (like [warmFonts]) so awaiting it in a `Future.wait`
+  /// during startup can never prevent `runApp`.
+  Future<void> warmVersionInfo() async {
+    try {
+      await version_warmup.warmVersionInfo();
+    } catch (error) {
+      debugPrint('Version warm-up failed (non-fatal): $error');
+    }
+  }
 
   /// Preloads the app's GoogleFonts families (Poppins, Martel, Noto Sans
   /// Bengali) so first paint doesn't flash fallback type or shift layout.
@@ -116,5 +138,3 @@ class AppBootstrap {
     await NotificationService().initWorkManager();
   }
 }
-
-

@@ -318,6 +318,26 @@ class AppTheme {
     return Colors.white;
   }
 
+  /// Selected-state fill for controls that sit on a surface (the floating nav
+  /// pill, segmented choices): the accent as a wash, so "selected" reads as a
+  /// tint instead of a block of saturated colour competing with the content.
+  ///
+  /// High Contrast keeps the solid accent: there the tint is the thing that
+  /// would fail, so the pairing falls back to accent + [onFestivalAccent].
+  static Color accentTint(BuildContext context, {double alpha = 0.18}) {
+    final accent = festivalAccent(context);
+    return highContrastOf(context) ? accent : accent.withValues(alpha: alpha);
+  }
+
+  /// Ink for content drawn on [accentTint]: the accent itself, because the
+  /// fill is only a wash. On the solid High Contrast fill it pairs like any
+  /// other filled accent surface.
+  static Color onAccentTint(BuildContext context) {
+    return highContrastOf(context)
+        ? onFestivalAccent(context)
+        : festivalAccent(context);
+  }
+
   /// Weekend column striping tint.
   static Color calendarWeekendStripe(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -618,11 +638,7 @@ class AppTheme {
         foregroundColor: const Color(0xFF2D3436),
         elevation: 0,
         centerTitle: true,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-        ),
+        systemOverlayStyle: systemUiOverlayStyle(Brightness.light),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -699,11 +715,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-        ),
+        systemOverlayStyle: systemUiOverlayStyle(Brightness.dark),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -782,11 +794,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-        ),
+        systemOverlayStyle: systemUiOverlayStyle(Brightness.dark),
         titleTextStyle: GoogleFonts.poppins(
           fontSize: 22,
           fontWeight: FontWeight.w600,
@@ -1062,7 +1070,13 @@ class AppTheme {
     return BoxDecoration(
       // Never the opaque card fill: the content underneath must stay visible
       // through the film (blurred by the widget, not by this decoration).
-      color: fill.withValues(alpha: isDark ? 0.72 : 0.78),
+      //
+      // Alpha is the depth knob. At ~0.75 the backdrop was blurred but hardly
+      // visible, so the capsule read as a flat frosted rectangle. Dark goes
+      // lower because the lift already separates it from the page; light stops
+      // at 0.68, where artwork scrolling underneath still cannot drag the
+      // dark labels under a readable contrast.
+      color: fill.withValues(alpha: isDark ? 0.66 : 0.68),
       borderRadius: BorderRadius.circular(borderRadius),
     );
   }
@@ -1072,6 +1086,40 @@ class AppTheme {
   /// arbitrary content beats the effect.
   static bool floatingOverlayBlurs(BuildContext context) {
     return !highContrastOf(context);
+  }
+
+  /// Shadow cast by a floating overlay onto the content beneath it.
+  ///
+  /// This is the cue that says "detached", which a backdrop blur alone cannot
+  /// give: blur marks the film as *not* the page, a cast shadow marks it as
+  /// *above* the page. It has to be painted outside the overlay's clip — a
+  /// shadow in [floatingOverlayDecoration] would be sliced off by the
+  /// `ClipRRect` the blur needs — so hosts wrap the clipped surface in a
+  /// [DecoratedBox] carrying this.
+  ///
+  /// Static by design: it depends on the palette, not on what scrolls under
+  /// the bar, so a frame of scrolling costs two pre-resolved blurred rects and
+  /// no new save layer. High Contrast returns none: the solid fill and its
+  /// strong border already separate the bar from the page, and a soft shadow
+  /// would soften the edge that mode is built on.
+  static List<BoxShadow> floatingOverlayShadows(BuildContext context) {
+    if (highContrastOf(context)) return const [];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return [
+      // Wide, low-alpha layer: the lift.
+      BoxShadow(
+        color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.10),
+        blurRadius: 24,
+        offset: const Offset(0, 8),
+      ),
+      // Tight contact edge, so the capsule is not hovered 8dp up with nothing
+      // holding it down.
+      BoxShadow(
+        color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
+        blurRadius: 3,
+        offset: const Offset(0, 1),
+      ),
+    ];
   }
 
   /// Returns [normal] unless Reduce Motion / OS disableAnimations is on,
@@ -1137,6 +1185,43 @@ class AppTheme {
           TargetPlatform.fuchsia: _InstantPageTransitionsBuilder(),
         },
       );
+
+  /// System-bar styling for a light or dark app theme.
+  ///
+  /// Both bars are transparent and both contrast scrims are off, so the app's
+  /// own background paints edge-to-edge behind the status bar and the gesture /
+  /// 3-button navigation area instead of leaving a tinted strip at the bottom.
+  /// Only the icon brightness follows the theme; everything else is fixed, so
+  /// every caller gets the same bars.
+  ///
+  /// Must stay in sync with the Activity's edge-to-edge setup
+  /// (`android/app/src/main/kotlin/app/tithi/pro/MainActivity.kt`): Android
+  /// ignores the bar colours on 15+, the transparent bar + `ContrastEnforced`
+  /// pair is what keeps the navigation area free of a background there.
+  static SystemUiOverlayStyle systemUiOverlayStyle(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final iconBrightness = isDark ? Brightness.light : Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: iconBrightness,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemStatusBarContrastEnforced: false,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: iconBrightness,
+      systemNavigationBarContrastEnforced: false,
+    );
+  }
+
+  /// Height of the system navigation area (gesture handle or 3-button bar).
+  ///
+  /// Edge-to-edge screens must let their background paint behind this strip and
+  /// add it to the *scrollable's* own bottom padding, not inset the viewport
+  /// with `SafeArea(bottom: true)`. Insetting the viewport makes the last row
+  /// stop short of the handle, and the bare page background below it reads as
+  /// a dedicated navigation-bar band even though the bar itself is transparent.
+  static double navigationBarInset(BuildContext context) =>
+      MediaQuery.viewPaddingOf(context).bottom;
 
   /// Standard background decoration for full-screen bodies.
   ///

@@ -21,6 +21,7 @@ import 'panchang_service.dart';
 ///   "category": "major",
 ///   "regions": ["all"],
 ///   "displayPriority": null,
+///   "featured": true,
 ///   "rule": {"masa": "Bhadrapada", "paksha": "Shukla",
 ///            "tithi": 4, "conditions": "Chaturthi"},
 ///   "occurrence": {
@@ -57,6 +58,8 @@ import 'panchang_service.dart';
 /// - `regions` is the normalized region tags list (`["all"]` for pan-India)
 ///   and `displayPriority` is the same-day rank (null when unranked), so an
 ///   exported year describes the ordering metadata the UI actually uses.
+/// - `featured` is the curated flagship flag, the one the all-festivals list
+///   uses to pick its large card.
 /// - All instants are local wall-clock ISO-8601; see `location` in the
 ///   document header for the coordinates they were computed for.
 class FestivalExportService {
@@ -210,8 +213,9 @@ class FestivalExportService {
             festival.tithi >= 1
         ? festival.resolvePaksha(panchang.paksha)
         : panchang.paksha;
-    final observedNum =
-        observedIndex <= 15 ? observedIndex : observedIndex - 15;
+    final observedNum = observedIndex <= 15
+        ? observedIndex
+        : observedIndex - 15;
 
     // Era years from the AMANTA masa (the +56/+57 boundary is defined by
     // Amanta Chaitra; feeding the Purnimant display label here would flip
@@ -263,8 +267,8 @@ class FestivalExportService {
     String? day(DateTime? dt) => dt == null
         ? null
         : '${dt.year.toString().padLeft(4, '0')}-'
-            '${dt.month.toString().padLeft(2, '0')}-'
-            '${dt.day.toString().padLeft(2, '0')}';
+              '${dt.month.toString().padLeft(2, '0')}-'
+              '${dt.day.toString().padLeft(2, '0')}';
     String? instant(DateTime? dt) => dt?.toIso8601String();
 
     return {
@@ -274,6 +278,7 @@ class FestivalExportService {
       'category': festival.category,
       'regions': festival.regions,
       'displayPriority': festival.displayPriority,
+      'featured': festival.featured,
       'rule': {
         'masa': festival.masa,
         'paksha': festival.paksha,

@@ -64,11 +64,19 @@ class HomeCardsScreen extends ConsumerWidget {
               ),
             ),
             SafeArea(
+              // The page background paints behind the gesture handle; the
+              // list pads its own last row clear of it instead.
+              bottom: false,
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 800),
                   child: ListView(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      24,
+                      24,
+                      24 + AppTheme.navigationBarInset(context),
+                    ),
                     children: [
                       const SettingsSectionHeader('HOME SCREEN'),
                       Padding(
@@ -91,8 +99,7 @@ class HomeCardsScreen extends ConsumerWidget {
                         children: [
                           SettingsSwitchTile(
                             icon: Icons.auto_stories_rounded,
-                            title:
-                                l10n?.dailyWisdom ?? 'Daily Wisdom',
+                            title: l10n?.dailyWisdom ?? 'Daily Wisdom',
                             subtitle: 'Verse of the day with translation',
                             value: ref.watch(dailyWisdomVisibleProvider),
                             onChanged: (v) async => ref
@@ -103,12 +110,13 @@ class HomeCardsScreen extends ConsumerWidget {
                           SettingsSwitchTile(
                             icon: Icons.hourglass_bottom_rounded,
                             title:
-                                l10n?.countdownHeading ??
-                                'Festival Countdowns',
+                                l10n?.countdownHeading ?? 'Festival Countdowns',
                             subtitle: 'Upcoming festival countdowns',
                             value: ref.watch(festivalCountdownsVisibleProvider),
                             onChanged: (v) async => ref
-                                .read(festivalCountdownsVisibleProvider.notifier)
+                                .read(
+                                  festivalCountdownsVisibleProvider.notifier,
+                                )
                                 .setVisible(v),
                           ),
                         ],

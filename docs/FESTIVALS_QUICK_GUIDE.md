@@ -142,6 +142,11 @@ different dates.
 - `displayPriority` is a **top-level** integer, not part of
   `panchang_rules`. Use it only when festivals collide; lower numbers appear
   first.
+- `featured` is a **top-level** boolean, not part of `panchang_rules`.
+  `"featured": true` marks a flagship: the All Festivals screen gives it the
+  large featured card. It is curated (20 entries today), independent of
+  `category`, and does not depend on today's date. Leave it out for
+  everything else.
 - `regions` is a top-level list. Use lowercase `north`, `south`, `east`,
   `west`, `central`, `northeast`, or `all`. Omit it for pan-India festivals.
 - `visuals.image` should normally remain empty. If artwork is needed, follow
