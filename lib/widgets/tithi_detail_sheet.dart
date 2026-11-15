@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/app_localizations_en.dart';
 import '../models/festival.dart';
@@ -16,6 +15,7 @@ import '../services/solar_events_service.dart';
 import '../services/moon_phase_service.dart';
 import '../services/moon_events_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../utils/tithi_localization.dart';
 import '../features/tithi_sheet/providers/sheet_providers.dart';
 import '../features/tithi_sheet/widgets/auspicious_card.dart';
@@ -51,7 +51,12 @@ export '../features/tithi_sheet/providers/sheet_providers.dart'
 /// (Timing ranges/values live in the shared sheet kit: [sheetTimeRange] and
 /// [sheetInstantValue], reused by the festival event sheet for the same
 /// observed-tithi span.)
-String _moonChipText(DateTime event, DateTime day, String label, String locale) {
+String _moonChipText(
+  DateTime event,
+  DateTime day,
+  String label,
+  String locale,
+) {
   final time = formatLocalizedDate(event, 'jm', locale);
   final sameDay =
       event.year == day.year &&
@@ -124,7 +129,8 @@ class TithiDetailSheet extends ConsumerWidget {
     // Primary-calendar date for the header (date, month, year). Masa is
     // Purnimant-correct; Bengali follows the app-language script rule.
     final primarySystem = ref.watch(primaryCalendarSystemProvider);
-    final useBengaliScript = resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
+    final useBengaliScript =
+        resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
     final names = masaTithiNames(
       masa: panchang.masa,
       paksha: panchang.paksha,
@@ -172,8 +178,7 @@ class TithiDetailSheet extends ConsumerWidget {
         );
     // Inauspicious day windows: pure sunrise/sunset arithmetic (no FFI),
     // so this resolves synchronously. Hidden when anchors are missing.
-    final inauspicious =
-        panchang.sunrise != null && panchang.sunset != null
+    final inauspicious = panchang.sunrise != null && panchang.sunset != null
         ? InauspiciousTimings.calculate(
             date: panchang.date,
             sunrise: panchang.sunrise!,
@@ -187,8 +192,7 @@ class TithiDetailSheet extends ConsumerWidget {
     final tithiEndForClip =
         (panchang.transitionExitsLabel ? panchang.tithiTransitionTime : null) ??
         timingsAsync.valueOrNull?.end;
-    final auspicious =
-        panchang.sunrise != null && panchang.sunset != null
+    final auspicious = panchang.sunrise != null && panchang.sunset != null
         ? AuspiciousTimings.calculate(
             date: panchang.date,
             sunrise: panchang.sunrise!,
@@ -215,9 +219,9 @@ class TithiDetailSheet extends ConsumerWidget {
     // hero-title styling. Gregorian/Hindu slots are sync; the Hindu year and
     // Bengali date resolve async and join when ready (weekday alone meanwhile).
     final weekday = formatLocalizedDate(panchang.date, 'EEEE', locale);
-    final dateBaseStyle = TextStyle(
+    final dateBaseStyle = AppTypography.display(
       fontSize: 22,
-      fontWeight: FontWeight.w600,
+      height: 1.3,
       color: highContrast
           ? context.colors.onSurface
           : AppTheme.heroForeground(context),
@@ -249,7 +253,15 @@ class TithiDetailSheet extends ConsumerWidget {
           dateSpans.add(
             TextSpan(
               text: ' · ${hy.eraLabel} ${hy.year}',
-              style: dateAccentStyle.copyWith(fontSize: 16),
+              // Below the display floor: AppTypography routes this to the UI
+              // sans so Newsreader's hairlines never render at 16pt.
+              style: AppTypography.display(
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+                color: highContrast
+                    ? context.colors.primary
+                    : AppTheme.heroAccent(context),
+              ),
             ),
           );
         }
@@ -262,14 +274,7 @@ class TithiDetailSheet extends ConsumerWidget {
             year: b.year,
             useBengaliScript: useBengaliScript,
           );
-          dateSpans.add(
-            TextSpan(
-              text: labels.compact,
-              style: useBengaliScript
-                  ? GoogleFonts.notoSansBengali(textStyle: dateAccentStyle)
-                  : dateAccentStyle,
-            ),
-          );
+          dateSpans.add(TextSpan(text: labels.compact, style: dateAccentStyle));
         }
       case AppCalendarSystem.none:
         break;
@@ -301,12 +306,7 @@ class TithiDetailSheet extends ConsumerWidget {
       if (moonrise != null)
         SheetChip(
           icon: Icons.dark_mode_outlined,
-          text: _moonChipText(
-            moonrise,
-            panchang.date,
-            l10n.moonrise,
-            locale,
-          ),
+          text: _moonChipText(moonrise, panchang.date, l10n.moonrise, locale),
           highContrast: highContrast,
           onSurface: true,
           centerContent: true,
@@ -314,12 +314,7 @@ class TithiDetailSheet extends ConsumerWidget {
       if (moonset != null)
         SheetChip(
           icon: Icons.dark_mode,
-          text: _moonChipText(
-            moonset,
-            panchang.date,
-            l10n.moonset,
-            locale,
-          ),
+          text: _moonChipText(moonset, panchang.date, l10n.moonset, locale),
           highContrast: highContrast,
           onSurface: true,
           centerContent: true,
@@ -336,585 +331,555 @@ class TithiDetailSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-                          // Header date: primary calendar date, month, year.
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: dateSpans.isEmpty
-                                      ? weekday
-                                      : '$weekday, ',
-                                  style: dateBaseStyle,
-                                ),
-                                ...dateSpans,
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // Moon row: tile + paksha/tithi + illumination +
-                          // number badge.
-                          Row(
-                            children: [
-                              SheetHeroTile(
-                                highContrast: highContrast,
-                                child: MoonAnimationWidget(
-                                  phase: illumination,
-                                  isWaxing: isShukla,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${l10n.pakshaWithName(panchang.isShukla ? l10n.themeShukla : l10n.themeKrishna)} · $displayTithiName',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                        color: highContrast
-                                            ? context.colors.onSurface
-                                            : AppTheme.heroForeground(context),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '$phaseWord · ${l10n.illuminatedPercent(illuminationPct)}',
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w500,
-                                        color: highContrast
-                                            ? context.colors.onSurface
-                                                  .withValues(alpha: 0.7)
-                                            : AppTheme.heroForeground(context),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.transparent,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: highContrast
-                                        ? context.colors.primary.withValues(
-                                            alpha: 0.4,
-                                          )
-                                        : AppTheme.heroAccent(
-                                            context,
-                                          ).withValues(alpha: 0.7),
-                                  ),
-                                ),
-                                child: Text(
-                                  '$displayNum',
-                                  style: TextStyle(
-                                    color: highContrast
-                                        ? context.colors.primary
-                                        : AppTheme.heroAccent(context),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+          // Header date: primary calendar date, month, year.
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: dateSpans.isEmpty ? weekday : '$weekday, ',
+                  style: dateBaseStyle,
+                ),
+                ...dateSpans,
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Moon row: tile + paksha/tithi + illumination +
+          // number badge.
+          Row(
+            children: [
+              SheetHeroTile(
+                highContrast: highContrast,
+                child: MoonAnimationWidget(
+                  phase: illumination,
+                  isWaxing: isShukla,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${l10n.pakshaWithName(panchang.isShukla ? l10n.themeShukla : l10n.themeKrishna)} · $displayTithiName',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: highContrast
+                            ? context.colors.onSurface
+                            : AppTheme.heroForeground(context),
                       ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$phaseWord · ${l10n.illuminatedPercent(illuminationPct)}',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: highContrast
+                            ? context.colors.onSurface.withValues(alpha: 0.7)
+                            : AppTheme.heroForeground(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: highContrast
+                        ? context.colors.primary.withValues(alpha: 0.4)
+                        : AppTheme.heroAccent(context).withValues(alpha: 0.7),
+                  ),
+                ),
+                child: Text(
+                  '$displayNum',
+                  style: TextStyle(
+                    color: highContrast
+                        ? context.colors.primary
+                        : AppTheme.heroAccent(context),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-                    // Sun + moon anchors sit just below the hero header
-                    // (not inside it) so the gradient stays focused on the
-                    // date + paksha/tithi identity: sunrise, sunset,
-                    // moonrise and moonset as a two-up chip grid that
-                    // spans the sheet width. Moonrise/moonset are computed
-                    // synchronously (pure-Dart lunar theory, no FFI) for
-                    // the sheet's date and resolved coordinates, falling
-                    // back to the prevailing neighbouring event (with its
-                    // date) on no-rise/set days.
-                    if (anchorChips.isNotEmpty) ...[
-                      _AnchorChipGrid(chips: anchorChips),
-                      const SizedBox(height: 16),
-                    ],
-                    // Dotted section label.
-                    SectionHeader(text: l10n.tithiTimings),
-                    const SizedBox(height: 10),
-                    // Begins/Ends card (exact start/end via binary search).
-                    timingsAsync.when(
-                      data: (timings) {
-                        // Kshaya edge (no nearby occurrence): hide rather
-                        // than show a wrong-lunation span.
-                        if (timings == null) {
-                          return const SizedBox.shrink();
-                        }
-                        // Prefer the precomputed transition instant when it ENDS
-                        // the displayed label (it exits into a later tithi
-                        // before the next sunrise); otherwise the searched
-                        // end (next boundary, usually tomorrow). After a
-                        // live flip the instant is the label's beginning —
-                        // using it as the end would collapse the span.
-                        // Date fragments follow the primary calendar.
-                        final end = (panchang.transitionExitsLabel
-                                ? panchang.tithiTransitionTime
-                                : null) ??
-                            timings.end;
-                        return TimingsCard(
-                          highContrast: highContrast,
-                          begins: sheetInstantValue(
-                            ref,
-                            timings.start,
-                            panchang.tithiIndex,
-                            locale,
-                          ),
-                          ends: sheetInstantValue(
-                            ref,
-                            end,
-                            panchang.tithiIndex,
-                            locale,
-                          ),
-                        );
-                      },
-                      loading: () => TimingsCard(highContrast: highContrast),
-                      error: (err, stack) => const SizedBox.shrink(),
-                    ),
-                    // Daytime-transition history (squeeze-case visibility).
-                    // Shown whenever a boundary falls inside the day — both
-                    // before the flip ("Ashtami begins at 1:02 PM" + its
-                    // end) and after it. Post-flip the subline keeps the
-                    // morning's context ("Saptami ends …") so a user opening
-                    // the sheet at 3 PM still learns what the day started
-                    // as; the incoming tithi's own end already stands in
-                    // the Begins/Ends card above.
-                    if (panchang.hasTithiTransition) ...[
-                      const SizedBox(height: 12),
-                      Consumer(
-                        builder: (context, ref, child) {
-                          final nextTimingsAsync = ref.watch(
-                            tithiTimingsProvider((
-                              date: panchang.date,
-                              tithiIndex: panchang.transitionTithiIndex!,
-                              latitude: coords.latitude,
-                              longitude: coords.longitude,
-                            )),
-                          );
-                          return nextTimingsAsync.when(
-                            data: (nextTimings) {
-                              if (nextTimings == null) {
-                                return const SizedBox.shrink();
-                              }
-                              return TransitionCard(
-                                highContrast: highContrast,
-                                headline: l10n.tithiBeginsAt(
-                                  localizedTithiName(
-                                    panchang.transitionTithiNumber,
-                                    panchang.transitionPaksha,
-                                    l10n,
-                                  ),
-                                  formatLocalizedDate(
-                                    panchang.tithiTransitionTime!,
-                                    'jm',
-                                    locale,
-                                  ),
-                                ),
-                                subline: panchang.transitionExitsLabel
-                                    ? l10n.tithiEndsAtDateTime(
-                                        localizedTithiName(
-                                          panchang.transitionTithiNumber,
-                                          panchang.transitionPaksha,
-                                          l10n,
-                                        ),
-                                        sheetInstantValue(
-                                          ref,
-                                          nextTimings.end,
-                                          panchang.transitionTithiIndex!,
-                                          locale,
-                                        ),
-                                      )
-                                    : l10n.tithiEndsAtDateTime(
-                                        localizedTithiName(
-                                          panchang.sunriseTithiNumber,
-                                          panchang.sunrisePaksha,
-                                          l10n,
-                                        ),
-                                        sheetInstantValue(
-                                          ref,
-                                          panchang.tithiTransitionTime!,
-                                          panchang.sunriseTithiIndex,
-                                          locale,
-                                        ),
-                                      ),
-                              );
-                            },
-                            loading: () =>
-                                TransitionCard(highContrast: highContrast),
-                            error: (err, stack) => const SizedBox.shrink(),
-                          );
-                        },
-                      ),
-                    ],
-                    // Nakshatra section: dotted header (like TITHI TIMINGS)
-                    // above the span card. Hidden when the span can't be
-                    // resolved - same hide-on-null contract as the timings
-                    // card above.
-                    nakshatraAsync.when(
-                      data: (nak) {
-                        if (nak == null) return const SizedBox.shrink();
-                        final endTime = formatLocalizedDate(
-                          nak.end,
+          // Sun + moon anchors sit just below the hero header
+          // (not inside it) so the gradient stays focused on the
+          // date + paksha/tithi identity: sunrise, sunset,
+          // moonrise and moonset as a two-up chip grid that
+          // spans the sheet width. Moonrise/moonset are computed
+          // synchronously (pure-Dart lunar theory, no FFI) for
+          // the sheet's date and resolved coordinates, falling
+          // back to the prevailing neighbouring event (with its
+          // date) on no-rise/set days.
+          if (anchorChips.isNotEmpty) ...[
+            _AnchorChipGrid(chips: anchorChips),
+            const SizedBox(height: 16),
+          ],
+          // Dotted section label.
+          SectionHeader(text: l10n.tithiTimings),
+          const SizedBox(height: 10),
+          // Begins/Ends card (exact start/end via binary search).
+          timingsAsync.when(
+            data: (timings) {
+              // Kshaya edge (no nearby occurrence): hide rather
+              // than show a wrong-lunation span.
+              if (timings == null) {
+                return const SizedBox.shrink();
+              }
+              // Prefer the precomputed transition instant when it ENDS
+              // the displayed label (it exits into a later tithi
+              // before the next sunrise); otherwise the searched
+              // end (next boundary, usually tomorrow). After a
+              // live flip the instant is the label's beginning —
+              // using it as the end would collapse the span.
+              // Date fragments follow the primary calendar.
+              final end =
+                  (panchang.transitionExitsLabel
+                      ? panchang.tithiTransitionTime
+                      : null) ??
+                  timings.end;
+              return TimingsCard(
+                highContrast: highContrast,
+                begins: sheetInstantValue(
+                  ref,
+                  timings.start,
+                  panchang.tithiIndex,
+                  locale,
+                ),
+                ends: sheetInstantValue(ref, end, panchang.tithiIndex, locale),
+              );
+            },
+            loading: () => TimingsCard(highContrast: highContrast),
+            error: (err, stack) => const SizedBox.shrink(),
+          ),
+          // Daytime-transition history (squeeze-case visibility).
+          // Shown whenever a boundary falls inside the day — both
+          // before the flip ("Ashtami begins at 1:02 PM" + its
+          // end) and after it. Post-flip the subline keeps the
+          // morning's context ("Saptami ends …") so a user opening
+          // the sheet at 3 PM still learns what the day started
+          // as; the incoming tithi's own end already stands in
+          // the Begins/Ends card above.
+          if (panchang.hasTithiTransition) ...[
+            const SizedBox(height: 12),
+            Consumer(
+              builder: (context, ref, child) {
+                final nextTimingsAsync = ref.watch(
+                  tithiTimingsProvider((
+                    date: panchang.date,
+                    tithiIndex: panchang.transitionTithiIndex!,
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                  )),
+                );
+                return nextTimingsAsync.when(
+                  data: (nextTimings) {
+                    if (nextTimings == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return TransitionCard(
+                      highContrast: highContrast,
+                      headline: l10n.tithiBeginsAt(
+                        localizedTithiName(
+                          panchang.transitionTithiNumber,
+                          panchang.transitionPaksha,
+                          l10n,
+                        ),
+                        formatLocalizedDate(
+                          panchang.tithiTransitionTime!,
                           'jm',
                           locale,
-                        );
-                        final endSameDay =
-                            nak.end.year == panchang.date.year &&
-                            nak.end.month == panchang.date.month &&
-                            nak.end.day == panchang.date.day;
-                        final endLabel = endSameDay
-                            ? endTime
-                            : '$endTime, ${formatLocalizedDate(nak.end, 'MMM d', locale)}';
-                        final now = DateTime.now();
-                        final progress = now.isBefore(nak.start)
-                            ? 0.0
-                            : now.isAfter(nak.end)
-                            ? 1.0
-                            : (now
-                                          .difference(nak.start)
-                                          .inSeconds /
-                                      nak.end
-                                          .difference(nak.start)
-                                          .inSeconds)
-                                  .clamp(0.0, 1.0);
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 12),
-                            SectionHeader(text: l10n.nakshatraTimings),
-                            const SizedBox(height: 10),
-                            NakshatraCard(
-                              highContrast: highContrast,
-                              headline: l10n.nakshatraUntil(
-                                nak.nakshatra,
-                                endLabel,
-                              ),
-                              subline:
-                                  '${l10n.nakshatraLord(localizedNakshatraLord(nak.index, l10n))} · '
-                                  '${l10n.nakshatraElapsed((progress * 100).toStringAsFixed(0))}',
-                              progress: progress,
-                              // The Moon's longitude advances monotonically,
-                              // so the upcoming mansion is always the next
-                              // Vedic-order index — no extra search needed.
-                              nextline: l10n.nakshatraNext(
-                                hinduNakshatras[(nak.index + 1) % 27],
-                                endLabel,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                      loading: () => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          SectionHeader(text: l10n.nakshatraTimings),
-                          const SizedBox(height: 10),
-                          NakshatraCard(highContrast: highContrast),
-                        ],
+                        ),
                       ),
-                      error: (err, stack) => const SizedBox.shrink(),
-                    ),
-                    // Yoga & karana section: dotted header above a
-                    // side-by-side card (timings-card idiom). Hidden when
-                    // the spans can't be resolved - same hide-on-null
-                    // contract as above.
-                    yogaKaranaAsync.when(
-                      data: (yk) {
-                        if (yk == null) return const SizedBox.shrink();
-                        String endLabel(DateTime end) {
-                          final time = formatLocalizedDate(end, 'jm', locale);
-                          final sameDay =
-                              end.year == panchang.date.year &&
-                              end.month == panchang.date.month &&
-                              end.day == panchang.date.day;
-                          return sameDay
-                              ? time
-                              : '$time, ${formatLocalizedDate(end, 'MMM d', locale)}';
-                        }
-
-                        // Both sequences advance by exactly one per
-                        // boundary (elongation and Sun+Moon sum grow
-                        // monotonically), so the followers need no search.
-                        final yogaEndLabel = endLabel(yk.yogaEnd);
-                        final karanaEndLabel = endLabel(yk.karanaEnd);
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 12),
-                            SectionHeader(text: l10n.yogaKaranaTimings),
-                            const SizedBox(height: 10),
-                            YogaKaranaCard(
-                              highContrast: highContrast,
-                              yogaLabel: l10n.yogaLabel,
-                              yogaValue: yk.yoga,
-                              yogaSubline: l10n.untilThen(
-                                yogaEndLabel,
-                                yogaNames[(yk.yogaIndex + 1) % 27],
+                      subline: panchang.transitionExitsLabel
+                          ? l10n.tithiEndsAtDateTime(
+                              localizedTithiName(
+                                panchang.transitionTithiNumber,
+                                panchang.transitionPaksha,
+                                l10n,
                               ),
-                              yogaTime: yogaEndLabel,
-                              karanaLabel: l10n.karanaLabel,
-                              karanaValue: yk.karana,
-                              karanaSubline: l10n.untilThen(
-                                karanaEndLabel,
-                                karanaNameForIndex(yk.karanaIndex + 1),
+                              sheetInstantValue(
+                                ref,
+                                nextTimings.end,
+                                panchang.transitionTithiIndex!,
+                                locale,
                               ),
-                              karanaTime: karanaEndLabel,
-                            ),
-                          ],
-                        );
-                      },
-                      loading: () => Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 12),
-                          SectionHeader(text: l10n.yogaKaranaTimings),
-                          const SizedBox(height: 10),
-                          YogaKaranaCard(
-                            highContrast: highContrast,
-                            yogaLabel: l10n.yogaLabel,
-                            karanaLabel: l10n.karanaLabel,
-                          ),
-                        ],
-                      ),
-                      error: (err, stack) => const SizedBox.shrink(),
-                    ),
-                    // Auspicious windows: dotted header above a rows card
-                    // (name + right-aligned range, optional dim subnote).
-                    // Hidden with the anchors above.
-                    if (auspicious != null) ...[
-                      const SizedBox(height: 12),
-                      SectionHeader(text: l10n.auspiciousTimings),
-                      const SizedBox(height: 10),
-                      AuspiciousCard(
-                        highContrast: highContrast,
-                        rows: [
-                          (
-                            name: l10n.abhijit,
-                            time: sheetTimeRange(
-                              auspicious.abhijit.start,
-                              auspicious.abhijit.end,
-                              panchang.date,
-                              locale,
-                            ),
-                            note: AuspiciousTimings.abhijitAvoided(
-                              panchang.date,
                             )
-                                ? l10n.abhijitAvoided
-                                : AuspiciousTimings.abhijitBoosted(
-                                    panchang.date,
-                                  )
-                                ? l10n.abhijitAuspicious
-                                : null,
-                            warn: AuspiciousTimings.abhijitAvoided(
-                              panchang.date,
-                            ),
-                          ),
-                          (
-                            name: l10n.brahmaMuhurta,
-                            time: sheetTimeRange(
-                              auspicious.brahmaMuhurta.start,
-                              auspicious.brahmaMuhurta.end,
-                              panchang.date,
-                              locale,
-                            ),
-                            note: null,
-                            warn: false,
-                          ),
-                          (
-                            name: l10n.madhyahna,
-                            time: sheetTimeRange(
-                              auspicious.madhyahnaWindow.start,
-                              auspicious.madhyahnaWindow.end,
-                              panchang.date,
-                              locale,
-                            ),
-                            note: l10n.midpointAt(
-                              formatLocalizedDate(
-                                auspicious.madhyahnaInstant,
-                                'jm',
+                          : l10n.tithiEndsAtDateTime(
+                              localizedTithiName(
+                                panchang.sunriseTithiNumber,
+                                panchang.sunrisePaksha,
+                                l10n,
+                              ),
+                              sheetInstantValue(
+                                ref,
+                                panchang.tithiTransitionTime!,
+                                panchang.sunriseTithiIndex,
                                 locale,
                               ),
                             ),
-                            warn: false,
-                          ),
-                          (
-                            name: l10n.nishita,
-                            time: sheetTimeRange(
-                              auspicious.nishita.start,
-                              auspicious.nishita.end,
-                              panchang.date,
-                              locale,
-                            ),
-                            note: null,
-                            warn: false,
-                          ),
-                          (
-                            name: l10n.godhuli,
-                            time: sheetTimeRange(
-                              auspicious.godhuli.start,
-                              auspicious.godhuli.end,
-                              panchang.date,
-                              locale,
-                            ),
-                            note: null,
-                            warn: false,
-                          ),
-                          (
-                            name: l10n.pradosha,
-                            time: sheetTimeRange(
-                              auspicious.pradosha.start,
-                              auspicious.pradosha.end,
-                              panchang.date,
-                              locale,
-                            ),
-                            note: null,
-                            warn: false,
-                          ),
-                        ],
-                      ),
-                    ],
-                    // Inauspicious timings: dotted header above a timeline
-                    // card (8 sunrise-to-sunset segments with the three
-                    // slots colored, plus per-row time ranges).
-                    if (inauspicious != null) ...[
-                      const SizedBox(height: 12),
-                      SectionHeader(text: l10n.inauspiciousTimings),
-                      const SizedBox(height: 10),
-                      InauspiciousCard(
-                        highContrast: highContrast,
-                        axisStart: formatLocalizedDate(
-                          inauspicious.sunrise,
-                          'jm',
-                          locale,
-                        ),
-                        axisMid: formatLocalizedDate(
-                          inauspicious.sunrise.add(
-                            Duration(
-                              microseconds:
-                                  inauspicious.sunset
-                                      .difference(inauspicious.sunrise)
-                                      .inMicroseconds ~/
-                                  2,
-                            ),
-                          ),
-                          'jm',
-                          locale,
-                        ),
-                        axisEnd: formatLocalizedDate(
-                          inauspicious.sunset,
-                          'jm',
-                          locale,
-                        ),
-                        rahuSegment: inauspicious.rahuSegment,
-                        yamagandaSegment: inauspicious.yamagandaSegment,
-                        gulikaSegment: inauspicious.gulikaSegment,
-                        rows: [
-                          (
-                            kind: WindowKind.rahu,
-                            name: l10n.rahuKalam,
-                            time: sheetTimeRange(
-                              inauspicious.rahu.start,
-                              inauspicious.rahu.end,
-                              panchang.date,
-                              locale,
-                            ),
-                          ),
-                          (
-                            kind: WindowKind.yamaganda,
-                            name: l10n.yamaganda,
-                            time: sheetTimeRange(
-                              inauspicious.yamaganda.start,
-                              inauspicious.yamaganda.end,
-                              panchang.date,
-                              locale,
-                            ),
-                          ),
-                          (
-                            kind: WindowKind.gulika,
-                            name: l10n.gulikaKalam,
-                            time: sheetTimeRange(
-                              inauspicious.gulika.start,
-                              inauspicious.gulika.end,
-                              panchang.date,
-                              locale,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    // Festivals on the day: an extra to the panchang itself,
-                    // using the same rows as the home card. Tapping one opens
-                    // the festival sheet on top of this one (pop returns
-                    // here). Kept above the explainer so the explainer stays
-                    // the closing note.
-                    if (dayFestivals.isNotEmpty) ...[
-                      SectionHeader(text: l10n.festivalsOnThisDay),
-                      const SizedBox(height: 10),
-                      for (var i = 0; i < dayFestivals.length; i++) ...[
-                        if (i > 0) const SizedBox(height: 8),
-                        FestivalRowTile(
-                          festival: dayFestivals[i],
-                          date: panchang.date,
-                          panchang: panchang,
-                          onTap: () => showEventDetailSheet(
-                            context,
-                            festival: dayFestivals[i],
-                            panchang: panchang,
-                            fromTithiSheet: true,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                    ],
-                    // AI hand-off (opt-in). Sits above the closing explainer
-                    // so the explainer stays the sheet's last word.
-                    if (aiAssistEnabled) ...[
-                      const SizedBox(height: 12),
-                      SheetLinkTile(
-                        icon: Icons.auto_awesome_outlined,
-                        // This sheet opens for any date the user selects, so
-                        // "today" is only right when it actually is.
-                        label: DateUtils.isSameDay(
-                          panchang.date,
-                          ref.watch(todayDateProvider),
-                        )
-                            ? l10n.aiAskAboutToday
-                            : l10n.aiAskAboutDay,
-                        supporting: l10n.aiOpensYourApp,
-                        onTap: () => showAskAiSheet(
-                          context,
-                          intent: AiIntent.todayPanchang,
-                          panchang: panchang,
-                          // Same windows the cards above show, so a muhurta
-                          // question is answered from Tithi's numbers.
-                          timings: auspicious,
-                          inauspicious: inauspicious,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    // Explainer card (shared kit with the event sheet).
-                    SheetExplainerCard(text: l10n.udayaTithiExplanation),
+                    );
+                  },
+                  loading: () => TransitionCard(highContrast: highContrast),
+                  error: (err, stack) => const SizedBox.shrink(),
+                );
+              },
+            ),
+          ],
+          // Nakshatra section: dotted header (like TITHI TIMINGS)
+          // above the span card. Hidden when the span can't be
+          // resolved - same hide-on-null contract as the timings
+          // card above.
+          nakshatraAsync.when(
+            data: (nak) {
+              if (nak == null) return const SizedBox.shrink();
+              final endTime = formatLocalizedDate(nak.end, 'jm', locale);
+              final endSameDay =
+                  nak.end.year == panchang.date.year &&
+                  nak.end.month == panchang.date.month &&
+                  nak.end.day == panchang.date.day;
+              final endLabel = endSameDay
+                  ? endTime
+                  : '$endTime, ${formatLocalizedDate(nak.end, 'MMM d', locale)}';
+              final now = DateTime.now();
+              final progress = now.isBefore(nak.start)
+                  ? 0.0
+                  : now.isAfter(nak.end)
+                  ? 1.0
+                  : (now.difference(nak.start).inSeconds /
+                            nak.end.difference(nak.start).inSeconds)
+                        .clamp(0.0, 1.0);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  SectionHeader(text: l10n.nakshatraTimings),
+                  const SizedBox(height: 10),
+                  NakshatraCard(
+                    highContrast: highContrast,
+                    headline: l10n.nakshatraUntil(nak.nakshatra, endLabel),
+                    subline:
+                        '${l10n.nakshatraLord(localizedNakshatraLord(nak.index, l10n))} · '
+                        '${l10n.nakshatraElapsed((progress * 100).toStringAsFixed(0))}',
+                    progress: progress,
+                    // The Moon's longitude advances monotonically,
+                    // so the upcoming mansion is always the next
+                    // Vedic-order index — no extra search needed.
+                    nextline: l10n.nakshatraNext(
+                      hinduNakshatras[(nak.index + 1) % 27],
+                      endLabel,
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                SectionHeader(text: l10n.nakshatraTimings),
+                const SizedBox(height: 10),
+                NakshatraCard(highContrast: highContrast),
+              ],
+            ),
+            error: (err, stack) => const SizedBox.shrink(),
+          ),
+          // Yoga & karana section: dotted header above a
+          // side-by-side card (timings-card idiom). Hidden when
+          // the spans can't be resolved - same hide-on-null
+          // contract as above.
+          yogaKaranaAsync.when(
+            data: (yk) {
+              if (yk == null) return const SizedBox.shrink();
+              String endLabel(DateTime end) {
+                final time = formatLocalizedDate(end, 'jm', locale);
+                final sameDay =
+                    end.year == panchang.date.year &&
+                    end.month == panchang.date.month &&
+                    end.day == panchang.date.day;
+                return sameDay
+                    ? time
+                    : '$time, ${formatLocalizedDate(end, 'MMM d', locale)}';
+              }
+
+              // Both sequences advance by exactly one per
+              // boundary (elongation and Sun+Moon sum grow
+              // monotonically), so the followers need no search.
+              final yogaEndLabel = endLabel(yk.yogaEnd);
+              final karanaEndLabel = endLabel(yk.karanaEnd);
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  SectionHeader(text: l10n.yogaKaranaTimings),
+                  const SizedBox(height: 10),
+                  YogaKaranaCard(
+                    highContrast: highContrast,
+                    yogaLabel: l10n.yogaLabel,
+                    yogaValue: yk.yoga,
+                    yogaSubline: l10n.untilThen(
+                      yogaEndLabel,
+                      yogaNames[(yk.yogaIndex + 1) % 27],
+                    ),
+                    yogaTime: yogaEndLabel,
+                    karanaLabel: l10n.karanaLabel,
+                    karanaValue: yk.karana,
+                    karanaSubline: l10n.untilThen(
+                      karanaEndLabel,
+                      karanaNameForIndex(yk.karanaIndex + 1),
+                    ),
+                    karanaTime: karanaEndLabel,
+                  ),
+                ],
+              );
+            },
+            loading: () => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+                SectionHeader(text: l10n.yogaKaranaTimings),
+                const SizedBox(height: 10),
+                YogaKaranaCard(
+                  highContrast: highContrast,
+                  yogaLabel: l10n.yogaLabel,
+                  karanaLabel: l10n.karanaLabel,
+                ),
+              ],
+            ),
+            error: (err, stack) => const SizedBox.shrink(),
+          ),
+          // Auspicious windows: dotted header above a rows card
+          // (name + right-aligned range, optional dim subnote).
+          // Hidden with the anchors above.
+          if (auspicious != null) ...[
+            const SizedBox(height: 12),
+            SectionHeader(text: l10n.auspiciousTimings),
+            const SizedBox(height: 10),
+            AuspiciousCard(
+              highContrast: highContrast,
+              rows: [
+                (
+                  name: l10n.abhijit,
+                  time: sheetTimeRange(
+                    auspicious.abhijit.start,
+                    auspicious.abhijit.end,
+                    panchang.date,
+                    locale,
+                  ),
+                  note: AuspiciousTimings.abhijitAvoided(panchang.date)
+                      ? l10n.abhijitAvoided
+                      : AuspiciousTimings.abhijitBoosted(panchang.date)
+                      ? l10n.abhijitAuspicious
+                      : null,
+                  warn: AuspiciousTimings.abhijitAvoided(panchang.date),
+                ),
+                (
+                  name: l10n.brahmaMuhurta,
+                  time: sheetTimeRange(
+                    auspicious.brahmaMuhurta.start,
+                    auspicious.brahmaMuhurta.end,
+                    panchang.date,
+                    locale,
+                  ),
+                  note: null,
+                  warn: false,
+                ),
+                (
+                  name: l10n.madhyahna,
+                  time: sheetTimeRange(
+                    auspicious.madhyahnaWindow.start,
+                    auspicious.madhyahnaWindow.end,
+                    panchang.date,
+                    locale,
+                  ),
+                  note: l10n.midpointAt(
+                    formatLocalizedDate(
+                      auspicious.madhyahnaInstant,
+                      'jm',
+                      locale,
+                    ),
+                  ),
+                  warn: false,
+                ),
+                (
+                  name: l10n.nishita,
+                  time: sheetTimeRange(
+                    auspicious.nishita.start,
+                    auspicious.nishita.end,
+                    panchang.date,
+                    locale,
+                  ),
+                  note: null,
+                  warn: false,
+                ),
+                (
+                  name: l10n.godhuli,
+                  time: sheetTimeRange(
+                    auspicious.godhuli.start,
+                    auspicious.godhuli.end,
+                    panchang.date,
+                    locale,
+                  ),
+                  note: null,
+                  warn: false,
+                ),
+                (
+                  name: l10n.pradosha,
+                  time: sheetTimeRange(
+                    auspicious.pradosha.start,
+                    auspicious.pradosha.end,
+                    panchang.date,
+                    locale,
+                  ),
+                  note: null,
+                  warn: false,
+                ),
+              ],
+            ),
+          ],
+          // Inauspicious timings: dotted header above a timeline
+          // card (8 sunrise-to-sunset segments with the three
+          // slots colored, plus per-row time ranges).
+          if (inauspicious != null) ...[
+            const SizedBox(height: 12),
+            SectionHeader(text: l10n.inauspiciousTimings),
+            const SizedBox(height: 10),
+            InauspiciousCard(
+              highContrast: highContrast,
+              axisStart: formatLocalizedDate(
+                inauspicious.sunrise,
+                'jm',
+                locale,
+              ),
+              axisMid: formatLocalizedDate(
+                inauspicious.sunrise.add(
+                  Duration(
+                    microseconds:
+                        inauspicious.sunset
+                            .difference(inauspicious.sunrise)
+                            .inMicroseconds ~/
+                        2,
+                  ),
+                ),
+                'jm',
+                locale,
+              ),
+              axisEnd: formatLocalizedDate(inauspicious.sunset, 'jm', locale),
+              rahuSegment: inauspicious.rahuSegment,
+              yamagandaSegment: inauspicious.yamagandaSegment,
+              gulikaSegment: inauspicious.gulikaSegment,
+              rows: [
+                (
+                  kind: WindowKind.rahu,
+                  name: l10n.rahuKalam,
+                  time: sheetTimeRange(
+                    inauspicious.rahu.start,
+                    inauspicious.rahu.end,
+                    panchang.date,
+                    locale,
+                  ),
+                ),
+                (
+                  kind: WindowKind.yamaganda,
+                  name: l10n.yamaganda,
+                  time: sheetTimeRange(
+                    inauspicious.yamaganda.start,
+                    inauspicious.yamaganda.end,
+                    panchang.date,
+                    locale,
+                  ),
+                ),
+                (
+                  kind: WindowKind.gulika,
+                  name: l10n.gulikaKalam,
+                  time: sheetTimeRange(
+                    inauspicious.gulika.start,
+                    inauspicious.gulika.end,
+                    panchang.date,
+                    locale,
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          // Festivals on the day: an extra to the panchang itself,
+          // using the same rows as the home card. Tapping one opens
+          // the festival sheet on top of this one (pop returns
+          // here). Kept above the explainer so the explainer stays
+          // the closing note.
+          if (dayFestivals.isNotEmpty) ...[
+            SectionHeader(text: l10n.festivalsOnThisDay),
+            const SizedBox(height: 10),
+            for (var i = 0; i < dayFestivals.length; i++) ...[
+              if (i > 0) const SizedBox(height: 8),
+              FestivalRowTile(
+                festival: dayFestivals[i],
+                date: panchang.date,
+                panchang: panchang,
+                // Flush with the section header above (no inner row box).
+                flush: true,
+                onTap: () => showEventDetailSheet(
+                  context,
+                  festival: dayFestivals[i],
+                  panchang: panchang,
+                  fromTithiSheet: true,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+          ],
+          // AI hand-off (opt-in). Sits above the closing explainer
+          // so the explainer stays the sheet's last word.
+          if (aiAssistEnabled) ...[
+            const SizedBox(height: 12),
+            SheetLinkTile(
+              icon: Icons.auto_awesome_outlined,
+              // This sheet opens for any date the user selects, so
+              // "today" is only right when it actually is.
+              label:
+                  DateUtils.isSameDay(
+                    panchang.date,
+                    ref.watch(todayDateProvider),
+                  )
+                  ? l10n.aiAskAboutToday
+                  : l10n.aiAskAboutDay,
+              supporting: l10n.aiOpensYourApp,
+              onTap: () => showAskAiSheet(
+                context,
+                intent: AiIntent.todayPanchang,
+                panchang: panchang,
+                // Same windows the cards above show, so a muhurta
+                // question is answered from Tithi's numbers.
+                timings: auspicious,
+                inauspicious: inauspicious,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          // Explainer card (shared kit with the event sheet).
+          SheetExplainerCard(text: l10n.udayaTithiExplanation),
         ],
       ),
     );
@@ -957,4 +922,3 @@ class _AnchorChipGrid extends StatelessWidget {
     );
   }
 }
-

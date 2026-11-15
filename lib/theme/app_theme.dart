@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../providers/accessibility_provider.dart';
+import 'app_typography.dart';
 
 /// Theme configuration for the Tithi app
 /// Modern, vibrant design targeting younger generation
@@ -20,6 +21,25 @@ class AppTheme {
   // or the brightness-aware helpers below so light/dark/high-contrast stay
   // consistent from this single file.
   // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // Crisp Shukla (light) palette.
+  //
+  // A cool-neutral page, pure-white cards with 1px hairlines and no shadows,
+  // deep-charcoal ink, and a single vermilion accent. Do not reintroduce
+  // translucent card fills, cream backgrounds, tan icon tiles or soft card
+  // shadows: the accent is meant to be the only saturated colour on screen.
+  // ---------------------------------------------------------------------------
+  static const Color shuklaAccent = Color(0xFFE84A1B); // vermilion
+  static const Color shuklaAccentDeep = Color(0xFFC2410C); // darker stop
+  static const Color shuklaBackground = Color(0xFFF5F5F7); // cool neutral
+  static const Color shuklaSurface = Colors.white; // cards: fully opaque
+  static const Color shuklaHairline = Color(0xFFE5E5EA); // 1px card edge
+  static const Color shuklaInk = Color(0xFF111113); // deep charcoal
+  static const Color shuklaInkSecondary = Color(0xFF3C3C43);
+  static const Color shuklaInkTertiary = Color(0xFF6E6E76);
+  static const Color shuklaTile = Color(0xFFF2F2F7); // neutral icon tile
+  static const Color shuklaTodayFill = Color(0xFFEDEDF2); // calendar today
 
   // Warning / error-display palette (replaces hardcoded Colors.orange shades).
   static const Color warning = Color(0xFFFF9800);
@@ -53,8 +73,6 @@ class AppTheme {
   static const Color moonGradientDarkB = Color(
     0xFF311B92,
   ); // deepPurple.shade900
-  static const Color moonGradientLightA = Color(0xFFFFECB3); // amber.shade100
-  static const Color moonGradientLightB = Color(0xFFFFF3E0); // orange.shade50
   static const Color moonDiscDarkA = Color(0xFFE0E0E0); // grey.shade300
   static const Color moonDiscDarkB = Color(0xFF757575); // grey.shade600
   static const Color moonDiscLightA = Color(0xFFFFE082); // amber.shade200
@@ -73,16 +91,11 @@ class AppTheme {
           moonGradientDarkA.withValues(alpha: 0.6),
           moonGradientDarkB.withValues(alpha: 0.4),
         ]
-      : [
-          moonGradientLightA.withValues(alpha: 0.8),
-          moonGradientLightB.withValues(alpha: 0.6),
-        ];
-  static Color moonCountdownBorder(bool isDark) => isDark
-      ? Colors.white.withValues(alpha: 0.1)
-      : moonLit.withValues(alpha: 0.5);
-  static Color moonCountdownShadow(bool isDark) => isDark
-      ? Colors.black.withValues(alpha: 0.3)
-      : moonGlowLight.withValues(alpha: 0.2);
+      : [shuklaSurface, shuklaSurface];
+  static Color moonCountdownBorder(bool isDark) =>
+      isDark ? Colors.white.withValues(alpha: 0.1) : shuklaHairline;
+  static Color moonCountdownShadow(bool isDark) =>
+      isDark ? Colors.black.withValues(alpha: 0.3) : Colors.transparent;
   static List<Color> moonDiscGradient(bool isDark) => isDark
       ? [moonDiscDarkA, moonDiscDarkB]
       : [moonDiscLightA, moonDiscLightB];
@@ -147,15 +160,15 @@ class AppTheme {
   // Calendar card palette — faithful mirror of
   // assets/redesign assets/calendar-redesign.html theme vars.
   // ---------------------------------------------------------------------------
-  static const Color calendarSelectedTopShukla = Color(0xFFD84315);
-  static const Color calendarSelectedBottomShukla = Color(0xFFBF360C);
+  static const Color calendarSelectedTopShukla = shuklaAccent;
+  static const Color calendarSelectedBottomShukla = shuklaAccentDeep;
   static const Color calendarSelectedTopKrishna = Color(0xFF9D4EDD);
   static const Color calendarSelectedBottomKrishna = Color(0xFF7B2CBF);
   static const Color calendarSelectedTopDark = Color(0xFFFFA000);
   static const Color calendarSelectedBottomDark = Color(0xFFE65100);
   static const Color calendarSelectedInkDark = Color(0xFF1A1200);
   static const Color calendarTodayInkKrishna = Color(0xFFC9B5FF);
-  static const Color calendarDotShukla = Color(0xFFFF9F1C);
+  static const Color calendarDotShukla = shuklaAccent;
   static const Color calendarDotKrishna = Color(0xFF4CC9F0);
   static const Color calendarDotDark = Color(0xFFFFA000);
 
@@ -199,7 +212,7 @@ class AppTheme {
     if (highContrastOf(context)) {
       return scheme.primary.withValues(alpha: 0.25);
     }
-    if (!isDark) return warningLightContainer;
+    if (!isDark) return shuklaTodayFill;
     // Krishna tints with the bright secondary (#9D4EDD at 18%); pure-dark
     // uses the gold primary at 14% — both per the spec vars.
     if (isPureDarkTheme(context)) {
@@ -214,7 +227,7 @@ class AppTheme {
     if (highContrastOf(context)) {
       return Theme.of(context).colorScheme.onSurface;
     }
-    if (!isDark) return warningDarkContainer;
+    if (!isDark) return shuklaAccent;
     if (isPureDarkTheme(context)) return moonDiscLightB;
     return calendarTodayInkKrishna;
   }
@@ -227,6 +240,7 @@ class AppTheme {
     if (highContrastOf(context)) {
       return Theme.of(context).colorScheme.primary;
     }
+    if (Theme.of(context).brightness != Brightness.dark) return shuklaAccent;
     return warningDarkContainer;
   }
 
@@ -239,8 +253,8 @@ class AppTheme {
   }
 
   // ---------------------------------------------------------------------------
-  // Festivals & Events palette — gold accents from the home-card redesign
-  // mock (gold glyph/text on a soft gold tile, both themes).
+  // Festivals & Events palette — vermilion accents on light, gold/purple on
+  // dark (see [festivalAccent]).
   // ---------------------------------------------------------------------------
 
   /// Bright purple for festival accents on the Krishna theme (same value the
@@ -248,7 +262,7 @@ class AppTheme {
   /// legible at small sizes on dark violet surfaces (~5.5:1).
   static const Color festivalAccentKrishna = Color(0xFFC77DFF);
 
-  /// Accent for festival rows, wisdom and countdowns: deep orange in light,
+  /// Accent for festival rows, wisdom and countdowns: vermilion in light,
   /// moon-gold in pure-dark — but the Krishna theme keeps its purple
   /// identity (brighter secondary for legibility on dark violet) instead of
   /// gold. Solid primary in high contrast.
@@ -257,47 +271,80 @@ class AppTheme {
       return Theme.of(context).colorScheme.primary;
     }
     if (Theme.of(context).brightness != Brightness.dark) {
-      return warningDarkContainer;
+      return shuklaAccent;
     }
     if (isPureDarkTheme(context)) return moonDiscLightB;
     return festivalAccentKrishna;
   }
 
-  /// Soft gold tile behind the festival glyph.
+  /// Soft tile behind the festival glyph: a neutral grey chip on the crisp
+  /// light card (the accent stays in the glyph), gold/purple wash on dark.
   static Color festivalTileBackground(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    if (!isDark) {
+      return highContrastOf(context)
+          ? shuklaAccent.withValues(alpha: 0.12)
+          : shuklaTile;
+    }
     return festivalAccent(
       context,
     ).withValues(alpha: highContrastOf(context) ? 0.12 : 0.14);
   }
 
-  /// Subtle row surface shared by the Festivals & Events rows and the
-  /// embedded countdown rows on home: faint surface tint + hairline border
-  /// (NOT glass, so rows stay defined on the base card in every theme,
-  /// including pure-dark's flat surfaces). High contrast steps both up.
+  /// Surface for a festival row: none.
   ///
-  /// [isSelectedDay] swaps the neutral tint for the festival accent — a soft
-  /// accent wash plus an accent hairline — so the rows of the day the user
-  /// is viewing read as the primary group next to the following days. That
-  /// day may be today or any browsed date.
+  /// Rows sit flush on the parent card (transparent, borderless) so the card
+  /// never reads as boxes-inside-a-box; separation comes from a 1px inset
+  /// divider between rows and from the row's own spacing.
+  ///
+  /// [isSelectedDay] is the exception: the rows of the day the user is viewing
+  /// (today or any browsed date) get a borderless accent wash so that group
+  /// reads first. High Contrast keeps a hairline accent edge because colour
+  /// alone would not carry the selection there.
   static BoxDecoration festivalRowDecoration(
     BuildContext context, {
     bool isSelectedDay = false,
   }) {
-    final scheme = Theme.of(context).colorScheme;
+    if (!isSelectedDay) return const BoxDecoration();
+    final accent = festivalAccent(context);
     final highContrast = highContrastOf(context);
-    if (isSelectedDay) {
-      final accent = festivalAccent(context);
+    return BoxDecoration(
+      color: accent.withValues(alpha: highContrast ? 0.18 : 0.08),
+      borderRadius: BorderRadius.circular(14),
+      border: highContrast
+          ? Border.all(color: accent.withValues(alpha: 0.6))
+          : null,
+    );
+  }
+
+  /// Surface for a festival row that owns its own container: the
+  /// all-festivals list has no card behind it, so the row supplies its own
+  /// fill + hairline (opaque card white in light, a faint tint in dark).
+  /// High contrast steps both up.
+  static BoxDecoration festivalListRowDecoration(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final highContrast = highContrastOf(context);
+    final radius = BorderRadius.circular(16);
+    // Light: a crisp white card with the same hairline as the featured card
+    // and the sheet cards. The old 5% onSurface wash composited to a muted
+    // grey on the white/#F5F5F7 page, so a plain row read as disabled next
+    // to the featured one.
+    if (theme.brightness != Brightness.dark) {
       return BoxDecoration(
-        color: accent.withValues(alpha: highContrast ? 0.18 : 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accent.withValues(alpha: highContrast ? 0.6 : 0.35),
-        ),
+        color: theme.cardTheme.color ?? shuklaSurface,
+        borderRadius: radius,
+        border: highContrast
+            ? Border.all(
+                color: scheme.onSurface.withValues(alpha: 0.6),
+                width: 1.5,
+              )
+            : Border.all(color: sheetHairline(context)),
       );
     }
     return BoxDecoration(
       color: scheme.onSurface.withValues(alpha: highContrast ? 0.08 : 0.05),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: radius,
       border: Border.all(
         color: scheme.onSurface.withValues(alpha: highContrast ? 0.25 : 0.1),
       ),
@@ -342,7 +389,7 @@ class AppTheme {
   static Color calendarWeekendStripe(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (!isDark) return calendarDotShukla.withValues(alpha: 0.06);
+    if (!isDark) return shuklaTile;
     if (isPureDarkTheme(context)) {
       return calendarDotDark.withValues(alpha: 0.05);
     }
@@ -350,25 +397,35 @@ class AppTheme {
   }
 
   // ---------------------------------------------------------------------------
-  // Hero (paksha indicator) palette — faithful mirror of
-  // assets/redesign assets/tithi-redesign-v3-faithful.html theme vars.
-  // Shukla: orange gradient / Krishna: purple gradient / PureDark: flat dark.
-  // Resolve via isDark + isPureDark (scaffold == black) so all three
-  // ThemeData variants + high-contrast stay correct from one place.
+  // Hero palette.
+  //
+  // Two flavours, deliberately split:
+  //  * [homeHero*] - the home-screen paksha card keeps its original warm peach
+  //    treatment in light. It is the one intentionally warm surface left in
+  //    the crisp Shukla theme.
+  //  * [hero*] - the sheet/detail surfaces. Light is crisp white with charcoal
+  //    ink, so sheet headers, tiles and chips match the rest of the page.
+  //
+  // Both resolve dark themes through the same code paths (Krishna purple /
+  // PureDark flat), so only the light branch differs.
   // ---------------------------------------------------------------------------
-  // Shukla hero is a soft peach card blending with the creamy scaffold;
-  // Krishna hero is a muted dark plum blending with the dark void (same
-  // subtle philosophy — low contrast with its scaffold, not a bright pop).
-  // PureDark keeps its flat dark card. All dark cards use white ink.
-  static const Color heroShukla1 = Color(0xFFFFF3E0); // orange.shade50
-  static const Color heroShukla2 = Color(0xFFFFE0B2); // orange.shade100
+  static const Color heroHomeShukla1 = Color(0xFFFFF3E0); // orange.shade50
+  static const Color heroHomeShukla2 = Color(0xFFFFE0B2); // orange.shade100
+  static const Color heroHomeInkShukla = Color(0xFF4E342E); // brown.shade800
+  static const Color heroHomeAccentShukla = Color(0xFFBF360C); // burnt orange
+
+  // Shukla hero is a crisp white card on the cool-neutral page: charcoal ink
+  // and the vermilion accent are the only colour, so the hero no longer reads
+  // as another cream-on-cream layer. Krishna and PureDark keep their gradients.
+  static const Color heroShukla1 = shuklaSurface;
+  static const Color heroShukla2 = shuklaSurface;
   static const Color heroKrishna1 = Color(0xFF2D1B4E); // muted dark plum
   static const Color heroKrishna2 = Color(0xFF1F123E); // deeper plum
   static const Color heroDark1 = Color(0xFF1E1E1E);
   static const Color heroDark2 = Color(0xFF050505);
   static const Color heroInk = Colors.white;
-  static const Color heroInkShukla = Color(0xFF4E342E); // brown.shade800
-  static const Color heroAccentShukla = Color(0xFFBF360C); // burnt orange
+  static const Color heroInkShukla = shuklaInk;
+  static const Color heroAccentShukla = shuklaAccent;
   static const Color heroMoonFillShukla = Color(0xFFFFE082); // moonLit
   static const Color heroMoonFillKrishna = Color(0xFF4CC9F0); // tertiary neon
   static const Color heroMoonFillDark = Color(0xFFFFE082); // moonLit
@@ -383,7 +440,7 @@ class AppTheme {
     return [heroKrishna1, heroKrishna2];
   }
 
-  /// Main copy color on the hero: warm brown on the light Shukla card,
+  /// Main copy color on the hero: deep charcoal on the white Shukla card,
   /// white on the dark Krishna / PureDark cards.
   static Color heroForeground(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -392,9 +449,9 @@ class AppTheme {
   }
 
   /// Accent color on the hero (italic title span, dot, chip highlight,
-  /// number badge): burnt orange on Shukla peach, moon-fill neon/gold on
-  /// the dark cards. Kept separate from [heroMoonFill] so the calendar's
-  /// selected-day bars can stay light-on-saturated.
+  /// number badge): vermilion on the crisp white Shukla card, moon-fill
+  /// neon/gold on the dark cards. Kept separate from [heroMoonFill] so the
+  /// calendar's selected-day bars can stay light-on-saturated.
   static Color heroAccent(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (!isDark) return heroAccentShukla;
@@ -403,7 +460,10 @@ class AppTheme {
 
   static Color heroGlow(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (!isDark) return heroAccentShukla.withValues(alpha: 0.14);
+    // No ambient wash in light: a tinted radial is exactly the dusty layer
+    // the crisp palette removes. It also makes the calendar's selected-tile
+    // glow transparent, so light mode paints zero shadows.
+    if (!isDark) return Colors.transparent;
     if (isPureDarkTheme(context)) {
       return const Color(0xFFFFA000).withValues(alpha: 0.25);
     }
@@ -422,9 +482,9 @@ class AppTheme {
 
   static Color heroChipBackground(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Light Shukla card uses a soft white veil; dark cards keep their
-    // translucent white glass.
-    if (!isDark) return Colors.white.withValues(alpha: 0.6);
+    // Light Shukla: an opaque neutral chip on the white hero. Dark cards keep
+    // their translucent white glass.
+    if (!isDark) return shuklaTile;
     if (isPureDarkTheme(context)) {
       return Colors.white.withValues(alpha: 0.08);
     }
@@ -433,7 +493,7 @@ class AppTheme {
 
   static Color heroChipBorder(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (!isDark) return heroAccentShukla.withValues(alpha: 0.18);
+    if (!isDark) return shuklaHairline;
     if (isPureDarkTheme(context)) {
       return const Color(0xFFFFB74D).withValues(alpha: 0.3);
     }
@@ -448,12 +508,12 @@ class AppTheme {
   }
 
   /// Hero card decoration: linear gradient plus a hairline border.
-  /// Shukla gets a warm hairline so the peach card stays defined on the
-  /// off-white scaffold; Krishna gets a faint light hairline so the dark plum
-  /// card stays defined on the dark void; PureDark keeps its flat bordered
-  /// card. No boxShadow: the hero card sits flat (see [glassmorphism], which
-  /// every other home card uses), and a shadow painted inside the card's
-  /// clip would be sliced off at the edge anyway.
+  /// Shukla is a pure-white card with the shared #E5E5EA hairline so it reads
+  /// as a crisp surface on the cool-neutral page; Krishna gets a faint light
+  /// hairline so the dark plum card stays defined on the dark void; PureDark
+  /// keeps its flat bordered card. No boxShadow: the hero card sits flat (see
+  /// [glassmorphism], which every other home card uses), and a shadow painted
+  /// inside the card's clip would be sliced off at the edge anyway.
   static BoxDecoration heroDecoration(BuildContext context) {
     final gradient = heroGradient(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -468,7 +528,7 @@ class AppTheme {
       border: isPureDark
           ? Border.all(color: Colors.white.withValues(alpha: 0.1))
           : !isDark
-          ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
+          ? Border.all(color: shuklaHairline)
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
     );
   }
@@ -486,10 +546,102 @@ class AppTheme {
     );
   }
 
-  /// Sheet header block: same hero gradient/ink treatment as [heroDecoration]
-  /// but flush with the sheet — rounded top (32, matching the bottom-sheet
-  /// shape), straight bottom edge into the body, no outer shadow (the modal
-  /// supplies elevation). High contrast falls back to a solid surface.
+  // ---------------------------------------------------------------------------
+  // Home-screen hero (warm exception)
+  //
+  // The paksha card on the home screen keeps the pre-crisp peach gradient and
+  // brown/burnt-orange ink in light. Everything else - sheet headers, sheet
+  // tiles, chips, calendar glows - uses the crisp [hero*] helpers above. Keep
+  // this block the only warm surface in the light theme; routing a sheet
+  // through it would put brown ink back on white headers.
+  // ---------------------------------------------------------------------------
+
+  static List<Color> homeHeroGradient(BuildContext context) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return const [heroHomeShukla1, heroHomeShukla2];
+    }
+    return heroGradient(context);
+  }
+
+  /// Copy color on the home hero: warm brown on the peach Shukla card, white
+  /// on the dark Krishna / PureDark cards.
+  static Color homeHeroForeground(BuildContext context) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return heroHomeInkShukla;
+    }
+    return heroForeground(context);
+  }
+
+  /// Accent on the home hero (italic title span, dot, chip highlight): burnt
+  /// orange on the peach Shukla card, moon-fill neon/gold on the dark cards.
+  static Color homeHeroAccent(BuildContext context) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return heroHomeAccentShukla;
+    }
+    return heroAccent(context);
+  }
+
+  static Color homeHeroGlow(BuildContext context) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return heroHomeAccentShukla.withValues(alpha: 0.14);
+    }
+    return heroGlow(context);
+  }
+
+  static Color homeHeroChipBackground(BuildContext context) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return Colors.white.withValues(alpha: 0.6);
+    }
+    return heroChipBackground(context);
+  }
+
+  static Color homeHeroChipBorder(BuildContext context) {
+    if (Theme.of(context).brightness != Brightness.dark) {
+      return heroHomeAccentShukla.withValues(alpha: 0.18);
+    }
+    return heroChipBorder(context);
+  }
+
+  /// Home hero card decoration: warm peach gradient with a burnt-orange
+  /// hairline in light, the shared [heroDecoration] on dark cards.
+  static BoxDecoration homeHeroDecoration(BuildContext context) {
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return heroDecoration(context);
+    }
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: homeHeroGradient(context),
+      ),
+      border: Border.all(color: heroHomeAccentShukla.withValues(alpha: 0.12)),
+    );
+  }
+
+  /// Radial highlight at the top-right of the home hero, mirroring the old
+  /// `.hero` background layer (dark cards keep [heroGlowBackdrop]).
+  static BoxDecoration homeHeroGlowBackdrop(BuildContext context) {
+    if (Theme.of(context).brightness == Brightness.dark) {
+      return heroGlowBackdrop(context);
+    }
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      gradient: RadialGradient(
+        center: const Alignment(0.85, -0.4),
+        radius: 1.4,
+        colors: [homeHeroGlow(context), Colors.transparent],
+        stops: const [0.0, 0.55],
+      ),
+    );
+  }
+
+  /// Sheet header block: the hero treatment, flush with the sheet — rounded
+  /// top (32, matching the bottom-sheet shape), straight bottom edge into the
+  /// body, no outer shadow (the modal supplies elevation). On the crisp white
+  /// Shukla sheet the header is white with a single bottom hairline so it
+  /// separates from the body without a tinted band. Dark themes keep the hero
+  /// gradient. High contrast falls back to a solid surface.
   /// Pass the resolved flag (OS MediaQuery and/or app accessibility setting,
   /// same as the hero card) — a static cannot read providers itself.
   static BoxDecoration heroSheetHeaderDecoration(
@@ -510,6 +662,13 @@ class AppTheme {
         ),
       );
     }
+    if (!isDark) {
+      return const BoxDecoration(
+        color: shuklaSurface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border(bottom: BorderSide(color: shuklaHairline)),
+      );
+    }
     final isPureDark = isPureDarkTheme(context);
     return BoxDecoration(
       gradient: LinearGradient(
@@ -520,16 +679,14 @@ class AppTheme {
       borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       border: isPureDark
           ? Border.all(color: Colors.white.withValues(alpha: 0.1))
-          : !isDark
-          ? Border.all(color: heroAccentShukla.withValues(alpha: 0.12))
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
     );
   }
 
   /// Hairline used by sheet body cards and their chips. White cards on the
-  /// Shukla off-white scaffold are only a handful of RGB steps apart from the
-  /// background, so an explicit edge is what separates them; dark themes use
-  /// the same idea with a faint light hairline to lift cards off the void.
+  /// cool-neutral Shukla scaffold are separated by an explicit cool-grey edge
+  /// rather than a shadow; dark themes use a faint light hairline to lift
+  /// cards off the void.
   static Color sheetHairline(
     BuildContext context, {
     bool highContrast = false,
@@ -540,9 +697,8 @@ class AppTheme {
         context,
       ).colorScheme.onSurface.withValues(alpha: isDark ? 0.35 : 0.28);
     }
-    return Theme.of(
-      context,
-    ).colorScheme.onSurface.withValues(alpha: isDark ? 0.12 : 0.1);
+    if (!isDark) return shuklaHairline;
+    return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.12);
   }
 
   /// Sheet body card decoration (tithi detail + festival event sheets):
@@ -594,93 +750,99 @@ class AppTheme {
   }
 
   // ---------------------------------------------------------------------------
-  // Shukla (light) base surface.
-  //
-  // The scaffold is a neutral off-white rather than the old creamy #FFFDF7:
-  // a warm cream base under a bright orange primary makes the whole page read
-  // as a tinted, night-mode-ish surface. Warmth now comes from the hero card
-  // and the accent palette, not from the page background, so white cards keep
-  // a clean separation from the body.
+  // Shukla (light) base surface — see the crisp palette constants at the top
+  // of this class. The page is a cool neutral (#F5F5F7) so opaque white cards
+  // separate from it; warm cream/peach backgrounds are intentionally gone.
   // ---------------------------------------------------------------------------
-  static const Color shuklaBackground = Color(0xFFFAFAF6);
 
-  /// OPT-3: static final fields so ThemeData + GoogleFonts text-theme objects
-  /// are constructed exactly once (on first class access) rather than on every
-  /// widget rebuild that calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
+  /// OPT-3: static final fields so ThemeData objects are constructed exactly
+  /// once (on first class access) rather than on every widget rebuild that
+  /// calls AppTheme.shuklaTheme / krishnaTheme / pureDarkTheme.
   static final ThemeData shuklaTheme = _buildShuklaTheme();
   static final ThemeData krishnaTheme = _buildKrishnaTheme();
   static final ThemeData pureDarkTheme = _buildPureDarkTheme();
 
-  /// Shukla Paksha (Waxing Moon) - Vibrant Warm Theme
+  /// Shukla Paksha (Waxing Moon) - Crisp Daylight Theme
   static ThemeData _buildShuklaTheme() {
-    // Vibrant Orange/Gold Palette
-    const primaryColor = Color(0xFFFF9F1C); // Vibrant Orange
-    const secondaryColor = Color(0xFFFFBF69); // Mellow Yellow-Orange
-    const accentColor = Color(0xFFCBF3F0); // Soft Cyan for contrast
-    const backgroundColor = shuklaBackground; // Neutral off-white
-    const surfaceColor = Colors.white;
+    // One accent family only: vermilion primary, darker/saffron siblings.
+    const primaryColor = shuklaAccent; // #E84A1B vermilion
+    const secondaryColor = shuklaAccentDeep; // #C2410C
+    const tertiaryColor = Color(0xFFFF5A1F); // saffron highlight
+    const backgroundColor = shuklaBackground; // cool neutral #F5F5F7
+    const surfaceColor = shuklaSurface; // pure #FFFFFF
+    const ink = shuklaInk; // deep charcoal #111113
 
-    final baseTextTheme = GoogleFonts.poppinsTextTheme();
+    final baseTextTheme = AppTypography.uiTextTheme(
+      ThemeData.light().textTheme,
+    );
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      fontFamily: AppTypography.uiFamily,
+      fontFamilyFallback: AppTypography.indicSansFallback,
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: secondaryColor,
-        tertiary: accentColor,
-        onSecondary: Color(0xFF3E2723), // brown.shade900
-        onSurface: Color(0xFF2D3436),
+        onSecondary: Colors.white,
+        tertiary: tertiaryColor,
+        onTertiary: Colors.white,
+        onSurface: ink,
+        onSurfaceVariant: shuklaInkTertiary,
+        outline: shuklaHairline,
+        outlineVariant: shuklaHairline,
       ),
       scaffoldBackgroundColor: backgroundColor,
       appBarTheme: AppBarTheme(
         backgroundColor: backgroundColor,
-        foregroundColor: const Color(0xFF2D3436),
+        foregroundColor: ink,
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: systemUiOverlayStyle(Brightness.light),
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: AppTypography.display(
           fontSize: 22,
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF2D3436),
+          color: ink,
+          height: 1.3,
         ),
       ),
+      // Flat white cards: 1px cool-grey edge, no elevation, no tinted shadow.
       cardTheme: CardThemeData(
         color: surfaceColor,
-        elevation: 8,
-        shadowColor: primaryColor.withValues(alpha: 0.15),
-        shape: roundedShape,
+        elevation: 0,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: const BorderSide(color: shuklaHairline),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: shuklaHairline,
+        thickness: 1,
+        space: 1,
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: 0,
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surfaceColor,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
       ),
       textTheme: baseTextTheme.copyWith(
-        headlineLarge: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
-          color: const Color(0xFF2D3436),
-          height: 1.2,
+        headlineLarge: AppTypography.display(
+          fontWeight: FontWeight.w700,
+          color: ink,
         ),
-        headlineMedium: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF2D3436),
-        ),
-        titleLarge: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          color: const Color(0xFF2D3436),
-        ),
-        bodyLarge: GoogleFonts.poppins(
-          color: const Color(0xFF4A4A4A),
-          fontSize: 16,
-        ),
-        bodyMedium: GoogleFonts.poppins(color: const Color(0xFF636E72)),
+        headlineMedium: AppTypography.display(color: ink),
+        headlineSmall: AppTypography.display(color: ink),
+        titleLarge: AppTypography.display(color: ink, height: 1.3),
+        bodyLarge: AppTypography.ui(color: shuklaInkSecondary, fontSize: 16),
+        bodyMedium: AppTypography.ui(color: shuklaInkTertiary),
       ),
     );
   }
@@ -694,13 +856,13 @@ class AppTheme {
     const backgroundColor = Color(0xFF10002B); // Deepest Void
     const surfaceColor = Color(0xFF240046); // Dark Violet Surface
 
-    final baseTextTheme = GoogleFonts.poppinsTextTheme(
-      ThemeData.dark().textTheme,
-    );
+    final baseTextTheme = AppTypography.uiTextTheme(ThemeData.dark().textTheme);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTypography.uiFamily,
+      fontFamilyFallback: AppTypography.indicSansFallback,
       colorScheme: const ColorScheme.dark(
         primary: primaryColor,
         secondary: secondaryColor,
@@ -716,10 +878,10 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: systemUiOverlayStyle(Brightness.dark),
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: AppTypography.display(
           fontSize: 22,
-          fontWeight: FontWeight.w600,
           color: Colors.white,
+          height: 1.3,
         ),
       ),
       cardTheme: CardThemeData(
@@ -740,24 +902,18 @@ class AppTheme {
         ),
       ),
       textTheme: baseTextTheme.copyWith(
-        headlineLarge: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          height: 1.2,
-        ),
-        headlineMedium: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
+        headlineLarge: AppTypography.display(
+          fontWeight: FontWeight.w700,
           color: Colors.white,
         ),
-        titleLarge: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-        bodyLarge: GoogleFonts.poppins(
+        headlineMedium: AppTypography.display(color: Colors.white),
+        headlineSmall: AppTypography.display(color: Colors.white),
+        titleLarge: AppTypography.display(color: Colors.white, height: 1.3),
+        bodyLarge: AppTypography.ui(
           color: const Color(0xFFE0E0E0),
           fontSize: 16,
         ),
-        bodyMedium: GoogleFonts.poppins(color: const Color(0xFFBDBDBD)),
+        bodyMedium: AppTypography.ui(color: const Color(0xFFBDBDBD)),
       ),
     );
   }
@@ -778,13 +934,13 @@ class AppTheme {
       onSurface: const Color(0xFFE0E0E0), // High legibility white
     );
 
-    final baseTextTheme = GoogleFonts.poppinsTextTheme(
-      ThemeData.dark().textTheme,
-    );
+    final baseTextTheme = AppTypography.uiTextTheme(ThemeData.dark().textTheme);
 
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: AppTypography.uiFamily,
+      fontFamilyFallback: AppTypography.indicSansFallback,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: Colors.black,
 
@@ -795,10 +951,10 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: systemUiOverlayStyle(Brightness.dark),
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: AppTypography.display(
           fontSize: 22,
-          fontWeight: FontWeight.w600,
           color: Colors.white,
+          height: 1.3,
         ),
       ),
 
@@ -826,24 +982,18 @@ class AppTheme {
       ),
 
       textTheme: baseTextTheme.copyWith(
-        headlineLarge: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          height: 1.2,
-        ),
-        headlineMedium: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
+        headlineLarge: AppTypography.display(
+          fontWeight: FontWeight.w700,
           color: Colors.white,
         ),
-        titleLarge: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-        bodyLarge: GoogleFonts.poppins(
+        headlineMedium: AppTypography.display(color: Colors.white),
+        headlineSmall: AppTypography.display(color: Colors.white),
+        titleLarge: AppTypography.display(color: Colors.white, height: 1.3),
+        bodyLarge: AppTypography.ui(
           color: const Color(0xFFEEEEEE),
           fontSize: 16,
         ),
-        bodyMedium: GoogleFonts.poppins(color: const Color(0xFFCCCCCC)),
+        bodyMedium: AppTypography.ui(color: const Color(0xFFCCCCCC)),
       ),
     );
   }
@@ -883,7 +1033,17 @@ class AppTheme {
           backgroundColor: Colors.white,
           foregroundColor: Colors.black,
         ),
-        cardTheme: base.cardTheme.copyWith(color: Colors.white, elevation: 0),
+        cardTheme: base.cardTheme.copyWith(
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(
+              color: Colors.black.withValues(alpha: 0.6),
+              width: 1.5,
+            ),
+          ),
+        ),
         bottomSheetTheme: base.bottomSheetTheme.copyWith(
           backgroundColor: Colors.white,
         ),
@@ -949,6 +1109,21 @@ class AppTheme {
   /// drift apart between widgets.
   static const double homeCardGutter = 12.0;
 
+  /// Horizontal breathing room inside a home-card row's surface (the selected
+  /// day's wash and the press highlight).
+  ///
+  /// The row's content stays on the card's 16dp gutter - the leading tile
+  /// lines up with the card heading, as the flush-row design requires - while
+  /// the wash/highlight reaches this far past it on both sides. Without it
+  /// the icon tile and the trailing chevron sit exactly on the wash edge and
+  /// the highlight reads as a clipped band instead of a surface.
+  static const double homeCardRowInset = 12.0;
+
+  /// Side padding the home cards themselves take so [homeCardRowInset] rows
+  /// still land their content on the 16dp heading gutter
+  /// (16 - [homeCardRowInset]).
+  static const double homeCardRowPadding = 4.0;
+
   /// Glassmorphism decoration for cards and sheets
   static BoxDecoration glassmorphism({
     required BuildContext context,
@@ -990,32 +1165,31 @@ class AppTheme {
       );
     }
 
+    // Shukla: opaque white card, 1px cool-grey edge, no shadow. The backdrop
+    // blur has nothing to reveal on the flat #F5F5F7 page, and a translucent
+    // fill was what made the light UI read beige-on-beige.
+    if (!isDark) {
+      return BoxDecoration(
+        color: shuklaSurface,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: border ?? Border.all(color: shuklaHairline),
+      );
+    }
+
     return BoxDecoration(
-      color: isDark
-          ? Colors.white.withValues(alpha: opacity)
-          : Colors.white.withValues(alpha: 0.6), // More visible glass in light
+      color: Colors.white.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(borderRadius),
       border:
           border ??
           Border.all(
-            // Light mode previously used white @0.4, which is invisible
-            // against the off-white scaffold — cards read as borderless blobs
-            // while the hero (a warm accent hairline) was the only outlined
-            // card. Derive the hairline from onSurface instead: dark ink on a
-            // light scaffold, white ink on a dark one, so every glass card
-            // carries the same visible edge in all themes.
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.14)
-                : Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.12),
+            // Dark themes keep a faint light hairline to lift glass cards off
+            // the void.
+            color: Colors.white.withValues(alpha: 0.14),
             width: 1.5,
           ),
       boxShadow: [
         BoxShadow(
-          color: Theme.of(
-            context,
-          ).primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
+          color: Theme.of(context).primaryColor.withValues(alpha: 0.2),
           blurRadius: blur,
         ),
       ],
@@ -1062,10 +1236,7 @@ class AppTheme {
 
     final fill = isDark
         ? Color.alphaBlend(Colors.white.withValues(alpha: 0.10), scheme.surface)
-        : Color.alphaBlend(
-            scheme.primary.withValues(alpha: 0.04),
-            Colors.white,
-          );
+        : Colors.white;
 
     return BoxDecoration(
       // Never the opaque card fill: the content underneath must stay visible
@@ -1075,9 +1246,11 @@ class AppTheme {
       // visible, so the capsule read as a flat frosted rectangle. Dark goes
       // lower because the lift already separates it from the page; light stops
       // at 0.68, where artwork scrolling underneath still cannot drag the
-      // dark labels under a readable contrast.
+      // dark labels under a readable contrast. The light film is untinted
+      // white (the old 4% primary wash muddied the capsule).
       color: fill.withValues(alpha: isDark ? 0.66 : 0.68),
       borderRadius: BorderRadius.circular(borderRadius),
+      border: isDark ? null : Border.all(color: shuklaHairline),
     );
   }
 
@@ -1225,11 +1398,12 @@ class AppTheme {
 
   /// Standard background decoration for full-screen bodies.
   ///
-  /// Shukla paints a flat [shuklaBackground] surface. Every warm layer stacked
-  /// on the old body (the #FFFDF7 base, then the amber gradient wash) composited
-  /// the page back to cream, which read as a tinted, night-mode-ish background
-  /// under the orange primary. The light branch therefore returns the scaffold
-  /// color as-is; the ambient gradient is dark-theme only.
+  /// Shukla paints a flat [shuklaBackground] (#F5F5F7) surface. Every warm
+  /// layer stacked on the old body (the #FFFDF7 base, then the amber gradient
+  /// wash) composited the page back to cream, which read as a tinted,
+  /// night-mode-ish background under the orange primary. The light branch
+  /// therefore returns the scaffold color as-is; the ambient gradient is
+  /// dark-theme only.
   ///
   /// Reduce Motion and High Contrast flatten to the scaffold color too, so no
   /// caller needs to branch on the setting.
@@ -1332,25 +1506,24 @@ class GlassmorphismConfig {
       );
     }
 
-    // Standard glassmorphism
+    // Shukla: opaque white card, 1px cool-grey edge, no shadow.
+    if (!isDark) {
+      return BoxDecoration(
+        color: AppTheme.shuklaSurface,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: border ?? Border.all(color: AppTheme.shuklaHairline),
+      );
+    }
+
+    // Standard glassmorphism (dark themes)
     return BoxDecoration(
-      color: isDark
-          ? Colors.white.withValues(alpha: opacity)
-          : Colors.white.withValues(alpha: 0.6),
+      color: Colors.white.withValues(alpha: opacity),
       borderRadius: BorderRadius.circular(borderRadius),
       border:
           border ??
-          Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : Colors.white.withValues(alpha: 0.4),
-            width: 1.5,
-          ),
+          Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
       boxShadow: [
-        BoxShadow(
-          color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-          blurRadius: blur,
-        ),
+        BoxShadow(color: primaryColor.withValues(alpha: 0.2), blurRadius: blur),
       ],
     );
   }

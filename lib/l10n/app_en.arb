@@ -1235,6 +1235,10 @@
   "@festivalFilterRecurring": {
     "description": "Filter chip: observances that repeat every lunar month"
   },
+  "festivalFilterFeatured": "Featured",
+  "@festivalFilterFeatured": {
+    "description": "Filter chip: the curated flagship festivals (the ones the all-festivals list renders as large cards)"
+  },
   "festivalFilterTitle": "Filter festivals",
   "@festivalFilterTitle": {
     "description": "Title of the festival filter sheet and tooltip of its icon button"

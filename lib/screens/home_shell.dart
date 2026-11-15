@@ -9,10 +9,9 @@ import '../widgets/floating_nav_bar.dart';
 import '../widgets/jump_to_today_button.dart';
 import '../widgets/responsive_layout.dart';
 import 'all_festivals_screen.dart';
-import 'festival_countdown_screen.dart';
 import 'home_screen.dart';
 
-/// Root of the narrow-screen app: keeps the three top-level tabs mounted and
+/// Root of the narrow-screen app: keeps both top-level tabs mounted and
 /// floats a [FloatingNavBar] above them.
 ///
 /// Wide screens (>= [ResponsiveLayout.tabletBreakpoint]) return the untouched
@@ -62,10 +61,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   /// One widget instance per tab, created the first time that tab is shown.
   ///
   /// The tabs stay in the tree (their scroll offsets, search text and filters
-  /// must survive a switch), so without the cache each switch rebuilt all
-  /// three subtrees. Reusing the same instance makes `Element.update` a
-  /// no-op for the tabs that did not change: an offscreen tab still exists,
-  /// but costs no build.
+  /// must survive a switch), so without the cache each switch rebuilt both
+  /// subtrees. Reusing the same instance makes `Element.update` a no-op for
+  /// the tab that did not change: an offscreen tab still exists, but costs no
+  /// build.
   final Map<int, Widget> _tabs = <int, Widget>{};
 
   /// Ambient theme handed to the tabs, with the snackbar lifted above the
@@ -119,22 +118,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             // The shell floats this action beside the capsule instead; two
             // live copies in the same frame would both jump.
             showJumpToToday: false,
-            onDrawerStateChanged: _onDrawerStateChanged,
-            // The drawer's Countdowns entry switches this shell's tab instead
-            // of pushing a second copy of the screen over it.
+            // The home cards' "View all N festivals" button asks for the
+            // Festivals destination, so it must switch this shell's tab rather
+            // than push a second copy of the screen over it.
             onSelectTab: _selectTab,
+            onDrawerStateChanged: _onDrawerStateChanged,
           );
         case HomeTab.festivals:
           return AllFestivalsScreen(
             bottomContentInset: FloatingNavBar.reserve,
-            // Every tab hosts the drawer: reaching Settings (or any other
-            // drawer destination) must not require a detour through Today.
-            onSelectTab: _selectTab,
-            onDrawerStateChanged: _onDrawerStateChanged,
-          );
-        case HomeTab.countdowns:
-          return FestivalCountdownScreen(
-            bottomContentInset: FloatingNavBar.reserve,
+            // The drawer hosts Settings (and every other drawer
+            // destination), so reaching it must not require a detour through
+            // Today.
             onSelectTab: _selectTab,
             onDrawerStateChanged: _onDrawerStateChanged,
           );
@@ -142,8 +137,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     });
   }
 
-  /// Switches to [tab] from inside a tab (the drawer), where only the tab
-  /// itself is known.
+  /// Switches to [tab] from inside a tab (the home card's "view all", which
+  /// only knows the destination it wants), where only the enum is known.
   void _selectTab(HomeTab tab) => _select(tab.index);
 
   TabLayerRole _roleFor(int index) {
@@ -226,10 +221,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         icon: Icons.event_available_rounded,
         label: l10n?.navFestivals ?? 'Festivals',
       ),
-      FloatingNavDestination(
-        icon: Icons.timer_rounded,
-        label: l10n?.navCountdowns ?? 'Countdowns',
-      ),
     ];
 
     return PopScope(
@@ -262,8 +253,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                 ),
                 // Scoped consumer: the "jump to today" rule depends on the
                 // calendar's focused month and selected day, so watching it in
-                // the shell's build would rebuild all three tabs on every
-                // date tap. Here only the bar rebuilds.
+                // the shell's build would rebuild both tabs on every date
+                // tap. Here only the bar rebuilds.
                 child: Consumer(
                   builder: (context, ref, child) {
                     // The calendar is the Today tab's content, so its action

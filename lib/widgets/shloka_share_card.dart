@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../l10n/app_localizations.dart';
 import '../models/shloka.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 
 /// A single translation paragraph for the share image.
 class ShlokaShareTranslation {
@@ -102,10 +102,8 @@ class ShlokaShareCard extends StatelessWidget {
                       Text(
                         shloka.text,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.martel(
+                        style: AppTypography.shloka(
                           fontSize: 20,
-                          height: 1.6,
-                          fontWeight: FontWeight.w600,
                           color: colors.onSurface,
                         ),
                       ),
@@ -127,7 +125,7 @@ class ShlokaShareCard extends StatelessWidget {
                           translation.text,
                           textAlign: TextAlign.center,
                           style: translation.isHindi
-                              ? GoogleFonts.martel(
+                              ? AppTypography.shloka(
                                   fontSize: 16,
                                   height: 1.5,
                                   fontWeight: FontWeight.w500,

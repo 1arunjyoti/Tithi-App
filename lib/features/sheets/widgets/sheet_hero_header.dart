@@ -27,11 +27,9 @@ class SheetHeroHeader extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          if (!highContrast)
+          if (!highContrast && Theme.of(context).brightness == Brightness.dark)
             Positioned.fill(
-              child: Container(
-                decoration: AppTheme.heroGlowBackdrop(context),
-              ),
+              child: Container(decoration: AppTheme.heroGlowBackdrop(context)),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),

@@ -1764,6 +1764,12 @@ abstract class AppLocalizations {
   /// **'Recurring'**
   String get festivalFilterRecurring;
 
+  /// Filter chip: the curated flagship festivals (the ones the all-festivals list renders as large cards)
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get festivalFilterFeatured;
+
   /// Title of the festival filter sheet and tooltip of its icon button
   ///
   /// In en, this message translates to:

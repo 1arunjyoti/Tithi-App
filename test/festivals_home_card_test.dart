@@ -17,6 +17,8 @@ import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/event_detail_sheet.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
 import 'package:tithi/widgets/festival_row_tile.dart';
+import 'package:tithi/widgets/festival_thumbnail.dart';
+import 'package:tithi/widgets/inset_row_divider.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
@@ -101,6 +103,7 @@ void main() {
     required List<Festival> all,
     List<Override> extraOverrides = const [],
     ValueChanged<HomeTab>? onSelectTab,
+    bool highContrast = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -117,9 +120,12 @@ void main() {
           accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
         ],
         child: MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: EventListWidget(onSelectTab: onSelectTab),
+          home: MediaQuery(
+            data: MediaQueryData(highContrast: highContrast),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: EventListWidget(onSelectTab: onSelectTab),
+              ),
             ),
           ),
         ),
@@ -235,7 +241,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('selected-day rows get the accent wash, later days neutral', (
+    testWidgets('selected-day rows get the accent wash, later days flush', (
       tester,
     ) async {
       // Arrange: fixed selection (9/14) and a different fixed "today"
@@ -274,23 +280,102 @@ void main() {
       final selectedRow = decorationOf('Balarama Jayanti');
       final laterRow = decorationOf('Vishwakarma Puja');
 
-      // Assert: the selected day's fill/border are the festival accent (hue
-      // match), no later row shares them, and the selected row is labelled
-      // with its date (it is not "today" in this fixture).
+      // Assert: the selected day is a borderless accent wash, later days are
+      // fully transparent (rows sit flush on the card), and the selected row
+      // is labelled with its date (it is not "today" in this fixture).
       final context = tester.element(find.byType(FestivalRowTile).first);
       final accent = AppTheme.festivalAccent(context);
       expect(find.text('Mon, 14 Sep · Shukla Chaturthi'), findsOneWidget);
       expect(selectedRow.color, isNotNull);
       expect(selectedRow.color!.withValues(alpha: 1), equals(accent));
-      expect(selectedRow.color, isNot(equals(laterRow.color)));
-      expect(
-        (selectedRow.border! as Border).top.color,
-        isNot(equals((laterRow.border! as Border).top.color)),
+      expect(selectedRow.color!.a, closeTo(0.08, 0.001));
+      expect(selectedRow.border, isNull);
+      expect(selectedRow.borderRadius, BorderRadius.circular(14));
+      expect(laterRow.color, isNull);
+      expect(laterRow.border, isNull);
+    });
+
+    testWidgets('selected-day wash gains a hairline in high contrast', (
+      tester,
+    ) async {
+      // Arrange: identical window, but High Contrast (MediaQuery flag is what
+      // AppTheme.highContrastOf reads).
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [festA],
+          ),
+          DateTime(2026, 9, 16): dayData(
+            date: DateTime(2026, 9, 16),
+            festivals: [festB],
+          ),
+        },
+        all: [festA, festB],
+        highContrast: true,
       );
-      expect(
-        (selectedRow.border! as Border).top.color.r,
-        closeTo(accent.r, 0.001),
+
+      BoxDecoration decorationOf(String name) {
+        final row = find.ancestor(
+          of: find.text(name),
+          matching: find.byType(FestivalRowTile),
+        );
+        return tester
+                .widget<Ink>(
+                  find.descendant(of: row, matching: find.byType(Ink)).first,
+                )
+                .decoration!
+            as BoxDecoration;
+      }
+
+      // Assert: colour alone would not carry the selection here, so the wash
+      // keeps a 1px accent edge; the unselected row stays flush.
+      final selectedRow = decorationOf('Balarama Jayanti');
+      final laterRow = decorationOf('Vishwakarma Puja');
+      expect(selectedRow.color!.a, closeTo(0.18, 0.001));
+      expect(selectedRow.border, isA<Border>());
+      expect((selectedRow.border! as Border).top.width, 1.0);
+      expect(laterRow.color, isNull);
+      expect(laterRow.border, isNull);
+    });
+
+    testWidgets('rows are flush and separated by an inset hairline', (
+      tester,
+    ) async {
+      // Arrange: two rows in the window.
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [festA, festB],
+          ),
+        },
+        all: [festA, festB],
       );
+
+      // Assert: no nested row boxes — one divider between two rows, none
+      // after the last, indented past the leading tile.
+      expect(find.byType(InsetRowDivider), findsOneWidget);
+      final divider = tester.widget<InsetRowDivider>(
+        find.byType(InsetRowDivider),
+      );
+      expect(divider.leadingInset, FestivalRowTile.textColumnInset);
+      expect(find.byType(FestivalRowTile), findsNWidgets(2));
+
+      // Assert: the leading tile lines up with the section heading (both at
+      // the card's content edge, no inner row padding).
+      final header = tester.getTopLeft(find.text('Festivals & Events'));
+      final tile = tester.getTopLeft(
+        find
+            .descendant(
+              of: find.byType(FestivalRowTile).first,
+              matching: find.byType(FestivalThumbnail),
+            )
+            .first,
+      );
+      expect(tile.dx, closeTo(header.dx, 0.5));
     });
 
     testWidgets('empty window keeps the view-all button', (tester) async {

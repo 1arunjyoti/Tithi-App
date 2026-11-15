@@ -51,9 +51,8 @@ class FestivalCountdownScreen extends ConsumerStatefulWidget {
 
 class _FestivalCountdownScreenState
     extends ConsumerState<FestivalCountdownScreen> {
-  /// Owns the list's offset so a re-tap of the Countdowns destination can
-  /// return to the top. Shared by all three list variants below: only one is
-  /// ever mounted at a time, so they can take turns attaching to it.
+  /// Shared by all three list variants below: only one is ever mounted at a
+  /// time, so they can take turns attaching to it.
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -62,31 +61,8 @@ class _FestivalCountdownScreenState
     super.dispose();
   }
 
-  /// Re-tapping the already-selected Countdowns destination returns the list to
-  /// its first row (the header widget card).
-  void _revealTop() {
-    if (!_scrollController.hasClients) return;
-    final ScrollPosition position = _scrollController.position;
-    if (!position.hasContentDimensions ||
-        position.pixels <= position.minScrollExtent) {
-      return;
-    }
-    _scrollController.animateTo(
-      position.minScrollExtent,
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 260),
-      ),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    ref.listen<int>(tabRevealProvider(HomeTab.countdowns), (previous, next) {
-      if (previous == next) return;
-      _revealTop();
-    });
     final l10n = AppLocalizations.of(context);
     // Keep widget in sync
     ref.watch(homeWidgetSyncProvider);
@@ -96,9 +72,7 @@ class _FestivalCountdownScreenState
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      drawer: widget.onSelectTab == null
-          ? null
-          : AppDrawer(onSelectTab: widget.onSelectTab),
+      drawer: widget.onSelectTab == null ? null : const AppDrawer(),
       onDrawerChanged: widget.onDrawerStateChanged,
       appBar: AppBar(
         automaticallyImplyLeading: false,

@@ -7,6 +7,7 @@ import '../core/navigation/app_routes.dart';
 import '../screens/moon_phases_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import 'moon_animation_widget.dart';
 
 /// Compact widget showing countdown to next Amavasya and Purnima
@@ -39,13 +40,15 @@ class MoonCountdownWidget extends ConsumerWidget {
             colors: AppTheme.moonCountdownGradient(isDark),
           ),
           border: Border.all(color: AppTheme.moonCountdownBorder(isDark)),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.moonCountdownShadow(isDark),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: isDark
+              ? [
+                  BoxShadow(
+                    color: AppTheme.moonCountdownShadow(true),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: moonPhaseAsync.when(
           data: (data) => _buildContent(context, data, l10n, isDark),
@@ -88,9 +91,7 @@ class MoonCountdownWidget extends ConsumerWidget {
           height: 60,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: AppTheme.moonDiscGradient(isDark),
-            ),
+            gradient: RadialGradient(colors: AppTheme.moonDiscGradient(isDark)),
             boxShadow: [
               BoxShadow(
                 color: AppTheme.moonGlowColor(isDark),
@@ -113,10 +114,9 @@ class MoonCountdownWidget extends ConsumerWidget {
                   toHeroContext,
                 ) => Material(
                   type: MaterialType.transparency,
-                  child:
-                      flightDirection == HeroFlightDirection.push
-                          ? toHeroContext.widget
-                          : fromHeroContext.widget,
+                  child: flightDirection == HeroFlightDirection.push
+                      ? toHeroContext.widget
+                      : fromHeroContext.widget,
                 ),
             child: MoonAnimationWidget(
               phase: phase,
@@ -254,9 +254,10 @@ class _LiveCountdownTextState extends State<_LiveCountdownText> {
       child: Text(
         label,
         key: ValueKey(label),
-        style: theme.textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.bold,
+        style: AppTypography.telemetry(
+          fontSize: 13,
           color: theme.colorScheme.onSurface,
+          letterSpacing: 0.2,
         ),
       ),
     );

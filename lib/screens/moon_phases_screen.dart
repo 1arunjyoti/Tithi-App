@@ -540,7 +540,14 @@ class _UpcomingDatesTab extends ConsumerWidget {
     return datesAsync.when(
       data: (dates) {
         if (dates.isEmpty) {
-          return Center(child: Text(emptyMessage));
+          return Center(
+            child: Text(
+              emptyMessage,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+              ),
+            ),
+          );
         }
 
         return ListView.builder(
@@ -573,15 +580,18 @@ class _UpcomingDatesTab extends ConsumerWidget {
                       children: [
                         Text(
                           DateFormat.yMMMMEEEEd().format(date),
+                          // Full ink: this is the row's primary content, and
+                          // `bodyMedium` is the theme's tertiary (hint) ink.
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
                           DateFormat.jm().format(date),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
+                              alpha: 0.72,
                             ),
                           ),
                         ),
@@ -609,6 +619,10 @@ class _UpcomingDatesTab extends ConsumerWidget {
                           : l10n.daysFromNow(daysUntil),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        // The pill is a tint of the moon glow; pin the text to
+                        // `onSurface` so it stays dark-on-amber in light and
+                        // light-on-indigo in the dark palettes.
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                   ),

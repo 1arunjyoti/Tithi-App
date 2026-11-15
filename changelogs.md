@@ -17,6 +17,64 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-14 - 0.8.1+26
+
+### Category chips on All Festivals
+The all-festivals list now has All / Major / Vrat / Recurring / Featured chips directly under the search field, so the common narrowing is one tap instead of a trip through the filter sheet.
+
+- `FestivalCategoryFilter` gained `featured` (`lib/models/festival_filter.dart`); its matcher reads the curated `Festival.featured` flag, **not** `category` — 96 of 110 catalog records are `category: 'major'`, so "Featured" must keep meaning the ~20 curated flagships (the ones the list renders as `MajorFestivalCard`).
+- Chip order is `FestivalCategoryFilter.values` order; append new values at the end. The strip is `AllFestivalsScreen.categoryChipsKey`, built by `_buildCategoryChips` in `lib/screens/all_festivals_screen.dart`.
+- The chips and the app-bar sheet write the same `_filters` state: `_selectCategory` uses `copyWith`, so a region picked in the sheet is preserved when a chip is tapped. The sheet still opens with the strip's choice staged and gains the Featured chip too.
+- One shared `FestivalFilterChip` + `festivalCategoryFilterLabel()` (`lib/widgets/festival_filter_chip.dart`) renders both entry points, so their tint/label cannot drift.
+- `FestivalFilterChip` fills via `ChoiceChip.color` (a `WidgetStateProperty`), **not** `selectedColor`: `RawChip` resolves the fill a selection fade *starts* from through the chip defaults' `color` (`colorScheme.secondaryContainer`, fully opaque) and only the *end* through `selectedColor`, so `selectedColor` alone flashed a solid off-palette block on every tap in both the strip and the sheet. With `color` set, the chip switches between transparent and the primary wash with no fade — keep it that way, and see `test/festival_filter_chip_test.dart`, which samples the painted fill mid-fade in all three palettes and fails if any frame is more opaque than the wash.
+- Tests in `test/all_festivals_screen_test.dart`: sheet taps must be scoped to `find.byType(BottomSheet)` — the strip renders the same labels behind the modal.
+
+### Moon phases list legibility
+The upcoming Purnima/Amavasya rows now read at full ink instead of the theme's hint colour.
+
+- Row date line: `bodyMedium` resolves to the Shukla hint ink (`shuklaInkTertiary` #6E6E76), so the row overrides it to `colorScheme.onSurface` at w600; the time line moves from `onSurface` 0.6 to 0.72.
+- The "in N days" pill pins its label to `onSurface` (dark on the amber tint in light, light on the indigo tint in the dark palettes), and the empty-list message uses 0.8 ink instead of the inherited hint colour.
+- `test/moon_scrub_test.dart` ("Upcoming dates list legibility") renders the screen in Shukla/Krishna/Pure Dark and asserts ≥7:1 for the date and ≥4.5:1 for the time against the page background (translucent ink is alpha-blended first). Keep those thresholds when restyling this list.
+
+### Two-destination nav bar
+The floating bar now has Today and Festivals only; Countdowns is still one tap away in the drawer, which opens it as a full screen over the current tab.
+
+- `HomeTab` is `{ today, festivals }` (`lib/core/navigation/home_tab.dart`). `HomeShell` indexes `HomeTab.values` with the bar's `onSelected` and with `_tab()`, so the destination list in `build()` must keep the enum's order and length.
+- The drawer's Countdowns entry no longer selects a tab: it pops the drawer and pushes `FestivalCountdownScreen` as a peer route (`AppDrawer._navigateTo`), the same as Moon Phases/Settings/About.
+- `AppDrawer` dropped its `onSelectTab` callback (Countdowns was its only consumer). The screens keep their own `onSelectTab` flag because it decides hosted-vs-pushed chrome (hamburger vs back arrow).
+- The home card's "view all" still switches to the Festivals tab, so `HomeShell` must pass `onSelectTab: _selectTab` to **both** tabs — `HomeScreen` forwards it to `EventListWidget`, and a missing callback silently falls back to pushing a second `AllFestivalsScreen` over the shell (guarded by `test/home_shell_navigation_test.dart`).
+- `FestivalCountdownScreen` lost its `tabRevealProvider` re-tap scroll handler (nothing re-selects it now); its `_scrollController` stays for the lists.
+
+### Cross-script type system (bundled, offline)
+Titles, body copy and astronomical labels now share harmonised Latin + Indic typefaces, with no runtime font fetching.
+
+- Three tiers in `AppTypography` (`lib/theme/app_typography.dart`): `display` = Newsreader + Tiro Devanagari Hindi/Bangla/Tamil/Telugu + Noto Serif Malayalam; `ui` = Plus Jakarta Sans + Noto Sans Devanagari/Bengali/Tamil/Telugu/Malayalam; `telemetry` = Space Grotesk; `shloka` = Tiro Devanagari Sanskrit.
+- Every tier carries an explicit `fontFamilyFallback` chain, so mixed "Kartika Chaturthi • कार्तिक चतुर्थी" strings never drop to the Android system font. Adding a script = add the family to `pubspec.yaml` and to the matching fallback list; no other wiring.
+- Theme coverage (`lib/theme/app_theme.dart`): `displayLarge/Medium/Small`, `headlineLarge/Medium/Small`, `titleLarge` and the app-bar title are serif; `titleMedium` and below are Jakarta with tabular figures (calendar digits, countdowns align). `theme.fontFamily`/`fontFamilyFallback` are set on all three themes too.
+- Serif stays on the hero tithi title, month heading, section headings, sheet date lines and shlokas. Dense scannable lists use the sans: `festival_row_tile.dart` names are `ui(fontSize: 16, w600)` and the featured `major_festival_card.dart` name is `ui(fontSize: 18, w600)` - ~110 rows are read top-to-bottom, and Newsreader at 15-17pt slows that scan.
+- `AppTypography.displayMinimumSize` (18pt) is a hard floor: `display(fontSize: < 18)` silently returns the `ui()` style, because Newsreader's hairlines go faint at small sizes on low-DPI light-mode screens. Call sites that need sub-18pt text should pass their size to `display()` (not `copyWith(fontSize:)` afterwards) so the guard applies.
+- Display/shloka styles default to a loose 1.35/1.6 line box so Devanagari/Bengali top and bottom matras are not clipped - do not tighten below 1.3 anywhere (section headings take 1.3 deliberately).
+- Fonts are bundled in `assets/fonts/` (49 files, ~7.2 MB) and registered in `pubspec.yaml`; `google_fonts` is removed and `AppBootstrap.warmFonts` is gone. Never reintroduce network font fetching.
+- SIL OFL texts live in `assets/licenses/OFL-<family>.txt` and are registered for the app license page by `AppTypography.registerFontLicenses()` (called from `main()`); add a family to that list when adding a font.
+- Telemetry examples: hero eyebrow (`paksha_hero_card.dart`) and the Purnima/Amavasya countdown (`moon_countdown_widget.dart`); festival mantras and daily-wisdom shlokas use the `shloka` tier.
+
+### Flush festival rows on the home cards
+The Festivals & Events and Festival Countdowns cards now read as one surface each: rows lost their inner boxes, so long festival titles get the reclaimed width and the lists scan without nested cards.
+
+- `AppTheme.festivalRowDecoration` returns `const BoxDecoration()` for standard rows; only `isSelectedDay` rows keep a borderless accent wash (`alpha 0.08`, radius 14). High Contrast uses `0.18` plus a 1px accent edge, since colour alone cannot carry the selection there.
+- Home rows are separated by `InsetRowDivider` (`lib/widgets/inset_row_divider.dart`) indented past the leading tile - `FestivalRowTile.textColumnInset` (60) and `FestivalCountdownTile.textColumnInset` (90) - at `onSurface` alpha 0.08 (0.22 in High Contrast), with no divider after the last row.
+- `FestivalRowTile.flush` and the embedded `FestivalCountdownTile` (`showTitle: false`) drop their horizontal padding so the squircle tile/day badge lines up with the card heading; the full-width `InkWell` (radius 14) keeps the whole row tappable.
+- Rows that are not on a card keep their own surface through `AppTheme.festivalListRowDecoration` (all-festivals list). The tithi sheet's "festivals on this day" rows are flush with their section header.
+
+### Crisp Daylight (Shukla) surface system
+The light theme now reads as crisp white cards on a cool-neutral page with one vermilion accent, instead of warm beige-on-beige layers.
+
+- Palette lives in `AppTheme` (`lib/theme/app_theme.dart`): page `#F5F5F7`, opaque cards `#FFFFFF`, 1px `#E5E5EA` hairline, ink `#111113`, accent `#E84A1B` (deep `#C2410C`, saffron `#FF5A1F`).
+- `AppTheme.glassmorphism` and `GlassmorphismConfig.getDecoration` return opaque white + hairline + no `boxShadow` in light; the dark and High Contrast branches are unchanged.
+- Moon-countdown and sheet-header/body surfaces are white/flat in light; festival glyph tiles are neutral `#F2F2F7`, so the vermilion glyph is the only colour. Light calendar selected/today states use the accent family.
+- The **home-screen paksha hero is the one intentional warm surface**: it keeps the previous peach gradient (`#FFF3E0`→`#FFE0B2`), brown ink, burnt-orange accent, glow, grain and translucent chips via the `homeHero*` helpers; every sheet/detail surface must use the crisp `hero*` helpers instead. `homeHeroDecoration`/`homeHeroGradient`/`homeHeroForeground`/`homeHeroAccent`/`homeHeroChip*` are home-only, and `paksha_hero_card.dart` + `features/hero/widgets/hero_chip.dart` are their only consumers.
+- Constraint: do not reintroduce translucent card fills, cream/peach page tints, or card shadows in the light theme. Shadows/glows are dark-theme only (`heroGlow` returns transparent in light, which also keeps the calendar's selected-tile glow off); the home hero's warm glow is separate in `homeHeroGlow`.
+
 ## 2026-11-13 - 0.8.1+25
 
 ### Edge-to-edge system bars

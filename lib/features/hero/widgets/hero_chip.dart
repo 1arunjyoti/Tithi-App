@@ -63,11 +63,13 @@ class HeroChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = highContrast
         ? context.colors.primary
-        : AppTheme.heroAccent(context);
+        : AppTheme.homeHeroAccent(context);
     final baseColor = highContrast
         ? context.colors.onSurface
-        : AppTheme.heroForeground(context);
-    final iconColor = highContrast ? accent : AppTheme.heroForeground(context);
+        : AppTheme.homeHeroForeground(context);
+    final iconColor = highContrast
+        ? accent
+        : AppTheme.homeHeroForeground(context);
     final weight =
         fontWeight ?? (highContrast ? FontWeight.w500 : FontWeight.bold);
 
@@ -76,12 +78,12 @@ class HeroChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: highContrast
             ? context.colors.primary.withValues(alpha: 0.1)
-            : AppTheme.heroChipBackground(context),
+            : AppTheme.homeHeroChipBackground(context),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: highContrast
               ? context.colors.primary.withValues(alpha: 0.2)
-              : AppTheme.heroChipBorder(context),
+              : AppTheme.homeHeroChipBorder(context),
         ),
       ),
       child: Row(

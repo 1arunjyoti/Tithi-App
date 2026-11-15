@@ -2103,11 +2103,8 @@ class _CalendarCell extends StatelessWidget {
                 width: 1.5,
               )
             : null,
-        // Soft glow only: the previous hard spread-3 "card ring" used
-        // cardTheme.color, which mismatches the glassmorphism card behind
-        // the grid, so it read as a halo while the 1.08 scale still bled
-        // over neighbors. The tile margin below provides the real gutter.
-        boxShadow: highContrast
+        // Dark themes get a soft glow; light stays flat (zero shadows).
+        boxShadow: highContrast || !context.isDark
             ? null
             : [
                 BoxShadow(

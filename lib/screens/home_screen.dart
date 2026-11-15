@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       // Only show drawer on mobile, desktop uses persistent sidebar
-      drawer: isWideScreen ? null : AppDrawer(onSelectTab: widget.onSelectTab),
+      drawer: isWideScreen ? null : const AppDrawer(),
       onDrawerChanged: (isOpened) {
         widget.onDrawerStateChanged?.call(isOpened);
         if (_isDrawerOpen != isOpened) {

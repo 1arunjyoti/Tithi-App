@@ -902,6 +902,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get festivalFilterRecurring => 'आवर्ती';
 
   @override
+  String get festivalFilterFeatured => 'विशेष';
+
+  @override
   String get festivalFilterTitle => 'त्योहार फ़िल्टर करें';
 
   @override

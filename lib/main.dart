@@ -22,6 +22,7 @@ import 'providers/calendar_provider.dart';
 import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_typography.dart';
 import 'screens/home_shell.dart';
 import 'widgets/panchang_init_failure_overlay.dart';
 
@@ -32,6 +33,8 @@ void main() {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      // Bundled font licenses (SIL OFL) for the About/license page.
+      AppTypography.registerFontLicenses();
       const bootstrap = AppBootstrap();
       await bootstrap.initSystem();
 
@@ -60,15 +63,12 @@ void main() {
 
       // Storage is required before the first frame, and it self-heals a
       // festivals cache written by an older model
-      // (StorageService.openFestivalsBox). Version metadata and font preloads
-      // only improve first paint: they run alongside it and swallow their own
-      // failures, because a warm-up must never keep `runApp` from happening.
+      // (StorageService.openFestivalsBox). Version metadata only improves
+      // first paint: it runs alongside it and swallows its own failures,
+      // because a warm-up must never keep `runApp` from happening. Fonts are
+      // bundled assets now, so there is no font warm-up to await.
       registerHiveAdapters();
-      await Future.wait([
-        bootstrap.initStorage(),
-        bootstrap.warmVersionInfo(),
-        bootstrap.warmFonts(),
-      ]);
+      await Future.wait([bootstrap.initStorage(), bootstrap.warmVersionInfo()]);
 
       // Initialize timezone for notifications
       await bootstrap.initTimezones();
