@@ -155,11 +155,7 @@ class PanchangDayResolver {
           )
         : null;
     final sankranti = computeSankranti
-        ? await _sankranti(
-            date: normalized,
-            solar: solar,
-            place: place,
-          )
+        ? await _sankranti(date: normalized, solar: solar, place: place)
         : null;
 
     return PanchangDay(

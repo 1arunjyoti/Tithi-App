@@ -84,8 +84,9 @@ class EventDetailSheet extends ConsumerWidget {
     // Hero title follows the app language (Bengali/Hindi/Sanskrit names
     // under those locales, English otherwise), resolved from the language
     // setting like the tithi sheet — not the Material locale.
-    final appLanguage =
-        resolveAppLocale(ref.watch(localeProvider)).languageCode;
+    final appLanguage = resolveAppLocale(
+      ref.watch(localeProvider),
+    ).languageCode;
     final displayName = festivalDisplayName(
       festival: festival,
       locale: appLanguage,
@@ -152,7 +153,10 @@ class EventDetailSheet extends ConsumerWidget {
     // Chip row: all language names minus the title language, plus English
     // up front when the title shows another language (shared helper,
     // unit tested).
-    final heroChips = heroLanguageChips(festival: festival, locale: appLanguage);
+    final heroChips = heroLanguageChips(
+      festival: festival,
+      locale: appLanguage,
+    );
     // Observance rule sentence ("Observed on the day …"), mapped from
     // timingOverride with an English fallback like the other sheet strings.
     // Demoted to a caption on the Panchang Details section (see below).
@@ -180,11 +184,7 @@ class EventDetailSheet extends ConsumerWidget {
                     style: dateBaseStyle,
                   ),
                   TextSpan(
-                    text: formatLocalizedDate(
-                      headerDate,
-                      'd MMMM y',
-                      locale,
-                    ),
+                    text: formatLocalizedDate(headerDate, 'd MMMM y', locale),
                     style: dateBaseStyle,
                   ),
                 ],
@@ -272,10 +272,7 @@ class EventDetailSheet extends ConsumerWidget {
           // toggle so festivals with many names don't push the hero tall.
           // The category stays in the Panchang Details rows below.
           if (heroChips.isNotEmpty)
-            _HeroLanguageChips(
-              chips: heroChips,
-              highContrast: highContrast,
-            ),
+            _HeroLanguageChips(chips: heroChips, highContrast: highContrast),
         ],
       ),
       body: Column(
@@ -311,10 +308,7 @@ class EventDetailSheet extends ConsumerWidget {
           // dateless rules).
           if (showsObservanceRule(festival)) ...[
             const SizedBox(height: 4),
-            _ObservanceCaption(
-              highContrast: highContrast,
-              rule: ruleSentence,
-            ),
+            _ObservanceCaption(highContrast: highContrast, rule: ruleSentence),
           ],
           const SizedBox(height: 10),
           if (dayPanchang != null && content != null) ...[
@@ -453,8 +447,7 @@ class EventDetailSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             SectionHeader(
               text:
-                  AppLocalizations.of(context)?.fastingVrat ??
-                  'Fasting / Vrat',
+                  AppLocalizations.of(context)?.fastingVrat ?? 'Fasting / Vrat',
             ),
             const SizedBox(height: 10),
             _EventFasting(
@@ -527,9 +520,7 @@ void _showTimingDialog(BuildContext context) {
         titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
         contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
             Icon(
@@ -628,30 +619,23 @@ class _ObservanceCaption extends StatelessWidget {
 /// Before the first measurement the full row renders unclipped (safe
 /// fallback — nothing is ever hidden without a toggle).
 class _HeroLanguageChips extends ConsumerStatefulWidget {
-  const _HeroLanguageChips({
-    required this.chips,
-    required this.highContrast,
-  });
+  const _HeroLanguageChips({required this.chips, required this.highContrast});
 
   final List<String> chips;
   final bool highContrast;
 
   @override
-  ConsumerState<_HeroLanguageChips> createState() =>
-      _HeroLanguageChipsState();
+  ConsumerState<_HeroLanguageChips> createState() => _HeroLanguageChipsState();
 }
 
 class _HeroLanguageChipsState extends ConsumerState<_HeroLanguageChips> {
-  late List<GlobalKey> _chipKeys = [
-    for (final _ in widget.chips) GlobalKey(),
-  ];
+  late List<GlobalKey> _chipKeys = [for (final _ in widget.chips) GlobalKey()];
   bool _measured = false;
   int _measureAttempts = 0;
   int _firstRowCount = 0;
   double? _firstRowHeight;
 
-  bool get _multiRow =>
-      _measured && _firstRowCount < widget.chips.length;
+  bool get _multiRow => _measured && _firstRowCount < widget.chips.length;
 
   @override
   void didUpdateWidget(covariant _HeroLanguageChips oldWidget) {
@@ -812,10 +796,7 @@ class _HeroLanguageChipsState extends ConsumerState<_HeroLanguageChips> {
               // 8px runSpacing, so the second row stays hidden). Clip is
               // paint-only, so the hidden chips still lay out and the row
               // grouping above stays valid.
-              ? SizedBox(
-                  height: (_firstRowHeight ?? 0) + 2,
-                  child: chipsWrap(),
-                )
+              ? SizedBox(height: (_firstRowHeight ?? 0) + 2, child: chipsWrap())
               : chipsWrap(),
         ),
         if (showToggle)
@@ -849,10 +830,7 @@ class _EventDescription extends ConsumerWidget {
         children: [
           _buildFormattedText(
             festival.description,
-            context.textTheme.bodyLarge?.copyWith(
-              fontSize: 16,
-              height: 1.5,
-            ),
+            context.textTheme.bodyLarge?.copyWith(fontSize: 16, height: 1.5),
           ),
           if (hasAdditionalDesc) ...[
             const SizedBox(height: 12),
@@ -880,9 +858,7 @@ class _EventDescription extends ConsumerWidget {
                                       context,
                                     )?.showLessTitleCase ??
                                     'Show Less')
-                              : (AppLocalizations.of(
-                                      context,
-                                    )?.readMore ??
+                              : (AppLocalizations.of(context)?.readMore ??
                                     'Read More'),
                           style: context.textTheme.labelLarge?.copyWith(
                             color: themeColor,
@@ -1097,8 +1073,7 @@ Widget _pujaWindowCard({
   final border = context.colors.onSurface.withValues(
     alpha: highContrast ? 0.2 : 0.1,
   );
-  final cardColor =
-      Theme.of(context).cardTheme.color ?? context.colors.surface;
+  final cardColor = Theme.of(context).cardTheme.color ?? context.colors.surface;
   final dim = context.colors.onSurface.withValues(alpha: 0.6);
   final faint = context.colors.onSurface.withValues(alpha: 0.7);
   Widget valueOrSpinner(String? value, TextStyle style) {
@@ -1146,17 +1121,11 @@ Widget _pujaWindowCard({
             ),
             if (secondary != null) ...[
               const SizedBox(height: 2),
-              Text(
-                secondary,
-                style: TextStyle(fontSize: 13, color: faint),
-              ),
+              Text(secondary, style: TextStyle(fontSize: 13, color: faint)),
             ],
             if (tertiary != null) ...[
               const SizedBox(height: 2),
-              Text(
-                tertiary,
-                style: TextStyle(fontSize: 13, color: faint),
-              ),
+              Text(tertiary, style: TextStyle(fontSize: 13, color: faint)),
             ],
           ],
         ),
@@ -1176,11 +1145,7 @@ Widget _pujaWindowCard({
         children: [
           cell(label: kalaName, primary: instant, secondary: date),
           Container(width: 1, color: border),
-          cell(
-            label: windowLabel,
-            primary: range,
-            secondary: note,
-          ),
+          cell(label: windowLabel, primary: range, secondary: note),
         ],
       ),
     ),
@@ -1340,14 +1305,10 @@ class _EventFasting extends ConsumerWidget {
                 ),
               ],
             ),
-          if (rule != null &&
-              dayPanchang != null &&
-              sheetContent != null) ...[
+          if (rule != null && dayPanchang != null && sheetContent != null) ...[
             if (showFasting) ...[
               const SizedBox(height: 8),
-              Divider(
-                color: context.colors.onSurface.withValues(alpha: 0.15),
-              ),
+              Divider(color: context.colors.onSurface.withValues(alpha: 0.15)),
               const SizedBox(height: 8),
             ],
             _EventParan(
@@ -1420,8 +1381,7 @@ class _EventParan extends ConsumerWidget {
     // both periods (and the far date when off-day).
     String range(DateTime start, DateTime end) =>
         sheetTimeRange(start, end, start, locale);
-    String jm(DateTime instant) =>
-        formatLocalizedDate(instant, 'jm', locale);
+    String jm(DateTime instant) => formatLocalizedDate(instant, 'jm', locale);
 
     switch (paranRule) {
       case 'moonrise':
@@ -1483,8 +1443,7 @@ class _EventParan extends ConsumerWidget {
             longitude: coords.longitude,
           );
         }
-        if (kala != 'sandhi_junction' &&
-            !festival.panchangRules.clipToTithi) {
+        if (kala != 'sandhi_junction' && !festival.panchangRules.clipToTithi) {
           final span = resolvePujaKala(
             kala: kala,
             date: panchang.date,
@@ -1553,9 +1512,7 @@ class _EventParan extends ConsumerWidget {
           longitude: coords.longitude,
         );
         final start = rise.add(
-          Duration(
-            microseconds: set.difference(rise).inMicroseconds ~/ 4,
-          ),
+          Duration(microseconds: set.difference(rise).inMicroseconds ~/ 4),
         );
         final dwadashiAsync = ref.watch(
           tithiTimingsProvider((

@@ -325,7 +325,9 @@ String buildMonthContext({
   // Keep the digest inside the requested month: the calendar collection also
   // carries the neighbouring months' overflow days that fill the grid.
   final inMonth = sorted
-      .where((day) => day.date.year == month.year && day.date.month == month.month)
+      .where(
+        (day) => day.date.year == month.year && day.date.month == month.month,
+      )
       .toList();
 
   final festivals = <String>[];

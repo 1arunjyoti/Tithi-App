@@ -63,11 +63,11 @@ Future<String?> readLastKnownTimezoneId() async {
 HinduMonthSystem readMonthSystem(Box<dynamic> settingsBox) {
   final index =
       (settingsBox.get(
-                'hindu_month_system',
-                defaultValue: HinduMonthSystem.amanta.index,
-              )
-              as int?) ??
-          HinduMonthSystem.amanta.index;
+            'hindu_month_system',
+            defaultValue: HinduMonthSystem.amanta.index,
+          )
+          as int?) ??
+      HinduMonthSystem.amanta.index;
   if (index >= 0 && index < HinduMonthSystem.values.length) {
     return HinduMonthSystem.values[index];
   }
@@ -91,8 +91,8 @@ readCalendarPrefs(Box<dynamic> settingsBox) {
     monthSystem: readMonthSystem(settingsBox),
     secondarySystem:
         (settingsBox.get('secondary_calendar_system', defaultValue: 2)
-                as int?) ??
-            2,
+            as int?) ??
+        2,
     yearEraIndex:
         (settingsBox.get('hindu_year_era', defaultValue: 1) as int?) ?? 1,
     tithiMode:
@@ -102,9 +102,7 @@ readCalendarPrefs(Box<dynamic> settingsBox) {
     ),
     // Stored by name, not index, so reordering the enum cannot remap a saved
     // preference. Unknown or missing values fall back to Bisuddhasiddhanta.
-    panchangSchool: panchangSchoolFromName(
-      settingsBox.get('panchang_school'),
-    ),
+    panchangSchool: panchangSchoolFromName(settingsBox.get('panchang_school')),
   );
 }
 

@@ -53,13 +53,15 @@ class WeatherData {
 
       for (int i = 1; i < dates.length && i < 3; i++) {
         final forecastCondition = _getConditionFromCode(codes[i] as int);
-        forecastList.add(DailyForecast(
-          date: DateTime.parse(dates[i]),
-          maxTemp: (maxTemps[i] as num).toDouble(),
-          minTemp: (minTemps[i] as num).toDouble(),
-          conditionText: forecastCondition.$1,
-          conditionIcon: forecastCondition.$2,
-        ));
+        forecastList.add(
+          DailyForecast(
+            date: DateTime.parse(dates[i]),
+            maxTemp: (maxTemps[i] as num).toDouble(),
+            minTemp: (minTemps[i] as num).toDouble(),
+            conditionText: forecastCondition.$1,
+            conditionIcon: forecastCondition.$2,
+          ),
+        );
       }
     }
 

@@ -67,8 +67,7 @@ class MoonriseCalculator {
     DateTime prevTime = dayStart;
     double prevAlt =
         moonAltitude(prevTime, latitude, longitude) - _riseSetAltitude;
-    final steps =
-        const Duration(days: 1).inMinutes ~/ _sampleStep.inMinutes;
+    final steps = const Duration(days: 1).inMinutes ~/ _sampleStep.inMinutes;
     for (var i = 1; i <= steps; i++) {
       final time = dayStart.add(Duration(minutes: i * _sampleStep.inMinutes));
       final alt = moonAltitude(time, latitude, longitude) - _riseSetAltitude;
@@ -147,8 +146,7 @@ class MoonriseCalculator {
     DateTime prevTime = from;
     double prevAlt =
         moonAltitude(prevTime, latitude, longitude) - _riseSetAltitude;
-    final steps =
-        _fallbackSearchLimit.inMinutes ~/ _sampleStep.inMinutes;
+    final steps = _fallbackSearchLimit.inMinutes ~/ _sampleStep.inMinutes;
     for (var i = 1; i <= steps; i++) {
       final time = from.add(
         Duration(minutes: direction * i * _sampleStep.inMinutes),
@@ -179,8 +177,7 @@ class MoonriseCalculator {
     double latitude,
     double longitude,
   ) {
-    final loAbove =
-        moonAltitude(lo, latitude, longitude) >= _riseSetAltitude;
+    final loAbove = moonAltitude(lo, latitude, longitude) >= _riseSetAltitude;
     var guard = 0;
     while (hi.difference(lo).inMinutes > 1 && guard++ < 20) {
       final mid = lo.add(Duration(minutes: hi.difference(lo).inMinutes ~/ 2));
@@ -264,8 +261,7 @@ class MoonriseCalculator {
     final latR2 = rad(latitude);
     final decR = rad(dec);
     final sinAlt =
-        sin(latR2) * sin(decR) +
-        cos(latR2) * cos(decR) * cos(rad(hourAngle));
+        sin(latR2) * sin(decR) + cos(latR2) * cos(decR) * cos(rad(hourAngle));
     return deg(asin(sinAlt.clamp(-1.0, 1.0)));
   }
 
@@ -273,9 +269,7 @@ class MoonriseCalculator {
   static double _julianDay(DateTime utc) {
     var year = utc.year;
     var month = utc.month;
-    final day =
-        utc.day +
-        (utc.hour + utc.minute / 60 + utc.second / 3600) / 24;
+    final day = utc.day + (utc.hour + utc.minute / 60 + utc.second / 3600) / 24;
     if (month <= 2) {
       year -= 1;
       month += 12;

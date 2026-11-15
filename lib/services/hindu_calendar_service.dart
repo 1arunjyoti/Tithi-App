@@ -309,11 +309,7 @@ class HinduCalendarService {
   Future<DateTime> nextMonthStartAfter(DateTime monthStart) async {
     final first = await calculateDate(monthStart);
     final currentMasa = first.masa;
-    var day = DateTime(
-      monthStart.year,
-      monthStart.month,
-      monthStart.day + 1,
-    );
+    var day = DateTime(monthStart.year, monthStart.month, monthStart.day + 1);
     for (int i = 0; i < 35; i++) {
       final hDate = await calculateDate(day);
       if (hDate.masa != currentMasa) {
@@ -322,20 +318,12 @@ class HinduCalendarService {
       day = day.add(const Duration(days: 1));
       if (i % 8 == 7) await Future<void>.delayed(Duration.zero);
     }
-    return DateTime(
-      monthStart.year,
-      monthStart.month,
-      monthStart.day + 30,
-    );
+    return DateTime(monthStart.year, monthStart.month, monthStart.day + 30);
   }
 
   /// Start of the masa immediately BEFORE the month beginning at [monthStart].
   Future<DateTime> prevMonthStartBefore(DateTime monthStart) async {
-    final day = DateTime(
-      monthStart.year,
-      monthStart.month,
-      monthStart.day - 1,
-    );
+    final day = DateTime(monthStart.year, monthStart.month, monthStart.day - 1);
     return monthStartContaining(day);
   }
 

@@ -48,10 +48,9 @@ class AiAssistEnabledNotifier extends Notifier<bool> {
   }
 }
 
-final aiAssistEnabledProvider =
-    NotifierProvider<AiAssistEnabledNotifier, bool>(
-      AiAssistEnabledNotifier.new,
-    );
+final aiAssistEnabledProvider = NotifierProvider<AiAssistEnabledNotifier, bool>(
+  AiAssistEnabledNotifier.new,
+);
 
 /// Settings-box key for the assistant Tithi opens directly.
 const String aiTargetAppKey = 'ai_target_app';
@@ -67,7 +66,8 @@ class AiTargetAppNotifier extends Notifier<String> {
   String build() {
     try {
       final box = StorageService().getSettingsBox();
-      final raw = box.get(aiTargetAppKey, defaultValue: kAiTargetAuto) as String;
+      final raw =
+          box.get(aiTargetAppKey, defaultValue: kAiTargetAuto) as String;
       return aiTargetById(raw) == null ? kAiTargetAuto : raw;
     } catch (e) {
       debugPrint('AI target app unavailable, defaulting to automatic: $e');
@@ -116,7 +116,9 @@ final aiDirectOpenSupportedProvider = Provider<bool>(
 ///
 /// Falls back to Asia/Kolkata, matching the app's primary audience (same rule
 /// as `NotificationService._getDeviceTimezone`).
-final aiDeviceTimeZoneProvider = FutureProvider.autoDispose<String>((ref) async {
+final aiDeviceTimeZoneProvider = FutureProvider.autoDispose<String>((
+  ref,
+) async {
   try {
     final info = await FlutterTimezone.getLocalTimezone();
     if (info.identifier.isNotEmpty) return info.identifier;

@@ -382,57 +382,57 @@ class _ShareOption extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
             onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.festivalTileBackground(context),
-                    borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppTheme.festivalTileBackground(context),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(icon, color: accent, size: 22),
                   ),
-                  alignment: Alignment.center,
-                  child: Icon(icon, color: accent, size: 22),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        title,
-                        style: context.textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: context.colors.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: context.textTheme.bodySmall?.copyWith(
-                          color: context.colors.onSurface.withValues(
-                            alpha: AppTheme.contrastAlpha(context, 0.6),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: context.textTheme.bodyLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: context.colors.onSurface,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.colors.onSurface.withValues(
+                              alpha: AppTheme.contrastAlpha(context, 0.6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: context.colors.onSurface.withValues(
-                    alpha: AppTheme.contrastAlpha(context, 0.4),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: context.colors.onSurface.withValues(
+                      alpha: AppTheme.contrastAlpha(context, 0.4),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -469,44 +469,44 @@ class DailyQuoteWidget extends ConsumerWidget {
             FadeTransition(opacity: animation, child: child),
         layoutBuilder: (currentChild, _) => currentChild!,
         child: shlokaAsync.when(
-            data: (wisdom) {
-              if (wisdom == null) return const SizedBox.shrink();
-              return _buildCard(
-                context,
-                ref,
-                wisdom,
-                hindiFirst: hindiFirst,
-                l10n: l10n,
-              );
-            },
-            // Keep the previous verse mounted while another day loads (or
-            // when a reload fails) so browsing days doesn't flash the card
-            // away.
-            loading: () {
-              final previous = shlokaAsync.valueOrNull;
-              if (previous == null) return const SizedBox.shrink();
-              return _buildCard(
-                context,
-                ref,
-                previous,
-                hindiFirst: hindiFirst,
-                l10n: l10n,
-              );
-            },
-            error: (_, _) {
-              final previous = shlokaAsync.valueOrNull;
-              if (previous == null) return const SizedBox.shrink();
-              return _buildCard(
-                context,
-                ref,
-                previous,
-                hindiFirst: hindiFirst,
-                l10n: l10n,
-              );
-            },
-          ),
+          data: (wisdom) {
+            if (wisdom == null) return const SizedBox.shrink();
+            return _buildCard(
+              context,
+              ref,
+              wisdom,
+              hindiFirst: hindiFirst,
+              l10n: l10n,
+            );
+          },
+          // Keep the previous verse mounted while another day loads (or
+          // when a reload fails) so browsing days doesn't flash the card
+          // away.
+          loading: () {
+            final previous = shlokaAsync.valueOrNull;
+            if (previous == null) return const SizedBox.shrink();
+            return _buildCard(
+              context,
+              ref,
+              previous,
+              hindiFirst: hindiFirst,
+              l10n: l10n,
+            );
+          },
+          error: (_, _) {
+            final previous = shlokaAsync.valueOrNull;
+            if (previous == null) return const SizedBox.shrink();
+            return _buildCard(
+              context,
+              ref,
+              previous,
+              hindiFirst: hindiFirst,
+              l10n: l10n,
+            );
+          },
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildCard(
@@ -578,117 +578,117 @@ class DailyQuoteWidget extends ConsumerWidget {
                 FadeTransition(opacity: animation, child: child),
             layoutBuilder: (currentChild, previousChildren) => Stack(
               alignment: Alignment.topCenter,
-              children: <Widget>[
-                ...previousChildren,
-                ?currentChild,
-              ],
+              children: <Widget>[...previousChildren, ?currentChild],
             ),
             child: KeyedSubtree(
-              key: ValueKey(
-                'wisdom-content-${shloka.id}-${wisdom.dayOffset}',
-              ),
+              key: ValueKey('wisdom-content-${shloka.id}-${wisdom.dayOffset}'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _WisdomHeader(
-            dayLabel: dayLabel,
-            showTodayReset: offset != 0,
-            onJumpToToday: jumpToToday,
-            onShare: () => _showShareOptions(
-              context,
-              shloka: shloka,
-              expanded: isExpanded,
-              hindiFirst: hindiFirst,
-              showAll: showAll,
-            ),
-            l10n: l10n,
-          ),
-
-          // Festival caption, shown when the verse was picked for a festival.
-          if (wisdom.festivalName != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-              child: Center(child: _FestivalChip(name: wisdom.festivalName!)),
-            ),
-
-          // Verse body: ornament, Sanskrit, transliteration, translation.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-            child: Column(
-              children: [
-                ExcludeSemantics(
-                  child: Icon(
-                    Icons.format_quote_rounded,
-                    size: 40,
-                    color: AppTheme.festivalAccent(
+                    dayLabel: dayLabel,
+                    showTodayReset: offset != 0,
+                    onJumpToToday: jumpToToday,
+                    onShare: () => _showShareOptions(
                       context,
-                    ).withValues(alpha: 0.35),
-                  ),
-                ),
-                // Sanskrit Text (Always visible)
-                Text(
-                  shloka.text,
-                  textAlign: TextAlign.center,
-                  style: AppTypography.shloka(
-                    fontSize: 19,
-                    color: context.colors.onSurface,
-                  ),
-                ),
-
-                // Transliteration (Always visible, muted)
-                if (shloka.transliteration.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    shloka.transliteration,
-                    textAlign: TextAlign.center,
-                    style: context.textTheme.bodySmall?.copyWith(
-                      color: context.colors.onSurface.withValues(
-                        alpha: AppTheme.contrastAlpha(context, 0.6),
-                      ),
-                      fontStyle: FontStyle.italic,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-
-                // Collapsible Translation (locale-driven, with fallback)
-                AnimatedCrossFade(
-                  firstChild: const SizedBox(width: double.infinity),
-                  secondChild: Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: _TranslationPanel(
-                      translation: translation,
-                      showingHindi: showingHindi,
-                      secondaryTranslation: secondaryTranslation,
-                      showingSecondaryHindi: showingSecondaryHindi,
+                      shloka: shloka,
+                      expanded: isExpanded,
+                      hindiFirst: hindiFirst,
                       showAll: showAll,
-                      l10n: l10n,
-                      onToggleShowAll: () {
-                        ref
-                                .read(quoteShowAllTranslationsProvider.notifier)
-                                .state =
-                            !showAll;
-                      },
+                    ),
+                    l10n: l10n,
+                  ),
+
+                  // Festival caption, shown when the verse was picked for a festival.
+                  if (wisdom.festivalName != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                      child: Center(
+                        child: _FestivalChip(name: wisdom.festivalName!),
+                      ),
+                    ),
+
+                  // Verse body: ornament, Sanskrit, transliteration, translation.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Column(
+                      children: [
+                        ExcludeSemantics(
+                          child: Icon(
+                            Icons.format_quote_rounded,
+                            size: 40,
+                            color: AppTheme.festivalAccent(
+                              context,
+                            ).withValues(alpha: 0.35),
+                          ),
+                        ),
+                        // Sanskrit Text (Always visible)
+                        Text(
+                          shloka.text,
+                          textAlign: TextAlign.center,
+                          style: AppTypography.shloka(
+                            fontSize: 19,
+                            color: context.colors.onSurface,
+                          ),
+                        ),
+
+                        // Transliteration (Always visible, muted)
+                        if (shloka.transliteration.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            shloka.transliteration,
+                            textAlign: TextAlign.center,
+                            style: context.textTheme.bodySmall?.copyWith(
+                              color: context.colors.onSurface.withValues(
+                                alpha: AppTheme.contrastAlpha(context, 0.6),
+                              ),
+                              fontStyle: FontStyle.italic,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+
+                        // Collapsible Translation (locale-driven, with fallback)
+                        AnimatedCrossFade(
+                          firstChild: const SizedBox(width: double.infinity),
+                          secondChild: Padding(
+                            padding: const EdgeInsets.only(top: 12),
+                            child: _TranslationPanel(
+                              translation: translation,
+                              showingHindi: showingHindi,
+                              secondaryTranslation: secondaryTranslation,
+                              showingSecondaryHindi: showingSecondaryHindi,
+                              showAll: showAll,
+                              l10n: l10n,
+                              onToggleShowAll: () {
+                                ref
+                                        .read(
+                                          quoteShowAllTranslationsProvider
+                                              .notifier,
+                                        )
+                                        .state =
+                                    !showAll;
+                              },
+                            ),
+                          ),
+                          crossFadeState: isExpanded
+                              ? CrossFadeState.showSecond
+                              : CrossFadeState.showFirst,
+                          duration: AppTheme.animationDuration(
+                            context,
+                            const Duration(milliseconds: 300),
+                          ),
+                        ),
+
+                        // Source attribution (always visible)
+                        const SizedBox(height: 12),
+                        _SourceLine(source: shloka.source),
+                      ],
                     ),
                   ),
-                  crossFadeState: isExpanded
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: AppTheme.animationDuration(
-                    context,
-                    const Duration(milliseconds: 300),
-                  ),
-                ),
-
-                // Source attribution (always visible)
-                const SizedBox(height: 12),
-                _SourceLine(source: shloka.source),
                 ],
               ),
             ),
-          ],
-          ),
-          ),
           ),
 
           // Bottom control bar: browse days + expand toggle.
@@ -927,7 +927,8 @@ class _TranslationPanel extends StatelessWidget {
                 child: Text(
                   showAll
                       ? (l10n?.showLess ?? 'Show less')
-                      : (l10n?.showMoreTranslations ?? 'Show more translations'),
+                      : (l10n?.showMoreTranslations ??
+                            'Show more translations'),
                 ),
               ),
             ),

@@ -61,8 +61,8 @@ final appUpdateServiceProvider = Provider<AppUpdateService>((ref) {
 
 final appUpdateProvider =
     StateNotifierProvider<AppUpdateNotifier, AppUpdateState>((ref) {
-  return AppUpdateNotifier(ref.read(appUpdateServiceProvider));
-});
+      return AppUpdateNotifier(ref.read(appUpdateServiceProvider));
+    });
 
 class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
   AppUpdateNotifier(this._service) : super(const AppUpdateState());
@@ -194,10 +194,7 @@ class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
       );
     } on AppUpdateCancelled {
       // Back to the offer so the download can be started again.
-      state = state.copyWith(
-        status: AppUpdateStatus.available,
-        progress: 0,
-      );
+      state = state.copyWith(status: AppUpdateStatus.available, progress: 0);
     } on AppUpdateException catch (e) {
       state = state.copyWith(
         status: AppUpdateStatus.error,

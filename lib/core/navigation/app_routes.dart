@@ -54,8 +54,7 @@ class AppRoutes {
     String? name,
     BuildContext? context,
   }) {
-    final reduceMotion =
-        context != null && AppTheme.reduceMotionOf(context);
+    final reduceMotion = context != null && AppTheme.reduceMotionOf(context);
     return PageRouteBuilder<T>(
       settings: RouteSettings(name: name ?? page.runtimeType.toString()),
       transitionDuration: reduceMotion ? _instant : _forwardDuration,
@@ -109,8 +108,7 @@ class AppRoutes {
     String? name,
     BuildContext? context,
   }) {
-    final reduceMotion =
-        context != null && AppTheme.reduceMotionOf(context);
+    final reduceMotion = context != null && AppTheme.reduceMotionOf(context);
     return PageRouteBuilder<T>(
       settings: RouteSettings(name: name ?? page.runtimeType.toString()),
       transitionDuration: reduceMotion ? _instant : _forwardDuration,
@@ -139,11 +137,10 @@ class AppRoutes {
             child: FadeTransition(
               opacity: primary,
               child: SlideTransition(
-                position:
-                    Tween<Offset>(
-                      begin: const Offset(0.08, 0),
-                      end: Offset.zero,
-                    ).animate(primary),
+                position: Tween<Offset>(
+                  begin: const Offset(0.08, 0),
+                  end: Offset.zero,
+                ).animate(primary),
                 child: child,
               ),
             ),

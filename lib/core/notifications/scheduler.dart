@@ -67,20 +67,15 @@ class NotificationScheduler {
   /// transition moves the wall time instead of shifting it by an hour.
   /// Always a [tz.TZDateTime]: `zonedSchedule` requires one.
   tz.TZDateTime _wallTime(int year, int month, int day, int hour, int minute) {
-    return tz.TZDateTime(
-      _zone ?? tz.local,
-      year,
-      month,
-      day,
-      hour,
-      minute,
-    );
+    return tz.TZDateTime(_zone ?? tz.local, year, month, day, hour, minute);
   }
 
   /// Get notification time (default 8:00 AM)
   Future<({int hour, int minute})> getNotificationTime() async {
-    final hour = (box?.get(NotificationKeys.hour, defaultValue: 8) as int?) ?? 8;
-    final minute = (box?.get(NotificationKeys.minute, defaultValue: 0) as int?) ?? 0;
+    final hour =
+        (box?.get(NotificationKeys.hour, defaultValue: 8) as int?) ?? 8;
+    final minute =
+        (box?.get(NotificationKeys.minute, defaultValue: 0) as int?) ?? 0;
     return (hour: hour, minute: minute);
   }
 
@@ -158,7 +153,8 @@ class NotificationScheduler {
   /// (0 = on the day, 1 = one day before, 2 = both). Defaults to on-day.
   Future<int> getFestivalTiming() async {
     final timing =
-        (box?.get(NotificationKeys.festivalTiming, defaultValue: 0) as int?) ?? 0;
+        (box?.get(NotificationKeys.festivalTiming, defaultValue: 0) as int?) ??
+        0;
     if (timing < 0 || timing > FestivalReminderTiming.values.length - 1) {
       return 0;
     }
@@ -182,7 +178,8 @@ class NotificationScheduler {
   /// [init], so festivals entering the window are never missed.
   Future<void> scheduleUpcomingFestivals() async {
     final enabled =
-        box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
+        box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ??
+        false;
     if (!enabled) return;
 
     await cancelFestivalNotifications();
@@ -255,8 +252,9 @@ class NotificationScheduler {
         panchang.paksha,
         monthSystem,
       ).replaceAll('_', ' ');
-      final hinduDay =
-          tithiMode == 0 ? panchang.tithiNumber : panchang.tithiIndex;
+      final hinduDay = tithiMode == 0
+          ? panchang.tithiNumber
+          : panchang.tithiIndex;
       final bodyLines = panchangBodyLines(
         date: date,
         panchang: panchang,
@@ -297,7 +295,8 @@ class NotificationScheduler {
           await plugin.zonedSchedule(
             id: NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
             title: festival.name,
-            body: 'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
+            body:
+                'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
             scheduledDate: eve,
             notificationDetails: notificationDetails,
             androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -423,7 +422,6 @@ class NotificationScheduler {
 
   /// Schedule daily notification
   Future<void> scheduleDailyNotification({String? title, String? body}) async {
-
     // Cancel existing notification first
     await plugin.cancel(id: NotificationKeys.dailyNotificationId);
 
@@ -497,7 +495,9 @@ class NotificationScheduler {
 
     await refreshDailyNotificationContent();
     return (
-      title: (box?.get(NotificationKeys.dailyTitle) as String?) ?? '🙏 Tithi Today',
+      title:
+          (box?.get(NotificationKeys.dailyTitle) as String?) ??
+          '🙏 Tithi Today',
       body:
           (box?.get(NotificationKeys.dailyBody) as String?) ??
           'Open to see today\'s panchang details',
@@ -565,9 +565,9 @@ class NotificationScheduler {
       final monthSystem = prefs.monthSystem;
 
       // The background isolate computes the same days the UI does, so it must
-    // use the same school and publish it to the cache signature first.
-    activePanchangSchool = prefs.panchangSchool;
-    final service = PanchangService(school: prefs.panchangSchool);
+      // use the same school and publish it to the cache signature first.
+      activePanchangSchool = prefs.panchangSchool;
+      final service = PanchangService(school: prefs.panchangSchool);
       await service.init();
 
       final today = _civilToday;
@@ -625,10 +625,7 @@ class NotificationScheduler {
         );
       }
 
-      return (
-        title: bodyLines.tithiIdentity,
-        body: bodyLines.dateLines,
-      );
+      return (title: bodyLines.tithiIdentity, body: bodyLines.dateLines);
     } catch (e, stack) {
       // BUG-MEDIUM-7: Surface the error instead of swallowing it silently.
       debugPrint('Failed to build notification content: $e\n$stack');
@@ -643,7 +640,6 @@ class NotificationScheduler {
     required String title,
     required String body,
   }) async {
-
     final notificationDetails = notificationChannel(
       id: 'tithi_daily',
       name: 'Daily Tithi',
@@ -679,7 +675,9 @@ class NotificationScheduler {
 
     // Allocate next sequential ID.
     final counter =
-        (box?.get(NotificationKeys.sankalpaIdCounter, defaultValue: 0) as int?) ?? 0;
+        (box?.get(NotificationKeys.sankalpaIdCounter, defaultValue: 0)
+            as int?) ??
+        0;
     final newId = NotificationKeys.sankalpaNotificationIdBase + counter;
     box?.put(NotificationKeys.sankalpaIdCounter, counter + 1);
     box?.put(mapKey, newId);
@@ -720,9 +718,10 @@ class NotificationScheduler {
 
     // Sankalpa model logic: it has endDate.
     if (scheduledDate.isAfter(
-      tz.TZDateTime.from(sankalpa.endDate, _zone ?? tz.local).add(
-        const Duration(days: 1),
-      ),
+      tz.TZDateTime.from(
+        sankalpa.endDate,
+        _zone ?? tz.local,
+      ).add(const Duration(days: 1)),
     )) {
       // Allow one day grace or stop exactly? Let's stop if past end date.
       return;

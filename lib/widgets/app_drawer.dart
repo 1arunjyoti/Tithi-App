@@ -48,9 +48,7 @@ class AppDrawer extends StatelessWidget {
       child: Column(
         children: [
           _DrawerHeader(colors: colors),
-          Expanded(
-            child: _DrawerMenuList(colors: colors),
-          ),
+          Expanded(child: _DrawerMenuList(colors: colors)),
           const _DrawerFooter(),
         ],
       ),
@@ -337,7 +335,9 @@ class _DrawerMenuItem extends StatelessWidget {
         child: PressScale(
           child: ListTile(
             onTap: onTap,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             leading: Icon(icon, color: colors.primary, size: 24),
             title: Text(
               title,
@@ -383,36 +383,40 @@ class _ViewModeToggleItem extends ConsumerWidget {
                 navigator.pop();
               }
             },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          leading: Icon(
-            isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
-            color: colors.primary,
-            size: 24,
-          ),
-          title: Text(
-            isSchedule
-                ? (l10n?.calendarView ?? 'Calendar View')
-                : (l10n?.scheduleView ?? 'Schedule View'),
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            leading: Icon(
+              isSchedule
+                  ? Icons.calendar_month_rounded
+                  : Icons.view_agenda_rounded,
+              color: colors.primary,
+              size: 24,
+            ),
+            title: Text(
+              isSchedule
+                  ? (l10n?.calendarView ?? 'Calendar View')
+                  : (l10n?.scheduleView ?? 'Schedule View'),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
+            ),
+            subtitle: Text(
+              isSchedule
+                  ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
+                  : (l10n?.switchToSchedule ?? 'Switch to event list'),
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontSize: 12,
+              ),
+            ),
+            trailing: Icon(
+              Icons.swap_horiz_rounded,
+              size: 20,
+              color: colors.primary.withValues(alpha: 0.7),
             ),
           ),
-          subtitle: Text(
-            isSchedule
-                ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
-                : (l10n?.switchToSchedule ?? 'Switch to event list'),
-            style: textTheme.bodySmall?.copyWith(
-              color: colors.onSurface.withValues(alpha: 0.5),
-              fontSize: 12,
-            ),
-          ),
-          trailing: Icon(
-            Icons.swap_horiz_rounded,
-            size: 20,
-            color: colors.primary.withValues(alpha: 0.7),
-          ),
-        ),
         ),
       ),
     );
@@ -436,7 +440,9 @@ class _AboutMenuItem extends ConsumerWidget {
         child: PressScale(
           child: ListTile(
             onTap: () => _navigateToAbout(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             leading: Icon(
               Icons.info_outline_rounded,
               color: colors.primary,
@@ -480,8 +486,11 @@ class _DrawerFooter extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final versionStr =
-        versionAsync.when(data: (v) => v, loading: () => '...', error: (e, s) => '?');
+    final versionStr = versionAsync.when(
+      data: (v) => v,
+      loading: () => '...',
+      error: (e, s) => '?',
+    );
 
     return Padding(
       padding: const EdgeInsets.all(24),

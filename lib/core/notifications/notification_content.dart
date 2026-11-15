@@ -88,9 +88,7 @@ String baseMasaName(String masa) {
   for (int i = 0; i < starts.length; i++) {
     if (date.isBefore(starts[i])) {
       monthIndex = i == 0 ? 11 : i - 1;
-      final prevStart = i == 0
-          ? DateTime(date.year - 1, 3, 15)
-          : starts[i - 1];
+      final prevStart = i == 0 ? DateTime(date.year - 1, 3, 15) : starts[i - 1];
       day = date.difference(prevStart).inDays + 1;
       break;
     }

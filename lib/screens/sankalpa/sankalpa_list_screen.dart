@@ -125,7 +125,10 @@ class _SankalpaCard extends ConsumerWidget {
     required this.isHistory,
   });
 
-  Future<bool> _confirmDelete(BuildContext context, AppLocalizations l10n) async {
+  Future<bool> _confirmDelete(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -277,9 +280,7 @@ class _SankalpaCard extends ConsumerWidget {
               ),
             ] else ...[
               Text(
-                l10n.completedOn(
-                  DateFormat.yMMMd().format(sankalpa.endDate),
-                ),
+                l10n.completedOn(DateFormat.yMMMd().format(sankalpa.endDate)),
                 style: TextStyle(
                   color: AppTheme.success(
                     Theme.of(context).brightness == Brightness.dark,

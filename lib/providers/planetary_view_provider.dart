@@ -66,7 +66,8 @@ final solarSystemDataProvider = FutureProvider<SolarSystemData>((ref) async {
       longitude: location?.longitude ?? kDefaultLongitude,
       viewMode: viewMode,
     ),
-    orElse: () => service.getSolarSystemData(dateTime: instant, viewMode: viewMode),
+    orElse: () =>
+        service.getSolarSystemData(dateTime: instant, viewMode: viewMode),
   );
 });
 
@@ -80,9 +81,10 @@ class SelectedPlanetNotifier extends Notifier<Planet?> {
   }
 }
 
-final selectedPlanetProvider = NotifierProvider<SelectedPlanetNotifier, Planet?>(
-  SelectedPlanetNotifier.new,
-);
+final selectedPlanetProvider =
+    NotifierProvider<SelectedPlanetNotifier, Planet?>(
+      SelectedPlanetNotifier.new,
+    );
 
 /// Provider for selected planet's visual data
 final selectedPlanetDataProvider = Provider<PlanetVisualData?>((ref) {
@@ -108,9 +110,10 @@ class AnimationEnabledNotifier extends Notifier<bool> {
   }
 }
 
-final animationEnabledProvider = NotifierProvider<AnimationEnabledNotifier, bool>(
-  AnimationEnabledNotifier.new,
-);
+final animationEnabledProvider =
+    NotifierProvider<AnimationEnabledNotifier, bool>(
+      AnimationEnabledNotifier.new,
+    );
 
 /// Provider for zoom level (default 1.0)
 class ZoomLevelNotifier extends Notifier<double> {

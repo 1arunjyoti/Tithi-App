@@ -15,12 +15,7 @@ String solarCacheKey(
   double latitude,
   double longitude,
 ) {
-  final hour = DateTime(
-    instant.year,
-    instant.month,
-    instant.day,
-    instant.hour,
-  );
+  final hour = DateTime(instant.year, instant.month, instant.day, instant.hour);
   return '${hour.year}-${hour.month}-${hour.day}-${hour.hour}_'
       '${viewMode.index}_'
       '${latitude.toStringAsFixed(2)}_${longitude.toStringAsFixed(2)}';

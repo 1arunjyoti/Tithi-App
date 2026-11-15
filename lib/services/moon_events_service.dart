@@ -157,7 +157,9 @@ class SwissMoonEventCalculator implements MoonEventCalculator {
     }
 
     final utc = bindings.julianDayToUtcDateTime(result.julianDay!);
-    final event = location == null ? utc.toLocal() : tz.TZDateTime.from(utc, location);
+    final event = location == null
+        ? utc.toLocal()
+        : tz.TZDateTime.from(utc, location);
 
     // Forward search: an event on the following day is not this day's event.
     if (event.year != midnight.year ||
@@ -261,8 +263,7 @@ class MoonEvents {
   final DateTime? moonset;
 
   @override
-  String toString() =>
-      'MoonEvents(moonrise: $moonrise, moonset: $moonset)';
+  String toString() => 'MoonEvents(moonrise: $moonrise, moonset: $moonset)';
 }
 
 /// Resolves moonrise/moonset for a place and civil day.
@@ -534,8 +535,14 @@ class MoonEventsService {
       var cursor = dayStart.add(const Duration(days: 1));
       final limit = cursor.add(kMoonFallbackSearchLimit);
       while (cursor.isBefore(limit)) {
-        final event = _eventAt(cursor, rising, latitude, longitude,
-            altitudeMeters, timezoneId);
+        final event = _eventAt(
+          cursor,
+          rising,
+          latitude,
+          longitude,
+          altitudeMeters,
+          timezoneId,
+        );
         if (event != null) return event;
         // The native search already skipped a day with no event; step a whole
         // day so a polar window terminates.
@@ -548,8 +555,14 @@ class MoonEventsService {
     DateTime? latest;
     var cursor = dayStart.subtract(kMoonFallbackSearchLimit);
     while (cursor.isBefore(dayStart)) {
-      final event = _eventAt(cursor, rising, latitude, longitude,
-          altitudeMeters, timezoneId);
+      final event = _eventAt(
+        cursor,
+        rising,
+        latitude,
+        longitude,
+        altitudeMeters,
+        timezoneId,
+      );
       if (event != null) {
         if (!event.isBefore(dayStart)) break;
         latest = event;

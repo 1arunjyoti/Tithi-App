@@ -13,8 +13,7 @@ class SheetExplainerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final highContrast =
-        AppTheme.highContrastOf(context);
+    final highContrast = AppTheme.highContrastOf(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

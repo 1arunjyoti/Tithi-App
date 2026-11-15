@@ -104,7 +104,9 @@ class ErrorDisplayWidget extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                message ?? l10n?.unexpectedErrorOccurred ?? 'An unexpected error occurred. Please try again.',
+                message ??
+                    l10n?.unexpectedErrorOccurred ??
+                    'An unexpected error occurred. Please try again.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                 ),

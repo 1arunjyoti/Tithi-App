@@ -27,8 +27,9 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       rituals: fields[7] as Rituals,
       media: fields[8] as Media,
       displayPriority: fields[9] as int?,
-      regions:
-          fields[10] == null ? ['all'] : (fields[10] as List).cast<String>(),
+      regions: fields[10] == null
+          ? ['all']
+          : (fields[10] as List).cast<String>(),
       featuredFlag: fields[11] as bool?,
     );
   }
@@ -139,10 +140,7 @@ class VisualsAdapter extends TypeAdapter<Visuals> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Visuals(
-      image: fields[0] as String,
-      themeColor: fields[1] as String,
-    );
+    return Visuals(image: fields[0] as String, themeColor: fields[1] as String);
   }
 
   @override
@@ -332,9 +330,7 @@ class MediaAdapter extends TypeAdapter<Media> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Media(
-      audioStotra: fields[0] as String,
-    );
+    return Media(audioStotra: fields[0] as String);
   }
 
   @override

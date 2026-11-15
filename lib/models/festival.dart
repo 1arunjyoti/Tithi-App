@@ -413,6 +413,7 @@ class Festival {
     final s = nameRegional.nameSanskrith;
     return (s == null || s.isEmpty) ? null : s;
   }
+
   String get description => purpose.description;
   String get masa => panchangRules.masa;
   String get paksha => panchangRules.paksha;
@@ -436,6 +437,7 @@ class Festival {
     }
     return null;
   }
+
   List<String> get ritualSteps => rituals.steps;
 
   /// Paksha this festival is observed in, falling back to the day's paksha
@@ -451,9 +453,7 @@ class Festival {
   /// festivals with a timingOverride (e.g. Ganesh Chaturthi at madhyahna)
   /// are observed on a tithi that may differ from the sunrise tithi.
   int resolveTithiIndex(String dayPaksha) {
-    final observed = resolvePaksha(dayPaksha) == 'Krishna'
-        ? tithi + 15
-        : tithi;
+    final observed = resolvePaksha(dayPaksha) == 'Krishna' ? tithi + 15 : tithi;
     return observed.clamp(1, 30);
   }
 
@@ -608,8 +608,7 @@ Festival primaryFestival(List<Festival> festivals) {
   if (hasRank) {
     var best = festivals.first;
     for (var i = 1; i < festivals.length; i++) {
-      if (displayPrioritySortKey(festivals[i]) <
-          displayPrioritySortKey(best)) {
+      if (displayPrioritySortKey(festivals[i]) < displayPrioritySortKey(best)) {
         best = festivals[i];
       }
     }
@@ -706,9 +705,7 @@ class Purpose {
       // Accept both spellings: 10 entries use correct
       // 'additional_description', 91 use typo 'addtional_description'.
       additionalDescription:
-          json['additional_description'] ??
-          json['addtional_description'] ??
-          '',
+          json['additional_description'] ?? json['addtional_description'] ?? '',
     );
   }
 }
@@ -899,15 +896,11 @@ class PanchangRules {
       // additional_description/addtional_description above.
       pujaKala: json['pujaKala'] ?? json['puja_kala'],
       paranRule: json['paranRule'] ?? json['paran_rule'],
-      clipToTithi:
-          json['clipToTithi'] ?? json['clip_to_tithi'] ?? false,
+      clipToTithi: json['clipToTithi'] ?? json['clip_to_tithi'] ?? false,
       sankrantiRashi: normalizeRashiName(
-        json['sankranti'] ??
-            json['sankrantiRashi'] ??
-            json['sankranti_rashi'],
+        json['sankranti'] ?? json['sankrantiRashi'] ?? json['sankranti_rashi'],
       ),
-      avoidBhadra:
-          json['avoidBhadra'] ?? json['avoid_bhadra'] ?? false,
+      avoidBhadra: json['avoidBhadra'] ?? json['avoid_bhadra'] ?? false,
       dominantTithi: normalizeDominantTithi(
         json['dominantTithi'] ?? json['dominant_tithi'],
       ),

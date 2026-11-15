@@ -86,10 +86,7 @@ Future<Map<DateTime, CalendarCellData>> buildCalendarCellData(
       ? ref.watch(resolvedSolarContextProvider)
       : null;
   final flagCacheBox = includeFestivals
-      ? await preparePanchangCacheBox(
-          flagSolar!.latitude,
-          flagSolar.longitude,
-        )
+      ? await preparePanchangCacheBox(flagSolar!.latitude, flagSolar.longitude)
       : null;
 
   // Batched to avoid a ~42-wide FFI burst on cold months: Hindu secondary

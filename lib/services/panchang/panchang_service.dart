@@ -32,7 +32,6 @@ class PanchangService {
 
   final PanchangEphemeris _ephemeris;
 
-
   bool _isInitialized = false;
   late String _ephePath;
 

@@ -7,7 +7,12 @@ import '../../../theme/app_theme.dart';
 /// Side-by-side Begins/Ends card with a center divider. Null values render
 /// a spinner (loading state).
 class TimingsCard extends StatelessWidget {
-  const TimingsCard({super.key, this.begins, this.ends, required this.highContrast});
+  const TimingsCard({
+    super.key,
+    this.begins,
+    this.ends,
+    required this.highContrast,
+  });
 
   final String? begins;
   final String? ends;
@@ -105,7 +110,8 @@ class TimingsCard extends StatelessWidget {
 /// Tinted transition card: orange label row, bold primary headline, dim
 /// subline. Null strings render a spinner (loading state).
 class TransitionCard extends StatelessWidget {
-  const TransitionCard({super.key, 
+  const TransitionCard({
+    super.key,
     this.headline,
     this.subline,
     required this.highContrast,

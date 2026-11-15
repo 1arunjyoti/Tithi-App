@@ -107,7 +107,6 @@ class LocationSettingsSection extends ConsumerWidget {
   }
 }
 
-
 class HomeLocationSetting extends ConsumerWidget {
   const HomeLocationSetting({super.key});
 
@@ -138,4 +137,3 @@ class HomeLocationSetting extends ConsumerWidget {
     );
   }
 }
-

@@ -187,8 +187,7 @@ class SuryaSiddhantaTuning {
       moonBijaArcSecondsPerYear:
           moonBijaArcSecondsPerYear ?? this.moonBijaArcSecondsPerYear,
       moonApsisBijaArcSecondsPerYear:
-          moonApsisBijaArcSecondsPerYear ??
-          this.moonApsisBijaArcSecondsPerYear,
+          moonApsisBijaArcSecondsPerYear ?? this.moonApsisBijaArcSecondsPerYear,
     );
   }
 
@@ -254,9 +253,7 @@ const SuryaSiddhantaTuning kSuryaSiddhantaTuning = SuryaSiddhantaTuning(
 /// The longitudes are already sidereal: the Sun's revolution count equals the
 /// number of sidereal years in a Mahayuga, so no ayanamsa is applied.
 class SuryaSiddhantaEngine {
-  const SuryaSiddhantaEngine({
-    this.tuning = kSuryaSiddhantaTuning,
-  });
+  const SuryaSiddhantaEngine({this.tuning = kSuryaSiddhantaTuning});
 
   final SuryaSiddhantaTuning tuning;
 
@@ -273,8 +270,7 @@ class SuryaSiddhantaEngine {
   /// algorithm, so the result is exact for every `DateTime` Dart can build.
   static double julianDayAt(DateTime instant) {
     final utc = instant.toUtc();
-    return utc.microsecondsSinceEpoch / Duration.microsecondsPerDay +
-        2440587.5;
+    return utc.microsecondsSinceEpoch / Duration.microsecondsPerDay + 2440587.5;
   }
 
   /// Mean longitude of the Sun, in degrees `[0, 360)`.
@@ -327,10 +323,7 @@ class SuryaSiddhantaEngine {
   /// True sidereal longitudes of both bodies at [instant].
   ({double sun, double moon}) longitudesAt(DateTime instant) {
     final ahargana = aharganaAt(instant);
-    return (
-      sun: trueSunLongitude(ahargana),
-      moon: trueMoonLongitude(ahargana),
-    );
+    return (sun: trueSunLongitude(ahargana), moon: trueMoonLongitude(ahargana));
   }
 
   // --- internals ---------------------------------------------------------
@@ -395,8 +388,7 @@ class SuryaSiddhantaEngine {
     final effective = quadrant.isOdd ? 90.0 - remainder : remainder;
     final sign = quadrant >= 2 ? -1.0 : 1.0;
 
-    final indexFloat =
-        effective * 60.0 / kSuryaSiddhantaSineStepArcMinutes;
+    final indexFloat = effective * 60.0 / kSuryaSiddhantaSineStepArcMinutes;
     final index = indexFloat.floor();
     if (index >= kSuryaSiddhantaSineTable.length) {
       return sign * kSuryaSiddhantaSineTable.last;

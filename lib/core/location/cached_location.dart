@@ -29,10 +29,7 @@ PlaceClock readPlaceClock(Box<dynamic> box) {
   final enabled =
       box.get(kLocationEnabledKey, defaultValue: false) as bool? ?? false;
   final home = box.get(kHomeTimezoneKey) as String?;
-  return resolvePlaceClock(
-    locationEnabled: enabled,
-    homeTimezoneId: home,
-  );
+  return resolvePlaceClock(locationEnabled: enabled, homeTimezoneId: home);
 }
 
 /// Last-known coordinates from [box], falling back to Delhi defaults.

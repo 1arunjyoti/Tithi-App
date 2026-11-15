@@ -38,7 +38,8 @@ class DiagonalStripesPainter extends CustomPainter {
 /// (striped red Rahu, dark Yamaganda, green Gulika), and one legend row per
 /// slot (dot + name + right-aligned "8:27 – 9:59 AM" range).
 class InauspiciousCard extends StatelessWidget {
-  const InauspiciousCard({super.key, 
+  const InauspiciousCard({
+    super.key,
     required this.axisStart,
     required this.axisMid,
     required this.axisEnd,
@@ -55,7 +56,7 @@ class InauspiciousCard extends StatelessWidget {
   final int rahuSegment;
   final int yamagandaSegment;
   final int gulikaSegment;
-  final List<({ WindowKind kind, String name, String time })> rows;
+  final List<({WindowKind kind, String name, String time})> rows;
   final bool highContrast;
 
   static const _rahuColor = Color(0xFFD32F2F);
@@ -179,9 +180,7 @@ class InauspiciousCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: kind == WindowKind.rahu
           ? const CustomPaint(
-              painter: DiagonalStripesPainter(
-                color: _rahuStripeColor,
-              ),
+              painter: DiagonalStripesPainter(color: _rahuStripeColor),
             )
           : null,
     );

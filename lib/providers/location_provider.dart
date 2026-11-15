@@ -59,8 +59,9 @@ void refreshPlaceContext(WidgetRef ref) {
 /// location) — on later launches it completes immediately, so warm starts
 /// behave exactly as before. Awaiting [Completer.future] never deadlocks:
 /// the wrapper completes it in a `finally` block on every path.
-final locationPermissionGateProvider =
-    Provider<Completer<void>>((ref) => Completer<void>());
+final locationPermissionGateProvider = Provider<Completer<void>>(
+  (ref) => Completer<void>(),
+);
 
 /// Provider for location enabled preference (reads from service)
 final locationEnabledProvider = FutureProvider<bool>((ref) async {

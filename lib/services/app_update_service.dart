@@ -131,10 +131,12 @@ class AppReleaseInfo {
       version: AppUpdateService.normalizeVersion(tag),
       name: json['name']?.toString() ?? tag,
       body: json['body']?.toString() ?? '',
-      htmlUrl: Uri.tryParse(json['html_url']?.toString() ?? '') ??
+      htmlUrl:
+          Uri.tryParse(json['html_url']?.toString() ?? '') ??
           Uri.https('github.com', '/'),
-      publishedAt:
-          publishedRaw == null ? null : DateTime.tryParse(publishedRaw),
+      publishedAt: publishedRaw == null
+          ? null
+          : DateTime.tryParse(publishedRaw),
       apkUrl: apkUrlRaw == null ? null : Uri.tryParse(apkUrlRaw),
       apkSizeBytes: sizeRaw is int ? sizeRaw : int.tryParse('$sizeRaw'),
       apkDigest: digestRaw == null || digestRaw.isEmpty ? null : digestRaw,
@@ -255,8 +257,7 @@ class AppUpdateService {
   /// therefore count as updates, while a higher version name with a
   /// lower-or-equal build number does not.
   static bool isNewerThan(String current, String latest) {
-    if (normalizeVersion(current).isEmpty ||
-        normalizeVersion(latest).isEmpty) {
+    if (normalizeVersion(current).isEmpty || normalizeVersion(latest).isEmpty) {
       return false;
     }
     if (compareVersions(current, latest) >= 0) return false;
@@ -392,8 +393,9 @@ class AppUpdateService {
       final request = http.Request('GET', url)
         ..headers['Accept'] = 'application/octet-stream'
         ..headers['User-Agent'] = 'Tithi-App';
-      final streamed =
-          await client.send(request).timeout(const Duration(minutes: 10));
+      final streamed = await client
+          .send(request)
+          .timeout(const Duration(minutes: 10));
       if (streamed.statusCode != 200) {
         throw AppUpdateException(
           'Download failed with HTTP ${streamed.statusCode}.',

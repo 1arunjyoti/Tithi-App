@@ -97,10 +97,7 @@ class AuspiciousTimings {
       start: at(sunrise, 2 / 5, 0),
       end: at(sunrise, 3 / 5, 0),
     );
-    final nishita = (
-      start: at(sunset, 0, 7 / 15),
-      end: at(sunset, 0, 8 / 15),
-    );
+    final nishita = (start: at(sunset, 0, 7 / 15), end: at(sunset, 0, 8 / 15));
     final godhuli = (start: _roundToMinute(sunset), end: at(sunset, 1 / 30, 0));
 
     var pradosha = switch (pradoshaConvention) {

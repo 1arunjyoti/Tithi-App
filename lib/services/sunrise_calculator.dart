@@ -24,13 +24,12 @@ class SunriseCalculator {
     required DateTime date,
     required double latitude,
     required double longitude,
-  }) =>
-      _computeSunTime(
-        date: date,
-        latitude: latitude,
-        longitude: longitude,
-        isSunrise: true,
-      );
+  }) => _computeSunTime(
+    date: date,
+    latitude: latitude,
+    longitude: longitude,
+    isSunrise: true,
+  );
 
   /// Get sunset for the device's local timezone.
   /// Previously fixed to IST; now uses the device's actual UTC offset.
@@ -38,13 +37,12 @@ class SunriseCalculator {
     required DateTime date,
     required double latitude,
     required double longitude,
-  }) =>
-      _computeSunTime(
-        date: date,
-        latitude: latitude,
-        longitude: longitude,
-        isSunrise: false,
-      );
+  }) => _computeSunTime(
+    date: date,
+    latitude: latitude,
+    longitude: longitude,
+    isSunrise: false,
+  );
 
   // ---------------------------------------------------------------------------
   // Shared solar-geometry engine (SMELL-4 refactor)
@@ -160,7 +158,13 @@ class SunriseCalculator {
     final hours = (eventMinutes ~/ 60) % 24;
     final minutes = eventMinutes % 60;
 
-    return DateTime(localDate.year, localDate.month, localDate.day, hours, minutes);
+    return DateTime(
+      localDate.year,
+      localDate.month,
+      localDate.day,
+      hours,
+      minutes,
+    );
   }
 
   /// Calculate Julian Day Number

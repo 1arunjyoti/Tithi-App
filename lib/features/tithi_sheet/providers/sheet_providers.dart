@@ -65,7 +65,8 @@ final bengaliInstantLabelProvider = FutureProvider.autoDispose
         final b = await ref
             .watch(bengaliCalendarServiceProvider)
             .calculateDate(instant);
-        final useBn = resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
+        final useBn =
+            resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
         if (useBn) {
           final idx = bengaliMonthIndexOf(b.month);
           final monthBn = idx >= 0 ? kBengaliMonthsBn[idx] : b.month;
