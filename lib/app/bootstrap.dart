@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 // `latest_all` (not `latest`) because place lookups can return any of the
 // 419 zone identifiers in the timezone boundary data; 106 of them are absent
@@ -81,22 +80,6 @@ class AppBootstrap {
       await version_warmup.warmVersionInfo();
     } catch (error) {
       debugPrint('Version warm-up failed (non-fatal): $error');
-    }
-  }
-
-  /// Preloads the app's GoogleFonts families (Poppins, Martel, Noto Sans
-  /// Bengali) so first paint doesn't flash fallback type or shift layout.
-  /// Safe offline (failures swallowed); bounded by timeout so a stalled
-  /// fetch can never hold up startup when awaited in [Future.wait].
-  Future<void> warmFonts() async {
-    try {
-      GoogleFonts.poppins();
-      GoogleFonts.poppinsTextTheme();
-      GoogleFonts.martel();
-      GoogleFonts.notoSansBengali();
-      await GoogleFonts.pendingFonts().timeout(const Duration(seconds: 8));
-    } catch (_) {
-      // Offline or store unavailable: runtime fallback type applies.
     }
   }
 

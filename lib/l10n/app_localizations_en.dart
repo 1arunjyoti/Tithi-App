@@ -901,6 +901,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get festivalFilterRecurring => 'Recurring';
 
   @override
+  String get festivalFilterFeatured => 'Featured';
+
+  @override
   String get festivalFilterTitle => 'Filter festivals';
 
   @override

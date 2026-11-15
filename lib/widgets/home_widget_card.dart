@@ -148,7 +148,20 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
           Padding(
             // Tighter bottom gap while the rows are open; the collapsed card
             // keeps the standard 16dp edge.
-            padding: EdgeInsets.fromLTRB(16, 16, 16, _expanded ? 8 : 16),
+            //
+            // The left edge takes less, because the header's press highlight
+            // gets `homeCardRowInset` of breathing room inside it: the icon
+            // still starts on the 16dp gutter the gallery rows below use,
+            // while the ripple no longer runs flush under the icon. With the
+            // dismiss button the right edge stays at 16 (the button owns that
+            // corner); without it the right edge matches the left, so the
+            // highlight and the content are symmetric on both sides.
+            padding: EdgeInsets.fromLTRB(
+              AppTheme.homeCardRowPadding,
+              16,
+              widget.showDismiss ? 16 : AppTheme.homeCardRowPadding,
+              _expanded ? 8 : 16,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -160,73 +173,89 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
                       child: InkWell(
                         onTap: _toggleExpanded,
                         borderRadius: BorderRadius.circular(12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppTheme.festivalTileBackground(context),
-                                borderRadius: BorderRadius.circular(13),
-                              ),
-                              child: Icon(
-                                Icons.widgets_rounded,
-                                color: accent,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n?.homeScreenWidget ??
-                                        'Home Screen Widgets',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: context.textTheme.titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.w700),
+                        // Highlight padding: same inset as the festival /
+                        // countdown rows, so the header ripple has left and
+                        // right breathing room instead of hugging the icon
+                        // and the chevron.
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.homeCardRowInset,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.festivalTileBackground(
+                                    context,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    canPin
-                                        ? l10n?.homeWidgetGallerySubtitle ??
-                                              'Add panchang widgets to your home screen'
-                                        : l10n?.homeWidgetManualHint ??
-                                              'Long-press home screen → Widgets → Tithi',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: context.textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: colors.onSurface.withValues(
-                                            alpha: AppTheme.contrastAlpha(
-                                              context,
-                                              0.64,
-                                            ),
-                                          ),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            AnimatedRotation(
-                              turns: _expanded ? 0.5 : 0.0,
-                              duration: AppTheme.animationDuration(
-                                context,
-                                const Duration(milliseconds: 200),
-                              ),
-                              curve: Curves.easeInOutCubic,
-                              child: Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 22,
-                                color: colors.onSurface.withValues(
-                                  alpha: AppTheme.contrastAlpha(context, 0.55),
+                                  borderRadius: BorderRadius.circular(13),
+                                ),
+                                child: Icon(
+                                  Icons.widgets_rounded,
+                                  color: accent,
+                                  size: 22,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n?.homeScreenWidget ??
+                                          'Home Screen Widgets',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: context.textTheme.titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      canPin
+                                          ? l10n?.homeWidgetGallerySubtitle ??
+                                                'Add panchang widgets to your home screen'
+                                          : l10n?.homeWidgetManualHint ??
+                                                'Long-press home screen → Widgets → Tithi',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: context.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: colors.onSurface.withValues(
+                                              alpha: AppTheme.contrastAlpha(
+                                                context,
+                                                0.64,
+                                              ),
+                                            ),
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              AnimatedRotation(
+                                turns: _expanded ? 0.5 : 0.0,
+                                duration: AppTheme.animationDuration(
+                                  context,
+                                  const Duration(milliseconds: 200),
+                                ),
+                                curve: Curves.easeInOutCubic,
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 22,
+                                  color: colors.onSurface.withValues(
+                                    alpha: AppTheme.contrastAlpha(
+                                      context,
+                                      0.55,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

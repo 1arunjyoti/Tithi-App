@@ -8,6 +8,7 @@ import '../providers/calendar_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../services/share_service.dart';
 import '../services/solar_events_service.dart';
 import '../utils/tithi_localization.dart';
@@ -134,9 +135,9 @@ class EventDetailSheet extends ConsumerWidget {
     // occurrence date while the panchang loads, so date-only entry points
     // show the date immediately instead of shifting it in later.
     final headerDate = dayPanchang?.date ?? requestedDate;
-    final dateBaseStyle = TextStyle(
+    final dateBaseStyle = AppTypography.display(
       fontSize: 22,
-      fontWeight: FontWeight.w600,
+      height: 1.3,
       color: highContrast
           ? context.colors.onSurface
           : AppTheme.heroForeground(context),
@@ -1674,10 +1675,10 @@ class _EventMantra extends StatelessWidget {
       border: Border.all(color: themeColor.withValues(alpha: 0.25)),
       child: Text(
         festival.rituals.mantra,
-        style: context.textTheme.bodyLarge?.copyWith(
-          fontFamily: 'serif',
+        style: AppTypography.shloka(
           fontSize: 15,
           height: 1.8,
+          fontWeight: FontWeight.w500,
           color: themeColor,
         ),
         textAlign: TextAlign.center,

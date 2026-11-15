@@ -8,8 +8,10 @@ import '../models/festival.dart';
 import '../providers/accessibility_provider.dart';
 import '../providers/festival_countdown_provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../utils/tithi_localization.dart';
 import '../features/sheets/sheet_launcher.dart';
+import 'inset_row_divider.dart';
 
 class FestivalCountdownCard extends ConsumerWidget {
   const FestivalCountdownCard({super.key});
@@ -34,27 +36,50 @@ class FestivalCountdownCard extends ConsumerWidget {
           // the Festivals & Events card (glass base + title + rows).
           return Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            // Side padding is smaller than the heading gutter: the embedded
+            // rows add `homeCardRowInset` inside their own highlight, so the
+            // day badge still lines up with the heading while the highlight
+            // gets left/right breathing room.
+            padding: const EdgeInsets.fromLTRB(
+              AppTheme.homeCardRowPadding,
+              16,
+              AppTheme.homeCardRowPadding,
+              16,
+            ),
             decoration: AppTheme.glassmorphism(context: context, ref: ref),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  AppLocalizations.of(context)?.countdownHeading ?? 'Festival Countdowns',
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                    color: context.colors.onSurface,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.homeCardRowInset,
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)?.countdownHeading ??
+                        'Festival Countdowns',
+                    style: AppTypography.display(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      height: 1.3,
+                      color: context.colors.onSurface,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 for (var i = 0; i < targets.length; i++) ...[
+                  // Flush rows on the base card: hairline only between them.
+                  if (i > 0)
+                    const InsetRowDivider(
+                      leadingInset:
+                          FestivalCountdownTile.textColumnInset +
+                          AppTheme.homeCardRowInset,
+                    ),
                   FestivalCountdownTile(
                     target: targets[i],
                     showTitle: false,
+                    horizontalPadding: AppTheme.homeCardRowInset,
                   ),
-                  if (i < targets.length - 1) const SizedBox(height: 10),
                 ],
               ],
             ),
@@ -74,6 +99,7 @@ class FestivalCountdownTile extends ConsumerWidget {
     this.isPinnedToHome = false,
     this.showActions = false,
     this.showTitle = true,
+    this.horizontalPadding,
     this.onToggleHome,
     this.onRemove,
   });
@@ -86,8 +112,22 @@ class FestivalCountdownTile extends ConsumerWidget {
   /// carries its own "Festival Countdowns" heading, so embedded rows hide
   /// it; the standalone countdown screen keeps it.
   final bool showTitle;
+
+  /// Horizontal padding inside an embedded row's tappable surface, between
+  /// its press highlight edge and the day badge. The home base card passes
+  /// [AppTheme.homeCardRowInset] so the badge and chevron never sit on the
+  /// highlight edge; standalone tiles keep their own 16dp card padding.
+  final double? horizontalPadding;
   final VoidCallback? onToggleHome;
   final VoidCallback? onRemove;
+
+  /// Leading day-count badge size and the gap after it.
+  static const double badgeSize = 76;
+  static const double badgeGap = 14;
+
+  /// Distance from the row's leading edge to the text column. The home card's
+  /// inter-row divider starts here so it never cuts under the day badge.
+  static const double textColumnInset = badgeSize + badgeGap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -95,9 +135,10 @@ class FestivalCountdownTile extends ConsumerWidget {
     // Festival-gold accent shared with the Festivals & Events rows and the
     // calendar's festival marks — NOT scheme primary (purple in Krishna).
     final accent = AppTheme.festivalAccent(context);
-    // Embedded rows (home base card) wear the festival-row surface; the
-    // standalone countdown screen keeps the glass card.
+    // Embedded rows (home base card) sit flush on the card surface like the
+    // festival rows; the standalone countdown screen keeps the glass card.
     final embedded = !showTitle;
+    final radius = BorderRadius.circular(embedded ? 14 : 24);
     final l10n = AppLocalizations.of(context);
     final locale =
         l10n?.localeName ?? Localizations.localeOf(context).languageCode;
@@ -106,9 +147,9 @@ class FestivalCountdownTile extends ConsumerWidget {
     return RepaintBoundary(
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(embedded ? 16 : 24),
+        borderRadius: radius,
         child: InkWell(
-          borderRadius: BorderRadius.circular(embedded ? 16 : 24),
+          borderRadius: radius,
           onTap: () {
             if (ref.read(accessibilityProvider).hapticFeedback) {
               HapticFeedback.lightImpact();
@@ -116,17 +157,20 @@ class FestivalCountdownTile extends ConsumerWidget {
             _showFestivalDetail(context, target.festival, target.date);
           },
           child: Container(
-            padding: EdgeInsets.all(embedded ? 12 : 16),
-            // Embedded rows match the festival rows' surface exactly (same
-            // helper); standalone tiles keep their glass card.
+            padding: EdgeInsets.symmetric(
+              horizontal: embedded ? (horizontalPadding ?? 0) : 16,
+              vertical: embedded ? 12 : 16,
+            ),
+            // Standalone tiles keep their glass card; embedded rows are
+            // transparent (the home card draws a divider between them).
             decoration: embedded
-                ? AppTheme.festivalRowDecoration(context)
+                ? null
                 : AppTheme.glassmorphism(context: context, ref: ref),
             child: Row(
               children: [
                 Container(
-                  width: 76,
-                  height: 76,
+                  width: badgeSize,
+                  height: badgeSize,
                   decoration: BoxDecoration(
                     // The old status pill's job lives here now: the block
                     // fills gold when the festival is today so the
@@ -170,7 +214,7 @@ class FestivalCountdownTile extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: FestivalCountdownTile.badgeGap),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +321,9 @@ class _CountdownActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Tooltip(
-          message: AppLocalizations.of(context)?.removeFromHomeScreen ?? 'Remove from home screen',
+          message:
+              AppLocalizations.of(context)?.removeFromHomeScreen ??
+              'Remove from home screen',
           // Scale only: the onToggleHome callback already buzzes.
           child: PressScale(
             haptic: false,
@@ -302,7 +348,9 @@ class _CountdownActions extends StatelessWidget {
           ),
         ),
         Tooltip(
-          message: AppLocalizations.of(context)?.removeCountdown ?? 'Remove countdown',
+          message:
+              AppLocalizations.of(context)?.removeCountdown ??
+              'Remove countdown',
           // Scale only: the onRemove callback already buzzes.
           child: PressScale(
             haptic: false,
@@ -334,8 +382,8 @@ class _CountdownLoadingCard extends ConsumerWidget {
       child: Row(
         children: [
           Container(
-            width: 76,
-            height: 76,
+            width: FestivalCountdownTile.badgeSize,
+            height: FestivalCountdownTile.badgeSize,
             decoration: BoxDecoration(
               color: AppTheme.festivalTileBackground(context),
               borderRadius: BorderRadius.circular(20),
@@ -351,7 +399,7 @@ class _CountdownLoadingCard extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: FestivalCountdownTile.badgeGap),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/app_localizations_en.dart';
@@ -22,6 +21,7 @@ import '../providers/location_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../features/hero/domain/hero_content.dart';
 import '../features/hero/providers/hero_providers.dart';
 import '../features/hero/widgets/artwork_window.dart';
@@ -244,8 +244,10 @@ class _HeroBody extends ConsumerWidget {
     final highContrast =
         AppTheme.highContrastOf(context) ||
         ref.watch(glassmorphismConfigProvider).isHighContrast;
-    final heroAccent = AppTheme.heroAccent(context);
-    final onHero = AppTheme.heroForeground(context);
+    // Home hero keeps its warm peach palette in light (the crisp sheet
+    // surfaces use the plain heroAccent/heroForeground helpers instead).
+    final heroAccent = AppTheme.homeHeroAccent(context);
+    final onHero = AppTheme.homeHeroForeground(context);
 
     final content = heroContentData(
       panchang: panchang,
@@ -263,11 +265,11 @@ class _HeroBody extends ConsumerWidget {
     // Display title: larger than the old 22/600, tighter tracking and a
     // tight line box — the editorial pairing that makes the card read
     // "designed" rather than "default Material text".
-    final titleBaseStyle = TextStyle(
+    final titleBaseStyle = AppTypography.display(
       fontSize: 24,
       fontWeight: FontWeight.w700,
       letterSpacing: -0.4,
-      height: 1.2,
+      height: 1.3,
       color: highContrast ? context.colors.onSurface : onHero,
     );
     final titleAccentStyle = titleBaseStyle.copyWith(
@@ -302,7 +304,7 @@ class _HeroBody extends ConsumerWidget {
             child: Ink(
               decoration: highContrast
                   ? AppTheme.glassmorphism(context: context, ref: ref)
-                  : AppTheme.heroDecoration(context),
+                  : AppTheme.homeHeroDecoration(context),
               child: InkWell(
                 borderRadius: BorderRadius.circular(24),
                 // Ink defaults to ThemeData.splashColor (onSurface @12%),
@@ -342,10 +344,13 @@ class _HeroBody extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(24),
                   child: Stack(
                     children: [
+                      // Ambient glow: burnt-orange wash on the peach Shukla
+                      // card, plum/gold halo on dark. The calendar's selected
+                      // tile glow stays off in light via [AppTheme.heroGlow].
                       if (!highContrast)
                         Positioned.fill(
                           child: Container(
-                            decoration: AppTheme.heroGlowBackdrop(context),
+                            decoration: AppTheme.homeHeroGlowBackdrop(context),
                           ),
                         ),
                       Padding(
@@ -510,12 +515,12 @@ class _HeroHeader extends ConsumerWidget {
             shape: BoxShape.circle,
             color: highContrast
                 ? context.colors.primary
-                : AppTheme.heroAccent(context),
+                : AppTheme.homeHeroAccent(context),
             boxShadow: highContrast
                 ? null
                 : [
                     BoxShadow(
-                      color: AppTheme.heroAccent(context),
+                      color: AppTheme.homeHeroAccent(context),
                       blurRadius: 8,
                     ),
                   ],
@@ -525,12 +530,11 @@ class _HeroHeader extends ConsumerWidget {
         Expanded(
           child: Text(
             tagLabel.toUpperCase(),
-            style: TextStyle(
-              // Eyebrow: quieter than the old 11/2.2/bold — tighter tracking
+            style: AppTypography.telemetry(
+              // Eyebrow: quieter than the old 11/2.2/bold - tighter tracking
               // and 72% ink let the 24pt title own the hierarchy.
               fontSize: 10.5,
               letterSpacing: 1.2,
-              fontWeight: FontWeight.w600,
               color: highContrast
                   ? context.colors.onSurface.withValues(alpha: 0.7)
                   : onHero.withValues(alpha: 0.72),
@@ -590,11 +594,9 @@ class _HeroTitle extends StatelessWidget {
             ? null
             : TextSpan(
                 text: content.secondaryText,
-                // Bengali typeface only with the Bengali app language;
-                // transliterated text keeps the hero typeface.
-                style: content.bengaliScript
-                    ? GoogleFonts.notoSansBengali(textStyle: accentStyle)
-                    : accentStyle,
+                // Tiro Bangla rides in the display fallback chain, so Bengali
+                // and transliterated text both keep the hero typeface.
+                style: accentStyle,
               );
       case HeroSecondaryKind.none:
         // Deliberately no label: title is just the weekday.
@@ -645,8 +647,8 @@ class _HeroMoonRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
-    final chipBg = AppTheme.heroChipBackground(context);
-    final chipBd = AppTheme.heroChipBorder(context);
+    final chipBg = AppTheme.homeHeroChipBackground(context);
+    final chipBd = AppTheme.homeHeroChipBorder(context);
     // Responsive artwork width: ~26% of the content width,
     // clamped so the text column always keeps room.
     final imageWidth = (maxWidth * 0.26).clamp(76.0, 110.0);

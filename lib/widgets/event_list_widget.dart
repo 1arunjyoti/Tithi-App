@@ -13,9 +13,11 @@ import '../core/navigation/home_tab.dart';
 import '../screens/all_festivals_screen.dart';
 import '../core/navigation/app_routes.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../features/event_list/providers/event_providers.dart';
 import '../features/sheets/sheet_launcher.dart';
 import 'festival_row_tile.dart';
+import 'inset_row_divider.dart';
 
 export '../features/event_list/providers/event_providers.dart'
     show
@@ -55,29 +57,45 @@ class EventListWidget extends ConsumerWidget {
         // Tighter bottom edge: the "View all" button already carries 10px
         // of vertical padding, so 6px here balances the 16px top padding
         // instead of stacking dead space below the button.
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+        //
+        // Side padding is the heading gutter minus
+        // [AppTheme.homeCardRowInset]: rows carry that inset inside their
+        // own wash/highlight, so their content still lines up with the
+        // heading while the today wash and press highlight get left/right
+        // breathing room instead of hugging the tile and chevron.
+        padding: const EdgeInsets.fromLTRB(
+          AppTheme.homeCardRowPadding,
+          16,
+          AppTheme.homeCardRowPadding,
+          6,
+        ),
         decoration: AppTheme.glassmorphism(context: context, ref: ref),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              AppLocalizations.of(context)?.festivalsAndEvents ??
-                  'Festivals & Events',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w700,
-                color: context.colors.onSurface,
+            _headingInset(
+              Text(
+                AppLocalizations.of(context)?.festivalsAndEvents ??
+                    'Festivals & Events',
+                style: AppTypography.display(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w700,
+                  height: 1.3,
+                  color: context.colors.onSurface,
+                ),
               ),
             ),
             const SizedBox(height: 2),
             // Range hint: the rows below cover the selected day plus the
             // next 3 days (see upcomingFestivalWindowDays), not the whole
             // calendar.
-            Text(
-              _rangeHint(selectedDate, ref.watch(todayDateProvider)),
-              style: context.textTheme.labelSmall?.copyWith(
-                color: context.colors.onSurface.withValues(alpha: 0.6),
+            _headingInset(
+              Text(
+                _rangeHint(selectedDate, ref.watch(todayDateProvider)),
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -91,10 +109,31 @@ class EventListWidget extends ConsumerWidget {
               error: (error, _) => _buildErrorBody(context, error),
             ),
             const SizedBox(height: 4),
-            _ViewAllButton(totalCount: totalCount, onSelectTab: onSelectTab),
+            // Same inset as the rows, so the button's ripple keeps the
+            // card's side rim.
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.homeCardRowInset,
+              ),
+              child: _ViewAllButton(
+                totalCount: totalCount,
+                onSelectTab: onSelectTab,
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Card text on the 16dp heading gutter (the card's own side padding plus
+  /// the row inset).
+  Widget _headingInset(Widget child) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppTheme.homeCardRowInset,
+      ),
+      child: child,
     );
   }
 
@@ -114,7 +153,10 @@ class EventListWidget extends ConsumerWidget {
   ) {
     if (items.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          vertical: 8,
+          horizontal: AppTheme.homeCardRowInset,
+        ),
         child: Row(
           children: [
             Icon(
@@ -143,7 +185,13 @@ class EventListWidget extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < shown.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
+          // Rows are flush on the card: no per-row box, just a hairline
+          // divider between them (none after the last row).
+          if (i > 0)
+            const InsetRowDivider(
+              leadingInset:
+                  FestivalRowTile.textColumnInset + AppTheme.homeCardRowInset,
+            ),
           // No per-row entrance: the card's own skeleton → content fade
           // already covers loading, and a row stagger on the home screen
           // delayed the first visible festival after every date tap.
@@ -152,6 +200,8 @@ class EventListWidget extends ConsumerWidget {
             date: shown[i].date,
             panchang: shown[i].panchang,
             daysAway: shown[i].daysAway,
+            flush: true,
+            horizontalPadding: AppTheme.homeCardRowInset,
             isSelectedDay: isSameDay(shown[i].date, selectedDate),
             onTap: () => _showFestivalDetail(
               context,
@@ -192,7 +242,10 @@ class EventListWidget extends ConsumerWidget {
 
   Widget _buildErrorBody(BuildContext context, Object error) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        vertical: 8,
+        horizontal: AppTheme.homeCardRowInset,
+      ),
       child: Text(
         AppLocalizations.of(
               context,
@@ -232,7 +285,10 @@ class _OverflowLine extends StatelessWidget {
         ? '+1 more: $names'
         : '+${hidden.length} more: $names';
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      // Card side padding already moved out by `homeCardRowInset`, so keep
+      // the overflow line on the same 4dp step past the row content it had
+      // before (heading gutter 16 + 4).
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       child: Text(
         label,
         maxLines: 2,

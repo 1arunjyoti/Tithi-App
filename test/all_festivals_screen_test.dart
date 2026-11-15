@@ -17,6 +17,7 @@ import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/widgets/major_festival_card.dart';
 import 'package:tithi/widgets/festival_row_tile.dart';
+import 'package:tithi/widgets/festival_filter_chip.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
@@ -92,6 +93,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Finder for a category chip inside the open filter sheet.
+  ///
+  /// The labels also exist on the screen's inline strip behind the sheet, so
+  /// every sheet interaction has to be scoped to the modal.
+  Finder sheetCategoryChip(String label) => find.descendant(
+    of: find.byType(BottomSheet),
+    matching: find.widgetWithText(FestivalFilterChip, label),
+  );
+
+  /// Finder for one chip on the inline strip under the search field.
+  Finder stripCategoryChip(String label) => find.descendant(
+    of: find.byKey(AllFestivalsScreen.categoryChipsKey),
+    matching: find.widgetWithText(FestivalFilterChip, label),
+  );
+
   /// Opens the app-bar filter sheet, optionally stages a category/region (or
   /// taps Reset), then applies with Done.
   Future<void> applyFilters(
@@ -103,18 +119,33 @@ void main() {
     await tester.tap(find.byIcon(Icons.tune_rounded));
     await tester.pumpAndSettle();
     if (reset) {
-      await tester.tap(find.text('Reset'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Reset'),
+        ),
+      );
       await tester.pumpAndSettle();
     }
     if (category != null) {
-      await tester.tap(find.text(category));
+      await tester.tap(sheetCategoryChip(category));
       await tester.pumpAndSettle();
     }
     if (region != null) {
-      await tester.tap(find.text(region));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text(region),
+        ),
+      );
       await tester.pumpAndSettle();
     }
-    await tester.tap(find.text('Done'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Done'),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -259,6 +290,50 @@ void main() {
           FestivalCategoryFilter.recurring,
         ),
         isTrue,
+      );
+    });
+
+    test('featured reads the curated flag, independent of category', () {
+      // Arrange: a featured vrat and an ordinary major. `featured` is an
+      // editorial flag, so it must not be confused with `category: 'major'`
+      // (96 of the catalog's 110 records) or with recurrence.
+      final featuredVrat = fixture(
+        id: 'fv',
+        name: 'Featured Vrat',
+        category: 'vrat',
+        featured: true,
+      );
+      final ordinaryMajor = fixture(id: 'om', name: 'Ordinary Major');
+
+      // Assert
+      expect(
+        festivalMatchesCategoryFilter(
+          featuredVrat,
+          FestivalCategoryFilter.featured,
+        ),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(
+          ordinaryMajor,
+          FestivalCategoryFilter.featured,
+        ),
+        isFalse,
+      );
+      // Featured is orthogonal: the vrat still matches its own categories.
+      expect(
+        festivalMatchesCategoryFilter(
+          featuredVrat,
+          FestivalCategoryFilter.vrat,
+        ),
+        isTrue,
+      );
+      expect(
+        festivalMatchesCategoryFilter(
+          featuredVrat,
+          FestivalCategoryFilter.major,
+        ),
+        isFalse,
       );
     });
   });
@@ -712,6 +787,196 @@ void main() {
       // Assert
       expect(find.text('Beta Vrat'), findsOneWidget);
       expect(find.text('Alpha Puja'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('category chips sit under the search field and start on All', (
+      tester,
+    ) async {
+      // Arrange
+      final today = todayOnly();
+      await pumpScreen(
+        tester,
+        occurrences: [
+          (festival: fixture(id: 'a', name: 'Alpha Puja'), date: today),
+        ],
+      );
+
+      // Assert: the strip is the search field's sibling, directly below it.
+      final strip = find.byKey(AllFestivalsScreen.categoryChipsKey);
+      expect(strip, findsOneWidget);
+      expect(
+        tester.getTopLeft(strip).dy,
+        greaterThanOrEqualTo(tester.getBottomLeft(find.byType(TextField)).dy),
+      );
+
+      // Every category filter, in enum order, including the curated Featured.
+      const labels = ['All', 'Major', 'Vrat', 'Recurring', 'Featured'];
+      for (final label in labels) {
+        expect(
+          find.descendant(of: strip, matching: find.text(label)),
+          findsOneWidget,
+        );
+      }
+
+      // Default state: All is selected, nothing is narrowed.
+      expect(
+        tester.widget<FestivalFilterChip>(stripCategoryChip('All')).selected,
+        isTrue,
+      );
+      for (final label in labels.skip(1)) {
+        expect(
+          tester.widget<FestivalFilterChip>(stripCategoryChip(label)).selected,
+          isFalse,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Featured chip narrows to the curated flagships', (
+      tester,
+    ) async {
+      // Arrange: two curated flagships (one a vrat, to prove the flag is not
+      // `category: 'major'`) and one ordinary major.
+      final today = todayOnly();
+      final flagship = fixture(
+        id: 'flagship',
+        name: 'Flagship Major',
+        featured: true,
+      );
+      final flagshipVrat = fixture(
+        id: 'flagship_vrat',
+        name: 'Featured Vrat',
+        category: 'vrat',
+        featured: true,
+      );
+      final ordinary = fixture(id: 'ordinary', name: 'Ordinary Major');
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: ordinary, date: today),
+          (festival: flagship, date: today.add(const Duration(days: 1))),
+          (festival: flagshipVrat, date: today.add(const Duration(days: 2))),
+        ]),
+      );
+
+      // Act
+      await tester.tap(stripCategoryChip('Featured'));
+      await tester.pumpAndSettle();
+
+      // Assert: only the flagged entries remain, both as the large card.
+      expect(
+        tester
+            .widget<FestivalFilterChip>(stripCategoryChip('Featured'))
+            .selected,
+        isTrue,
+      );
+      expect(find.text('Ordinary Major'), findsNothing);
+      expect(find.text('Flagship Major'), findsOneWidget);
+      expect(find.text('Featured Vrat'), findsOneWidget);
+      expect(find.byType(MajorFestivalCard), findsNWidgets(2));
+      expect(find.byType(FestivalRowTile), findsNothing);
+      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('inline chip and filter sheet share one selection', (
+      tester,
+    ) async {
+      // Arrange
+      final today = todayOnly();
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: fixture(id: 'a', name: 'Alpha Major'), date: today),
+          (
+            festival: fixture(
+              id: 'b',
+              name: 'Beta Recurring',
+              category: 'recurring',
+              recurring: true,
+            ),
+            date: today.add(const Duration(days: 1)),
+          ),
+        ]),
+      );
+
+      // Chip -> sheet: opening the sheet shows the strip's choice staged.
+      await tester.tap(stripCategoryChip('Recurring'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.tune_rounded));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FestivalFilterChip>(sheetCategoryChip('Recurring'))
+            .selected,
+        isTrue,
+      );
+      expect(
+        tester.widget<FestivalFilterChip>(sheetCategoryChip('All')).selected,
+        isFalse,
+      );
+
+      // Sheet -> chip: applying Major in the sheet moves the strip's tint.
+      await tester.tap(sheetCategoryChip('Major'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BottomSheet),
+          matching: find.text('Done'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<FestivalFilterChip>(stripCategoryChip('Major')).selected,
+        isTrue,
+      );
+      expect(
+        tester
+            .widget<FestivalFilterChip>(stripCategoryChip('Recurring'))
+            .selected,
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a region picked in the sheet survives a chip tap', (
+      tester,
+    ) async {
+      // Arrange: one pan-India major plus a vrat rooted in each of two zones.
+      final today = todayOnly();
+      final panMajor = fixture(id: 'pan', name: 'Pan Major');
+      final southVrat = fixture(
+        id: 'south',
+        name: 'South Vrat',
+        category: 'vrat',
+        regions: const ['south'],
+      );
+      final northVrat = fixture(
+        id: 'north',
+        name: 'North Vrat',
+        category: 'vrat',
+        regions: const ['north'],
+      );
+      await pumpScreen(
+        tester,
+        occurrences: sortDatedFestivals([
+          (festival: panMajor, date: today),
+          (festival: southVrat, date: today.add(const Duration(days: 1))),
+          (festival: northVrat, date: today.add(const Duration(days: 2))),
+        ]),
+      );
+
+      // Act: narrow by region in the sheet, then by category on the strip.
+      await applyFilters(tester, region: 'South India');
+      expect(find.text('North Vrat'), findsNothing);
+      await tester.tap(stripCategoryChip('Vrat'));
+      await tester.pumpAndSettle();
+
+      // Assert: the chip only changed the category, so the region still bites.
+      expect(find.text('South Vrat'), findsOneWidget);
+      expect(find.text('North Vrat'), findsNothing);
+      expect(find.text('Pan Major'), findsNothing);
       expect(tester.takeException(), isNull);
     });
 

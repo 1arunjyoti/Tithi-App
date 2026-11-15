@@ -2,14 +2,20 @@ import 'festival.dart';
 import 'festival_region.dart';
 
 /// Category filter options on the all-festivals screen. [all] filters nothing.
-enum FestivalCategoryFilter { all, major, vrat, recurring }
+///
+/// [featured] is the curated catalog flag ([Festival.featured]), not a
+/// `category` value: the screen's inline chips and the filter sheet offer it as
+/// a fifth choice, and [festivalMatchesCategoryFilter] reads the flag.
+enum FestivalCategoryFilter { all, major, vrat, recurring, featured }
 
 /// Whether [festival] belongs under [filter].
 ///
 /// `vrat` mirrors the app-wide vrat definition (`category == 'vrat'` OR
 /// `recurring`), so monthly observances such as Ekadashi/Purnima appear in
 /// both the vrat and recurring views. `recurring` is the narrower "repeats
-/// every lunar month" view.
+/// every lunar month" view. `featured` is orthogonal to [Festival.category]:
+/// it keeps the ~20 curated flagships the all-festivals list renders as large
+/// cards.
 bool festivalMatchesCategoryFilter(
   Festival festival,
   FestivalCategoryFilter filter,
@@ -20,6 +26,7 @@ bool festivalMatchesCategoryFilter(
     FestivalCategoryFilter.vrat =>
       festival.category == 'vrat' || festival.recurring,
     FestivalCategoryFilter.recurring => festival.recurring,
+    FestivalCategoryFilter.featured => festival.featured,
   };
 }
 

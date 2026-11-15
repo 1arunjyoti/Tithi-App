@@ -13,6 +13,7 @@ import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../services/solar_events_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../utils/tithi_localization.dart';
 import 'festival_thumbnail.dart';
 
@@ -203,12 +204,11 @@ class MajorFestivalCard extends ConsumerWidget {
                                       festival.name,
                                       maxLines: 3,
                                       overflow: TextOverflow.ellipsis,
-                                      style: context.textTheme.titleLarge
-                                          ?.copyWith(
-                                            fontSize: 18,
-                                            height: 1.2,
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                                      style: AppTypography.ui(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        height: 1.3,
+                                      ),
                                     ),
                                   ),
                                   if (countdown != null) ...[

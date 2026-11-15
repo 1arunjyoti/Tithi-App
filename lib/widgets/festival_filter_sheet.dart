@@ -8,6 +8,7 @@ import '../models/festival_filter.dart';
 import '../models/festival_region.dart';
 import '../providers/accessibility_provider.dart';
 import '../theme/app_theme.dart';
+import 'festival_filter_chip.dart';
 import 'settings_widgets.dart';
 
 /// Opens the category + region filter sheet for the all-festivals list.
@@ -81,16 +82,6 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
     );
   }
 
-  String _categoryLabel(AppLocalizations? l10n, FestivalCategoryFilter filter) {
-    return switch (filter) {
-      FestivalCategoryFilter.all => l10n?.festivalFilterAll ?? 'All',
-      FestivalCategoryFilter.major => l10n?.festivalFilterMajor ?? 'Major',
-      FestivalCategoryFilter.vrat => l10n?.festivalFilterVrat ?? 'Vrat',
-      FestivalCategoryFilter.recurring =>
-        l10n?.festivalFilterRecurring ?? 'Recurring',
-    };
-  }
-
   String _regionLabel(AppLocalizations? l10n, FestivalRegion region) {
     if (region == FestivalRegion.all) {
       return l10n?.festivalFilterAllRegions ?? 'All regions';
@@ -101,37 +92,16 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final highContrast = ref.watch(accessibilityProvider).highContrast;
-    final hairline = AppTheme.sheetHairline(
-      context,
-      highContrast: highContrast,
-    );
 
     Widget chip({
       required String label,
       required bool selected,
       required VoidCallback onTap,
     }) {
-      return ChoiceChip(
-        label: Text(label),
+      return FestivalFilterChip(
+        label: label,
         selected: selected,
-        showCheckmark: false,
-        onSelected: (_) => onTap(),
-        selectedColor: context.colors.primary.withValues(alpha: 0.16),
-        backgroundColor: Colors.transparent,
-        side: BorderSide(
-          color: selected
-              ? context.colors.primary.withValues(alpha: 0.45)
-              : hairline,
-        ),
-        labelStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: selected
-              ? context.colors.primary
-              : context.colors.onSurface.withValues(alpha: 0.75),
-        ),
-        shape: const StadiumBorder(),
+        onTap: onTap,
       );
     }
 
@@ -187,7 +157,7 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
                 children: [
                   for (final filter in FestivalCategoryFilter.values)
                     chip(
-                      label: _categoryLabel(l10n, filter),
+                      label: festivalCategoryFilterLabel(l10n, filter),
                       selected: _category == filter,
                       onTap: () => _selectCategory(filter),
                     ),

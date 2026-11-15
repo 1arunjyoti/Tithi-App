@@ -1,17 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/festival_filter.dart';
+import '../providers/accessibility_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../features/sheets/sheet_launcher.dart';
+import '../widgets/festival_filter_chip.dart';
 import '../widgets/festival_filter_sheet.dart';
 import '../widgets/festival_row_tile.dart';
 import '../widgets/major_festival_card.dart';
@@ -88,12 +91,13 @@ final allFestivalOccurrencesProvider =
 /// every festival sorted by this year's occurrence date, January first, with
 /// the date on each row. On open the list auto-scrolls to the current point
 /// (first festival dated today or later). A live search field filters by
-/// name/category/description, and the app-bar filter button opens a sheet
-/// with category (All / Major / Vrat / Recurring) and region (all regions or
-/// one zone) narrowing; search and filters compose, and a dot on the button
-/// marks an active filter. Tapping a row opens the festival detail sheet with
-/// the row's occurrence date, so the sheet can backfill that day's panchang
-/// (timings, puja/paran windows).
+/// name/category/description, a chip strip under it applies the category
+/// (All / Major / Vrat / Recurring / Featured) in one tap, and the app-bar
+/// filter button opens a sheet with the same categories plus region (all
+/// regions or one zone) narrowing; search and filters compose, and a dot on
+/// the button marks an active filter. Tapping a row opens the festival detail
+/// sheet with the row's occurrence date, so the sheet can backfill that day's
+/// panchang (timings, puja/paran windows).
 class AllFestivalsScreen extends ConsumerStatefulWidget {
   const AllFestivalsScreen({
     super.key,
@@ -118,6 +122,11 @@ class AllFestivalsScreen extends ConsumerStatefulWidget {
   /// floating capsule while it is out (the drawer paints inside this Scaffold,
   /// below the shell's overlay).
   final ValueChanged<bool>? onDrawerStateChanged;
+
+  /// Key of the inline category strip under the search field, so tests (and
+  /// future tooltips) can address it without matching the same chip labels the
+  /// filter sheet renders.
+  static const categoryChipsKey = ValueKey('all-festivals-category-chips');
 
   @override
   ConsumerState<AllFestivalsScreen> createState() => _AllFestivalsScreenState();
@@ -177,6 +186,17 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     final result = await showFestivalFilterSheet(context, initial: _filters);
     if (!mounted || result == null || result == _filters) return;
     setState(() => _filters = result);
+  }
+
+  /// Applies a category from the inline strip, keeping the sheet's region
+  /// narrowing (the two dimensions compose, so a chip must not silently clear
+  /// the region the user picked).
+  void _selectCategory(FestivalCategoryFilter category) {
+    if (category == _filters.category) return;
+    if (ref.read(accessibilityProvider).hapticFeedback) {
+      HapticFeedback.lightImpact();
+    }
+    setState(() => _filters = _filters.copyWith(category: category));
   }
 
   List<DatedFestival> _visible(List<DatedFestival> all) {
@@ -241,9 +261,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      drawer: widget.onSelectTab == null
-          ? null
-          : AppDrawer(onSelectTab: widget.onSelectTab),
+      drawer: widget.onSelectTab == null ? null : const AppDrawer(),
       onDrawerChanged: widget.onDrawerStateChanged,
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -315,6 +333,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                     ),
                   ),
                 ),
+                _buildCategoryChips(context),
                 Expanded(
                   child: occurrencesAsync.when(
                     // Same stale-first pattern as the home card: a recompute
@@ -337,6 +356,35 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  /// The filter sheet's category dimension, surfaced as a chip strip under the
+  /// search field so the common narrowing (and Featured) takes one tap.
+  ///
+  /// Both entry points write the same [_filters] state: a chip tap updates the
+  /// category through `copyWith`, and the sheet opens already showing that
+  /// choice. The strip scrolls horizontally instead of wrapping, so the list
+  /// below keeps its height on narrow screens and at large text scales.
+  Widget _buildCategoryChips(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      key: AllFestivalsScreen.categoryChipsKey,
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Row(
+        children: [
+          for (final filter in FestivalCategoryFilter.values)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FestivalFilterChip(
+                label: festivalCategoryFilterLabel(l10n, filter),
+                selected: _filters.category == filter,
+                onTap: () => _selectCategory(filter),
+              ),
+            ),
         ],
       ),
     );

@@ -902,6 +902,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get festivalFilterRecurring => 'পুনরাবৃত্ত';
 
   @override
+  String get festivalFilterFeatured => 'বিশেষ';
+
+  @override
   String get festivalFilterTitle => 'উৎসব ফিল্টার করুন';
 
   @override

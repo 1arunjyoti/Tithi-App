@@ -20,23 +20,15 @@ import '../screens/sankalpa/sankalpa_list_screen.dart';
 import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
 import '../core/navigation/app_routes.dart';
-import '../core/navigation/home_tab.dart';
 import 'responsive_layout.dart';
 
 import 'native_screens/native_screens.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key, this.isSidebar = false, this.onSelectTab});
+  const AppDrawer({super.key, this.isSidebar = false});
 
   /// When true, renders as a persistent sidebar without Drawer wrapper
   final bool isSidebar;
-
-  /// Selects one of the hosting shell's tabs instead of pushing a screen.
-  ///
-  /// Null when there is no shell to switch (the wide sidebar, and every screen
-  /// that pushes this drawer on its own), which keeps push navigation for the
-  /// destinations the shell already keeps mounted.
-  final ValueChanged<HomeTab>? onSelectTab;
 
   static const _drawerBorderRadius = BorderRadius.only(
     topRight: Radius.circular(32),
@@ -57,7 +49,7 @@ class AppDrawer extends StatelessWidget {
         children: [
           _DrawerHeader(colors: colors),
           Expanded(
-            child: _DrawerMenuList(colors: colors, onSelectTab: onSelectTab),
+            child: _DrawerMenuList(colors: colors),
           ),
           const _DrawerFooter(),
         ],
@@ -188,12 +180,9 @@ Future<void> _openTemplesInMaps(BuildContext context, WidgetRef ref) async {
 
 /// Menu list with all drawer items
 class _DrawerMenuList extends ConsumerWidget {
-  const _DrawerMenuList({required this.colors, this.onSelectTab});
+  const _DrawerMenuList({required this.colors});
 
   final ColorScheme colors;
-
-  /// Non-null when the hosting shell can switch tabs (see [AppDrawer]).
-  final ValueChanged<HomeTab>? onSelectTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -218,7 +207,7 @@ class _DrawerMenuList extends ConsumerWidget {
         _DrawerMenuItem(
           icon: Icons.event_available_rounded,
           title: l10n?.countdownHeading ?? 'Festival Countdowns',
-          onTap: () => _openCountdowns(context),
+          onTap: () => _navigateTo(context, const FestivalCountdownScreen()),
         ),
 
         _DrawerMenuItem(
@@ -307,24 +296,6 @@ class _DrawerMenuList extends ConsumerWidget {
         const _AboutMenuItem(),
       ],
     );
-  }
-
-  /// Countdowns exists twice over: as a drawer entry and as one of the shell's
-  /// destinations. When the shell is hosting this drawer, the tab is already
-  /// mounted, so picking the entry selects it instead of pushing a second copy
-  /// (which used to leave the bar pointing at Today while a full-screen
-  /// countdowns page covered it). The wide sidebar has no tabs, so it keeps
-  /// pushing.
-  void _openCountdowns(BuildContext context) {
-    final select = onSelectTab;
-    if (select == null) {
-      _navigateTo(context, const FestivalCountdownScreen());
-      return;
-    }
-    if (!ResponsiveLayout.isTabletOrLarger(context)) {
-      Navigator.of(context).pop();
-    }
-    select(HomeTab.countdowns);
   }
 
   void _navigateTo(BuildContext context, Widget screen) {

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
@@ -12,6 +11,7 @@ import '../../../core/anim/press_scale.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../services/share_file/share_file.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 import '../providers/quote_providers.dart';
 import '../../../widgets/shloka_share_card.dart';
 
@@ -629,10 +629,8 @@ class DailyQuoteWidget extends ConsumerWidget {
                 Text(
                   shloka.text,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.martel(
+                  style: AppTypography.shloka(
                     fontSize: 19,
-                    height: 1.6,
-                    fontWeight: FontWeight.w600,
                     color: context.colors.onSurface,
                   ),
                 ),
@@ -1092,7 +1090,7 @@ class _TranslationText extends StatelessWidget {
       text,
       textAlign: TextAlign.center,
       style: isHindi
-          ? GoogleFonts.martel(
+          ? AppTypography.shloka(
               fontSize: 15,
               height: 1.5,
               fontWeight: FontWeight.w500,
