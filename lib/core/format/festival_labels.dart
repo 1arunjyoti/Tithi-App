@@ -41,13 +41,12 @@ String observanceRuleKey(Festival festival) {
 String observanceRuleLabel(String ruleKey, AppLocalizations? l10n) {
   return switch (ruleKey) {
     'brahma_muhurta_start' =>
-      l10n?.brahmaMuhurta ??
-          'the tithi prevailing at Brahma Muhurta',
-    'arunodaya_start' || 'arunodaya' =>
-      'the tithi prevailing at Arunodaya',
+      l10n?.brahmaMuhurta ?? 'the tithi prevailing at Brahma Muhurta',
+    'arunodaya_start' || 'arunodaya' => 'the tithi prevailing at Arunodaya',
     'purvahna' => 'the tithi prevailing at Purvahna (forenoon)',
-    'sayahna_start' || 'sayahna_center' || 'sayahna_end' =>
-      'the tithi prevailing at Sayahna (late afternoon)',
+    'sayahna_start' ||
+    'sayahna_center' ||
+    'sayahna_end' => 'the tithi prevailing at Sayahna (late afternoon)',
     'madhyahna' =>
       l10n?.observanceRuleMadhyahna ??
           'the tithi prevailing at Madhyahna (midday)',
@@ -58,8 +57,7 @@ String observanceRuleLabel(String ruleKey, AppLocalizations? l10n) {
       l10n?.observanceRuleNishita ??
           'the tithi prevailing at Nishita (midnight)',
     'pradosh' || 'pradosha' =>
-      l10n?.observanceRulePradosha ??
-          'the tithi prevailing at Pradosha (dusk)',
+      l10n?.observanceRulePradosha ?? 'the tithi prevailing at Pradosha (dusk)',
     'moonrise' || 'chandrodaya' =>
       l10n?.observanceRuleMoonrise ?? 'the tithi prevailing at moonrise',
     _ => l10n?.observanceRuleUdaya ?? 'the tithi prevailing at sunrise',
@@ -129,9 +127,7 @@ String capitalizedMasaLabel({
   return displayMasaName(masa, paksha, monthSystem)
       .replaceAll('_', ' ')
       .split(' ')
-      .map(
-        (w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}',
-      )
+      .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
       .join(' ');
 }
 

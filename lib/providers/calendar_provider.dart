@@ -21,8 +21,9 @@ class TodayDateNotifier extends Notifier<DateTime> {
   void setToday(DateTime date) => state = date;
 }
 
-final todayDateProvider =
-    NotifierProvider<TodayDateNotifier, DateTime>(TodayDateNotifier.new);
+final todayDateProvider = NotifierProvider<TodayDateNotifier, DateTime>(
+  TodayDateNotifier.new,
+);
 
 /// Provider for currently selected date in calendar
 class SelectedDateNotifier extends Notifier<DateTime> {
@@ -98,9 +99,7 @@ class HeavyMonthNotifier extends Notifier<DateTime> {
 }
 
 final heavyFocusedMonthProvider =
-    NotifierProvider<HeavyMonthNotifier, DateTime>(
-      HeavyMonthNotifier.new,
-    );
+    NotifierProvider<HeavyMonthNotifier, DateTime>(HeavyMonthNotifier.new);
 
 /// Date tile the user actively tapped on the calendar. Null by default and
 /// after any month navigation — the secondary header then shows the
@@ -117,9 +116,9 @@ final tappedCalendarDateProvider = StateProvider<DateTime?>((ref) => null);
 /// the animation via the debounced helper in calendar_widget.dart.
 void setCalendarMonth(WidgetRef ref, DateTime month) {
   ref.read(focusedMonthProvider.notifier).setFocusedMonth(month);
-  ref.read(heavyFocusedMonthProvider.notifier).settle(
-        DateTime(month.year, month.month),
-      );
+  ref
+      .read(heavyFocusedMonthProvider.notifier)
+      .settle(DateTime(month.year, month.month));
   // Navigating months ends the explicit tile-tap state: the secondary
   // header returns to its default two-month range.
   ref.read(tappedCalendarDateProvider.notifier).state = null;
@@ -224,14 +223,54 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
     // day is computed.
     activePanchangSchool = school;
     return CalendarPreferences(
-      startOfWeek: _parseEnum(box, _startOfWeekKey, StartingDayOfWeek.values, StartingDayOfWeek.sunday),
-      primaryEventView: _parseEnum(box, _primaryEventViewKey, PrimaryEventView.values, PrimaryEventView.tithi),
-      primaryCalendarSystem: _parseEnum(box, _primaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.gregorian),
-      secondaryCalendarSystem: _parseEnum(box, _secondaryCalendarSystemKey, AppCalendarSystem.values, AppCalendarSystem.hindu),
-      hinduMonthSystem: _parseEnum(box, _hinduMonthSystemKey, HinduMonthSystem.values, HinduMonthSystem.amanta),
-      hinduYearEra: _parseEnum(box, _hinduYearEraKey, HinduYearEra.values, HinduYearEra.shakaSamvat),
-      tithiDisplayMode: _parseEnum(box, _tithiDisplayModeKey, TithiDisplayMode.values, TithiDisplayMode.continuous30),
-      festivalRegion: _parseEnum(box, _festivalRegionKey, FestivalRegion.values, FestivalRegion.all),
+      startOfWeek: _parseEnum(
+        box,
+        _startOfWeekKey,
+        StartingDayOfWeek.values,
+        StartingDayOfWeek.sunday,
+      ),
+      primaryEventView: _parseEnum(
+        box,
+        _primaryEventViewKey,
+        PrimaryEventView.values,
+        PrimaryEventView.tithi,
+      ),
+      primaryCalendarSystem: _parseEnum(
+        box,
+        _primaryCalendarSystemKey,
+        AppCalendarSystem.values,
+        AppCalendarSystem.gregorian,
+      ),
+      secondaryCalendarSystem: _parseEnum(
+        box,
+        _secondaryCalendarSystemKey,
+        AppCalendarSystem.values,
+        AppCalendarSystem.hindu,
+      ),
+      hinduMonthSystem: _parseEnum(
+        box,
+        _hinduMonthSystemKey,
+        HinduMonthSystem.values,
+        HinduMonthSystem.amanta,
+      ),
+      hinduYearEra: _parseEnum(
+        box,
+        _hinduYearEraKey,
+        HinduYearEra.values,
+        HinduYearEra.shakaSamvat,
+      ),
+      tithiDisplayMode: _parseEnum(
+        box,
+        _tithiDisplayModeKey,
+        TithiDisplayMode.values,
+        TithiDisplayMode.continuous30,
+      ),
+      festivalRegion: _parseEnum(
+        box,
+        _festivalRegionKey,
+        FestivalRegion.values,
+        FestivalRegion.all,
+      ),
       panchangSchool: school,
     );
   }
@@ -260,26 +299,34 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   }
 
   Future<void> setPrimaryView(PrimaryEventView view) async {
-    await StorageService().getSettingsBox().put(_primaryEventViewKey, view.index);
+    await StorageService().getSettingsBox().put(
+      _primaryEventViewKey,
+      view.index,
+    );
     state = state.copyWith(primaryEventView: view);
   }
 
   Future<void> setPrimaryCalendarSystem(AppCalendarSystem system) async {
-    await StorageService()
-        .getSettingsBox()
-        .put(_primaryCalendarSystemKey, system.index);
+    await StorageService().getSettingsBox().put(
+      _primaryCalendarSystemKey,
+      system.index,
+    );
     state = state.copyWith(primaryCalendarSystem: system);
   }
 
   Future<void> setSecondaryCalendarSystem(AppCalendarSystem system) async {
-    await StorageService()
-        .getSettingsBox()
-        .put(_secondaryCalendarSystemKey, system.index);
+    await StorageService().getSettingsBox().put(
+      _secondaryCalendarSystemKey,
+      system.index,
+    );
     state = state.copyWith(secondaryCalendarSystem: system);
   }
 
   Future<void> setHinduMonthSystem(HinduMonthSystem system) async {
-    await StorageService().getSettingsBox().put(_hinduMonthSystemKey, system.index);
+    await StorageService().getSettingsBox().put(
+      _hinduMonthSystemKey,
+      system.index,
+    );
     state = state.copyWith(hinduMonthSystem: system);
   }
 
@@ -289,12 +336,18 @@ class CalendarPreferencesNotifier extends Notifier<CalendarPreferences> {
   }
 
   Future<void> setTithiDisplayMode(TithiDisplayMode mode) async {
-    await StorageService().getSettingsBox().put(_tithiDisplayModeKey, mode.index);
+    await StorageService().getSettingsBox().put(
+      _tithiDisplayModeKey,
+      mode.index,
+    );
     state = state.copyWith(tithiDisplayMode: mode);
   }
 
   Future<void> setFestivalRegion(FestivalRegion region) async {
-    await StorageService().getSettingsBox().put(_festivalRegionKey, region.index);
+    await StorageService().getSettingsBox().put(
+      _festivalRegionKey,
+      region.index,
+    );
     state = state.copyWith(festivalRegion: region);
   }
 
@@ -395,7 +448,5 @@ final festivalRegionProvider = Provider<FestivalRegion>((ref) {
 /// service (and therefore every provider downstream of it) instead of leaving a
 /// service on the old theory.
 final panchangSchoolProvider = Provider<PanchangSchool>((ref) {
-  return ref.watch(
-    calendarPreferencesProvider.select((p) => p.panchangSchool),
-  );
+  return ref.watch(calendarPreferencesProvider.select((p) => p.panchangSchool));
 });

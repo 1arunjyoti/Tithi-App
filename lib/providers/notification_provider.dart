@@ -74,10 +74,9 @@ class FestivalTimingNotifier extends Notifier<int> {
   }
 }
 
-final festivalTimingProvider =
-    NotifierProvider<FestivalTimingNotifier, int>(
-      FestivalTimingNotifier.new,
-    );
+final festivalTimingProvider = NotifierProvider<FestivalTimingNotifier, int>(
+  FestivalTimingNotifier.new,
+);
 
 /// Provider for notification time (hour, minute)
 class NotificationTimeNotifier extends Notifier<({int hour, int minute})> {
@@ -108,9 +107,9 @@ final loadNotificationStateProvider = FutureProvider<void>((ref) async {
       .setEnabled(shlokaEnabled);
 
   final festivalEnabled = await service.isFestivalEnabled();
-  ref.read(festivalNotificationEnabledProvider.notifier).setEnabled(
-        festivalEnabled,
-      );
+  ref
+      .read(festivalNotificationEnabledProvider.notifier)
+      .setEnabled(festivalEnabled);
 
   final festivalTiming = await service.getFestivalTiming();
   ref.read(festivalTimingProvider.notifier).setTiming(festivalTiming);

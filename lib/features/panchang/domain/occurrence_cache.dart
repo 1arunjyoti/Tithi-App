@@ -136,7 +136,9 @@ Future<void> _evictAgedOccurrenceKeys(Box<dynamic> box) async {
   try {
     final now = DateTime.now();
     final nowMonths = now.year * 12 + now.month;
-    final pattern = RegExp('^${_occPrefix}_(.+)_([0-9]+)-([0-9]+)_([0-9]+)_(.+)\$');
+    final pattern = RegExp(
+      '^${_occPrefix}_(.+)_([0-9]+)-([0-9]+)_([0-9]+)_(.+)\$',
+    );
     final evict = <String>[];
     for (final key in box.keys.whereType<String>()) {
       if (!key.startsWith('${_occPrefix}_')) continue;
@@ -172,13 +174,7 @@ Future<DateTime?> findNextFestivalOccurrenceCached({
   required HinduMonthSystem monthSystem,
 }) async {
   final day = dateOnly(startDate);
-  final key = _occKey(
-    festival.id,
-    day,
-    monthSystem.index,
-    latitude,
-    longitude,
-  );
+  final key = _occKey(festival.id, day, monthSystem.index, latitude, longitude);
 
   int? cachedMillis = _occMemory[key];
   Box<dynamic>? cacheBox;

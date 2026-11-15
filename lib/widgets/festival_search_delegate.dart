@@ -196,9 +196,9 @@ class FestivalSearchDelegate extends SearchDelegate {
               festival: festival,
               size: 44,
               borderRadius: 12,
-              backgroundColor: Theme.of(context).colorScheme.primary.withValues(
-                alpha: isMajor ? 0.2 : 0.1,
-              ),
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: isMajor ? 0.2 : 0.1),
               glyphColor: Theme.of(context).colorScheme.primary,
               // Search results keep their own category glyphs (celebration /
               // event) rather than the row's sun/temple set.
@@ -235,7 +235,9 @@ class FestivalSearchDelegate extends SearchDelegate {
             const SizedBox(width: 8),
             IconButton(
               icon: const Icon(Icons.calendar_month_outlined),
-              tooltip: AppLocalizations.of(context)?.goToNextOccurrence ?? 'Go to next occurrence',
+              tooltip:
+                  AppLocalizations.of(context)?.goToNextOccurrence ??
+                  'Go to next occurrence',
               onPressed: () async {
                 // Show loading or feedback
                 final l10n = AppLocalizations.of(context);
@@ -269,7 +271,8 @@ class FestivalSearchDelegate extends SearchDelegate {
                 } else if (context.mounted) {
                   showAppMessage(
                     context,
-                    l10n?.couldNotFindUpcomingOccurrence ?? 'Could not find upcoming occurrence within a year.',
+                    l10n?.couldNotFindUpcomingOccurrence ??
+                        'Could not find upcoming occurrence within a year.',
                     kind: AppMessageKind.error,
                   );
                 }

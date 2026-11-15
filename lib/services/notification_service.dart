@@ -60,11 +60,8 @@ class NotificationService {
   // Phase 6b: scheduling engine lives in core/notifications/scheduler.dart
   // as [NotificationScheduler], driven by this explicit seam (plugin + box).
   // Delegates below preserve the public API and the lifecycle guards.
-  NotificationScheduler get _scheduler => NotificationScheduler(
-    plugin: _notifications,
-    box: _box,
-    clock: _clock,
-  );
+  NotificationScheduler get _scheduler =>
+      NotificationScheduler(plugin: _notifications, box: _box, clock: _clock);
 
   Future<({int hour, int minute})> getNotificationTime() {
     _ensureInitialized();
@@ -92,8 +89,7 @@ class NotificationService {
   Future<void> cancelFestivalNotifications() =>
       _scheduler.cancelFestivalNotifications();
 
-  Future<void> cancelAllNotifications() =>
-      _scheduler.cancelAllNotifications();
+  Future<void> cancelAllNotifications() => _scheduler.cancelAllNotifications();
 
   Future<bool> requestPermission() => _scheduler.requestPermission();
 
@@ -220,7 +216,8 @@ class NotificationService {
     final shlokasEnabled =
         _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ?? false;
     final festivalsEnabled =
-        _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
+        _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ??
+        false;
 
     if (kDebugMode) {
       if (notificationsEnabled || festivalsEnabled) {
@@ -321,7 +318,8 @@ class NotificationService {
   Future<void> setEnabled(bool enabled) async {
     _ensureInitialized();
     final previous =
-        _box?.get(NotificationKeys.enabled, defaultValue: false) as bool? ?? false;
+        _box?.get(NotificationKeys.enabled, defaultValue: false) as bool? ??
+        false;
     await _box?.put(NotificationKeys.enabled, enabled);
 
     try {
@@ -333,7 +331,8 @@ class NotificationService {
         await scheduleDailyNotification();
         // Re-assert shloka schedules (independent flag; harmless if fresh).
         final shlokaEnabled =
-            _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ?? false;
+            _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ??
+            false;
         if (shlokaEnabled) {
           await _scheduleUpcomingShlokas();
         }
@@ -351,11 +350,12 @@ class NotificationService {
       } catch (rollbackError) {
         debugPrint('Failed to roll back notification flag: $rollbackError');
       }
-      debugPrint('Failed to ${enabled ? 'enable' : 'disable'} notifications: $e');
+      debugPrint(
+        'Failed to ${enabled ? 'enable' : 'disable'} notifications: $e',
+      );
       rethrow;
     }
   }
-
 
   // SMELL-02: cache the enabled flag to avoid two awaited Hive reads.
   ///
@@ -363,24 +363,29 @@ class NotificationService {
   /// time never disagrees with the active schedule.
   Future<void> setNotificationTime(int hour, int minute) async {
     _ensureInitialized();
-    final prevHour = (_box?.get(NotificationKeys.hour, defaultValue: 8) as int?) ?? 8;
-    final prevMinute = (_box?.get(NotificationKeys.minute, defaultValue: 0) as int?) ?? 0;
+    final prevHour =
+        (_box?.get(NotificationKeys.hour, defaultValue: 8) as int?) ?? 8;
+    final prevMinute =
+        (_box?.get(NotificationKeys.minute, defaultValue: 0) as int?) ?? 0;
     await _box?.put(NotificationKeys.hour, hour);
     await _box?.put(NotificationKeys.minute, minute);
 
     try {
       // Read flags directly from the box — same synchronous Hive get as isEnabled()
-      final enabled = _box?.get(NotificationKeys.enabled, defaultValue: false) ?? false;
+      final enabled =
+          _box?.get(NotificationKeys.enabled, defaultValue: false) ?? false;
       if (enabled) {
         await scheduleDailyNotification();
       }
       final shlokaEnabled =
-          _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ?? false;
+          _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ??
+          false;
       if (shlokaEnabled) {
         await _scheduleUpcomingShlokas();
       }
       final festivalsEnabled =
-          _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
+          _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ??
+          false;
       if (festivalsEnabled) {
         await _scheduleUpcomingFestivals();
       }
@@ -399,7 +404,8 @@ class NotificationService {
   /// Check if Shloka notifications are enabled
   Future<bool> isShlokaEnabled() async {
     _ensureInitialized();
-    return _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ?? false;
+    return _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) ??
+        false;
   }
 
   /// Enable or disable Shloka notifications.
@@ -411,7 +417,9 @@ class NotificationService {
   Future<void> setShlokaEnabled(bool enabled) async {
     _ensureInitialized();
     final previous =
-        _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false) as bool? ?? false;
+        _box?.get(NotificationKeys.shlokaEnabled, defaultValue: false)
+            as bool? ??
+        false;
     await _box?.put(NotificationKeys.shlokaEnabled, enabled);
 
     try {
@@ -432,14 +440,12 @@ class NotificationService {
     }
   }
 
-
-
   /// Check if festival reminders are enabled.
   Future<bool> isFestivalEnabled() async {
     _ensureInitialized();
-    return _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
+    return _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ??
+        false;
   }
-
 
   /// Enable or disable festival reminders.
   ///
@@ -449,7 +455,9 @@ class NotificationService {
   Future<void> setFestivalEnabled(bool enabled) async {
     _ensureInitialized();
     final previous =
-        _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) as bool? ?? false;
+        _box?.get(NotificationKeys.festivalEnabled, defaultValue: false)
+            as bool? ??
+        false;
     await _box?.put(NotificationKeys.festivalEnabled, enabled);
 
     try {
@@ -479,12 +487,14 @@ class NotificationService {
       throw ArgumentError.value(timing, 'timing', 'Must be 0, 1, or 2');
     }
     final previous =
-        (_box?.get(NotificationKeys.festivalTiming, defaultValue: 0) as int?) ?? 0;
+        (_box?.get(NotificationKeys.festivalTiming, defaultValue: 0) as int?) ??
+        0;
     await _box?.put(NotificationKeys.festivalTiming, timing);
 
     try {
       final enabled =
-          _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ?? false;
+          _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ??
+          false;
       if (enabled) {
         await _scheduleUpcomingFestivals();
       }
@@ -498,19 +508,6 @@ class NotificationService {
       rethrow;
     }
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   /// BUG-07: Returns the device's IANA timezone name using flutter_timezone.
   /// Falls back to 'Asia/Kolkata' (app's primary audience) if unavailable.
@@ -528,12 +525,6 @@ class NotificationService {
     }
     return 'Asia/Kolkata';
   }
-
-
-
-
-
-
 
   void _ensureInitialized() {
     if (!_isInitialized) {

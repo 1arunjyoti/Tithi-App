@@ -82,7 +82,8 @@ class HinduMonthSystemSetting extends ConsumerWidget {
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.hinduMonthSystem ?? 'Hindu Month System',
-      subtitle: l10n?.hinduMonthSystemSubtitle ??
+      subtitle:
+          l10n?.hinduMonthSystemSubtitle ??
           'Choose how months are named during Krishna Paksha',
       children: HinduMonthSystem.values.map((system) {
         return SettingsPickerItem(
@@ -137,7 +138,8 @@ class PanchangSchoolSetting extends ConsumerWidget {
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.panchangSchool ?? 'Panjika System',
-      subtitle: l10n?.panchangSchoolSubtitle ??
+      subtitle:
+          l10n?.panchangSchoolSubtitle ??
           'Choose the calculation system behind every tithi, nakshatra and '
               'festival date',
       children: PanchangSchool.values.map((school) {
@@ -157,7 +159,8 @@ class PanchangSchoolSetting extends ConsumerWidget {
   }
 }
 
-class HinduYearEraSetting extends ConsumerWidget {  const HinduYearEraSetting({super.key});
+class HinduYearEraSetting extends ConsumerWidget {
+  const HinduYearEraSetting({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -187,7 +190,8 @@ class HinduYearEraSetting extends ConsumerWidget {  const HinduYearEraSetting({s
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.hinduYearEra ?? 'Hindu Year Era',
-      subtitle: l10n?.hinduYearEraSubtitle ??
+      subtitle:
+          l10n?.hinduYearEraSubtitle ??
           'Choose the calendar era for year display',
       children: HinduYearEra.values.map((era) {
         return SettingsPickerItem(
@@ -239,7 +243,8 @@ class TithiDisplayModeSetting extends ConsumerWidget {
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.tithiDisplay ?? 'Tithi Display',
-      subtitle: l10n?.tithiDisplaySubtitle ??
+      subtitle:
+          l10n?.tithiDisplaySubtitle ??
           'Choose how tithis are numbered in the calendar',
       children: TithiDisplayMode.values.map((mode) {
         return SettingsPickerItem(
@@ -248,9 +253,9 @@ class TithiDisplayModeSetting extends ConsumerWidget {
               : (l10n?.tithiDisplayThirtyDays ?? '30 Days'),
           subtitle: mode == TithiDisplayMode.pakshaBased
               ? (l10n?.tithiDisplayPakshaDescription ??
-                  'Show 1-15 for each paksha separately')
+                    'Show 1-15 for each paksha separately')
               : (l10n?.tithiDisplayContinuousDescription ??
-                  'Show 1-30 continuously'),
+                    'Show 1-30 continuously'),
           isSelected: mode == currentMode,
           onTap: () async {
             await ref
@@ -263,7 +268,6 @@ class TithiDisplayModeSetting extends ConsumerWidget {
     );
   }
 }
-
 
 Future<void> showCalendarSystemPicker(
   BuildContext context,

@@ -467,10 +467,7 @@ Future<MonthRangeParts?> getSecondaryTraditionalRangeForLunarPrimary(
         nextIndex = 0;
         nextYear++;
       }
-      final nextStart = await bengaliService.getMonthStart(
-        nextYear,
-        nextIndex,
-      );
+      final nextStart = await bengaliService.getMonthStart(nextYear, nextIndex);
       spanEnd = nextStart.subtract(const Duration(days: 1));
     }
 

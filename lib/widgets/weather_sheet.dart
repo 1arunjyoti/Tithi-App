@@ -221,11 +221,7 @@ class WeatherSheet extends ConsumerWidget {
                       child: Column(
                         children: [
                           Text(
-                            formatLocalizedDate(
-                              f.date,
-                              'EEE',
-                              l10n.localeName,
-                            ),
+                            formatLocalizedDate(f.date, 'EEE', l10n.localeName),
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),

@@ -313,8 +313,10 @@ Festival? _findFestivalById(List<Festival> festivals, String id) {
   normalizedHit ??= _matchNormalized(festivals, fallbackName);
   normalizedHit ??= _matchTokenOverlap(festivals, fallbackName);
   if (normalizedHit != null) {
-    debugPrint('Countdown fallback: "$id" resolved via name match '
-        '("${normalizedHit.name}"). Consider updating the id map.');
+    debugPrint(
+      'Countdown fallback: "$id" resolved via name match '
+      '("${normalizedHit.name}"). Consider updating the id map.',
+    );
   }
   return normalizedHit;
 }
@@ -360,4 +362,3 @@ Festival? _matchTokenOverlap(List<Festival> festivals, String fallbackName) {
   }
   return best;
 }
-

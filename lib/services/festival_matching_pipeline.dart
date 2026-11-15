@@ -84,9 +84,7 @@ Map<DateTime, PanchangData> applyVriddhiFilter(
     final day = dateOnly(entry.key);
     originalKeyOf.putIfAbsent(day, () => entry.key);
     for (final festival in entry.value.festivals) {
-      final pref = normalizeVriddhiPreference(
-        festival.panchangRules.vriddhi,
-      );
+      final pref = normalizeVriddhiPreference(festival.panchangRules.vriddhi);
       if (pref == 'both') continue;
       preferenceOf.putIfAbsent(festival.id, () => pref);
       (matchedDaysOf[festival.id] ??= <DateTime>[]).add(day);
@@ -102,8 +100,7 @@ Map<DateTime, PanchangData> applyVriddhiFilter(
     var runStart = 0;
     for (var i = 1; i <= dates.length; i++) {
       final continues =
-          i < dates.length &&
-          dates[i].difference(dates[i - 1]).inDays == 1;
+          i < dates.length && dates[i].difference(dates[i - 1]).inDays == 1;
       if (continues) continue;
       final runLength = i - runStart;
       if (runLength > 1) {
@@ -158,8 +155,7 @@ Map<DateTime, PanchangData> applyVriddhiFilter(
 /// - `'first'`: walks back to the run start. When the run started before
 ///   [baseDate], the observance is in the past → null occurrence and
 ///   [resumeFrom] set past the run end so the scan skips the whole run.
-Future<({DateTime? occurrence, DateTime resumeFrom})>
-resolveVriddhiCandidate({
+Future<({DateTime? occurrence, DateTime resumeFrom})> resolveVriddhiCandidate({
   required Festival festival,
   required DateTime candidate,
   required DateTime baseDate,
@@ -170,9 +166,7 @@ resolveVriddhiCandidate({
   var cand = dateOnly(candidate);
   final pref = normalizeVriddhiPreference(festival.panchangRules.vriddhi);
 
-  if (pref == 'both' ||
-      festival.conditions == 'Solar' ||
-      festival.tithi < 1) {
+  if (pref == 'both' || festival.conditions == 'Solar' || festival.tithi < 1) {
     return (occurrence: cand, resumeFrom: cand);
   }
 

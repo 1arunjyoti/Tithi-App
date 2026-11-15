@@ -21,8 +21,7 @@ class PanchangSankranti {
   final bool shifted;
 
   @override
-  String toString() =>
-      'PanchangSankranti($rashi, $instant, shifted: $shifted)';
+  String toString() => 'PanchangSankranti($rashi, $instant, shifted: $shifted)';
 }
 
 /// Panchang data for a specific date
@@ -141,9 +140,8 @@ class PanchangData {
   String get sunrisePaksha => sunriseTithiIndex <= 15 ? 'Shukla' : 'Krishna';
 
   /// Paksha-relative (1-15) number of the sunrise tithi.
-  int get sunriseTithiNumber => sunriseTithiIndex <= 15
-      ? sunriseTithiIndex
-      : sunriseTithiIndex - 15;
+  int get sunriseTithiNumber =>
+      sunriseTithiIndex <= 15 ? sunriseTithiIndex : sunriseTithiIndex - 15;
 
   /// Name of the sunrise tithi.
   String get sunriseTithiName =>
@@ -303,10 +301,8 @@ class PanchangData {
       // timingOverride instead of hard-coding festival IDs.
       // BUG-04: pass `date` so weekday constraints are evaluated.
       double targetRawTithi = switch (f.panchangRules.timingOverride) {
-        'brahma_muhurta_start' =>
-          rawTithiBrahmaMuhurtaStart ?? rawTithi,
-        'arunodaya_start' || 'arunodaya' =>
-          rawTithiArunodaya ?? rawTithi,
+        'brahma_muhurta_start' => rawTithiBrahmaMuhurtaStart ?? rawTithi,
+        'arunodaya_start' || 'arunodaya' => rawTithiArunodaya ?? rawTithi,
         'purvahna' => rawTithiPurvahna ?? rawTithi,
         'sayahna_start' => rawTithiSayahnaStart ?? rawTithi,
         'sayahna_center' => rawTithiSayahnaCenter ?? rawTithi,

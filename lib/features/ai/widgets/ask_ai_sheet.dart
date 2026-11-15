@@ -293,9 +293,7 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
               children: [
                 // Expanded: at large text scales the label and "Show all"
                 // cannot both take their intrinsic width.
-                Expanded(
-                  child: SectionHeader(text: l10n.aiWhatWillBeShared),
-                ),
+                Expanded(child: SectionHeader(text: l10n.aiWhatWillBeShared)),
                 if (!showPrompt && isReady && _contextLineCount > 6)
                   TextButton(
                     onPressed: () =>
@@ -374,8 +372,7 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
             if (monthFailed) ...[
               const SizedBox(height: 4),
               TextButton.icon(
-                onPressed: () =>
-                    ref.invalidate(monthlyPanchangProvider(month)),
+                onPressed: () => ref.invalidate(monthlyPanchangProvider(month)),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: Text(l10n.retry),
                 style: TextButton.styleFrom(
@@ -449,9 +446,14 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
         'EEE, d MMM',
         localeCode,
       ),
-      AiIntent.festival => widget.panchang == null
-          ? null
-          : formatLocalizedDate(widget.panchang!.date, 'EEE, d MMM', localeCode),
+      AiIntent.festival =>
+        widget.panchang == null
+            ? null
+            : formatLocalizedDate(
+                widget.panchang!.date,
+                'EEE, d MMM',
+                localeCode,
+              ),
       AiIntent.monthDigest => formatLocalizedDate(month, 'MMMM y', localeCode),
     };
 

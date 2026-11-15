@@ -131,4 +131,3 @@ class PrimaryViewSetting extends ConsumerWidget {
     );
   }
 }
-

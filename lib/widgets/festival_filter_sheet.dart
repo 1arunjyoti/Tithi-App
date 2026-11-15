@@ -98,11 +98,7 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
       required bool selected,
       required VoidCallback onTap,
     }) {
-      return FestivalFilterChip(
-        label: label,
-        selected: selected,
-        onTap: onTap,
-      );
+      return FestivalFilterChip(label: label, selected: selected, onTap: onTap);
     }
 
     return Container(

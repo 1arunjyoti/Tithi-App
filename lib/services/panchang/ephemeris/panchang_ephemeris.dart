@@ -44,7 +44,8 @@ class PanchangEphemerisException implements Exception {
   final Object? cause;
 
   @override
-  String toString() => 'PanchangEphemerisException: $message'
+  String toString() =>
+      'PanchangEphemerisException: $message'
       '${cause == null ? '' : ' ($cause)'}';
 }
 
@@ -71,10 +72,7 @@ class DrikPanchangEphemeris extends PanchangEphemeris {
       dateTime: instant,
       location: GeographicLocation(latitude: latitude, longitude: longitude),
     );
-    return (
-      sun: positions.sun.longitude,
-      moon: positions.moon.longitude,
-    );
+    return (sun: positions.sun.longitude, moon: positions.moon.longitude);
   }
 }
 
@@ -83,9 +81,7 @@ class DrikPanchangEphemeris extends PanchangEphemeris {
 /// Needs no ephemeris files and no FFI. Positions are geocentric sidereal
 /// longitudes, so the observer position is ignored.
 class SuryaSiddhantaEphemeris extends PanchangEphemeris {
-  const SuryaSiddhantaEphemeris({
-    this.engine = const SuryaSiddhantaEngine(),
-  });
+  const SuryaSiddhantaEphemeris({this.engine = const SuryaSiddhantaEngine()});
 
   final SuryaSiddhantaEngine engine;
 

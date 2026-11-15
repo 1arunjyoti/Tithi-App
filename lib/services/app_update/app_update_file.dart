@@ -115,8 +115,9 @@ Future<int> purgeOldUpdateApks({String? keepPath}) async {
   }
 }
 
-const MethodChannel _installerChannel =
-    MethodChannel('app.tithi.pro/app_update');
+const MethodChannel _installerChannel = MethodChannel(
+  'app.tithi.pro/app_update',
+);
 
 /// Hands a downloaded `.apk` to the Android package installer.
 ///
@@ -138,8 +139,9 @@ Future<void> installDownloadedApk(String path) async {
 /// "Installer is unavailable" error instead.
 Future<bool> queryCanRequestInstalls() async {
   try {
-    final result =
-        await _installerChannel.invokeMethod<bool>('canRequestInstalls');
+    final result = await _installerChannel.invokeMethod<bool>(
+      'canRequestInstalls',
+    );
     return result ?? true;
   } on MissingPluginException {
     return true;

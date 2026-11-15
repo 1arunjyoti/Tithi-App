@@ -7,7 +7,11 @@ import '../../../theme/app_theme.dart';
 /// 11:54 AM"), with an optional small subnote under the name — warning
 /// colored for [warn] rows (Abhijit avoided), dim otherwise.
 class AuspiciousCard extends StatelessWidget {
-  const AuspiciousCard({super.key, required this.rows, required this.highContrast});
+  const AuspiciousCard({
+    super.key,
+    required this.rows,
+    required this.highContrast,
+  });
 
   final List<({String name, String time, String? note, bool warn})> rows;
   final bool highContrast;

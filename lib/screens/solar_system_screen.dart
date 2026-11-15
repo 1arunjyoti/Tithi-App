@@ -110,93 +110,98 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             // handle; the panel pads its own controls clear of it instead.
             bottom: false,
             child: Stack(
-            children: [
-              // Main content column
-              Column(
-                children: [
-                  // Top controls row
-                  _buildTopControls(context, theme, l10n),
+              children: [
+                // Main content column
+                Column(
+                  children: [
+                    // Top controls row
+                    _buildTopControls(context, theme, l10n),
 
-                  // Solar system visualization
-                  Expanded(
-                    child: Consumer(
-                      builder: (context, ref, _) {
-                        final solarSystemAsync = ref.watch(solarSystemDataProvider);
-                        return solarSystemAsync.when(
-                          skipLoadingOnReload: true,
-                          data: (data) => _buildSolarSystem(
-                            context,
-                            ref,
-                            data,
-                            isDark,
-                            showZodiac: _showZodiac,
-                          ),
-                          loading: () => const Center(
-                            child: CircularProgressIndicator.adaptive(),
-                          ),
-                          error: (e, _) => Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 48,
-                                  color: theme.colorScheme.error,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(l10n.errorLoadingData),
-                                const SizedBox(height: 8),
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      ref.refresh(solarSystemDataProvider),
-                                  child: Text(l10n.retry),
-                                ),
-                              ],
+                    // Solar system visualization
+                    Expanded(
+                      child: Consumer(
+                        builder: (context, ref, _) {
+                          final solarSystemAsync = ref.watch(
+                            solarSystemDataProvider,
+                          );
+                          return solarSystemAsync.when(
+                            skipLoadingOnReload: true,
+                            data: (data) => _buildSolarSystem(
+                              context,
+                              ref,
+                              data,
+                              isDark,
+                              showZodiac: _showZodiac,
                             ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Planet info panel (MOVED TO STACK)
-
-                  // Time slider control
-                  _buildTimeSlider(context, theme, l10n),
-                ],
-              ),
-
-              // Zoom controls overlay
-              _buildZoomControls(context, theme),
-
-              // Planet info panel overlay
-              Consumer(
-                builder: (context, ref, _) {
-                  final selectedPlanetData = ref.watch(selectedPlanetDataProvider);
-                  if (selectedPlanetData == null) return const SizedBox.shrink();
-                  return Positioned(
-                    top: 100,
-                    right: ResponsiveLayout.value(
-                      context,
-                      mobile: 16.0,
-                      tablet: 24.0,
-                      desktop: 32.0,
-                    ),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 300),
-                      child: _buildPlanetInfoPanel(
-                        context,
-                        selectedPlanetData,
-                        isDark,
+                            loading: () => const Center(
+                              child: CircularProgressIndicator.adaptive(),
+                            ),
+                            error: (e, _) => Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 48,
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(l10n.errorLoadingData),
+                                  const SizedBox(height: 8),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        ref.refresh(solarSystemDataProvider),
+                                    child: Text(l10n.retry),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
-              ),
-            ],
+
+                    // Planet info panel (MOVED TO STACK)
+
+                    // Time slider control
+                    _buildTimeSlider(context, theme, l10n),
+                  ],
+                ),
+
+                // Zoom controls overlay
+                _buildZoomControls(context, theme),
+
+                // Planet info panel overlay
+                Consumer(
+                  builder: (context, ref, _) {
+                    final selectedPlanetData = ref.watch(
+                      selectedPlanetDataProvider,
+                    );
+                    if (selectedPlanetData == null)
+                      return const SizedBox.shrink();
+                    return Positioned(
+                      top: 100,
+                      right: ResponsiveLayout.value(
+                        context,
+                        mobile: 16.0,
+                        tablet: 24.0,
+                        desktop: 32.0,
+                      ),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 300),
+                        child: _buildPlanetInfoPanel(
+                          context,
+                          selectedPlanetData,
+                          isDark,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
       ),
     );
   }
@@ -226,7 +231,10 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             builder: (context, ref, _) {
               final viewDate = ref.watch(planetaryViewDateProvider);
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(16),
@@ -281,215 +289,231 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
       builder: (context, ref, _) {
         final viewDate = ref.watch(planetaryViewDateProvider);
         // Time slider spans from -1 year to +1 year
-    final now = DateTime.now();
-    final minDate = now.subtract(const Duration(days: 365));
-    final maxDate = now.add(const Duration(days: 365));
+        final now = DateTime.now();
+        final minDate = now.subtract(const Duration(days: 365));
+        final maxDate = now.add(const Duration(days: 365));
 
-    // Convert current date to slider value (0-730)
-    final daysDiff = viewDate.difference(minDate).inDays.toDouble();
-    final sliderValue = daysDiff.clamp(0.0, 730.0);
+        // Convert current date to slider value (0-730)
+        final daysDiff = viewDate.difference(minDate).inDays.toDouble();
+        final sliderValue = daysDiff.clamp(0.0, 730.0);
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        ResponsiveLayout.value(
-          context,
-          mobile: 16.0,
-          tablet: 24.0,
-          desktop: 32.0,
-        ),
-        8,
-        ResponsiveLayout.value(
-          context,
-          mobile: 16.0,
-          tablet: 24.0,
-          desktop: 32.0,
-        ),
-        // The panel now runs to the bottom edge of the screen (the body no
-        // longer insets it), so its own controls carry the gesture-bar
-        // clearance while the rounded surface paints behind the handle.
-        16 + AppTheme.navigationBarInset(context),
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withValues(alpha: 0.8),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(2),
+        return Container(
+          padding: EdgeInsets.fromLTRB(
+            ResponsiveLayout.value(
+              context,
+              mobile: 16.0,
+              tablet: 24.0,
+              desktop: 32.0,
             ),
+            8,
+            ResponsiveLayout.value(
+              context,
+              mobile: 16.0,
+              tablet: 24.0,
+              desktop: 32.0,
+            ),
+            // The panel now runs to the bottom edge of the screen (the body no
+            // longer insets it), so its own controls carry the gesture-bar
+            // clearance while the rounded surface paints behind the handle.
+            16 + AppTheme.navigationBarInset(context),
           ),
-
-          // Time navigation buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Fast backward (1 month)
-              _buildTimeButton(
-                context,
-                icon: Icons.fast_rewind_rounded,
-                tooltip: l10n.back30Days,
-                onPressed: () => _adjustDate(-30),
-              ),
-              // Backward (1 day)
-              _buildTimeButton(
-                context,
-                icon: Icons.skip_previous_rounded,
-                tooltip: l10n.back1Day,
-                onPressed: () => _adjustDate(-1),
-              ),
-              const SizedBox(width: 8),
-              // Today button
-              FilledButton.icon(
-                onPressed: () {
-                  ref
-                      .read(planetaryViewDateProvider.notifier)
-                      .setDate(DateTime.now());
-                },
-                icon: const Icon(Icons.today, size: 18),
-                label: Text(l10n.today),
-                style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Forward (1 day)
-              _buildTimeButton(
-                context,
-                icon: Icons.skip_next_rounded,
-                tooltip: l10n.forward1Day,
-                onPressed: () => _adjustDate(1),
-              ),
-              // Fast forward (1 month)
-              _buildTimeButton(
-                context,
-                icon: Icons.fast_forward_rounded,
-                tooltip: l10n.forward30Days,
-                onPressed: () => _adjustDate(30),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface.withValues(alpha: 0.8),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                blurRadius: 20,
+                offset: const Offset(0, -4),
               ),
             ],
           ),
-
-          const SizedBox(height: 2),
-
-          // Animation Controls
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    _isAnimating
-                        ? Icons.pause_circle_filled
-                        : Icons.play_circle_fill,
-                  ),
-                  iconSize: 32,
-                  color: theme.colorScheme.primary,
-                  onPressed: _toggleAnimation,
-                  tooltip: _isAnimating
-                      ? l10n.pauseAnimation
-                      : l10n.playAnimation,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                if (_isAnimating) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    '${l10n.speedLabel}:',
-                    style: theme.textTheme.labelSmall,
+              ),
+
+              // Time navigation buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Fast backward (1 month)
+                  _buildTimeButton(
+                    context,
+                    icon: Icons.fast_rewind_rounded,
+                    tooltip: l10n.back30Days,
+                    onPressed: () => _adjustDate(-30),
                   ),
-                  SizedBox(
-                    width: 100,
-                    child: Slider(
-                      value: _animationSpeed,
-                      min: 0.1,
-                      max: 5.0,
-                      divisions: 10,
-                      label: '${_animationSpeed.toStringAsFixed(1)}x',
-                      onChanged: (val) => setState(() => _animationSpeed = val),
+                  // Backward (1 day)
+                  _buildTimeButton(
+                    context,
+                    icon: Icons.skip_previous_rounded,
+                    tooltip: l10n.back1Day,
+                    onPressed: () => _adjustDate(-1),
+                  ),
+                  const SizedBox(width: 8),
+                  // Today button
+                  FilledButton.icon(
+                    onPressed: () {
+                      ref
+                          .read(planetaryViewDateProvider.notifier)
+                          .setDate(DateTime.now());
+                    },
+                    icon: const Icon(Icons.today, size: 18),
+                    label: Text(l10n.today),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Forward (1 day)
+                  _buildTimeButton(
+                    context,
+                    icon: Icons.skip_next_rounded,
+                    tooltip: l10n.forward1Day,
+                    onPressed: () => _adjustDate(1),
+                  ),
+                  // Fast forward (1 month)
+                  _buildTimeButton(
+                    context,
+                    icon: Icons.fast_forward_rounded,
+                    tooltip: l10n.forward30Days,
+                    onPressed: () => _adjustDate(30),
+                  ),
                 ],
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 2),
-
-          // Slider
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 4,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-              activeTrackColor: theme.colorScheme.primary,
-              inactiveTrackColor: theme.colorScheme.primary.withValues(
-                alpha: 0.2,
               ),
-              thumbColor: theme.colorScheme.primary,
-              overlayColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-            ),
-            child: Slider(
-              value: sliderValue,
-              max: 730,
-              onChanged: (value) {
-                final newDate = minDate.add(Duration(days: value.round()));
-                ref.read(planetaryViewDateProvider.notifier).setDate(newDate);
-              },
-            ),
-          ),
 
-          // Date labels
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  formatLocalizedDate(minDate, 'MMM y', l10n.localeName),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              const SizedBox(height: 2),
+
+              // Animation Controls
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        _isAnimating
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_fill,
+                      ),
+                      iconSize: 32,
+                      color: theme.colorScheme.primary,
+                      onPressed: _toggleAnimation,
+                      tooltip: _isAnimating
+                          ? l10n.pauseAnimation
+                          : l10n.playAnimation,
+                    ),
+                    if (_isAnimating) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '${l10n.speedLabel}:',
+                        style: theme.textTheme.labelSmall,
+                      ),
+                      SizedBox(
+                        width: 100,
+                        child: Slider(
+                          value: _animationSpeed,
+                          min: 0.1,
+                          max: 5.0,
+                          divisions: 10,
+                          label: '${_animationSpeed.toStringAsFixed(1)}x',
+                          onChanged: (val) =>
+                              setState(() => _animationSpeed = val),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              // Slider
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 8,
+                  ),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 16,
+                  ),
+                  activeTrackColor: theme.colorScheme.primary,
+                  inactiveTrackColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.2,
+                  ),
+                  thumbColor: theme.colorScheme.primary,
+                  overlayColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.2,
                   ),
                 ),
-                Text(
-                  l10n.today,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Slider(
+                  value: sliderValue,
+                  max: 730,
+                  onChanged: (value) {
+                    final newDate = minDate.add(Duration(days: value.round()));
+                    ref
+                        .read(planetaryViewDateProvider.notifier)
+                        .setDate(newDate);
+                  },
                 ),
-                Text(
-                  formatLocalizedDate(maxDate, 'MMM y', l10n.localeName),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
+              ),
+
+              // Date labels
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      formatLocalizedDate(minDate, 'MMM y', l10n.localeName),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      l10n.today,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      formatLocalizedDate(maxDate, 'MMM y', l10n.localeName),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
       },
     );
   }

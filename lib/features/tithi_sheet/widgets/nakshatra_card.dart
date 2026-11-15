@@ -10,7 +10,8 @@ import '../../../theme/app_theme.dart';
 /// card. Null strings render a spinner (loading state); a null [progress]
 /// hides the bar, a null [nextline] hides the upcoming line.
 class NakshatraCard extends StatelessWidget {
-  const NakshatraCard({super.key, 
+  const NakshatraCard({
+    super.key,
     this.headline,
     this.subline,
     this.progress,

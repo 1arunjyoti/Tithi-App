@@ -54,11 +54,7 @@ Future<List<BhadraWindow>> resolveBhadraWindows({
 
   /// Solves the karana boundary between [before] and [after], whose karana
   /// index at [after] is [nextIndex].
-  Future<DateTime?> boundary(
-    DateTime before,
-    DateTime after,
-    int nextIndex,
-  ) {
+  Future<DateTime?> boundary(DateTime before, DateTime after, int nextIndex) {
     return solveAngleCrossing(
       before: before,
       after: after,
@@ -86,9 +82,7 @@ Future<List<BhadraWindow>> resolveBhadraWindows({
 
   final first = await longitudesAt(samples.first);
   if (first == null) return const [];
-  var previousVishti = isVishtiKarana(
-    karanaIndexFor(first.sun, first.moon),
-  );
+  var previousVishti = isVishtiKarana(karanaIndexFor(first.sun, first.moon));
   // A window already open at sunrise is clipped to the day boundary.
   if (previousVishti) open = sunrise;
 
@@ -134,10 +128,11 @@ Future<List<BhadraWindow>> resolveBhadraWindows({
 }) {
   if (!end.isAfter(start)) return null;
 
-  final overlaps = windows
-      .where((w) => w.start.isBefore(end) && w.end.isAfter(start))
-      .toList()
-    ..sort((a, b) => a.start.compareTo(b.start));
+  final overlaps =
+      windows
+          .where((w) => w.start.isBefore(end) && w.end.isAfter(start))
+          .toList()
+        ..sort((a, b) => a.start.compareTo(b.start));
 
   ({DateTime start, DateTime end})? best;
   var cursor = start;

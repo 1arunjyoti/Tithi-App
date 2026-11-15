@@ -87,9 +87,7 @@ void showAppMessageOn(
               : const Duration(seconds: 3)),
       behavior: SnackBarBehavior.floating,
       backgroundColor: colors.inverseSurface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   );
 }

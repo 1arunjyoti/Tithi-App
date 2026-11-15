@@ -96,7 +96,8 @@ class SolarSystemStaticPainter extends CustomPainter {
     // Draw stars
     // We use a deterministic random seed so stars don't flicker on repaint
     final random = math.Random(42);
-    final starPaint = Paint()..color = AppTheme.spaceStar.withValues(alpha: 0.8);
+    final starPaint = Paint()
+      ..color = AppTheme.spaceStar.withValues(alpha: 0.8);
 
     // Draw about 100 random stars
     for (int i = 0; i < 100; i++) {
@@ -273,11 +274,7 @@ class SolarSystemStaticPainter extends CustomPainter {
     // Draw earth core (blue ocean with green land hints)
     final earthPaint = Paint()
       ..shader = const RadialGradient(
-        colors: [
-          AppTheme.earthLight,
-          AppTheme.earthMid,
-          AppTheme.earthDeep,
-        ],
+        colors: [AppTheme.earthLight, AppTheme.earthMid, AppTheme.earthDeep],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
     canvas.drawCircle(center, 18, earthPaint);
@@ -300,6 +297,7 @@ class SolarSystemStaticPainter extends CustomPainter {
       ),
     );
   }
+
   @override
   bool shouldRepaint(covariant SolarSystemStaticPainter oldDelegate) {
     return oldDelegate.viewMode != viewMode ||
@@ -309,7 +307,6 @@ class SolarSystemStaticPainter extends CustomPainter {
         oldDelegate.panOffset != panOffset;
   }
 }
-
 
 /// Dynamic planet layer: positions, selection, retrograde rings, labels.
 /// Repaints every data frame; the static background stays cached.
@@ -486,6 +483,7 @@ class SolarSystemPainter extends CustomPainter {
     );
     textPainter.paint(canvas, offset);
   }
+
   @override
   bool shouldRepaint(covariant SolarSystemPainter oldDelegate) {
     return oldDelegate.solarSystemData != solarSystemData ||
@@ -494,7 +492,6 @@ class SolarSystemPainter extends CustomPainter {
         oldDelegate.panOffset != panOffset;
   }
 }
-
 
 class PlanetHitTester {
   PlanetHitTester({

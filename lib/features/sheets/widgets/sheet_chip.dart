@@ -42,12 +42,8 @@ class SheetChip extends StatelessWidget {
       // Same fill as the sheet's cards (timings, nakshatra, yoga/karana,
       // auspicious, inauspicious), so the chips read as the same surface
       // family; the hairline keeps the pill defined on the scaffold.
-      background =
-          Theme.of(context).cardTheme.color ?? context.colors.surface;
-      borderColor = AppTheme.sheetHairline(
-        context,
-        highContrast: highContrast,
-      );
+      background = Theme.of(context).cardTheme.color ?? context.colors.surface;
+      borderColor = AppTheme.sheetHairline(context, highContrast: highContrast);
     } else {
       final ink = highContrast
           ? context.colors.primary

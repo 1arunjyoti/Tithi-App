@@ -192,6 +192,9 @@ final panchang = ref.watch(panchangProvider);
 ```
 
 ### Testing
+- Add only the test files and test cases necessary to verify meaningful new or changed behavior, important bug fixes, or regression-prone edge cases.
+- Tests are not required for every small or non-important change, such as formatting, straightforward refactors, documentation-only updates, or other changes with no meaningful behavioral impact.
+- When tests are not added, still run the smallest appropriate validation command for the change and explain the testing decision when reporting the work.
 - Follow AAA pattern: Arrange, Act, Assert
 - Use descriptive test names that explain expected behavior
 - Group related tests with `group()`

@@ -383,7 +383,9 @@ class SettingsPickerItem extends StatelessWidget {
           title,
           style: TextStyle(
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? context.colors.primary : context.colors.onSurface,
+            color: isSelected
+                ? context.colors.primary
+                : context.colors.onSurface,
           ),
         ),
         subtitle: subtitle != null

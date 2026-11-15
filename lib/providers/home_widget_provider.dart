@@ -127,9 +127,7 @@ final panchangWidgetSyncProvider = Provider<void>((ref) {
       primarySystem: primarySystem,
       secondarySystem: secondarySystem,
       monthSystem: monthSystem,
-      bengali: ref
-          .watch(bengaliDateForHeroProvider(panchang.date))
-          .valueOrNull,
+      bengali: ref.watch(bengaliDateForHeroProvider(panchang.date)).valueOrNull,
       useBengaliScript: locale.languageCode == 'bn',
       isToday: true,
       region: region,
@@ -147,10 +145,7 @@ final panchangWidgetSyncProvider = Provider<void>((ref) {
     ].where((part) => part.trim().isNotEmpty).join(' · ');
 
     // Widget text follows the app language, including festival names.
-    final festivals = sortedFestivalsForRegion(
-      panchang.festivals,
-      region,
-    )
+    final festivals = sortedFestivalsForRegion(panchang.festivals, region)
         .map(
           (festival) => festivalDisplayName(
             festival: festival,

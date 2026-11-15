@@ -46,8 +46,9 @@ void storePanchangUiSync(DateTime date, PanchangData data) {
     );
   }
   if (panchangUiCache.length >= panchangUiCacheMax) {
-    final toRemove =
-        panchangUiCache.keys.take(panchangUiCacheMax ~/ 5).toList();
+    final toRemove = panchangUiCache.keys
+        .take(panchangUiCacheMax ~/ 5)
+        .toList();
     for (final k in toRemove) {
       panchangUiCache.remove(k);
     }
@@ -79,8 +80,8 @@ const int kPlaceContextVersion = 3;
 /// Keeping it out of every call site avoids threading a parameter through the
 /// dozen cache-key builders that all sit below the settings layer.
 PanchangSchool get activePanchangSchool => _activePanchangSchool;
-set activePanchangSchool(PanchangSchool school) => _activePanchangSchool =
-    school;
+set activePanchangSchool(PanchangSchool school) =>
+    _activePanchangSchool = school;
 PanchangSchool _activePanchangSchool = PanchangSchool.bisuddha;
 
 String locationSignature(
@@ -113,8 +114,7 @@ Future<Box<dynamic>> preparePanchangCacheBox(
 ) async {
   final cacheBox = await StorageService().openPanchangCacheBox();
   final expectedSignature = locationSignature(latitude, longitude);
-  final storedSignature =
-      cacheBox.get(panchangLocationSignatureKey) as String?;
+  final storedSignature = cacheBox.get(panchangLocationSignatureKey) as String?;
 
   if (storedSignature != expectedSignature) {
     await cacheBox.clear();

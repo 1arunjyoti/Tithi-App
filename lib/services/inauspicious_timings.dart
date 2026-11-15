@@ -40,8 +40,7 @@ class InauspiciousTimings {
       (start: boundaries[segment - 1], end: boundaries[segment]);
 
   ({DateTime start, DateTime end}) get rahu => rangeOf(rahuSegment);
-  ({DateTime start, DateTime end}) get yamaganda =>
-      rangeOf(yamagandaSegment);
+  ({DateTime start, DateTime end}) get yamaganda => rangeOf(yamagandaSegment);
   ({DateTime start, DateTime end}) get gulika => rangeOf(gulikaSegment);
 
   /// 1-based Rahu Kalam segment by weekday ([DateTime.monday] == 1 ..

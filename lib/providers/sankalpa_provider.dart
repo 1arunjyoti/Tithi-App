@@ -9,9 +9,10 @@ final sankalpaServiceProvider = Provider<SankalpaService>((ref) {
   return SankalpaService();
 });
 
-final sankalpaListProvider = NotifierProvider<SankalpaListNotifier, List<Sankalpa>>(
-  SankalpaListNotifier.new,
-);
+final sankalpaListProvider =
+    NotifierProvider<SankalpaListNotifier, List<Sankalpa>>(
+      SankalpaListNotifier.new,
+    );
 
 class SankalpaListNotifier extends Notifier<List<Sankalpa>> {
   late final SankalpaService _service;

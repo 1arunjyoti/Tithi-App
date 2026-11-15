@@ -27,7 +27,8 @@ class CheckForUpdatesTile extends ConsumerWidget {
         ref.watch(packageInfoProvider).valueOrNull?.version ??
         state.currentVersion;
 
-    final busy = state.status == AppUpdateStatus.checking ||
+    final busy =
+        state.status == AppUpdateStatus.checking ||
         state.status == AppUpdateStatus.downloading ||
         state.status == AppUpdateStatus.installing;
 
@@ -42,11 +43,8 @@ class CheckForUpdatesTile extends ConsumerWidget {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : state.status == AppUpdateStatus.available
-              ? Icon(
-                  Icons.fiber_new_rounded,
-                  color: context.colors.primary,
-                )
-              : null,
+          ? Icon(Icons.fiber_new_rounded, color: context.colors.primary)
+          : null,
       onTap: busy ? null : () async => _handleTap(context, ref),
     );
   }
@@ -210,7 +208,8 @@ class _RefreshButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final busy = status == AppUpdateStatus.downloading ||
+    final busy =
+        status == AppUpdateStatus.downloading ||
         status == AppUpdateStatus.cancelling ||
         status == AppUpdateStatus.installing;
 
@@ -225,7 +224,8 @@ class _RefreshButton extends ConsumerWidget {
       );
     }
 
-    final showRefresh = status == AppUpdateStatus.available ||
+    final showRefresh =
+        status == AppUpdateStatus.available ||
         status == AppUpdateStatus.readyToInstall;
     if (!showRefresh) return const SizedBox.shrink();
 
@@ -444,9 +444,9 @@ class UpdateAvailableDialog extends ConsumerWidget {
               if (release != null) ...[
                 Text(
                   release.name.isNotEmpty ? release.name : release.version,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 if (release.body.trim().isNotEmpty) ...[
@@ -563,8 +563,7 @@ bool _showsReleaseDetails(AppUpdateStatus status) {
 /// Keeps the build visible (`0.5.0+3` -> `0.5.0 (3)`): a same-name
 /// rebuild is a legitimate update, so announcing only "0.5.0" would
 /// claim a version the user is already running.
-String _displayName(String version) =>
-    AppUpdateService.displayVersion(version);
+String _displayName(String version) => AppUpdateService.displayVersion(version);
 
 String _subtitle(
   AppLocalizations? l10n,
@@ -615,11 +614,7 @@ Future<void> _reportError(BuildContext context, WidgetRef ref) async {
   if (state.status == AppUpdateStatus.error &&
       state.errorMessage != null &&
       context.mounted) {
-    showAppMessage(
-      context,
-      state.errorMessage!,
-      kind: AppMessageKind.error,
-    );
+    showAppMessage(context, state.errorMessage!, kind: AppMessageKind.error);
   }
 }
 

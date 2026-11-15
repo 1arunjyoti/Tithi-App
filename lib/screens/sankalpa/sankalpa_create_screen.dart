@@ -48,7 +48,9 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
 
   Future<void> _showCustomDaysDialog() async {
     final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: _selectedDuration.toString());
+    final controller = TextEditingController(
+      text: _selectedDuration.toString(),
+    );
 
     final result = await showDialog<int>(
       context: context,

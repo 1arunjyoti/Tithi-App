@@ -8,7 +8,8 @@ import '../../../theme/app_theme.dart';
 /// language's word order. Falls back to plain dim text when [emphasis] is
 /// null or absent.
 class EmphasizedText extends StatelessWidget {
-  const EmphasizedText({super.key, 
+  const EmphasizedText({
+    super.key,
     required this.text,
     required this.emphasis,
     required this.style,
@@ -48,7 +49,8 @@ class EmphasizedText extends StatelessWidget {
 /// undimmed ([yogaTime]/[karanaTime]). Null values render a spinner in
 /// place (loading state).
 class YogaKaranaCard extends StatelessWidget {
-  const YogaKaranaCard({super.key, 
+  const YogaKaranaCard({
+    super.key,
     required this.yogaLabel,
     required this.karanaLabel,
     this.yogaValue,

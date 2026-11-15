@@ -55,7 +55,9 @@ class ExportFestivalsSetting extends ConsumerWidget {
     return SettingsActionTile(
       icon: Icons.ios_share_rounded,
       title: l10n?.exportFestivalsJson ?? 'Export Festivals (JSON)',
-      subtitle: l10n?.exportFestivalsSubtitle ?? 'Save all festivals with Panchang details to a file',
+      subtitle:
+          l10n?.exportFestivalsSubtitle ??
+          'Save all festivals with Panchang details to a file',
       onTap: () => _showYearPicker(context, ref),
     );
   }
@@ -68,7 +70,9 @@ class ExportFestivalsSetting extends ConsumerWidget {
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.exportFestivals ?? 'Export Festivals',
-      subtitle: l10n?.exportFestivalsSubtitleYear ?? 'First occurrence of each festival in the chosen year',
+      subtitle:
+          l10n?.exportFestivalsSubtitleYear ??
+          'First occurrence of each festival in the chosen year',
       children: years.map((year) {
         return SettingsPickerItem(
           title: year.toString(),
@@ -82,11 +86,7 @@ class ExportFestivalsSetting extends ConsumerWidget {
     );
   }
 
-  Future<void> _runExport(
-    BuildContext context,
-    WidgetRef ref,
-    int year,
-  ) async {
+  Future<void> _runExport(BuildContext context, WidgetRef ref, int year) async {
     final l10n = AppLocalizations.of(context);
 
     try {
@@ -123,19 +123,22 @@ class ExportFestivalsSetting extends ConsumerWidget {
           builder: (dialogContext) => PopScope(
             canPop: false,
             child: AlertDialog(
-              title: Text(l10n?.exportingYear(year.toString()) ?? 'Exporting $year'),
+              title: Text(
+                l10n?.exportingYear(year.toString()) ?? 'Exporting $year',
+              ),
               content: ValueListenableBuilder<int>(
                 valueListenable: progress,
                 builder: (_, done, _) => Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     LinearProgressIndicator(
-                      value: festivals.isEmpty
-                          ? null
-                          : done / festivals.length,
+                      value: festivals.isEmpty ? null : done / festivals.length,
                     ),
                     const SizedBox(height: 12),
-                    Text(l10n?.festivalsExportedProgress(done, festivals.length) ?? '$done / ${festivals.length} festivals'),
+                    Text(
+                      l10n?.festivalsExportedProgress(done, festivals.length) ??
+                          '$done / ${festivals.length} festivals',
+                    ),
                   ],
                 ),
               ),
@@ -173,10 +176,7 @@ class ExportFestivalsSetting extends ConsumerWidget {
 
       if (json == null) {
         if (!context.mounted) return;
-        showAppMessage(
-          context,
-          l10n?.exportCancelled ?? 'Export cancelled',
-        );
+        showAppMessage(context, l10n?.exportCancelled ?? 'Export cancelled');
         return;
       }
 
@@ -192,7 +192,9 @@ class ExportFestivalsSetting extends ConsumerWidget {
         // file_picker 13.x returns a Uri (was String?); keep the String
         // path contract below, with the raw URI as display fallback.
         final savedUri = await FilePicker.saveFile(
-          dialogTitle: l10n?.saveFestivalsYear(year.toString()) ?? 'Save festivals $year',
+          dialogTitle:
+              l10n?.saveFestivalsYear(year.toString()) ??
+              'Save festivals $year',
           fileName: filename,
           type: FileType.custom,
           allowedExtensions: ['json'],
@@ -211,10 +213,7 @@ class ExportFestivalsSetting extends ConsumerWidget {
       if (!context.mounted) return;
 
       if (savedPath == null && !pickerFailed) {
-        showAppMessage(
-          context,
-          l10n?.exportCancelled ?? 'Export cancelled',
-        );
+        showAppMessage(context, l10n?.exportCancelled ?? 'Export cancelled');
         return;
       }
 
@@ -243,7 +242,13 @@ class ExportFestivalsSetting extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(l10n?.festivalsExportedForYear(festivals.length, year.toString()) ?? '${festivals.length} festivals exported for $year.'),
+              Text(
+                l10n?.festivalsExportedForYear(
+                      festivals.length,
+                      year.toString(),
+                    ) ??
+                    '${festivals.length} festivals exported for $year.',
+              ),
               const SizedBox(height: 8),
               Text(
                 filename,
@@ -252,9 +257,7 @@ class ExportFestivalsSetting extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(
                 displayPath,
-                style: Theme.of(
-                  dialogContext,
-                ).textTheme.bodySmall,
+                style: Theme.of(dialogContext).textTheme.bodySmall,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -272,9 +275,11 @@ class ExportFestivalsSetting extends ConsumerWidget {
                   await SharePlus.instance.share(
                     ShareParams(
                       files: [XFile(sharePath, mimeType: 'application/json')],
-                      subject: l10n?.festivalExportShareSubject(year.toString()) ??
+                      subject:
+                          l10n?.festivalExportShareSubject(year.toString()) ??
                           'Tithi festivals $year',
-                      text: l10n?.festivalExportShareText(year.toString()) ??
+                      text:
+                          l10n?.festivalExportShareText(year.toString()) ??
                           'Tithi festivals $year with Panchang details (JSON)',
                     ),
                   );
@@ -327,9 +332,7 @@ class ResetSettingsTile extends ConsumerWidget {
                 onPressed: () => Navigator.pop(c, true),
                 child: Text(
                   l10n?.reset ?? 'Reset',
-                  style: TextStyle(
-                    color: Theme.of(c).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(c).colorScheme.error),
                 ),
               ),
             ],
@@ -384,4 +387,3 @@ class ResetSettingsTile extends ConsumerWidget {
     );
   }
 }
-

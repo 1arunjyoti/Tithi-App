@@ -25,8 +25,7 @@ final Map<DateTime, ({bool hasFestivals, bool isMajor})> festivalDotCache = {};
 const int festivalDotCacheMax = 600;
 final Set<String> precachedFestivalMonthKeys = {};
 
-DateTime normalizeMonthKey(DateTime month) =>
-    DateTime(month.year, month.month);
+DateTime normalizeMonthKey(DateTime month) => DateTime(month.year, month.month);
 
 // Calculation-school suffix for every sync-cache key below. A Panjika switch
 // changes which tithi/masa a date resolves to, so the old entries must miss
@@ -116,8 +115,7 @@ Timer? adaptiveCachePersistTimer;
 /// written by older logic load as truth and misdirect navigation.
 const int adaptiveCacheCodeVersion = 4;
 
-String versionedNavKey(String navKey) =>
-    '${navKey}_v$adaptiveCacheCodeVersion';
+String versionedNavKey(String navKey) => '${navKey}_v$adaptiveCacheCodeVersion';
 
 DateTime? readAdaptiveNavTarget(String navKey) {
   return adaptiveNavTargets[versionedNavKey(navKey)];

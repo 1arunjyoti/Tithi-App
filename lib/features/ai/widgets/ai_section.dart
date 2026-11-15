@@ -132,7 +132,9 @@ class AiSection extends ConsumerWidget {
       ),
     );
     if (chosen == null || !context.mounted) return;
-    final saved = await ref.read(aiTargetAppProvider.notifier).setTarget(chosen);
+    final saved = await ref
+        .read(aiTargetAppProvider.notifier)
+        .setTarget(chosen);
     if (!saved && context.mounted) {
       // Not `aiToggleFailed`: the switch is not what failed to save here.
       showAppMessage(
@@ -164,10 +166,7 @@ class AiSection extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l10n.aiConsentBody,
-              style: const TextStyle(fontSize: 15),
-            ),
+            Text(l10n.aiConsentBody, style: const TextStyle(fontSize: 15)),
             const SizedBox(height: 12),
             _ConsentBullet(text: l10n.aiConsentBulletSend),
             _ConsentBullet(text: l10n.aiConsentBulletLocation),

@@ -28,14 +28,11 @@ import '../features/calendar/providers/header_provider.dart';
 export '../features/calendar/data/calendar_models.dart'
     show CalendarCellData, AdaptiveCalendarData, HeaderData, MonthRangeParts;
 export '../features/calendar/providers/cell_providers.dart'
-    show
-        gregorianCalendarCellDataProvider,
-        adaptiveCalendarDataProvider;
+    show gregorianCalendarCellDataProvider, adaptiveCalendarDataProvider;
 export '../features/calendar/providers/header_provider.dart'
     show calendarHeaderDataProvider;
 export '../features/calendar/domain/header_builders.dart'
     show cachedHeaderSync, formatGregorianHeader;
-
 
 // Adapter: the shared dot cache stores plain records; the grid works with
 // CalendarCellData.
@@ -66,19 +63,13 @@ Future<T> _readWarmed<T>(
 void _storeAdaptiveDotsSync(Map<DateTime, CalendarCellData> cellData) {
   storeAdaptiveDotsSync(
     cellData.map(
-      (date, cell) => MapEntry(
-        date,
-        (hasFestivals: cell.hasFestivals, isMajor: cell.hasMajorFestival),
-      ),
+      (date, cell) => MapEntry(date, (
+        hasFestivals: cell.hasFestivals,
+        isMajor: cell.hasMajorFestival,
+      )),
     ),
   );
 }
-
-
-
-
-
-
 
 // Stale-data cache for the adaptive (Hindu/Bengali) grid. Family-arg changes
 // create a FRESH provider instance, so Riverpod keeps no previous value —
@@ -97,7 +88,6 @@ int? _lastAdaptiveModeIndex;
 // real month). Single slide only once fresh data arrives.
 String? _lastAdaptiveKey;
 
-
 /// Adaptive month setter that ignores no-op targets. A stale/wrong cached
 /// target equal to the viewed month would otherwise look like a frozen
 /// calendar (state set to the same value → no rebuild, no feedback).
@@ -111,15 +101,6 @@ void _setAdaptiveMonth(WidgetRef ref, DateTime target, DateTime focusedMonth) {
   logCalNav('nav settled: ${ymd(focusedMonth)} -> ${ymd(target)}');
   cp.setCalendarMonth(ref, target);
 }
-
-
-
-
-
-
-
-
-
 
 /// Pre-computes neighbor months so sliding feels instant. Covers both the
 /// secondary corner labels and (Gregorian path) the festival indicator dots
@@ -1171,8 +1152,7 @@ class CalendarWidget extends ConsumerWidget {
 
     // Step 2: Select Month (Bengali script names for the Bengali UI locale,
     // transliterated names otherwise — same rule as the header labels).
-    final useBnMonths =
-        Localizations.localeOf(context).languageCode == 'bn';
+    final useBnMonths = Localizations.localeOf(context).languageCode == 'bn';
     final selectedMonthIndex = await _showBengaliMonthPickerDialog(
       context,
       ref,
@@ -1748,9 +1728,6 @@ class CalendarWidget extends ConsumerWidget {
   }
 }
 
-
-
-
 class _CalendarHeader extends ConsumerWidget {
   final DateTime focusedMonth;
   final VoidCallback onLeftChevronTap;
@@ -1826,13 +1803,11 @@ class _CalendarHeader extends ConsumerWidget {
         ) ??
         HeaderData(
           primaryText: localizeDigits(
-            formatGregorianHeader(
-              focusedMonth,
-              AppLocalizations.of(context),
-            ),
+            formatGregorianHeader(focusedMonth, AppLocalizations.of(context)),
             localeCode,
           ),
-        );    final materialL10n = MaterialLocalizations.of(context);
+        );
+    final materialL10n = MaterialLocalizations.of(context);
 
     final highContrast = AppTheme.highContrastOf(context);
     final onSurface = context.colors.onSurface;

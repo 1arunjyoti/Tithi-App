@@ -112,12 +112,12 @@ PujaKalaSpan? resolvePujaKala({
 
   switch (kala) {
     case 'purvahna' ||
-          'madhyahna' ||
-          'aparahna' ||
-          'nishita' ||
-          'pradosh' ||
-          'pradosha' ||
-          'godhuli':
+        'madhyahna' ||
+        'aparahna' ||
+        'nishita' ||
+        'pradosh' ||
+        'pradosha' ||
+        'godhuli':
       if (sunrise == null || sunset == null || nextSunrise == null) {
         return null;
       }
