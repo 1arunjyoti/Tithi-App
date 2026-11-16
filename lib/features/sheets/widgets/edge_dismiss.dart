@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 // Canonical edge-drag dismissal extracted from
 // widgets/tithi_detail_sheet.dart (finalized design): a sustained downward

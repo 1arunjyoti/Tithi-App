@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
@@ -198,8 +198,6 @@ class ExportFestivalsSetting extends ConsumerWidget {
               l10n?.saveFestivalsYear(year.toString()) ??
               'Save festivals $year',
           fileName: filename,
-          type: FileType.custom,
-          allowedExtensions: ['json'],
           bytes: Uint8List.fromList(utf8.encode(json)),
         );
         try {

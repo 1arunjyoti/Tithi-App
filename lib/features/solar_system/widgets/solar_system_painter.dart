@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:jyotish/jyotish.dart';
 import '../data/solar_models.dart';
 import '../../../services/planetary_view_service.dart';

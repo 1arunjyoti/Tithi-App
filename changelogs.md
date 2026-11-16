@@ -12,14 +12,23 @@ Format:
 ## YYYY-MM-DD - <version from pubspec.yaml>
 
 ### <Feature name>
+
 <one-line description of what the user gets>
 - <key behaviour or constraint>
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-16 - 0.9.1+30
+
+### Updated flutter version and gradle version
+
+- Updated flutter version to 3.50.0, gradle version to 9.9.1 and agp to 9.3.1.
+- Fixed related issues with the new flutter version, including the removal of deprecated APIs and the addition of new features.
+
 ## 2026-11-16 - 0.8.1+28
 
 ### One empty state, one error state, one skeleton
+
 Every list, sheet and card now says "nothing here", "could not load" and "still loading" the same way - and an error can no longer print a raw exception into the UI.
 
 - `EmptyState` / `ErrorState` (`lib/widgets/state_views.dart`) take a `StateViewVariant`: `page` (48dp faint glyph, centred), `card` (same inside card padding) and `inline` (20dp glyph on one line; the caller owns the outer padding, which is part of the card's row rhythm). `EmptyState` is display-only by design - each empty state already has its action in a toolbar, FAB or adjacent control.
@@ -31,6 +40,7 @@ Every list, sheet and card now says "nothing here", "could not load" and "still 
 - `test/state_views_test.dart` locks the variants, the action-free empty state, retry wiring, the 0.06 skeleton tint/radius, `SkeletonList` geometry and `InlineSpinner` size/stroke.
 
 ### One spacing ladder, one radius scale, named icon sizes
+
 Padding, corners and icon sizes now come from three shared scales, so a sheet cannot pick 11dp where the next screen picks 12 and two cards that look the same can no longer round to 14 and 16.
 
 - `AppSpacing` (`lib/theme/app_metrics.dart`) is a 2dp ladder: `s2`, `s4`, `s6`, `s8`, `s10`, `s12`, `s14`, `s16`, `s18`, `s20`, `s22`, `s24`, `s28`, `s32`. Anything above `maxStep` (32) is a component dimension - a 44dp avatar, a 168dp moon disc - and stays a literal where the widget owns it. ~700 `EdgeInsets`/`SizedBox` values migrated; off-grid 3/5 snap to `s4` and 11 snaps to `s12`.
@@ -40,6 +50,7 @@ Padding, corners and icon sizes now come from three shared scales, so a sheet ca
 - `test/app_metrics_test.dart` locks the three ladders (ascending, 2dp grid, retired radii absent) and is a textual guard: a numeric `EdgeInsets` value up to 32, an on-ladder `SizedBox` gap, a numeric corner radius or a numeric icon size in `lib/` fails the suite.
 
 ### One type scale, one weight set, one shared theme type map
+
 Sizes are picked from a named ladder instead of 21 one-off numbers, and the four colour palettes build the same serif-heading / sans-body map, so a heading can no longer land half a point off its neighbour or be serif in one theme and sans in another.
 
 - `AppTypography.sizeLadder` (`lib/theme/app_typography.dart`) is the only place a text size is named: `sizeMicro` 10, `sizeFootnote` 11, `sizeCaption` 12, `sizeDetail` 13, `sizeBody` 14, `sizeProse` 15, `sizeSubtitle` 16, `sizeHeading` 18, `sizeTitle` 20, `sizeHeadline` 22, `sizeDisplay` 24, `sizeHero` 32, `sizeGlyph` 64. Pick by job, not by number; 117 raw `fontSize:` literals migrated.
@@ -53,6 +64,7 @@ Sizes are picked from a named ladder instead of 21 one-off numbers, and the four
 ## 2026-11-15 - 0.8.1+27
 
 ### One haptic gate, named motion tokens, screen-reader labels
+
 Buzzes, animation lengths and assistive labels now come from shared helpers, so the Accessibility switches and the Reduce Motion setting can no longer be bypassed by a call site that forgot the gate.
 
 - `AppHaptics` (`lib/core/feedback/app_haptics.dart`) is the only place the app calls `HapticFeedback`: `AppHaptics.tap(ref)` (lightImpact - taps, selection, toggles) and `AppHaptics.impact(ref)` (mediumImpact - deliberate actions only, the Paksha hero's manual page turn). Two weights, both checking `accessibilityProvider.hapticFeedback`; ~22 hand-inlined `if (ref.read(...).hapticFeedback)` blocks collapsed into it. Pass `haptic: false` to `PressScale` where the tap callback already buzzes so the scale animates without a second buzz.
@@ -63,6 +75,7 @@ Buzzes, animation lengths and assistive labels now come from shared helpers, so 
 - `test/app_haptics_test.dart` (silence when off, one buzz per call, the two platform weights), `test/app_motion_test.dart` (token values, curves, 1ms collapse) and `test/calendar_day_semantics_test.dart` (label/flag shape, plain day, Bengali) lock the behaviour.
 
 ### Shared hairline rule and muted text levels
+
 Rules and de-emphasized text now come from two shared helpers, so dividers match inside one screen and quiet text follows High Contrast instead of being pinned to a per-call alpha.
 
 - `AppDivider` (`lib/widgets/app_divider.dart`) is the only place the app builds a `Divider`: `AppDivider()` (onSurface 0.1) separates sections/panels, `AppDivider.row()` (0.08) separates rows sharing one card surface; both are 1px with optional `indent`/`endIndent`.
@@ -72,6 +85,7 @@ Rules and de-emphasized text now come from two shared helpers, so dividers match
 - Deliberately untouched: sheet hairlines/card fills, the solar-system canvas, the map picker surface, the schedule view, the drawer and the Paksha hero. `test/app_divider_test.dart` / `test/muted_ink_test.dart` lock the weights, the High Contrast values and the inset delegation.
 
 ### Shared page shell and back button
+
 Every full-screen page now builds from one `PageScaffold`, and pushed pages share one back button, so app-bar height, background layering and gesture-handle clearance can no longer drift screen to screen.
 
 - `PageScaffold` (`lib/widgets/page_scaffold.dart`) owns the transparent `AppBar` (`automaticallyImplyLeading: false`, elevation 0), the `RepaintBoundary` around `AppTheme.backgroundDecoration`, and the `SafeArea(bottom: false)` that lets the gradient paint behind the gesture handle. Its defaults are the reading-page shape; `extendBodyBehindAppBar: false` is the form shape (background becomes a plain wrapper, the safe area is ignored) used by the sankalpa list and create screens.
@@ -81,9 +95,10 @@ Every full-screen page now builds from one `PageScaffold`, and pushed pages shar
 - `test/page_scaffold_test.dart` locks the three shapes (reading, form, edge-to-edge) plus chrome/drawer forwarding. It keys the body and reads the shell as its ancestors, because the app bar brings its own `SafeArea`.
 
 ### Shared page-card layout
+
 Cards on every page now share one surface, one corner radius and the same distance from the screen edge; the home screen is the reference rather than the exception.
 
-- `AppCard` (`lib/widgets/app_card.dart`) owns the surface (`AppTheme.cardDecoration`), the radius shared by the card *and* its ripple, the haptic `InkWell` tap, and the single-node semantics pattern. `ScreenBody` (`lib/widgets/screen_body.dart`) owns the outer frame: 12dp gutter on every breakpoint and the 800dp reading width.
+- `AppCard` (`lib/widgets/app_card.dart`) owns the surface (`AppTheme.cardDecoration`), the radius shared by the card _and_ its ripple, the haptic `InkWell` tap, and the single-node semantics pattern. `ScreenBody` (`lib/widgets/screen_body.dart`) owns the outer frame: 12dp gutter on every breakpoint and the 800dp reading width.
 - `AppTheme.pageGutter` (12, aliased by `homeCardGutter`), `cardRadius` (24), `cardRadiusCompact` (16) and `cardGap` (16) are the only numbers a card should use. `AppTheme.cardDecoration(accent: ...)` is the featured edge; ordinary cards keep the neutral hairline - an accent edge on every card makes the whole screen read as featured.
 - Migrated: home (calendar, quote, festivals, countdown and widget cards - pixel-identical), eclipse, all festivals (16dp/900 -> 12dp/800, row gaps 10 -> 16), moon phases, festival countdown screen, sankalpa list (elevated 16dp `Card` -> flat 24dp page card).
 - Text screens migrated too: settings, home-cards picker, about, privacy policy and the sankalpa create form went from a 24dp gutter to `ScreenBody`, and their hand-rolled `Material`/`Ink`/`Container` cards (`AppUpdateCard`, the group cards, the about/privacy cards) are now `AppCard`. Inner paddings (16/20/24) stay - they express hierarchy, not the page frame.
@@ -94,6 +109,7 @@ Cards on every page now share one surface, one corner radius and the same distan
 - Sheets keep `sheetCardDecoration` / `sheetHairline`: a sheet body card sits on the sheet surface, not on the page, and its padding is intentionally tighter.
 
 ### Eclipse tabs
+
 Solar and lunar eclipses are two tabs instead of two stacked sections, so the lunar list no longer sits below six solar cards and needs a scroll to reach.
 
 - `EclipseScreen` is stateful with a 2-tab `TabController` in the app bar; each tab is an `EclipseList` already filtered by `EclipseType.isSolar` / `isLunar` (import `models/eclipse.dart` - the provider re-export does not include the extension).
@@ -101,6 +117,7 @@ Solar and lunar eclipses are two tabs instead of two stacked sections, so the lu
 - `EclipseCard` composes one semantics label (type, days until, date, max-eclipse time, visibility) like the festival rows; `AppCard` excludes the visual text and keeps the tap action.
 
 ### Home card highlight spacing
+
 The selected-day wash and the press highlight now extend past the row content instead of hugging the tile and chevron.
 
 - `AppTheme.homeCardRowInset` (12) is the breathing room inside a row's surface; `AppTheme.homeCardRowPadding` (4) is the card's side padding. They sum to the 16dp heading gutter, so keep them in that relationship.
@@ -111,16 +128,18 @@ The selected-day wash and the press highlight now extend past the row content in
 ## 2026-11-14 - 0.8.1+26
 
 ### Category chips on All Festivals
+
 The all-festivals list now has All / Major / Vrat / Recurring / Featured chips directly under the search field, so the common narrowing is one tap instead of a trip through the filter sheet.
 
 - `FestivalCategoryFilter` gained `featured` (`lib/models/festival_filter.dart`); its matcher reads the curated `Festival.featured` flag, **not** `category` — 96 of 110 catalog records are `category: 'major'`, so "Featured" must keep meaning the ~20 curated flagships (the ones the list renders as `MajorFestivalCard`).
 - Chip order is `FestivalCategoryFilter.values` order; append new values at the end. The strip is `AllFestivalsScreen.categoryChipsKey`, built by `_buildCategoryChips` in `lib/screens/all_festivals_screen.dart`.
 - The chips and the app-bar sheet write the same `_filters` state: `_selectCategory` uses `copyWith`, so a region picked in the sheet is preserved when a chip is tapped. The sheet still opens with the strip's choice staged and gains the Featured chip too.
 - One shared `FestivalFilterChip` + `festivalCategoryFilterLabel()` (`lib/widgets/festival_filter_chip.dart`) renders both entry points, so their tint/label cannot drift.
-- `FestivalFilterChip` fills via `ChoiceChip.color` (a `WidgetStateProperty`), **not** `selectedColor`: `RawChip` resolves the fill a selection fade *starts* from through the chip defaults' `color` (`colorScheme.secondaryContainer`, fully opaque) and only the *end* through `selectedColor`, so `selectedColor` alone flashed a solid off-palette block on every tap in both the strip and the sheet. With `color` set, the chip switches between transparent and the primary wash with no fade — keep it that way, and see `test/festival_filter_chip_test.dart`, which samples the painted fill mid-fade in all three palettes and fails if any frame is more opaque than the wash.
+- `FestivalFilterChip` fills via `ChoiceChip.color` (a `WidgetStateProperty`), **not** `selectedColor`: `RawChip` resolves the fill a selection fade _starts_ from through the chip defaults' `color` (`colorScheme.secondaryContainer`, fully opaque) and only the _end_ through `selectedColor`, so `selectedColor` alone flashed a solid off-palette block on every tap in both the strip and the sheet. With `color` set, the chip switches between transparent and the primary wash with no fade — keep it that way, and see `test/festival_filter_chip_test.dart`, which samples the painted fill mid-fade in all three palettes and fails if any frame is more opaque than the wash.
 - Tests in `test/all_festivals_screen_test.dart`: sheet taps must be scoped to `find.byType(BottomSheet)` — the strip renders the same labels behind the modal.
 
 ### Moon phases list legibility
+
 The upcoming Purnima/Amavasya rows now read at full ink instead of the theme's hint colour.
 
 - Row date line: `bodyMedium` resolves to the Shukla hint ink (`shuklaInkTertiary` #6E6E76), so the row overrides it to `colorScheme.onSurface` at w600; the time line moves from `onSurface` 0.6 to 0.72.
@@ -128,6 +147,7 @@ The upcoming Purnima/Amavasya rows now read at full ink instead of the theme's h
 - `test/moon_scrub_test.dart` ("Upcoming dates list legibility") renders the screen in Shukla/Krishna/Pure Dark and asserts ≥7:1 for the date and ≥4.5:1 for the time against the page background (translucent ink is alpha-blended first). Keep those thresholds when restyling this list.
 
 ### Two-destination nav bar
+
 The floating bar now has Today and Festivals only; Countdowns is still one tap away in the drawer, which opens it as a full screen over the current tab.
 
 - `HomeTab` is `{ today, festivals }` (`lib/core/navigation/home_tab.dart`). `HomeShell` indexes `HomeTab.values` with the bar's `onSelected` and with `_tab()`, so the destination list in `build()` must keep the enum's order and length.
@@ -137,6 +157,7 @@ The floating bar now has Today and Festivals only; Countdowns is still one tap a
 - `FestivalCountdownScreen` lost its `tabRevealProvider` re-tap scroll handler (nothing re-selects it now); its `_scrollController` stays for the lists.
 
 ### Cross-script type system (bundled, offline)
+
 Titles, body copy and astronomical labels now share harmonised Latin + Indic typefaces, with no runtime font fetching.
 
 - Three tiers in `AppTypography` (`lib/theme/app_typography.dart`): `display` = Newsreader + Tiro Devanagari Hindi/Bangla/Tamil/Telugu + Noto Serif Malayalam; `ui` = Plus Jakarta Sans + Noto Sans Devanagari/Bengali/Tamil/Telugu/Malayalam; `telemetry` = Space Grotesk; `shloka` = Tiro Devanagari Sanskrit.
@@ -150,6 +171,7 @@ Titles, body copy and astronomical labels now share harmonised Latin + Indic typ
 - Telemetry examples: hero eyebrow (`paksha_hero_card.dart`) and the Purnima/Amavasya countdown (`moon_countdown_widget.dart`); festival mantras and daily-wisdom shlokas use the `shloka` tier.
 
 ### Flush festival rows on the home cards
+
 The Festivals & Events and Festival Countdowns cards now read as one surface each: rows lost their inner boxes, so long festival titles get the reclaimed width and the lists scan without nested cards.
 
 - `AppTheme.festivalRowDecoration` returns `const BoxDecoration()` for standard rows; only `isSelectedDay` rows keep a borderless accent wash (`alpha 0.08`, radius 14). High Contrast uses `0.18` plus a 1px accent edge, since colour alone cannot carry the selection there.
@@ -158,6 +180,7 @@ The Festivals & Events and Festival Countdowns cards now read as one surface eac
 - Rows that are not on a card keep their own surface through `AppTheme.festivalListRowDecoration` (all-festivals list). The tithi sheet's "festivals on this day" rows are flush with their section header.
 
 ### Crisp Daylight (Shukla) surface system
+
 The light theme now reads as crisp white cards on a cool-neutral page with one vermilion accent, instead of warm beige-on-beige layers.
 
 - Palette lives in `AppTheme` (`lib/theme/app_theme.dart`): page `#F5F5F7`, opaque cards `#FFFFFF`, 1px `#E5E5EA` hairline, ink `#111113`, accent `#E84A1B` (deep `#C2410C`, saffron `#FF5A1F`).
@@ -169,17 +192,19 @@ The light theme now reads as crisp white cards on a cool-neutral page with one v
 ## 2026-11-13 - 0.8.1+25
 
 ### Edge-to-edge system bars
+
 The app now paints behind the status and gesture/3-button navigation bars instead of leaving an opaque strip at the bottom, and the floating nav bar still clears the gesture handle.
 
 - `MainActivity` opts into edge-to-edge with `WindowCompat.setDecorFitsSystemWindows(window, false)`, transparent status/navigation bars, and `isNavigationBarContrastEnforced = false` (API 29+). `FlutterActivity` is not a `ComponentActivity`, so it cannot call `androidx.activity`'s `enableEdgeToEdge()`.
 - `AppBootstrap.initSystem` requests `SystemUiMode.edgeToEdge` on Android (the engine only supports it from API 29; `MainActivity.onPostResume` re-asserts the layout below that).
 - `AppTheme.systemUiOverlayStyle(Brightness)` is the single source of bar styling: transparent status/nav colors and divider, contrast scrims off, icon brightness from the theme. `MaterialApp` re-applies it per theme, so the bars stay transparent across palettes.
 - `FloatingNavBar` already lifts itself by `MediaQuery.viewPadding.bottom`; with edge-to-edge that is now the real gesture-bar inset, so the capsule sits above the handle rather than under it.
-- **Scrolling content must not be inset by the bar.** A `SafeArea` around a scroll view shrinks the *viewport*, so the last row stops exactly at the handle and the bare page background below it reads as a dedicated navigation-bar band even though the bar is transparent. Full-screen bodies therefore use `SafeArea(bottom: false)` and add `AppTheme.navigationBarInset(context)` to the scrollable's own bottom padding (`home_screen`, `all_festivals_screen`, `festival_countdown_screen`, `settings_screen`, `about_screen`, `privacy_policy_screen`, `home_cards_screen`, `moon_phases_screen`, `eclipse_screen`, `schedule_view_widget`, `eclipse_list`).
+- **Scrolling content must not be inset by the bar.** A `SafeArea` around a scroll view shrinks the _viewport_, so the last row stops exactly at the handle and the bare page background below it reads as a dedicated navigation-bar band even though the bar is transparent. Full-screen bodies therefore use `SafeArea(bottom: false)` and add `AppTheme.navigationBarInset(context)` to the scrollable's own bottom padding (`home_screen`, `all_festivals_screen`, `festival_countdown_screen`, `settings_screen`, `about_screen`, `privacy_policy_screen`, `home_cards_screen`, `moon_phases_screen`, `eclipse_screen`, `schedule_view_widget`, `eclipse_list`).
 - `solar_system_screen` is not scrollable but is the same trap: its bottom time panel has a rounded, shadowed surface that must run to the screen edge, so the body uses `SafeArea(bottom: false)` and the panel carries `AppTheme.navigationBarInset(context)` in its own bottom padding instead. Anything positioned relative to that stack's bottom (`_buildZoomControls`) adds the inset back to keep its clearance.
 - Sheets and the drawer keep their own `SafeArea`: there the bar sits over an interactive surface, and content behind it would be unreachable.
 
 ### Tinted selection and depth in the floating nav bar
+
 The selected destination is now a soft accent wash instead of a solid accent block, and the capsule casts a shadow, so the bar reads as floating above the page rather than laid flat on it.
 
 - `AppTheme.accentTint` (`lib/theme/app_theme.dart`) is the accent at 18% alpha; `AppTheme.onAccentTint` is the accent itself for the label and icon, because the fill is only a wash. Both are generic, not nav-specific.
@@ -190,11 +215,12 @@ The selected destination is now a soft accent wash instead of a solid accent blo
 - Tint alpha, film alpha and the shadow list are the knobs; the `BackdropFilter` (sigma 20) stays as-is and is still skipped under High Contrast.
 
 ### Major festival cards
+
 The all-festivals list gives its large, information-rich card to the festivals the catalog marks as flagship — the observance windows the event sheet shows, plus the date, tithi and description a scanner needs.
 
 - "Featured" is a curated `featured` flag in `assets/festivals.json` (`Festival.featured`, Hive field 11, read by `Festival.fromJson`), not a category and not a date heuristic: `AllFestivalsScreen` uses `MajorFestivalCard` whenever `festival.featured`. It is date-independent, so a past flagship keeps the card and a whole run (Durga Puja Shashthi→Dasami) stays featured instead of splitting at the first day.
 - 20 of 110 records set `"featured": true` today. Everything else, including the other 76 `major` entries, keeps `FestivalRowTile`. Adding one is a **data edit only** — add the flag to the record; `FestivalExportService` round-trips it. Do not re-derive the set from `category` (96/110 are `major`), `displayPriority` (same-day ordering, 7 records) or `visuals.image` (7 records, 6 share `durga_puja.webp`); `test/festival_data_test.dart` guards its size and `test/festival_first_launch_test.dart` proves field 11 survives a Hive round-trip.
-- Field 11 is stored as the nullable `featuredFlag` and exposed through `bool get featured => featuredFlag ?? false`. Never read `featuredFlag` directly: null is how a box written before the field existed *and* a hot-reloaded instance of the class both look, and a non-nullable field turned those into a `Null is not a subtype of bool` crash.
+- Field 11 is stored as the nullable `featuredFlag` and exposed through `bool get featured => featuredFlag ?? false`. Never read `featuredFlag` directly: null is how a box written before the field existed _and_ a hot-reloaded instance of the class both look, and a non-nullable field turned those into a `Null is not a subtype of bool` crash.
 - The artwork square is drawn only when `visuals.image` is set; without artwork the card leads with a 40dp glyph chip instead of spending a quarter of its width on a placeholder icon. The card also carries what the rows had and it had dropped: the tithi by name on the gold date line, a one-line description, and the festival's name in the UI language when the catalog has one.
 - Timings are caption-above-value (caption 10.5/55% ink, value 13/w600/92%). The caption used to be the boldest text in the card while the time it labelled sat at 12px/78%, and the old inline form needed a `<220dp` stacked fallback that fired on most phones.
 - The "in N days" countdown is a chip in the title row instead of a date-line suffix; a chevron marks the card as tappable; today's card gets an accent hairline (`BoxDecoration.copyWith` on the glass fill).
@@ -202,10 +228,11 @@ The all-festivals list gives its large, information-rich card to the festivals t
 - Lives in `lib/widgets/major_festival_card.dart`; covered by `test/major_festival_card_test.dart` (rows, wording, artwork vs chip, regional name, today border, 320dp + 1.6x text) and the featured cases in `test/all_festivals_screen_test.dart`.
 
 ### Festivals cache self-heals after a model change
+
 Upgrading across a festival-model change now starts the app instead of crashing before the first frame; the stored copy is discarded and re-seeded from the bundled catalog when it no longer matches the model.
 
-- `kFestivalCacheSchemaVersion` (`lib/models/festival.dart`) is stored in `festival_settings` under `StorageService.festivalsSchemaKey` (`hiveSchema`). `StorageService.openFestivalsBox()` deletes the cached box *before* opening it when the marker differs, so an ordinary upgrade never decodes records with the wrong adapter. Bump the constant when a field's type or meaning changes; an additive optional field does not need it.
-- Why the pre-check: Hive decodes every record while *opening* a non-lazy box, and a decode failure is also reported as an unhandled async error (its internal `_openingBoxes` completer has no listener) even when the throw is caught. The `tier` (int) → `featured` (bool) field 11 rename left ints in the previous box and crashed startup exactly that way.
+- `kFestivalCacheSchemaVersion` (`lib/models/festival.dart`) is stored in `festival_settings` under `StorageService.festivalsSchemaKey` (`hiveSchema`). `StorageService.openFestivalsBox()` deletes the cached box _before_ opening it when the marker differs, so an ordinary upgrade never decodes records with the wrong adapter. Bump the constant when a field's type or meaning changes; an additive optional field does not need it.
+- Why the pre-check: Hive decodes every record while _opening_ a non-lazy box, and a decode failure is also reported as an unhandled async error (its internal `_openingBoxes` completer has no listener) even when the throw is caught. The `tier` (int) → `featured` (bool) field 11 rename left ints in the previous box and crashed startup exactly that way.
 - The box is a rebuildable cache, never a source of truth, so it also self-heals without a marker: a decode failure from `Hive.openBox` is caught, the box deleted and reopened empty, and `FestivalRepository` reseeds 110 records from `assets/festivals.json`.
 - The discard retries (3 × 20ms) because Hive releases the failed open's file handles asynchronously and Windows can lose the delete race. If the box still cannot be rebuilt, it falls back to an in-memory box for the session: the catalog renders, and the next launch retries the disk.
 - `AppBootstrap.warmVersionInfo()` now swallows its own failure like `warmFonts()`; an optional warm-up must never keep `runApp` from happening. `initStorage()` stays awaited and fatal.
@@ -214,6 +241,7 @@ Upgrading across a festival-model change now starts the app instead of crashing 
 ## 2026-11-12 - 0.8.1+24
 
 ### Borderless floating navigation
+
 The floating navbar now blends into the page without a visible outline.
 
 - Normal palettes keep the translucent fill and blur without a border.
@@ -221,6 +249,7 @@ The floating navbar now blends into the page without a visible outline.
 - Shared decoration lives in `lib/theme/app_theme.dart`.
 
 ### Festivals card uses the mounted Festivals tab
+
 The home card's "View all" action now opens the same Festivals screen chrome as the bottom navigation tab.
 
 - In the narrow shell, the action selects `HomeTab.festivals`, preserving the mounted list and its scroll position.
@@ -228,6 +257,7 @@ The home card's "View all" action now opens the same Festivals screen chrome as 
 - The selector is passed from `HomeScreen` to `EventListWidget` (`lib/screens/home_screen.dart`, `lib/widgets/event_list_widget.dart`).
 
 ### Drawer is reachable from every tab
+
 Festivals and Countdowns now have the hamburger (and the edge swipe) too, so Sankalpas, Moon Phases, Settings and the rest are one tap away from any destination instead of a detour through Today.
 
 - Both tab screens take `onSelectTab` + `onDrawerStateChanged` like `HomeScreen`; a non-null `onSelectTab` means "hosted as a shell tab", which adds one `AppDrawer` to that Scaffold and puts `AppDrawerButton` (`lib/widgets/app_drawer_button.dart`, shared with `HomeScreen`) in the leading slot. Pushed full-page, the leading slot stays `HapticBackButton`.
@@ -235,6 +265,7 @@ Festivals and Countdowns now have the hamburger (and the edge swipe) too, so San
 - Covered by the `drawer` group in `test/all_festivals_screen_test.dart` (hosted opens the drawer and reports it; pushed has no drawer and no hamburger).
 
 ### Drawer destinations switch the shell tab instead of pushing a copy
+
 Picking "Festival Countdowns" in the drawer now selects the Countdowns tab: the capsule highlights it, back returns through Today, and the tab keeps the state it already had.
 
 - `AppDrawer.onSelectTab` (`lib/widgets/app_drawer.dart`) is set by `HomeShell` through `HomeScreen.onSelectTab`; the entry pops the drawer and selects `HomeTab.countdowns`. When it is null (the wide sidebar, and every screen that pushes the drawer on its own) the entry keeps pushing `FestivalCountdownScreen`.
@@ -242,6 +273,7 @@ Picking "Festival Countdowns" in the drawer now selects the Countdowns tab: the 
 - Covered by `test/app_drawer_test.dart` (select path asserts no route was pushed; null path asserts a push still starts).
 
 ### Re-tapping the selected destination returns its tab to the top
+
 Tapping Today, Festivals or Countdowns while it is already selected scrolls that tab back to its first item, the way every other tab bar behaves.
 
 - `HomeShell._select` bumps `tabRevealProvider(tab)` (`lib/core/navigation/home_tab.dart`), a `StateProvider.family<int, HomeTab>` counter, instead of ignoring the re-tap. Each tab watches its own entry and scrolls itself, because the three tabs disagree on what "the top" is.
@@ -249,14 +281,16 @@ Tapping Today, Festivals or Countdowns while it is already selected scrolls that
 - Animations use `AppTheme.animationDuration(context, 260ms)`, so Reduce Motion jumps straight to the top.
 
 ### Jump to today joins the floating nav bar
+
 On narrow screens the calendar's "jump to today" action now floats beside the navigation capsule on the same baseline, instead of hovering above it, so the two controls read as one bar and nothing floats in the content's way.
 
 - `JumpToTodayButton` (`lib/widgets/jump_to_today_button.dart`) is the single 56dp icon-only action for both hosts; `jumpToTodayVisibleProvider` is the single rule (another month focused, or another day selected) and `goToToday` moves month, date and `tappedCalendarDateProvider` together.
-- "Today" is `todayDateProvider` (the app's place-clock day, refreshed at midnight and on a place change), not `DateTime.now()`. That matches the calendar's own seeding *and* makes the rule re-evaluate at a midnight rollover, when the calendar is left showing yesterday.
-- It sits *outside* the capsule: `FloatingNavBar.trailingAction` is a sibling in the bar's row, and the capsule is `Flexible`, so the action takes width from the capsule (labels shrink/ellipsize) rather than from the screen gutters. `showTrailingAction` opens the slot as one staggered transition (`_TrailingAction`: width first, then the action fades in on the opened space), so the bar re-centres instead of jumping and the button never slides out of a moving clip.
+- "Today" is `todayDateProvider` (the app's place-clock day, refreshed at midnight and on a place change), not `DateTime.now()`. That matches the calendar's own seeding _and_ makes the rule re-evaluate at a midnight rollover, when the calendar is left showing yesterday.
+- It sits _outside_ the capsule: `FloatingNavBar.trailingAction` is a sibling in the bar's row, and the capsule is `Flexible`, so the action takes width from the capsule (labels shrink/ellipsize) rather than from the screen gutters. `showTrailingAction` opens the slot as one staggered transition (`_TrailingAction`: width first, then the action fades in on the opened space), so the bar re-centres instead of jumping and the button never slides out of a moving clip.
 - Shown only on the Today tab; `HomeScreen.showJumpToToday: false` from the shell prevents a second live copy (the wide layout still uses the Scaffold FAB slot).
 
 ### Floating bottom navigation capsule
+
 Narrow screens now get a Google-Photos-style floating pill with three top-level tabs (Today / Festivals / Countdowns) that keeps each tab's state instead of pushing and popping screens.
 
 - `HomeShell` (`lib/screens/home_shell.dart`) owns the tab index: the tabs are stacked, each one wrapped in an `AnimatedTabLayer` (`TickerMode` keeps offscreen tabs from ticking), tabs mount on first visit only (`AllFestivalsScreen` resolves ~100 occurrences through the ephemeris and must not run at startup), and back returns to Today before leaving the app (`PopScope`).
@@ -269,7 +303,7 @@ Narrow screens now get a Google-Photos-style floating pill with three top-level 
 - All transitions route through `AppTheme.animationDuration`.
 - The capsule is a real overlay: `AppTheme.floatingOverlayDecoration` keeps the film translucent in every palette (Pure Dark's `glassmorphism` would be opaque and read as a docked footer) and the widget adds a `BackdropFilter` blur, skipped under High Contrast.
 - The film carries a tonal lift (10% white into `colorScheme.surface` dark, 4% primary into white light) so it reads above both the page and the card fill: Pure Dark's bare surface at 62% came out darker than its `#1E1E1E` cards, reading as a hole.
-- Nothing shrinks the tab viewport. Each tab takes a `bottomContentInset` (`HomeShell` passes `FloatingNavBar.reserve`) for scroll padding only, so content scrolls *under* the pill; the home FAB is lifted by the same value, and floating snackbars get it via a `snackBarTheme.insetPadding` override in the shell.
+- Nothing shrinks the tab viewport. Each tab takes a `bottomContentInset` (`HomeShell` passes `FloatingNavBar.reserve`) for scroll padding only, so content scrolls _under_ the pill; the home FAB is lifted by the same value, and floating snackbars get it via a `snackBarTheme.insetPadding` override in the shell.
 - Narrow screens only: at >= 900dp (`ResponsiveLayout.tabletBreakpoint`) the shell returns `HomeScreen` unchanged, keeping the 280px sidebar as the only navigation.
 - The bar hides while `HomeScreen`'s drawer is open (`HomeScreen.onDrawerStateChanged`), since the drawer paints inside that Scaffold, below the shell's overlay.
 - Labels are single short nouns (`navToday` / `navFestivals` / `navCountdowns`) in en/hi/bn/sa. They are always painted; when the capsule is clamped to a narrow screen (or the app's 1.3x large-text scale), each label shrinks inside its measured share and ellipsizes instead of overflowing.
@@ -277,6 +311,7 @@ Narrow screens now get a Google-Photos-style floating pill with three top-level 
 ## 2026-11-06 - 0.8.1+23
 
 ### Shukla body uses a neutral off-white instead of warm cream
+
 The light theme's page background is a flat `#FAFAF6`, so the orange primary reads as an accent on a neutral surface instead of tinting the whole screen.
 
 - `AppTheme.shuklaBackground` is the single source: `scaffoldBackgroundColor` and the app bar background build from it, and `backgroundDecoration` returns it flat for light mode.
@@ -285,6 +320,7 @@ The light theme's page background is a flat `#FAFAF6`, so the orange primary rea
 - Where: `lib/theme/app_theme.dart`.
 
 ### Theme switching no longer flashes the Krishna palette
+
 Picking a theme now swaps in one frame; the app never paints plum/purple "in between" on the way from Shukla to Dark (or when the OS flips auto mode).
 
 - MaterialApp was cross-fading `ThemeData` over 200ms; `ThemeData.lerp` flips `brightness` to dark at t=0.5 while `scaffoldBackgroundColor` is still mid-grey, so `AppTheme.isPureDarkTheme()` (scaffold == black) failed and every brightness-aware helper fell through to the Krishna branch.
@@ -294,6 +330,7 @@ Picking a theme now swaps in one frame; the app never paints plum/purple "in bet
 ## 2026-10-30 - 0.8.1+22
 
 ### Panjika switch keeps the home screen alive
+
 Switching between Bisuddhasiddhanta and Suryasiddhanta now recomputes the home screen and calendar in place instead of leaving them blank until a restart.
 
 - `panchangInitProvider` now **watches** `panchangServiceProvider`: a school switch replaces the service with a new, uninitialized instance, so the init future must be invalidated with it. Reading the service kept serving the previous instance's completed init; downstream computations then threw `PanchangService not initialized`, the hero fell back to its skeleton and the festival card said "No festivals".
@@ -302,6 +339,7 @@ Switching between Bisuddhasiddhanta and Suryasiddhanta now recomputes the home s
 - Regression: `test/panchang_school_switch_test.dart` initializes the first service, swaps the school and asserts the replacement is initialized; it fails if the init goes back to `read`.
 
 ### Durga Puja 2026 keeps its two-sunrise days under both Panjika systems
+
 Durga Puja resolves to the reference dates instead of gaining an extra Saptami (Bisuddha) or Ashtami (Surya Siddhanta) day.
 
 - New per-rule `dominant_tithi` (`"grace"` default, `"strict"` opt-out) in `PanchangRules` (`lib/models/festival.dart`, Hive field 15 with `defaultValue: 'grace'`). `PanchangData.fromRawTithi` skips the 60-minute dominant-tithi grace window for `strict` rules; everything else is unchanged.
@@ -312,6 +350,7 @@ Durga Puja resolves to the reference dates instead of gaining an extra Saptami (
 ## 2026-10-28 - 0.7.20+21
 
 ### Surya Siddhanta Panjika system
+
 Settings now offers Bisuddhasiddhanta and Suryasiddhanta; the selected system drives the Panchang and the Bengali calendar.
 
 - `PanchangSchool` (`lib/models/panchang_school.dart`) is persisted by name under `panchang_school`; missing/unknown values fall back to `bisuddha`, so existing installs keep the current behaviour.
@@ -319,21 +358,22 @@ Settings now offers Bisuddhasiddhanta and Suryasiddhanta; the selected system dr
 - `PanchangProfile.school` is part of `cacheKey`; `kPanchangCalculationVersion` is now **4** and `schemaVersion` **2**. `locationSignature`, the Bengali month/date caches and every process-local cache in `PanchangService` (`_tithiCache`, `_sunLongitudeCache`, `_lunationVerdicts`) key on the school, so a switch cannot serve the other system's days. `_lunationVerdicts` is a `static` map that decides **masa and adhika**, i.e. the Hindu and Bengali month names, so leaving it unkeyed showed the previous school's month for up to 8 lunations after a switch; `clearCaches()` now drops it as well.
 - The Surya Siddhanta engine is the classical text (`SuryaSiddhantaTuning.classical`): mean motions plus the manda correction, no sighra iteration. `tool/surya_siddhanta_probe.dart fit` solves the six calibration parameters; against the modern ephemeris it reaches ~1.4 degrees RMS over 1900-2100.
 - **`kSuryaSiddhantaTuning` in `surya_siddhanta_engine.dart` is the single paste point for a calibration.** It is the default for both `SuryaSiddhantaEngine` and `ephemerisFor`, so one edit reaches the panchang, the Bengali calendar and the notification isolate. It now ships **calibrated** against a New Delhi Surya Siddhanta panjika (see the last two bullets); leaving it at `SuryaSiddhantaTuning.classical` means "uncalibrated".
-- Calibration workflow without a reference database: `tool/surya_siddhanta_probe.dart check <date> --tithi ... --ends HH:MM --csv` per date, ~10 dates over 10+ years, then `fit` the collected CSV. A printed **limb end time** is the sharpest datum (it pins the limb to an exact degree); a limb *name* is only a 12-degree bin. All times are read as IST, not machine-local, so results do not depend on the developer's timezone.
+- Calibration workflow without a reference database: `tool/surya_siddhanta_probe.dart check <date> --tithi ... --ends HH:MM --csv` per date, ~10 dates over 10+ years, then `fit` the collected CSV. A printed **limb end time** is the sharpest datum (it pins the limb to an exact degree); a limb _name_ is only a 12-degree bin. All times are read as IST, not machine-local, so results do not depend on the developer's timezone.
 - `fit` freezes the Sun when the references are tithi-only: elongation rows cannot see the absolute frame, and letting both epochs move leaves a null direction that pushes the fit hundreds of degrees from the text. Nakshatra or yoga **end times** do see the absolute frame, so those unfreeze it.
 - `fit` searches 24 lunar-apogee starting points, because a single Gauss-Newton start lands in a local minimum: the apogee longitude is periodic in the residual, so the linearised step overshoots and gets clamped. On the New Delhi reference file this was the difference between 3.7 and 0.003 degrees RMS.
 - The manda correction is applied as a **magnitude** with the quadrant choosing the sign. Feeding an already-signed jya into the quadrant rule inverts the equation over the half orbit from perigee back to apogee; that bug was worth up to 10 degrees for the Moon and is locked by `test/surya_siddhanta_engine_test.dart`.
-- Sunrise, sunset, moonrise and moonset still come from Swiss Ephemeris, so Surya Siddhanta mode is SS lunar limbs on modern solar events - not a faithful reproduction of a panjika that computes its own sunrise. Sankranti is *not* in that list: it is solved from the ephemeris, so the Bengali month and the Hindu masa do follow the school.
+- Sunrise, sunset, moonrise and moonset still come from Swiss Ephemeris, so Surya Siddhanta mode is SS lunar limbs on modern solar events - not a faithful reproduction of a panjika that computes its own sunrise. Sankranti is _not_ in that list: it is solved from the ephemeris, so the Bengali month and the Hindu masa do follow the school.
 - The background notification isolate reads the same preference and sets `activePanchangSchool` before computing.
 - **Calibrated against a New Delhi Surya Siddhanta panjika.** The tuning is fitted to 26 tithi and nakshatra end times for New Delhi from `tool/reference/surya_siddhanta_delhi_2005_2026.csv` (2005-2026) and then checked against 15 **yoga** end times held out of the fit (`..._yoga.csv`). All 41 boundaries reproduce to within 0.005 deg, the rounding limit of the source's own times. The fitted bijas are all under ~1.1 arcsec/year, i.e. the source applies no drift correction - traditional siddhantic arithmetic - and this engine is the same model. The **bisuddha** option is the Drik Ganita school (Swiss Ephemeris + Lahiri, observationally drift-corrected) and therefore misses the same boundaries by 1-3 degrees; that is the difference between the two schools, not a defect in either. `verify <reference.csv>` is the regression check for the shipped tuning and exits non-zero above 0.01 deg.
-- **The reference source is not a printed Gupta Press page.** It is a Surya Siddhanta panjika for New Delhi (values agree with Drik Panchang's Surya Siddhanta mode) whose sunrise is *modern*: the app's Swiss Delhi sunrise reproduces all 15 of its sunrises to 0 minutes, while Kolkata is off ~45 min. So 0.005 deg measures agreement with the same arithmetic, and it validates the engine against a Surya Siddhanta source, not against the printed page. For the same reason **siddhantic sunrise is deliberately not implemented** - it would move the app away from this source. Sunrise/sunset/moonrise/moonset and everything derived from them (udaya-tithi labelling, Rahu kalam, Yamaganda, Gulika, Abhijit, Choghadiya, Hora) stay modern; sankranti and the Bengali month *do* follow the school, since they are solved from the ephemeris.
-- `test/panchang_school_dispatch_test.dart` guards the seam *between* the schools, which no single-school test can: it asserts `ephemerisFor` returns the implementation the school names (distinct `tag`s, so cache keys cannot collide), that the two disagree by >0.2 deg of Sun and >0.5 deg of Moon at one instant, that `suryasiddhanta` lands within 0.01 deg of a reference tithi/nakshatra boundary while `bisuddha` misses it by >0.2 deg, and that the SS path is geocentric (same result for Delhi and Kolkata).
+- **The reference source is not a printed Gupta Press page.** It is a Surya Siddhanta panjika for New Delhi (values agree with Drik Panchang's Surya Siddhanta mode) whose sunrise is _modern_: the app's Swiss Delhi sunrise reproduces all 15 of its sunrises to 0 minutes, while Kolkata is off ~45 min. So 0.005 deg measures agreement with the same arithmetic, and it validates the engine against a Surya Siddhanta source, not against the printed page. For the same reason **siddhantic sunrise is deliberately not implemented** - it would move the app away from this source. Sunrise/sunset/moonrise/moonset and everything derived from them (udaya-tithi labelling, Rahu kalam, Yamaganda, Gulika, Abhijit, Choghadiya, Hora) stay modern; sankranti and the Bengali month _do_ follow the school, since they are solved from the ephemeris.
+- `test/panchang_school_dispatch_test.dart` guards the seam _between_ the schools, which no single-school test can: it asserts `ephemerisFor` returns the implementation the school names (distinct `tag`s, so cache keys cannot collide), that the two disagree by >0.2 deg of Sun and >0.5 deg of Moon at one instant, that `suryasiddhanta` lands within 0.01 deg of a reference tithi/nakshatra boundary while `bisuddha` misses it by >0.2 deg, and that the SS path is geocentric (same result for Delhi and Kolkata).
 
 ### Nishita observances never disappear
+
 A `timingOverride: nishita` festival now always finds a day, instead of vanishing for a whole year when its tithi ends between sunset and the Nishita window.
 
 - Symptom: `findNextFestivalOccurrence` returned `null`, so Janmashtami 2025/2026/2035 were missing under Suryasiddhanta (SS ends Krishna Ashtami 2026-09-04 at 23:03 IST, 54 min before the 23:57 window opening) and Maha Shivaratri 2031 was missing under **both** schools (it also skipped a year in 2041).
-- The fallback matches on the sunset sample, but **only** when the same tithi did not already cover the *previous* night's window - otherwise a ~20 h tithi still runs at the next sunset and every observance becomes two days. Measured: the naive "accept sunset" rule changed 27 of 96 nishita festival-years; this rule changes 4, all of them the previously-empty ones, with 0 empty and 0 new multi-day runs.
+- The fallback matches on the sunset sample, but **only** when the same tithi did not already cover the _previous_ night's window - otherwise a ~20 h tithi still runs at the next sunset and every observance becomes two days. Measured: the naive "accept sunset" rule changed 27 of 96 nishita festival-years; this rule changes 4, all of them the previously-empty ones, with 0 empty and 0 new multi-day runs.
 - New `PanchangCheckpoints.previousNishita` = `sunrise - 8/15 night` (the previous night's Nishita opening; the two nights differ by under 2 min, so it costs no extra solar call), sampled into `PanchangCheckpointTithis.previousNishita` and passed as `PanchangData.fromRawTithi(rawTithiPreviousNishita:)`. Both matching seams carry it - `projectPanchangDay` (scan, grid flags) and `TithiCheckpoints`/`computePanchangData` (grid, day detail) - so the scan cannot find a date the grid leaves blank.
 - Files: `panchang_day.dart`, `panchang_day_resolver.dart`, `panchang_day_projection.dart`, `tithi_transitions.dart`, `panchang_data.dart`. Regression tests: `test/panchang_data_test.dart` ("Nishita window matching") and `test/festival_occurrence_scan_test.dart` (Janmashtami 2026 under SS, through `computePanchangData`).
 
@@ -342,6 +382,7 @@ A `timingOverride: nishita` festival now always finds a day, instead of vanishin
 ## 2026-10-26 - 0.7.20+21
 
 ### Sankranti transit matching and punya kala
+
 Makar Sankranti and Pongal now fall on the Sun's actual ingress day and show the traditional punya kala.
 
 - `sankranti: "Makara"` matches the ingress day; an after-sunset ingress moves the observance to the next day (Drik rule).
@@ -351,6 +392,7 @@ Makar Sankranti and Pongal now fall on the Sun's actual ingress day and show the
 - Files: `panchang_day_resolver.dart` (`_sankranti`), `panchang_data.dart`, `puja_samay.dart`, `assets/festivals.json`.
 
 ### Bhadra-free puja windows
+
 Raksha Bandhan's puja window now avoids Bhadra (Vishti karana).
 
 - `avoid_bhadra: true` trims the kalam to the Bhadra-free part, falls back to Pradosha when the target window is covered, and hides the card if neither has 12 usable minutes.
@@ -358,6 +400,7 @@ Raksha Bandhan's puja window now avoids Bhadra (Vishti karana).
 - Files: `lib/features/panchang/domain/bhadra.dart`, `puja_samay.dart`, `tithi_transitions.dart`, `assets/festivals.json`.
 
 ### Godhuli puja kala
+
 Tulsi Vivah now shows its Godhuli (cow-dust hour) window instead of aparahna.
 
 - `puja_kala: "godhuli"` spans sunset to sunset + one day-ghati (D/30).
@@ -366,6 +409,7 @@ Tulsi Vivah now shows its Godhuli (cow-dust hour) window instead of aparahna.
 ## 2026-10-26 - 0.7.20+21
 
 ### Purvahna and Aparahna observance windows
+
 Festival matching and Puja Samay cards now support the forenoon and afternoon
 observance checkpoints.
 
@@ -378,6 +422,7 @@ observance checkpoints.
 ## 2026-10-26 - 0.7.20+21
 
 ### Arunodaya timing checkpoint
+
 Festival rules may use `timingOverride: "brahma_muhurta_start"` or
 `"arunodaya_start"` for the two pre-sunrise checkpoints.
 
@@ -387,6 +432,7 @@ Festival rules may use `timingOverride: "brahma_muhurta_start"` or
   authoring documentation use the same checkpoint.
 
 ### Sayahna and Chandrodaya checkpoints
+
 Festival rules may use the three Sayahna positions or `chandrodaya` for
 the Moonrise checkpoint.
 
@@ -400,6 +446,7 @@ the Moonrise checkpoint.
 ## 2026-10-26 - 0.7.20+21
 
 ### Pradosh timing overrides
+
 Festival rules may use `timingOverride: "pradosh"` to evaluate the tithi at
 the Pradosh dusk checkpoint.
 
@@ -412,6 +459,7 @@ the Pradosh dusk checkpoint.
 ## 2026-10-25 - 0.7.20+21
 
 ### Jyotish native-state and edge-case hardening
+
 Concurrent native calculations remain isolated, and boundary longitude/time inputs
 produce consistent results across package and app services.
 
@@ -421,6 +469,7 @@ produce consistent results across package and app services.
 - Zodiac, sign-position, and nakshatra accessors normalize negative longitudes.
 
 ### Vedic charts honour the requested house system and sidereal frame
+
 `calculateVedicChart(houseSystem:)` now calculates and labels the system the
 caller asks for, with cusps and angles taken directly from the sidereal engine.
 
@@ -429,7 +478,7 @@ caller asks for, with cusps and angles taken directly from the sidereal engine.
   forces Placidus or subtracts ayanamsa from cusps/ascendant/MC. Without flags
   the method keeps its historical tropical result.
 - `VedicChartService` validates the house code and labels the result (`Whole
-  Sign`, `Placidus`, ...). 'G' (Gauquelin) stays unsupported because it writes 36
+Sign`, `Placidus`, ...). 'G' (Gauquelin) stays unsupported because it writes 36
   cusps into the standard 13-element buffer.
 - Sidereal equatorial planet requests (`useEquatorial` without `useTropical`)
   are rejected: ayanamsa is an ecliptic offset, not a right-ascension offset.
@@ -441,6 +490,7 @@ caller asks for, with cusps and angles taken directly from the sidereal engine.
   `packages/jyotish/test/{houses,planetary_dignity,geographic_location,equatorial_frame}_test.dart`.
 
 ### Ephemeris provenance and loaded data ranges are visible
+
 A missing `.se1` file no longer hides behind a position that looks like Swiss
 Ephemeris output, and startup can verify the range the library actually opened.
 
@@ -460,6 +510,7 @@ Ephemeris output, and startup can verify the range the library actually opened.
   smoke test asserts the loaded range and a Swiss provenance.
 
 ### Ephemeris batches, typed cache and opt-in native sidereal
+
 Panchang Sun/Moon work runs as one batch, cached positions can no longer mix
 frames, and callers can ask Swiss Ephemeris for native sidereal longitude.
 
@@ -487,6 +538,7 @@ frames, and callers can ask Swiss Ephemeris for native sidereal longitude.
 ## 2026-10-23 - 0.7.20+20
 
 ### Licensing resolved: AGPLv3, with install docs that match
+
 The project is now explicitly AGPLv3 end to end, and consumers are told how to
 get the fixed package instead of the unfixed upstream one.
 
@@ -503,6 +555,7 @@ get the fixed package instead of the unfixed upstream one.
   deleted: AGPL binary, unclear provenance, and no build target referenced it.
 
 ### Ephemeris assets are checksum-verified before and after install
+
 A corrupted or mismatched `.se1` now fails on launch with a clear message
 instead of surfacing later as an opaque `swe_calc` error.
 
@@ -516,6 +569,7 @@ instead of surfacing later as an opaque `swe_calc` error.
   tests can install synthetic bytes.
 
 ### A failed ephemeris install is visible on every screen
+
 The error banner moved out of the home body and above the navigator, so pushed
 screens and dialogs show it too.
 
@@ -529,6 +583,7 @@ screens and dialogs show it too.
 - Tests: `test/panchang_init_failure_overlay_test.dart`.
 
 ### CI builds the native engine and gates analyze + tests
+
 Every push and PR now runs the analyzer and the full suite with a real Swiss
 Ephemeris library instead of failing on a host without one.
 
@@ -877,7 +932,7 @@ of a single night-midpoint sample, which restores Janmashtami on 2026-09-04 in
 Delhi.
 
 - Nishita Kaal is the eighth of the fifteen night muhurtas: `sunset + 7/15
-  night` to `sunset + 8/15 night`. A `nishita` rule matches the tithi at the
+night` to `sunset + 8/15 night`. A `nishita` rule matches the tithi at the
   opening, or one still current at the close; the midpoint is never a fallback.
   The policy is `FestivalObservancePolicy.nishita` (`NishitaPolicy.windowEdges`;
   `midpoint` exists only to reproduce pre-v3 results).
@@ -1104,6 +1159,7 @@ for today's panchang, plus auspicious, inauspicious and combined timing widgets.
   dedup cache.
 
 ### Live tithi clock refresh
+
 The hero label now flips at the tithi boundary and after the app resumes,
 instead of sticking to the clock instant captured on the first read.
 

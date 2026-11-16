@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../theme/app_metrics.dart';
 
 // Right-side festival artwork for the hero moon row. Moved verbatim from

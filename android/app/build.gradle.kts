@@ -1,3 +1,4 @@
+import com.android.build.api.variant.VariantOutputConfiguration
 import org.gradle.api.tasks.compile.JavaCompile
 import java.io.File
 import java.io.FileInputStream
@@ -83,7 +84,8 @@ android {
     buildTypes {
         create("staging") {
             initWith(getByName("debug"))
-            applicationIdSuffix = ".staging"
+            // Flutter 3.50 propagates applicationIdSuffix to native library
+            // modules, which AGP correctly rejects for library projects.
             versionNameSuffix = "-staging"
             matchingFallbacks += listOf("debug")
         }
@@ -105,14 +107,18 @@ android {
         }
     }
 
-    applicationVariants.all {
-        val variant = this
-        variant.outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
-            .forEach { output ->
-                val outputName = "tithi-${variant.versionName}+${variant.versionCode}-${variant.buildType.name}.apk"
-                output.outputFileName = outputName
+}
+
+// APK output naming is configured through the public variant API in AGP 9.
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            if (output.outputType == VariantOutputConfiguration.OutputType.SINGLE) {
+                val outputName =
+                    "tithi-${output.versionName.get()}+${output.versionCode.get()}-${variant.name}.apk"
+                output.outputFileName.set(outputName)
             }
+        }
     }
 }
 
