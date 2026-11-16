@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 
-/// A user-friendly error display widget that replaces the default red error screen.
-/// Used both as a global ErrorWidget.builder replacement and for local error states.
+/// The last-resort screen shown when a widget throws.
+///
+/// Installed as the global `ErrorWidget.builder` in `main.dart`, so a build
+/// failure renders this instead of Flutter's red screen. Local, recoverable
+/// data errors use [ErrorState] instead: they stay inside the page and keep
+/// its content, while this replaces it.
 class ErrorDisplayWidget extends StatelessWidget {
   /// Optional error message to display
   final String? message;
@@ -12,15 +18,7 @@ class ErrorDisplayWidget extends StatelessWidget {
   /// Optional retry callback
   final VoidCallback? onRetry;
 
-  /// Whether to show a compact version (for inline errors)
-  final bool compact;
-
-  const ErrorDisplayWidget({
-    super.key,
-    this.message,
-    this.onRetry,
-    this.compact = false,
-  });
+  const ErrorDisplayWidget({super.key, this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -28,92 +26,46 @@ class ErrorDisplayWidget extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    if (compact) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.warningBackground(isDark),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.warningBorderColor()),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.warning_amber_rounded,
-              color: AppTheme.warningStrong,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                message ?? l10n?.somethingWentWrong ?? 'Something went wrong',
-                style: TextStyle(
-                  color: AppTheme.warningTextColor(isDark),
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: onRetry,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(l10n?.retry ?? 'Retry'),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
     return Material(
       color: theme.scaffoldBackgroundColor,
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(AppSpacing.s32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(AppSpacing.s20),
                 decoration: BoxDecoration(
                   color: AppTheme.warningSoftBackground(),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.error_outline_rounded,
-                  size: 56,
+                  size: AppIconSize.display,
                   color: AppTheme.warningIconColor(isDark),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.s24),
               Text(
                 l10n?.oopsSomethingWentWrong ?? 'Oops! Something went wrong',
                 style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: AppTypography.bold,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               Text(
                 message ??
                     l10n?.unexpectedErrorOccurred ??
                     'An unexpected error occurred. Please try again.',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  color: context.secondaryInk,
                 ),
                 textAlign: TextAlign.center,
               ),
               if (onRetry != null) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.s24),
                 FilledButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),

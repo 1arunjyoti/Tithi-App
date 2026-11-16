@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/panchang_provider.dart';
 import 'panchang_init_error_banner.dart';
+import '../theme/app_metrics.dart';
 
 /// Pins [PanchangInitErrorBanner] above every route in the app.
 ///
@@ -33,7 +34,7 @@ class PanchangInitFailureOverlay extends ConsumerWidget {
         const SafeArea(
           bottom: false,
           child: Padding(
-            padding: EdgeInsets.only(top: 8),
+            padding: EdgeInsets.only(top: AppSpacing.s8),
             child: PanchangInitErrorBanner(),
           ),
         ),

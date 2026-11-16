@@ -11,8 +11,11 @@ import '../../../core/anim/press_scale.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../services/share_file/share_file.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_motion.dart';
 import '../../../theme/app_typography.dart';
 import '../providers/quote_providers.dart';
+import '../../../widgets/app_card.dart';
 import '../../../widgets/shloka_share_card.dart';
 
 export '../providers/quote_providers.dart'
@@ -211,9 +214,16 @@ void _showShareOptions(
     builder: (sheetContext) => Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        AppSpacing.s12,
+        AppSpacing.s20,
+        AppSpacing.s24,
+      ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -224,10 +234,10 @@ void _showShareOptions(
               height: 4,
               decoration: BoxDecoration(
                 color: context.colors.onSurfaceVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.micro),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Row(
               children: [
                 Container(
@@ -235,12 +245,16 @@ void _showShareOptions(
                   height: 44,
                   decoration: BoxDecoration(
                     color: AppTheme.festivalTileBackground(context),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.tile),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(Icons.share_rounded, color: accent, size: 22),
+                  child: Icon(
+                    Icons.share_rounded,
+                    color: accent,
+                    size: AppIconSize.large,
+                  ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -249,11 +263,11 @@ void _showShareOptions(
                       Text(
                         l10n?.shareVerse ?? 'Share verse',
                         style: context.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: AppTypography.bold,
                           color: context.colors.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSpacing.s2),
                       Text(
                         '— ${shloka.source}',
                         maxLines: 1,
@@ -269,7 +283,7 @@ void _showShareOptions(
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             _ShareOption(
               icon: Icons.image_outlined,
               title: l10n?.shareAsImage ?? 'Share as image',
@@ -284,7 +298,7 @@ void _showShareOptions(
                 );
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             _ShareOption(
               icon: Icons.short_text_rounded,
               title: l10n?.shareAsText ?? 'Share as text',
@@ -305,7 +319,7 @@ void _showShareOptions(
                 );
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             _ShareOption(
               icon: Icons.copy_rounded,
               title: l10n?.copyText ?? 'Copy text',
@@ -376,14 +390,14 @@ class _ShareOption extends StatelessWidget {
     return PressScale(
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         child: Ink(
           decoration: AppTheme.festivalRowDecoration(context),
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.tile),
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.s12),
               child: Row(
                 children: [
                   Container(
@@ -391,12 +405,12 @@ class _ShareOption extends StatelessWidget {
                     height: 44,
                     decoration: BoxDecoration(
                       color: AppTheme.festivalTileBackground(context),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.tile),
                     ),
                     alignment: Alignment.center,
-                    child: Icon(icon, color: accent, size: 22),
+                    child: Icon(icon, color: accent, size: AppIconSize.large),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,11 +419,11 @@ class _ShareOption extends StatelessWidget {
                         Text(
                           title,
                           style: context.textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: AppTypography.bold,
                             color: context.colors.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSpacing.s2),
                         Text(
                           subtitle,
                           style: context.textTheme.bodySmall?.copyWith(
@@ -421,7 +435,7 @@ class _ShareOption extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   Icon(
                     Icons.chevron_right_rounded,
                     color: context.colors.onSurface.withValues(
@@ -455,16 +469,10 @@ class DailyQuoteWidget extends ConsumerWidget {
     // control bar stay mounted and never blink.
     return AnimatedSize(
       alignment: Alignment.topCenter,
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 250),
-      ),
-      curve: Curves.easeInOutCubic,
+      duration: AppMotion.of(context, AppMotion.emphasized),
+      curve: AppMotion.emphasizedCurve,
       child: AnimatedSwitcher(
-        duration: AppTheme.animationDuration(
-          context,
-          const Duration(milliseconds: 180),
-        ),
+        duration: AppMotion.of(context, AppMotion.subtle),
         transitionBuilder: (child, animation) =>
             FadeTransition(opacity: animation, child: child),
         layoutBuilder: (currentChild, _) => currentChild!,
@@ -554,11 +562,11 @@ class DailyQuoteWidget extends ConsumerWidget {
       ref.read(quoteExpandedProvider.notifier).state = !isExpanded;
     }
 
-    return Container(
-      // Shared home gutter (matches CalendarWidget exactly). No key: the
+    return AppCard(
+      // Shared page gutter (matches CalendarWidget exactly). No key: the
       // shell stays mounted across day browse; only the content below swaps.
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.pageGutter),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -570,10 +578,7 @@ class DailyQuoteWidget extends ConsumerWidget {
           // verse must grow from the pinned header downward, never float
           // mid-card and snap back when the transition ends.
           AnimatedSwitcher(
-            duration: AppTheme.animationDuration(
-              context,
-              const Duration(milliseconds: 200),
-            ),
+            duration: AppMotion.of(context, AppMotion.standard),
             transitionBuilder: (child, animation) =>
                 FadeTransition(opacity: animation, child: child),
             layoutBuilder: (currentChild, previousChildren) => Stack(
@@ -602,7 +607,12 @@ class DailyQuoteWidget extends ConsumerWidget {
                   // Festival caption, shown when the verse was picked for a festival.
                   if (wisdom.festivalName != null)
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.s20,
+                        AppSpacing.s10,
+                        AppSpacing.s20,
+                        0,
+                      ),
                       child: Center(
                         child: _FestivalChip(name: wisdom.festivalName!),
                       ),
@@ -610,13 +620,18 @@ class DailyQuoteWidget extends ConsumerWidget {
 
                   // Verse body: ornament, Sanskrit, transliteration, translation.
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s20,
+                      AppSpacing.s12,
+                      AppSpacing.s20,
+                      0,
+                    ),
                     child: Column(
                       children: [
                         ExcludeSemantics(
                           child: Icon(
                             Icons.format_quote_rounded,
-                            size: 40,
+                            size: AppIconSize.feature,
                             color: AppTheme.festivalAccent(
                               context,
                             ).withValues(alpha: 0.35),
@@ -627,14 +642,14 @@ class DailyQuoteWidget extends ConsumerWidget {
                           shloka.text,
                           textAlign: TextAlign.center,
                           style: AppTypography.shloka(
-                            fontSize: 19,
+                            fontSize: AppTypography.sizeHeading,
                             color: context.colors.onSurface,
                           ),
                         ),
 
                         // Transliteration (Always visible, muted)
                         if (shloka.transliteration.isNotEmpty) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.s8),
                           Text(
                             shloka.transliteration,
                             textAlign: TextAlign.center,
@@ -652,7 +667,7 @@ class DailyQuoteWidget extends ConsumerWidget {
                         AnimatedCrossFade(
                           firstChild: const SizedBox(width: double.infinity),
                           secondChild: Padding(
-                            padding: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.only(top: AppSpacing.s12),
                             child: _TranslationPanel(
                               translation: translation,
                               showingHindi: showingHindi,
@@ -674,14 +689,11 @@ class DailyQuoteWidget extends ConsumerWidget {
                           crossFadeState: isExpanded
                               ? CrossFadeState.showSecond
                               : CrossFadeState.showFirst,
-                          duration: AppTheme.animationDuration(
-                            context,
-                            const Duration(milliseconds: 300),
-                          ),
+                          duration: AppMotion.of(context, AppMotion.page),
                         ),
 
                         // Source attribution (always visible)
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.s12),
                         _SourceLine(source: shloka.source),
                       ],
                     ),
@@ -693,7 +705,12 @@ class DailyQuoteWidget extends ConsumerWidget {
 
           // Bottom control bar: browse days + expand toggle.
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s16,
+              AppSpacing.s12,
+            ),
             child: _ControlBar(
               atPastBound: atPastBound,
               atToday: atToday,
@@ -734,7 +751,12 @@ class _WisdomHeader extends StatelessWidget {
     // theme) — so this card sits visually with its home-screen neighbours.
     final accent = AppTheme.festivalAccent(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s16,
+        AppSpacing.s14,
+        AppSpacing.s12,
+        0,
+      ),
       child: Row(
         children: [
           Container(
@@ -742,12 +764,16 @@ class _WisdomHeader extends StatelessWidget {
             height: 44,
             decoration: BoxDecoration(
               color: AppTheme.festivalTileBackground(context),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.tile),
             ),
             alignment: Alignment.center,
-            child: Icon(Icons.auto_stories_rounded, size: 22, color: accent),
+            child: Icon(
+              Icons.auto_stories_rounded,
+              size: AppIconSize.large,
+              color: accent,
+            ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,25 +782,25 @@ class _WisdomHeader extends StatelessWidget {
                 Text(
                   l10n?.dailyWisdom ?? 'Daily Wisdom',
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: AppTypography.bold,
                     color: context.colors.onSurface,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.s4),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: AppSpacing.s8,
+                    vertical: AppSpacing.s4,
                   ),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.round),
                   ),
                   child: Text(
                     dayLabel,
                     style: context.textTheme.labelSmall?.copyWith(
                       color: accent,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: AppTypography.bold,
                       letterSpacing: 0.4,
                     ),
                   ),
@@ -792,25 +818,27 @@ class _WisdomHeader extends StatelessWidget {
                   // Shared helper: white-on-deep-gold (light),
                   // near-black-on-gold (dark), onPrimary in high contrast.
                   foregroundColor: AppTheme.onFestivalAccent(context),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s12,
+                  ),
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
                   textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
+                    fontSize: AppTypography.sizeDetail,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
                 child: Text(l10n?.today ?? 'Today'),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
           ],
           PressScale(
             child: IconButton(
               onPressed: onShare,
               tooltip: l10n?.share ?? 'Share',
-              icon: const Icon(Icons.share_rounded, size: 18),
+              icon: const Icon(Icons.share_rounded, size: AppIconSize.dense),
               color: context.colors.onSurface.withValues(
                 alpha: AppTheme.contrastAlpha(context, 0.7),
               ),
@@ -838,24 +866,31 @@ class _FestivalChip extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final accent = AppTheme.festivalAccent(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.round),
         border: Border.all(color: accent.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.celebration_rounded, size: 14, color: accent),
-          const SizedBox(width: 6),
+          Icon(
+            Icons.celebration_rounded,
+            size: AppIconSize.inline,
+            color: accent,
+          ),
+          const SizedBox(width: AppSpacing.s6),
           Flexible(
             child: Text(
               l10n?.chosenForFestival(name) ?? 'Chosen for $name',
               overflow: TextOverflow.ellipsis,
               style: context.textTheme.labelSmall?.copyWith(
                 color: accent,
-                fontWeight: FontWeight.w800,
+                fontWeight: AppTypography.bold,
               ),
             ),
           ),
@@ -893,10 +928,13 @@ class _TranslationPanel extends StatelessWidget {
     final highContrast = AppTheme.highContrastOf(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s14,
+        vertical: AppSpacing.s12,
+      ),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: highContrast ? 0.12 : 0.07),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(
           color: accent.withValues(alpha: highContrast ? 0.5 : 0.14),
         ),
@@ -907,19 +945,21 @@ class _TranslationPanel extends StatelessWidget {
             _TranslationText(text: translation!, isHindi: showingHindi),
           // Reveal every available translation on demand.
           if (secondaryTranslation != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             if (showAll) ...[
               _TranslationText(
                 text: secondaryTranslation!,
                 isHindi: showingSecondaryHindi,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
             ],
             PressScale(
               child: TextButton(
                 onPressed: onToggleShowAll,
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s8,
+                  ),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
@@ -953,25 +993,25 @@ class _SourceLine extends StatelessWidget {
       height: 1.5,
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(1),
+        borderRadius: BorderRadius.circular(AppRadius.micro),
       ),
     );
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         hairline(),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Flexible(
           child: Text(
             '— $source',
             textAlign: TextAlign.center,
             style: context.textTheme.labelMedium?.copyWith(
               color: accent,
-              fontWeight: FontWeight.w800,
+              fontWeight: AppTypography.bold,
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         hairline(),
       ],
     );
@@ -1005,10 +1045,13 @@ class _ControlBar extends StatelessWidget {
     final onSurface = context.colors.onSurface;
     final highContrast = AppTheme.highContrastOf(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s6,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
         color: onSurface.withValues(alpha: highContrast ? 0.06 : 0.05),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(
           color: onSurface.withValues(alpha: highContrast ? 0.3 : 0.08),
         ),
@@ -1039,7 +1082,7 @@ class _ControlBar extends StatelessWidget {
                     ? Icons.keyboard_arrow_up_rounded
                     : Icons.keyboard_arrow_down_rounded,
                 color: accent,
-                size: 20,
+                size: AppIconSize.medium,
               ),
               label: Text(
                 isExpanded
@@ -1047,11 +1090,11 @@ class _ControlBar extends StatelessWidget {
                     : (l10n?.showTranslation ?? 'Show translation'),
                 style: context.textTheme.labelLarge?.copyWith(
                   color: accent,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: AppTypography.bold,
                 ),
               ),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
                 minimumSize: const Size(0, 40),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
@@ -1092,9 +1135,9 @@ class _TranslationText extends StatelessWidget {
       textAlign: TextAlign.center,
       style: isHindi
           ? AppTypography.shloka(
-              fontSize: 15,
+              fontSize: AppTypography.sizeProse,
               height: 1.5,
-              fontWeight: FontWeight.w500,
+              fontWeight: AppTypography.medium,
               color: context.colors.onSurface.withValues(alpha: 0.9),
             )
           : context.textTheme.bodyMedium?.copyWith(

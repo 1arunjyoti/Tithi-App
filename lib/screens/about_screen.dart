@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
-import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
 import '../core/location/timezone_resolver.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/navigation/haptic_back_button.dart';
 import '../providers/version_provider.dart';
 import '../features/settings/widgets/app_update_settings.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
+import '../widgets/app_card.dart';
+import '../widgets/page_scaffold.dart';
+import '../widgets/screen_body.dart';
 
 class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
@@ -24,231 +27,146 @@ class AboutScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final versionAsync = ref.watch(packageInfoProvider);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(l10n?.aboutApp ?? 'About'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: PressScale(
-          child: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: context.colors.surface.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.arrow_back_rounded),
-            ),
-            onPressed: () => Navigator.pop(context),
+    return PageScaffold(
+      title: Text(l10n?.aboutApp ?? 'About'),
+      leading: const HapticBackButton(),
+      body: ScreenBody(
+        child: ListView(
+          padding: EdgeInsets.only(
+            top: AppSpacing.s16,
+            bottom: AppSpacing.s16 + AppTheme.navigationBarInset(context),
           ),
-        ),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: Container(
-                decoration: AppTheme.backgroundDecoration(context),
-              ),
+          children: [
+            _AboutHeroCard(versionAsync: versionAsync),
+            const SizedBox(height: AppSpacing.s20),
+            const AppUpdateCard(),
+            const SizedBox(height: AppSpacing.s20),
+            _AboutSectionCard(
+              icon: Icons.auto_awesome_rounded,
+              title:
+                  l10n?.aboutBuiltForDailyPractice ??
+                  'Built for daily practice',
+              description:
+                  l10n?.aboutDailyPracticeDescription ??
+                  'Tithi blends traditional Panchang wisdom with modern clarity, so your rituals and observances stay on time and effortless.',
             ),
-          ),
-          SafeArea(
-            // The page background paints behind the gesture handle; the list
-            // pads its own last row clear of it instead.
-            bottom: false,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    24,
-                    24,
-                    24,
-                    24 + AppTheme.navigationBarInset(context),
-                  ),
-                  children: [
-                    _AboutHeroCard(versionAsync: versionAsync),
-                    const SizedBox(height: 20),
-                    const AppUpdateCard(),
-                    const SizedBox(height: 20),
-                    _AboutSectionCard(
-                      icon: Icons.auto_awesome_rounded,
-                      title:
-                          l10n?.aboutBuiltForDailyPractice ??
-                          'Built for daily practice',
-                      description:
-                          l10n?.aboutDailyPracticeDescription ??
-                          'Tithi blends traditional Panchang wisdom with modern clarity, so your rituals and observances stay on time and effortless.',
-                    ),
-                    const SizedBox(height: 16),
-                    _AboutSectionCard(
-                      icon: Icons.explore_rounded,
-                      title: l10n?.aboutWhatsInside ?? 'What\'s inside',
-                      description:
-                          l10n?.aboutFeaturesDescription ??
-                          'Accurate tithi and nakshatra tracking, festival countdowns, local sunrise and sunset, and calm daily inspiration.',
-                    ),
-                    const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
+            _AboutSectionCard(
+              icon: Icons.explore_rounded,
+              title: l10n?.aboutWhatsInside ?? 'What\'s inside',
+              description:
+                  l10n?.aboutFeaturesDescription ??
+                  'Accurate tithi and nakshatra tracking, festival countdowns, local sunrise and sunset, and calm daily inspiration.',
+            ),
+            const SizedBox(height: AppSpacing.s16),
 
-                    _AboutSectionCard(
-                      icon: Icons.offline_bolt_rounded,
-                      title:
-                          l10n?.privacyYourDataStays ??
-                          'Your Data Stays With You',
-                      description:
-                          l10n?.privacyYourDataDesc ??
-                          'Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, event processing happen directly on your device and the app keeps working without a network. We do not collect, store, or transmit your personal data to any external servers.',
+            _AboutSectionCard(
+              icon: Icons.offline_bolt_rounded,
+              title: l10n?.privacyYourDataStays ?? 'Your Data Stays With You',
+              description:
+                  l10n?.privacyYourDataDesc ??
+                  'Tithi is designed with a privacy-first, offline-first architecture. All astronomical calculations, calendar generation, event processing happen directly on your device and the app keeps working without a network. We do not collect, store, or transmit your personal data to any external servers.',
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            _AboutSectionCard(
+              icon: Icons.location_on_rounded,
+              title: l10n?.privacyLocationUsage ?? 'Location Usage',
+              description:
+                  l10n?.privacyLocationDesc ??
+                  'We request access to your location solely to calculate accurate Tithi, Nakshatra, and sunrise/sunset timings, which depend on your specific geographic coordinates. Your location data is processed locally by the app and is never shared with third parties or stored on our servers.',
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            _AboutSectionCard(
+              icon: Icons.signal_wifi_off_rounded,
+              title: l10n?.privacyOffline ?? 'Offline Functionality',
+              description:
+                  l10n?.privacyOfflineDesc ??
+                  'The app works completely offline. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.',
+            ),
+            const SizedBox(height: AppSpacing.s16),
+            _AboutSectionCard(
+              icon: Icons.code_rounded,
+              title: l10n?.privacyOpenSource ?? 'Open Source Transparency',
+              description:
+                  l10n?.privacyOpenSourceDesc ??
+                  'Tithi is an open-source project. Our code is publicly available for audit, ensuring that our privacy promises are backed by verifiable transparency. What you see is exactly what you get.',
+            ),
+            const SizedBox(height: AppSpacing.s20),
+            // Full-card tap target: AppCard owns the ripple, the radius
+            // shared by card and ripple, and the haptic. It keeps the
+            // default pressedScale of 1.0 so the splash reads as a
+            // full-card press instead of popping inside a scaled box.
+            AppCard(
+              padding: const EdgeInsets.all(AppSpacing.s20),
+              onTap: () => _openPrivacyPolicy(context),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.s10),
+                    decoration: BoxDecoration(
+                      color: context.colors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppRadius.dense),
                     ),
-                    const SizedBox(height: 16),
-                    _AboutSectionCard(
-                      icon: Icons.location_on_rounded,
-                      title: l10n?.privacyLocationUsage ?? 'Location Usage',
-                      description:
-                          l10n?.privacyLocationDesc ??
-                          'We request access to your location solely to calculate accurate Tithi, Nakshatra, and sunrise/sunset timings, which depend on your specific geographic coordinates. Your location data is processed locally by the app and is never shared with third parties or stored on our servers.',
+                    child: Icon(
+                      Icons.language_rounded,
+                      color: context.colors.primary,
+                      size: AppIconSize.large,
                     ),
-                    const SizedBox(height: 16),
-                    _AboutSectionCard(
-                      icon: Icons.signal_wifi_off_rounded,
-                      title: l10n?.privacyOffline ?? 'Offline Functionality',
-                      description:
-                          l10n?.privacyOfflineDesc ??
-                          'The app works completely offline. It contains the Swiss Ephemeris data required for high-precision planetary calculations embedded within the app itself.',
-                    ),
-                    const SizedBox(height: 16),
-                    _AboutSectionCard(
-                      icon: Icons.code_rounded,
-                      title:
-                          l10n?.privacyOpenSource ?? 'Open Source Transparency',
-                      description:
-                          l10n?.privacyOpenSourceDesc ??
-                          'Tithi is an open-source project. Our code is publicly available for audit, ensuring that our privacy promises are backed by verifiable transparency. What you see is exactly what you get.',
-                    ),
-                    const SizedBox(height: 20),
-                    // Full-card tap target: Material wraps the whole card and
-                    // clips (antiAlias) to the glassmorphism radius, so the
-                    // splash covers every pixel of the card. Padding lives on
-                    // the InkWell's child, NOT on the Container — padding on
-                    // the Container sits outside the Material and would inset
-                    // the splash away from the card edges.
-                    //
-                    // Deliberately no PressScale here: it wraps the child in
-                    // an AnimatedScale, so the splash would render inside a
-                    // shrunken 0.94 box and pop inward instead of reading as a
-                    // full-card press.
-                    Material(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(24),
-                      clipBehavior: Clip.antiAlias,
-                      child: Ink(
-                        decoration: AppTheme.glassmorphism(
-                          context: context,
-                          ref: ref,
-                        ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(24),
-                          onTap: () {
-                            if (ref
-                                .read(accessibilityProvider)
-                                .hapticFeedback) {
-                              HapticFeedback.lightImpact();
-                            }
-                            _openPrivacyPolicy(context);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: context.colors.primary.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.language_rounded,
-                                    color: context.colors.primary,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        l10n?.detailedPrivacyPolicy ??
-                                            'Detailed privacy policy',
-                                        style: context.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: context.colors.onSurface,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        l10n?.readFullPrivacyPolicy ??
-                                            'Read the full policy on our website',
-                                        style: context.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: context.colors.onSurface
-                                                  .withValues(alpha: 0.7),
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  Icons.open_in_new_rounded,
-                                  color: context.colors.onSurface.withValues(
-                                    alpha: 0.6,
-                                  ),
-                                ),
-                              ],
-                            ),
+                  ),
+                  const SizedBox(width: AppSpacing.s12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n?.detailedPrivacyPolicy ??
+                              'Detailed privacy policy',
+                          style: context.textTheme.titleMedium?.copyWith(
+                            fontWeight: AppTypography.bold,
+                            color: context.colors.onSurface,
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    // ODbL credit for the bundled time zone boundaries; the
-                    // package's licence requires it wherever the data ships.
-                    Center(
-                      child: Text(
-                        l10n?.timezoneDataCredit ??
-                            kTimezoneBoundaryAttribution,
-                        textAlign: TextAlign.center,
-                        style: context.textTheme.labelSmall?.copyWith(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.55,
+                        const SizedBox(height: AppSpacing.s2),
+                        Text(
+                          l10n?.readFullPrivacyPolicy ??
+                              'Read the full policy on our website',
+                          style: context.textTheme.bodySmall?.copyWith(
+                            color: context.secondaryInk,
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        l10n?.applicationLegalese ??
-                            '© 2026 Tithi Project\nMade with love for Sanatan Dharma',
-                        textAlign: TextAlign.center,
-                        style: context.textTheme.labelSmall?.copyWith(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
+                  Icon(Icons.open_in_new_rounded, color: context.secondaryInk),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.s24),
+            // ODbL credit for the bundled time zone boundaries; the
+            // package's licence requires it wherever the data ships.
+            Center(
+              child: Text(
+                l10n?.timezoneDataCredit ?? kTimezoneBoundaryAttribution,
+                textAlign: TextAlign.center,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: context.hintInk,
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.s8),
+            Center(
+              child: Text(
+                l10n?.applicationLegalese ??
+                    '© 2026 Tithi Project\nMade with love for Sanatan Dharma',
+                textAlign: TextAlign.center,
+                style: context.textTheme.labelSmall?.copyWith(
+                  color: context.secondaryInk,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -269,17 +187,16 @@ class AboutScreen extends ConsumerWidget {
   }
 }
 
-class _AboutHeroCard extends ConsumerWidget {
+class _AboutHeroCard extends StatelessWidget {
   const _AboutHeroCard({required this.versionAsync});
 
   final AsyncValue<PackageInfo> versionAsync;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.s24),
       child: Column(
         children: [
           Container(
@@ -290,26 +207,29 @@ class _AboutHeroCard extends ConsumerWidget {
               shape: BoxShape.circle,
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Image.asset('assets/icons/logo_transparent.png'),
+              padding: const EdgeInsets.all(AppSpacing.s12),
+              child: Image.asset(
+                'assets/icons/logo_transparent.png',
+                excludeFromSemantics: true,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           Text(
             l10n?.tithi ?? 'Tithi',
             style: context.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: AppTypography.bold,
               color: context.colors.onSurface,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.s6),
           Text(
             l10n?.aboutTagline ?? 'Vedic calendar for modern life',
             style: context.textTheme.bodyMedium?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.7),
+              color: context.secondaryInk,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           _VersionChip(versionAsync: versionAsync),
         ],
       ),
@@ -329,42 +249,51 @@ class _VersionChip extends StatelessWidget {
       data: (info) {
         final versionLabel = '${info.version} (${info.buildNumber})';
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s12,
+            vertical: AppSpacing.s6,
+          ),
           decoration: BoxDecoration(
             color: context.colors.surface.withValues(alpha: 0.6),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             l10n?.versionText(versionLabel) ?? 'Version $versionLabel',
             style: context.textTheme.labelMedium?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.7),
+              color: context.secondaryInk,
             ),
           ),
         );
       },
       loading: () => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s6,
+        ),
         decoration: BoxDecoration(
           color: context.colors.surface.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Text(
           l10n?.versionText('...') ?? 'Version ...',
           style: context.textTheme.labelMedium?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.7),
+            color: context.secondaryInk,
           ),
         ),
       ),
       error: (error, stack) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s6,
+        ),
         decoration: BoxDecoration(
           color: context.colors.surface.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Text(
           l10n?.versionText('?') ?? 'Version ?',
           style: context.textTheme.labelMedium?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.7),
+            color: context.secondaryInk,
           ),
         ),
       ),
@@ -372,7 +301,7 @@ class _VersionChip extends StatelessWidget {
   }
 }
 
-class _AboutSectionCard extends ConsumerWidget {
+class _AboutSectionCard extends StatelessWidget {
   const _AboutSectionCard({
     required this.icon,
     required this.title,
@@ -384,36 +313,39 @@ class _AboutSectionCard extends ConsumerWidget {
   final String description;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpacing.s10),
                 decoration: BoxDecoration(
                   color: context.colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.dense),
                 ),
-                child: Icon(icon, color: context.colors.primary, size: 22),
+                child: Icon(
+                  icon,
+                  color: context.colors.primary,
+                  size: AppIconSize.large,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Text(
                   title,
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.bold,
                     color: context.colors.onSurface,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           Text(
             description,
             style: context.textTheme.bodyMedium?.copyWith(

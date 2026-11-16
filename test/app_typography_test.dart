@@ -189,5 +189,151 @@ void main() {
       ).listSync().whereType<File>().where((f) => f.path.endsWith('.txt'));
       expect(licenses.length, greaterThanOrEqualTo(14));
     });
+
+    test(
+      'the size ladder is sorted, whole-point and free of retired steps',
+      () {
+        const ladder = AppTypography.sizeLadder;
+        expect(ladder, isNotEmpty);
+
+        for (var i = 1; i < ladder.length; i++) {
+          expect(
+            ladder[i],
+            greaterThan(ladder[i - 1]),
+            reason: 'the ladder must stay ascending',
+          );
+          expect(
+            ladder[i - 1],
+            isNot(equals(ladder[i])),
+            reason: 'two steps cannot share a size',
+          );
+        }
+
+        for (final size in ladder) {
+          expect(
+            size % 1,
+            equals(0),
+            reason: '$size is fractional - half-point steps were folded away',
+          );
+        }
+
+        // The values in use before consolidation must stay retired.
+        for (final retired in <double>[
+          9,
+          10.5,
+          11.5,
+          12.5,
+          13.5,
+          14.5,
+          17,
+          19,
+        ]) {
+          expect(ladder, isNot(contains(retired)));
+        }
+
+        // Heading text is the smallest serif step; below the display floor the
+        // serif silently turns sans, so the two numbers must not drift apart.
+        expect(ladder, contains(AppTypography.sizeHeading));
+        expect(
+          AppTypography.sizeHeading,
+          greaterThanOrEqualTo(AppTypography.displayMinimumSize),
+        );
+      },
+    );
+
+    test('the weight set stops at the heaviest bundled face', () {
+      expect(AppTypography.regular, FontWeight.w400);
+      expect(AppTypography.medium, FontWeight.w500);
+      expect(AppTypography.semibold, FontWeight.w600);
+      expect(AppTypography.bold, FontWeight.w700);
+      expect(
+        AppTypography.bold,
+        FontWeight.bold,
+        reason:
+            'bold == w700; pubspec ships nothing heavier, so w800 was a '
+            'phantom weight',
+      );
+    });
+
+    test('uiTextTheme wires the family chain into every role', () {
+      final themed = AppTypography.uiTextTheme(ThemeData.light().textTheme);
+      final roles = <TextStyle?>[
+        themed.displayLarge,
+        themed.displayMedium,
+        themed.displaySmall,
+        themed.headlineLarge,
+        themed.headlineMedium,
+        themed.headlineSmall,
+        themed.titleLarge,
+        themed.titleMedium,
+        themed.titleSmall,
+        themed.bodyLarge,
+        themed.bodyMedium,
+        themed.bodySmall,
+        themed.labelLarge,
+        themed.labelMedium,
+        themed.labelSmall,
+      ];
+
+      for (final role in roles) {
+        expect(role?.fontFamily, AppTypography.uiFamily);
+        expect(role?.fontFamilyFallback, AppTypography.indicSansFallback);
+        expect(role?.fontFeatures, AppTypography.tabularFigures);
+      }
+    });
+
+    testWidgets('all three palettes share one type map and ladder sizes', (
+      tester,
+    ) async {
+      // The palettes used to hand-copy the role map; only the ink differs.
+      final themes = <String, ThemeData>{
+        'Shukla': AppTheme.shuklaTheme,
+        'Krishna': AppTheme.krishnaTheme,
+        'Pure Dark': AppTheme.pureDarkTheme,
+      };
+
+      for (final entry in themes.entries) {
+        late ThemeData resolved;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: entry.value,
+            home: Builder(
+              builder: (context) {
+                resolved = Theme.of(context);
+                return const SizedBox.shrink();
+              },
+            ),
+          ),
+        );
+
+        final name = entry.key;
+        expect(
+          resolved.textTheme.headlineLarge?.fontFamily,
+          AppTypography.displayFamily,
+          reason: '$name headlines are serif',
+        );
+        expect(
+          resolved.textTheme.headlineLarge?.fontWeight,
+          AppTypography.bold,
+          reason: '$name headlineLarge is the heaviest heading',
+        );
+        expect(
+          resolved.textTheme.titleLarge?.fontSize,
+          AppTypography.sizeHeadline,
+          reason: '$name titleLarge keeps its 22pt step',
+        );
+        expect(
+          resolved.textTheme.bodyLarge?.fontSize,
+          AppTypography.sizeSubtitle,
+          reason: '$name bodyLarge keeps the 16pt step',
+        );
+        expect(resolved.textTheme.bodyMedium?.fontSize, AppTypography.sizeBody);
+        expect(
+          resolved.appBarTheme.titleTextStyle?.fontSize,
+          AppTypography.sizeHeadline,
+          reason: '$name app-bar titles come from _appBarTitle',
+        );
+      }
+    });
   });
 }

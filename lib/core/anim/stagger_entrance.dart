@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../theme/app_motion.dart';
 
 /// One-shot staggered entrance for list rows: fade + 12px rise.
 ///
@@ -26,8 +27,8 @@ class StaggerEntrance extends StatefulWidget {
     required this.index,
     required this.child,
     this.maxStaggered = 8,
-    this.delayPerIndex = const Duration(milliseconds: 60),
-    this.duration = const Duration(milliseconds: 280),
+    this.delayPerIndex = AppMotion.staggerStep,
+    this.duration = AppMotion.entrance,
     this.slideOffset = 12.0,
   });
 
@@ -99,8 +100,8 @@ class _StaggerEntranceState extends State<StaggerEntrance> {
       );
     }
     return TweenAnimationBuilder<double>(
-      duration: AppTheme.animationDuration(context, widget.duration),
-      curve: Curves.easeOutCubic,
+      duration: AppMotion.of(context, widget.duration),
+      curve: AppMotion.standardCurve,
       tween: Tween<double>(begin: 0, end: 1),
       onEnd: () {
         if (mounted && !_completed) setState(() => _completed = true);

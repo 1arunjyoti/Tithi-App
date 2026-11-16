@@ -1,18 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/festival_filter.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_motion.dart';
 import '../features/sheets/sheet_launcher.dart';
 import '../widgets/festival_filter_chip.dart';
 import '../widgets/festival_filter_sheet.dart';
@@ -20,6 +21,11 @@ import '../widgets/festival_row_tile.dart';
 import '../widgets/major_festival_card.dart';
 import '../widgets/app_drawer_button.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/app_card.dart';
+import '../widgets/page_scaffold.dart';
+import '../widgets/screen_body.dart';
+import '../widgets/skeleton.dart';
+import '../widgets/state_views.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../core/navigation/home_tab.dart';
@@ -193,9 +199,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   /// the region the user picked).
   void _selectCategory(FestivalCategoryFilter category) {
     if (category == _filters.category) return;
-    if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.lightImpact();
-    }
+    AppHaptics.tap(ref);
     setState(() => _filters = _filters.copyWith(category: category));
   }
 
@@ -241,11 +245,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     if (!_itemScrollController.isAttached) return;
     _itemScrollController.scrollTo(
       index: 0,
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 260),
-      ),
-      curve: Curves.easeOutCubic,
+      duration: AppMotion.of(context, AppMotion.scroll),
+      curve: AppMotion.standardCurve,
     );
   }
 
@@ -259,104 +260,88 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     final occurrencesAsync = ref.watch(allFestivalOccurrencesProvider);
     final today = dateOnly(ref.watch(todayDateProvider));
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
+    return PageScaffold(
       drawer: widget.onSelectTab == null ? null : const AppDrawer(),
       onDrawerChanged: widget.onDrawerStateChanged,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: widget.onSelectTab == null
-            ? const HapticBackButton()
-            : const AppDrawerButton(),
-        title: Text(l10n?.allFestivals ?? 'All Festivals'),
-        backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            tooltip: l10n?.festivalFilterTitle ?? 'Filter festivals',
-            onPressed: _openFilters,
-            icon: Badge(
-              isLabelVisible: _filters.isActive,
-              smallSize: 8,
-              backgroundColor: context.colors.primary,
-              child: Icon(
-                Icons.tune_rounded,
-                color: _filters.isActive ? context.colors.primary : null,
-              ),
+      leading: widget.onSelectTab == null
+          ? const HapticBackButton()
+          : const AppDrawerButton(),
+      title: Text(l10n?.allFestivals ?? 'All Festivals'),
+      actions: [
+        IconButton(
+          tooltip: l10n?.festivalFilterTitle ?? 'Filter festivals',
+          onPressed: _openFilters,
+          icon: Badge(
+            isLabelVisible: _filters.isActive,
+            smallSize: 8,
+            backgroundColor: context.colors.primary,
+            child: Icon(
+              Icons.tune_rounded,
+              color: _filters.isActive ? context.colors.primary : null,
             ),
           ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: Container(
-                decoration: AppTheme.backgroundDecoration(context),
+        ),
+      ],
+      // Shared page frame: 12dp gutter and the 800 reading width. The
+      // search field, chip strip and list all sit inside it, so their
+      // own horizontal padding is gone and the cards line up with the
+      // home screen's.
+      body: ScreenBody(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(
+                top: AppSpacing.s8,
+                bottom: AppSpacing.s12,
               ),
-            ),
-          ),
-          SafeArea(
-            // Background paints behind the gesture handle; the list adds the
-            // system inset to its own bottom padding instead.
-            bottom: false,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Container(
-                    decoration: AppTheme.glassmorphism(context: context),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _onSearchChanged,
-                      textInputAction: TextInputAction.search,
-                      decoration: InputDecoration(
-                        hintText:
-                            l10n?.searchFestivalsHint ?? 'Search festivals',
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.5,
+              child: AppCard(
+                padding: EdgeInsets.zero,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _onSearchChanged,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: context.hintInk,
+                    ),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.clear_rounded),
+                            tooltip: l10n?.clearSearch ?? 'Clear search',
+                            onPressed: _clearSearch,
                           ),
-                        ),
-                        suffixIcon: _query.isEmpty
-                            ? null
-                            : IconButton(
-                                icon: const Icon(Icons.clear_rounded),
-                                onPressed: _clearSearch,
-                              ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                      ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s16,
+                      vertical: AppSpacing.s14,
                     ),
                   ),
                 ),
-                _buildCategoryChips(context),
-                Expanded(
-                  child: occurrencesAsync.when(
-                    // Same stale-first pattern as the home card: a recompute
-                    // (e.g. midnight rollover) keeps the old list up instead
-                    // of flashing a skeleton.
-                    skipLoadingOnReload: true,
-                    data: (items) => _buildList(context, items, today),
-                    loading: () => _OccurrencesLoading(
-                      bottomInset: widget.bottomContentInset,
-                    ),
-                    error: (error, _) => _OccurrencesError(
-                      message:
-                          l10n?.couldNotLoadFestivals ??
-                          'Could not load festivals. Please try again.',
-                      onRetry: () =>
-                          ref.invalidate(allFestivalOccurrencesProvider),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+            _buildCategoryChips(context),
+            Expanded(
+              child: occurrencesAsync.when(
+                // Same stale-first pattern as the home card: a recompute
+                // (e.g. midnight rollover) keeps the old list up instead
+                // of flashing a skeleton.
+                skipLoadingOnReload: true,
+                data: (items) => _buildList(context, items, today),
+                loading: () =>
+                    _OccurrencesLoading(bottomInset: widget.bottomContentInset),
+                error: (error, _) => _OccurrencesError(
+                  message:
+                      l10n?.couldNotLoadFestivals ??
+                      'Could not load festivals. Please try again.',
+                  onRetry: () => ref.invalidate(allFestivalOccurrencesProvider),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -373,12 +358,12 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     return SingleChildScrollView(
       key: AllFestivalsScreen.categoryChipsKey,
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s12),
       child: Row(
         children: [
           for (final filter in FestivalCategoryFilter.values)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: AppSpacing.s8),
               child: FestivalFilterChip(
                 label: festivalCategoryFilterLabel(l10n, filter),
                 selected: _filters.category == filter,
@@ -436,37 +421,26 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       }
     }
     if (visible.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.event_busy_rounded,
-              size: 48,
-              color: context.colors.onSurface.withValues(alpha: 0.35),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              AppLocalizations.of(context)?.noFestivalsFound ??
-                  'No festivals found',
-              style: TextStyle(
-                color: context.colors.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
+      return EmptyState(
+        icon: Icons.event_busy_rounded,
+        title:
+            AppLocalizations.of(context)?.noFestivalsFound ??
+            'No festivals found',
       );
     }
     return ScrollablePositionedList.separated(
       itemScrollController: _itemScrollController,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        32 + widget.bottomContentInset + AppTheme.navigationBarInset(context),
+      // [ScreenBody] supplies the side gutter; only the vertical rhythm and
+      // the system/nav insets are left to the list. [AppTheme.cardGap] is the
+      // same 16dp the home cards use between them.
+      padding: EdgeInsets.only(
+        bottom:
+            32 +
+            widget.bottomContentInset +
+            AppTheme.navigationBarInset(context),
       ),
       itemCount: visible.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: AppTheme.cardGap),
       itemBuilder: (context, index) {
         final item = visible[index];
         // Calendar-day diff (DST-safe); see calendarDaysBetween docs.
@@ -530,21 +504,13 @@ class _OccurrencesLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        0,
-        16,
-        32 + bottomInset + AppTheme.navigationBarInset(context),
+      padding: EdgeInsets.only(
+        bottom:
+            AppSpacing.s32 + bottomInset + AppTheme.navigationBarInset(context),
       ),
       itemCount: 6,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
-      itemBuilder: (context, _) => Container(
-        height: 76,
-        decoration: BoxDecoration(
-          color: context.colors.onSurface.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
+      separatorBuilder: (_, _) => const SizedBox(height: AppTheme.cardGap),
+      itemBuilder: (context, _) => const SkeletonBox(height: 76),
     );
   }
 }
@@ -557,34 +523,6 @@ class _OccurrencesError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: context.colors.onSurface.withValues(alpha: 0.35),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: context.colors.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(AppLocalizations.of(context)?.retry ?? 'Retry'),
-            ),
-          ],
-        ),
-      ),
-    );
+    return ErrorState(message: message, onRetry: onRetry);
   }
 }

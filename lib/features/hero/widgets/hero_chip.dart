@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/anim/press_scale.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 
 // Pill chip shared by the hero's transition / sunrise / sunset / city rows.
 // Moved verbatim from widgets/paksha_hero_card.dart (_HeroChip).
@@ -71,15 +73,19 @@ class HeroChip extends StatelessWidget {
         ? accent
         : AppTheme.homeHeroForeground(context);
     final weight =
-        fontWeight ?? (highContrast ? FontWeight.w500 : FontWeight.bold);
+        fontWeight ??
+        (highContrast ? AppTypography.medium : AppTypography.bold);
 
     final pill = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s10,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
         color: highContrast
             ? context.colors.primary.withValues(alpha: 0.1)
             : AppTheme.homeHeroChipBackground(context),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: highContrast
               ? context.colors.primary.withValues(alpha: 0.2)
@@ -89,8 +95,9 @@ class HeroChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (!inlineIcon) Icon(icon, size: 14, color: iconColor),
-          if (!inlineIcon) const SizedBox(width: 6),
+          if (!inlineIcon)
+            Icon(icon, size: AppIconSize.inline, color: iconColor),
+          if (!inlineIcon) const SizedBox(width: AppSpacing.s6),
           Flexible(
             child: Text.rich(
               TextSpan(
@@ -100,8 +107,14 @@ class HeroChip extends StatelessWidget {
                     WidgetSpan(
                       alignment: PlaceholderAlignment.middle,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(icon, size: 14, color: iconColor),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.s4,
+                        ),
+                        child: Icon(
+                          icon,
+                          size: AppIconSize.inline,
+                          color: iconColor,
+                        ),
                       ),
                     ),
                   if (highlight != null)
@@ -113,7 +126,7 @@ class HeroChip extends StatelessWidget {
                 ],
               ),
               style: TextStyle(
-                fontSize: fontSize ?? 12,
+                fontSize: fontSize ?? AppTypography.sizeCaption,
                 color: baseColor,
                 fontWeight: weight,
               ),
@@ -142,7 +155,7 @@ class HeroChip extends StatelessWidget {
         highlightColor: highContrast
             ? context.colors.primary.withValues(alpha: 0.12)
             : Colors.white.withValues(alpha: 0.18),
-        highlightRadius: BorderRadius.circular(999),
+        highlightRadius: BorderRadius.circular(AppRadius.pill),
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: onTap,

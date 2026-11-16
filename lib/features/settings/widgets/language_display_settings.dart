@@ -4,6 +4,7 @@ import '../../../providers/calendar_provider.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class LanguageSetting extends ConsumerWidget {
@@ -25,7 +26,7 @@ class LanguageSetting extends ConsumerWidget {
         currentName,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showLanguagePicker(context, ref),
@@ -85,7 +86,7 @@ class StartOfWeekSetting extends ConsumerWidget {
             : (l10n?.monday ?? 'Monday'),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () async {
@@ -118,7 +119,7 @@ class PrimaryViewSetting extends ConsumerWidget {
             : (l10n?.moon ?? 'Moon'),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () {

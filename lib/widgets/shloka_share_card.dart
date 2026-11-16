@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/shloka.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
 
 /// A single translation paragraph for the share image.
@@ -80,55 +81,55 @@ class ShlokaShareCard extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(28),
+                  padding: const EdgeInsets.all(AppSpacing.s28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.auto_stories_rounded,
-                        size: 40,
+                        size: AppIconSize.feature,
                         color: colors.primary,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.s8),
                       Text(
                         l10n?.dailyWisdom ?? 'DAILY WISDOM',
                         style: textTheme.labelMedium?.copyWith(
                           color: colors.primary,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: AppTypography.bold,
                           letterSpacing: 2,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.s20),
                       Text(
                         shloka.text,
                         textAlign: TextAlign.center,
                         style: AppTypography.shloka(
-                          fontSize: 20,
+                          fontSize: AppTypography.sizeTitle,
                           color: colors.onSurface,
                         ),
                       ),
                       if (shloka.transliteration.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: AppSpacing.s10),
                         Text(
                           shloka.transliteration,
                           textAlign: TextAlign.center,
                           style: textTheme.bodySmall?.copyWith(
-                            color: colors.onSurface.withValues(alpha: 0.6),
+                            color: context.secondaryInk,
                             fontStyle: FontStyle.italic,
                             height: 1.4,
                           ),
                         ),
                       ],
                       for (final translation in translations) ...[
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppSpacing.s14),
                         Text(
                           translation.text,
                           textAlign: TextAlign.center,
                           style: translation.isHindi
                               ? AppTypography.shloka(
-                                  fontSize: 16,
+                                  fontSize: AppTypography.sizeSubtitle,
                                   height: 1.5,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: AppTypography.medium,
                                   color: colors.onSurface.withValues(
                                     alpha: 0.9,
                                   ),
@@ -142,41 +143,41 @@ class ShlokaShareCard extends StatelessWidget {
                                 ),
                         ),
                       ],
-                      const SizedBox(height: 14),
+                      const SizedBox(height: AppSpacing.s14),
                       Text(
                         "— ${shloka.source}",
                         textAlign: TextAlign.center,
                         style: textTheme.labelMedium?.copyWith(
                           color: colors.primary,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: AppTypography.bold,
                         ),
                       ),
                       if (shloka.themes.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: AppSpacing.s10),
                         Text(
                           shloka.themes.map((t) => '#$t').join('  '),
                           textAlign: TextAlign.center,
                           style: textTheme.labelSmall?.copyWith(
                             color: colors.primary.withValues(alpha: 0.8),
-                            fontWeight: FontWeight.w600,
+                            fontWeight: AppTypography.semibold,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.s20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.calendar_month,
                             color: colors.primary,
-                            size: 20,
+                            size: AppIconSize.medium,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.s8),
                           Text(
                             l10n?.tithi ?? 'TITHI',
                             style: textTheme.titleMedium?.copyWith(
                               color: colors.primary,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: AppTypography.bold,
                               letterSpacing: 1.5,
                             ),
                           ),

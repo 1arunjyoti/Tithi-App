@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_motion.dart';
 
 class MoonAnimationWidget extends StatelessWidget {
   final double phase;
@@ -26,7 +27,7 @@ class MoonAnimationWidget extends StatelessWidget {
         context,
         const Duration(milliseconds: 350),
       ),
-      curve: Curves.easeInOutCubic,
+      curve: AppMotion.emphasizedCurve,
       tween: Tween<double>(end: phase.clamp(0.0, 1.0)),
       builder: (context, animatedPhase, _) => SizedBox(
         width: size,

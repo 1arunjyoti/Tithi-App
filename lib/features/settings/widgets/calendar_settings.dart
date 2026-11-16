@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../models/panchang_school.dart';
 import '../../../widgets/settings_widgets.dart';
@@ -21,7 +22,7 @@ class PrimaryCalendarSetting extends ConsumerWidget {
         primarySystem.label,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => showCalendarSystemPicker(context, ref, isPrimary: true),
@@ -43,7 +44,7 @@ class SecondaryCalendarSetting extends ConsumerWidget {
         secondarySystem.label,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => showCalendarSystemPicker(context, ref, isPrimary: false),
@@ -65,7 +66,7 @@ class HinduMonthSystemSetting extends ConsumerWidget {
         monthSystem.label,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showHinduMonthSystemPicker(context, ref),
@@ -121,7 +122,7 @@ class PanchangSchoolSetting extends ConsumerWidget {
         school.label,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showPanchangSchoolPicker(context, ref),
@@ -173,7 +174,7 @@ class HinduYearEraSetting extends ConsumerWidget {
         yearEra.shortLabel,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showHinduYearEraPicker(context, ref),
@@ -226,7 +227,7 @@ class TithiDisplayModeSetting extends ConsumerWidget {
             : (l10n?.tithiDisplayThirtyDays ?? '30 Days'),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showTithiDisplayModePicker(context, ref),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/anim/press_scale.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart';
+import '../theme/app_metrics.dart';
 
 /// Whether the calendar is showing something other than today: a month other
 /// than the current one, or any selected day other than today.
@@ -75,7 +76,7 @@ class JumpToTodayButton extends ConsumerWidget {
               onTap: () => goToToday(ref),
               child: Icon(
                 Icons.today_rounded,
-                size: 24,
+                size: AppIconSize.nav,
                 color: scheme.onPrimary,
               ),
             ),

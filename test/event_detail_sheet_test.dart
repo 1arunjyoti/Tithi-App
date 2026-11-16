@@ -13,6 +13,7 @@ import 'package:tithi/features/sheets/widgets/sheet_link_tile.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/storage_service.dart';
+import 'package:tithi/theme/app_typography.dart';
 import 'package:tithi/widgets/event_detail_sheet.dart';
 import 'package:tithi/widgets/tithi_detail_sheet.dart';
 
@@ -90,21 +91,23 @@ void main() {
     // Hermetic for the tithi sheet the cross-link opens: the real
     // nakshatra/yoga providers need the native ephemeris.
     nakshatraTimingsProvider.overrideWith(
-      (ref, arg) => Future<
-        ({DateTime end, int index, String nakshatra, DateTime start})?
-      >.value(),
+      (ref, arg) =>
+          Future<
+            ({DateTime end, int index, String nakshatra, DateTime start})?
+          >.value(),
     ),
     yogaKaranaTimingsProvider.overrideWith(
-      (ref, arg) => Future<
-        ({
-          int yogaIndex,
-          String yoga,
-          DateTime yogaEnd,
-          int karanaIndex,
-          String karana,
-          DateTime karanaEnd,
-        })?
-      >.value(),
+      (ref, arg) =>
+          Future<
+            ({
+              int yogaIndex,
+              String yoga,
+              DateTime yogaEnd,
+              int karanaIndex,
+              String karana,
+              DateTime karanaEnd,
+            })?
+          >.value(),
     ),
   ];
 
@@ -120,11 +123,7 @@ void main() {
         overrides: [...sheetOverrides(), ...extraOverrides],
         child: MaterialApp(
           home: Scaffold(
-            body: EventDetailSheet(
-              festival: f,
-              panchang: panchang,
-              date: date,
-            ),
+            body: EventDetailSheet(festival: f, panchang: panchang, date: date),
           ),
         ),
       ),
@@ -196,9 +195,7 @@ void main() {
       expect(find.byIcon(Icons.keyboard_arrow_up), findsNothing);
     });
 
-    testWidgets('arrow reveals all chips and collapses back', (
-      tester,
-    ) async {
+    testWidgets('arrow reveals all chips and collapses back', (tester) async {
       // Arrange
       await pumpPhoneSheet(tester, multiRegional(), day());
 
@@ -271,9 +268,7 @@ void main() {
       expect(find.text('BEGINS'), findsWidgets);
     });
 
-    testWidgets('shows the paran line once paranRule is set', (
-      tester,
-    ) async {
+    testWidgets('shows the paran line once paranRule is set', (tester) async {
       // Arrange + Act
       await pumpSheet(
         tester,
@@ -288,9 +283,7 @@ void main() {
       expect(find.textContaining('after moonrise'), findsOneWidget);
     });
 
-    testWidgets('hides both without data or without panchang', (
-      tester,
-    ) async {
+    testWidgets('hides both without data or without panchang', (tester) async {
       // Arrange + Act: no kala/rule in data.
       await pumpSheet(tester, festival(), day());
 
@@ -440,12 +433,7 @@ void main() {
 
     testWidgets('a supplied panchang wins over the date', (tester) async {
       // Arrange + Act
-      await pumpSheet(
-        tester,
-        festival(),
-        day(),
-        date: DateTime(2026, 12, 25),
-      );
+      await pumpSheet(tester, festival(), day(), date: DateTime(2026, 12, 25));
 
       // Assert: the link points at the panchang's own day.
       expect(find.text('6 October 2026'), findsOneWidget);
@@ -501,8 +489,8 @@ void main() {
       final header = tester.getTopLeft(find.text('Panchang Details')).dy;
       expect(tester.getTopLeft(caption).dy, greaterThan(header));
       final style = tester.widget<Text>(caption).style;
-      expect(style?.fontSize, 12.5);
-      expect(style?.fontWeight, FontWeight.w500);
+      expect(style?.fontSize, AppTypography.sizeCaption);
+      expect(style?.fontWeight, AppTypography.medium);
     });
 
     testWidgets('hides the note where no tithi checkpoint applies', (

@@ -7,8 +7,11 @@ import '../core/navigation/app_routes.dart';
 import '../screens/moon_phases_screen.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_motion.dart';
 import '../theme/app_typography.dart';
 import 'moon_animation_widget.dart';
+import 'state_views.dart';
 
 /// Compact widget showing countdown to next Amavasya and Purnima
 /// Designed for integration into the home screen
@@ -30,10 +33,13 @@ class MoonCountdownWidget extends ConsumerWidget {
         AppRoutes.pushFadeThrough(context, const MoonPhasesScreen());
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s8,
+        ),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.round),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -58,12 +64,14 @@ class MoonCountdownWidget extends ConsumerWidget {
               child: CircularProgressIndicator.adaptive(),
             ),
           ),
-          error: (e, _) => Center(
-            child: Text(
-              'Unable to load moon phase data',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ),
+          error: (error, _) {
+            debugPrint('Moon countdown failed: $error');
+            return ErrorState(
+              message: l10n.errorLoadingData,
+              onRetry: () => ref.invalidate(moonPhaseDataProvider),
+              variant: StateViewVariant.card,
+            );
+          },
         ),
       ),
     );
@@ -75,7 +83,6 @@ class MoonCountdownWidget extends ConsumerWidget {
     AppLocalizations l10n,
     bool isDark,
   ) {
-    final theme = Theme.of(context);
     // Same widget type as the MoonPhasesScreen destination so the
     // 'moon_icon' Hero flight scales moon-to-moon instead of morphing
     // Icon -> CustomPaint (which flashed mid-push).
@@ -125,7 +132,7 @@ class MoonCountdownWidget extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppSpacing.s16),
         // Countdown info
         Expanded(
           child: Column(
@@ -139,7 +146,7 @@ class MoonCountdownWidget extends ConsumerWidget {
                 icon: Icons.circle,
                 iconColor: AppTheme.purnimaIconColor(isDark),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               // Next Amavasya
               _CountdownRow(
                 label: l10n.nextAmavasya,
@@ -151,10 +158,7 @@ class MoonCountdownWidget extends ConsumerWidget {
           ),
         ),
         // Chevron
-        Icon(
-          Icons.chevron_right,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-        ),
+        Icon(Icons.chevron_right, color: context.hintInk),
       ],
     );
   }
@@ -179,12 +183,12 @@ class _CountdownRow extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, size: 14, color: iconColor),
-        const SizedBox(width: 6),
+        Icon(icon, size: AppIconSize.inline, color: iconColor),
+        const SizedBox(width: AppSpacing.s6),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            color: context.secondaryInk,
           ),
         ),
         const Spacer(),
@@ -237,10 +241,7 @@ class _LiveCountdownTextState extends State<_LiveCountdownText> {
     final label = _formatCountdown(_countdown);
     // Cross-fade on minute ticks instead of a hard text cut.
     return AnimatedSwitcher(
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 250),
-      ),
+      duration: AppMotion.of(context, AppMotion.emphasized),
       transitionBuilder: (child, animation) => FadeTransition(
         opacity: animation,
         child: SlideTransition(
@@ -255,7 +256,7 @@ class _LiveCountdownTextState extends State<_LiveCountdownText> {
         label,
         key: ValueKey(label),
         style: AppTypography.telemetry(
-          fontSize: 13,
+          fontSize: AppTypography.sizeDetail,
           color: theme.colorScheme.onSurface,
           letterSpacing: 0.2,
         ),

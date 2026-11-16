@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/accessibility_provider.dart';
+import 'app_metrics.dart';
 import 'app_typography.dart';
 
 /// Theme configuration for the Tithi app
@@ -10,7 +11,7 @@ import 'app_typography.dart';
 class AppTheme {
   // Common Shapes
   static final roundedShape = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(24),
+    borderRadius: BorderRadius.circular(AppRadius.card),
   );
 
   // ---------------------------------------------------------------------------
@@ -310,7 +311,7 @@ class AppTheme {
     final highContrast = highContrastOf(context);
     return BoxDecoration(
       color: accent.withValues(alpha: highContrast ? 0.18 : 0.08),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.tile),
       border: highContrast
           ? Border.all(color: accent.withValues(alpha: 0.6))
           : null,
@@ -325,7 +326,7 @@ class AppTheme {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final highContrast = highContrastOf(context);
-    final radius = BorderRadius.circular(16);
+    final radius = BorderRadius.circular(cardRadiusCompact);
     // Light: a crisp white card with the same hairline as the featured card
     // and the sheet cards. The old 5% onSurface wash composited to a muted
     // grey on the white/#F5F5F7 page, so a plain row read as disabled next
@@ -519,7 +520,7 @@ class AppTheme {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isPureDark = isPureDarkTheme(context);
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -536,7 +537,7 @@ class AppTheme {
   static BoxDecoration heroGlowBackdrop(BuildContext context) {
     // Radial highlight at top-right, mirroring `.hero` background layer.
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       gradient: RadialGradient(
         center: const Alignment(0.85, -0.4),
         radius: 1.4,
@@ -609,7 +610,7 @@ class AppTheme {
       return heroDecoration(context);
     }
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
@@ -626,7 +627,7 @@ class AppTheme {
       return heroGlowBackdrop(context);
     }
     return BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.card),
       gradient: RadialGradient(
         center: const Alignment(0.85, -0.4),
         radius: 1.4,
@@ -652,7 +653,7 @@ class AppTheme {
     if (highContrast) {
       return BoxDecoration(
         color: isDark ? Colors.black : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: AppRadius.sheetTop,
         border: Border(
           bottom: BorderSide(
             color: (isDark ? Colors.white : Colors.black).withValues(
@@ -665,7 +666,7 @@ class AppTheme {
     if (!isDark) {
       return const BoxDecoration(
         color: shuklaSurface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: AppRadius.sheetTop,
         border: Border(bottom: BorderSide(color: shuklaHairline)),
       );
     }
@@ -676,7 +677,7 @@ class AppTheme {
         end: Alignment.bottomRight,
         colors: heroGradient(context),
       ),
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+      borderRadius: AppRadius.sheetTop,
       border: isPureDark
           ? Border.all(color: Colors.white.withValues(alpha: 0.1))
           : Border.all(color: Colors.white.withValues(alpha: 0.08)),
@@ -717,7 +718,7 @@ class AppTheme {
   static BoxDecoration sheetCardDecoration(
     BuildContext context, {
     bool highContrast = false,
-    double radius = 16,
+    double radius = AppRadius.tile,
     Color? color,
     bool withBorder = true,
   }) {
@@ -739,7 +740,7 @@ class AppTheme {
   static BoxDecoration sheetCardBorderOverlay(
     BuildContext context, {
     bool highContrast = false,
-    double radius = 16,
+    double radius = AppRadius.tile,
   }) {
     return BoxDecoration(
       borderRadius: BorderRadius.circular(radius),
@@ -799,11 +800,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: systemUiOverlayStyle(Brightness.light),
-        titleTextStyle: AppTypography.display(
-          fontSize: 22,
-          color: ink,
-          height: 1.3,
-        ),
+        titleTextStyle: _appBarTitle(ink),
       ),
       // Flat white cards: 1px cool-grey edge, no elevation, no tinted shadow.
       cardTheme: CardThemeData(
@@ -812,7 +809,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.card),
           side: const BorderSide(color: shuklaHairline),
         ),
       ),
@@ -829,21 +826,51 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: surfaceColor,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.sheetTop),
       ),
-      textTheme: baseTextTheme.copyWith(
-        headlineLarge: AppTypography.display(
-          fontWeight: FontWeight.w700,
-          color: ink,
-        ),
-        headlineMedium: AppTypography.display(color: ink),
-        headlineSmall: AppTypography.display(color: ink),
-        titleLarge: AppTypography.display(color: ink, height: 1.3),
-        bodyLarge: AppTypography.ui(color: shuklaInkSecondary, fontSize: 16),
-        bodyMedium: AppTypography.ui(color: shuklaInkTertiary),
+      textTheme: _appTextTheme(
+        base: baseTextTheme,
+        ink: ink,
+        bodyInk: shuklaInkSecondary,
+        secondaryInk: shuklaInkTertiary,
       ),
+    );
+  }
+
+  /// App-bar title: 22 serif on a 1.3 line box, so a two-line title stays
+  /// centred in the bar.
+  static TextStyle _appBarTitle(Color ink) => AppTypography.display(
+    fontSize: AppTypography.sizeHeadline,
+    color: ink,
+    height: 1.3,
+  );
+
+  /// The type map every theme shares: editorial serif headings, sans body.
+  ///
+  /// Only the ink changes per theme, so the roles and sizes live in one place -
+  /// three hand-copied maps is how `titleLarge` ends up serif in one theme and
+  /// sans in another. [base] is [AppTypography.uiTextTheme] for the matching
+  /// brightness; roles the map does not override keep the Material 3 geometry,
+  /// which `Theme` merges in when the app mounts.
+  static TextTheme _appTextTheme({
+    required TextTheme base,
+    required Color ink,
+    required Color bodyInk,
+    required Color secondaryInk,
+  }) {
+    return base.copyWith(
+      headlineLarge: AppTypography.display(
+        fontWeight: AppTypography.bold,
+        color: ink,
+      ),
+      headlineMedium: AppTypography.display(color: ink),
+      headlineSmall: AppTypography.display(color: ink),
+      titleLarge: AppTypography.display(color: ink, height: 1.3),
+      bodyLarge: AppTypography.ui(
+        color: bodyInk,
+        fontSize: AppTypography.sizeSubtitle,
+      ),
+      bodyMedium: AppTypography.ui(color: secondaryInk),
     );
   }
 
@@ -878,11 +905,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: systemUiOverlayStyle(Brightness.dark),
-        titleTextStyle: AppTypography.display(
-          fontSize: 22,
-          color: Colors.white,
-          height: 1.3,
-        ),
+        titleTextStyle: _appBarTitle(Colors.white),
       ),
       cardTheme: CardThemeData(
         color: surfaceColor.withValues(alpha: 0.6), // Translucent look
@@ -897,23 +920,13 @@ class AppTheme {
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Color(0xFF240046),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.sheetTop),
       ),
-      textTheme: baseTextTheme.copyWith(
-        headlineLarge: AppTypography.display(
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-        headlineMedium: AppTypography.display(color: Colors.white),
-        headlineSmall: AppTypography.display(color: Colors.white),
-        titleLarge: AppTypography.display(color: Colors.white, height: 1.3),
-        bodyLarge: AppTypography.ui(
-          color: const Color(0xFFE0E0E0),
-          fontSize: 16,
-        ),
-        bodyMedium: AppTypography.ui(color: const Color(0xFFBDBDBD)),
+      textTheme: _appTextTheme(
+        base: baseTextTheme,
+        ink: Colors.white,
+        bodyInk: const Color(0xFFE0E0E0),
+        secondaryInk: const Color(0xFFBDBDBD),
       ),
     );
   }
@@ -951,11 +964,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: systemUiOverlayStyle(Brightness.dark),
-        titleTextStyle: AppTypography.display(
-          fontSize: 22,
-          color: Colors.white,
-          height: 1.3,
-        ),
+        titleTextStyle: _appBarTitle(Colors.white),
       ),
 
       // Standard Card Style (Not Glassmorphic by default, just clean dark cards)
@@ -963,7 +972,10 @@ class AppTheme {
         color: const Color(0xFF1E1E1E),
         elevation: 0,
         shape: roundedShape,
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        margin: const EdgeInsets.symmetric(
+          vertical: AppSpacing.s8,
+          horizontal: AppSpacing.s4,
+        ),
       ),
 
       // Distinct FAB
@@ -976,24 +988,14 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Color(0xFF1E1E1E),
         modalBackgroundColor: Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.sheetTop),
       ),
 
-      textTheme: baseTextTheme.copyWith(
-        headlineLarge: AppTypography.display(
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-        ),
-        headlineMedium: AppTypography.display(color: Colors.white),
-        headlineSmall: AppTypography.display(color: Colors.white),
-        titleLarge: AppTypography.display(color: Colors.white, height: 1.3),
-        bodyLarge: AppTypography.ui(
-          color: const Color(0xFFEEEEEE),
-          fontSize: 16,
-        ),
-        bodyMedium: AppTypography.ui(color: const Color(0xFFCCCCCC)),
+      textTheme: _appTextTheme(
+        base: baseTextTheme,
+        ink: Colors.white,
+        bodyInk: const Color(0xFFEEEEEE),
+        secondaryInk: const Color(0xFFCCCCCC),
       ),
     );
   }
@@ -1017,6 +1019,15 @@ class AppTheme {
     return highContrastOf(context) ? 1.0 : normal;
   }
 
+  /// Alpha for a 1px rule - card row separators, settings panel rules.
+  ///
+  /// High Contrast lifts hairlines to 0.22 rather than [contrastAlpha]'s full
+  /// ink: an opaque 1px line reads as a hard border, not a divider, and the
+  /// rows it separates are already at full ink there.
+  static double hairlineAlpha(BuildContext context, double normal) {
+    return highContrastOf(context) ? 0.22 : normal;
+  }
+
   /// High-contrast wrapper for any base theme. Light becomes pure
   /// white/black; dark becomes black background, white text, and a
   /// brightened primary when the base uses deep purple.
@@ -1037,7 +1048,7 @@ class AppTheme {
           color: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             side: BorderSide(
               color: Colors.black.withValues(alpha: 0.6),
               width: 1.5,
@@ -1103,11 +1114,30 @@ class AppTheme {
     return withHighContrast(base);
   }
 
-  /// Single source of truth for the home screen's card gutters: every home
-  /// card (hero, calendar, festivals, wisdom, countdowns, widget) insets
-  /// itself by exactly this on both sides, so left and right gaps can never
-  /// drift apart between widgets.
-  static const double homeCardGutter = 12.0;
+  /// Single source of truth for page card gutters: every page-level card
+  /// (home hero, calendar, festivals, wisdom, countdowns, widget, and the
+  /// cards on the pushed screens) insets itself by exactly this on both
+  /// sides, so left and right gaps can never drift apart between widgets or
+  /// screens. Pushed screens used to pick 16/24 per screen; [ScreenBody]
+  /// now applies this for them.
+  static const double pageGutter = AppSpacing.s12;
+
+  /// Home-screen spelling of [pageGutter]: the home cards *are* page cards.
+  static const double homeCardGutter = pageGutter;
+
+  /// Corner radius of a page-level card. Every standalone card (home cards,
+  /// eclipse cards, the featured festival card, about/privacy/settings
+  /// groups) uses this; 16 was the source of the "some screens are boxier"
+  /// drift.
+  static const double cardRadius = AppRadius.card;
+
+  /// Corner radius for compact tiles that live inside another surface or
+  /// stack tightly in a list (festival rows, nested stat tiles).
+  static const double cardRadiusCompact = AppRadius.tile;
+
+  /// Vertical gap between two page-level cards. Cards own no margin; the
+  /// parent list/column spaces them with this, so gaps cannot double up.
+  static const double cardGap = AppSpacing.s16;
 
   /// Horizontal breathing room inside a home-card row's surface (the selected
   /// day's wash and the press highlight).
@@ -1117,19 +1147,43 @@ class AppTheme {
   /// the wash/highlight reaches this far past it on both sides. Without it
   /// the icon tile and the trailing chevron sit exactly on the wash edge and
   /// the highlight reads as a clipped band instead of a surface.
-  static const double homeCardRowInset = 12.0;
+  static const double homeCardRowInset = AppSpacing.s12;
 
   /// Side padding the home cards themselves take so [homeCardRowInset] rows
   /// still land their content on the 16dp heading gutter
   /// (16 - [homeCardRowInset]).
-  static const double homeCardRowPadding = 4.0;
+  static const double homeCardRowPadding = AppSpacing.s4;
+
+  /// Standard page-card surface: the neutral `glassmorphism` fill/hairline at
+  /// [radius], with an optional [accent] edge for a featured card.
+  ///
+  /// This is the one entry point cards should use, so fill, edge, radius and
+  /// palette branch stay in lockstep. An accent edge is the *featured*
+  /// treatment (the featured festival card, an alert card); ordinary cards
+  /// keep the neutral hairline - colouring every card's edge makes the whole
+  /// screen read as featured.
+  static BoxDecoration cardDecoration(
+    BuildContext context, {
+    WidgetRef? ref,
+    double radius = cardRadius,
+    Color? accent,
+  }) {
+    return glassmorphism(
+      context: context,
+      ref: ref,
+      borderRadius: radius,
+      border: accent == null
+          ? null
+          : Border.all(color: accent.withValues(alpha: 0.45), width: 1.5),
+    );
+  }
 
   /// Glassmorphism decoration for cards and sheets
   static BoxDecoration glassmorphism({
     required BuildContext context,
     double opacity = 0.1,
     double blur = 20,
-    double borderRadius = 24,
+    double borderRadius = AppRadius.card,
     Border? border,
     WidgetRef? ref, // Added ref parameter
   }) {
@@ -1218,7 +1272,7 @@ class AppTheme {
   /// border is legible over any content the user scrolls under it.
   static BoxDecoration floatingOverlayDecoration(
     BuildContext context, {
-    double borderRadius = 32,
+    double borderRadius = AppRadius.sheet,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
@@ -1462,71 +1516,41 @@ extension ThemeExtension on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
 }
 
-/// Cached glassmorphism decoration data to avoid recreating on every build.
+/// The three levels of de-emphasized ink.
+///
+/// Before this the level was picked per call site: `onSurface @ 0.6` for a
+/// subtitle here, 0.65/0.7 for the same job one screen over, 0.4/0.5/0.55 for
+/// captions, and 352 raw `withValues(alpha:)` against 18 `contrastAlpha`
+/// calls - so High Contrast only lifted the 18. Pick by job, not by alpha:
+///
+/// - [secondaryInk] (0.7): information-bearing text - descriptions, subtitle
+///   lines, values under a label.
+/// - [hintInk] (0.55): metadata and quiet affordances - timestamps, chevrons,
+///   "last updated", search-field placeholders, empty-state copy.
+/// - [faintInk] (0.35): decorative glyphs only - empty-state illustration,
+///   unselected marks, out-of-month calendar days. Never copy to read.
+///
+/// Every level folds to full ink under High Contrast ([faintInk] stops at 0.6
+/// so it still reads as "not available"); go through these instead of
+/// `withValues`, which ignores the accessibility setting.
+extension MutedInk on BuildContext {
+  Color get secondaryInk =>
+      colors.onSurface.withValues(alpha: AppTheme.contrastAlpha(this, 0.7));
+
+  Color get hintInk =>
+      colors.onSurface.withValues(alpha: AppTheme.contrastAlpha(this, 0.55));
+
+  Color get faintInk => colors.onSurface.withValues(
+    alpha: AppTheme.highContrastOf(this) ? 0.6 : 0.35,
+  );
+}
+
+/// Cached glassmorphism configuration for the high-contrast branch.
 /// This provider only rebuilds when accessibility settings change.
 class GlassmorphismConfig {
   final bool isHighContrast;
 
   const GlassmorphismConfig({required this.isHighContrast});
-
-  /// Get cached decoration for a specific theme context
-  BoxDecoration getDecoration({
-    required bool isDark,
-    required bool isPureDark,
-    required Color primaryColor,
-    double opacity = 0.1,
-    double blur = 20,
-    double borderRadius = 24,
-    Border? border,
-  }) {
-    // High Contrast: solid + strong border (dark HC uses black card so it
-    // stays legible on the flattened black background).
-    if (isHighContrast) {
-      return BoxDecoration(
-        color: isDark ? Colors.black : Colors.white,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.7)
-              : Colors.black.withValues(alpha: 0.6),
-          width: 1.5,
-        ),
-      );
-    }
-    // Pure Dark (non-HC) - return solid decoration
-    if (isPureDark) {
-      return BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.1),
-        ),
-      );
-    }
-
-    // Shukla: opaque white card, 1px cool-grey edge, no shadow.
-    if (!isDark) {
-      return BoxDecoration(
-        color: AppTheme.shuklaSurface,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: border ?? Border.all(color: AppTheme.shuklaHairline),
-      );
-    }
-
-    // Standard glassmorphism (dark themes)
-    return BoxDecoration(
-      color: Colors.white.withValues(alpha: opacity),
-      borderRadius: BorderRadius.circular(borderRadius),
-      border:
-          border ??
-          Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
-      boxShadow: [
-        BoxShadow(color: primaryColor.withValues(alpha: 0.2), blurRadius: blur),
-      ],
-    );
-  }
 }
 
 /// Provider for glassmorphism configuration - only rebuilds on accessibility changes

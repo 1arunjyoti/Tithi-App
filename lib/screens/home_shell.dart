@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/navigation/home_tab.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
 import '../widgets/animated_tab_layer.dart';
 import '../widgets/floating_nav_bar.dart';
 import '../widgets/jump_to_today_button.dart';
@@ -196,10 +197,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       // bar's strip so a confirmation never lands underneath it.
       snackBarTheme: theme.snackBarTheme.copyWith(
         insetPadding: const EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          FloatingNavBar.reserve + 8,
+          AppSpacing.s16,
+          AppSpacing.s16,
+          AppSpacing.s16,
+          FloatingNavBar.reserve + AppSpacing.s8,
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/features/countdown/providers/countdown_providers.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
+import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/festival_countdown_card.dart';
 import 'package:tithi/widgets/inset_row_divider.dart';
 
@@ -76,16 +77,22 @@ void main() {
       _target(id: 'pongal', title: 'Pongal', days: 260),
     ]);
 
-    // Assert: one hairline between 3 rows, none after the last.
+    // Assert: one hairline between 3 rows, none after the last. The indent
+    // clears the day badge *and* the row's own horizontal inset, so the
+    // divider starts under the text column and not under the badge.
     expect(find.byType(InsetRowDivider), findsNWidgets(2));
     for (final divider in tester.widgetList<InsetRowDivider>(
       find.byType(InsetRowDivider),
     )) {
-      expect(divider.leadingInset, FestivalCountdownTile.textColumnInset);
+      expect(
+        divider.leadingInset,
+        FestivalCountdownTile.textColumnInset + AppTheme.homeCardRowInset,
+      );
     }
 
-    // Assert: the embedded row carries no surface of its own and no
-    // horizontal padding, so its day badge aligns with the heading.
+    // Assert: the embedded row carries no surface of its own, and its
+    // horizontal inset plus the base card's 4dp side padding add up to the
+    // heading's 16dp gutter, so its day badge aligns with the heading.
     final surface = tester.widget<Container>(
       find
           .descendant(
@@ -96,8 +103,8 @@ void main() {
     );
     expect(surface.decoration, isNull);
     final padding = surface.padding! as EdgeInsets;
-    expect(padding.left, 0);
-    expect(padding.right, 0);
+    expect(padding.left, AppTheme.homeCardRowInset);
+    expect(padding.right, AppTheme.homeCardRowInset);
     expect(padding.top, greaterThan(0));
 
     final header = tester.getTopLeft(find.text('Festival Countdowns'));

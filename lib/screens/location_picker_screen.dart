@@ -9,13 +9,19 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../l10n/app_localizations.dart';
-import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
+import '../core/navigation/haptic_back_button.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 import '../app/bootstrap.dart';
 import '../providers/location_provider.dart';
 import '../services/location_service.dart';
 import '../core/location/location_defaults.dart';
+import '../widgets/app_divider.dart';
+import '../widgets/page_scaffold.dart';
+import '../widgets/skeleton.dart';
+import '../widgets/state_views.dart';
 
 class LocationPickerScreen extends ConsumerStatefulWidget {
   const LocationPickerScreen({super.key});
@@ -446,44 +452,34 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        // The bar floats transparent over light map tiles, so the title
-        // carries its own scrim pill (explicit onSurface ink — the theme
-        // foreground is white in dark mode and washes out over tiles).
-        // Same surface treatment as the back-button circle below.
-        title: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: context.colors.surface.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            l10n?.setHomeLocation ?? 'Set Home Location',
-            style: TextStyle(
-              color: context.colors.onSurface,
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+    return PageScaffold(
+      // The bar floats transparent over light map tiles, so the title
+      // carries its own scrim pill (explicit onSurface ink — the theme
+      // foreground is white in dark mode and washes out over tiles).
+      // Same surface treatment as the back-button circle below.
+      title: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s6,
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: PressScale(
-          child: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: context.colors.surface.withValues(alpha: 0.5),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.arrow_back_rounded),
-            ),
-            onPressed: () => Navigator.pop(context),
+        decoration: BoxDecoration(
+          color: context.colors.surface.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Text(
+          l10n?.setHomeLocation ?? 'Set Home Location',
+          style: TextStyle(
+            color: context.colors.onSurface,
+            fontSize: AppTypography.sizeSubtitle,
+            fontWeight: AppTypography.semibold,
           ),
         ),
       ),
+      leading: const HapticBackButton(circled: true),
+      // The map paints edge to edge and positions its own overlays, so the
+      // shell adds neither a background nor a safe area.
+      background: false,
+      safeArea: false,
       body: Stack(
         children: [
           FlutterMap(
@@ -524,7 +520,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
               child: Icon(
                 Icons.location_on,
                 color: Theme.of(context).colorScheme.error,
-                size: 48,
+                size: AppIconSize.empty,
               ),
             ),
           ),
@@ -558,7 +554,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                   isBusy: _isLocating,
                   onTap: _recenterToLiveLocation,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 _buildZoomButton(
                   icon: Icons.add,
                   tooltip: l10n?.zoomIn ?? 'Zoom in',
@@ -567,7 +563,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                     _mapController.move(_center, currentZoom + 1);
                   },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 _buildZoomButton(
                   icon: Icons.remove,
                   tooltip: l10n?.zoomOut ?? 'Zoom out',
@@ -590,7 +586,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             left: 16,
             right: 16,
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.s16),
               decoration: AppTheme.glassmorphism(
                 context: context,
                 opacity: 0.8,
@@ -606,7 +602,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                       color: context.colors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.s16),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -614,42 +610,40 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colors.primary,
                         foregroundColor: context.colors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.s16,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.tile),
                         ),
                       ),
                       child: _isLoading
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: context.colors.onPrimary,
-                              ),
+                          ? InlineSpinner(
+                              size: AppIconSize.medium,
+                              color: context.colors.onPrimary,
                             )
                           : Text(
                               l10n?.setThisLocation ?? 'Set This Location',
                               style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                fontSize: AppTypography.sizeSubtitle,
+                                fontWeight: AppTypography.bold,
                               ),
                             ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s8),
                   GestureDetector(
                     onTap: _openOsmCopyright,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.s2,
+                      ),
                       child: Text(
                         '© OpenStreetMap contributors',
                         textAlign: TextAlign.center,
                         style: context.textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.55,
-                          ),
+                          fontSize: AppTypography.sizeFootnote,
+                          color: context.hintInk,
                         ),
                       ),
                     ),
@@ -680,24 +674,18 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         decoration: InputDecoration(
           hintText: l10n?.searchLocationHint ?? 'Search for a city or area',
           hintStyle: context.textTheme.bodyMedium?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.6),
+            color: context.secondaryInk,
           ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: context.colors.onSurface.withValues(alpha: 0.7),
-          ),
+          prefixIcon: Icon(Icons.search_rounded, color: context.secondaryInk),
           suffixIcon: _searchController.text.isEmpty
               ? null
               : IconButton(
                   tooltip: l10n?.clearSearch ?? 'Clear search',
-                  icon: Icon(
-                    Icons.close_rounded,
-                    color: context.colors.onSurface.withValues(alpha: 0.7),
-                  ),
+                  icon: Icon(Icons.close_rounded, color: context.secondaryInk),
                   onPressed: _clearSearch,
                 ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s14),
         ),
       ),
     );
@@ -705,42 +693,37 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
 
   Widget _buildSearchResults(AppLocalizations? l10n) {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+      margin: const EdgeInsets.only(top: AppSpacing.s8),
       constraints: const BoxConstraints(maxHeight: 280),
       decoration: AppTheme.glassmorphism(context: context, opacity: 0.9),
       clipBehavior: Clip.antiAlias,
       child: switch (_searchStatus) {
         _SearchStatus.idle => const SizedBox.shrink(),
         _SearchStatus.searching => const Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
+          padding: EdgeInsets.all(AppSpacing.s24),
+          child: Center(child: InlineSpinner(size: AppIconSize.large)),
         ),
         _SearchStatus.failed => _buildSearchFailure(l10n),
-        _SearchStatus.empty => _buildSearchMessage(
-          l10n?.noLocationsFound ?? 'No places found',
+        _SearchStatus.empty => Padding(
+          padding: const EdgeInsets.all(AppSpacing.s20),
+          child: EmptyState(
+            icon: Icons.location_off_outlined,
+            title: l10n?.noLocationsFound ?? 'No places found',
+            variant: StateViewVariant.inline,
+          ),
         ),
         _SearchStatus.results => ListView.separated(
           padding: EdgeInsets.zero,
           shrinkWrap: true,
           itemCount: _searchResults.length,
-          separatorBuilder: (_, _) => Divider(
-            height: 1,
-            thickness: 1,
-            color: context.colors.onSurface.withValues(alpha: 0.08),
-          ),
+          separatorBuilder: (_, _) => const AppDivider.row(),
           itemBuilder: (context, index) {
             final result = _searchResults[index];
             return ListTile(
               dense: true,
               leading: Icon(
                 Icons.location_on_outlined,
-                color: context.colors.onSurface.withValues(alpha: 0.7),
+                color: context.secondaryInk,
               ),
               title: Text(
                 result.displayName,
@@ -758,19 +741,6 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     );
   }
 
-  Widget _buildSearchMessage(String message) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: context.textTheme.bodyMedium?.copyWith(
-          color: context.colors.onSurface.withValues(alpha: 0.7),
-        ),
-      ),
-    );
-  }
-
   /// Failure state: says what actually went wrong and offers a retry, since
   /// the field's [TextField.onChanged] will not fire again on its own.
   Widget _buildSearchFailure(AppLocalizations? l10n) {
@@ -783,22 +753,16 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             'Search failed. Check your connection and try again.',
     };
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildSearchMessage(message),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: TextButton.icon(
-            onPressed: () {
-              _searchDebounce?.cancel();
-              _performSearch(_searchController.text);
-            },
-            icon: const Icon(Icons.refresh_rounded, size: 18),
-            label: Text(l10n?.retry ?? 'Retry'),
-          ),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.s20),
+      child: ErrorState(
+        message: message,
+        onRetry: () {
+          _searchDebounce?.cancel();
+          _performSearch(_searchController.text);
+        },
+        variant: StateViewVariant.inline,
+      ),
     );
   }
 
@@ -823,7 +787,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         height: 44,
         decoration: BoxDecoration(
           color: context.colors.surface.withValues(alpha: 0.9),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.dense),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
@@ -834,16 +798,16 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
         ),
         child: isBusy
             ? Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: context.colors.onSurface,
-                  ),
+                child: InlineSpinner(
+                  size: AppIconSize.medium,
+                  color: context.colors.onSurface,
                 ),
               )
-            : Icon(icon, color: context.colors.onSurface, size: 24),
+            : Icon(
+                icon,
+                color: context.colors.onSurface,
+                size: AppIconSize.nav,
+              ),
       ),
     );
 

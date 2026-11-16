@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../core/format/date_only.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../providers/festival_provider.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
+import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 import '../core/feedback/app_messages.dart';
 import '../features/countdown/domain/target_resolution.dart';
 import '../features/sheets/sheet_launcher.dart';
 import 'festival_thumbnail.dart';
+import 'state_views.dart';
 
 class FestivalSearchDelegate extends SearchDelegate {
   final WidgetRef ref;
@@ -31,7 +34,7 @@ class FestivalSearchDelegate extends SearchDelegate {
       ),
       inputDecorationTheme: const InputDecorationTheme(
         border: InputBorder.none,
-        hintStyle: TextStyle(fontSize: 18),
+        hintStyle: TextStyle(fontSize: AppTypography.sizeHeading),
       ),
     );
   }
@@ -42,6 +45,7 @@ class FestivalSearchDelegate extends SearchDelegate {
       if (query.isNotEmpty)
         IconButton(
           icon: const Icon(Icons.clear),
+          tooltip: AppLocalizations.of(context)?.clearSearch ?? 'Clear search',
           onPressed: () {
             query = '';
           },
@@ -53,6 +57,7 @@ class FestivalSearchDelegate extends SearchDelegate {
   Widget buildLeading(BuildContext context) {
     return IconButton(
       icon: const Icon(Icons.arrow_back),
+      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       onPressed: () {
         close(context, null);
       },
@@ -81,46 +86,21 @@ class FestivalSearchDelegate extends SearchDelegate {
           }).toList();
 
     if (query.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.search_rounded,
-              size: 64,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Search for festivals, vrats, and events',
-              style: TextStyle(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
+      return const EmptyState(
+        icon: Icons.search_rounded,
+        title: 'Search for festivals, vrats, and events',
       );
     }
 
     if (results.isEmpty) {
-      return Center(
-        child: Text(
-          'No festivals found',
-          style: TextStyle(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
-        ),
+      return const EmptyState(
+        icon: Icons.search_off_rounded,
+        title: 'No festivals found',
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       itemCount: results.length,
       itemBuilder: (context, index) {
         final festival = results[index];
@@ -138,9 +118,7 @@ class FestivalSearchDelegate extends SearchDelegate {
     return GestureDetector(
       onTap: () async {
         // Immediate feedback while the occurrence lookup runs.
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          await HapticFeedback.lightImpact();
-        }
+        AppHaptics.tap(ref);
         // Try to find the next occurrence date so we can pass panchang context.
         // Await the shared init: a Panjika switch replaces the service, and
         // this scan would otherwise run on an uninitialized instance.
@@ -177,13 +155,13 @@ class FestivalSearchDelegate extends SearchDelegate {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: AppSpacing.s12),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
           color: Theme.of(
             context,
           ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(
             color: Theme.of(
               context,
@@ -195,7 +173,7 @@ class FestivalSearchDelegate extends SearchDelegate {
             FestivalThumbnail(
               festival: festival,
               size: 44,
-              borderRadius: 12,
+              borderRadius: AppRadius.dense,
               backgroundColor: Theme.of(
                 context,
               ).colorScheme.primary.withValues(alpha: isMajor ? 0.2 : 0.1),
@@ -204,7 +182,7 @@ class FestivalSearchDelegate extends SearchDelegate {
               // event) rather than the row's sun/temple set.
               glyphIcon: isMajor ? Icons.celebration : Icons.event,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.s16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,27 +190,25 @@ class FestivalSearchDelegate extends SearchDelegate {
                   Text(
                     festival.name,
                     style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
+                      fontWeight: AppTypography.semibold,
+                      fontSize: AppTypography.sizeSubtitle,
                     ),
                   ),
                   if (festival.nameHindi != null)
                     Text(
                       festival.nameHindi!,
                       style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontSize: AppTypography.sizeCaption,
+                        color: context.secondaryInk,
                       ),
                     ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 20),
+            const Icon(Icons.chevron_right, size: AppIconSize.medium),
 
             // Go to Date Button
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             IconButton(
               icon: const Icon(Icons.calendar_month_outlined),
               tooltip:

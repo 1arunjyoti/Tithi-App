@@ -5,7 +5,9 @@ import '../../providers/sankalpa_provider.dart';
 import '../../core/feedback/app_messages.dart';
 import '../../core/navigation/haptic_back_button.dart';
 import '../../l10n/app_localizations.dart';
-import '../../theme/app_theme.dart';
+import '../../widgets/page_scaffold.dart';
+import '../../widgets/screen_body.dart';
+import '../../theme/app_metrics.dart';
 
 class SankalpaCreateScreen extends ConsumerStatefulWidget {
   const SankalpaCreateScreen({super.key});
@@ -124,147 +126,142 @@ class _SankalpaCreateScreenState extends ConsumerState<SankalpaCreateScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HapticBackButton(),
-        title: Text(l10n.newIntention),
-        backgroundColor: Colors.transparent,
-      ),
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PageScaffold(
+      // Form-style page: the form sits below the bar instead of scrolling
+      // behind it.
+      extendBodyBehindAppBar: false,
+      leading: const HapticBackButton(),
+      title: Text(l10n.newIntention),
+      // Shared page frame: 12dp gutter and the 800 reading width.
+      body: ScreenBody(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.s16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  l10n.whatIsYourSankalpa,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: AppSpacing.s24),
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: l10n.intentionTitle,
+                    hintText: l10n.intentionTitleHint,
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.pleaseEnterTitle;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: l10n.descriptionOptional,
+                    hintText: l10n.descriptionHint,
+                    border: const OutlineInputBorder(),
+                    filled: true,
+                  ),
+                  maxLines: 3,
+                ),
+                const SizedBox(height: AppSpacing.s32),
+
+                Text(
+                  l10n.durationDays,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: AppSpacing.s16),
+                Wrap(
+                  spacing: 12,
                   children: [
-                    Text(
-                      l10n.whatIsYourSankalpa,
-                      style: Theme.of(context).textTheme.headlineSmall,
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _titleController,
-                      decoration: InputDecoration(
-                        labelText: l10n.intentionTitle,
-                        hintText: l10n.intentionTitleHint,
-                        border: const OutlineInputBorder(),
-                        filled: true,
+                    ..._durationPresets.map(
+                      (days) => ChoiceChip(
+                        label: Text(l10n.daysCount(days)),
+                        selected: _selectedDuration == days,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() => _selectedDuration = days);
+                          }
+                        },
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return l10n.pleaseEnterTitle;
+                    ),
+                    ChoiceChip(
+                      label: Text(l10n.custom),
+                      selected: !_durationPresets.contains(_selectedDuration),
+                      onSelected: (selected) async {
+                        if (selected) {
+                          await _showCustomDaysDialog();
                         }
-                        return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _descriptionController,
-                      decoration: InputDecoration(
-                        labelText: l10n.descriptionOptional,
-                        hintText: l10n.descriptionHint,
-                        border: const OutlineInputBorder(),
-                        filled: true,
-                      ),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 32),
-
-                    Text(
-                      l10n.durationDays,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Wrap(
-                      spacing: 12,
+                  ],
+                ),
+                if (!_durationPresets.contains(_selectedDuration))
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.s8),
+                    child: Row(
                       children: [
-                        ..._durationPresets.map(
-                          (days) => ChoiceChip(
-                            label: Text(l10n.daysCount(days)),
-                            selected: _selectedDuration == days,
-                            onSelected: (selected) {
-                              if (selected) {
-                                setState(() => _selectedDuration = days);
+                        Text('${l10n.customDays}: '),
+                        SizedBox(
+                          width: 80,
+                          child: TextFormField(
+                            initialValue: _selectedDuration.toString(),
+                            keyboardType: TextInputType.number,
+                            onChanged: (val) {
+                              if (val.isNotEmpty) {
+                                setState(
+                                  () => _selectedDuration =
+                                      int.tryParse(val) ?? 1,
+                                );
                               }
                             },
                           ),
                         ),
-                        ChoiceChip(
-                          label: Text(l10n.custom),
-                          selected: !_durationPresets.contains(
-                            _selectedDuration,
-                          ),
-                          onSelected: (selected) async {
-                            if (selected) {
-                              await _showCustomDaysDialog();
-                            }
-                          },
-                        ),
                       ],
                     ),
-                    if (!_durationPresets.contains(_selectedDuration))
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            Text('${l10n.customDays}: '),
-                            SizedBox(
-                              width: 80,
-                              child: TextFormField(
-                                initialValue: _selectedDuration.toString(),
-                                keyboardType: TextInputType.number,
-                                onChanged: (val) {
-                                  if (val.isNotEmpty) {
-                                    setState(
-                                      () => _selectedDuration =
-                                          int.tryParse(val) ?? 1,
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                  ),
 
-                    const SizedBox(height: 32),
-                    Text(
-                      l10n.dailyReminderTime,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    Material(
-                      color: Colors.transparent,
-                      child: ListTile(
-                        tileColor: Theme.of(context).cardColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        leading: const Icon(Icons.alarm),
-                        title: Text(_selectedTime.format(context)),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                        onTap: () => _selectTime(context),
-                      ),
-                    ),
-
-                    const SizedBox(height: 48),
-                    FilledButton.icon(
-                      onPressed: _saveSankalpa,
-                      icon: const Icon(Icons.check),
-                      label: Text(l10n.createSankalpa),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.all(16),
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: AppSpacing.s32),
+                Text(
+                  l10n.dailyReminderTime,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
-              ),
+                const SizedBox(height: AppSpacing.s16),
+                Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    tileColor: Theme.of(context).cardColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.dense),
+                    ),
+                    leading: const Icon(Icons.alarm),
+                    title: Text(_selectedTime.format(context)),
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: AppIconSize.small,
+                    ),
+                    onTap: () => _selectTime(context),
+                  ),
+                ),
+
+                const SizedBox(height: 48),
+                FilledButton.icon(
+                  onPressed: _saveSankalpa,
+                  icon: const Icon(Icons.check),
+                  label: Text(l10n.createSankalpa),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.all(AppSpacing.s16),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

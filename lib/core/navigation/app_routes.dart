@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
+import '../../theme/app_motion.dart';
 
 /// Central navigation motion for the app (Material Motion, hand-rolled).
 ///
@@ -22,8 +23,8 @@ import '../../theme/app_theme.dart';
 class AppRoutes {
   const AppRoutes._();
 
-  static const Duration _forwardDuration = Duration(milliseconds: 300);
-  static const Duration _reverseDuration = Duration(milliseconds: 250);
+  static const Duration _forwardDuration = AppMotion.page;
+  static const Duration _reverseDuration = AppMotion.emphasized;
   static const Duration _instant = Duration(milliseconds: 1);
 
   /// Peer-level transition: drawer → Moon / Countdown / Settings / About …
@@ -66,14 +67,14 @@ class AppRoutes {
         // arrives (0.3–1.0) with a 0.92 → 1.0 scale. No overlap ghost.
         final incomingOpacity = CurvedAnimation(
           parent: animation,
-          curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-          reverseCurve: Curves.easeInCubic,
+          curve: const Interval(0.3, 1.0, curve: AppMotion.standardCurve),
+          reverseCurve: AppMotion.exitCurve,
         );
         final incomingScale = Tween<double>(begin: 0.92, end: 1.0).animate(
           CurvedAnimation(
             parent: animation,
-            curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-            reverseCurve: Curves.easeInCubic,
+            curve: const Interval(0.3, 1.0, curve: AppMotion.standardCurve),
+            reverseCurve: AppMotion.exitCurve,
           ),
         );
         final outgoingOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
@@ -118,12 +119,12 @@ class AppRoutes {
         if (AppTheme.reduceMotionOf(context)) return child;
         final primary = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: AppMotion.standardCurve,
+          reverseCurve: AppMotion.exitCurve,
         );
         final secondary = CurvedAnimation(
           parent: secondaryAnimation,
-          curve: Curves.easeOutCubic,
+          curve: AppMotion.standardCurve,
         );
         // Incoming: slide 8% → settled + fade. Outgoing (when covered):
         // parallax 6% back + dim. Pop reverses symmetrically.

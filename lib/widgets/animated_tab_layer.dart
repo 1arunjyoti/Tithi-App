@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/app_motion.dart';
 
 /// What a tab does while the shell is switching tabs.
 enum TabLayerRole {
@@ -77,7 +78,7 @@ class AnimatedTabLayer extends StatefulWidget {
 
 class _AnimatedTabLayerState extends State<AnimatedTabLayer>
     with TickerProviderStateMixin {
-  static const Duration _duration = Duration(milliseconds: 250);
+  static const Duration _duration = AppMotion.emphasized;
 
   /// 1 = fully visible, 0 = fully hidden.
   late final AnimationController _presence = AnimationController(
@@ -120,8 +121,8 @@ class _AnimatedTabLayerState extends State<AnimatedTabLayer>
       // A tab opened for the first time: it fades in from the side the switch
       // is heading towards.
       _offset.value = widget.direction * widget.slide;
-      _presence.animateTo(1, curve: Curves.easeOutCubic);
-      _offset.animateTo(0, curve: Curves.easeOutCubic);
+      _presence.animateTo(1, curve: AppMotion.standardCurve);
+      _offset.animateTo(0, curve: AppMotion.standardCurve);
     }
   }
 
@@ -151,16 +152,16 @@ class _AnimatedTabLayerState extends State<AnimatedTabLayer>
           _presence.value = 0;
           _offset.value = widget.direction * widget.slide;
         }
-        _presence.animateTo(1, curve: Curves.easeOutCubic);
-        _offset.animateTo(0, curve: Curves.easeOutCubic);
+        _presence.animateTo(1, curve: AppMotion.standardCurve);
+        _offset.animateTo(0, curve: AppMotion.standardCurve);
       case TabLayerRole.exiting:
         // Opaque backdrop: whatever the tab's opacity was when it started
         // leaving (it may have been fading in), it ramps to 1 so the incoming
         // tab always has something solid to land on.
-        _presence.animateTo(1, curve: Curves.easeOutCubic);
+        _presence.animateTo(1, curve: AppMotion.standardCurve);
         _offset.animateTo(
           -widget.direction * widget.slide,
-          curve: Curves.easeOutCubic,
+          curve: AppMotion.standardCurve,
         );
       case TabLayerRole.idle:
         // A switch that interrupts another demotes a tab that is still on
@@ -170,7 +171,7 @@ class _AnimatedTabLayerState extends State<AnimatedTabLayer>
         // exit already finished (offset no longer animating) is fully
         // covered, so it can snap.
         if (_presence.value > 0 && _offset.isAnimating) {
-          _presence.animateTo(0, curve: Curves.easeOutCubic);
+          _presence.animateTo(0, curve: AppMotion.standardCurve);
         } else {
           _presence.stop();
           _presence.value = 0;

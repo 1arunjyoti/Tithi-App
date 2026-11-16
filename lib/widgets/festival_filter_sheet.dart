@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/settings/widgets/region_settings.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival_filter.dart';
 import '../models/festival_region.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 import 'festival_filter_chip.dart';
 import 'settings_widgets.dart';
 
@@ -48,9 +49,7 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
       _category != FestivalCategoryFilter.all || _region != FestivalRegion.all;
 
   void _haptic() {
-    if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.lightImpact();
-    }
+    AppHaptics.tap(ref);
   }
 
   void _selectCategory(FestivalCategoryFilter category) {
@@ -104,7 +103,9 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * 0.85,
@@ -112,7 +113,12 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s20,
+            AppSpacing.s12,
+            AppSpacing.s20,
+            AppSpacing.s24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,29 +129,29 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: context.colors.onSurface.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(AppRadius.micro),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.s16),
               Text(
                 l10n?.festivalFilterTitle ?? 'Filter festivals',
                 textAlign: TextAlign.center,
                 style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: AppTypography.bold,
                   color: context.colors.onSurface,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               Text(
                 l10n?.festivalFilterSubtitle ??
                     'Narrow the list by category and region',
                 textAlign: TextAlign.center,
                 style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  color: context.secondaryInk,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.s24),
               SettingsSectionHeader(l10n?.category ?? 'Category'),
               Wrap(
                 spacing: 8,
@@ -159,7 +165,7 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
                     ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.s24),
               SettingsSectionHeader(l10n?.festivalFilterRegion ?? 'Region'),
               Wrap(
                 spacing: 8,
@@ -173,7 +179,7 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
                     ),
                 ],
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: AppSpacing.s28),
               Row(
                 children: [
                   Expanded(
@@ -182,7 +188,7 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
                       child: Text(l10n?.reset ?? 'Reset'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.s12),
                   Expanded(
                     child: FilledButton(
                       onPressed: _apply,

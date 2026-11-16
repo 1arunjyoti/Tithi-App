@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../core/anim/press_scale.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_motion.dart';
 
 /// One top-level destination in a [FloatingNavBar].
 @immutable
@@ -68,9 +70,10 @@ class FloatingNavBar extends StatelessWidget {
   /// host hides a mounted one.
   final Widget? trailingAction;
 
-  /// Whether [trailingAction] is painted. The slot collapses to zero width
-  /// over one animation, so the capsule slides across instead of jumping when
-  /// the action appears or disappears (see `_TrailingAction`).
+  /// Whether [trailingAction] is painted. The slot's width and the action's
+  /// opacity run as one staggered transition, so the capsule slides across
+  /// instead of jumping when the action appears or disappears, and the action
+  /// fades in and out instead of sliding out of a clip (see `_TrailingAction`).
   final bool showTrailingAction;
 
   /// Capsule height. The destinations are centred inside it and are inset by
@@ -128,18 +131,18 @@ class FloatingNavBar extends StatelessWidget {
   static TextStyle _labelStyle(BuildContext context) {
     final base = Theme.of(context).textTheme.labelLarge ?? const TextStyle();
     return base.copyWith(
-      fontSize: 14,
+      fontSize: AppTypography.sizeBody,
       height: 1.1,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppTypography.semibold,
     );
   }
 
   /// Width [label] paints at the current text scale.
   ///
   /// Measured once per label per [build] — not per layout pass — because the
-  /// capsule's width changes on every frame of the trailing action's
-  /// `AnimatedSize`, and a [TextPainter] per destination per frame is pure
-  /// waste when only the space it is given has changed.
+  /// capsule's width changes on every frame of the trailing action's width
+  /// animation, and a [TextPainter] per destination per frame is pure waste
+  /// when only the space it is given has changed.
   static double _measureLabel(
     String label,
     TextStyle style,
@@ -255,10 +258,7 @@ class FloatingNavBar extends StatelessWidget {
     final muted = scheme.onSurface.withValues(
       alpha: AppTheme.contrastAlpha(context, 0.66),
     );
-    final duration = AppTheme.animationDuration(
-      context,
-      const Duration(milliseconds: 200),
-    );
+    final duration = AppMotion.of(context, AppMotion.standard);
 
     return Material(
       // Transparent Material: gives the subtree a DefaultTextStyle and an ink
@@ -411,7 +411,7 @@ class _Slot {
   final double hPadding;
 }
 
-class _TrailingAction extends StatelessWidget {
+class _TrailingAction extends StatefulWidget {
   const _TrailingAction({required this.visible, required this.child});
 
   final bool visible;
@@ -421,30 +421,129 @@ class _TrailingAction extends StatelessWidget {
   static const double gap = 8;
 
   @override
+  State<_TrailingAction> createState() => _TrailingActionState();
+}
+
+/// Opens and closes the slot for [FloatingNavBar.trailingAction].
+///
+/// One controller drives both halves of the transition, staggered: the slot
+/// opens over the first [_widthEnd] of the timeline while the action is still
+/// transparent, then the action fades in on the space it will keep. That is
+/// what makes it read as *appearing* rather than sliding out from behind the
+/// capsule - a width-only animation reveals the control edge-first through a
+/// moving clip, which looks like it emerges from a wall. The reverse runs the
+/// pair backwards: the action fades out while its space is still open, then the
+/// slot collapses, so the capsule glides to its new centre without dragging a
+/// half-painted button with it.
+///
+/// The stagger also keeps the transition cheap. The geometry settles with a
+/// third of the timeline still to run, so the closing frames change nothing but
+/// the action's opacity: no layout, and - with the action on its own
+/// [RepaintBoundary] - no repaint of the capsule's backdrop blur. Without the
+/// stagger, every frame would both re-lay-out the bar and re-blur its film.
+///
+/// The clipped child is aligned to the *end* of the slot, so it stays put
+/// beside the screen gutter while the slot opens towards the capsule; aligning
+/// it to the start would carry the whole control across as the width grows.
+class _TrailingActionState extends State<_TrailingAction>
+    with SingleTickerProviderStateMixin {
+  /// Seeded at the resolved state, so a bar that mounts with the action already
+  /// visible (or hidden) does not animate on its first frame.
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppMotion.standard,
+    value: widget.visible ? 1 : 0,
+  );
+
+  /// Share of the timeline the slot's opening takes. Chosen so the bar has
+  /// stopped moving before the fade ends, not after it: the last third is the
+  /// fade alone.
+  static const double _widthEnd = 0.7;
+
+  /// Where the fade starts, expressed on the width's own curve: half of
+  /// [_widthEnd] is where [Curves.easeOutCubic] has opened 87.5% of the slot -
+  /// exactly the share the 56dp action needs of the 64dp slot. By then the clip
+  /// has finished trimming the gap, so it never trims the action.
+  static const double _fadeStart = _widthEnd / 2;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Resolved here, not at construction: Reduce Motion collapses the token to
+    // 1ms, and this is the first point where the theme is reachable.
+    _controller.duration = AppMotion.of(context, AppMotion.standard);
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_TrailingAction oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  void _sync() {
+    if (widget.visible) {
+      _controller.forward();
+    } else {
+      _controller.reverse();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 220),
+    return AnimatedBuilder(
+      animation: _controller,
+      // Built once and handed to the builder: the ticks below only move the
+      // slot and its opacity, never the action's own tree. The boundary above
+      // the padding is what makes the fade compositing-only: the button is
+      // painted once into a layer, so re-running the capsule's blur every frame
+      // of the fade is not required to see it come in.
+      child: RepaintBoundary(
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(start: _TrailingAction.gap),
+          child: widget.child,
+        ),
       ),
-      curve: Curves.easeOutCubic,
-      // Directional: the action is on the *end* side in both reading
-      // directions, and it has to stay there when the shell is mirrored.
-      alignment: AlignmentDirectional.centerStart,
-      // The hidden state keeps the bar's height so only the width animates:
-      // collapsing both axes would clip the round button from top and bottom
-      // too, which reads as a squash instead of a slide.
-      //
-      // Staying mounted (rather than being dropped from the row) is what lets
-      // the parent re-measure the capsule every frame, so the bar re-centres
-      // smoothly and a clamped capsule's labels follow the change.
-      child: visible
-          ? Padding(
-              padding: const EdgeInsetsDirectional.only(start: gap),
-              child: child,
-            )
-          : const SizedBox(width: 0, height: FloatingNavBar.height),
+      builder: (context, child) {
+        final progress = _controller.value;
+        // Fully collapsed: drop the action rather than paint it at zero
+        // opacity, so it leaves the semantics tree and cannot be tapped.
+        if (progress == 0) {
+          return const SizedBox(width: 0, height: FloatingNavBar.height);
+        }
+        return ClipRect(
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            widthFactor: _width(progress),
+            // Keep the bar's height while only the width animates: collapsing
+            // both axes would clip the round button from top and bottom too,
+            // which reads as a squash.
+            heightFactor: 1,
+            child: Opacity(opacity: _opacity(progress), child: child),
+          ),
+        );
+      },
     );
+  }
+
+  /// Width progress at [progress]: the slot opens over the first [_widthEnd] of
+  /// the timeline, eased out so the space reads as immediate.
+  static double _width(double progress) {
+    return Curves.easeOutCubic.transform(
+      (progress / _widthEnd).clamp(0.0, 1.0),
+    );
+  }
+
+  /// Opacity at [progress]: 0 until [_fadeStart], then eased to 1 by the end.
+  static double _opacity(double progress) {
+    final fade = (progress - _fadeStart) / (1 - _fadeStart);
+    return Curves.easeOut.transform(fade.clamp(0.0, 1.0));
   }
 }
 
@@ -501,7 +600,7 @@ class _DestinationButton extends StatelessWidget {
             child: Center(
               child: AnimatedContainer(
                 duration: duration,
-                curve: Curves.easeOutCubic,
+                curve: AppMotion.standardCurve,
                 height: FloatingNavBar._pillHeight,
                 padding: EdgeInsets.symmetric(horizontal: slot.hPadding),
                 decoration: BoxDecoration(
@@ -527,7 +626,7 @@ class _DestinationButton extends StatelessWidget {
                     Flexible(
                       child: AnimatedDefaultTextStyle(
                         duration: duration,
-                        curve: Curves.easeOutCubic,
+                        curve: AppMotion.standardCurve,
                         style: labelStyle.copyWith(
                           color: selected ? ink : muted,
                         ),

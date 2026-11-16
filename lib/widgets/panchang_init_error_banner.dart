@@ -5,6 +5,8 @@ import '../l10n/app_localizations.dart';
 import '../providers/panchang_provider.dart';
 import '../services/panchang_init/panchang_init.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 
 /// Shows why the panchang engine could not start, with a retry.
 ///
@@ -39,13 +41,18 @@ class PanchangInitErrorBanner extends ConsumerWidget {
           AppTheme.homeCardGutter,
           0,
           AppTheme.homeCardGutter,
-          12,
+          AppSpacing.s12,
         ),
         child: Material(
           color: colors.errorContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s8,
+              AppSpacing.s12,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -53,7 +60,7 @@ class PanchangInitErrorBanner extends ConsumerWidget {
                   Icons.error_outline_rounded,
                   color: colors.onErrorContainer,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,10 +69,10 @@ class PanchangInitErrorBanner extends ConsumerWidget {
                         l10n?.errorLoadingData ?? 'Error loading data',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: colors.onErrorContainer,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: AppTypography.semibold,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.s4),
                       Text(
                         detail,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(

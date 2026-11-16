@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
+import 'app_divider.dart';
 
 /// 1px hairline between two rows that share one card surface.
 ///
@@ -9,6 +9,9 @@ import '../theme/app_theme.dart';
 /// under it. Rows are transparent on the card (see
 /// `AppTheme.festivalRowDecoration`), so this line is the only separator;
 /// callers leave it off after the last row.
+///
+/// Thin delegate to [AppDivider.row] - kept as its own type because the inset
+/// is the point of the widget and the card tests look it up by type.
 class InsetRowDivider extends StatelessWidget {
   const InsetRowDivider({super.key, required this.leadingInset});
 
@@ -18,13 +21,6 @@ class InsetRowDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      indent: leadingInset,
-      color: context.colors.onSurface.withValues(
-        alpha: AppTheme.highContrastOf(context) ? 0.22 : 0.08,
-      ),
-    );
+    return AppDivider.row(indent: leadingInset);
   }
 }

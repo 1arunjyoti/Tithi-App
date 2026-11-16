@@ -3,7 +3,6 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
@@ -14,13 +13,15 @@ import '../core/format/date_only.dart';
 import '../core/locale/app_locale.dart';
 import '../core/location/place_clock.dart';
 import '../core/navigation/app_routes.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/location_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../screens/location_picker_screen.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_motion.dart';
 import '../theme/app_typography.dart';
 import '../features/hero/domain/hero_content.dart';
 import '../features/hero/providers/hero_providers.dart';
@@ -29,6 +30,7 @@ import '../features/hero/widgets/hero_chip.dart';
 import '../features/hero/widgets/hero_festival_image.dart';
 import '../features/sheets/sheet_launcher.dart';
 import 'moon_animation_widget.dart';
+import 'skeleton.dart';
 
 export '../features/hero/providers/hero_providers.dart'
     show bengaliDateForHeroProvider;
@@ -145,27 +147,25 @@ class PakshaHeroCard extends ConsumerWidget {
       // Neutral block with festival-row-style placeholder bars (same look as
       // the Festivals & Events loading skeleton) so a slow cold load reads
       // as loading content rather than a spinner or a black hole.
-      Widget bar() => Container(
-        height: 76,
-        decoration: BoxDecoration(
-          color: context.colors.onSurface.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(16),
-        ),
-      );
+      Widget bar() => const SkeletonBox(height: 76);
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
         height: _trueColdSkeletonHeight,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
           color: context.colors.onSurface.withValues(
             alpha: highContrast ? 0.14 : 0.08,
           ),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.card),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
-          children: [bar(), const SizedBox(height: 10), bar()],
+          children: [
+            bar(),
+            const SizedBox(height: AppSpacing.s10),
+            bar(),
+          ],
         ),
       );
     }
@@ -179,16 +179,10 @@ class PakshaHeroCard extends ConsumerWidget {
     // flash with sliced text at the bottom edge.
     return AnimatedSize(
       alignment: Alignment.topCenter,
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 250),
-      ),
-      curve: Curves.easeInOutCubic,
+      duration: AppMotion.of(context, AppMotion.emphasized),
+      curve: AppMotion.emphasizedCurve,
       child: AnimatedSwitcher(
-        duration: AppTheme.animationDuration(
-          context,
-          const Duration(milliseconds: 180),
-        ),
+        duration: AppMotion.of(context, AppMotion.subtle),
         transitionBuilder: (child, animation) =>
             FadeTransition(opacity: animation, child: child),
         layoutBuilder: (currentChild, _) => currentChild!,
@@ -266,8 +260,8 @@ class _HeroBody extends ConsumerWidget {
     // tight line box — the editorial pairing that makes the card read
     // "designed" rather than "default Material text".
     final titleBaseStyle = AppTypography.display(
-      fontSize: 24,
-      fontWeight: FontWeight.w700,
+      fontSize: AppTypography.sizeDisplay,
+      fontWeight: AppTypography.bold,
       letterSpacing: -0.4,
       height: 1.3,
       color: highContrast ? context.colors.onSurface : onHero,
@@ -299,14 +293,14 @@ class _HeroBody extends ConsumerWidget {
           pressedScale: 0.985,
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(AppRadius.card),
             clipBehavior: Clip.antiAlias,
             child: Ink(
               decoration: highContrast
                   ? AppTheme.glassmorphism(context: context, ref: ref)
                   : AppTheme.homeHeroDecoration(context),
               child: InkWell(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 // Ink defaults to ThemeData.splashColor (onSurface @12%),
                 // which lands as a grey wash on the peach hero. Use a white
                 // veil instead — the light end of the card's own palette, so
@@ -329,9 +323,7 @@ class _HeroBody extends ConsumerWidget {
                       : 0.12,
                 ),
                 onTap: () {
-                  if (ref.read(accessibilityProvider).hapticFeedback) {
-                    HapticFeedback.lightImpact();
-                  }
+                  AppHaptics.tap(ref);
                   showTithiDetailSheet(context, panchang: panchang);
                 },
                 child: ClipRRect(
@@ -341,7 +333,7 @@ class _HeroBody extends ConsumerWidget {
                   // only the content subtree — the gradient + drop shadow
                   // live on Ink's decoration, above this, so they keep their
                   // soft outer edge.
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.card),
                   child: Stack(
                     children: [
                       // Ambient glow: burnt-orange wash on the peach Shukla
@@ -354,16 +346,13 @@ class _HeroBody extends ConsumerWidget {
                           ),
                         ),
                       Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppSpacing.s16),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             // Content-only fade: the gradient shell, ripple
                             // and glow above stay mounted while day text swaps.
                             return AnimatedSwitcher(
-                              duration: AppTheme.animationDuration(
-                                context,
-                                const Duration(milliseconds: 180),
-                              ),
+                              duration: AppMotion.of(context, AppMotion.subtle),
                               transitionBuilder: (child, animation) =>
                                   FadeTransition(
                                     opacity: animation,
@@ -533,10 +522,10 @@ class _HeroHeader extends ConsumerWidget {
             style: AppTypography.telemetry(
               // Eyebrow: quieter than the old 11/2.2/bold - tighter tracking
               // and 72% ink let the 24pt title own the hierarchy.
-              fontSize: 10.5,
+              fontSize: AppTypography.sizeMicro,
               letterSpacing: 1.2,
               color: highContrast
-                  ? context.colors.onSurface.withValues(alpha: 0.7)
+                  ? context.secondaryInk
                   : onHero.withValues(alpha: 0.72),
             ),
           ),
@@ -556,10 +545,8 @@ class _HeroHeader extends ConsumerWidget {
         const SizedBox(width: _heroHeaderPillChevronGap),
         Icon(
           Icons.expand_more,
-          size: 18,
-          color: highContrast
-              ? context.colors.onSurface.withValues(alpha: 0.7)
-              : onHero,
+          size: AppIconSize.dense,
+          color: highContrast ? context.secondaryInk : onHero,
         ),
       ],
     );
@@ -666,7 +653,7 @@ class _HeroMoonRow extends ConsumerWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(13),
+                      borderRadius: BorderRadius.circular(AppRadius.dense),
                       color: highContrast
                           ? context.colors.primary.withValues(alpha: 0.1)
                           : chipBg,
@@ -691,8 +678,8 @@ class _HeroMoonRow extends ConsumerWidget {
                         Text(
                           content.title,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: AppTypography.sizeHeading,
+                            fontWeight: AppTypography.semibold,
                             color: highContrast
                                 ? context.colors.onSurface
                                 : onHero,
@@ -702,13 +689,9 @@ class _HeroMoonRow extends ConsumerWidget {
                         Text(
                           content.subLabel,
                           style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: highContrast
-                                ? context.colors.onSurface.withValues(
-                                    alpha: 0.7,
-                                  )
-                                : onHero,
+                            fontSize: AppTypography.sizeCaption,
+                            fontWeight: AppTypography.medium,
+                            color: highContrast ? context.secondaryInk : onHero,
                           ),
                         ),
                       ],
@@ -741,9 +724,7 @@ class _HeroMoonRow extends ConsumerWidget {
             // The index keeps the gallery on the picture the user swiped to
             // instead of always starting at the day's headline festival.
             onLongPress: (index) {
-              if (ref.read(accessibilityProvider).hapticFeedback) {
-                HapticFeedback.mediumImpact();
-              }
+              AppHaptics.impact(ref);
               showArtworkWindow(context, images: artworks, initialIndex: index);
             },
           ),
@@ -870,7 +851,7 @@ class _HeroArtworkStackState extends State<_HeroArtworkStack>
       value: 1,
       duration: _swipeTurnDuration,
     )..addStatusListener(_onFadeStatus);
-    _fadeIn = CurvedAnimation(parent: _fade, curve: Curves.easeInOutCubic);
+    _fadeIn = CurvedAnimation(parent: _fade, curve: AppMotion.emphasizedCurve);
     _fadeOut = ReverseAnimation(_fadeIn);
   }
 
@@ -1079,7 +1060,7 @@ class _HeroArtworkStackState extends State<_HeroArtworkStack>
     final ordered = _ordered;
     final backCount = count - 1 < _maxBackCards ? count - 1 : _maxBackCards;
     final inset = _peek * backCount;
-    final radius = BorderRadius.circular(24);
+    final radius = BorderRadius.circular(AppRadius.card);
     // Decode the thumbnail at the size it is drawn instead of the full asset:
     // the same cache entry then serves the front card, the peeking cards and
     // the single-picture slot, at a fraction of the memory.
@@ -1256,6 +1237,7 @@ class _HeroArtworkCard extends StatelessWidget {
             source,
             cacheWidth: cacheWidth,
             fit: BoxFit.cover,
+            excludeFromSemantics: true,
             loadingBuilder: (context, child, progress) =>
                 progress == null ? child : placeholder,
             errorBuilder: (context, _, _) => placeholder,
@@ -1264,6 +1246,7 @@ class _HeroArtworkCard extends StatelessWidget {
             source,
             cacheWidth: cacheWidth,
             fit: BoxFit.cover,
+            excludeFromSemantics: true,
             errorBuilder: (context, _, _) => placeholder,
           );
 
@@ -1336,18 +1319,21 @@ class _HeroArtworkPositionBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s6,
+        vertical: AppSpacing.s2,
+      ),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
       ),
       child: Text(
         '${index + 1}/$count',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 10.5,
-          fontWeight: FontWeight.w700,
+          fontSize: AppTypography.sizeMicro,
+          fontWeight: AppTypography.bold,
         ),
       ),
     );
@@ -1377,8 +1363,8 @@ class _HeroChips extends StatelessWidget {
             suffix: chip.suffix,
             inlineIcon: chip.inlineIcon,
             wrap: true,
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
+            fontWeight: AppTypography.bold,
+            fontSize: AppTypography.sizeDetail,
             highContrast: highContrast,
           ),
       ],

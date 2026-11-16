@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival_filter.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 
 /// Localized label for a category filter, shared by the filter sheet and the
 /// inline chip strip under the all-festivals search field so the two entry
@@ -72,8 +73,8 @@ class FestivalFilterChip extends StatelessWidget {
         color: selected ? colors.primary.withValues(alpha: 0.45) : hairline,
       ),
       labelStyle: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
+        fontSize: AppTypography.sizeDetail,
+        fontWeight: AppTypography.semibold,
         color: selected
             ? colors.primary
             : colors.onSurface.withValues(alpha: 0.75),

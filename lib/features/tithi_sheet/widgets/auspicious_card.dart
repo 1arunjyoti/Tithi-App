@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 
 /// Auspicious-windows rows card in the legend idiom: surface fill, one row
 /// per window (medium name + right-aligned dim range, e.g. "11:06 –
@@ -20,7 +22,7 @@ class AuspiciousCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.s18),
       decoration: AppTheme.sheetCardDecoration(
         context,
         highContrast: highContrast,
@@ -31,7 +33,9 @@ class AuspiciousCard extends StatelessWidget {
         children: [
           for (var i = 0; i < rows.length; i++)
             Padding(
-              padding: EdgeInsets.only(bottom: i < rows.length - 1 ? 12 : 0),
+              padding: EdgeInsets.only(
+                bottom: i < rows.length - 1 ? AppSpacing.s12 : 0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -41,8 +45,8 @@ class AuspiciousCard extends StatelessWidget {
                       Text(
                         rows[i].name,
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
+                          fontSize: AppTypography.sizeProse,
+                          fontWeight: AppTypography.medium,
                           color: context.colors.onSurface,
                         ),
                       ),
@@ -50,23 +54,21 @@ class AuspiciousCard extends StatelessWidget {
                       Text(
                         rows[i].time,
                         style: TextStyle(
-                          fontSize: 14,
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
+                          fontSize: AppTypography.sizeBody,
+                          color: context.secondaryInk,
                         ),
                       ),
                     ],
                   ),
                   if (rows[i].note != null) ...[
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
                       rows[i].note!,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: AppTypography.sizeCaption,
                         color: rows[i].warn
                             ? AppTheme.warningTextColor(isDark)
-                            : context.colors.onSurface.withValues(alpha: 0.7),
+                            : context.secondaryInk,
                       ),
                     ),
                   ],

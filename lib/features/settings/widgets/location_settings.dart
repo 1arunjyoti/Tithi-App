@@ -126,7 +126,7 @@ class HomeLocationSetting extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.labelSmall?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.6),
+            color: context.secondaryInk,
           ),
         ),
       ),
