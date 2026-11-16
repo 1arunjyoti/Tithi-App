@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kReleaseMode;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'widgets/error_display_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

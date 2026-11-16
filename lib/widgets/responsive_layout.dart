@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Screen type enumeration for responsive layouts
 enum ScreenType { mobile, tablet, desktop }

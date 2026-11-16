@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:material_ui/material_ui.dart';
+import 'package:cupertino_ui/cupertino_ui.dart';
 
 /// Custom Material Localizations delegate that falls back to English
 /// for unsupported locales like Sanskrit.
