@@ -8,6 +8,11 @@ import '../../core/anim/press_scale.dart';
 import '../../core/navigation/haptic_back_button.dart';
 import '../../core/navigation/app_routes.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/app_metrics.dart';
+import '../../theme/app_typography.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/page_scaffold.dart';
+import '../../widgets/state_views.dart';
 import 'sankalpa_create_screen.dart';
 
 class SankalpaListScreen extends ConsumerWidget {
@@ -22,21 +27,20 @@ class SankalpaListScreen extends ConsumerWidget {
 
     return DefaultTabController(
       length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: const HapticBackButton(),
-          title: Text(l10n.mySankalpas),
-          backgroundColor: Colors.transparent,
-          bottom: TabBar(
-            // No hairline under the tab strip — the indicator carries the
-            // selection on its own (same treatment as the Moon Phases tabs).
-            dividerColor: Colors.transparent,
-            tabs: [
-              Tab(text: l10n.active),
-              Tab(text: l10n.completed),
-            ],
-          ),
+      child: PageScaffold(
+        // Form-style page: the tab view sits below the bar instead of
+        // scrolling behind it.
+        extendBodyBehindAppBar: false,
+        leading: const HapticBackButton(),
+        title: Text(l10n.mySankalpas),
+        bottom: TabBar(
+          // No hairline under the tab strip — the indicator carries the
+          // selection on its own (same treatment as the Moon Phases tabs).
+          dividerColor: Colors.transparent,
+          tabs: [
+            Tab(text: l10n.active),
+            Tab(text: l10n.completed),
+          ],
         ),
         floatingActionButton: PressScale(
           child: FloatingActionButton.extended(
@@ -48,17 +52,14 @@ class SankalpaListScreen extends ConsumerWidget {
             icon: const Icon(Icons.add),
           ),
         ),
-        body: Container(
-          decoration: AppTheme.backgroundDecoration(context),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: TabBarView(
-                children: [
-                  _SankalpaList(sankalpas: activeSankalpas),
-                  _SankalpaList(sankalpas: completedSankalpas, isHistory: true),
-                ],
-              ),
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: TabBarView(
+              children: [
+                _SankalpaList(sankalpas: activeSankalpas),
+                _SankalpaList(sankalpas: completedSankalpas, isHistory: true),
+              ],
             ),
           ),
         ),
@@ -77,32 +78,23 @@ class _SankalpaList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     if (sankalpas.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isHistory ? Icons.history : Icons.spa,
-              size: 64,
-              color: Theme.of(context).disabledColor,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isHistory
-                  ? l10n.noCompletedIntentionsYet
-                  : l10n.startNewSpiritualJourney,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).disabledColor,
-              ),
-            ),
-          ],
-        ),
+      return EmptyState(
+        icon: isHistory ? Icons.history : Icons.spa_outlined,
+        title: isHistory
+            ? l10n.noCompletedIntentionsYet
+            : l10n.startNewSpiritualJourney,
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
+    return ListView.separated(
+      padding: EdgeInsets.fromLTRB(
+        AppTheme.pageGutter,
+        AppSpacing.s16,
+        AppTheme.pageGutter,
+        AppSpacing.s16 + AppTheme.navigationBarInset(context),
+      ),
       itemCount: sankalpas.length,
+      separatorBuilder: (_, _) => const SizedBox(height: AppTheme.cardGap),
       itemBuilder: (context, index) {
         final sankalpa = sankalpas[index];
         return _SankalpaCard(
@@ -163,133 +155,126 @@ class _SankalpaCard extends ConsumerWidget {
       (d) => d.year == now.year && d.month == now.month && d.day == now.day,
     );
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Theme.of(context).cardColor.withValues(alpha: 0.9),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    sankalpa.title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  sankalpa.title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
-                if (!isHistory)
-                  PopupMenuButton<String>(
-                    onSelected: (value) async {
-                      if (value == 'delete') {
-                        final confirmed = await _confirmDelete(context, l10n);
-                        if (!confirmed) return;
-                        await ref
-                            .read(sankalpaListProvider.notifier)
-                            .deleteSankalpa(sankalpa.id);
-                      } else if (value == 'toggle') {
-                        await ref
-                            .read(sankalpaListProvider.notifier)
-                            .toggleCompletion(sankalpa.id);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 'toggle',
-                        child: Text(l10n.markCompleteIncomplete),
-                      ),
-                      PopupMenuItem(
-                        value: 'delete',
-                        child: Text(
-                          l10n.delete,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+              ),
+              if (!isHistory)
+                PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'delete') {
+                      final confirmed = await _confirmDelete(context, l10n);
+                      if (!confirmed) return;
+                      await ref
+                          .read(sankalpaListProvider.notifier)
+                          .deleteSankalpa(sankalpa.id);
+                    } else if (value == 'toggle') {
+                      await ref
+                          .read(sankalpaListProvider.notifier)
+                          .toggleCompletion(sankalpa.id);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'toggle',
+                      child: Text(l10n.markCompleteIncomplete),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: Text(
+                        l10n.delete,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
                         ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          if (sankalpa.description.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              sankalpa.description,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.s16),
+          if (!isHistory) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.dayOf(
+                          sankalpa.currentDayNumber,
+                          sankalpa.durationDays,
+                        ),
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.s4),
+                      LinearProgressIndicator(
+                        value: clampedProgress,
+                        borderRadius: BorderRadius.circular(AppRadius.small),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).dividerColor.withValues(alpha: 0.2),
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(width: AppSpacing.s16),
+                IconButton.filled(
+                  onPressed: todayMarked
+                      ? null
+                      : () => ref
+                            .read(sankalpaListProvider.notifier)
+                            .markDailyProgress(sankalpa.id),
+                  icon: Icon(
+                    todayMarked ? Icons.check_circle : Icons.circle_outlined,
+                  ),
+                  tooltip: todayMarked
+                      ? l10n.doneForToday
+                      : l10n.markTodayAsDone,
+                ),
               ],
             ),
-            if (sankalpa.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                sankalpa.description,
-                style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: AppSpacing.s8),
+            Text(
+              l10n.reminderAt(
+                TimeOfDay(
+                  hour: sankalpa.reminderHour,
+                  minute: sankalpa.reminderMinute,
+                ).format(context),
               ),
-            ],
-            const SizedBox(height: 16),
-            if (!isHistory) ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.dayOf(
-                            sankalpa.currentDayNumber,
-                            sankalpa.durationDays,
-                          ),
-                          style: Theme.of(context).textTheme.labelMedium,
-                        ),
-                        const SizedBox(height: 4),
-                        LinearProgressIndicator(
-                          value: clampedProgress,
-                          borderRadius: BorderRadius.circular(4),
-                          backgroundColor: Theme.of(
-                            context,
-                          ).dividerColor.withValues(alpha: 0.2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  IconButton.filled(
-                    onPressed: todayMarked
-                        ? null
-                        : () => ref
-                              .read(sankalpaListProvider.notifier)
-                              .markDailyProgress(sankalpa.id),
-                    icon: Icon(
-                      todayMarked ? Icons.check_circle : Icons.circle_outlined,
-                    ),
-                    tooltip: todayMarked
-                        ? l10n.doneForToday
-                        : l10n.markTodayAsDone,
-                  ),
-                ],
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).disabledColor,
               ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.reminderAt(
-                  TimeOfDay(
-                    hour: sankalpa.reminderHour,
-                    minute: sankalpa.reminderMinute,
-                  ).format(context),
-                ),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).disabledColor,
+            ),
+          ] else ...[
+            Text(
+              l10n.completedOn(DateFormat.yMMMd().format(sankalpa.endDate)),
+              style: TextStyle(
+                color: AppTheme.success(
+                  Theme.of(context).brightness == Brightness.dark,
                 ),
               ),
-            ] else ...[
-              Text(
-                l10n.completedOn(DateFormat.yMMMd().format(sankalpa.endDate)),
-                style: TextStyle(
-                  color: AppTheme.success(
-                    Theme.of(context).brightness == Brightness.dark,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

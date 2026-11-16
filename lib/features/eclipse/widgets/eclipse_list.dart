@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/anim/stagger_entrance.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/eclipse.dart';
-import '../../../widgets/responsive_layout.dart';
+import '../../../theme/app_theme.dart';
+import '../../../widgets/screen_body.dart';
+import '../../../widgets/state_views.dart';
 import 'eclipse_card.dart';
 
 /// Upcoming eclipses for one tab of [EclipseScreen].
@@ -22,27 +24,34 @@ class EclipseList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    if (eclipses.isEmpty) {
-      return Center(child: Text(l10n.noUpcomingDates));
-    }
-
-    return CenteredContent(
-      maxWidth: 900,
-      child: ListView(
-        addRepaintBoundaries: false,
-        padding: ResponsiveLayout.responsivePadding(context).add(
-          EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
-        ),
-        children: [
-          // Few items per tab (eclipses are rare), so all animate; the index
-          // restarts per tab and only runs when that tab first builds.
-          for (var i = 0; i < eclipses.length; i++)
-            StaggerEntrance(
-              index: i,
-              child: EclipseCard(eclipse: eclipses[i]),
+    // Shared page frame: 12dp gutter and the 800 reading width every other
+    // screen uses, so eclipse cards sit exactly as far from the edge as the
+    // home cards do.
+    return ScreenBody(
+      child: eclipses.isEmpty
+          ? EmptyState(
+              icon: Icons.nights_stay_outlined,
+              title: l10n.noUpcomingDates,
+            )
+          : ListView.separated(
+              addRepaintBoundaries: false,
+              // 16dp above the first card and below the last (plus the system
+              // gesture inset); [AppTheme.cardGap] is the same gap the home
+              // column uses.
+              padding: EdgeInsets.only(
+                top: AppTheme.cardGap,
+                bottom:
+                    AppTheme.cardGap + MediaQuery.viewPaddingOf(context).bottom,
+              ),
+              itemCount: eclipses.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(height: AppTheme.cardGap),
+              itemBuilder: (context, i) => StaggerEntrance(
+                // Few items per tab (eclipses are rare), so all animate.
+                index: i,
+                child: EclipseCard(eclipse: eclipses[i]),
+              ),
             ),
-        ],
-      ),
     );
   }
 }

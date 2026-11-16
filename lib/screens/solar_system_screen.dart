@@ -9,7 +9,11 @@ import '../providers/planetary_view_provider.dart';
 import '../services/planetary_view_service.dart';
 import '../widgets/solar_system_painter.dart';
 import '../widgets/responsive_layout.dart';
+import '../widgets/page_scaffold.dart';
+import '../widgets/state_views.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 
 /// Full-screen solar system visualization with interactive planets
 class SolarSystemScreen extends ConsumerStatefulWidget {
@@ -65,141 +69,104 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HapticBackButton(),
-        title: Text(l10n.solarSystem),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          // Date picker button (gated press haptic + scale in PressScale).
-          PressScale(
-            child: IconButton(
-              icon: const Icon(Icons.calendar_today),
-              tooltip: l10n.selectDate,
-              onPressed: () => _selectDate(context),
-            ),
+    return PageScaffold(
+      leading: const HapticBackButton(),
+      title: Text(l10n.solarSystem),
+      actions: [
+        // Date picker button (gated press haptic + scale in PressScale).
+        PressScale(
+          child: IconButton(
+            icon: const Icon(Icons.calendar_today),
+            tooltip: l10n.selectDate,
+            onPressed: () => _selectDate(context),
           ),
-          // Reset to today
-          PressScale(
-            child: IconButton(
-              icon: const Icon(Icons.today),
-              tooltip: l10n.goToToday,
-              onPressed: () {
-                ref
-                    .read(planetaryViewDateProvider.notifier)
-                    .setDate(DateTime.now());
-              },
-            ),
+        ),
+        // Reset to today
+        PressScale(
+          child: IconButton(
+            icon: const Icon(Icons.today),
+            tooltip: l10n.goToToday,
+            onPressed: () {
+              ref
+                  .read(planetaryViewDateProvider.notifier)
+                  .setDate(DateTime.now());
+            },
           ),
-        ],
-      ),
+        ),
+      ],
+      // The time panel paints behind the gesture handle and pads its own
+      // controls clear of it, so the canvas is left edge to edge.
       body: Stack(
         children: [
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: Container(
-                decoration: AppTheme.backgroundDecoration(context),
-              ),
-            ),
-          ),
-          SafeArea(
-            // The page background and the time panel paint behind the gesture
-            // handle; the panel pads its own controls clear of it instead.
-            bottom: false,
-            child: Stack(
-              children: [
-                // Main content column
-                Column(
-                  children: [
-                    // Top controls row
-                    _buildTopControls(context, theme, l10n),
+          // Main content column
+          Column(
+            children: [
+              // Top controls row
+              _buildTopControls(context, theme, l10n),
 
-                    // Solar system visualization
-                    Expanded(
-                      child: Consumer(
-                        builder: (context, ref, _) {
-                          final solarSystemAsync = ref.watch(
-                            solarSystemDataProvider,
-                          );
-                          return solarSystemAsync.when(
-                            skipLoadingOnReload: true,
-                            data: (data) => _buildSolarSystem(
-                              context,
-                              ref,
-                              data,
-                              isDark,
-                              showZodiac: _showZodiac,
-                            ),
-                            loading: () => const Center(
-                              child: CircularProgressIndicator.adaptive(),
-                            ),
-                            error: (e, _) => Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.error_outline,
-                                    size: 48,
-                                    color: theme.colorScheme.error,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(l10n.errorLoadingData),
-                                  const SizedBox(height: 8),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        ref.refresh(solarSystemDataProvider),
-                                    child: Text(l10n.retry),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    // Planet info panel (MOVED TO STACK)
-
-                    // Time slider control
-                    _buildTimeSlider(context, theme, l10n),
-                  ],
-                ),
-
-                // Zoom controls overlay
-                _buildZoomControls(context, theme),
-
-                // Planet info panel overlay
-                Consumer(
+              // Solar system visualization
+              Expanded(
+                child: Consumer(
                   builder: (context, ref, _) {
-                    final selectedPlanetData = ref.watch(
-                      selectedPlanetDataProvider,
-                    );
-                    if (selectedPlanetData == null)
-                      return const SizedBox.shrink();
-                    return Positioned(
-                      top: 100,
-                      right: ResponsiveLayout.value(
+                    final solarSystemAsync = ref.watch(solarSystemDataProvider);
+                    return solarSystemAsync.when(
+                      skipLoadingOnReload: true,
+                      data: (data) => _buildSolarSystem(
                         context,
-                        mobile: 16.0,
-                        tablet: 24.0,
-                        desktop: 32.0,
+                        ref,
+                        data,
+                        isDark,
+                        showZodiac: _showZodiac,
                       ),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 300),
-                        child: _buildPlanetInfoPanel(
-                          context,
-                          selectedPlanetData,
-                          isDark,
-                        ),
+                      loading: () => const Center(
+                        child: CircularProgressIndicator.adaptive(),
                       ),
+                      error: (error, _) {
+                        debugPrint('Solar system data failed: $error');
+                        return ErrorState(
+                          message: l10n.errorLoadingData,
+                          onRetry: () =>
+                              ref.invalidate(solarSystemDataProvider),
+                        );
+                      },
                     );
                   },
                 ),
-              ],
-            ),
+              ),
+
+              // Planet info panel (MOVED TO STACK)
+
+              // Time slider control
+              _buildTimeSlider(context, theme, l10n),
+            ],
+          ),
+
+          // Zoom controls overlay
+          _buildZoomControls(context, theme),
+
+          // Planet info panel overlay
+          Consumer(
+            builder: (context, ref, _) {
+              final selectedPlanetData = ref.watch(selectedPlanetDataProvider);
+              if (selectedPlanetData == null) return const SizedBox.shrink();
+              return Positioned(
+                top: 100,
+                right: ResponsiveLayout.value(
+                  context,
+                  mobile: AppSpacing.s16,
+                  tablet: AppSpacing.s24,
+                  desktop: AppSpacing.s32,
+                ),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: _buildPlanetInfoPanel(
+                    context,
+                    selectedPlanetData,
+                    isDark,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -215,11 +182,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveLayout.value(
           context,
-          mobile: 16.0,
-          tablet: 24.0,
-          desktop: 32.0,
+          mobile: AppSpacing.s16,
+          tablet: AppSpacing.s24,
+          desktop: AppSpacing.s32,
         ),
-        vertical: 8,
+        vertical: AppSpacing.s8,
       ),
       child: Row(
         children: [
@@ -232,12 +199,12 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               final viewDate = ref.watch(planetaryViewDateProvider);
               return Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: AppSpacing.s12,
+                  vertical: AppSpacing.s6,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.tile),
                   border: Border.all(
                     color: theme.colorScheme.primary.withValues(alpha: 0.3),
                   ),
@@ -247,10 +214,10 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   children: [
                     Icon(
                       Icons.calendar_today,
-                      size: 14,
+                      size: AppIconSize.inline,
                       color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.s6),
                     Text(
                       formatLocalizedDate(
                         viewDate,
@@ -258,7 +225,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                         l10n.localeName,
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                        fontWeight: AppTypography.semibold,
                       ),
                     ),
                   ],
@@ -266,7 +233,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               );
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           // Zodiac Toggle
           _buildModeChip(
             context,
@@ -301,16 +268,16 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           padding: EdgeInsets.fromLTRB(
             ResponsiveLayout.value(
               context,
-              mobile: 16.0,
-              tablet: 24.0,
-              desktop: 32.0,
+              mobile: AppSpacing.s16,
+              tablet: AppSpacing.s24,
+              desktop: AppSpacing.s32,
             ),
-            8,
+            AppSpacing.s8,
             ResponsiveLayout.value(
               context,
-              mobile: 16.0,
-              tablet: 24.0,
-              desktop: 32.0,
+              mobile: AppSpacing.s16,
+              tablet: AppSpacing.s24,
+              desktop: AppSpacing.s32,
             ),
             // The panel now runs to the bottom edge of the screen (the body no
             // longer insets it), so its own controls carry the gesture-bar
@@ -319,7 +286,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           ),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface.withValues(alpha: 0.8),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.card),
+            ),
             boxShadow: [
               BoxShadow(
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -335,10 +304,10 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               Container(
                 width: 40,
                 height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: const EdgeInsets.only(bottom: AppSpacing.s12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.micro),
                 ),
               ),
 
@@ -360,7 +329,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                     tooltip: l10n.back1Day,
                     onPressed: () => _adjustDate(-1),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   // Today button
                   FilledButton.icon(
                     onPressed: () {
@@ -368,16 +337,16 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                           .read(planetaryViewDateProvider.notifier)
                           .setDate(DateTime.now());
                     },
-                    icon: const Icon(Icons.today, size: 18),
+                    icon: const Icon(Icons.today, size: AppIconSize.dense),
                     label: Text(l10n.today),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: AppSpacing.s16,
+                        vertical: AppSpacing.s8,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.s8),
                   // Forward (1 day)
                   _buildTimeButton(
                     context,
@@ -395,17 +364,17 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                 ],
               ),
 
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.s2),
 
               // Animation Controls
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
+                  horizontal: AppSpacing.s12,
+                  vertical: AppSpacing.s4,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.round),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -416,7 +385,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                             ? Icons.pause_circle_filled
                             : Icons.play_circle_fill,
                       ),
-                      iconSize: 32,
+                      iconSize: AppIconSize.hero,
                       color: theme.colorScheme.primary,
                       onPressed: _toggleAnimation,
                       tooltip: _isAnimating
@@ -424,7 +393,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                           : l10n.playAnimation,
                     ),
                     if (_isAnimating) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.s8),
                       Text(
                         '${l10n.speedLabel}:',
                         style: theme.textTheme.labelSmall,
@@ -446,7 +415,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                 ),
               ),
 
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.s2),
 
               // Slider
               SliderTheme(
@@ -481,31 +450,27 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
               // Date labels
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       formatLocalizedDate(minDate, 'MMM y', l10n.localeName),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
-                        ),
+                        color: context.hintInk,
                       ),
                     ),
                     Text(
                       l10n.today,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: AppTypography.bold,
                       ),
                     ),
                     Text(
                       formatLocalizedDate(maxDate, 'MMM y', l10n.localeName),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
-                        ),
+                        color: context.hintInk,
                       ),
                     ),
                   ],
@@ -529,7 +494,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
       onPressed: onPressed,
       tooltip: tooltip,
       icon: Icon(icon),
-      iconSize: 28,
+      iconSize: AppIconSize.title,
       color: theme.colorScheme.primary,
       style: IconButton.styleFrom(
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -555,9 +520,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
       bottom: 210 + AppTheme.navigationBarInset(context),
       right: ResponsiveLayout.value(
         context,
-        mobile: 16.0,
-        tablet: 24.0,
-        desktop: 32.0,
+        mobile: AppSpacing.s16,
+        tablet: AppSpacing.s24,
+        desktop: AppSpacing.s32,
       ),
       child: Column(
         // Vertical column for better mobile ergonomics
@@ -577,21 +542,24 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             tooltip: l10n.zoomIn,
             child: const Icon(Icons.add),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s8,
+              vertical: AppSpacing.s4,
+            ),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.dense),
             ),
             child: Text(
               '${(((ref.watch(zoomLevelProvider) as num?)?.toDouble() ?? 1.0) * 100).round()}%',
               style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: AppTypography.bold,
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           FloatingActionButton.small(
             heroTag: 'zoom_out',
             onPressed: () {
@@ -709,11 +677,11 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     );
 
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(AppSpacing.s16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.round),
         border: Border.all(color: planetColor.withValues(alpha: 0.3), width: 2),
         boxShadow: [
           BoxShadow(
@@ -744,23 +712,23 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Text(
                 PlanetaryViewService.getPlanetDisplayName(planetData.planet),
                 style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: AppTypography.bold,
                 ),
               ),
               if (planetData.isRetrograde) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.s8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
+                    horizontal: AppSpacing.s8,
+                    vertical: AppSpacing.s2,
                   ),
                   decoration: BoxDecoration(
                     color: AppTheme.retrogradeIndicator.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                     border: Border.all(
                       color: AppTheme.retrogradeIndicator.withValues(
                         alpha: 0.5,
@@ -771,14 +739,14 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                     l10n.retrograde,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppTheme.retrogradeIndicator,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: AppTypography.bold,
                     ),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
 
           // Position details
           Row(
@@ -807,7 +775,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
           // Distance and orbital info (if available)
           if (planetData.distanceAU != null && planetData.distanceAU! > 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -853,19 +821,19 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
     return Column(
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
-        const SizedBox(height: 4),
+        Icon(icon, size: AppIconSize.medium, color: theme.colorScheme.primary),
+        const SizedBox(height: AppSpacing.s4),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: context.secondaryInk,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSpacing.s2),
         Text(
           value,
           style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: AppTypography.bold,
           ),
         ),
       ],
@@ -879,7 +847,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.round),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.3),
         ),
@@ -928,16 +896,22 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.tile),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s12,
+                vertical: AppSpacing.s6,
+              ),
               decoration: BoxDecoration(
                 color: isSelected
                     ? theme.colorScheme.primary.withValues(alpha: 0.2)
                     : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.tile),
               ),
-              child: Text(label, style: const TextStyle(fontSize: 18)),
+              child: Text(
+                label,
+                style: const TextStyle(fontSize: AppTypography.sizeHeading),
+              ),
             ),
           ),
         ),

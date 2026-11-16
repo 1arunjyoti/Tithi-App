@@ -19,6 +19,8 @@ import '../../../providers/accessibility_provider.dart';
 import '../../../services/festival_export_service.dart';
 import '../../../services/share_file/share_file.dart';
 import '../../../widgets/settings_widgets.dart';
+import '../../../theme/app_typography.dart';
+import '../../../theme/app_metrics.dart';
 
 class ClearCacheSetting extends ConsumerWidget {
   const ClearCacheSetting({super.key});
@@ -134,7 +136,7 @@ class ExportFestivalsSetting extends ConsumerWidget {
                     LinearProgressIndicator(
                       value: festivals.isEmpty ? null : done / festivals.length,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.s12),
                     Text(
                       l10n?.festivalsExportedProgress(done, festivals.length) ??
                           '$done / ${festivals.length} festivals',
@@ -249,12 +251,12 @@ class ExportFestivalsSetting extends ConsumerWidget {
                     ) ??
                     '${festivals.length} festivals exported for $year.',
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Text(
                 filename,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: AppTypography.bold),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               Text(
                 displayPath,
                 style: Theme.of(dialogContext).textTheme.bodySmall,

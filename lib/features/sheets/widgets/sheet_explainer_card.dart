@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 
 // Canonical gray explainer card shared by the tithi detail sheet (udaya
 // explanation) and the festival event sheet (timing note): dim info icon
@@ -15,28 +17,28 @@ class SheetExplainerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final highContrast = AppTheme.highContrastOf(context);
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.s12),
       decoration: BoxDecoration(
         color: context.colors.onSurface.withValues(
           alpha: highContrast ? 0.1 : 0.05,
         ),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             icon ?? Icons.info_outline,
-            size: 18,
-            color: context.colors.onSurface.withValues(alpha: 0.5),
+            size: AppIconSize.dense,
+            color: context.hintInk,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12.5,
-                color: context.colors.onSurface.withValues(alpha: 0.65),
+                fontSize: AppTypography.sizeCaption,
+                color: context.secondaryInk,
               ),
             ),
           ),

@@ -7,6 +7,8 @@ import '../core/navigation/haptic_back_button.dart';
 import '../models/eclipse.dart';
 import '../providers/eclipse_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/page_scaffold.dart';
+import '../widgets/state_views.dart';
 
 /// Screen displaying upcoming eclipses.
 ///
@@ -44,82 +46,45 @@ class _EclipseScreenState extends ConsumerState<EclipseScreen>
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HapticBackButton(),
-        title: Text(l10n.eclipses),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          dividerColor: Colors.transparent,
-          tabs: [
-            Tab(text: l10n.solarEclipses),
-            Tab(text: l10n.lunarEclipses),
-          ],
-          indicatorColor: theme.colorScheme.primary,
-          labelColor: theme.colorScheme.primary,
-          unselectedLabelColor: theme.colorScheme.onSurface.withValues(
-            alpha: 0.6,
-          ),
-        ),
-      ),
-      body: Stack(
-        children: [
-          // Background - isolated in its own RepaintBoundary
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: Container(
-                decoration: AppTheme.backgroundDecoration(context),
-              ),
-            ),
-          ),
-          SafeArea(
-            // The page background paints behind the gesture handle; the list
-            // adds the system inset to its own bottom padding instead.
-            bottom: false,
-            child: eclipsesAsync.when(
-              data: (eclipses) => TabBarView(
-                controller: _tabController,
-                children: [
-                  EclipseList(
-                    eclipses: eclipses
-                        .where((e) => e.type.isSolar)
-                        .toList(growable: false),
-                  ),
-                  EclipseList(
-                    eclipses: eclipses
-                        .where((e) => e.type.isLunar)
-                        .toList(growable: false),
-                  ),
-                ],
-              ),
-              loading: () =>
-                  const Center(child: CircularProgressIndicator.adaptive()),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 48,
-                      color: theme.colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(l10n.errorLoadingData),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () => ref.refresh(upcomingEclipsesProvider),
-                      child: Text(l10n.retry),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+    return PageScaffold(
+      leading: const HapticBackButton(),
+      title: Text(l10n.eclipses),
+      bottom: TabBar(
+        controller: _tabController,
+        dividerColor: Colors.transparent,
+        tabs: [
+          Tab(text: l10n.solarEclipses),
+          Tab(text: l10n.lunarEclipses),
         ],
+        indicatorColor: theme.colorScheme.primary,
+        labelColor: theme.colorScheme.primary,
+        unselectedLabelColor: context.secondaryInk,
+      ),
+      body: eclipsesAsync.when(
+        data: (eclipses) => TabBarView(
+          controller: _tabController,
+          children: [
+            EclipseList(
+              eclipses: eclipses
+                  .where((e) => e.type.isSolar)
+                  .toList(growable: false),
+            ),
+            EclipseList(
+              eclipses: eclipses
+                  .where((e) => e.type.isLunar)
+                  .toList(growable: false),
+            ),
+          ],
+        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator.adaptive()),
+        error: (error, _) {
+          debugPrint('Eclipse list failed: $error');
+          return ErrorState(
+            message: l10n.errorLoadingData,
+            onRetry: () => ref.invalidate(upcomingEclipsesProvider),
+          );
+        },
       ),
     );
   }

@@ -13,7 +13,10 @@ import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../services/solar_events_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
+import 'app_card.dart';
+import 'app_divider.dart';
 import '../utils/tithi_localization.dart';
 import 'festival_thumbnail.dart';
 
@@ -137,202 +140,141 @@ class MajorFestivalCard extends ConsumerWidget {
       for (final entry in entries) '${entry.label}: ${entry.value}',
     ].join('. ');
 
-    return Semantics(
-      button: true,
-      label: semanticsLabel,
-      hint: description.isEmpty ? null : description,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(24),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(24),
-          onTap: onTap,
-          child: Ink(
-            decoration: _decoration(
-              context,
-              ref,
-              isToday: isToday,
-              accent: accent,
-            ),
-            child: ExcludeSemantics(
-              child: Padding(
-                // 14, not the row's 12: a featured card must feel larger than
-                // the rows it replaces, and it previously padded 10 - tighter
-                // than a compact row.
-                padding: const EdgeInsets.all(14),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Artwork only ever exists for a handful of festivals, so
-                    // it sizes from the card instead of the old fixed 96-108
-                    // square that dominated the text column.
-                    final imageSize = (constraints.maxWidth * 0.32).clamp(
-                      84.0,
-                      104.0,
-                    );
-                    return Row(
+    return AppCard(
+      // 14, not the row's 12: a featured card must feel larger than the rows
+      // it replaces. The accent edge marks today's observance (an ordinary
+      // card keeps the neutral hairline).
+      padding: const EdgeInsets.all(AppSpacing.s14),
+      accent: isToday ? accent : null,
+      onTap: onTap,
+      semanticLabel: semanticsLabel,
+      semanticHint: description.isEmpty ? null : description,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Artwork only ever exists for a handful of festivals, so
+          // it sizes from the card instead of the old fixed 96-108
+          // square that dominated the text column.
+          final imageSize = (constraints.maxWidth * 0.32).clamp(84.0, 104.0);
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasArtwork) ...[
+                FestivalThumbnail(
+                  festival: festival,
+                  size: imageSize,
+                  backgroundColor: AppTheme.festivalTileBackground(context),
+                  glyphColor: accent,
+                  glyphSize: AppIconSize.title,
+                ),
+                const SizedBox(width: AppSpacing.s12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (hasArtwork) ...[
-                          FestivalThumbnail(
-                            festival: festival,
-                            size: imageSize,
-                            backgroundColor: AppTheme.festivalTileBackground(
-                              context,
-                            ),
-                            glyphColor: accent,
-                            borderRadius: 16,
-                            glyphSize: 28,
+                        if (!hasArtwork) ...[
+                          _GlyphChip(
+                            icon: festivalRowIcon(festival),
+                            color: accent,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: AppSpacing.s10),
                         ],
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (!hasArtwork) ...[
-                                    _GlyphChip(
-                                      icon: festivalRowIcon(festival),
-                                      color: accent,
-                                    ),
-                                    const SizedBox(width: 10),
-                                  ],
-                                  Expanded(
-                                    child: Text(
-                                      festival.name,
-                                      maxLines: 3,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.ui(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.3,
-                                      ),
-                                    ),
-                                  ),
-                                  if (countdown != null) ...[
-                                    const SizedBox(width: 8),
-                                    _CountdownChip(
-                                      label: countdown,
-                                      color: accent,
-                                    ),
-                                  ],
-                                ],
-                              ),
-                              if (regionalName != null) ...[
-                                const SizedBox(height: 2),
-                                Text(
-                                  regionalName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    height: 1.2,
-                                    fontWeight: FontWeight.w500,
-                                    color: colors.onSurface.withValues(
-                                      alpha: AppTheme.contrastAlpha(
-                                        context,
-                                        0.70,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              if (dateLine != null) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  dateLine,
-                                  style: context.textTheme.titleSmall?.copyWith(
-                                    color: accent,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                              if (description.isNotEmpty) ...[
-                                const SizedBox(height: 6),
-                                // One line: the card already carries name,
-                                // regional name, gold date line and timings,
-                                // so the description is a hook, not a
-                                // paragraph. Two lines made the card taller
-                                // than the content it adds; the full text
-                                // stays one tap away in the event sheet (and
-                                // is the semantics hint).
-                                Text(
-                                  description,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    height: 1.35,
-                                    fontWeight: FontWeight.w500,
-                                    color: colors.onSurface.withValues(
-                                      alpha: AppTheme.contrastAlpha(
-                                        context,
-                                        0.72,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              if (entries.isNotEmpty) ...[
-                                const SizedBox(height: 10),
-                                Divider(
-                                  height: 1,
-                                  color: colors.onSurface.withValues(
-                                    alpha: AppTheme.contrastAlpha(
-                                      context,
-                                      0.10,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              for (final entry in entries)
-                                _TimingRow(
-                                  label: entry.label,
-                                  value: entry.value,
-                                ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        // The rows end in a chevron; without one the card read
-                        // as static content until it was pressed.
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Icon(
-                            Icons.chevron_right_rounded,
-                            size: 20,
-                            color: colors.onSurface.withValues(
-                              alpha: AppTheme.contrastAlpha(context, 0.32),
+                          child: Text(
+                            festival.name,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.ui(
+                              fontSize: AppTypography.sizeHeading,
+                              fontWeight: AppTypography.semibold,
+                              height: 1.3,
                             ),
                           ),
                         ),
+                        if (countdown != null) ...[
+                          const SizedBox(width: AppSpacing.s8),
+                          _CountdownChip(label: countdown, color: accent),
+                        ],
                       ],
-                    );
-                  },
+                    ),
+                    if (regionalName != null) ...[
+                      const SizedBox(height: AppSpacing.s2),
+                      Text(
+                        regionalName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppTypography.sizeDetail,
+                          height: 1.2,
+                          fontWeight: AppTypography.medium,
+                          color: colors.onSurface.withValues(
+                            alpha: AppTheme.contrastAlpha(context, 0.70),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (dateLine != null) ...[
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(
+                        dateLine,
+                        style: context.textTheme.titleSmall?.copyWith(
+                          color: accent,
+                          fontWeight: AppTypography.bold,
+                        ),
+                      ),
+                    ],
+                    if (description.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.s6),
+                      // One line: the card already carries name,
+                      // regional name, gold date line and timings,
+                      // so the description is a hook, not a
+                      // paragraph. Two lines made the card taller
+                      // than the content it adds; the full text
+                      // stays one tap away in the event sheet (and
+                      // is the semantics hint).
+                      Text(
+                        description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppTypography.sizeCaption,
+                          height: 1.35,
+                          fontWeight: AppTypography.medium,
+                          color: colors.onSurface.withValues(
+                            alpha: AppTheme.contrastAlpha(context, 0.72),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (entries.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.s10),
+                      const AppDivider(),
+                    ],
+                    for (final entry in entries)
+                      _TimingRow(label: entry.label, value: entry.value),
+                  ],
                 ),
               ),
-            ),
-          ),
-        ),
+              const SizedBox(width: AppSpacing.s4),
+              // The rows end in a chevron; without one the card read
+              // as static content until it was pressed.
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.s2),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: AppIconSize.medium,
+                  color: colors.onSurface.withValues(
+                    alpha: AppTheme.contrastAlpha(context, 0.32),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
-    );
-  }
-
-  /// Card surface, with the accent hairline that marks today's observance.
-  BoxDecoration _decoration(
-    BuildContext context,
-    WidgetRef ref, {
-    required bool isToday,
-    required Color accent,
-  }) {
-    final base = AppTheme.glassmorphism(context: context, ref: ref);
-    if (!isToday) return base;
-    // copyWith, not a constructor: the fill/shadow stay the palette's, and
-    // this works for every glassmorphism branch (Pure Dark, High Contrast).
-    return base.copyWith(
-      border: Border.all(color: accent.withValues(alpha: 0.45), width: 1.5),
     );
   }
 
@@ -451,9 +393,9 @@ class _GlyphChip extends StatelessWidget {
       height: 40,
       decoration: BoxDecoration(
         color: AppTheme.festivalTileBackground(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
       ),
-      child: Icon(icon, size: 20, color: color),
+      child: Icon(icon, size: AppIconSize.medium, color: color),
     );
   }
 }
@@ -468,19 +410,22 @@ class _CountdownChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s8,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         label,
         maxLines: 1,
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: AppTypography.sizeFootnote,
           height: 1.2,
-          fontWeight: FontWeight.w800,
+          fontWeight: AppTypography.bold,
         ),
       ),
     );
@@ -510,7 +455,7 @@ class _TimingRow extends StatelessWidget {
         ? label.substring(0, label.length - 1)
         : label;
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.s8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -519,9 +464,9 @@ class _TimingRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: AppTypography.sizeMicro,
               height: 1.1,
-              fontWeight: FontWeight.w700,
+              fontWeight: AppTypography.bold,
               letterSpacing: 0.7,
               color: colors.onSurface.withValues(
                 alpha: AppTheme.contrastAlpha(context, 0.55),
@@ -534,9 +479,9 @@ class _TimingRow extends StatelessWidget {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: AppTypography.sizeDetail,
               height: 1.2,
-              fontWeight: FontWeight.w600,
+              fontWeight: AppTypography.semibold,
               color: colors.onSurface.withValues(
                 alpha: AppTheme.contrastAlpha(context, 0.92),
               ),

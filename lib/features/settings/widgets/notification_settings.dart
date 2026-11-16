@@ -5,8 +5,10 @@ import '../../../providers/notification_provider.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 import '../../../services/notification_service.dart'
     show FestivalReminderTiming;
+import '../../../widgets/app_divider.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class NotificationSettings extends ConsumerWidget {
@@ -88,7 +90,7 @@ class NotificationSettings extends ConsumerWidget {
             }
           },
         ),
-        const SettingsDivider(),
+        const AppDivider(),
         // Daily Shloka Toggle (independent of the daily master switch,
         // so users can opt into shloka-only notifications).
         SettingsSwitchTile(
@@ -137,7 +139,7 @@ class NotificationSettings extends ConsumerWidget {
             }
           },
         ),
-        const SettingsDivider(),
+        const AppDivider(),
         // Festival Reminders Toggle (independent of daily master switch,
         // so users can opt into festival-only notifications).
         SettingsSwitchTile(
@@ -189,7 +191,7 @@ class NotificationSettings extends ConsumerWidget {
           },
         ),
         if (ref.watch(festivalNotificationEnabledProvider)) ...[
-          const SettingsDivider(),
+          const AppDivider(),
           SettingsActionTile(
             icon: Icons.schedule_rounded,
             title: l10n?.festivalReminderTime ?? 'Festival Reminder Time',
@@ -200,7 +202,7 @@ class NotificationSettings extends ConsumerWidget {
               textAlign: TextAlign.end,
               style: context.textTheme.bodyMedium?.copyWith(
                 color: context.colors.primary,
-                fontWeight: FontWeight.bold,
+                fontWeight: AppTypography.bold,
               ),
             ),
             onTap: () => _showFestivalTimingPicker(context, ref),
@@ -211,7 +213,7 @@ class NotificationSettings extends ConsumerWidget {
         if (isEnabled ||
             ref.watch(shlokaNotificationEnabledProvider) ||
             ref.watch(festivalNotificationEnabledProvider)) ...[
-          const SettingsDivider(),
+          const AppDivider(),
           SettingsActionTile(
             icon: Icons.access_time_rounded,
             title: l10n?.notificationTime ?? 'Notification Time',
@@ -222,7 +224,7 @@ class NotificationSettings extends ConsumerWidget {
               ),
               style: context.textTheme.bodyMedium?.copyWith(
                 color: context.colors.primary,
-                fontWeight: FontWeight.bold,
+                fontWeight: AppTypography.bold,
               ),
             ),
             onTap: () async {

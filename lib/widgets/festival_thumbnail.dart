@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/festival.dart';
+import '../theme/app_metrics.dart';
 
 /// Best-effort glyph per festival category (the bundle ships no per-festival
 /// icon metadata). Major festivals get the gold sun from the redesign mock,
@@ -28,8 +29,8 @@ class FestivalThumbnail extends StatelessWidget {
     required this.size,
     required this.backgroundColor,
     required this.glyphColor,
-    this.borderRadius = 14,
-    this.glyphSize = 24,
+    this.borderRadius = AppRadius.tile,
+    this.glyphSize = AppIconSize.nav,
     this.glyphIcon,
   });
 

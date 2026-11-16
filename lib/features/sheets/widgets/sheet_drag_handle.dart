@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
 
 // Canonical drag handle extracted from widgets/tithi_detail_sheet.dart
 // (finalized design). The taller transparent zone makes the framework
@@ -23,7 +24,7 @@ class SheetDragHandle extends StatelessWidget {
           color: highContrast
               ? context.colors.onSurface.withValues(alpha: 0.35)
               : AppTheme.heroForeground(context).withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(AppRadius.micro),
         ),
       ),
     );

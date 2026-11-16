@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../l10n/app_localizations.dart';
@@ -9,13 +8,17 @@ import '../providers/calendar_provider.dart' as cp;
 import '../providers/panchang_provider.dart';
 import '../providers/festival_provider.dart';
 import '../providers/location_provider.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../services/bengali_calendar_service.dart';
 import '../services/hindu_calendar_service.dart';
 import '../models/hindu_month_system.dart';
 import '../models/panchang_data.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_motion.dart';
 import '../utils/tithi_localization.dart';
+import 'skeleton.dart';
 import '../core/anim/press_scale.dart';
 import '../features/calendar/data/calendar_caches.dart';
 import '../features/calendar/data/calendar_models.dart';
@@ -24,6 +27,9 @@ import '../features/calendar/domain/header_builders.dart'
     show cachedHeaderSync, formatGregorianHeader;
 import '../features/calendar/providers/cell_providers.dart';
 import '../features/calendar/providers/header_provider.dart';
+import 'app_card.dart';
+import 'app_divider.dart';
+import 'calendar_day_semantics.dart';
 
 export '../features/calendar/data/calendar_models.dart'
     show CalendarCellData, AdaptiveCalendarData, HeaderData, MonthRangeParts;
@@ -488,22 +494,24 @@ class CalendarWidget extends ConsumerWidget {
     // edge never kicks on the first frames.
     return AnimatedSize(
       alignment: Alignment.topCenter,
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 250),
-      ),
-      curve: Curves.easeInOutCubic,
-      child: Container(
-        // Horizontal gutters only (shared AppTheme.homeCardGutter so left and
-        // right match every other home card): vertical spacing between home
-        // cards is owned by the home column's uniform SizedBox gaps, so a
-        // vertical margin here would double up around this card alone.
-        margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
-        decoration: AppTheme.glassmorphism(context: context, ref: ref),
+      duration: AppMotion.of(context, AppMotion.emphasized),
+      curve: AppMotion.emphasizedCurve,
+      child: AppCard(
+        // Horizontal gutters only ([AppTheme.pageGutter] so left and right
+        // match every other page card): vertical spacing between home cards
+        // is owned by the home column's uniform gaps, so a vertical margin
+        // here would double up around this card alone.
+        margin: const EdgeInsets.symmetric(horizontal: AppTheme.pageGutter),
+        padding: EdgeInsets.zero,
         // Card padding per the redesign (18 top, 14 sides/bottom) keeps the
         // grid and stripes clear of the rounded card corners.
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s14,
+            AppSpacing.s18,
+            AppSpacing.s14,
+            AppSpacing.s14,
+          ),
           child: Column(
             children: [
               // Custom Header
@@ -556,10 +564,7 @@ class CalendarWidget extends ConsumerWidget {
                   },
                   child: RepaintBoundary(
                     child: AnimatedSwitcher(
-                      duration: AppTheme.animationDuration(
-                        context,
-                        const Duration(milliseconds: 250),
-                      ),
+                      duration: AppMotion.of(context, AppMotion.emphasized),
                       // Outgoing drops instantly: AnimatedSwitcher reuses this
                       // Tween reversed for the exit, which would slide the old
                       // grid back over the incoming one (wrong side) while
@@ -578,7 +583,7 @@ class CalendarWidget extends ConsumerWidget {
                             ).animate(
                               CurvedAnimation(
                                 parent: animation,
-                                curve: Curves.easeOutCubic,
+                                curve: AppMotion.standardCurve,
                               ),
                             );
                         return SlideTransition(position: slide, child: child);
@@ -621,7 +626,7 @@ class CalendarWidget extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _WeekdayHeaderRow(startOfWeek: startOfWeek),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.s4),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return _WeekendStripes(
@@ -635,11 +640,11 @@ class CalendarWidget extends ConsumerWidget {
                               // Short, eased page animation: the default 300ms easeInOut
                               // feels sluggish while heavy providers resolve underneath.
                               // Reduce Motion jumps instantly between months.
-                              pageAnimationDuration: AppTheme.animationDuration(
+                              pageAnimationDuration: AppMotion.of(
                                 context,
-                                const Duration(milliseconds: 250),
+                                AppMotion.emphasized,
                               ),
-                              pageAnimationCurve: Curves.easeOutCubic,
+                              pageAnimationCurve: AppMotion.standardCurve,
                               availableGestures:
                                   AvailableGestures.horizontalSwipe,
                               startingDayOfWeek:
@@ -682,11 +687,7 @@ class CalendarWidget extends ConsumerWidget {
                                 // Single haptic for Gregorian page turns (swipe or
                                 // chevron-driven animation). Chevron taps don't buzz
                                 // separately on this path (see _navigateTo*Month).
-                                if (ref
-                                    .read(accessibilityProvider)
-                                    .hapticFeedback) {
-                                  HapticFeedback.lightImpact();
-                                }
+                                AppHaptics.tap(ref);
                                 // Instant: header + page position flip at mid-screen cross.
                                 ref
                                     .read(cp.focusedMonthProvider.notifier)
@@ -831,9 +832,7 @@ class CalendarWidget extends ConsumerWidget {
                               calendarStyle: CalendarStyle(
                                 // Styles handled by custom builders, but keeping basics for fallback
                                 outsideTextStyle: TextStyle(
-                                  color: context.colors.onSurface.withValues(
-                                    alpha: 0.35,
-                                  ),
+                                  color: context.faintInk,
                                 ),
                               ),
                               // Weekday labels render in the shared row above.
@@ -864,7 +863,7 @@ class CalendarWidget extends ConsumerWidget {
       key: key,
       children: [
         _WeekdayHeaderRow(startOfWeek: startOfWeek),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -873,12 +872,9 @@ class CalendarWidget extends ConsumerWidget {
           ),
           // 5 rows: the most common lunar-month shape (see grid padding).
           itemCount: 35,
-          itemBuilder: (context, index) => Container(
-            margin: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: context.colors.onSurface.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(8),
-            ),
+          itemBuilder: (context, index) => const Padding(
+            padding: EdgeInsets.all(AppSpacing.s4),
+            child: SkeletonBox(radius: AppRadius.chip),
           ),
         ),
       ],
@@ -908,7 +904,7 @@ class CalendarWidget extends ConsumerWidget {
       children: [
         // Weekday Headers (shared styling with the Gregorian path).
         _WeekdayHeaderRow(startOfWeek: startOfWeek),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.s4),
         // Grid with weekend striping.
         _WeekendStripes(
           startOfWeek: startOfWeek,
@@ -996,9 +992,7 @@ class CalendarWidget extends ConsumerWidget {
     WidgetRef ref,
     DateTime focusedMonth,
   ) async {
-    if (ref.read(accessibilityProvider).hapticFeedback) {
-      await HapticFeedback.lightImpact();
-    }
+    AppHaptics.tap(ref);
     if (!context.mounted) return;
 
     final primarySystem = ref.read(cp.primaryCalendarSystemProvider);
@@ -1196,7 +1190,7 @@ class CalendarWidget extends ConsumerWidget {
           final materialL10n = MaterialLocalizations.of(context);
           return Dialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(28),
+              borderRadius: BorderRadius.circular(AppRadius.card),
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 328, maxHeight: 496),
@@ -1206,7 +1200,12 @@ class CalendarWidget extends ConsumerWidget {
                 children: [
                   // Header matching Material 3 date picker style
                   Container(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s24,
+                      AppSpacing.s16,
+                      AppSpacing.s24,
+                      AppSpacing.s8,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1214,28 +1213,24 @@ class CalendarWidget extends ConsumerWidget {
                           AppLocalizations.of(context)?.selectYear ??
                               'Select year',
                           style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color: context.colors.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
-                              ),
+                              ?.copyWith(color: context.secondaryInk),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.s4),
                         Text(
                           eraName,
                           style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w400),
+                              ?.copyWith(fontWeight: AppTypography.regular),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 1),
+                  const AppDivider(),
                   // Year grid
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: AppSpacing.s12,
+                        vertical: AppSpacing.s8,
                       ),
                       child: GridView.builder(
                         controller: scrollController,
@@ -1254,21 +1249,23 @@ class CalendarWidget extends ConsumerWidget {
                             color: isSelected
                                 ? context.colors.primary
                                 : Colors.transparent,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.round,
+                            ),
                             child: InkWell(
                               onTap: () {
-                                if (ref
-                                    .read(accessibilityProvider)
-                                    .hapticFeedback) {
-                                  HapticFeedback.lightImpact();
-                                }
+                                AppHaptics.tap(ref);
                                 Navigator.of(dialogContext).pop(year);
                               },
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.round,
+                              ),
                               child: Container(
                                 alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.round,
+                                  ),
                                   border: isSelected
                                       ? null
                                       : Border.all(
@@ -1288,9 +1285,9 @@ class CalendarWidget extends ConsumerWidget {
                                         ? context.colors.onPrimary
                                         : context.colors.onSurface,
                                     fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                    fontSize: 14,
+                                        ? AppTypography.semibold
+                                        : AppTypography.regular,
+                                    fontSize: AppTypography.sizeBody,
                                   ),
                                 ),
                               ),
@@ -1302,7 +1299,12 @@ class CalendarWidget extends ConsumerWidget {
                   ),
                   // Action buttons
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s8,
+                      AppSpacing.s8,
+                      AppSpacing.s8,
+                      AppSpacing.s8,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -1380,7 +1382,7 @@ class CalendarWidget extends ConsumerWidget {
         final materialL10n = MaterialLocalizations.of(context);
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.card),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 328, maxHeight: 440),
@@ -1390,35 +1392,36 @@ class CalendarWidget extends ConsumerWidget {
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s24,
+                    AppSpacing.s16,
+                    AppSpacing.s24,
+                    AppSpacing.s8,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         AppLocalizations.of(context)!.selectMonth,
                         style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: context.colors.onSurface.withValues(
-                                alpha: 0.6,
-                              ),
-                            ),
+                            ?.copyWith(color: context.secondaryInk),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.s4),
                       Text(
                         yearLabel,
                         style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w400),
+                            ?.copyWith(fontWeight: AppTypography.regular),
                       ),
                     ],
                   ),
                 ),
-                const Divider(height: 1),
+                const AppDivider(),
                 // Month grid
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: AppSpacing.s12,
+                      vertical: AppSpacing.s8,
                     ),
                     child: GridView.builder(
                       gridDelegate:
@@ -1436,21 +1439,21 @@ class CalendarWidget extends ConsumerWidget {
                           color: isSelected
                               ? context.colors.primary
                               : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.round),
                           child: InkWell(
                             onTap: () {
-                              if (ref
-                                  .read(accessibilityProvider)
-                                  .hapticFeedback) {
-                                HapticFeedback.lightImpact();
-                              }
+                              AppHaptics.tap(ref);
                               Navigator.of(dialogContext).pop(index);
                             },
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.round,
+                            ),
                             child: Container(
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.round,
+                                ),
                                 border: isSelected
                                     ? null
                                     : Border.all(
@@ -1465,9 +1468,9 @@ class CalendarWidget extends ConsumerWidget {
                                       ? context.colors.onPrimary
                                       : context.colors.onSurface,
                                   fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  fontSize: 13,
+                                      ? AppTypography.semibold
+                                      : AppTypography.regular,
+                                  fontSize: AppTypography.sizeDetail,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -1480,7 +1483,12 @@ class CalendarWidget extends ConsumerWidget {
                 ),
                 // Action buttons
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.s8,
+                    AppSpacing.s8,
+                    AppSpacing.s8,
+                    AppSpacing.s8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -1521,13 +1529,12 @@ class CalendarWidget extends ConsumerWidget {
     try {
       // Buzz here only for Hindu/Bengali (no page view, no onPageChanged).
       // Gregorian chevrons buzz via onPageChanged's page-turn animation.
-      if (primarySystem != cp.AppCalendarSystem.gregorian &&
-          ref.read(accessibilityProvider).hapticFeedback) {
-        await HapticFeedback.lightImpact();
+      if (primarySystem != cp.AppCalendarSystem.gregorian) {
+        AppHaptics.tap(ref);
       }
 
       if (primarySystem == cp.AppCalendarSystem.bengali) {
-        // Navigate by Bengali Month — instant on cache hit (no FFI before
+        // Navigate by Bengali Month - instant on cache hit (no FFI before
         // the UI responds), FFI fallback records the target for next time.
         adaptiveSlideDirection = -1;
         final navKey = '${adaptiveNavKey(primarySystem, focusedMonth)}_-1';
@@ -1595,13 +1602,12 @@ class CalendarWidget extends ConsumerWidget {
     try {
       // Same split as _navigateToPreviousMonth: Gregorian buzzes once via
       // onPageChanged; Hindu/Bengali buzz here.
-      if (primarySystem != cp.AppCalendarSystem.gregorian &&
-          ref.read(accessibilityProvider).hapticFeedback) {
-        await HapticFeedback.lightImpact();
+      if (primarySystem != cp.AppCalendarSystem.gregorian) {
+        AppHaptics.tap(ref);
       }
 
       if (primarySystem == cp.AppCalendarSystem.bengali) {
-        // Navigate by Bengali Month — instant on cache hit (no FFI before
+        // Navigate by Bengali Month - instant on cache hit (no FFI before
         // the UI responds), FFI fallback records the target for next time.
         adaptiveSlideDirection = 1;
         final navKey = '${adaptiveNavKey(primarySystem, focusedMonth)}_+1';
@@ -1720,7 +1726,7 @@ class CalendarWidget extends ConsumerWidget {
           height: 3,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(99),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
         ),
       ),
@@ -1811,7 +1817,7 @@ class _CalendarHeader extends ConsumerWidget {
 
     final highContrast = AppTheme.highContrastOf(context);
     final onSurface = context.colors.onSurface;
-    final dim = onSurface.withValues(alpha: 0.6);
+    final dim = context.secondaryInk;
 
     Widget navButton({
       required IconData icon,
@@ -1823,9 +1829,9 @@ class _CalendarHeader extends ConsumerWidget {
       // double feedback.
       return Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.dense),
           onTap: onTap,
           child: Tooltip(
             message: tooltip,
@@ -1833,13 +1839,13 @@ class _CalendarHeader extends ConsumerWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.dense),
                 border: Border.all(
                   color: onSurface.withValues(alpha: highContrast ? 0.25 : 0.1),
                 ),
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 16, color: onSurface),
+              child: Icon(icon, size: AppIconSize.small, color: onSurface),
             ),
           ),
         ),
@@ -1847,7 +1853,12 @@ class _CalendarHeader extends ConsumerWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s8,
+        0,
+        AppSpacing.s8,
+        AppSpacing.s4,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -1871,16 +1882,20 @@ class _CalendarHeader extends ConsumerWidget {
                         child: Text(
                           headerData.primaryText,
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                            fontSize: AppTypography.sizeHeading,
+                            fontWeight: AppTypography.semibold,
                             letterSpacing: -0.2,
                             color: onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.expand_more, size: 14, color: dim),
+                      const SizedBox(width: AppSpacing.s4),
+                      Icon(
+                        Icons.expand_more,
+                        size: AppIconSize.inline,
+                        color: dim,
+                      ),
                     ],
                   ),
                   if (headerData.secondaryAccent != null) ...[
@@ -1891,9 +1906,9 @@ class _CalendarHeader extends ConsumerWidget {
                           TextSpan(
                             text: headerData.secondaryAccent,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: AppTypography.sizeFootnote,
                               letterSpacing: 0.2,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: AppTypography.semibold,
                               color: context.colors.primary,
                             ),
                           ),
@@ -1901,7 +1916,10 @@ class _CalendarHeader extends ConsumerWidget {
                               headerData.secondaryDim!.isNotEmpty)
                             TextSpan(
                               text: ' · ${headerData.secondaryDim}',
-                              style: TextStyle(fontSize: 11, color: dim),
+                              style: TextStyle(
+                                fontSize: AppTypography.sizeFootnote,
+                                color: dim,
+                              ),
                             ),
                         ],
                       ),
@@ -1960,17 +1978,17 @@ class _WeekdayHeaderRow extends StatelessWidget {
         for (var i = 0; i < 7; i++)
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
               child: Text(
                 labels[i],
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
+                  fontSize: AppTypography.sizeMicro,
+                  fontWeight: AppTypography.semibold,
                   letterSpacing: 0.6,
                   color: isWeekend(i)
                       ? context.colors.primary
-                      : context.colors.onSurface.withValues(alpha: 0.6),
+                      : context.secondaryInk,
                 ),
               ),
             ),
@@ -2014,7 +2032,7 @@ class _WeekendStripes extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: AppTheme.calendarWeekendStripe(context),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.dense),
                   ),
                 ),
               ),
@@ -2061,12 +2079,12 @@ class _CalendarCell extends StatelessWidget {
     // Selected wins over today (spec .today.sel).
     BoxDecoration? decoration;
     Color textColor = scheme.onSurface;
-    FontWeight weight = FontWeight.w500;
+    FontWeight weight = AppTypography.medium;
     Matrix4? transform;
 
     if (isSelected) {
       decoration = BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -2090,32 +2108,34 @@ class _CalendarCell extends StatelessWidget {
               ],
       );
       textColor = AppTheme.calendarSelectedForeground(context);
-      weight = FontWeight.w600;
+      weight = AppTypography.semibold;
       transform = Matrix4.identity()..scaleByDouble(1.08, 1.08, 1.0, 1.0);
     } else if (isToday) {
       decoration = BoxDecoration(
         color: AppTheme.calendarTodayBackground(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
         border: Border.all(
           color: AppTheme.calendarTodayRing(context),
           width: 1.5,
         ),
       );
       textColor = AppTheme.calendarTodayForeground(context);
-      weight = FontWeight.w600;
+      weight = AppTypography.semibold;
     }
 
     // Outside-month days render muted (spec `.d.muted`: dim at 35%) unless
     // they carry the selected/today emphasis.
     if (isOutside && !isSelected && !isToday) {
-      textColor = scheme.onSurface.withValues(alpha: 0.35);
+      textColor = context.faintInk;
     }
 
     final secondaryColor = isSelected
         ? AppTheme.calendarSelectedForeground(context).withValues(alpha: 0.7)
         : isToday
         ? AppTheme.calendarTodayForeground(context).withValues(alpha: 0.7)
-        : scheme.onSurface.withValues(alpha: isOutside ? 0.35 : 0.5);
+        : isOutside
+        ? context.faintInk
+        : context.hintInk;
 
     // 2px gutter on every tile: adjacent squares no longer touch, so the
     // selected tile's 1.08 scale (~2px overflow on a ~50px cell) just fills
@@ -2126,44 +2146,60 @@ class _CalendarCell extends StatelessWidget {
     // Callers' onTap/onDaySelected must NOT buzz separately (double-buzz).
     // The fill matters here: most tiles are transparent, so scale alone
     // wouldn't read as a hit — the tint briefly reveals the tap target.
-    return PressScale(
-      highlightColor: scheme.primary.withValues(alpha: 0.12),
-      highlightRadius: BorderRadius.circular(12),
-      child: Container(
-        margin: const EdgeInsets.all(2),
-        decoration: decoration,
-        transform: transform,
-        transformAlignment: Alignment.center,
-        // NOTE: no clipBehavior here — Container asserts
-        // (decoration != null || clipBehavior == Clip.none), and plain day
-        // tiles have no decoration. The children (centered number + corner
-        // label) never reach the rounded corners, so no clip is needed.
-        child: Stack(
-          children: [
-            Center(
-              child: Text(
-                resolvedPrimary,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                  fontWeight: weight,
-                ),
-              ),
-            ),
-            if (secondaryText != null)
-              Positioned(
-                top: 4,
-                left: 6,
+    // The painted tile has no text semantics of its own beyond the day number
+    // and the corner label; a screen reader should hear one node that also
+    // says this is a button, and whether it is today/selected.
+    final l10n = AppLocalizations.of(context);
+    final detail = secondaryText == null
+        ? null
+        : localizeDigits(secondaryText!, locale);
+
+    return CalendarDaySemantics(
+      dayLabel: resolvedPrimary,
+      detail: detail,
+      isToday: isToday,
+      isSelected: isSelected,
+      todayLabel: l10n?.today ?? 'Today',
+      selectedLabel: l10n?.selected ?? 'Selected',
+      child: PressScale(
+        highlightColor: scheme.primary.withValues(alpha: 0.12),
+        highlightRadius: BorderRadius.circular(AppRadius.dense),
+        child: Container(
+          margin: const EdgeInsets.all(AppSpacing.s2),
+          decoration: decoration,
+          transform: transform,
+          transformAlignment: Alignment.center,
+          // NOTE: no clipBehavior here — Container asserts
+          // (decoration != null || clipBehavior == Clip.none), and plain day
+          // tiles have no decoration. The children (centered number + corner
+          // label) never reach the rounded corners, so no clip is needed.
+          child: Stack(
+            children: [
+              Center(
                 child: Text(
-                  localizeDigits(secondaryText!, locale),
+                  resolvedPrimary,
                   style: TextStyle(
-                    color: secondaryColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                    fontSize: AppTypography.sizeBody,
+                    fontWeight: weight,
                   ),
                 ),
               ),
-          ],
+              if (detail != null)
+                Positioned(
+                  top: 4,
+                  left: 6,
+                  child: Text(
+                    detail,
+                    style: TextStyle(
+                      color: secondaryColor,
+                      fontSize: AppTypography.sizeMicro,
+                      fontWeight: AppTypography.medium,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

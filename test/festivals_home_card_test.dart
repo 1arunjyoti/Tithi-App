@@ -13,6 +13,7 @@ import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/core/navigation/home_tab.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
+import 'package:tithi/theme/app_metrics.dart';
 import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/event_detail_sheet.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
@@ -290,7 +291,7 @@ void main() {
       expect(selectedRow.color!.withValues(alpha: 1), equals(accent));
       expect(selectedRow.color!.a, closeTo(0.08, 0.001));
       expect(selectedRow.border, isNull);
-      expect(selectedRow.borderRadius, BorderRadius.circular(14));
+      expect(selectedRow.borderRadius, BorderRadius.circular(AppRadius.tile));
       expect(laterRow.color, isNull);
       expect(laterRow.border, isNull);
     });
@@ -361,7 +362,12 @@ void main() {
       final divider = tester.widget<InsetRowDivider>(
         find.byType(InsetRowDivider),
       );
-      expect(divider.leadingInset, FestivalRowTile.textColumnInset);
+      // The rows sit inset inside the card (their wash must not hug the
+      // edge), so the hairline follows them past the text column.
+      expect(
+        divider.leadingInset,
+        FestivalRowTile.textColumnInset + AppTheme.homeCardRowInset,
+      );
       expect(find.byType(FestivalRowTile), findsNWidgets(2));
 
       // Assert: the leading tile lines up with the section heading (both at

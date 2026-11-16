@@ -15,6 +15,7 @@ import '../services/solar_events_service.dart';
 import '../services/moon_phase_service.dart';
 import '../services/moon_events_service.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
 import '../utils/tithi_localization.dart';
 import '../features/tithi_sheet/providers/sheet_providers.dart';
@@ -220,7 +221,7 @@ class TithiDetailSheet extends ConsumerWidget {
     // Bengali date resolve async and join when ready (weekday alone meanwhile).
     final weekday = formatLocalizedDate(panchang.date, 'EEEE', locale);
     final dateBaseStyle = AppTypography.display(
-      fontSize: 22,
+      fontSize: AppTypography.sizeHeadline,
       height: 1.3,
       color: highContrast
           ? context.colors.onSurface
@@ -256,7 +257,7 @@ class TithiDetailSheet extends ConsumerWidget {
               // Below the display floor: AppTypography routes this to the UI
               // sans so Newsreader's hairlines never render at 16pt.
               style: AppTypography.display(
-                fontSize: 16,
+                fontSize: AppTypography.sizeSubtitle,
                 fontStyle: FontStyle.italic,
                 color: highContrast
                     ? context.colors.primary
@@ -343,7 +344,7 @@ class TithiDetailSheet extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           // Moon row: tile + paksha/tithi + illumination +
           // number badge.
           Row(
@@ -356,7 +357,7 @@ class TithiDetailSheet extends ConsumerWidget {
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,36 +365,36 @@ class TithiDetailSheet extends ConsumerWidget {
                     Text(
                       '${l10n.pakshaWithName(panchang.isShukla ? l10n.themeShukla : l10n.themeKrishna)} · $displayTithiName',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontSize: AppTypography.sizeHeading,
+                        fontWeight: AppTypography.semibold,
                         color: highContrast
                             ? context.colors.onSurface
                             : AppTheme.heroForeground(context),
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
                       '$phaseWord · ${l10n.illuminatedPercent(illuminationPct)}',
                       style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
+                        fontSize: AppTypography.sizeCaption,
+                        fontWeight: AppTypography.medium,
                         color: highContrast
-                            ? context.colors.onSurface.withValues(alpha: 0.7)
+                            ? context.secondaryInk
                             : AppTheme.heroForeground(context),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: AppSpacing.s12,
+                  vertical: AppSpacing.s6,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.dense),
                   border: Border.all(
                     color: highContrast
                         ? context.colors.primary.withValues(alpha: 0.4)
@@ -406,8 +407,8 @@ class TithiDetailSheet extends ConsumerWidget {
                     color: highContrast
                         ? context.colors.primary
                         : AppTheme.heroAccent(context),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
+                    fontWeight: AppTypography.bold,
+                    fontSize: AppTypography.sizeProse,
                   ),
                 ),
               ),
@@ -430,11 +431,11 @@ class TithiDetailSheet extends ConsumerWidget {
           // date) on no-rise/set days.
           if (anchorChips.isNotEmpty) ...[
             _AnchorChipGrid(chips: anchorChips),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
           ],
           // Dotted section label.
           SectionHeader(text: l10n.tithiTimings),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           // Begins/Ends card (exact start/end via binary search).
           timingsAsync.when(
             data: (timings) {
@@ -478,7 +479,7 @@ class TithiDetailSheet extends ConsumerWidget {
           // as; the incoming tithi's own end already stands in
           // the Begins/Ends card above.
           if (panchang.hasTithiTransition) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Consumer(
               builder: (context, ref, child) {
                 final nextTimingsAsync = ref.watch(
@@ -570,9 +571,9 @@ class TithiDetailSheet extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   SectionHeader(text: l10n.nakshatraTimings),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.s10),
                   NakshatraCard(
                     highContrast: highContrast,
                     headline: l10n.nakshatraUntil(nak.nakshatra, endLabel),
@@ -595,9 +596,9 @@ class TithiDetailSheet extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 SectionHeader(text: l10n.nakshatraTimings),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.s10),
                 NakshatraCard(highContrast: highContrast),
               ],
             ),
@@ -630,9 +631,9 @@ class TithiDetailSheet extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   SectionHeader(text: l10n.yogaKaranaTimings),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.s10),
                   YogaKaranaCard(
                     highContrast: highContrast,
                     yogaLabel: l10n.yogaLabel,
@@ -657,9 +658,9 @@ class TithiDetailSheet extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 SectionHeader(text: l10n.yogaKaranaTimings),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSpacing.s10),
                 YogaKaranaCard(
                   highContrast: highContrast,
                   yogaLabel: l10n.yogaLabel,
@@ -673,9 +674,9 @@ class TithiDetailSheet extends ConsumerWidget {
           // (name + right-aligned range, optional dim subnote).
           // Hidden with the anchors above.
           if (auspicious != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SectionHeader(text: l10n.auspiciousTimings),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             AuspiciousCard(
               highContrast: highContrast,
               rows: [
@@ -762,9 +763,9 @@ class TithiDetailSheet extends ConsumerWidget {
           // card (8 sunrise-to-sunset segments with the three
           // slots colored, plus per-row time ranges).
           if (inauspicious != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SectionHeader(text: l10n.inauspiciousTimings),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             InauspiciousCard(
               highContrast: highContrast,
               axisStart: formatLocalizedDate(
@@ -823,7 +824,7 @@ class TithiDetailSheet extends ConsumerWidget {
               ],
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           // Festivals on the day: an extra to the panchang itself,
           // using the same rows as the home card. Tapping one opens
           // the festival sheet on top of this one (pop returns
@@ -831,9 +832,9 @@ class TithiDetailSheet extends ConsumerWidget {
           // the closing note.
           if (dayFestivals.isNotEmpty) ...[
             SectionHeader(text: l10n.festivalsOnThisDay),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             for (var i = 0; i < dayFestivals.length; i++) ...[
-              if (i > 0) const SizedBox(height: 8),
+              if (i > 0) const SizedBox(height: AppSpacing.s8),
               FestivalRowTile(
                 festival: dayFestivals[i],
                 date: panchang.date,
@@ -848,12 +849,12 @@ class TithiDetailSheet extends ConsumerWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           // AI hand-off (opt-in). Sits above the closing explainer
           // so the explainer stays the sheet's last word.
           if (aiAssistEnabled) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SheetLinkTile(
               icon: Icons.auto_awesome_outlined,
               // This sheet opens for any date the user selects, so
@@ -876,7 +877,7 @@ class TithiDetailSheet extends ConsumerWidget {
                 inauspicious: inauspicious,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
           ],
           // Explainer card (shared kit with the event sheet).
           SheetExplainerCard(text: l10n.udayaTithiExplanation),
@@ -904,14 +905,14 @@ class _AnchorChipGrid extends StatelessWidget {
       children: [
         for (var i = 0; i < chips.length; i += 2)
           Padding(
-            padding: EdgeInsets.only(top: i == 0 ? 0 : 8),
+            padding: EdgeInsets.only(top: i == 0 ? 0 : AppSpacing.s8),
             child: IntrinsicHeight(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(child: chips[i]),
                   if (i + 1 < chips.length) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.s8),
                     Expanded(child: chips[i + 1]),
                   ],
                 ],

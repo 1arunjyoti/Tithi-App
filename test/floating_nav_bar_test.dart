@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
+import 'package:tithi/theme/app_motion.dart';
 import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/floating_nav_bar.dart';
 
@@ -351,6 +352,60 @@ void main() {
         (capsule.left + action.right) / 2,
         moreOrLessEquals(400, epsilon: 0.5),
       );
+    });
+
+    testWidgets('trailing action fades in on opened space, not out of a clip', (
+      tester,
+    ) async {
+      // Arrange
+      const actionKey = Key('test-trailing-action');
+      Widget build({required bool visible}) => _harness(
+        selected: 0,
+        onSelected: (_) {},
+        trailingAction: const SizedBox.square(key: actionKey, dimension: 56),
+        showTrailingAction: visible,
+      );
+      await tester.pumpWidget(build(visible: false));
+      await tester.pumpAndSettle();
+
+      Finder fade() => find
+          .ancestor(of: find.byKey(actionKey), matching: find.byType(Opacity))
+          .first;
+      double opacity() => tester.widget<Opacity>(fade()).opacity;
+      Rect slot() => tester.getRect(
+        find
+            .ancestor(of: find.byKey(actionKey), matching: find.byType(Align))
+            .first,
+      );
+
+      // Act: step through the whole opening one frame at a time.
+      await tester.pumpWidget(build(visible: true));
+
+      // Assert: whenever the action is visible the clip already exposes all of
+      // it, so it is never revealed edge-first (which is what read as the
+      // button sliding out from behind the capsule)...
+      var fadedPartWay = false;
+      for (
+        var elapsed = 0;
+        elapsed < AppMotion.standard.inMilliseconds;
+        elapsed += 10
+      ) {
+        await tester.pump(const Duration(milliseconds: 10));
+        final alpha = opacity();
+        if (alpha <= 0) continue;
+        fadedPartWay = fadedPartWay || alpha < 1;
+        expect(
+          tester.getRect(find.byKey(actionKey)).left,
+          greaterThanOrEqualTo(slot().left - 0.5),
+          reason: 'the action was trimmed at ${elapsed + 10}ms',
+        );
+      }
+      // ... because it comes in through the fade.
+      expect(fadedPartWay, isTrue);
+
+      // And it settles fully opaque in its final place.
+      await tester.pumpAndSettle();
+      expect(opacity(), 1.0);
     });
 
     testWidgets(

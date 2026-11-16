@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../providers/ritual_state_provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_motion.dart';
 
 class RitualChecklistWidget extends ConsumerWidget {
   final String ritualId;
@@ -21,24 +22,22 @@ class RitualChecklistWidget extends ConsumerWidget {
     final isCompleted = ref.watch(ritualStateProvider)[ritualId] ?? false;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: InkWell(
         onTap: () {
-          if (ref.read(accessibilityProvider).hapticFeedback) {
-            HapticFeedback.lightImpact();
-          }
+          AppHaptics.tap(ref);
 
           // Toggle state
           ref.read(ritualStateProvider.notifier).toggleRitual(ritualId);
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           decoration: BoxDecoration(
             color: isCompleted
                 ? context.colors.primary.withValues(alpha: 0.1)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.dense),
             border: Border.all(
               color: isCompleted
                   ? context.colors.primary.withValues(alpha: 0.5)
@@ -50,10 +49,7 @@ class RitualChecklistWidget extends ConsumerWidget {
             children: [
               // Checkbox/Icon
               AnimatedContainer(
-                duration: AppTheme.animationDuration(
-                  context,
-                  const Duration(milliseconds: 200),
-                ),
+                duration: AppMotion.of(context, AppMotion.standard),
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
@@ -64,19 +60,19 @@ class RitualChecklistWidget extends ConsumerWidget {
                   border: Border.all(
                     color: isCompleted
                         ? context.colors.primary
-                        : context.colors.onSurface.withValues(alpha: 0.5),
+                        : context.hintInk,
                     width: 2,
                   ),
                 ),
                 child: isCompleted
                     ? Icon(
                         Icons.check,
-                        size: 16,
+                        size: AppIconSize.small,
                         color: context.colors.onPrimary,
                       )
                     : null,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
 
               // Text
               Expanded(
@@ -87,7 +83,7 @@ class RitualChecklistWidget extends ConsumerWidget {
                         ? TextDecoration.lineThrough
                         : TextDecoration.none,
                     color: isCompleted
-                        ? context.colors.onSurface.withValues(alpha: 0.6)
+                        ? context.secondaryInk
                         : context.colors.onSurface,
                   ),
                 ),

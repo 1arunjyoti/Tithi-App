@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tithi/theme/app_metrics.dart';
 import 'package:tithi/theme/app_theme.dart';
 
 /// Rows are flush on their parent card in every palette; only the selected
@@ -63,7 +64,7 @@ void main() {
       );
       expect(decoration.color!.a, closeTo(0.08, 0.001));
       expect(decoration.border, isNull);
-      expect(decoration.borderRadius, BorderRadius.circular(14));
+      expect(decoration.borderRadius, BorderRadius.circular(AppRadius.tile));
     }
   });
 

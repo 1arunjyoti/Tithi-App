@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../models/panchang_data.dart';
-import '../../../providers/accessibility_provider.dart';
+import '../../../core/feedback/app_haptics.dart';
 import '../../../providers/calendar_provider.dart' as cp;
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 import '../../../utils/tithi_localization.dart';
 import '../providers/schedule_providers.dart';
 import '../../../features/sheets/sheet_launcher.dart';
@@ -231,7 +232,9 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
                   _anchorDate.day - daysAgo,
                 );
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16,
+                  ),
                   child: _ScheduleDateItem(date: date, isToday: false),
                 );
               }, childCount: _daysBefore),
@@ -242,8 +245,8 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
               key: _centerKey,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                  horizontal: AppSpacing.s16,
+                  vertical: AppSpacing.s8,
                 ),
                 child: _ScheduleDateItem(date: _anchorDate, isToday: true),
               ),
@@ -262,7 +265,9 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
                   _anchorDate.day + daysAhead,
                 );
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s16,
+                  ),
                   child: _ScheduleDateItem(date: date, isToday: false),
                 );
               }, childCount: _daysAfter),
@@ -313,7 +318,10 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
     return GestureDetector(
       onTap: _pickDate,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s16,
+          vertical: AppSpacing.s8,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -332,11 +340,11 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
             Text(
               monthLabel,
               style: context.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: AppTypography.bold,
                 color: context.colors.onSurface.withValues(alpha: 0.8),
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Icon(
               Icons.arrow_drop_down,
               color: context.colors.onSurface.withValues(alpha: 0.8),
@@ -385,10 +393,10 @@ class _ScheduleDateItem extends ConsumerWidget {
     final hinduDate = dateData.hinduDate;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
       decoration: isToday
           ? BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.tile),
               border: Border.all(
                 color: context.colors.primary.withValues(alpha: 0.5),
                 width: 2,
@@ -415,13 +423,13 @@ class _ScheduleDateItem extends ConsumerWidget {
             Container(
               width: 1,
               color: context.colors.onSurface.withValues(alpha: 0.1),
-              margin: const EdgeInsets.symmetric(vertical: 8),
+              margin: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
             ),
 
             // Events Column (Right side)
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.s12),
                 child: hasEvents
                     ? _buildEventsList(context, ref, panchang)
                     : _buildPanchangOnly(context, ref, panchang),
@@ -534,55 +542,57 @@ class _ScheduleDateItem extends ConsumerWidget {
 
     return Container(
       width: hasSecondary ? 75 : 60,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.s12,
+        horizontal: AppSpacing.s8,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             primaryMonth,
             style: context.textTheme.labelSmall?.copyWith(
-              color: isToday
-                  ? context.colors.primary
-                  : context.colors.onSurface.withValues(alpha: 0.6),
-              fontWeight: FontWeight.w600,
+              color: isToday ? context.colors.primary : context.secondaryInk,
+              fontWeight: AppTypography.semibold,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             primaryDay,
             style: context.textTheme.headlineMedium?.copyWith(
               color: isToday
                   ? context.colors.primary
                   : context.colors.onSurface,
-              fontWeight: FontWeight.bold,
-              fontSize: 24,
+              fontWeight: AppTypography.bold,
+              fontSize: AppTypography.sizeDisplay,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             weekday,
             style: context.textTheme.labelSmall?.copyWith(
-              color: isToday
-                  ? context.colors.primary
-                  : context.colors.onSurface.withValues(alpha: 0.5),
+              color: isToday ? context.colors.primary : context.hintInk,
             ),
           ),
           // Secondary calendar info
           if (hasSecondary) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: AppSpacing.s2,
+              ),
               decoration: BoxDecoration(
                 color: context.colors.secondary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppRadius.small),
               ),
               child: Text(
                 secondaryText,
                 style: context.textTheme.labelSmall?.copyWith(
                   color: context.colors.secondary,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w500,
+                  fontSize: AppTypography.sizeMicro,
+                  fontWeight: AppTypography.medium,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -605,7 +615,7 @@ class _ScheduleDateItem extends ConsumerWidget {
         _buildPanchangSummaryRow(context, panchang),
         // Sunrise/Sunset times
         _buildSunTimesRow(context, panchang),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.s8),
         // Festival cards
         ...panchang.festivals.map(
           (festival) => _buildFestivalCard(context, ref, festival, panchang),
@@ -635,29 +645,32 @@ class _ScheduleDateItem extends ConsumerWidget {
       children: [
         Icon(
           isShukla ? Icons.brightness_high_rounded : Icons.nights_stay_rounded,
-          size: 16,
+          size: AppIconSize.small,
           color: context.colors.primary.withValues(alpha: 0.7),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             '${panchang.paksha} ${panchang.tithiName}',
             style: context.textTheme.bodyMedium?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.7),
+              color: context.secondaryInk,
             ),
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.s8,
+            vertical: AppSpacing.s2,
+          ),
           decoration: BoxDecoration(
             color: context.colors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.chip),
           ),
           child: Text(
             '${panchang.tithiNumber}',
             style: context.textTheme.labelSmall?.copyWith(
               color: context.colors.primary,
-              fontWeight: FontWeight.bold,
+              fontWeight: AppTypography.bold,
             ),
           ),
         ),
@@ -675,7 +688,7 @@ class _ScheduleDateItem extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.only(top: AppSpacing.s6),
       child: Row(
         children: [
           if (panchang.sunrise != null) ...[
@@ -683,34 +696,34 @@ class _ScheduleDateItem extends ConsumerWidget {
               label: l10n.sunrise,
               child: Icon(
                 Icons.wb_sunny_outlined,
-                size: 14,
-                color: context.colors.onSurface.withValues(alpha: 0.7),
+                size: AppIconSize.inline,
+                color: context.secondaryInk,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Text(
               '${l10n.sunrise}: ${formatLocalizedDate(panchang.sunrise!, 'h:mm a', locale)}',
               style: context.textTheme.labelSmall?.copyWith(
-                color: context.colors.onSurface.withValues(alpha: 0.6),
+                color: context.secondaryInk,
               ),
             ),
           ],
           if (panchang.sunrise != null && panchang.sunset != null)
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
           if (panchang.sunset != null) ...[
             Semantics(
               label: l10n.sunset,
               child: Icon(
                 Icons.nightlight_round,
-                size: 14,
-                color: context.colors.onSurface.withValues(alpha: 0.7),
+                size: AppIconSize.inline,
+                color: context.secondaryInk,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.s4),
             Text(
               '${l10n.sunset}: ${formatLocalizedDate(panchang.sunset!, 'h:mm a', locale)}',
               style: context.textTheme.labelSmall?.copyWith(
-                color: context.colors.onSurface.withValues(alpha: 0.6),
+                color: context.secondaryInk,
               ),
             ),
           ],
@@ -729,19 +742,17 @@ class _ScheduleDateItem extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
+        AppHaptics.tap(ref);
         _showFestivalDetail(context, festival, panchang);
       },
       child: Container(
         width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: AppSpacing.s8),
+        padding: const EdgeInsets.all(AppSpacing.s12),
         decoration: AppTheme.glassmorphism(
           context: context,
           opacity: isMajor ? 0.25 : 0.15,
-          borderRadius: 12,
+          borderRadius: AppRadius.dense,
           ref: ref,
         ),
         child: Row(
@@ -753,10 +764,10 @@ class _ScheduleDateItem extends ConsumerWidget {
                 color: isMajor
                     ? context.colors.primary
                     : context.colors.secondary,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.micro),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -764,14 +775,14 @@ class _ScheduleDateItem extends ConsumerWidget {
                   Text(
                     festival.name,
                     style: context.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                      fontWeight: AppTypography.semibold,
                     ),
                   ),
                   if (festival.description.isNotEmpty)
                     Text(
                       festival.description,
                       style: context.textTheme.bodySmall?.copyWith(
-                        color: context.colors.onSurface.withValues(alpha: 0.6),
+                        color: context.secondaryInk,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -781,7 +792,7 @@ class _ScheduleDateItem extends ConsumerWidget {
             ),
             Icon(
               isMajor ? Icons.celebration_rounded : Icons.event_rounded,
-              size: 20,
+              size: AppIconSize.medium,
               color: context.colors.primary.withValues(alpha: 0.7),
             ),
           ],
@@ -800,8 +811,8 @@ class _ScheduleDateItem extends ConsumerWidget {
 
   Widget _buildLoadingRow(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
           Container(
@@ -809,16 +820,16 @@ class _ScheduleDateItem extends ConsumerWidget {
             height: 60,
             decoration: BoxDecoration(
               color: context.colors.onSurface.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.s16),
           Expanded(
             child: Container(
               height: 40,
               decoration: BoxDecoration(
                 color: context.colors.onSurface.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
             ),
           ),
@@ -829,8 +840,8 @@ class _ScheduleDateItem extends ConsumerWidget {
 
   Widget _buildErrorRow(BuildContext context, Object error) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Text(
         'Error: $error',
         style: TextStyle(color: context.colors.error),

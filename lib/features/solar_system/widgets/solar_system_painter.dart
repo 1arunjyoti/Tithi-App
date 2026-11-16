@@ -4,6 +4,7 @@ import 'package:jyotish/jyotish.dart';
 import '../data/solar_models.dart';
 import '../../../services/planetary_view_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 
 /// Static background layer: gradient, stars, guides, zodiac ring, orbit
 /// paths, and the center body. Depends only on view configuration — never
@@ -167,12 +168,14 @@ class SolarSystemStaticPainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: label,
-        style: TextStyle(
+        // Canvas text inherits no theme, so the family has to be asked for
+        // explicitly or the ring renders in the platform default face.
+        style: AppTypography.telemetry(
           color: isDark
               ? AppTheme.spaceStar.withValues(alpha: 0.5)
               : AppTheme.spaceStar.withValues(alpha: 0.6),
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
+          fontSize: AppTypography.sizeMicro,
+          fontWeight: AppTypography.medium,
         ),
       );
       textPainter.layout();
@@ -192,12 +195,12 @@ class SolarSystemStaticPainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: '$degree°',
-        style: TextStyle(
+        style: AppTypography.telemetry(
           color: isDark
               ? AppTheme.spaceStar.withValues(alpha: 0.45)
               : AppTheme.spaceStar.withValues(alpha: 0.55),
-          fontSize: 9,
-          fontWeight: FontWeight.w500,
+          fontSize: AppTypography.sizeMicro,
+          fontWeight: AppTypography.medium,
         ),
       );
       textPainter.layout();
@@ -284,7 +287,10 @@ class SolarSystemStaticPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: const TextSpan(
         text: '🌍',
-        style: TextStyle(fontSize: 16, shadows: [Shadow(blurRadius: 10)]),
+        style: TextStyle(
+          fontSize: AppTypography.sizeSubtitle,
+          shadows: [Shadow(blurRadius: 10)],
+        ),
       ),
       textDirection: TextDirection.ltr,
     );
@@ -465,13 +471,17 @@ class SolarSystemPainter extends CustomPainter {
 
     final textPainter = TextPainter(
       text: TextSpan(
+        // Localized planet names: without the family chain a Bengali name
+        // falls back to the platform's generic face.
         text: PlanetaryViewService.getPlanetDisplayName(planet.planet),
-        style: TextStyle(
+        style: AppTypography.ui(
           color: textColor.withValues(alpha: isSelected ? 1.0 : 0.7),
-          fontSize: isSelected ? 12 : 10,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          shadows: const [Shadow(blurRadius: 2)],
-        ),
+          fontSize: isSelected
+              ? AppTypography.sizeCaption
+              : AppTypography.sizeMicro,
+          fontWeight: isSelected ? AppTypography.bold : AppTypography.regular,
+          tabularNumbers: false,
+        ).copyWith(shadows: const [Shadow(blurRadius: 2)]),
       ),
       textDirection: TextDirection.ltr,
     );

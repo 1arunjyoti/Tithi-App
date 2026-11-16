@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 
 // Canonical hero-style sun pill extracted from
 // widgets/tithi_detail_sheet.dart (_SheetChip, finalized design): same
@@ -58,10 +60,13 @@ class SheetChip extends StatelessWidget {
           : AppTheme.heroChipBorder(context);
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s12,
+        vertical: AppSpacing.s6,
+      ),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: borderColor),
       ),
       child: Row(
@@ -70,16 +75,16 @@ class SheetChip extends StatelessWidget {
             ? MainAxisAlignment.center
             : MainAxisAlignment.start,
         children: [
-          Icon(icon, size: 14, color: iconColor),
-          const SizedBox(width: 6),
+          Icon(icon, size: AppIconSize.inline, color: iconColor),
+          const SizedBox(width: AppSpacing.s6),
           Flexible(
             child: Text(
               text,
               textAlign: centerContent ? TextAlign.center : null,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: AppTypography.sizeCaption,
                 color: textColor,
-                fontWeight: FontWeight.bold,
+                fontWeight: AppTypography.bold,
               ),
             ),
           ),

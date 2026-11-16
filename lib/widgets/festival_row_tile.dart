@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
@@ -7,9 +6,10 @@ import '../l10n/app_localizations_en.dart';
 import '../core/format/date_only.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../providers/calendar_provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
 import '../utils/tithi_localization.dart';
 import 'festival_thumbnail.dart';
@@ -139,9 +139,7 @@ class FestivalRowTile extends ConsumerWidget {
             onTap: onTap == null
                 ? null
                 : () {
-                    if (ref.read(accessibilityProvider).hapticFeedback) {
-                      HapticFeedback.lightImpact();
-                    }
+                    AppHaptics.tap(ref);
                     onTap!();
                   },
             child: ExcludeSemantics(
@@ -151,8 +149,8 @@ class FestivalRowTile extends ConsumerWidget {
                 // [horizontalPadding] then pads inside the tappable surface
                 // (the wash/highlight) without moving the tile.
                 padding: EdgeInsets.symmetric(
-                  horizontal: horizontalPadding ?? (flush ? 0 : 12),
-                  vertical: 12,
+                  horizontal: horizontalPadding ?? (flush ? 0 : AppSpacing.s12),
+                  vertical: AppSpacing.s12,
                 ),
                 child: Row(
                   children: [
@@ -171,8 +169,8 @@ class FestivalRowTile extends ConsumerWidget {
                           Text(
                             festival.name,
                             style: AppTypography.ui(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: AppTypography.sizeSubtitle,
+                              fontWeight: AppTypography.semibold,
                               height: 1.3,
                               color: context.colors.onSurface,
                             ),
@@ -180,12 +178,12 @@ class FestivalRowTile extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           if (goldLine != null) ...[
-                            const SizedBox(height: 2),
+                            const SizedBox(height: AppSpacing.s2),
                             Text(
                               goldLine,
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontSize: AppTypography.sizeDetail,
+                                fontWeight: AppTypography.semibold,
                                 color: gold,
                               ),
                               // Two lines so the "in N days" suffix survives on
@@ -195,14 +193,12 @@ class FestivalRowTile extends ConsumerWidget {
                             ),
                           ],
                           if (description.isNotEmpty) ...[
-                            const SizedBox(height: 2),
+                            const SizedBox(height: AppSpacing.s2),
                             Text(
                               description,
                               style: TextStyle(
-                                fontSize: 13,
-                                color: context.colors.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
+                                fontSize: AppTypography.sizeDetail,
+                                color: context.secondaryInk,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -212,11 +208,8 @@ class FestivalRowTile extends ConsumerWidget {
                       ),
                     ),
                     if (onTap != null) ...[
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: context.colors.onSurface.withValues(alpha: 0.5),
-                      ),
+                      const SizedBox(width: AppSpacing.s8),
+                      Icon(Icons.chevron_right_rounded, color: context.hintInk),
                     ],
                   ],
                 ),

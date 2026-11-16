@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 
 // Canonical icon/label/value row extracted from
 // widgets/event_detail_sheet.dart (_buildInfoRow). Positional parameters
@@ -21,47 +23,53 @@ Widget buildInfoRow(
   if (dense) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: context.colors.primary),
-        const SizedBox(width: 12),
+        Icon(icon, size: AppIconSize.medium, color: context.colors.primary),
+        const SizedBox(width: AppSpacing.s12),
         Text(
           '$label:',
           style: context.textTheme.bodyMedium?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.6),
+            color: context.secondaryInk,
           ),
         ),
         const Spacer(),
         Text(
           value,
           style: context.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: AppTypography.semibold,
           ),
         ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing],
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.s8),
+          trailing,
+        ],
       ],
     );
   }
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 8),
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
     child: Row(
       children: [
-        Icon(icon, color: context.colors.primary, size: 22),
-        const SizedBox(width: 12),
+        Icon(icon, color: context.colors.primary, size: AppIconSize.large),
+        const SizedBox(width: AppSpacing.s12),
         Text(
           '$label:',
           style: context.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w500,
+            fontWeight: AppTypography.medium,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.s8),
         Expanded(
           child: Text(
             value,
             style: context.textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+              fontWeight: AppTypography.semibold,
             ),
           ),
         ),
-        if (trailing != null) ...[const SizedBox(width: 8), trailing],
+        if (trailing != null) ...[
+          const SizedBox(width: AppSpacing.s8),
+          trailing,
+        ],
       ],
     ),
   );

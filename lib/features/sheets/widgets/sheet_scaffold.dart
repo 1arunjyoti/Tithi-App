@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'edge_dismiss.dart';
 import 'sheet_hero_header.dart';
+import '../../../theme/app_metrics.dart';
 
 // Canonical bottom-sheet scaffold shared by the tithi detail sheet and
 // the festival event sheet: capped at 85% of the screen height (the card
@@ -35,19 +36,24 @@ class SheetScaffold extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: AppRadius.sheetTop,
         ),
         child: SafeArea(
           child: EdgeDismiss(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 28),
+              padding: const EdgeInsets.only(bottom: AppSpacing.s28),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SheetHeroHeader(highContrast: highContrast, child: hero),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s20,
+                      AppSpacing.s16,
+                      AppSpacing.s20,
+                      0,
+                    ),
                     child: body,
                   ),
                 ],

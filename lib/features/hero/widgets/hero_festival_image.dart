@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../theme/app_metrics.dart';
 
 // Right-side festival artwork for the hero moon row. Moved verbatim from
 // widgets/paksha_hero_card.dart (_HeroFestivalImage).
@@ -94,6 +95,7 @@ class _HeroFestivalImageState extends State<HeroFestivalImage> {
         widget.source,
         cacheWidth: cacheWidth,
         fit: BoxFit.cover,
+        semanticLabel: widget.semanticsLabel,
         errorBuilder: (context, _, _) {
           _markFailed();
           return const SizedBox.shrink();
@@ -101,7 +103,7 @@ class _HeroFestivalImageState extends State<HeroFestivalImage> {
       );
     }
 
-    const radius = BorderRadius.all(Radius.circular(24));
+    const radius = BorderRadius.all(Radius.circular(AppRadius.card));
     Widget framed = SizedBox(
       width: widget.width,
       height: widget.width * 1.2,

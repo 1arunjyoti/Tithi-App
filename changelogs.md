@@ -17,6 +17,97 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-16 - 0.8.1+28
+
+### One empty state, one error state, one skeleton
+Every list, sheet and card now says "nothing here", "could not load" and "still loading" the same way - and an error can no longer print a raw exception into the UI.
+
+- `EmptyState` / `ErrorState` (`lib/widgets/state_views.dart`) take a `StateViewVariant`: `page` (48dp faint glyph, centred), `card` (same inside card padding) and `inline` (20dp glyph on one line; the caller owns the outer padding, which is part of the card's row rhythm). `EmptyState` is display-only by design - each empty state already has its action in a toolbar, FAB or adjacent control.
+- Error copy is always friendly, already-localised text (`l10n.couldNotLoadFestivals`, `l10n.errorLoadingData`, `l10n.weatherDataUnavailable`, ...). The exception goes to `debugPrint` at the catch site; `Text` never carries `error.toString()`. Pages that can reload pass `onRetry` (a provider `invalidate`), so the old dead-end red text is now recoverable.
+- `SkeletonBox` / `SkeletonList` / `InlineSpinner` (`lib/widgets/skeleton.dart`): one tint (`onSurface` 0.06), radius from `AppRadius` (calendars pass `chip`, everything else `tile`), `strokeWidth: 2`, primary ink. Static on purpose - a shimmer would add a dependency and a Reduce Motion gate for no information gain.
+- Migrated: 9 empty sites (countdown, all-festivals, sankalpa, eclipse, moon-phase tabs, both search delegates, weather, home event card), 11 error sites (countdown, all-festivals, home event card, eclipse, moon phases, solar system, moon countdown, weather, location search), and every inline spinner (tithi sheet cards, settings/update rows, location picker, event detail, home-widget card, countdown tile).
+- Full-screen loads keep `CircularProgressIndicator.adaptive()`; `PanchangInitErrorBanner`/`FailureOverlay` (persistent warning + settings action) and the hero artwork placeholder keep their own shapes.
+- `ErrorDisplayWidget` is now only the global `ErrorWidget.builder` crash screen; its unused `compact` branch is deleted, and local data errors use the calmer `ErrorState`.
+- `test/state_views_test.dart` locks the variants, the action-free empty state, retry wiring, the 0.06 skeleton tint/radius, `SkeletonList` geometry and `InlineSpinner` size/stroke.
+
+### One spacing ladder, one radius scale, named icon sizes
+Padding, corners and icon sizes now come from three shared scales, so a sheet cannot pick 11dp where the next screen picks 12 and two cards that look the same can no longer round to 14 and 16.
+
+- `AppSpacing` (`lib/theme/app_metrics.dart`) is a 2dp ladder: `s2`, `s4`, `s6`, `s8`, `s10`, `s12`, `s14`, `s16`, `s18`, `s20`, `s22`, `s24`, `s28`, `s32`. Anything above `maxStep` (32) is a component dimension - a 44dp avatar, a 168dp moon disc - and stays a literal where the widget owns it. ~700 `EdgeInsets`/`SizedBox` values migrated; off-grid 3/5 snap to `s4` and 11 snaps to `s12`.
+- `AppRadius` is role-named and nine steps: `micro` 2, `small` 4, `chip` 8, `dense` 12, `tile` 16, `round` 20, `card` 24, `sheet` 32, `pill` 999, plus `sheetTop`. 18 shipped values snapped to it (1/3 -> `micro`, 6 -> `chip`, 10/13 -> `dense`, 14 -> `tile`, 28 -> `card`, 50/99 -> `pill`); the festival-row selected-day wash moves 14 -> 16 as a result. `AppTheme.pageGutter`/`cardRadius`/`cardRadiusCompact`/`cardGap` are now aliases, so existing call sites keep working.
+- `AppIconSize` keeps every shipped pixel (no icon was resized) but names the role: `inline` 14, `small` 16, `dense` 18, `medium` 20, `large` 22, `nav` 24, `title` 28, `hero` 32, `feature` 40, `avatar` 44, `empty` 48, `display` 56, `splash` 64. Numeric `Icon(size:)`, `iconSize:` and `glyphSize:` are gone from `lib/`.
+- Exempt by design: a `SizedBox` with a `child:` is a fixed-size box (spinner, thumbnail), not a gap, and `SizedBox(height: 1)` and `>32` sizes stay literal. Canvas painter geometry (planet radii, blur) is untouched.
+- `test/app_metrics_test.dart` locks the three ladders (ascending, 2dp grid, retired radii absent) and is a textual guard: a numeric `EdgeInsets` value up to 32, an on-ladder `SizedBox` gap, a numeric corner radius or a numeric icon size in `lib/` fails the suite.
+
+### One type scale, one weight set, one shared theme type map
+Sizes are picked from a named ladder instead of 21 one-off numbers, and the four colour palettes build the same serif-heading / sans-body map, so a heading can no longer land half a point off its neighbour or be serif in one theme and sans in another.
+
+- `AppTypography.sizeLadder` (`lib/theme/app_typography.dart`) is the only place a text size is named: `sizeMicro` 10, `sizeFootnote` 11, `sizeCaption` 12, `sizeDetail` 13, `sizeBody` 14, `sizeProse` 15, `sizeSubtitle` 16, `sizeHeading` 18, `sizeTitle` 20, `sizeHeadline` 22, `sizeDisplay` 24, `sizeHero` 32, `sizeGlyph` 64. Pick by job, not by number; 117 raw `fontSize:` literals migrated.
+- The retired half-point steps were folded into their neighbour (`10.5 -> 10`, `11.5 -> 11`, `12.5 -> 12`, `13.5 -> 13`, `14.5 -> 14`); `17`/`19` use the 16/18 heading steps they were shadowing. Every change shrinks or holds, except 9 -> 10 on canvas labels; `sizeHeading` sits exactly on `displayMinimumSize`, so it stays serif.
+- Weights are `AppTypography.regular`/`medium`/`semibold`/`bold` (400/500/600/700) - the only faces `pubspec.yaml` ships. `FontWeight.w800` (10 sites) was never rendered and is now `bold`; `bold`/`w700`/`normal`/`w400` spellings collapsed the same way.
+- `AppTheme._appTextTheme` + `_appBarTitle` build the type map once for shukla, krishna and pure-dark themes; only the ink is passed in. Roles the map does not override keep their Material 3 sizes (which `Theme` merges in per locale) - `test/app_typography_test.dart` reads the live theme to lock that.
+- Canvas text gets the family chain too: the solar-system painter's zodiac/degree ring now uses `AppTypography.telemetry` and its planet names `AppTypography.ui`, both with the Indic fallbacks - a painter inherits no theme, so a Bengali planet name used to fall back to the platform face.
+- `test/typography_scale_test.dart` is a textual guard (like `test/no_web_target_test.dart`): no numeric `fontSize:` and no `FontWeight.` anywhere in `lib/` outside `app_typography.dart`, and every file that names `AppTypography` must import it.
+- Use a Material role where the widget already has one (`bodyMedium`, `titleMedium`, `labelSmall` match the ladder); the token is for `Text` styled by hand.
+
+## 2026-11-15 - 0.8.1+27
+
+### One haptic gate, named motion tokens, screen-reader labels
+Buzzes, animation lengths and assistive labels now come from shared helpers, so the Accessibility switches and the Reduce Motion setting can no longer be bypassed by a call site that forgot the gate.
+
+- `AppHaptics` (`lib/core/feedback/app_haptics.dart`) is the only place the app calls `HapticFeedback`: `AppHaptics.tap(ref)` (lightImpact - taps, selection, toggles) and `AppHaptics.impact(ref)` (mediumImpact - deliberate actions only, the Paksha hero's manual page turn). Two weights, both checking `accessibilityProvider.hapticFeedback`; ~22 hand-inlined `if (ref.read(...).hapticFeedback)` blocks collapsed into it. Pass `haptic: false` to `PressScale` where the tap callback already buzzes so the scale animates without a second buzz.
+- `AppMotion` (`lib/theme/app_motion.dart`) names the durations by job - `press` 100, `chrome` 150, `subtle` 180, `standard` 200, `resize` 220, `emphasized` 250, `scroll` 260, `entrance` 280, `page` 300, `staggerStep` 60 - plus `standardCurve` / `emphasizedCurve` / `exitCurve`. Always gate a token with `AppMotion.of(context, token)`: it delegates to `AppTheme.animationDuration`, so Reduce Motion and the OS `disableAnimations` flag collapse it to 1ms. A raw `Duration(milliseconds:)` in an implicit animation silently ignores that setting.
+- Reduce Motion coverage filled in where it was missing: `ask_ai_sheet` keyboard padding, `event_detail_sheet`'s two `AnimatedSize` toggles, and the page/tab/stagger controllers, which now read their durations from the same tokens.
+- New `CalendarDaySemantics` (`lib/widgets/calendar_day_semantics.dart`) collapses a day tile into one node - `15, Shukla Ashtami, Today, Selected` - instead of leaving the reader on the raw day-number text. Every tile reports a selected state (unselected reads "not selected"), so the grid is a set of selectable cells; state words come from `l10n.today` / `l10n.selected`, and the tap handler stays on the grid.
+- Icon-only buttons in `all_festivals_screen`, `festival_countdown_screen` and `festival_search_delegate` gained tooltips (`l10n.clearSearch`, `MaterialLocalizations.backButtonTooltip`), and decorative artwork (about logo, drawer logo, the Paksha hero's deck imagery) is now `excludeFromSemantics` instead of being read as an unlabelled image. The hero festival image's asset branch carries its `semanticLabel` the way the network branch already did.
+- `test/app_haptics_test.dart` (silence when off, one buzz per call, the two platform weights), `test/app_motion_test.dart` (token values, curves, 1ms collapse) and `test/calendar_day_semantics_test.dart` (label/flag shape, plain day, Bengali) lock the behaviour.
+
+### Shared hairline rule and muted text levels
+Rules and de-emphasized text now come from two shared helpers, so dividers match inside one screen and quiet text follows High Contrast instead of being pinned to a per-call alpha.
+
+- `AppDivider` (`lib/widgets/app_divider.dart`) is the only place the app builds a `Divider`: `AppDivider()` (onSurface 0.1) separates sections/panels, `AppDivider.row()` (0.08) separates rows sharing one card surface; both are 1px with optional `indent`/`endIndent`.
+- `AppTheme.hairlineAlpha(context, normal)` lifts both weights to 0.22 under High Contrast - not `contrastAlpha`'s full ink, because an opaque 1px rule reads as a hard border. Card/sheet edges keep `sheetHairline`.
+- `InsetRowDivider` is now a thin delegate to `AppDivider.row(indent: leadingInset)`; `SettingsDivider` is deleted and its 22 settings/home-cards/ai call sites use `AppDivider()`.
+- `MutedInk` (`lib/theme/app_theme.dart`, next to `ThemeExtension`): `secondaryInk` (0.7, information-bearing), `hintInk` (0.55, metadata/quiet affordances), `faintInk` (0.35, decorative glyphs only - 0.6 in High Contrast). Over 100 raw `onSurface.withValues` ink sites migrated; every change darkens text, never lightens it.
+- Deliberately untouched: sheet hairlines/card fills, the solar-system canvas, the map picker surface, the schedule view, the drawer and the Paksha hero. `test/app_divider_test.dart` / `test/muted_ink_test.dart` lock the weights, the High Contrast values and the inset delegation.
+
+### Shared page shell and back button
+Every full-screen page now builds from one `PageScaffold`, and pushed pages share one back button, so app-bar height, background layering and gesture-handle clearance can no longer drift screen to screen.
+
+- `PageScaffold` (`lib/widgets/page_scaffold.dart`) owns the transparent `AppBar` (`automaticallyImplyLeading: false`, elevation 0), the `RepaintBoundary` around `AppTheme.backgroundDecoration`, and the `SafeArea(bottom: false)` that lets the gradient paint behind the gesture handle. Its defaults are the reading-page shape; `extendBodyBehindAppBar: false` is the form shape (background becomes a plain wrapper, the safe area is ignored) used by the sankalpa list and create screens.
+- `background: false` / `safeArea: false` is the edge-to-edge escape hatch: the home screen's body paints its own background and insets (and wide layouts keep the drawer flush), and the map picker paints tiles.
+- Migrated: about, all festivals, eclipse, festival countdown, home, home cards, location picker, moon phases, privacy policy, settings, solar system, sankalpa list and sankalpa create. Each screen still passes its own `leading` because the shell cannot guess: `HapticBackButton()` when pushed, `AppDrawerButton()` when hosted as a tab, `null` for the wide home layout.
+- `HapticBackButton` (`lib/core/navigation/haptic_back_button.dart`) gained `circled` and the native back tooltip. The circle is reserved for bars floating over imagery (the map picker); about/settings/home cards/privacy used to paste a circle-backed button and eclipse/countdown a plain arrow - pushed pages are all plain now.
+- `test/page_scaffold_test.dart` locks the three shapes (reading, form, edge-to-edge) plus chrome/drawer forwarding. It keys the body and reads the shell as its ancestors, because the app bar brings its own `SafeArea`.
+
+### Shared page-card layout
+Cards on every page now share one surface, one corner radius and the same distance from the screen edge; the home screen is the reference rather than the exception.
+
+- `AppCard` (`lib/widgets/app_card.dart`) owns the surface (`AppTheme.cardDecoration`), the radius shared by the card *and* its ripple, the haptic `InkWell` tap, and the single-node semantics pattern. `ScreenBody` (`lib/widgets/screen_body.dart`) owns the outer frame: 12dp gutter on every breakpoint and the 800dp reading width.
+- `AppTheme.pageGutter` (12, aliased by `homeCardGutter`), `cardRadius` (24), `cardRadiusCompact` (16) and `cardGap` (16) are the only numbers a card should use. `AppTheme.cardDecoration(accent: ...)` is the featured edge; ordinary cards keep the neutral hairline - an accent edge on every card makes the whole screen read as featured.
+- Migrated: home (calendar, quote, festivals, countdown and widget cards - pixel-identical), eclipse, all festivals (16dp/900 -> 12dp/800, row gaps 10 -> 16), moon phases, festival countdown screen, sankalpa list (elevated 16dp `Card` -> flat 24dp page card).
+- Text screens migrated too: settings, home-cards picker, about, privacy policy and the sankalpa create form went from a 24dp gutter to `ScreenBody`, and their hand-rolled `Material`/`Ink`/`Container` cards (`AppUpdateCard`, the group cards, the about/privacy cards) are now `AppCard`. Inner paddings (16/20/24) stay - they express hierarchy, not the page frame.
+- Last `AppCard` bypasses closed: `FestivalCountdownTile`'s standalone branch is an `AppCard` (the embedded branch stays surface-free and keeps its 12dp row inset so the home base card's flush rows and dividers still work), and `_CountdownLoadingCard`, `_LoadingCard` and `_UnresolvableCard` use it instead of calling `glassmorphism` directly.
+- `GlassmorphismConfig.getDecoration` is deleted: it duplicated `AppTheme.glassmorphism` branch for branch and was the second surface path settings cards used. `GlassmorphismConfig` now only caches `isHighContrast` for `AppTheme.glassmorphism`'s provider read.
+- `SettingsGroupCard` passes `clipBehavior: Clip.antiAlias` to its `AppCard`: it owns no padding, so a row's `ListTile` hover wash is a square and painted past the 24dp corners. A card that hosts its own ink (rows) must clip, the way `SheetSurfaceCard` already does for `SheetLinkTile`.
+- `ResponsiveLayout.responsivePadding` (16/32/48 by breakpoint) and `CenteredContent` (max 900 on eclipses) are gone; they were the per-screen gutter/width drift.
+- Sheets keep `sheetCardDecoration` / `sheetHairline`: a sheet body card sits on the sheet surface, not on the page, and its padding is intentionally tighter.
+
+### Eclipse tabs
+Solar and lunar eclipses are two tabs instead of two stacked sections, so the lunar list no longer sits below six solar cards and needs a scroll to reach.
+
+- `EclipseScreen` is stateful with a 2-tab `TabController` in the app bar; each tab is an `EclipseList` already filtered by `EclipseType.isSolar` / `isLunar` (import `models/eclipse.dart` - the provider re-export does not include the extension).
+- Per-tab empty state and stagger restart; the eclipse-type colour stays on the card badge, while the card edge keeps the neutral hairline.
+- `EclipseCard` composes one semantics label (type, days until, date, max-eclipse time, visibility) like the festival rows; `AppCard` excludes the visual text and keeps the tap action.
+
+### Home card highlight spacing
+The selected-day wash and the press highlight now extend past the row content instead of hugging the tile and chevron.
+
+- `AppTheme.homeCardRowInset` (12) is the breathing room inside a row's surface; `AppTheme.homeCardRowPadding` (4) is the card's side padding. They sum to the 16dp heading gutter, so keep them in that relationship.
+- `FestivalRowTile` and `FestivalCountdownTile` gained `horizontalPadding`; `InsetRowDivider` indents by `textColumnInset + homeCardRowInset`.
+- `HomeWidgetCard`'s header ripple takes the same inset, and its right padding is symmetric when mounted without the dismiss button (countdown screen).
+- All Festivals non-featured rows use opaque card white + `sheetHairline` in light mode (the old 5% `onSurface` wash read as disabled); dark palettes keep the `onSurface` tint.
+
 ## 2026-11-14 - 0.8.1+26
 
 ### Category chips on All Festivals
@@ -162,7 +253,7 @@ On narrow screens the calendar's "jump to today" action now floats beside the na
 
 - `JumpToTodayButton` (`lib/widgets/jump_to_today_button.dart`) is the single 56dp icon-only action for both hosts; `jumpToTodayVisibleProvider` is the single rule (another month focused, or another day selected) and `goToToday` moves month, date and `tappedCalendarDateProvider` together.
 - "Today" is `todayDateProvider` (the app's place-clock day, refreshed at midnight and on a place change), not `DateTime.now()`. That matches the calendar's own seeding *and* makes the rule re-evaluate at a midnight rollover, when the calendar is left showing yesterday.
-- It sits *outside* the capsule: `FloatingNavBar.trailingAction` is a sibling in the bar's row, and the capsule is `Flexible`, so the action takes width from the capsule (labels shrink/ellipsize) rather than from the screen gutters. `showTrailingAction` collapses the slot via `AnimatedSize` so the bar re-centres instead of jumping.
+- It sits *outside* the capsule: `FloatingNavBar.trailingAction` is a sibling in the bar's row, and the capsule is `Flexible`, so the action takes width from the capsule (labels shrink/ellipsize) rather than from the screen gutters. `showTrailingAction` opens the slot as one staggered transition (`_TrailingAction`: width first, then the action fades in on the opened space), so the bar re-centres instead of jumping and the button never slides out of a moving clip.
 - Shown only on the Today tab; `HomeScreen.showJumpToToday: false` from the shell prevents a second live copy (the wide layout still uses the Scaffold FAB slot).
 
 ### Floating bottom navigation capsule

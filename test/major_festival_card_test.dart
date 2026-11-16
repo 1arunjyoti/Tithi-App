@@ -12,6 +12,7 @@ import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/utils/tithi_localization.dart';
+import 'package:tithi/widgets/app_card.dart';
 import 'package:tithi/widgets/festival_thumbnail.dart';
 import 'package:tithi/widgets/major_festival_card.dart';
 
@@ -222,17 +223,20 @@ void main() {
       expect(find.textContaining('Today'), findsOneWidget);
       expect(find.textContaining('in 0 days'), findsNothing);
       // ...and today's card carries the accent hairline the rows lack.
-      final decoration =
-          tester
-                  .widget<Ink>(
-                    find.descendant(
-                      of: find.byType(MajorFestivalCard),
-                      matching: find.byType(Ink),
-                    ),
-                  )
-                  .decoration
-              as BoxDecoration;
-      expect(decoration.border, isNotNull);
+      final card = tester.widget<AppCard>(find.byType(AppCard));
+      expect(card.accent, isNotNull);
+      final surface = tester.widget<Container>(
+        find
+            .descendant(
+              of: find.byType(AppCard),
+              matching: find.byWidgetPredicate(
+                (widget) =>
+                    widget is Container && widget.decoration is BoxDecoration,
+              ),
+            )
+            .first,
+      );
+      expect((surface.decoration! as BoxDecoration).border, isNotNull);
     });
 
     testWidgets('exposes one composed label and hides the raw rows', (

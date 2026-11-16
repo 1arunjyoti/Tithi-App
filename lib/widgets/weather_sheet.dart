@@ -8,6 +8,9 @@ import '../providers/calendar_provider.dart';
 import '../services/weather_service.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/tithi_localization.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_metrics.dart';
+import 'state_views.dart';
 
 class WeatherSheet extends ConsumerWidget {
   const WeatherSheet({super.key});
@@ -22,10 +25,10 @@ class WeatherSheet extends ConsumerWidget {
     final panchang = panchangAsync.asData?.value;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.s24),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: AppRadius.sheetTop,
         border: Border(
           top: BorderSide(
             color: Theme.of(
@@ -41,12 +44,12 @@ class WeatherSheet extends ConsumerWidget {
           Container(
             width: 40,
             height: 4,
-            margin: const EdgeInsets.only(bottom: 24),
+            margin: const EdgeInsets.only(bottom: AppSpacing.s24),
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
               ).colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(AppRadius.micro),
             ),
           ),
 
@@ -54,35 +57,46 @@ class WeatherSheet extends ConsumerWidget {
             l10n.weatherDetails,
             style: Theme.of(
               context,
-            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+            ).textTheme.headlineSmall?.copyWith(fontWeight: AppTypography.bold),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
 
           weatherAsync.when(
             data: (result) {
               if (result == null) {
-                return Center(child: Text(l10n.weatherDataUnavailable));
+                return EmptyState(
+                  icon: Icons.cloud_off_outlined,
+                  title: l10n.weatherDataUnavailable,
+                  variant: StateViewVariant.card,
+                );
               }
               if (result is WeatherFailure) {
-                return Center(
-                  child: Text(l10n.errorMessage(result.error.message)),
+                return ErrorState(
+                  message: l10n.errorMessage(result.error.message),
+                  variant: StateViewVariant.card,
                 );
               }
               final data = (result as WeatherSuccess).data;
               return _buildWeatherContent(context, data, panchang);
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, stack) =>
-                Center(child: Text(l10n.errorMessage(e.toString()))),
+            error: (error, stack) {
+              debugPrint('Weather load failed: $error');
+              return ErrorState(
+                message: l10n.weatherDataUnavailable,
+                onRetry: () => ref.invalidate(currentWeatherProvider),
+                variant: StateViewVariant.card,
+              );
+            },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
           Text(
             l10n.weatherDataByOpenMeteo,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
         ],
       ),
     );
@@ -107,12 +121,12 @@ class WeatherSheet extends ConsumerWidget {
                     Text(
                       '${data.temperature.round()}°',
                       style: const TextStyle(
-                        fontSize: 64,
-                        fontWeight: FontWeight.bold,
+                        fontSize: AppTypography.sizeGlyph,
+                        fontWeight: AppTypography.bold,
                         height: 1,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.s8),
                     Semantics(
                       label: l10n.weatherCondition(data.conditionText),
                       child: Image.network(
@@ -120,7 +134,7 @@ class WeatherSheet extends ConsumerWidget {
                         width: 64,
                         height: 64,
                         errorBuilder: (_, _, _) =>
-                            const Icon(Icons.wb_sunny, size: 48),
+                            const Icon(Icons.wb_sunny, size: AppIconSize.empty),
                       ),
                     ),
                   ],
@@ -144,7 +158,7 @@ class WeatherSheet extends ConsumerWidget {
                   l10n.sunrise,
                   panchang?.sunrise,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.s12),
                 _buildSunRow(
                   context,
                   Icons.nightlight_round,
@@ -152,7 +166,7 @@ class WeatherSheet extends ConsumerWidget {
                   panchang?.sunset,
                 ),
                 if (panchang?.sunrise != null && panchang?.sunset != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.s12),
                   _buildDaylightRow(
                     context,
                     panchang!.sunrise!,
@@ -163,7 +177,7 @@ class WeatherSheet extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.s32),
 
         // Grid of details
         Row(
@@ -196,56 +210,60 @@ class WeatherSheet extends ConsumerWidget {
           ],
         ),
         if (data.forecast.isNotEmpty) ...[
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpacing.s32),
           Text(
             l10n.forecast,
             style: Theme.of(
               context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ).textTheme.titleMedium?.copyWith(fontWeight: AppTypography.bold),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           Row(
             children: data.forecast
                 .map(
                   (f) => Expanded(
                     child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s4,
+                      ),
+                      padding: const EdgeInsets.all(AppSpacing.s12),
                       decoration: BoxDecoration(
                         color: Theme.of(context)
                             .colorScheme
                             .surfaceContainerHighest
                             .withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.tile),
                       ),
                       child: Column(
                         children: [
                           Text(
                             formatLocalizedDate(f.date, 'EEE', l10n.localeName),
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                                ?.copyWith(fontWeight: AppTypography.bold),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.s8),
                           Image.network(
                             f.conditionIcon,
                             width: 40,
                             height: 40,
-                            errorBuilder: (_, _, _) =>
-                                const Icon(Icons.wb_sunny, size: 32),
+                            errorBuilder: (_, _, _) => const Icon(
+                              Icons.wb_sunny,
+                              size: AppIconSize.hero,
+                            ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.s8),
                           Text(
                             '${f.maxTemp.round()}° / ${f.minTemp.round()}°',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.s4),
                           Text(
                             f.conditionText,
                             textAlign: TextAlign.center,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: AppTypography.sizeMicro,
                               color: Theme.of(
                                 context,
                               ).colorScheme.onSurfaceVariant,
@@ -277,10 +295,10 @@ class WeatherSheet extends ConsumerWidget {
       children: [
         Icon(
           icon,
-          size: 16,
+          size: AppIconSize.small,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.s4),
         Text(
           '$label: $timeStr',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -305,10 +323,10 @@ class WeatherSheet extends ConsumerWidget {
       children: [
         Icon(
           Icons.wb_twilight,
-          size: 16,
+          size: AppIconSize.small,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.s4),
         Text(
           l10n.daylightDuration(hours, minutes),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -328,7 +346,7 @@ class WeatherSheet extends ConsumerWidget {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           decoration: BoxDecoration(
             color: Theme.of(
               context,
@@ -337,13 +355,13 @@ class WeatherSheet extends ConsumerWidget {
           ),
           child: Icon(icon, color: Theme.of(context).colorScheme.primary),
         ),
-        const SizedBox(height: 8),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: AppSpacing.s8),
+        Text(value, style: const TextStyle(fontWeight: AppTypography.bold)),
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
-            fontSize: 10,
+            fontSize: AppTypography.sizeMicro,
           ),
         ),
       ],

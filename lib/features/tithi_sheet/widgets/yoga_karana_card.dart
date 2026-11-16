@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/skeleton.dart';
 
 /// Runs of [text] matching [emphasis] render in full onSurface while the
 /// rest stays in [style] (dim). Used for the Yoga/Karana sublines so the
@@ -87,50 +90,50 @@ class YogaKaranaCard extends StatelessWidget {
       return Expanded(
         child: Container(
           color: Theme.of(context).cardTheme.color ?? context.colors.surface,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 16, color: context.colors.primary),
-                  const SizedBox(width: 6),
+                  Icon(
+                    icon,
+                    size: AppIconSize.small,
+                    color: context.colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: AppTypography.sizeMicro,
                       letterSpacing: 1.0,
-                      fontWeight: FontWeight.w600,
-                      color: context.colors.onSurface.withValues(alpha: 0.6),
+                      fontWeight: AppTypography.semibold,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               if (value == null)
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                const InlineSpinner(size: AppIconSize.medium)
               else
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: AppTypography.sizeSubtitle,
+                    fontWeight: AppTypography.bold,
                     color: context.colors.onSurface,
                   ),
                 ),
               if (subline != null) ...[
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSpacing.s2),
                 EmphasizedText(
                   text: subline,
                   emphasis: highlight,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: context.colors.onSurface.withValues(alpha: 0.7),
+                    fontSize: AppTypography.sizeDetail,
+                    color: context.secondaryInk,
                   ),
                 ),
               ],

@@ -97,13 +97,111 @@ class AppTypography {
   /// automatically. Never send a display style below this size by hand.
   static const double displayMinimumSize = 18.0;
 
+  // ---------------------------------------------------------------------
+  // Size ladder
+  // ---------------------------------------------------------------------
+
+  // Sizes had drifted into 21 un-named values (9, 10, 10.5, 11, 11.5, 12,
+  // 12.5, 13, 13.5, 14, 14.5, 15, 16, 17, 18, 19, 20, 22, 24, 32, 64): a
+  // half-point here, a whole point there, and no way to tell a deliberate
+  // 15 from a typo for 16. This is the one ladder - pick by *job*, not by
+  // number, and keep it in this file so the next drift is visible as a diff.
+  //
+  // The half-point steps were noise: they are folded into their neighbour
+  // (10.5 -> 10, 11.5 -> 11, 12.5 -> 12, 13.5 -> 13, 14.5 -> 14), and 17/19
+  // now use the 16/18 heading steps they were shadowing.
+  //
+  // The Material roles line up with these steps (bodyMedium 14, titleMedium
+  // 16, bodySmall/labelMedium 12, labelSmall 11). Use the role when a widget
+  // already has one - `ListTile`, buttons, dialogs - and a token when you are
+  // styling a `Text` by hand.
+
+  /// 10 - corner label on a calendar tile, canvas annotation.
+  static const double sizeMicro = 10;
+
+  /// 11 - eyebrow above a value, weekday header, chip.
+  static const double sizeFootnote = 11;
+
+  /// 12 - metadata line, timestamp, secondary row text.
+  static const double sizeCaption = 12;
+
+  /// 13 - dense body: sheet descriptions, list subtitles.
+  static const double sizeDetail = 13;
+
+  /// 14 - the default reading size (Material `bodyMedium`).
+  static const double sizeBody = 14;
+
+  /// 15 - long-form copy that wants a touch more air (consent text, drawer
+  /// rows, sheet paragraphs).
+  static const double sizeProse = 15;
+
+  /// 16 - row title / card title (Material `titleMedium`).
+  static const double sizeSubtitle = 16;
+
+  /// 18 - section heading, card headline. Also the smallest serif size.
+  static const double sizeHeading = 18;
+
+  /// 20 - verse text on a share card.
+  static const double sizeTitle = 20;
+
+  /// 22 - app-bar and sheet title.
+  static const double sizeHeadline = 22;
+
+  /// 24 - headline numeral on a hero card.
+  static const double sizeDisplay = 24;
+
+  /// 32 - the one glyph that fronts a detail sheet (eclipse type).
+  static const double sizeHero = 32;
+
+  /// 64 - weather condition glyph.
+  static const double sizeGlyph = 64;
+
+  /// The whole ladder, smallest first. Tests walk this to prove it stays
+  /// sorted, unique, and free of the retired half-point steps.
+  static const List<double> sizeLadder = <double>[
+    sizeMicro,
+    sizeFootnote,
+    sizeCaption,
+    sizeDetail,
+    sizeBody,
+    sizeProse,
+    sizeSubtitle,
+    sizeHeading,
+    sizeTitle,
+    sizeHeadline,
+    sizeDisplay,
+    sizeHero,
+    sizeGlyph,
+  ];
+
+  // ---------------------------------------------------------------------
+  // Weights
+  // ---------------------------------------------------------------------
+
+  // The bundled families ship 400/500/600/700 only (see `pubspec.yaml`), so
+  // these four are the weights the app may ask for. `FontWeight.w800` was
+  // used in ten places and was never rendered - the engine picked the 700
+  // face - so "extra bold" is gone rather than silently synthesized.
+
+  /// 400 - body copy.
+  static const FontWeight regular = FontWeight.w400;
+
+  /// 500 - labels, calendar numerals.
+  static const FontWeight medium = FontWeight.w500;
+
+  /// 600 - emphasis, card titles, default for [display]/[telemetry].
+  static const FontWeight semibold = FontWeight.w600;
+
+  /// 700 - the heaviest shipped face: headings, numerals that must shout.
+  static const FontWeight bold = FontWeight.w700;
+
   /// Cultural/editorial display style.
   ///
   /// Sizes under [displayMinimumSize] silently switch to the UI sans (the
   /// small-serif legibility rule); pass the size so the guard can apply.
   static TextStyle display({
     double? fontSize,
-    FontWeight fontWeight = FontWeight.w600,
+    FontWeight fontWeight = semibold,
     Color? color,
     double? height = 1.35,
     double? letterSpacing,
@@ -142,7 +240,7 @@ class AppTypography {
   /// Body/navigation style with tabular digits by default.
   static TextStyle ui({
     double? fontSize,
-    FontWeight fontWeight = FontWeight.w400,
+    FontWeight fontWeight = regular,
     Color? color,
     double? height,
     double? letterSpacing,
@@ -169,7 +267,7 @@ class AppTypography {
   /// Uppercase eyebrows, illumination percentages and ephemeris timestamps.
   static TextStyle telemetry({
     double? fontSize,
-    FontWeight fontWeight = FontWeight.w600,
+    FontWeight fontWeight = semibold,
     Color? color,
     double letterSpacing = 0.8,
     double? height,
@@ -192,7 +290,7 @@ class AppTypography {
   /// behind it for Bengali/Tamil/Telugu/Malayalam shlokas.
   static TextStyle shloka({
     double? fontSize,
-    FontWeight fontWeight = FontWeight.w600,
+    FontWeight fontWeight = semibold,
     Color? color,
     double? height = 1.6,
   }) {

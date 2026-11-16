@@ -22,6 +22,7 @@ import 'providers/calendar_provider.dart';
 import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
 import 'theme/app_theme.dart';
+import 'theme/app_metrics.dart';
 import 'theme/app_typography.dart';
 import 'screens/home_shell.dart';
 import 'widgets/panchang_init_failure_overlay.dart';
@@ -382,7 +383,7 @@ class _LocationPermissionWrapperState
         title: Row(
           children: [
             const Icon(Icons.location_on, color: AppTheme.locationAccent),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Text(l10n?.locationAccess ?? 'Location Access'),
           ],
         ),
@@ -393,19 +394,17 @@ class _LocationPermissionWrapperState
             Text(
               l10n?.locationAccessDescription ??
                   'Tithi uses your location to calculate accurate Panchang data for your city.',
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: AppTypography.sizeSubtitle),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n?.locationAccessBenefits ??
                   '• More accurate tithi calculations\n'
                       '• Location-specific moonrise/sunset times\n'
                       '• Your location data stays on your device',
               style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.6),
+                fontSize: AppTypography.sizeBody,
+                color: context.secondaryInk,
               ),
             ),
           ],
@@ -502,7 +501,7 @@ class _LocationPermissionWrapperState
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(),
-              SizedBox(height: 16),
+              SizedBox(height: AppSpacing.s16),
               Text('Initializing...'),
             ],
           ),

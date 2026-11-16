@@ -8,6 +8,8 @@ import '../providers/calendar_provider.dart';
 import '../providers/locale_provider.dart';
 import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_motion.dart';
 import '../theme/app_typography.dart';
 import '../services/share_service.dart';
 import '../services/solar_events_service.dart';
@@ -30,6 +32,8 @@ import '../features/sheets/widgets/sheet_time_format.dart';
 import '../features/sheets/widgets/info_row.dart';
 import '../features/sheets/widgets/section_header.dart';
 import '../features/tithi_sheet/widgets/timings_cards.dart';
+import 'app_divider.dart';
+import 'skeleton.dart';
 
 export '../features/event_detail/providers/event_detail_providers.dart'
     show descExpandedProvider, heroChipsExpandedProvider;
@@ -137,7 +141,7 @@ class EventDetailSheet extends ConsumerWidget {
     // show the date immediately instead of shifting it in later.
     final headerDate = dayPanchang?.date ?? requestedDate;
     final dateBaseStyle = AppTypography.display(
-      fontSize: 22,
+      fontSize: AppTypography.sizeHeadline,
       height: 1.3,
       color: highContrast
           ? context.colors.onSurface
@@ -190,7 +194,7 @@ class EventDetailSheet extends ConsumerWidget {
                 ],
               ),
             ),
-          if (headerDate != null) const SizedBox(height: 12),
+          if (headerDate != null) const SizedBox(height: AppSpacing.s12),
           // Title row: icon tile + name/subtitle + tithi badge + share.
           // Center-aligned like the tithi sheet's moon row, so the badge
           // and share button sit mid-row instead of riding the top edge.
@@ -200,13 +204,13 @@ class EventDetailSheet extends ConsumerWidget {
                 highContrast: highContrast,
                 child: Icon(
                   Icons.celebration_outlined,
-                  size: 24,
+                  size: AppIconSize.nav,
                   color: highContrast
                       ? context.colors.primary
                       : AppTheme.heroForeground(context),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,34 +218,34 @@ class EventDetailSheet extends ConsumerWidget {
                     Text(
                       displayName,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                        fontSize: AppTypography.sizeHeading,
+                        fontWeight: AppTypography.semibold,
                         color: heroInk,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
                       // Sanskrit companion to the title.
                       festival.nameSanskrit ?? categoryLabel,
                       style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
+                        fontSize: AppTypography.sizeCaption,
+                        fontWeight: AppTypography.medium,
                         color: heroInk,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.s8),
               if (content != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
+                    horizontal: AppSpacing.s12,
+                    vertical: AppSpacing.s6,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.dense),
                     border: Border.all(
                       color: highContrast
                           ? context.colors.primary.withValues(alpha: 0.4)
@@ -252,8 +256,8 @@ class EventDetailSheet extends ConsumerWidget {
                     '${content.displayTithiNum}',
                     style: TextStyle(
                       color: heroAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontWeight: AppTypography.bold,
+                      fontSize: AppTypography.sizeProse,
                     ),
                   ),
                 ),
@@ -284,7 +288,7 @@ class EventDetailSheet extends ConsumerWidget {
             hasAdditionalDesc: flags.additionalDesc,
             themeColor: themeColor,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
 
           // Panchang info (tithi-sheet section style).
           Row(
@@ -307,10 +311,10 @@ class EventDetailSheet extends ConsumerWidget {
           // checkpoint applies (solar fixed dates, nakshatra-observed,
           // dateless rules).
           if (showsObservanceRule(festival)) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             _ObservanceCaption(highContrast: highContrast, rule: ruleSentence),
           ],
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.s10),
           if (dayPanchang != null && content != null) ...[
             _EventPanchang(
               festival: festival,
@@ -383,7 +387,7 @@ class EventDetailSheet extends ConsumerWidget {
           // sheet was opened from the tithi sheet, pop back to it instead
           // of stacking a duplicate.
           if (dayPanchang != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             SheetLinkTile(
               icon: Icons.calendar_month_outlined,
               label: l10n?.viewFullPanchang ?? 'View full panchang',
@@ -405,7 +409,7 @@ class EventDetailSheet extends ConsumerWidget {
           // AI hand-off (opt-in). Below the panchang link so the sheet's own
           // data keeps priority; works with or without resolved panchang.
           if (aiAssistEnabled) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             SheetLinkTile(
               icon: Icons.auto_awesome_outlined,
               label: l10n?.aiAskAboutFestival ?? 'Ask AI about this festival',
@@ -423,12 +427,12 @@ class EventDetailSheet extends ConsumerWidget {
           // Puja Samay ritual window (below Panchang Details). Needs the
           // day's anchors, so it hides without panchang data.
           if (dayPanchang != null && content != null && pujaKala != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SectionHeader(
               text:
                   '${AppLocalizations.of(context)?.pujaSamay ?? 'Puja Samay'} · ${pujaKalaLabel(pujaKala, l10n)}',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             _EventPujaSamay(
               festival: festival,
               panchang: dayPanchang,
@@ -444,12 +448,12 @@ class EventDetailSheet extends ConsumerWidget {
               (paranRule != null &&
                   dayPanchang != null &&
                   content != null)) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SectionHeader(
               text:
                   AppLocalizations.of(context)?.fastingVrat ?? 'Fasting / Vrat',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             _EventFasting(
               festival: festival,
               panchang: dayPanchang,
@@ -461,29 +465,29 @@ class EventDetailSheet extends ConsumerWidget {
 
           // Rituals
           if (festival.rituals.steps.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SectionHeader(
               text:
                   AppLocalizations.of(context)?.ritualsAndPractices ??
                   'Rituals & Practices',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             _EventRituals(festival: festival, themeColor: themeColor),
           ],
 
           // Mantra section
           if (flags.mantra) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SectionHeader(
               text: AppLocalizations.of(context)?.mantra ?? 'Mantra',
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             _EventMantra(festival: festival, themeColor: themeColor),
           ],
 
           // Timing note (shared explainer style) while timings resolve.
           if (content?.showTimings ?? false) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SheetExplainerCard(
               text:
                   AppLocalizations.of(context)?.timingNoteDescription ??
@@ -499,13 +503,13 @@ class EventDetailSheet extends ConsumerWidget {
 Widget _buildTimingInfoButton(BuildContext context) {
   return InkWell(
     onTap: () => _showTimingDialog(context),
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(AppRadius.dense),
     child: Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.all(AppSpacing.s4),
       child: Icon(
         Icons.info_outline_rounded,
-        size: 16,
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        size: AppIconSize.small,
+        color: context.hintInk,
       ),
     ),
   );
@@ -517,32 +521,50 @@ void _showTimingDialog(BuildContext context) {
     builder: (context) {
       return AlertDialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-        titlePadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        contentPadding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 16, 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(
+          AppSpacing.s20,
+          AppSpacing.s16,
+          AppSpacing.s20,
+          AppSpacing.s8,
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.s20,
+          0,
+          AppSpacing.s20,
+          AppSpacing.s8,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(
+          AppSpacing.s20,
+          0,
+          AppSpacing.s16,
+          AppSpacing.s12,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.tile),
+        ),
         title: Row(
           children: [
             Icon(
               Icons.info_outline_rounded,
               color: Theme.of(context).colorScheme.primary,
-              size: 20,
+              size: AppIconSize.medium,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Text(
               AppLocalizations.of(context)?.timingNote ?? 'Timing Note',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ).textTheme.titleMedium?.copyWith(fontWeight: AppTypography.bold),
             ),
           ],
         ),
         content: Text(
           AppLocalizations.of(context)?.timingNoteDescription ??
               'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.',
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(height: 1.35, fontSize: 14),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            height: 1.35,
+            fontSize: AppTypography.sizeBody,
+          ),
         ),
         actions: [
           TextButton(
@@ -570,7 +592,7 @@ Widget _buildFormattedText(String text, TextStyle? baseStyle) {
       TextSpan(
         text: parts[i],
         style: baseStyle?.copyWith(
-          fontWeight: isBold ? FontWeight.bold : baseStyle.fontWeight,
+          fontWeight: isBold ? AppTypography.bold : baseStyle.fontWeight,
         ),
       ),
     );
@@ -594,8 +616,8 @@ class _ObservanceCaption extends StatelessWidget {
     return Text(
       rule,
       style: TextStyle(
-        fontSize: 12.5,
-        fontWeight: FontWeight.w500,
+        fontSize: AppTypography.sizeCaption,
+        fontWeight: AppTypography.medium,
         height: 1.35,
         // High contrast keeps the caption readable without the banner's
         // primary-tinted fill; elsewhere it reads as secondary text.
@@ -760,7 +782,7 @@ class _HeroLanguageChipsState extends ConsumerState<_HeroLanguageChips> {
         icon: Icon(
           isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
           color: ink,
-          size: 20,
+          size: AppIconSize.medium,
         ),
         tooltip: isExpanded
             ? (l10n?.showLess ?? 'Show less')
@@ -784,9 +806,9 @@ class _HeroLanguageChipsState extends ConsumerState<_HeroLanguageChips> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.s14),
         AnimatedSize(
-          duration: const Duration(milliseconds: 200),
+          duration: AppMotion.of(context, AppMotion.standard),
           curve: Curves.easeInOut,
           alignment: Alignment.topCenter,
           child: showToggle && !expanded
@@ -830,10 +852,13 @@ class _EventDescription extends ConsumerWidget {
         children: [
           _buildFormattedText(
             festival.description,
-            context.textTheme.bodyLarge?.copyWith(fontSize: 16, height: 1.5),
+            context.textTheme.bodyLarge?.copyWith(
+              fontSize: AppTypography.sizeSubtitle,
+              height: 1.5,
+            ),
           ),
           if (hasAdditionalDesc) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -843,11 +868,11 @@ class _EventDescription extends ConsumerWidget {
                         .read(descExpandedProvider.notifier)
                         .update((state) => !state);
                   },
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 4,
-                      horizontal: 8,
+                      vertical: AppSpacing.s4,
+                      horizontal: AppSpacing.s8,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -862,16 +887,16 @@ class _EventDescription extends ConsumerWidget {
                                     'Read More'),
                           style: context.textTheme.labelLarge?.copyWith(
                             color: themeColor,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: AppTypography.bold,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.s4),
                         Icon(
                           ref.watch(descExpandedProvider)
                               ? Icons.keyboard_arrow_up
                               : Icons.keyboard_arrow_down,
                           color: themeColor,
-                          size: 18,
+                          size: AppIconSize.dense,
                         ),
                       ],
                     ),
@@ -880,24 +905,20 @@ class _EventDescription extends ConsumerWidget {
               ],
             ),
             AnimatedSize(
-              duration: const Duration(milliseconds: 200),
+              duration: AppMotion.of(context, AppMotion.standard),
               curve: Curves.easeInOut,
               alignment: Alignment.topCenter,
               child: ref.watch(descExpandedProvider)
                   ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 8),
-                        Divider(
-                          color: context.colors.onSurface.withValues(
-                            alpha: 0.15,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.s8),
+                        const AppDivider(),
+                        const SizedBox(height: AppSpacing.s8),
                         _buildFormattedText(
                           festival.purpose.additionalDescription,
                           context.textTheme.bodyMedium?.copyWith(
-                            fontSize: 14,
+                            fontSize: AppTypography.sizeBody,
                             height: 1.5,
                             color: context.colors.onSurface.withValues(
                               alpha: 0.8,
@@ -999,7 +1020,7 @@ class _EventPanchang extends ConsumerWidget {
             error: (err, stack) => const SizedBox.shrink(),
           ),
         if (content.showTimings || content.isNakshatraObserved)
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
         SheetSurfaceCard(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1074,15 +1095,11 @@ Widget _pujaWindowCard({
     alpha: highContrast ? 0.2 : 0.1,
   );
   final cardColor = Theme.of(context).cardTheme.color ?? context.colors.surface;
-  final dim = context.colors.onSurface.withValues(alpha: 0.6);
-  final faint = context.colors.onSurface.withValues(alpha: 0.7);
+  final dim = context.secondaryInk;
+  final faint = context.secondaryInk;
   Widget valueOrSpinner(String? value, TextStyle style) {
     if (value == null) {
-      return const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
+      return const InlineSpinner(size: AppIconSize.medium);
     }
     return Text(value, style: style);
   }
@@ -1096,7 +1113,7 @@ Widget _pujaWindowCard({
     return Expanded(
       child: Container(
         color: cardColor,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -1104,28 +1121,40 @@ Widget _pujaWindowCard({
             Text(
               label,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: AppTypography.sizeMicro,
                 letterSpacing: 1.0,
-                fontWeight: FontWeight.w600,
+                fontWeight: AppTypography.semibold,
                 color: dim,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSpacing.s6),
             valueOrSpinner(
               primary,
               TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: AppTypography.sizeSubtitle,
+                fontWeight: AppTypography.bold,
                 color: context.colors.onSurface,
               ),
             ),
             if (secondary != null) ...[
-              const SizedBox(height: 2),
-              Text(secondary, style: TextStyle(fontSize: 13, color: faint)),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                secondary,
+                style: TextStyle(
+                  fontSize: AppTypography.sizeDetail,
+                  color: faint,
+                ),
+              ),
             ],
             if (tertiary != null) ...[
-              const SizedBox(height: 2),
-              Text(tertiary, style: TextStyle(fontSize: 13, color: faint)),
+              const SizedBox(height: AppSpacing.s2),
+              Text(
+                tertiary,
+                style: TextStyle(
+                  fontSize: AppTypography.sizeDetail,
+                  color: faint,
+                ),
+              ),
             ],
           ],
         ),
@@ -1136,7 +1165,7 @@ Widget _pujaWindowCard({
   return Container(
     decoration: BoxDecoration(
       color: border,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.tile),
     ),
     clipBehavior: Clip.antiAlias,
     child: IntrinsicHeight(
@@ -1296,7 +1325,7 @@ class _EventFasting extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.s12),
                 Expanded(
                   child: Text(
                     fasting,
@@ -1307,9 +1336,9 @@ class _EventFasting extends ConsumerWidget {
             ),
           if (rule != null && dayPanchang != null && sheetContent != null) ...[
             if (showFasting) ...[
-              const SizedBox(height: 8),
-              Divider(color: context.colors.onSurface.withValues(alpha: 0.15)),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
+              const AppDivider(),
+              const SizedBox(height: AppSpacing.s8),
             ],
             _EventParan(
               festival: festival,
@@ -1358,16 +1387,16 @@ class _EventParan extends ConsumerWidget {
           Text(
             l10n?.paranLabel ?? 'Paran (breaking the fast):',
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
+              fontSize: AppTypography.sizeBody,
+              fontWeight: AppTypography.bold,
               color: warnRed,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             '$reason — $detail',
             style: context.textTheme.bodyMedium?.copyWith(
-              fontSize: 15,
+              fontSize: AppTypography.sizeProse,
               height: 1.5,
               color: context.colors.onSurface.withValues(alpha: 0.9),
             ),
@@ -1551,7 +1580,10 @@ class _EventRituals extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SheetSurfaceCard(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s20,
+        vertical: AppSpacing.s20,
+      ),
       child: Column(
         children: festival.rituals.steps.asMap().entries.map((entry) {
           final index = entry.key;
@@ -1580,8 +1612,8 @@ class _EventRituals extends StatelessWidget {
                         '${index + 1}',
                         style: context.textTheme.bodySmall?.copyWith(
                           color: themeColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
+                          fontWeight: AppTypography.bold,
+                          fontSize: AppTypography.sizeCaption,
                         ),
                       ),
                     ),
@@ -1594,16 +1626,18 @@ class _EventRituals extends StatelessWidget {
                       ),
                   ],
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: AppSpacing.s16),
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(
-                      bottom: index < totalSteps - 1 ? 20.0 : 4.0,
+                      bottom: index < totalSteps - 1
+                          ? AppSpacing.s20
+                          : AppSpacing.s4,
                     ),
                     child: Text(
                       ritual,
                       style: context.textTheme.bodyMedium?.copyWith(
-                        fontSize: 15,
+                        fontSize: AppTypography.sizeProse,
                         height: 1.5,
                         color: context.colors.onSurface.withValues(alpha: 0.9),
                       ),
@@ -1633,9 +1667,9 @@ class _EventMantra extends StatelessWidget {
       child: Text(
         festival.rituals.mantra,
         style: AppTypography.shloka(
-          fontSize: 15,
+          fontSize: AppTypography.sizeProse,
           height: 1.8,
-          fontWeight: FontWeight.w500,
+          fontWeight: AppTypography.medium,
           color: themeColor,
         ),
         textAlign: TextAlign.center,
