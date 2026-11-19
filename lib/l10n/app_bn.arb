@@ -270,6 +270,8 @@
   "noFestivalsFound": "কোন উৎসব পাওয়া যায়নি",
   "noCountdownsYet": "এখনও কোনো কাউন্টডাউন নেই",
   "allFestivals": "সব উৎসব",
+  "previousYear": "পূর্ববর্তী বছর",
+  "nextYear": "পরবর্তী বছর",
   "navToday": "আজ",
   "navFestivals": "উৎসব",
   "navCountdowns": "কাউন্টডাউন",

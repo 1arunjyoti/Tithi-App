@@ -409,7 +409,7 @@ void main() {
         all: [festA, festB, festC],
         extraOverrides: [
           allFestivalOccurrencesProvider.overrideWith(
-            (ref) => Future.value([
+            (ref, year) => Future.value([
               (festival: festB, date: DateTime(2026, 9, 17)),
               (festival: festA, date: DateTime(2026, 9, 14)),
               (festival: festC, date: null),

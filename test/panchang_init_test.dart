@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart' show sha256;
@@ -248,6 +249,106 @@ void main() {
         expect(await target.readAsBytes(), before);
       },
     );
+
+    group('verification stamp', () {
+      File stampFile() => File(p.join(tempDir.path, 'ephe', '.verify.json'));
+
+      test('records every verified file for the next launch', () async {
+        // Act
+        await copy(validBundle());
+
+        // Assert: the record carries the manifest hash, size and mtime that a
+        // later launch compares against, so it can skip re-hashing ~1.9 MB.
+        final stamp = jsonDecode(await stampFile().readAsString()) as Map;
+        expect(stamp['format'], 1);
+        final files = stamp['files'] as Map;
+        for (final name in kEphemerisAssets) {
+          expect((files[name] as Map)['sha256'], manifest[name], reason: name);
+          expect((files[name] as Map)['size'], _se1().length, reason: name);
+          expect((files[name] as Map)['mtime_ms'], isA<int>(), reason: name);
+        }
+      });
+
+      test('a relaunch leaves the record and the files untouched', () async {
+        // Arrange: a verified install. The record's mtime is moved into the
+        // past so a rewrite on the next launch is visible.
+        await copy(validBundle());
+        final stamp = stampFile();
+        final old = DateTime(2020);
+        await stamp.setLastModified(old);
+        final bundle = _FakeAssetBundle({});
+
+        // Act: steady state - nothing changed since the last verification.
+        await copy(bundle);
+
+        // Assert: no asset read, no re-verification, no rewrite.
+        expect(bundle.requested, isEmpty);
+        expect(
+          (await stamp.lastModified()).millisecondsSinceEpoch,
+          old.millisecondsSinceEpoch,
+        );
+      });
+
+      test('re-verifies a file modified after the stamp was written', () async {
+        // Arrange: a verified install, then the file changes on disk.
+        await copy(validBundle());
+        final target = installed('seas_18.se1');
+        await target.writeAsBytes(_corrupt(await target.readAsBytes()));
+        await target.setLastModified(
+          DateTime.now().add(const Duration(seconds: 2)),
+        );
+
+        // Act
+        await copy(validBundle());
+
+        // Assert
+        expect(_sha256(await target.readAsBytes()), _sha256(_se1()));
+      });
+
+      test('falls back to hashing when the stamp cannot be read', () async {
+        // Arrange: a damaged record plus a damaged data file - exactly the
+        // state a half-finished write could leave.
+        await copy(validBundle());
+        await stampFile().writeAsString('{ not json');
+        final target = installed('sepl_18.se1');
+        await target.writeAsBytes(_corrupt(await target.readAsBytes()));
+        await target.setLastModified(
+          DateTime.now().add(const Duration(seconds: 2)),
+        );
+
+        // Act
+        await copy(validBundle());
+
+        // Assert
+        expect(_sha256(await target.readAsBytes()), _sha256(_se1()));
+      });
+
+      test('ignores a stamp whose hash is not the current manifest', () async {
+        // Arrange: the stamp claims the file is verified, but the build now
+        // expects different bytes (an upgraded ephemeris asset).
+        await copy(validBundle());
+        final target = installed('semo_18.se1');
+        await target.writeAsBytes(_corrupt(await target.readAsBytes()));
+        await target.setLastModified(
+          DateTime.now().add(const Duration(seconds: 2)),
+        );
+        final upgraded = _se1(length: 3072);
+        final other = {
+          for (final name in kEphemerisAssets) name: _sha256(_se1()),
+        };
+        other['semo_18.se1'] = _sha256(upgraded);
+        final bundle = _FakeAssetBundle({
+          for (final name in kEphemerisAssets) 'assets/ephe/$name': _se1(),
+          'assets/ephe/semo_18.se1': upgraded,
+        });
+
+        // Act
+        await copyEphemerisFiles(bundle, sha256ByFile: other);
+
+        // Assert: the stale copy is replaced by the newly expected asset.
+        expect(_sha256(await target.readAsBytes()), _sha256(upgraded));
+      });
+    });
   });
 
   group('shipped ephemeris manifest', () {

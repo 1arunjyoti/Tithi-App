@@ -13,6 +13,7 @@ import 'storage_service.dart';
 import '../core/location/location_defaults.dart';
 import '../core/location/place_clock.dart';
 import '../core/location/timezone_resolver.dart';
+import '../core/perf/startup_timeline.dart';
 
 /// Location data model
 class LocationData {
@@ -227,6 +228,13 @@ class LocationService {
   static const Duration _cacheDuration = Duration(seconds: 10);
   static const Duration _backgroundRefreshThreshold = Duration(minutes: 15);
 
+  /// Last fix written to storage, loaded once by [init].
+  ///
+  /// Kept separate from [_memoryCachedLocation] so the "fresh fix" paths keep
+  /// their meaning: this is the place the previous session ended on, and it is
+  /// what lets a cold start paint before GPS (and the geocoder) answer.
+  LocationData? _persistedLocation;
+
   /// Initialize the location service
   Future<void> init() async {
     if (_isInitialized) return;
@@ -245,6 +253,21 @@ class LocationService {
       // Phase 0 migration: older boxes have coordinates but no zone. Resolve
       // and persist it once so locations become self-describing.
       await _backfillPlaceMetadata();
+
+      // Seed the synchronous snapshot the first frame reads. Reading the box
+      // is cheap and already warm here; without this, a launch with location
+      // enabled answers null until a GPS fix + reverse geocode complete, and
+      // every home card waits behind them (see resolvedCoordinatesProvider).
+      try {
+        _persistedLocation = await _getCachedLocation();
+      } catch (error) {
+        // A corrupt cache must not fail location init: the next fix rewrites it.
+        debugPrint('Cached place unreadable ($error); starting without it.');
+        _persistedLocation = null;
+      }
+      StartupTimeline.mark('place-seeded', {
+        'saved': _persistedLocation != null,
+      });
 
       _isInitialized = true;
 
@@ -946,22 +969,22 @@ class LocationService {
     await _box?.put(sourceKey, timezone.source.storageValue);
   }
 
-  /// GET home location manually
-  /// Returns null if not set
   /// Synchronous place snapshot for consumers that cannot await.
   ///
   /// Returns null before [init] so tests that override coordinates do not
   /// trigger Hive or a permission prompt. Once initialized this mirrors
-  /// [currentLocationProvider]: home/default when location is disabled, and
-  /// the most recent GPS fix otherwise (null until that fix arrives).
+  /// [currentLocationProvider]: home/default when location is disabled, and the
+  /// most recent fix otherwise — the live fix when one has arrived this
+  /// session, else the fix persisted by the previous session.
   LocationData? get lastKnownLocation {
     if (!_isInitialized) return null;
     final enabled =
         _box?.get(_keyLocationEnabled, defaultValue: false) as bool? ?? false;
     if (!enabled) return getHomeLocation() ?? LocationData.defaultLocation;
-    return _memoryCachedLocation;
+    return _memoryCachedLocation ?? _persistedLocation;
   }
 
+  /// User-picked place, or null when none was saved.
   LocationData? getHomeLocation() {
     _ensureInitialized();
     final lat = _box?.get(_keyHomeLat) as double?;

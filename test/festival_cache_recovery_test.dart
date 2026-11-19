@@ -48,7 +48,7 @@ Festival _festival({bool? featuredFlag}) => Festival(
 
 /// Writes the cache-schema marker that `openFestivalsBox` checks.
 Future<void> _markSchema(int version) async {
-  final settings = await Hive.openBox<int>(
+  final settings = await Hive.openBox<dynamic>(
     StorageService.festivalSettingsBoxName,
   );
   await settings.put(StorageService.festivalsSchemaKey, version);

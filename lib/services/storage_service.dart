@@ -24,6 +24,7 @@ class StorageService {
   static const String sankalpasBoxName = BoxNames.sankalpas;
   static const String festivalSettingsBoxName = BoxNames.festivalSettings;
   static const String festivalsBoxName = BoxNames.festivals;
+  static const String festivalOccurrencesBoxName = BoxNames.festivalOccurrences;
   static const String panchangCacheBoxName = BoxNames.panchangCache;
 
   /// Key in [festivalSettingsBoxName] holding the
@@ -39,6 +40,7 @@ class StorageService {
     await openSankalpasBox();
     await openFestivalSettingsBox();
     await openFestivalsBox();
+    await openFestivalOccurrencesBox();
     await openPanchangCacheBox();
   }
 
@@ -77,11 +79,13 @@ class StorageService {
     return Hive.openBox<Sankalpa>(sankalpasBoxName);
   }
 
-  Future<Box<int>> openFestivalSettingsBox() async {
+  /// Festival catalog settings: the schema marker (an int) and the catalog
+  /// fingerprint stamp (which includes the build string), hence `dynamic`.
+  Future<Box<dynamic>> openFestivalSettingsBox() async {
     if (Hive.isBoxOpen(festivalSettingsBoxName)) {
-      return Hive.box<int>(festivalSettingsBoxName);
+      return Hive.box(festivalSettingsBoxName);
     }
-    return Hive.openBox<int>(festivalSettingsBoxName);
+    return Hive.openBox(festivalSettingsBoxName);
   }
 
   /// Opens the festivals box, discarding a cached catalog it cannot use.
@@ -141,7 +145,8 @@ class StorageService {
   Future<void> _discardIncompatibleFestivalsCache() async {
     int? stored;
     try {
-      stored = (await openFestivalSettingsBox()).get(festivalsSchemaKey);
+      stored =
+          (await openFestivalSettingsBox()).get(festivalsSchemaKey) as int?;
     } catch (error) {
       debugPrint('Could not read the festivals cache schema ($error).');
     }
@@ -181,6 +186,17 @@ class StorageService {
     }
   }
 
+  /// Resolved yearly festival rows (id + date-only values), one record per
+  /// year/location/school/catalog generation. Kept out of the panchang cache
+  /// box on purpose: that box is cleared whenever the location signature
+  /// changes, and this snapshot must survive a GPS jitter / app upgrade.
+  Future<Box<dynamic>> openFestivalOccurrencesBox() async {
+    if (Hive.isBoxOpen(festivalOccurrencesBoxName)) {
+      return Hive.box(festivalOccurrencesBoxName);
+    }
+    return Hive.openBox(festivalOccurrencesBoxName);
+  }
+
   Future<Box<dynamic>> openPanchangCacheBox() async {
     if (Hive.isBoxOpen(panchangCacheBoxName)) {
       return Hive.box(panchangCacheBoxName);
@@ -217,6 +233,9 @@ class StorageService {
 
     final festivalBox = await openFestivalsBox();
     await festivalBox.clear();
+
+    final occurrencesBox = await openFestivalOccurrencesBox();
+    await occurrencesBox.clear();
 
     final panchangCacheBox = await openPanchangCacheBox();
     await panchangCacheBox.clear();

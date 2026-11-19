@@ -162,7 +162,7 @@ void main() {
           homeWidgetSyncProvider.overrideWith((ref) {}),
           panchangWidgetSyncProvider.overrideWith((ref) {}),
           allFestivalOccurrencesProvider.overrideWith(
-            (ref) => Future.value([(festival: festival, date: today)]),
+            (ref, year) => Future.value([(festival: festival, date: today)]),
           ),
         ],
         child: MaterialApp(

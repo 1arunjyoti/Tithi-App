@@ -14,6 +14,7 @@ import '../providers/panchang_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_motion.dart';
+import '../theme/app_typography.dart';
 import '../features/sheets/sheet_launcher.dart';
 import '../widgets/festival_filter_chip.dart';
 import '../widgets/festival_filter_sheet.dart';
@@ -31,6 +32,7 @@ import '../core/navigation/haptic_back_button.dart';
 import '../core/navigation/home_tab.dart';
 import '../core/async/keep_alive.dart';
 import '../core/format/date_only.dart';
+import '../features/countdown/data/festival_year_snapshot.dart';
 import '../features/countdown/domain/target_resolution.dart';
 
 export '../features/countdown/domain/target_resolution.dart'
@@ -43,23 +45,43 @@ export '../models/festival_filter.dart'
         festivalMatchesFilters,
         festivalMatchesRegionFilter;
 
-/// All bundled festivals with this year's occurrence dates, ascending from
-/// January — past festivals first, then the current/upcoming ones (the screen
-/// auto-scrolls to those on open), undatable entries last. Recurring entries
-/// (Ekadashi, Purnima, Amavasya) appear once per occurrence, not once per
-/// catalog entry, so the yearly list shows all 24 Ekadashis.
+/// Years the festival list can resolve for. Matches the calendar's Gregorian
+/// year picker range (calendar_widget.dart), which is the bundled ephemeris
+/// window; the year selector's arrows clamp to it.
+const int kFestivalFirstYear = 1976;
+const int kFestivalLastYear = 2076;
+
+/// All bundled festivals with [year]'s occurrence dates, ascending from
+/// January — past festivals first, then the upcoming ones (for the current
+/// year the screen auto-scrolls to those on open), undatable entries last.
+/// Recurring entries (Ekadashi, Purnima, Amavasya) appear once per
+/// occurrence, not once per catalog entry, so the yearly list shows all 24
+/// Ekadashis.
+///
+/// The year is the family parameter: the screen's year selector picks it and
+/// each year resolves (and caches) independently, so 2025, 2026 and 2027
+/// show their own dates, not today's year.
 ///
 /// Each festival reuses the vriddhi-aware
 /// [PanchangService.findNextFestivalOccurrence] forward scan (the same source
-/// the countdowns use), run in small parallel batches.
+/// the countdowns use), run in small parallel batches. Scanning forward from
+/// Jan 1 of [year] is correct for past years too — the first match on/after
+/// that date lands inside the year.
 ///
-/// Perf: 5-minute timed `keepAlive` (same pattern as `monthlyPanchangProvider`)
-/// so reopening the screen is instant but idle data is released instead of
-/// pinning ~100 festivals (with multi-KB descriptions) for the whole session.
-/// The watch on [todayDateProvider] still refreshes it at midnight, and a
+/// Perf: the completed list is persisted as one Hive record per
+/// year/location/school/catalog generation ([readFestivalYearSnapshot]), so a
+/// revisit (or a launch after process death) paints from disk instead of
+/// rebuilding ~150 scans. Resolution always runs from Jan 1 through Dec 31,
+/// so a stored list cannot go stale inside the year; a moved place,
+/// school/engine bump or catalog edit changes the key and misses cleanly.
+///
+/// A 5-minute timed `keepAlive` (same pattern as `monthlyPanchangProvider`)
+/// still releases the in-memory list when the screen has been closed for a
+/// while; reopening then costs one box read. The watch on [todayDateProvider]
+/// refreshes the lists at midnight (the key only changes on Jan 1), and a
 /// location change invalidates via [resolvedCoordinatesProvider].
-final allFestivalOccurrencesProvider =
-    FutureProvider.autoDispose<List<DatedFestival>>((ref) async {
+final allFestivalOccurrencesProvider = FutureProvider.autoDispose
+    .family<List<DatedFestival>, int>((ref, year) async {
       ref.keepAliveFor(const Duration(minutes: 5));
 
       await ref.watch(panchangInitProvider.future);
@@ -67,10 +89,27 @@ final allFestivalOccurrencesProvider =
 
       final festivals = ref.read(festivalProvider);
       if (festivals.isEmpty) return const [];
-      final today = dateOnly(ref.watch(todayDateProvider));
-      final yearStart = DateTime(today.year);
+      // Watch (not read) so a midnight rollover re-resolves: the year key
+      // only changes on Jan 1, when the new year's list must first appear.
+      ref.watch(todayDateProvider);
+      final yearStart = DateTime(year);
       final coords = ref.watch(resolvedCoordinatesProvider);
+      // Read the service first: building it resolves the persisted school,
+      // which is part of the snapshot key. Reading it after the snapshot
+      // could look up the wrong generation on a cold start.
       final service = ref.read(panchangServiceProvider);
+      final catalogVersion = ref
+          .read(festivalRepositoryProvider)
+          .catalogVersion;
+
+      final snapshot = await readFestivalYearSnapshot(
+        yearStart: yearStart,
+        festivals: festivals,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        catalogVersion: catalogVersion,
+      );
+      if (snapshot != null) return snapshot;
 
       try {
         // Shared resolver (features/countdown/domain): batched cached
@@ -79,14 +118,22 @@ final allFestivalOccurrencesProvider =
         // occurrence through Dec 31, so the yearly list shows all of them.
         // No month-system watch: resolution is Amanta-fixed, so toggling
         // Amanta↔Purnimant no longer re-scans (rows show dates, not masas).
-        return await resolveDatedFestivals(
+        final resolved = await resolveDatedFestivals(
           service: service,
           festivals: festivals,
           baseDate: yearStart,
-          through: DateTime(today.year, 12, 31),
+          through: DateTime(year, 12, 31),
           latitude: coords.latitude,
           longitude: coords.longitude,
         );
+        await writeFestivalYearSnapshot(
+          yearStart: yearStart,
+          items: resolved,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          catalogVersion: catalogVersion,
+        );
+        return resolved;
       } catch (e, st) {
         debugPrint('allFestivalOccurrences failed: $e\n$st');
         rethrow;
@@ -94,9 +141,13 @@ final allFestivalOccurrencesProvider =
     });
 
 /// Full browsable list behind the home card's "View all N festivals" button:
-/// every festival sorted by this year's occurrence date, January first, with
-/// the date on each row. On open the list auto-scrolls to the current point
-/// (first festival dated today or later). A live search field filters by
+/// every festival sorted by the selected year's occurrence date, January
+/// first, with the date on each row. A year selector (chevron arrows plus a
+/// tappable year that opens a picker) loads any year's list, not just the
+/// current one — each year resolves independently through
+/// [allFestivalOccurrencesProvider]. On open the current year's list
+/// auto-scrolls to the current point (first festival dated today or later);
+/// other years open at January. A live search field filters by
 /// name/category/description, a chip strip under it applies the category
 /// (All / Major / Vrat / Recurring / Featured) in one tap, and the app-bar
 /// filter button opens a sheet with the same categories plus region (all
@@ -134,6 +185,10 @@ class AllFestivalsScreen extends ConsumerStatefulWidget {
   /// filter sheet renders.
   static const categoryChipsKey = ValueKey('all-festivals-category-chips');
 
+  /// Key of the app-bar year stepper, so tests can reach its arrows without
+  /// matching unrelated chevrons elsewhere on the screen.
+  static const yearSelectorKey = ValueKey('all-festivals-year-selector');
+
   @override
   ConsumerState<AllFestivalsScreen> createState() => _AllFestivalsScreenState();
 }
@@ -144,6 +199,11 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   Timer? _searchDebounce;
   String _query = '';
   FestivalFilterSelection _filters = const FestivalFilterSelection();
+
+  /// The year whose list is shown. Defaults to today's year; the selector
+  /// row changes it and every year resolves independently (each family
+  /// instance keeps its own snapshot-backed list).
+  late int _selectedYear = dateOnly(ref.read(todayDateProvider)).year;
 
   // Leak-free auto-scroll token: an int key, NOT the list itself, so the
   // previous occurrence list can be GC'd after a midnight/location refresh.
@@ -203,6 +263,48 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     setState(() => _filters = _filters.copyWith(category: category));
   }
 
+  /// Steps the year selector by [delta], clamped to the ephemeris window.
+  /// Out-of-range arrows are disabled, so the clamp is only a guard.
+  void _shiftYear(int delta) {
+    final next = (_selectedYear + delta).clamp(
+      kFestivalFirstYear,
+      kFestivalLastYear,
+    );
+    if (next == _selectedYear) return;
+    AppHaptics.tap(ref);
+    setState(() => _selectedYear = next);
+  }
+
+  /// Opens the same Material year picker the calendar header uses
+  /// (calendar_widget.dart's Gregorian picker), bounded to the ephemeris
+  /// window, and applies the picked year.
+  Future<void> _pickYear() async {
+    AppHaptics.tap(ref);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(_selectedYear),
+      firstDate: DateTime(kFestivalFirstYear),
+      lastDate: DateTime(kFestivalLastYear, 12, 31),
+      initialDatePickerMode: DatePickerMode.year,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: context.colors.primary,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
+              surface: Theme.of(context).scaffoldBackgroundColor,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked == null || picked.year == _selectedYear) return;
+    if (!mounted) return;
+    AppHaptics.tap(ref);
+    setState(() => _selectedYear = picked.year);
+  }
+
   List<DatedFestival> _visible(List<DatedFestival> all) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty && !_filters.isActive) return all;
@@ -257,7 +359,9 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       _revealTop();
     });
     final l10n = AppLocalizations.of(context);
-    final occurrencesAsync = ref.watch(allFestivalOccurrencesProvider);
+    final occurrencesAsync = ref.watch(
+      allFestivalOccurrencesProvider(_selectedYear),
+    );
     final today = dateOnly(ref.watch(todayDateProvider));
 
     return PageScaffold(
@@ -267,7 +371,11 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
           ? const HapticBackButton()
           : const AppDrawerButton(),
       title: Text(l10n?.allFestivals ?? 'All Festivals'),
+      // The year stepper widens the actions strip; a themed centered title
+      // would then sit in the leftover middle space and look off-center.
+      centerTitle: false,
       actions: [
+        _buildYearStepper(context),
         IconButton(
           tooltip: l10n?.festivalFilterTitle ?? 'Filter festivals',
           onPressed: _openFilters,
@@ -329,20 +437,80 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                 // (e.g. midnight rollover) keeps the old list up instead
                 // of flashing a skeleton.
                 skipLoadingOnReload: true,
-                data: (items) => _buildList(context, items, today),
+                data: (items) =>
+                    _buildList(context, items, today, _selectedYear),
                 loading: () =>
                     _OccurrencesLoading(bottomInset: widget.bottomContentInset),
                 error: (error, _) => _OccurrencesError(
                   message:
                       l10n?.couldNotLoadFestivals ??
                       'Could not load festivals. Please try again.',
-                  onRetry: () => ref.invalidate(allFestivalOccurrencesProvider),
+                  onRetry: () => ref.invalidate(
+                    allFestivalOccurrencesProvider(_selectedYear),
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// App-bar year stepper: a back arrow, the tappable year (opens the
+  /// Material year picker) and a forward arrow. It lives in the actions
+  /// strip instead of the body so the list keeps its full height, while
+  /// year stepping stays one tap away and always visible. Arrows disable
+  /// at the ephemeris window's edges, so a tap never resolves a year the
+  /// engine cannot compute.
+  Widget _buildYearStepper(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final canGoBack = _selectedYear > kFestivalFirstYear;
+    final canGoForward = _selectedYear < kFestivalLastYear;
+    return Row(
+      key: AllFestivalsScreen.yearSelectorKey,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          tooltip: l10n?.previousYear ?? 'Previous year',
+          onPressed: canGoBack ? () => _shiftYear(-1) : null,
+          icon: const Icon(Icons.chevron_left_rounded, size: 20),
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+        ),
+        Tooltip(
+          message: l10n?.selectYear ?? 'Select year',
+          child: InkWell(
+            onTap: _pickYear,
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: AppSpacing.s8,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$_selectedYear',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: AppTypography.semibold,
+                    ),
+                  ),
+                  const Icon(Icons.expand_more_rounded, size: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: l10n?.nextYear ?? 'Next year',
+          onPressed: canGoForward ? () => _shiftYear(1) : null,
+          icon: const Icon(Icons.chevron_right_rounded, size: 20),
+          visualDensity: VisualDensity.compact,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+        ),
+      ],
     );
   }
 
@@ -379,26 +547,33 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     BuildContext context,
     List<DatedFestival> items,
     DateTime today,
+    int selectedYear,
   ) {
     final visible = _visible(items);
     // The list runs January → December, so on open (fresh data, no search)
-    // it lands on the current point: the first festival dated today or
-    // later, with earlier entries reachable by scrolling up.
+    // the current year's list lands on the current point: the first festival
+    // dated today or later, with earlier entries reachable by scrolling up.
+    // Another year's list opens at its January instead — "today or later"
+    // is meaningless for a past year and trivially row 0 for a future one.
     final queryEmpty = _query.trim().isEmpty;
+    final isCurrentYear = selectedYear == today.year;
     if (queryEmpty) {
       // Int key — never retains the old occurrence list (multi-KB
       // descriptions) after a refresh, unlike holding the list itself.
       final key = Object.hash(
         identityHashCode(items),
         today.millisecondsSinceEpoch,
+        selectedYear,
         _filters.category.index,
         _filters.region.index,
       );
       if (_scrolledForKey != key) {
         _scrolledForKey = key;
-        final target = visible.indexWhere(
-          (e) => e.date != null && !e.date!.isBefore(today),
-        );
+        final target = !isCurrentYear
+            ? (visible.isEmpty ? -1 : 0)
+            : visible.indexWhere(
+                (e) => e.date != null && !e.date!.isBefore(today),
+              );
         // Indexed jump lands exactly even when the target row was never
         // built (list laziness) — no measurement, no mistimed animation: the
         // screen simply opens at the current point, like a calendar opening

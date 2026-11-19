@@ -881,6 +881,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get allFestivals => 'सभी त्योहार';
 
   @override
+  String get previousYear => 'पिछला वर्ष';
+
+  @override
+  String get nextYear => 'अगला वर्ष';
+
+  @override
   String get navToday => 'आज';
 
   @override

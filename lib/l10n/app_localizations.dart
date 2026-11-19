@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:cupertino_ui/cupertino_ui.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'
-    show GlobalWidgetsLocalizations;
-import 'package:material_ui/material_ui.dart';
 
 import 'app_localizations_bn.dart';
 import 'app_localizations_en.dart';
@@ -1723,6 +1721,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'All Festivals'**
   String get allFestivals;
+
+  /// Tooltip of the all-festivals year selector's back arrow
+  ///
+  /// In en, this message translates to:
+  /// **'Previous year'**
+  String get previousYear;
+
+  /// Tooltip of the all-festivals year selector's forward arrow
+  ///
+  /// In en, this message translates to:
+  /// **'Next year'**
+  String get nextYear;
 
   /// Floating navigation bar label for the home tab. Keep it a single short word: the selected pill grows with it.
   ///

@@ -114,6 +114,29 @@ void main() {
       );
     });
 
+    testWidgets('centerTitle overrides the theme only when supplied', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.shuklaTheme,
+          home: const PageScaffold(body: SizedBox.shrink(key: bodyKey)),
+        ),
+      );
+      expect(tester.widget<AppBar>(find.byType(AppBar)).centerTitle, isNull);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.shuklaTheme,
+          home: const PageScaffold(
+            centerTitle: false,
+            body: SizedBox.shrink(key: bodyKey),
+          ),
+        ),
+      );
+      expect(tester.widget<AppBar>(find.byType(AppBar)).centerTitle, isFalse);
+    });
+
     testWidgets('forwards the app bar chrome and the drawer callback', (
       tester,
     ) async {

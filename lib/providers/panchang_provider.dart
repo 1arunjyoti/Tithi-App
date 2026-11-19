@@ -18,6 +18,7 @@ import 'location_provider.dart';
 import 'calendar_provider.dart';
 import '../core/location/location_defaults.dart';
 import '../core/format/date_only.dart';
+import '../core/perf/startup_timeline.dart';
 
 export '../features/panchang/data/panchang_cache.dart'
     show
@@ -171,12 +172,14 @@ final panchangForDateProvider = FutureProvider.autoDispose
                   transitionTithiIndex: transition.index,
                 );
           storePanchangUiSync(normalized, data);
+          StartupTimeline.mark('day-ready', {'path': 'adaptive'});
           return data;
         } catch (e) {
           // The cached daily record is complete enough for the selected-date
           // UI. A failed optional transition lookup must not fall through to
           // an expensive duplicate month batch.
           debugPrint('Cached single-day transition lookup skipped: $e');
+          StartupTimeline.mark('day-ready', {'path': 'adaptive-cached'});
           return adaptiveGridEntry;
         }
       }
@@ -219,6 +222,7 @@ final panchangForDateProvider = FutureProvider.autoDispose
                 );
           // Feed the stale-UI LRU so date taps render instantly next time.
           storePanchangUiSync(date, data);
+          StartupTimeline.mark('day-ready', {'path': 'month'});
           return data;
         }
       } catch (e) {
@@ -245,6 +249,7 @@ final panchangForDateProvider = FutureProvider.autoDispose
       );
       // Feed the stale-UI LRU so date taps render instantly next time.
       storePanchangUiSync(date, data);
+      StartupTimeline.mark('day-ready', {'path': 'direct'});
       return data;
     });
 
@@ -500,6 +505,10 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
       ) {
         allDates.add(DateTime(date.year, date.month, date.day));
       }
+      StartupTimeline.mark('month-batch-start', {
+        'month': '${focusedMonth.year}-${focusedMonth.month}',
+        'days': allDates.length,
+      });
 
       for (var i = 0; i < allDates.length; i += batchSize) {
         final end = (i + batchSize) > allDates.length
@@ -526,6 +535,7 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
         if (value != null) monthData[key] = value;
       }
 
+      StartupTimeline.mark('month-batch-ready', {'days': monthData.length});
       return monthData;
     });
 

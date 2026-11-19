@@ -83,7 +83,7 @@ void main() {
       ProviderScope(
         overrides: [
           allFestivalOccurrencesProvider.overrideWith(
-            (ref) => Future.value(occurrences),
+            (ref, year) => Future.value(occurrences),
           ),
           accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
         ],
@@ -106,6 +106,13 @@ void main() {
   Finder stripCategoryChip(String label) => find.descendant(
     of: find.byKey(AllFestivalsScreen.categoryChipsKey),
     matching: find.widgetWithText(FestivalFilterChip, label),
+  );
+
+  /// Finder for one arrow of the year selector row, scoped so unrelated
+  /// chevrons elsewhere on the screen cannot make the tap ambiguous.
+  Finder yearArrow(IconData icon) => find.descendant(
+    of: find.byKey(AllFestivalsScreen.yearSelectorKey),
+    matching: find.byIcon(icon),
   );
 
   /// Opens the app-bar filter sheet, optionally stages a category/region (or
@@ -1006,7 +1013,7 @@ void main() {
         ProviderScope(
           overrides: [
             allFestivalOccurrencesProvider.overrideWith(
-              (ref) => Future.value([(festival: festival, date: null)]),
+              (ref, year) => Future.value([(festival: festival, date: null)]),
             ),
             festivalProvider.overrideWithValue([festival]),
             accessibilityProvider.overrideWith(_HapticsNotifier.new),
@@ -1024,6 +1031,105 @@ void main() {
       expect(haptics, hasLength(1));
       expect(haptics.single.arguments, 'HapticFeedbackType.lightImpact');
     });
+
+    testWidgets('app bar title is left-aligned, not centered', (tester) async {
+      // The year stepper widens the actions strip; with the theme's centered
+      // title the text would drift into the leftover middle space.
+      await pumpScreen(
+        tester,
+        occurrences: [
+          (festival: fixture(id: 'a', name: 'Alpha Puja'), date: todayOnly()),
+        ],
+      );
+
+      expect(tester.widget<AppBar>(find.byType(AppBar)).centerTitle, isFalse);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets(
+      'year selector defaults to the current year and steps forward',
+      (tester) async {
+        // Arrange: each year resolves to its own fixture, so the displayed
+        // festival proves which year's list is on screen.
+        final today = todayOnly();
+        final current = fixture(id: 'cur', name: 'Current Year Festival');
+        final next = fixture(id: 'nxt', name: 'Next Year Festival');
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              allFestivalOccurrencesProvider.overrideWith((ref, year) {
+                return Future.value([
+                  if (year == today.year)
+                    (festival: current, date: today)
+                  else
+                    (festival: next, date: DateTime(year, 3, 5)),
+                ]);
+              }),
+              accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
+            ],
+            child: const MaterialApp(home: AllFestivalsScreen()),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Assert: opens on the current year's list, with its year shown.
+        expect(find.text('Current Year Festival'), findsOneWidget);
+        expect(find.text('${today.year}'), findsOneWidget);
+
+        // Act: the forward arrow steps to the next year.
+        await tester.tap(yearArrow(Icons.chevron_right_rounded));
+        await tester.pumpAndSettle();
+
+        // Assert: the next year's list replaced the current one.
+        expect(find.text('Next Year Festival'), findsOneWidget);
+        expect(find.text('Current Year Festival'), findsNothing);
+        expect(find.text('${today.year + 1}'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets('previous-year arrow loads the previous year\'s list', (
+      tester,
+    ) async {
+      // Arrange: step back from the current year to a list of past dates.
+      final today = todayOnly();
+      final pastYear = today.year - 1;
+      final pastFestival = fixture(id: 'old', name: 'Past Year Festival');
+      final current = fixture(id: 'cur', name: 'Current Year Festival');
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            allFestivalOccurrencesProvider.overrideWith((ref, year) {
+              return Future.value([
+                if (year == today.year)
+                  (festival: current, date: today)
+                else
+                  (festival: pastFestival, date: DateTime(pastYear, 3, 5)),
+              ]);
+            }),
+            accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
+          ],
+          child: const MaterialApp(home: AllFestivalsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Act: the back arrow steps to the previous year.
+      await tester.tap(yearArrow(Icons.chevron_left_rounded));
+      await tester.pumpAndSettle();
+
+      // Assert: the previous year's list is shown, with that year's date on
+      // the row (no "in N days" suffix for past years).
+      expect(find.text('Past Year Festival'), findsOneWidget);
+      expect(find.text('Current Year Festival'), findsNothing);
+      expect(find.text('$pastYear'), findsOneWidget);
+      expect(
+        find.textContaining('in '),
+        findsNothing,
+        reason: 'past-year rows show plain dates, not countdowns',
+      );
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('drawer', () {
@@ -1039,7 +1145,7 @@ void main() {
         ProviderScope(
           overrides: [
             allFestivalOccurrencesProvider.overrideWith(
-              (ref) => Future.value([
+              (ref, year) => Future.value([
                 (festival: fixture(id: 'row', name: 'A Festival'), date: today),
               ]),
             ),

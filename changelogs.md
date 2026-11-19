@@ -18,6 +18,50 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-17 - 0.9.1+31
+
+### All Festivals shows any year, not just the current one
+
+The screen's app-bar year stepper (chevron arrows plus a tappable year that opens the Material year picker) loads 1976-2076; each year resolves to its own occurrence dates instead of always showing today's year.
+
+- `allFestivalOccurrencesProvider` (`lib/screens/all_festivals_screen.dart`) is now `FutureProvider.autoDispose.family<List<DatedFestival>, int>` keyed by year; resolution scans forward from Jan 1 of the picked year (correct for past years too). Past-year rows show plain dates, never "in N days".
+- The year snapshot box keeps multiple years: `writeFestivalYearSnapshot` (`lib/features/countdown/data/festival_year_snapshot.dart`) no longer deletes every other `year1_` record; it prunes to the 8 most recent years and always keeps the record just written.
+- The per-scan occurrence cache (`lib/features/panchang/domain/occurrence_cache.dart`) keeps January bases within +/-3 years of today (was: this year and next), so returning to a browsed year does not re-scan.
+- The current year's list still auto-scrolls to today's point on open; other years open at January.
+- The app bar title is left-aligned on this screen (`PageScaffold(centerTitle: false)`): the stepper widens the actions strip, so the theme's centered title would drift into the leftover middle space. `PageScaffold` now exposes an optional `centerTitle` override; leaving it null keeps every other screen on the theme setting.
+
+## 2026-11-17 - 0.9.1+30
+
+### All Festivals opens instantly after the app is evicted
+
+The yearly list now paints from a persisted snapshot instead of rescanning the ephemeris on every cold start.
+
+- `allFestivalOccurrencesProvider` (`lib/screens/all_festivals_screen.dart`) reads one Hive record per year/location/school/catalog generation before falling back to `resolveDatedFestivals`. Recurring vrat expansions are stored too, and resolution always runs Jan 1 through Dec 31, so the record cannot go stale inside the year.
+- The snapshot lives in its own `festival_occurrences` box (`lib/features/countdown/data/festival_year_snapshot.dart`, `BoxNames.festivalOccurrences`), not the panchang cache box, so location-driven cache clears and catalog reseeds cannot wipe it.
+- `locationSignature` (`lib/features/panchang/data/panchang_cache.dart`) rounds the cache identity to 2 decimals (~1.1 km) instead of 4 (~11 m). Ordinary GPS jitter between launches no longer changes the identity, so `preparePanchangCacheBox` stops clearing the box and the per-scan occurrence cache survives.
+- Snapshot dates are stored as `YYYYMMDD` integers, not epoch millis, so a timezone change between launches cannot shift a row by a day.
+- Occurrence generation bumped to `occ8` (and `occ7_*` purged): keys written with the 4-decimal identity are orphaned. Regression: `test/festival_year_snapshot_test.dart`.
+
+### Home paints at the last used place instead of waiting for GPS
+
+A cold start no longer holds every home card behind a device fix and reverse geocode; panchang computes immediately at the place the previous session ended on.
+
+- `LocationService.init` seeds `_persistedLocation` from the Hive cache, and `lastKnownLocation` now answers with it when no live fix has arrived (`lib/services/location_service.dart`). Location disabled still resolves to the home/default place.
+- `calculationLocationProvider` (`lib/providers/location_provider.dart`) starts at the persisted place and adopts a fresh fix only when it lands in another `placeGridKey` cell (~1.1 km, `lib/core/location/place_grid.dart`). Returning the same instance inside a cell is deliberate: a new `LocationData` would notify every panchang provider and restart the month batch for a few metres of drift.
+- `locationSignature` now uses the shared `placeGridKey`, so "same place" and "same cache identity" cannot drift apart.
+- `LocationPermissionWrapper` (`lib/main.dart`) completes the gate as soon as a saved place is readable and refreshes the device fix in the background; only a first launch with nothing saved still waits (10 s timeout) so the month batch does not compute twice.
+- Cold-start marks: `StartupTimeline` (`lib/core/perf/startup_timeline.dart`) logs `[startup] +NNNms <stage>` for storage, timezones, first frame, location init/gate/fresh fix, ephemeris install, festival catalog, month batch, and each home card's first data. Off by default; enable with `flutter build apk --profile --dart-define=tithi.startupTimeline=true` (tests force it off).
+- Regression: `test/calculation_location_test.dart`.
+
+### Cold start stops re-hashing the bundled data files
+
+A relaunch of the same build no longer SHA-256s the 1.9 MB ephemeris trio or re-reads and fingerprints the 230 KB festival catalog.
+
+- Ephemeris: `copyEphemerisFiles` (`lib/services/panchang_init/panchang_init.dart`) records each installed file's expected hash, size and mtime in `ephe/.verify.json`. A launch that finds all three unchanged only stats the files (`hashed=0` in the `ephe-files` mark) and skips the full hash; a modified file, a new manifest hash or an unreadable record falls back to hashing and repair. The record is best-effort and never fails startup.
+- Festival catalog: `FestivalRepository.init` stores the catalog fingerprint with the build that produced it (`version_build` = `version+buildNumber`, `version_seed` = `_festivalSeedVersion`) in `festival_settings`. A matching build with a non-empty box reuses the fingerprint instead of loading `assets/festivals.json`; an unknown build identity, a new build, a cleared box or a changed seed version always re-fingerprints. `hashed` in the `festival-init` mark reports which path ran.
+- Constraint: editing `assets/festivals.json` without bumping `version`/build number keeps the old catalog on installed devices — bump the build.
+- Regressions: `test/panchang_init_test.dart` (verification stamp), `test/festival_catalog_stamp_test.dart`.
+
 ## 2026-11-16 - 0.9.1+30
 
 ### Updated flutter version and gradle version

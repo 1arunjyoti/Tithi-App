@@ -1207,6 +1207,14 @@
   "@allFestivals": {
     "description": "Title for all festivals screen"
   },
+  "previousYear": "Previous year",
+  "@previousYear": {
+    "description": "Tooltip of the all-festivals year selector's back arrow"
+  },
+  "nextYear": "Next year",
+  "@nextYear": {
+    "description": "Tooltip of the all-festivals year selector's forward arrow"
+  },
   "navToday": "Today",
   "@navToday": {
     "description": "Floating navigation bar label for the home tab. Keep it a single short word: the selected pill grows with it."
