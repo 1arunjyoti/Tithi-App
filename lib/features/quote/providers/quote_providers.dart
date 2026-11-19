@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/shloka.dart';
+import '../../../core/perf/startup_timeline.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../../services/shloka_service.dart';
 
@@ -61,6 +62,7 @@ final dailyShlokaProvider = FutureProvider.autoDispose<DailyWisdom?>((
       break;
     }
   }
+  StartupTimeline.mark('wisdom-ready', {'offset': offset});
   return DailyWisdom(
     shloka: shloka,
     date: date,

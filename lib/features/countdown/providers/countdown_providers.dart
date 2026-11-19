@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/date_only.dart';
+import '../../../core/perf/startup_timeline.dart';
 import '../../../models/festival.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../services/storage_service.dart';
@@ -284,16 +285,20 @@ Future<List<FestivalCountdownTarget>> _loadCountdownTargets(
     out.addAll(batch.nonNulls);
   }
 
-  return out
+  out.sort((a, b) {
     // Name breaks same-day ties so shared dates never reorder across
     // rebuilds (list jumping); id keeps identical names stable.
-    ..sort((a, b) {
-      final byDate = a.daysRemaining.compareTo(b.daysRemaining);
-      if (byDate != 0) return byDate;
-      final byName = a.festival.name.compareTo(b.festival.name);
-      if (byName != 0) return byName;
-      return a.id.compareTo(b.id);
-    });
+    final byDate = a.daysRemaining.compareTo(b.daysRemaining);
+    if (byDate != 0) return byDate;
+    final byName = a.festival.name.compareTo(b.festival.name);
+    if (byName != 0) return byName;
+    return a.id.compareTo(b.id);
+  });
+  StartupTimeline.mark('countdowns-ready', {
+    'targets': out.length,
+    'ids': ids.length,
+  });
+  return out;
 }
 
 Festival? _findFestivalById(List<Festival> festivals, String id) {

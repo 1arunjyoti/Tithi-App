@@ -13,6 +13,7 @@ import '../moon_events_service.dart';
 import '../panchang_init/panchang_init.dart';
 import '../solar_events_service.dart';
 import '../../core/location/location_defaults.dart';
+import '../../core/perf/startup_timeline.dart';
 import 'ephemeris/panchang_ephemeris.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
@@ -65,7 +66,10 @@ class PanchangService {
   }
 
   Future<void> init() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      StartupTimeline.mark('panchang-init', {'cached': true});
+      return;
+    }
 
     try {
       // Copy ephemeris files and initialize
@@ -73,6 +77,7 @@ class PanchangService {
 
       // Initialize Jyotish/SwissEph with the path
       await Jyotish().initialize(ephemerisPath: _ephePath);
+      StartupTimeline.mark('ephe-engine');
 
       // A missing or truncated file does not make Swiss Ephemeris fail: it
       // silently falls back to Moshier. Check the range the library actually
@@ -80,6 +85,7 @@ class PanchangService {
       if (kNativeEnginePlatforms.contains(defaultTargetPlatform)) {
         ensureEphemerisRangeInstalled(await Jyotish().probeDataRange());
       }
+      StartupTimeline.mark('ephe-range');
 
       // Install the native rise/set calculators after the ephemeris files
       // exist. Both record their own setup error instead of throwing, because
@@ -106,6 +112,7 @@ class PanchangService {
       }
 
       _isInitialized = true;
+      StartupTimeline.mark('panchang-init');
     } catch (e) {
       if (kDebugMode) {
         print("Error initializing PanchangService: $e");

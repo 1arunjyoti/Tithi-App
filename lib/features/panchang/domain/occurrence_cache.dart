@@ -51,7 +51,10 @@ import '../data/panchang_cache.dart';
 // occ7: ALL resolution paths are Amanta-fixed (all-festivals, search and
 // export no longer key by the display system — stale occ6 Purnimant entries,
 // which the January-preserving TTL would otherwise keep forever, must go).
-const String _occPrefix = 'occ7';
+// occ8: the location identity coarsened from 4 decimals (~11 m) to 2 (~1.1 km)
+// so GPS jitter no longer invalidates every occurrence on a cold start; occ7
+// keys are keyed by the old precision and would linger as January entries.
+const String _occPrefix = 'occ8';
 // Countdown/all-festivals/search/export share this box: ~150 festivals ×
 // a few retained months fit comfortably; evict oldest first past the cap so
 // hot (current-month) entries aren't churned by cold (January/export) ones.
@@ -78,8 +81,8 @@ void _storeOccMemory(String key, int millis) {
   _occMemory[key] = millis;
 }
 
-// One-time purge of pre-fix generations (occ2_*..occ6_*) so upgrades don't
-// leave stale keys beside occ7 indefinitely, plus TTL eviction of occ7
+// One-time purge of pre-fix generations (occ2_*..occ7_*) so upgrades don't
+// leave stale keys beside occ8 indefinitely, plus TTL eviction of occ8
 // entries whose base-month is long past (the box otherwise grows without
 // bound: one key per festival × month × system × location). Runs once per
 // process on first box access; best-effort.
@@ -114,7 +117,8 @@ Future<void> _purgeOldOccurrenceGenerations(Box<dynamic> box) async {
               k.startsWith('occ3_') ||
               k.startsWith('occ4_') ||
               k.startsWith('occ5_') ||
-              k.startsWith('occ6_'),
+              k.startsWith('occ6_') ||
+              k.startsWith('occ7_'),
         )
         .toList();
     for (final k in stale) {
@@ -131,7 +135,9 @@ Future<void> _purgeOldOccurrenceGenerations(Box<dynamic> box) async {
 /// Deletes current-generation occurrence keys whose base-month can no longer
 /// be queried: countdowns query the current month, the all-festivals screen
 /// and export query January. Anything else is dead weight from past months
-/// (base dates only move forward). January of this/next year is always kept.
+/// (base dates only move forward). January within a few years of today is
+/// always kept: the all-festivals screen resolves arbitrary years, so a
+/// browsed year's January base must survive a later eviction pass.
 Future<void> _evictAgedOccurrenceKeys(Box<dynamic> box) async {
   try {
     final now = DateTime.now();
@@ -147,8 +153,13 @@ Future<void> _evictAgedOccurrenceKeys(Box<dynamic> box) async {
       final year = int.tryParse(match.group(2) ?? '');
       final month = int.tryParse(match.group(3) ?? '');
       if (year == null || month == null || month < 1 || month > 12) continue;
-      // January bases serve the all-festivals screen + year export.
-      if (month == 1 && (year == now.year || year == now.year + 1)) continue;
+      // January bases serve the all-festivals screen + year export, for any
+      // browsed year near today — not just this/next year. Bounded so the
+      // box still cannot grow without bound; the year snapshot carries the
+      // finished lists anyway, this only avoids re-scans when it misses.
+      if (month == 1 && year >= now.year - 3 && year <= now.year + 3) {
+        continue;
+      }
       final ageMonths = nowMonths - (year * 12 + month);
       // Keep the current month and the two previous months (midnight
       // rollover + slow readers); drop anything older or futuristic.

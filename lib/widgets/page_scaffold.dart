@@ -15,6 +15,9 @@ import '../theme/app_theme.dart';
 ///   `leading: const HapticBackButton()` for a pushed page and
 ///   `const AppDrawerButton()` for a tab that owns a drawer; the shell never
 ///   guesses, because the home tab has no leading at all on wide screens.
+/// - [centerTitle] overrides the theme's title centering for screens whose
+///   actions are wide enough to visually offset a centered title. Leave it
+///   null to inherit the theme.
 /// - [body]: the page content, already wrapped in a `ScreenBody` when the
 ///   page is a reading surface.
 /// - [background] paints [AppTheme.backgroundDecoration] behind [body] and
@@ -39,6 +42,7 @@ class PageScaffold extends StatelessWidget {
     this.drawer,
     this.onDrawerChanged,
     this.floatingActionButton,
+    this.centerTitle,
     this.extendBodyBehindAppBar = true,
     this.safeArea = true,
     this.background = true,
@@ -52,6 +56,7 @@ class PageScaffold extends StatelessWidget {
   final Widget? drawer;
   final DrawerCallback? onDrawerChanged;
   final Widget? floatingActionButton;
+  final bool? centerTitle;
   final bool extendBodyBehindAppBar;
   final bool safeArea;
   final bool background;
@@ -95,6 +100,7 @@ class PageScaffold extends StatelessWidget {
         automaticallyImplyLeading: false,
         leading: leading,
         title: title,
+        centerTitle: centerTitle,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: actions,

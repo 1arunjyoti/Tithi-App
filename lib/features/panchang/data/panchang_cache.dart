@@ -4,6 +4,7 @@ import '../../../models/panchang_data.dart';
 import '../../../models/panchang_profile.dart';
 import '../../../models/panchang_school.dart';
 import '../../../core/format/date_only.dart';
+import '../../../core/location/place_grid.dart';
 import '../../../services/storage_service.dart';
 import '../../../utils/date_utils.dart';
 
@@ -90,7 +91,15 @@ String locationSignature(
   PanchangSchool? school,
 }) {
   final resolved = school ?? _activePanchangSchool;
-  return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'
+  // ~1.1 km grid ([placeGridKey]), NOT the precision used for the calculation.
+  //
+  // This is a cache *identity*: the scan still receives the exact fix. At 4
+  // decimals (~11 m) ordinary GPS jitter moved a stationary device onto a new
+  // identity between launches; [preparePanchangCacheBox] then cleared the
+  // whole box and the all-festivals screen re-ran every scan on each cold
+  // start. Two decimals keeps a city on one identity; the worst case move is
+  // a few seconds of sunrise, well below a tithi boundary's display precision.
+  return '${placeGridKey(latitude, longitude)}'
       '_v$kPanchangCalculationVersion'
       '_p$kPlaceContextVersion'
       '_s${resolved.name}';

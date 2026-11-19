@@ -13,6 +13,8 @@ import 'package:jyotish/jyotish.dart';
 import 'app/bootstrap.dart';
 import 'core/feedback/app_messages.dart';
 import 'core/location/place_clock.dart';
+import 'core/location/place_grid.dart';
+import 'core/perf/startup_timeline.dart';
 import 'core/storage/hive_adapters.dart';
 import 'providers/location_provider.dart';
 import 'providers/panchang_provider.dart';
@@ -21,6 +23,7 @@ import 'providers/accessibility_provider.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
+import 'services/location_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_metrics.dart';
 import 'theme/app_typography.dart';
@@ -33,11 +36,14 @@ import 'platform/platform_init.dart';
 void main() {
   runZonedGuarded(
     () async {
+      StartupTimeline.start();
       WidgetsFlutterBinding.ensureInitialized();
+      StartupTimeline.mark('binding-ready');
       // Bundled font licenses (SIL OFL) for the About/license page.
       AppTypography.registerFontLicenses();
       const bootstrap = AppBootstrap();
       await bootstrap.initSystem();
+      StartupTimeline.mark('system-ready');
 
       // Set custom error widget to replace the red error screen
       ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -70,15 +76,18 @@ void main() {
       // bundled assets now, so there is no font warm-up to await.
       registerHiveAdapters();
       await Future.wait([bootstrap.initStorage(), bootstrap.warmVersionInfo()]);
+      StartupTimeline.mark('storage-ready');
 
       // Initialize timezone for notifications
       await bootstrap.initTimezones();
+      StartupTimeline.mark('timezones-ready');
 
       runApp(const ProviderScope(child: TithiApp()));
 
       // Post-first-frame: tile cache + Workmanager must never block it.
       // The temple map awaits AppBootstrap.tileCacheReady before tiles.
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        StartupTimeline.mark('first-frame');
         unawaited(bootstrap.initTileCache());
         unawaited(bootstrap.initBackgroundWork());
       });
@@ -324,6 +333,10 @@ class _LocationPermissionWrapperState
   }
 
   Future<void> _initLocationFlow() async {
+    // The place the previous session ended on, when there is one. Read after
+    // the first-launch dialog: skipping it disables location, which changes
+    // what `lastKnownLocation` answers.
+    LocationData? savedPlace;
     try {
       // Wait for location service to initialize
       await ref.read(locationInitProvider.future);
@@ -345,26 +358,30 @@ class _LocationPermissionWrapperState
           await locationService.markFirstLaunchComplete();
         }
       }
+      savedPlace = locationService.lastKnownLocation;
     } finally {
-      // Wait for the device-location lookup to settle before unblocking
-      // background festival seeding. The granted path only invalidates
-      // `currentLocationProvider` without awaiting it, so without this the
-      // gate completes while `resolvedCoordinatesProvider` still holds the
-      // Delhi fallback — the month batch then computes once with fallback
-      // coordinates and again when GPS finishes. Awaiting here (with a
-      // timeout fallback) ensures seeding computes once with final
-      // coordinates (granted → device; denied/skipped/failed → default).
-      // Runs on every path — including later launches, where it completes
-      // immediately — so seeding can never deadlock. Guarded: the wrapper
-      // outlives the flow, but never crash teardown.
-      try {
-        await ref
-            .read(currentLocationProvider.future)
-            .timeout(const Duration(seconds: 10));
-      } catch (_) {
-        // GPS unavailable/timed out: fallback coordinates apply and
-        // seeding still proceeds.
+      // A saved place is enough to start computing: the first frame paints the
+      // place the user actually used, and the device fix (with its reverse
+      // geocode) refreshes in the background. Waiting for it here meant every
+      // home card sat on a skeleton behind a GPS fix + Nominatim round trip
+      // that can take seconds after Android evicted the process.
+      //
+      // With no saved place (first launch, or a failed cache read) keep the old
+      // behaviour: wait for the device lookup so the month batch does not
+      // compute once with the Delhi fallback and again with the real fix.
+      if (savedPlace != null) {
+        unawaited(_refreshDevicePlace(savedPlace));
+      } else {
+        try {
+          await ref
+              .read(currentLocationProvider.future)
+              .timeout(const Duration(seconds: 10));
+        } catch (_) {
+          // GPS unavailable/timed out: fallback coordinates apply and
+          // seeding still proceeds.
+        }
       }
+      StartupTimeline.mark('location-gate', {'saved': savedPlace != null});
       try {
         final gate = ref.read(locationPermissionGateProvider);
         if (!gate.isCompleted) gate.complete();
@@ -372,6 +389,34 @@ class _LocationPermissionWrapperState
         // Seeding stays gated only if the scope itself is gone (app exit).
       }
     }
+  }
+
+  /// Fetches the device fix without blocking the gate, then reports whether it
+  /// moved far enough to invalidate the day computation.
+  ///
+  /// The recompute itself is not triggered here:
+  /// [calculationLocationProvider] adopts the new fix once it is known, and
+  /// ignoring sub-grid moves keeps a stationary device from restarting the
+  /// month batch right after it painted.
+  Future<void> _refreshDevicePlace(LocationData savedPlace) async {
+    final LocationData? fresh;
+    try {
+      fresh = await ref.read(currentLocationProvider.future);
+    } catch (_) {
+      // GPS or geocoding unavailable: the saved place stands for this session.
+      return;
+    }
+    if (fresh == null) return;
+    final moved = !samePlaceGrid(
+      latitudeA: savedPlace.latitude,
+      longitudeA: savedPlace.longitude,
+      latitudeB: fresh.latitude,
+      longitudeB: fresh.longitude,
+    );
+    StartupTimeline.mark('location-fresh', {
+      'moved': moved,
+      'city': fresh.cityName ?? '-',
+    });
   }
 
   Future<void> _showFirstLaunchDialog() async {

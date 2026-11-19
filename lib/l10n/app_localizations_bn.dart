@@ -881,6 +881,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get allFestivals => 'সব উৎসব';
 
   @override
+  String get previousYear => 'পূর্ববর্তী বছর';
+
+  @override
+  String get nextYear => 'পরবর্তী বছর';
+
+  @override
   String get navToday => 'আজ';
 
   @override

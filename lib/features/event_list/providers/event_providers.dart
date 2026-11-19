@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/festival.dart';
 import '../../../models/festival_region.dart';
 import '../../../models/panchang_data.dart';
+import '../../../core/perf/startup_timeline.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/panchang_provider.dart';
 
@@ -77,5 +78,6 @@ final upcomingFestivalsProvider =
           ));
         }
       }
+      StartupTimeline.mark('events-ready', {'rows': out.length});
       return out;
     });
