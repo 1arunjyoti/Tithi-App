@@ -4,8 +4,8 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
 
-// Canonical icon/label/value row extracted from
-// widgets/event_detail_sheet.dart (_buildInfoRow). Positional parameters
+// Canonical icon/label/value row extracted from the former
+// widgets/event_detail_sheet.dart monolith (_buildInfoRow). Positional parameters
 // mirror the original method signature so existing call sites move
 // unchanged.
 //

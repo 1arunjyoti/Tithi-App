@@ -8,8 +8,9 @@ import '../../../providers/panchang_provider.dart';
 import '../../../services/bengali_calendar_service.dart';
 import '../../../services/hindu_calendar_service.dart';
 
-// Phase 5a: schedule-view providers extracted from
-// widgets/schedule_view_widget.dart. Names unchanged; the widget re-exports.
+// Schedule-view providers. Pure rules live in features/schedule/domain/
+// (date-column resolution, scroll maths); renderers live in
+// features/schedule/widgets/.
 
 /// Data class for Hindu date with proper settings applied
 class HinduDateData {

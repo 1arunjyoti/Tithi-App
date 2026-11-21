@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import '../../../theme/app_metrics.dart';
 
-// Right-side festival artwork for the hero moon row. Moved verbatim from
-// widgets/paksha_hero_card.dart (_HeroFestivalImage).
+// Right-side festival artwork for the hero moon row. Moved verbatim from the
+// former widgets/paksha_hero_card.dart monolith (_HeroFestivalImage).
 //
 // Handles asset paths and network URLs. Shows a translucent placeholder
 // while a network image loads, and collapses to nothing if the image fails

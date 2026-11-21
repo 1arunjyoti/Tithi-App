@@ -4,8 +4,8 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
 
-// Canonical dotted section label extracted from
-// widgets/tithi_detail_sheet.dart (_SectionLabel, finalized design):
+// Canonical dotted section label, formerly _SectionLabel in the
+// widgets/tithi_detail_sheet.dart monolith (finalized design):
 // primary dot + letterspaced onSurface caption, e.g. TITHI TIMINGS.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.text});

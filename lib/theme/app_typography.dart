@@ -153,7 +153,7 @@ class AppTypography {
   /// 32 - the one glyph that fronts a detail sheet (eclipse type).
   static const double sizeHero = 32;
 
-  /// 64 - weather condition glyph.
+  /// 64 - the one oversized type step (search prompt glyph).
   static const double sizeGlyph = 64;
 
   /// The whole ladder, smallest first. Tests walk this to prove it stays

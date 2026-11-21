@@ -5,9 +5,9 @@ import '../../../core/perf/startup_timeline.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../../services/shloka_service.dart';
 
-// Phase 5a: quote providers extracted from widgets/daily_quote_widget.dart.
-// Names unchanged; the widget re-exports. Pure helpers (quoteDayLabel,
-// stepQuoteDay, buildShlokaShareText) stay with the widget for now.
+// Daily-wisdom providers for the quote card. Pure rules live in
+// features/quote/domain/ (day navigation, translation picking, share text);
+// renderers live in features/quote/widgets/.
 
 // Verse shown on the Daily Wisdom card for one day, plus display metadata.
 class DailyWisdom {

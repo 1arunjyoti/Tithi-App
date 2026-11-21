@@ -4,7 +4,8 @@ import '../../../core/calendar/calendar_guards.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../services/bengali_calendar_service.dart';
 
-// Phase 5a: hero provider extracted from widgets/paksha_hero_card.dart.
+// Phase 5a: hero provider extracted from the former
+// widgets/paksha_hero_card.dart monolith.
 // Name unchanged; the widget re-exports.
 
 /// Bengali date for the hero header. Only resolves when Bengali is the

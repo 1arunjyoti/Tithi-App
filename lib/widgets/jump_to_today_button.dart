@@ -6,30 +6,6 @@ import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart';
 import '../theme/app_metrics.dart';
 
-/// Whether the calendar is showing something other than today: a month other
-/// than the current one, or any selected day other than today.
-///
-/// Single source for both hosts of [JumpToTodayButton] — the floating nav
-/// capsule (narrow shell) and the Scaffold FAB slot (wide layout) — so the two
-/// can never disagree about when the action is needed.
-///
-/// "Today" comes from [todayDateProvider], not `DateTime.now()`: that provider
-/// is the app's day (the place clock's date), refreshed at midnight and on a
-/// place change, so a rollover or a non-device time zone cannot leave the
-/// action hidden while the calendar shows yesterday. Watching it also means the
-/// rule re-evaluates when the day changes, instead of caching a yes/no answer
-/// computed against an instant that has since passed.
-final jumpToTodayVisibleProvider = Provider<bool>((ref) {
-  final focusedMonth = ref.watch(focusedMonthProvider);
-  final selectedDate = ref.watch(selectedDateProvider);
-  final today = ref.watch(todayDateProvider);
-  return focusedMonth.year != today.year ||
-      focusedMonth.month != today.month ||
-      selectedDate.year != today.year ||
-      selectedDate.month != today.month ||
-      selectedDate.day != today.day;
-});
-
 /// Returns the calendar to the current month with today selected.
 ///
 /// Month and selected date must move together: resetting only one leaves the

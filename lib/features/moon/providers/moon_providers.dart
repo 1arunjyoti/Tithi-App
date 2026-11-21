@@ -59,3 +59,14 @@ final upcomingPurnimasProvider = FutureProvider<List<DateTime>>((ref) async {
     longitude: location?.longitude ?? kDefaultLongitude,
   );
 });
+
+/// Scrub offset in days from today for the hero moon. 0 = today.
+final moonScrubOffsetProvider = StateProvider.autoDispose<int>((ref) => 0);
+
+/// Scrub range in days. Panchang month batches are Hive-cached, so stepping
+/// through these dates stays cheap (no per-step ephemeris work).
+const int moonScrubRangeDays = 15;
+
+/// Clamps a scrub offset into the supported range.
+int clampMoonScrubOffset(int value) =>
+    value.clamp(-moonScrubRangeDays, moonScrubRangeDays);

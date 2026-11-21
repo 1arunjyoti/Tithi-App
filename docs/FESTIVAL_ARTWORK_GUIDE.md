@@ -183,11 +183,11 @@ its bytes would still ship in the APK/IPA.
 - Swiping the deck sideways rotates it — the front picture restacks at the
   back — so every picture on the day can be seen without opening anything.
   A tap still opens the detail sheet, exactly as on a single picture.
-- A deck also turns by itself every 10 s (`_autoRotateInterval` in
-  `paksha_hero_card.dart`), so a multi-picture day reveals all of its artwork.
-  An idle turn is a slow cross-dissolve (1.2 s, `_autoTurnDuration`) that
-  settles up from slightly smaller; a swipe you make yourself swaps in
-  220 ms (`_swipeTurnDuration`) so it still feels direct.
+- A deck also turns by itself every 10 s (`HeroDeckRotation.interval` in
+  `features/hero/widgets/hero_deck_rotation.dart`), so a multi-picture day
+  reveals all of its artwork. An idle turn is a slow cross-dissolve (1.2 s,
+  `_autoTurnDuration`) that settles up from slightly smaller; a swipe you make
+  yourself swaps in 220 ms (`_swipeTurnDuration`) so it still feels direct.
 - The idle motion stops for good on the first swipe or long press — that is the
   pause control WCAG 2.2.2 asks for — and never starts under Reduce Motion,
   while a screen reader is running, while a sheet or dialog covers the card, or

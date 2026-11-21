@@ -734,22 +734,8 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get weatherDetails => 'আবহাওয়ার বিবরণ';
-
-  @override
-  String get weatherDataUnavailable => 'আবহাওয়ার তথ্য পাওয়া যায়নি';
-
-  @override
   String errorMessage(String error) {
     return 'ত্রুটি: $error';
-  }
-
-  @override
-  String get weatherDataByOpenMeteo => 'Open-Meteo থেকে আবহাওয়ার তথ্য';
-
-  @override
-  String weatherCondition(String condition) {
-    return 'আবহাওয়ার অবস্থা: $condition';
   }
 
   @override
@@ -763,21 +749,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get moonset => 'চন্দ্রাস্ত';
-
-  @override
-  String get humidity => 'আর্দ্রতা';
-
-  @override
-  String get wind => 'বাতাস';
-
-  @override
-  String get realFeel => 'অনুভূত তাপমাত্রা';
-
-  @override
-  String get uvIndex => 'ইউভি সূচক';
-
-  @override
-  String get forecast => 'পূর্বাভাস';
 
   @override
   String daylightDuration(int hours, int minutes) {
@@ -925,6 +896,9 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get searchFestivalsHint => 'উৎসব খুঁজুন';
+
+  @override
+  String get closeFestivalSearch => 'অনুসন্ধান বন্ধ করুন';
 
   @override
   String get couldNotLoadFestivals => 'উৎসব লোড করা যায়নি। আবার চেষ্টা করুন।';
@@ -1608,11 +1582,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get krishnaPakshaInitial => 'কৃ';
-
-  @override
-  String windSpeedKph(double speed) {
-    return '$speed কিমি/ঘণ্টা';
-  }
 
   @override
   String get tithiDisplayThirtyDays => '৩০ দিন';

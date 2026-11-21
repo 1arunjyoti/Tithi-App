@@ -190,6 +190,11 @@ class MajorFestivalCard extends ConsumerWidget {
                             style: AppTypography.ui(
                               fontSize: AppTypography.sizeHeading,
                               fontWeight: AppTypography.semibold,
+                              // Full-strength ink, same as FestivalRowTile's
+                              // name. Without an explicit colour this inherits
+                              // bodyMedium's secondaryInk and reads muted next
+                              // to the rows it replaces.
+                              color: colors.onSurface,
                               height: 1.3,
                             ),
                           ),

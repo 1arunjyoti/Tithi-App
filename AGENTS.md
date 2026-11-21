@@ -41,10 +41,12 @@ renderer - open it only when changing that rendering itself.
 | Sunrise / sunset / moonrise / timings | `services/solar_events_service.dart`, `moon_events_service.dart`, `auspicious_timings.dart`, `inauspicious_timings.dart` |
 | Festival matching / dates | `models/festival.dart`, `services/festival_matching_pipeline.dart` |
 | Festival data | `assets/festivals.json` (+ `docs/FESTIVALS_QUICK_GUIDE.md`) |
-| Calendar / today / selected date | `providers/calendar_provider.dart`, `features/calendar/`, `widgets/calendar_widget.dart` (90 KB) |
-| Home / hero / home cards | `features/hero/domain/hero_content.dart`, `screens/home_*.dart`, `widgets/*card.dart`, `widgets/paksha_hero_card.dart` (58 KB) |
-| Detail sheets | `features/sheets/`, `features/event_detail/domain/`, `widgets/tithi_detail_sheet.dart` (37 KB), `widgets/event_detail_sheet.dart` (62 KB) |
-| All Festivals / countdowns / upcoming | `features/countdown/`, `features/event_list/`, `screens/all_festivals_screen.dart` (29 KB) |
+| Calendar / today / selected date | `providers/calendar_provider.dart`, `features/calendar/` (`data/`, `domain/`, `providers/`, `widgets/`) |
+| Home / hero / home cards | `features/hero/` (`domain/`, `providers/`, `widgets/`), `screens/home_*.dart`, `widgets/*card.dart` |
+| Daily Wisdom / quote card | `features/quote/` (`domain/`, `providers/`, `widgets/`) |
+| Schedule view | `features/schedule/` (`domain/`, `providers/`, `widgets/`) |
+| Detail sheets | `features/sheets/`, `features/tithi_sheet/`, `features/event_detail/` (`domain/`, `providers/`, `widgets/`) |
+| All Festivals / countdowns / upcoming | `features/countdown/`, `features/event_list/`, `features/festival_search/`, `screens/all_festivals_screen.dart` (27 KB) |
 | Notifications | `services/notification_service.dart`, `core/notifications/` |
 | Location / GPS / timezone | `services/location_service.dart`, `providers/location_provider.dart`, `core/location/` |
 | Settings | `screens/settings_screen.dart`, `features/settings/` |
@@ -109,7 +111,14 @@ Tests track behaviour, not diffs:
   capability lives in the service, not the UI.
 - Hive type IDs: `models/hive_type_ids.dart` (next free 7-9, 11+).
 - Keep new files under ~500 lines; extract a helper instead of growing a
-  `(large)` file. Lint rules live in `analysis_options.yaml`.
+  `(large)` file. Split along seams (a state machine, pure computation, an
+  independently testable unit), not by chopping one cohesive render tree.
+  - Exceptions: single-purpose tables/registries (theme, generated, data) and
+    cohesive state machines may exceed it.
+  - Existing `(large)` files are grandfathered: split them when you touch
+    them, not for their own sake.
+  - Above ~800 lines, a split is always justified.
+- Lint rules live in `analysis_options.yaml`.
 
 ## Changelog
 

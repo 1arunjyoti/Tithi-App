@@ -6,7 +6,8 @@ import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
 
 // Pill chip shared by the hero's transition / sunrise / sunset / city rows.
-// Moved verbatim from widgets/paksha_hero_card.dart (_HeroChip).
+// Moved verbatim from the former widgets/paksha_hero_card.dart monolith
+// (_HeroChip).
 //
 // Bold hero-foreground ink on the gradient (brown on light Shukla, white
 // on dark); theme primary on surface in high-contrast mode. [highlight]

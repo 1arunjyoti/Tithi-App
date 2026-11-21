@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/format/festival_labels.dart';
 import '../core/locale/app_locale.dart';
+import '../features/countdown/providers/countdown_providers.dart';
 import '../features/hero/domain/hero_content.dart';
 import '../features/hero/providers/hero_providers.dart';
 import '../features/home_widget/domain/panchang_widget_payload.dart';
@@ -19,7 +20,6 @@ import '../models/festival_region.dart';
 import '../services/home_widget.dart';
 import '../utils/tithi_localization.dart';
 import 'calendar_provider.dart';
-import 'festival_countdown_provider.dart';
 import 'locale_provider.dart';
 import 'location_provider.dart';
 import 'panchang_provider.dart';

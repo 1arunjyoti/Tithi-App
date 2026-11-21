@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
-// Canonical edge-drag dismissal extracted from
-// widgets/tithi_detail_sheet.dart (finalized design): a sustained downward
+// Canonical edge-drag dismissal, extracted from the former
+// widgets/tithi_detail_sheet.dart monolith (finalized design): a sustained downward
 // touch-drag past the top edge (e.g. from the handle) pops the route.
 // Overscroll fires only for touch drags via dragDetails, so ballistic
 // flings can't mis-dismiss; pixels accumulate until a ~120px drag.

@@ -11,7 +11,7 @@ import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/shloka_service.dart';
 import 'package:tithi/services/storage_service.dart';
-import 'package:tithi/widgets/daily_quote_widget.dart';
+import 'package:tithi/features/quote/providers/quote_providers.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
 
 // Scroll-remount regression tests for the home-screen cards that stay inside

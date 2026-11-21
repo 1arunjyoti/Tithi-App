@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
-import 'package:tithi/widgets/festival_search_delegate.dart';
+import 'package:tithi/features/festival_search/widgets/festival_search_delegate.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
@@ -82,7 +82,7 @@ class _SearchHost extends ConsumerWidget {
         builder: (context) => TextButton(
           onPressed: () => showSearch<void>(
             context: context,
-            delegate: FestivalSearchDelegate(ref: ref, parentContext: context),
+            delegate: FestivalSearchDelegate(ref: ref),
           ),
           child: const Text('open search'),
         ),

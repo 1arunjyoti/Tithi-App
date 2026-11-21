@@ -197,7 +197,11 @@ class SettingsSwitchTile extends ConsumerWidget {
           ),
           if (isLoading) ...[
             const SizedBox(width: AppSpacing.s8),
-            const InlineSpinner(),
+            // The spinner ticks every frame. Without its own boundary the
+            // repaint climbs to SettingsGroupCard's RepaintBoundary and
+            // re-rasterizes the entire card (5 rows here), stuttering scroll
+            // while a one-shot provider such as location init is pending.
+            const RepaintBoundary(child: InlineSpinner()),
           ],
         ],
       ),

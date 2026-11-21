@@ -1,11 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/eclipse/providers/eclipse_providers.dart';
 import '../features/eclipse/widgets/eclipse_list.dart';
 import '../l10n/app_localizations.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../models/eclipse.dart';
-import '../providers/eclipse_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/page_scaffold.dart';
 import '../widgets/state_views.dart';

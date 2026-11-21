@@ -734,22 +734,8 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get weatherDetails => 'मौसम विवरण';
-
-  @override
-  String get weatherDataUnavailable => 'मौसम डेटा उपलब्ध नहीं';
-
-  @override
   String errorMessage(String error) {
     return 'त्रुटि: $error';
-  }
-
-  @override
-  String get weatherDataByOpenMeteo => 'Open-Meteo द्वारा मौसम डेटा';
-
-  @override
-  String weatherCondition(String condition) {
-    return 'मौसम स्थिति: $condition';
   }
 
   @override
@@ -763,21 +749,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get moonset => 'चंद्रास्त';
-
-  @override
-  String get humidity => 'आर्द्रता';
-
-  @override
-  String get wind => 'हवा';
-
-  @override
-  String get realFeel => 'अनुभूत ताप';
-
-  @override
-  String get uvIndex => 'यूवी सूचकांक';
-
-  @override
-  String get forecast => 'पूर्वानुमान';
 
   @override
   String daylightDuration(int hours, int minutes) {
@@ -925,6 +896,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get searchFestivalsHint => 'त्योहार खोजें';
+
+  @override
+  String get closeFestivalSearch => 'खोज बंद करें';
 
   @override
   String get couldNotLoadFestivals =>
@@ -1612,11 +1586,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get krishnaPakshaInitial => 'कृ';
-
-  @override
-  String windSpeedKph(double speed) {
-    return '$speed किमी/घंटा';
-  }
 
   @override
   String get tithiDisplayThirtyDays => '३० दिन';

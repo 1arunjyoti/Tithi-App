@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     
-    <!-- Internet permission for reverse geocoding and weather API -->
+    <!-- Internet permission for reverse geocoding and release downloads -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- In-app updates: sideloading release APKs fetched from GitHub releases -->

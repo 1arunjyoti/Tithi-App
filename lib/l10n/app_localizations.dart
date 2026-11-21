@@ -1446,35 +1446,11 @@ abstract class AppLocalizations {
   /// **'Completed on {date}'**
   String completedOn(String date);
 
-  /// Weather bottom sheet title
-  ///
-  /// In en, this message translates to:
-  /// **'Weather Details'**
-  String get weatherDetails;
-
-  /// Shown when weather service returns no data
-  ///
-  /// In en, this message translates to:
-  /// **'Weather data unavailable'**
-  String get weatherDataUnavailable;
-
   /// Generic error message with details
   ///
   /// In en, this message translates to:
   /// **'Error: {error}'**
   String errorMessage(String error);
-
-  /// Credit text for weather source
-  ///
-  /// In en, this message translates to:
-  /// **'Weather data by Open-Meteo'**
-  String get weatherDataByOpenMeteo;
-
-  /// Accessibility label for weather icon
-  ///
-  /// In en, this message translates to:
-  /// **'Weather condition: {condition}'**
-  String weatherCondition(String condition);
 
   /// Label for sunrise time
   ///
@@ -1499,36 +1475,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Moonset'**
   String get moonset;
-
-  /// Weather metric label
-  ///
-  /// In en, this message translates to:
-  /// **'Humidity'**
-  String get humidity;
-
-  /// Weather metric label
-  ///
-  /// In en, this message translates to:
-  /// **'Wind'**
-  String get wind;
-
-  /// Weather metric label for feels-like temperature
-  ///
-  /// In en, this message translates to:
-  /// **'Real Feel'**
-  String get realFeel;
-
-  /// Weather metric label
-  ///
-  /// In en, this message translates to:
-  /// **'UV Index'**
-  String get uvIndex;
-
-  /// Weather forecast section title
-  ///
-  /// In en, this message translates to:
-  /// **'Forecast'**
-  String get forecast;
 
   /// Daylight duration text
   ///
@@ -1811,6 +1757,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search festivals'**
   String get searchFestivalsHint;
+
+  /// Tooltip for the button that closes the festival search field
+  ///
+  /// In en, this message translates to:
+  /// **'Close search'**
+  String get closeFestivalSearch;
 
   /// Error message when festivals fail to load
   ///
@@ -2927,12 +2879,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'K'**
   String get krishnaPakshaInitial;
-
-  /// Wind speed in kilometers per hour in the weather sheet
-  ///
-  /// In en, this message translates to:
-  /// **'{speed} kph'**
-  String windSpeedKph(double speed);
 
   /// Continuous 30-day tithi display mode label
   ///

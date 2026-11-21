@@ -10,7 +10,8 @@ import '../../../services/moon_phase_service.dart';
 import '../../../utils/tithi_localization.dart';
 import '../../sheets/domain/sheet_labels.dart';
 
-// Hero view-model extracted from widgets/paksha_hero_card.dart (_HeroBody).
+// Hero view-model extracted from the former widgets/paksha_hero_card.dart
+// monolith (HeroBody).
 // Pure data: every string, chip spec, and artwork descriptor the hero
 // renders, computed from (panchang, l10n, calendar settings, Bengali date).
 // No BuildContext — unit-testable without widgets.

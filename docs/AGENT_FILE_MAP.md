@@ -42,7 +42,7 @@ lib/
   features/<name>/   data/ domain/ providers/ widgets/
   providers/         app-wide Riverpod providers
   screens/           route-level widgets
-  widgets/           shared UI kit + re-export shims
+  widgets/           shared UI kit
   theme/             palette, metrics, typography, motion
   l10n/              generated localizations + .arb sources
 ```
@@ -100,7 +100,6 @@ lib/
 | `models/hindu_month_system.dart` | Amanta/Purnimant conversion. |
 | `models/festival_filter.dart` / `festival_region.dart` | Category filter and region enums. |
 | `models/eclipse.dart` | Eclipse model. |
-| `models/weather_data.dart` | Weather models. |
 | `models/shloka.dart` | Daily-wisdom shloka model. |
 | `models/sankalpa.dart` / `sankalpa.g.dart` | Sankalpa Hive model + generated adapter. |
 | `models/hive_type_ids.dart` | Central Hive type-ID registry. |
@@ -142,7 +141,6 @@ lib/
 | `services/eclipse_service.dart` | Upcoming eclipse calculation (legacy provider lives here). |
 | `services/moon_phase_service.dart` | Moon phase/illumination (legacy provider lives here). |
 | `services/planetary_view_service.dart` | Solar-system positions for the visualization. |
-| `services/weather_service.dart` | Open-Meteo fetch. |
 
 ## Festivals
 
@@ -161,10 +159,11 @@ lib/
 
 | Path | Responsibility |
 |---|---|
-| `providers/calendar_provider.dart` | `todayDateProvider`, selected/focused month, `CalendarPreferences`, school, calendar-system providers (**large**). |
+| `providers/calendar_provider.dart` | `todayDateProvider`, selected/focused month, `jumpToTodayVisibleProvider`, `CalendarPreferences`, school, calendar-system providers (**large**). |
 | `providers/panchang_provider.dart` | `panchangForDateProvider`, `todayPanchangProvider`, `monthlyPanchangProvider`, live tick, timings providers (**large**). |
 | `providers/location_provider.dart` | Location service, permission gate, `placeClockProvider`, `calculationLocationProvider`, coordinates. |
 | `providers/festival_provider.dart` | Festival repository + init + major/vrat lists. |
+| `providers/festival_occurrences_provider.dart` | `allFestivalOccurrencesProvider`: one year's dated festivals, snapshot-cached. |
 | `features/calendar/data/calendar_caches.dart` | Sync LRUs so cells paint stale labels while FFI runs. |
 | `features/calendar/data/calendar_models.dart` | Public cell/header models. |
 | `features/calendar/domain/cell_builders.dart` | Cell label builders. |
@@ -172,19 +171,35 @@ lib/
 | `features/calendar/domain/month_navigation.dart` | Adaptive-month swipe policy. |
 | `features/calendar/providers/cell_providers.dart` | Month cell providers. |
 | `features/calendar/providers/header_provider.dart` | Header provider. |
-| `widgets/calendar_widget.dart` | Calendar grid + adaptive Hindu/Bengali grid (**large**). |
+| `features/calendar/widgets/calendar_widget.dart` | Calendar card composition (header + active grid). |
+| `features/calendar/widgets/adaptive_calendar_grid.dart` | Adaptive Hindu/Bengali grid, swipe, stale-first hold. |
+| `features/calendar/widgets/gregorian_calendar_grid.dart` | TableCalendar Gregorian grid + day builders. |
+| `features/calendar/widgets/calendar_header.dart` | Month header, chevrons, year tap. |
+| `features/calendar/widgets/calendar_cell.dart` | Date tile states + press scale. |
+| `features/calendar/widgets/calendar_weekday_row.dart` | Weekday labels + weekend stripes. |
+| `features/calendar/widgets/calendar_festival_bar.dart` | Festival bar marker + stale-dot fallback. |
+| `features/calendar/widgets/calendar_year_picker.dart` / `year_picker_dialogs.dart` | Year/month picker flows and dialogs. |
+| `features/calendar/domain/calendar_precache.dart` | Neighbor-month precache orchestration. |
+| `features/calendar/domain/month_navigation_controller.dart` | Prev/next month navigation (all systems). |
+| `features/calendar/data/adaptive_grid_state.dart` | Stale adaptive-grid resolve + old-key hold. |
 | `widgets/calendar_day_semantics.dart` | Screen-reader node per day tile. |
 | `screens/home_shell.dart` | Narrow-screen root: two mounted tabs + floating nav bar. |
 | `screens/home_screen.dart` | Main home (wide sidebar / narrow body), drawer, FAB. |
 | `screens/home_cards_screen.dart` | Toggle optional home cards. |
 | `features/hero/domain/hero_content.dart` | Pure hero view-model (strings, chips, artwork). |
 | `features/hero/providers/hero_providers.dart` | Bengali date for the hero header. |
+| `features/hero/widgets/paksha_hero_card.dart` | Hero entry point, `heroRecordFor`, cold skeleton. |
+| `features/hero/widgets/hero_card_body.dart` | Gradient shell, tap, content switcher. |
+| `features/hero/widgets/hero_card_sections.dart` | Header, title and moon block + transition chips. |
+| `features/hero/widgets/hero_artwork_deck.dart` | Single slot / rotating deck and gestures. |
+| `features/hero/widgets/hero_deck_rotation.dart` | Idle-rotation clock (timer, lifecycle, scroll). |
+| `features/hero/widgets/hero_artwork_cards.dart` | Deck card and position pill. |
+| `features/hero/widgets/hero_grain_painter.dart` | Tiled film-grain painter. |
 | `features/hero/widgets/` | `artwork_window.dart`, `hero_chip.dart`, `hero_festival_image.dart`. |
-| `widgets/paksha_hero_card.dart` | Hero renderer + `heroRecordFor` (**large**). |
 | `widgets/major_festival_card.dart` | Featured festival card (**large**). |
 | `widgets/event_list_widget.dart` | Home "Festivals & Events" card. |
 | `widgets/festival_countdown_card.dart` | Home countdown card. |
-| `widgets/moon_countdown_widget.dart` / `moon_animation_widget.dart` | Moon widgets. |
+| `widgets/moon_animation_widget.dart` | Moon phase glyph (hero, tithi sheet, moon screen). |
 | `widgets/floating_nav_bar.dart` | Floating capsule nav (**large**). |
 | `widgets/animated_tab_layer.dart` | Tab switch animation. |
 | `widgets/jump_to_today_button.dart` | "Jump to today" control. |
@@ -197,8 +212,22 @@ lib/
 | `features/sheets/sheet_launcher.dart` | **Single entry point**: `showTithiDetailSheet`, `showEventDetailSheet`. |
 | `features/sheets/domain/sheet_labels.dart` | Shared sheet header labels. |
 | `features/sheets/widgets/` | Shared sheet kit: scaffold, hero header/tile, surface card, chips, info rows, section header, drag handle, edge dismiss, time formatters. |
-| `widgets/tithi_detail_sheet.dart` | Tithi detail sheet (**large**). |
-| `widgets/event_detail_sheet.dart` | Festival detail sheet (**large**). |
+| `features/tithi_sheet/widgets/tithi_detail_sheet.dart` | Tithi sheet composition root. |
+| `features/tithi_sheet/widgets/tithi_sheet_hero.dart` | Hero header + primary-calendar date line. |
+| `features/tithi_sheet/widgets/tithi_sheet_anchor_chips.dart` | Sun/moon anchor chip grid. |
+| `features/tithi_sheet/widgets/tithi_sheet_timings_sections.dart` | Begins/Ends, transition, nakshatra, yoga/karana sections. |
+| `features/tithi_sheet/widgets/tithi_sheet_day_windows_sections.dart` | Auspicious/inauspicious sections. |
+| `features/tithi_sheet/widgets/tithi_sheet_footer.dart` | Festival links + opt-in AI link. |
+| `features/tithi_sheet/domain/tithi_sheet_context.dart` | Shared resolved values passed to sections. |
+| `features/event_detail/widgets/event_detail_sheet.dart` | Festival sheet composition root. |
+| `features/event_detail/widgets/event_sheet_hero.dart` | Hero header, title row, share. |
+| `features/event_detail/widgets/hero_language_chips.dart` | Measured collapsible name chips. |
+| `features/event_detail/widgets/event_sheet_info.dart` | Timing-note button/dialog + observance caption. |
+| `features/event_detail/widgets/event_description_card.dart` | Description card with read-more. |
+| `features/event_detail/widgets/event_panchang_section.dart` | Observed tithi timings + label rows. |
+| `features/event_detail/widgets/event_puja_samay_section.dart` | Puja kala window/instant card. |
+| `features/event_detail/widgets/event_fasting_section.dart` | Fasting card + paran block. |
+| `features/event_detail/widgets/event_rituals_cards.dart` | Ritual steps + mantra cards. |
 | `features/tithi_sheet/providers/sheet_providers.dart` | Bengali date for the tithi sheet. |
 | `features/tithi_sheet/widgets/` | Timings, nakshatra, yoga/karana, auspicious, inauspicious cards. |
 | `features/event_detail/domain/event_content.dart` | Event-sheet view-model. |
@@ -211,7 +240,7 @@ lib/
 | Path | Responsibility |
 |---|---|
 | `screens/all_festivals_screen.dart` | Year stepper, search, filters, yearly occurrence list (**large**). |
-| `screens/festival_countdown_screen.dart` | Countdown list. |
+| `screens/festival_countdown_screen.dart` | Countdown list (search lives in `features/festival_search/`). |
 | `screens/moon_phases_screen.dart` | Moon scrub + phases. |
 | `screens/solar_system_screen.dart` | Solar-system visualization (**large**). |
 | `screens/eclipse_screen.dart` | Eclipse tabs. |
@@ -234,14 +263,13 @@ lib/
 | `widgets/settings_widgets.dart` | Settings section/row primitives. |
 | `widgets/festival_row_tile.dart` | Shared festival row. |
 | `widgets/festival_filter_chip.dart` / `festival_filter_sheet.dart` | Category/region filters. |
-| `widgets/festival_search_delegate.dart` | Search. |
+| `features/festival_search/widgets/festival_search_shell.dart` | Shared `SearchDelegate` chrome (app bar, clear/back, results plumbing). |
+| `features/festival_search/widgets/festival_search_delegate.dart` | Home search: catalog match + open event sheet. |
+| `features/festival_search/widgets/countdown_search_delegate.dart` | Countdown picker: excludes added ids, returns the pick. |
 | `widgets/festival_thumbnail.dart` | Category glyph/artwork. |
 | `widgets/festival_share_card.dart` / `shloka_share_card.dart` | Share-image cards. |
-| `widgets/ritual_checklist_widget.dart` | Ritual checklist. |
-| `widgets/weather_sheet.dart` | Weather bottom sheet. |
 | `widgets/home_widget_card.dart` | Home-screen-widget promo card. |
 | `widgets/panchang_init_error_banner.dart` / `panchang_init_failure_overlay.dart` | Panchang init failure UI. |
-| `widgets/native_screens/native_screens.dart` | Barrel for FFI screens (eclipse, solar system). |
 
 ## Other feature slices
 
@@ -250,12 +278,11 @@ lib/
 | `features/ai/` | Opt-in "Ask AI" hand-off: domain (`ai_app_target`, `ai_context`, `ai_prompt`), providers, `ask_ai_sheet.dart`, settings section. |
 | `features/home_widget/` | Android widget payload builders + promo-dismiss state. |
 | `features/eclipse/` | Eclipse providers, card, list, details sheet. |
-| `features/moon/providers/moon_providers.dart` | Moon phase providers. |
-| `features/quote/` | Daily-wisdom providers + widget. |
-| `features/schedule/` | Schedule-view providers + widget. |
+| `features/moon/providers/moon_providers.dart` | Moon phase providers + moon-screen scrub offset/clamp. |
+| `features/quote/` | Daily-wisdom card: `domain/` (day navigation, translation picking, share text), `providers/`, `widgets/`. |
+| `features/schedule/` | Schedule view: `domain/` (date-column resolution, scroll maths), `providers/`, `widgets/`. |
 | `features/settings/widgets/` | Settings sections: accessibility, app update, calendar, data, language, location, notifications, region. |
 | `features/solar_system/` | Solar models/cache + painters. |
-| `features/weather/providers/weather_providers.dart` | Weather provider. |
 
 ## Other services
 
@@ -276,14 +303,12 @@ lib/
 ## App-wide providers
 
 `accessibility_provider`, `app_update_provider`, `calendar_provider`,
-`festival_provider`, `home_cards_visibility_provider`, `home_widget_provider`,
+`festival_provider`, `festival_occurrences_provider`,
+`home_cards_visibility_provider`, `home_widget_provider`,
 `locale_provider`, `location_provider`, `notification_provider`,
 `panchang_provider`, `planetary_view_provider`, `ritual_state_provider`,
 `sankalpa_provider`, `storage_provider`, `theme_provider`, `version_provider`,
 `view_mode_provider`.
-
-Compatibility barrels only - follow the `export`: `eclipse_provider`,
-`festival_countdown_provider`, `moon_phase_provider`, `weather_provider`.
 
 ## Theme and localization
 
