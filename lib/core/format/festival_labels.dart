@@ -6,22 +6,107 @@ import '../../utils/tithi_localization.dart';
 // Festival label helpers shared by sheets (event detail sheet today;
 // extracted from features/event_detail/domain/event_content.dart).
 
-/// Hero title name following the app language: the Bengali/Hindi/Sanskrit
-/// name under those locales, English otherwise. Falls back to English when
-/// the locale's name is missing or empty.
+// Hoisted: festivalDisplayName runs on every card/tile/semantics build, so the
+// locale separator must not be recompiled per call.
+final RegExp _localeSeparator = RegExp('[-_]');
+
+bool _nameContains(String? name, String needle) =>
+    name != null && (name.contains(needle) || name.toLowerCase().contains(needle));
+
+/// Two catalog strings that differ only in case or edge whitespace are the
+/// same name for display purposes — showing both would read as a duplicate.
+bool _sameName(String a, String b) =>
+    a.trim().toLowerCase() == b.trim().toLowerCase();
+
+/// The single resolver for a festival's user-facing name: the catalog's
+/// regional name for the app language, falling back to English when that
+/// name is missing or empty.
+///
+/// Accepts a bare language code or a full locale (`hi-IN`, `bn_BD`, …); only
+/// the language subtag selects the name. Regional names outside the app's
+/// four UI languages are mapped too, so adding a locale never silently puts
+/// the catalog back in English.
 String festivalDisplayName({
   required Festival festival,
   required String locale,
 }) {
   final regional = festival.nameRegional;
-  final localized = switch (locale) {
+  final language = locale.trim().toLowerCase().split(_localeSeparator).first;
+  final localized = switch (language) {
     'bn' => regional.nameBengali,
     'hi' => regional.nameHindi,
     'sa' => regional.nameSanskrith,
+    'te' => regional.nameTelugu,
+    'kn' => regional.nameKannada,
+    'ta' => regional.nameTamil,
+    'ml' => regional.nameMalayalam,
     _ => null,
   };
-  if (localized != null && localized.isNotEmpty) return localized;
+  if (localized != null) {
+    final trimmed = localized.trim();
+    if (trimmed.isNotEmpty) return trimmed;
+  }
   return festival.name;
+}
+
+/// Secondary name for a card/tile whose title already uses [festivalDisplayName].
+///
+/// Returns English when the title is a regional name (so the canonical name
+/// stays discoverable), otherwise the Hindi name these cards have always
+/// shown underneath the English title. Empty when there is nothing to add —
+/// callers should skip the line rather than render a duplicate of the title.
+String festivalAlternateName({
+  required Festival festival,
+  required String locale,
+}) {
+  final displayName = festivalDisplayName(festival: festival, locale: locale);
+  if (!_sameName(displayName, festival.name)) return festival.name;
+  final hindi = festival.nameRegional.nameHindi?.trim();
+  if (hindi != null &&
+      hindi.isNotEmpty &&
+      !_sameName(hindi, festival.name)) {
+    return hindi;
+  }
+  return '';
+}
+
+/// Every catalogued name (English + all regional scripts), lowercased and
+/// newline-joined. Search screens cache this once per catalog change instead
+/// of lowercasing names on every keystroke.
+String festivalSearchHaystack(Festival festival) {
+  final regional = festival.nameRegional;
+  return <String?>[
+    festival.name,
+    regional.nameSanskrith,
+    regional.nameEnglish,
+    regional.nameHindi,
+    regional.nameBengali,
+    regional.nameTelugu,
+    regional.nameKannada,
+    regional.nameTamil,
+    regional.nameMalayalam,
+  ].whereType<String>().join('\n').toLowerCase();
+}
+
+/// Whether any catalogued name (English or regional) contains [query],
+/// case-insensitively. Search stays useful in the app language without giving
+/// up the canonical English terms.
+bool festivalMatchesName(Festival festival, String query) {
+  final needle = query.trim().toLowerCase();
+  if (needle.isEmpty) return false;
+  final regional = festival.nameRegional;
+  // Short-circuit direct checks: search runs on every keystroke, so avoid the
+  // list + join allocation of festivalSearchHaystack here (that one is for
+  // screens that cache it once per catalog change).
+  return _nameContains(festival.name, needle) ||
+      _nameContains(regional.nameSanskrith, needle) ||
+      _nameContains(regional.nameEnglish, needle) ||
+      _nameContains(regional.nameHindi, needle) ||
+      _nameContains(regional.nameBengali, needle) ||
+      _nameContains(regional.nameTelugu, needle) ||
+      _nameContains(regional.nameKannada, needle) ||
+      _nameContains(regional.nameTamil, needle) ||
+      _nameContains(regional.nameMalayalam, needle);
 }
 
 /// Normalized observance checkpoint for the banner: the festival's
@@ -85,8 +170,8 @@ List<String> heroLanguageChips({
 }) {
   final displayName = festivalDisplayName(festival: festival, locale: locale);
   return <String>[
-    if (displayName != festival.name) festival.name,
-    ...regionalNamesOf(festival).where((name) => name != displayName),
+    if (!_sameName(displayName, festival.name)) festival.name,
+    ...regionalNamesOf(festival).where((name) => !_sameName(name, displayName)),
   ];
 }
 

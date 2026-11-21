@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/locale_provider.dart';
+import '../../../services/notification_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
@@ -47,6 +48,8 @@ class LanguageSetting extends ConsumerWidget {
           isSelected: currentLocale == null,
           onTap: () async {
             await ref.read(localeProvider.notifier).clearLocale();
+            // Scheduled notifications already carry the old-language title.
+            await NotificationService().rescheduleAfterLanguageChange();
             if (context.mounted) Navigator.pop(context);
           },
         ),
@@ -61,6 +64,7 @@ class LanguageSetting extends ConsumerWidget {
               await ref
                   .read(localeProvider.notifier)
                   .setLocale(supported.locale);
+              await NotificationService().rescheduleAfterLanguageChange();
               if (context.mounted) Navigator.pop(context);
             },
           );

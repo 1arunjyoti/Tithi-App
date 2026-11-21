@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
+import '../core/format/festival_labels.dart';
 import '../models/festival.dart';
 import '../core/feedback/app_haptics.dart';
 import '../features/countdown/providers/countdown_providers.dart';
@@ -123,7 +124,15 @@ class _FestivalCountdownScreenState
             final undatedEntries = <({String id, String name})>[];
             for (final id in missingIds) {
               final festival = lookup(id);
-              undatedEntries.add((id: id, name: festival?.name ?? id));
+              undatedEntries.add((
+                id: id,
+                name: festival == null
+                    ? id
+                    : festivalDisplayName(
+                        festival: festival,
+                        locale: l10n?.localeName ?? 'en',
+                      ),
+              ));
             }
             final hasMissing = undatedEntries.isNotEmpty;
             // Entries carry ids, not just names, so stuck countdowns
@@ -254,18 +263,22 @@ class _FestivalCountdownScreenState
         .addFestival(festival.id);
     if (!context.mounted) return;
     final l10n = AppLocalizations.of(context);
+    final displayName = festivalDisplayName(
+      festival: festival,
+      locale: l10n?.localeName ?? 'en',
+    );
     if (added) {
       showAppMessage(
         context,
-        l10n?.countdownAddedForFestival(festival.name) ??
-            'Countdown added for ${festival.name}',
+        l10n?.countdownAddedForFestival(displayName) ??
+            'Countdown added for $displayName',
         kind: AppMessageKind.success,
       );
     } else {
       showAppMessage(
         context,
-        l10n?.festivalAlreadyInCountdowns(festival.name) ??
-            '${festival.name} is already in your countdowns',
+        l10n?.festivalAlreadyInCountdowns(displayName) ??
+            '$displayName is already in your countdowns',
       );
     }
   }

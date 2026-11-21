@@ -75,6 +75,7 @@ class HeroBody extends ConsumerWidget {
           resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn',
       isToday: isToday,
       region: ref.watch(festivalRegionProvider),
+      locale: resolveAppLocale(ref.watch(localeProvider)).languageCode,
     );
 
     // Display title: larger than the old 22/600, tighter tracking and a

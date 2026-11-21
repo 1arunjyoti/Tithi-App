@@ -324,6 +324,224 @@ void main() {
       );
     });
 
+    test('festivalDisplayName accepts locale tags and regional-only names', () {
+      // ignore: prefer_const_constructors
+      final f = Festival(
+        id: 'f',
+        name: 'Ganesh Chaturthi',
+        nameRegional: const NameRegional(
+          nameEnglish: 'Ganesh Chaturthi',
+          nameHindi: 'गणेश चतुर्थी',
+          nameBengali: 'গণেশ চতুর্থী',
+          nameTelugu: 'వినాయక చవితి',
+        ),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Shravana',
+          paksha: 'Shukla',
+          tithi: 4,
+          conditions: 'Lunar',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+
+      expect(
+        festivalDisplayName(festival: f, locale: 'hi-IN'),
+        equals('गणेश चतुर्थी'),
+      );
+      expect(
+        festivalDisplayName(festival: f, locale: 'bn_BD'),
+        equals('গণেশ চতুর্থী'),
+      );
+      expect(
+        festivalDisplayName(festival: f, locale: 'te'),
+        equals('వినాయక చవితి'),
+      );
+      // A missing name in the requested language falls back to English.
+      expect(
+        festivalDisplayName(festival: f, locale: 'sa'),
+        equals('Ganesh Chaturthi'),
+      );
+    });
+
+    test('festivalAlternateName keeps both names on a card', () {
+      // ignore: prefer_const_constructors
+      final f = Festival(
+        id: 'f',
+        name: 'Ganesh Chaturthi',
+        nameRegional: const NameRegional(
+          nameEnglish: 'Ganesh Chaturthi',
+          nameHindi: 'गणेश चतुर्थी',
+          nameBengali: 'গণেশ চতুর্থী',
+        ),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Shravana',
+          paksha: 'Shukla',
+          tithi: 4,
+          conditions: 'Lunar',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+
+      // Regional title: English is the alternate line.
+      expect(
+        festivalAlternateName(festival: f, locale: 'hi'),
+        equals('Ganesh Chaturthi'),
+      );
+      // English title: the long-standing Hindi line stays.
+      expect(
+        festivalAlternateName(festival: f, locale: 'en'),
+        equals('गणेश चतुर्थी'),
+      );
+      // No translation available: callers must skip the line, not repeat it.
+      // ignore: prefer_const_constructors
+      final englishOnly = Festival(
+        id: 'f',
+        name: 'Ram Navami',
+        nameRegional: const NameRegional(nameEnglish: 'Ram Navami'),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Chaitra',
+          paksha: 'Shukla',
+          tithi: 9,
+          conditions: 'Lunar',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+      expect(festivalAlternateName(festival: englishOnly, locale: 'bn'), isEmpty);
+    });
+
+    test('festival search matches every catalogued name', () {
+      // ignore: prefer_const_constructors
+      final f = Festival(
+        id: 'f',
+        name: 'Ganesh Chaturthi',
+        nameRegional: const NameRegional(
+          nameEnglish: 'Ganesh Chaturthi',
+          nameHindi: 'गणेश चतुर्थी',
+          nameBengali: 'গণেশ চতুর্থী',
+          nameTamil: 'விநாயகர் சதுர்த்தி',
+        ),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Shravana',
+          paksha: 'Shukla',
+          tithi: 4,
+          conditions: 'Lunar',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+
+      expect(festivalMatchesName(f, 'ganesh'), isTrue);
+      expect(festivalMatchesName(f, 'गणेश'), isTrue);
+      expect(festivalMatchesName(f, 'বিনায়ক'), isFalse);
+      expect(festivalMatchesName(f, 'உபாகரண'), isFalse);
+      expect(festivalMatchesName(f, 'விநாயகர்'), isTrue);
+      expect(festivalMatchesName(f, ''), isFalse);
+      expect(
+        festivalSearchHaystack(f),
+        contains('ganesh chaturthi'),
+      );
+    });
+
+    test('name helpers stay safe on missing, blank and unknown values', () {
+      // A sparse catalog record: only the English name, no regional scripts.
+      // ignore: prefer_const_constructors
+      final sparse = Festival(
+        id: 'f',
+        name: 'Diwali',
+        nameRegional: const NameRegional(
+          nameEnglish: 'Diwali',
+          nameHindi: '',
+          nameBengali: '',
+        ),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Ashwin',
+          paksha: 'Krishna',
+          tithi: 15,
+          conditions: 'Amavasya',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+      for (final locale in ['', '   ', 'zz', 'en-US', 'hi_IN']) {
+        expect(
+          festivalDisplayName(festival: sparse, locale: locale),
+          equals('Diwali'),
+          reason: 'locale "$locale" has no usable regional name',
+        );
+      }
+      // Empty regional names never produce a duplicate secondary line.
+      expect(festivalAlternateName(festival: sparse, locale: 'hi'), isEmpty);
+      expect(festivalAlternateName(festival: sparse, locale: 'bn'), isEmpty);
+      // Whitespace around a catalog name is trimmed, not shown to the user.
+      // ignore: prefer_const_constructors
+      final padded = Festival(
+        id: 'f',
+        name: 'Diwali',
+        nameRegional: const NameRegional(
+          nameEnglish: 'Diwali',
+          nameHindi: '  दीपावली  ',
+        ),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Ashwin',
+          paksha: 'Krishna',
+          tithi: 15,
+          conditions: 'Amavasya',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+      expect(
+        festivalDisplayName(festival: padded, locale: 'hi'),
+        equals('दीपावली'),
+      );
+      expect(
+        festivalAlternateName(festival: padded, locale: 'hi'),
+        equals('Diwali'),
+      );
+      // A spelling that differs only in case is not a second name: no
+      // duplicate chip or subtitle line.
+      // ignore: prefer_const_constructors
+      final caseOnly = Festival(
+        id: 'f',
+        name: 'Diwali',
+        nameRegional: const NameRegional(
+          nameEnglish: 'Diwali',
+          nameHindi: 'diwali',
+        ),
+        visuals: const Visuals(),
+        purpose: const Purpose(description: 'd'),
+        panchangRules: const PanchangRules(
+          masa: 'Ashwin',
+          paksha: 'Krishna',
+          tithi: 15,
+          conditions: 'Amavasya',
+        ),
+        rituals: const Rituals(steps: []),
+        media: const Media(),
+      );
+      expect(festivalAlternateName(festival: caseOnly, locale: 'hi'), isEmpty);
+      expect(heroLanguageChips(festival: caseOnly, locale: 'hi'), isEmpty);
+      // Search tolerates whitespace/case and never throws on a blank query.
+      expect(festivalMatchesName(sparse, '  DIWALI  '), isTrue);
+      expect(festivalMatchesName(sparse, '   '), isFalse);
+      expect(festivalMatchesName(sparse, 'not-there'), isFalse);
+    });
+
     test('heroLanguageChips swaps the title language for English', () {
       // Arrange
       // ignore: prefer_const_constructors

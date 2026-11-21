@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../models/festival_filter.dart';
 import '../core/feedback/app_haptics.dart';
+import '../core/format/festival_labels.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/festival_occurrences_provider.dart';
 import '../theme/app_theme.dart';
@@ -246,9 +247,10 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     if (!identical(all, _filterSource)) {
       _filterHaystacks = List<String>.generate(all.length, (i) {
         final f = all[i].festival;
-        // Name + category carry the signal; description kept for parity
-        // with the old filter but lowercased once, not per keystroke.
-        return '${f.name}\n${f.category}\n${f.description}'.toLowerCase();
+        // Every catalogued name + category carry the signal; description kept
+        // for parity with the old filter. Lowercased once, not per keystroke.
+        return '${festivalSearchHaystack(f)}\n${f.category}\n${f.description}'
+            .toLowerCase();
       }, growable: false);
       _filterSource = all;
     }

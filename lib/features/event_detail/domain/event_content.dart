@@ -9,6 +9,9 @@ export '../../../core/format/festival_labels.dart'
     show
         regionalNamesOf,
         festivalDisplayName,
+        festivalAlternateName,
+        festivalMatchesName,
+        festivalSearchHaystack,
         heroLanguageChips,
         observanceRuleKey,
         observanceRuleLabel,

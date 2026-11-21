@@ -131,6 +131,7 @@ final panchangWidgetSyncProvider = Provider<void>((ref) {
       useBengaliScript: locale.languageCode == 'bn',
       isToday: true,
       region: region,
+      locale: locale.languageCode,
     );
     final names = masaTithiNames(
       masa: panchang.masa,

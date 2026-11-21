@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/app_localizations_en.dart';
 import '../core/format/date_only.dart';
+import '../core/format/festival_labels.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../core/feedback/app_haptics.dart';
 import '../providers/calendar_provider.dart';
+import '../providers/primary_date_label_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
@@ -68,14 +70,23 @@ class FestivalRowTile extends ConsumerWidget {
   /// inter-row divider starts here so it never cuts under the icon tile.
   static const double textColumnInset = leadingTileSize + leadingGap;
 
-  String? _goldLine(BuildContext context, {required bool isToday}) {
+  String? _goldLine(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool isToday,
+  }) {
     final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final day = date;
     if (day != null) {
       final parts = <String>[
         isToday
             ? l10n.today
-            : formatLocalizedDate(day, 'EEE, d MMM', l10n.localeName),
+            : primaryCalendarDateLine(
+                ref,
+                day,
+                l10n.localeName,
+                gregorianPattern: 'd MMM',
+              ),
       ];
       // The tithi half needs the day's panchang, which the home card already
       // holds; the all-festivals list passes date-only rows (no extra fetch).
@@ -112,11 +123,14 @@ class FestivalRowTile extends ConsumerWidget {
     // the calendar selection instead (see [isSelectedDay]).
     final day = date;
     final isToday = day != null && isSameDay(day, ref.watch(todayDateProvider));
-    final goldLine = _goldLine(context, isToday: isToday);
+    final goldLine = _goldLine(context, ref, isToday: isToday);
     final description = festival.description.trim();
+    // The name follows the app language (catalog regional name, else English).
+    final locale = AppLocalizations.of(context)?.localeName ?? 'en';
+    final displayName = festivalDisplayName(festival: festival, locale: locale);
     // One composed label instead of the row's separate Text nodes (which
     // would otherwise repeat the name and date after this label).
-    final semanticsLabel = [festival.name, ?goldLine].join('. ');
+    final semanticsLabel = [displayName, ?goldLine].join('. ');
 
     return Semantics(
       button: onTap != null,
@@ -167,7 +181,7 @@ class FestivalRowTile extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            festival.name,
+                            displayName,
                             style: AppTypography.ui(
                               fontSize: AppTypography.sizeSubtitle,
                               fontWeight: AppTypography.semibold,

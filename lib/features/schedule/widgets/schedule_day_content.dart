@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/feedback/app_haptics.dart';
+import '../../../core/format/festival_labels.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../models/panchang_data.dart';
@@ -160,6 +161,10 @@ class _FestivalCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isMajor = festival.category == 'major';
+    final displayName = festivalDisplayName(
+      festival: festival,
+      locale: AppLocalizations.of(context)?.localeName ?? 'en',
+    );
 
     return GestureDetector(
       onTap: () {
@@ -194,7 +199,7 @@ class _FestivalCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    festival.name,
+                    displayName,
                     style: context.textTheme.bodyLarge?.copyWith(
                       fontWeight: AppTypography.semibold,
                     ),

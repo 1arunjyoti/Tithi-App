@@ -1,7 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/shloka.dart';
+import '../../../core/format/festival_labels.dart';
+import '../../../core/locale/app_locale.dart';
 import '../../../core/perf/startup_timeline.dart';
+import '../../../providers/locale_provider.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../../services/shloka_service.dart';
 
@@ -55,10 +58,11 @@ final dailyShlokaProvider = FutureProvider.autoDispose<DailyWisdom?>((
     festivalIds: festivals.map((festival) => festival.id).toList(),
   );
   if (shloka == null) return null;
+  final locale = resolveAppLocale(ref.watch(localeProvider)).languageCode;
   String? festivalName;
   for (final festival in festivals) {
     if (shloka.festivalIds.contains(festival.id)) {
-      festivalName = festival.name;
+      festivalName = festivalDisplayName(festival: festival, locale: locale);
       break;
     }
   }

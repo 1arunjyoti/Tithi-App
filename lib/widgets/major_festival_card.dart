@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/format/date_only.dart';
+import '../core/format/festival_labels.dart';
 import '../features/countdown/domain/target_resolution.dart';
 import '../features/event_detail/domain/puja_moonrise.dart';
 import '../features/event_detail/domain/puja_samay.dart';
@@ -11,6 +12,7 @@ import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/panchang_provider.dart';
+import '../providers/primary_date_label_provider.dart';
 import '../services/solar_events_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
@@ -102,7 +104,12 @@ class MajorFestivalCard extends ConsumerWidget {
         : [
             isToday
                 ? (l10n?.today ?? 'Today')
-                : formatLocalizedDate(date, 'EEE, d MMMM', locale),
+                : primaryCalendarDateLine(
+                    ref,
+                    date,
+                    locale,
+                    gregorianPattern: 'd MMMM',
+                  ),
             ?tithiName,
           ].join(' · ');
     // A chip instead of the row's " · in N days" suffix: the suffix made the
@@ -111,7 +118,13 @@ class MajorFestivalCard extends ConsumerWidget {
     final countdown = !isToday && daysAway > 0 && l10n != null
         ? l10n.festivalInDays(daysAway)
         : null;
-    final regionalName = _regionalName(festival, locale);
+    // Title follows the app language; the line beneath shows the other name
+    // (English when the title is regional, Hindi otherwise) so neither is lost.
+    final displayName = festivalDisplayName(festival: festival, locale: locale);
+    final alternateName = festivalAlternateName(
+      festival: festival,
+      locale: locale,
+    );
     final description = festival.description.trim();
 
     final paranValue = _paranValue(festival, pujaKala, l10n);
@@ -133,8 +146,8 @@ class MajorFestivalCard extends ConsumerWidget {
     // excluded below, so a screen reader hears the observance once, in order,
     // and the description is a hint rather than a fourth data point.
     final semanticsLabel = [
-      festival.name,
-      ?regionalName,
+      displayName,
+      if (alternateName.isNotEmpty) alternateName,
       ?dateLine,
       ?countdown,
       for (final entry in entries) '${entry.label}: ${entry.value}',
@@ -184,7 +197,7 @@ class MajorFestivalCard extends ConsumerWidget {
                         ],
                         Expanded(
                           child: Text(
-                            festival.name,
+                            displayName,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.ui(
@@ -205,10 +218,10 @@ class MajorFestivalCard extends ConsumerWidget {
                         ],
                       ],
                     ),
-                    if (regionalName != null) ...[
+                    if (alternateName.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.s2),
                       Text(
-                        regionalName,
+                        alternateName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -359,28 +372,6 @@ class MajorFestivalCard extends ConsumerWidget {
         : head;
   }
 
-  /// Festival's name in the UI language, or null when the catalog only has the
-  /// English one (a row that repeats the title is noise, not a translation).
-  String? _regionalName(Festival festival, String localeName) {
-    final names = festival.nameRegional;
-    final language = localeName.toLowerCase().split(RegExp('[-_]')).first;
-    final candidate = switch (language) {
-      'hi' => names.nameHindi,
-      'bn' => names.nameBengali,
-      'sa' => names.nameSanskrith,
-      'te' => names.nameTelugu,
-      'kn' => names.nameKannada,
-      'ta' => names.nameTamil,
-      'ml' => names.nameMalayalam,
-      _ => null,
-    }?.trim();
-    if (candidate == null ||
-        candidate.isEmpty ||
-        candidate == festival.name.trim()) {
-      return null;
-    }
-    return candidate;
-  }
 }
 
 /// Small category glyph shown when the festival ships no artwork: presence

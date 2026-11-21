@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../format/festival_labels.dart';
 import '../../features/panchang/data/panchang_cache.dart';
 import '../../features/panchang/domain/panchang_day.dart';
 import '../../features/panchang/domain/panchang_day_projection.dart';
@@ -28,6 +29,23 @@ import 'scheduling_parts.dart';
 // logic lives here, driven by an explicit seam: the plugin + the settings
 // box. No Riverpod, no singletons — every method is testable with a fake
 // box and a mock plugin.
+
+/// App language for notification text, read from the same settings-box
+/// `locale` key as `LocaleNotifier`. Falls back to the platform language when
+/// the user left it on "system default", and to English when the platform
+/// dispatcher is unavailable in a background isolate.
+String festivalNotificationLanguage(Box settingsBox) {
+  try {
+    final saved = settingsBox.get('locale');
+    if (saved is String && saved.isNotEmpty) return saved;
+    final code = PlatformDispatcher.instance.locale.languageCode;
+    if (code.isNotEmpty) return code;
+  } catch (_) {
+    // Closed box or background isolate without a bound dispatcher: a
+    // notification with an English title is better than a failed schedule.
+  }
+  return 'en';
+}
 
 /// Schedules, cancels, and builds notification content.
 ///
@@ -194,6 +212,7 @@ class NotificationScheduler {
 
     final settingsBox = await StorageService().openSettingsBox();
     final prefs = readCalendarPrefs(settingsBox);
+    final language = festivalNotificationLanguage(settingsBox);
     final monthSystem = prefs.monthSystem;
     final secondarySystem = prefs.secondarySystem;
     final yearEraIndex = prefs.yearEraIndex;
@@ -275,7 +294,10 @@ class NotificationScheduler {
         if (!onDay.isBefore(now)) {
           await plugin.zonedSchedule(
             id: NotificationKeys.festivalNotificationIdBase + i * 2,
-            title: festival.name,
+            title: festivalDisplayName(
+              festival: festival,
+              locale: language,
+            ),
             body: 'Today • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
             scheduledDate: onDay,
             notificationDetails: notificationDetails,
@@ -294,7 +316,10 @@ class NotificationScheduler {
         if (!eve.isBefore(now)) {
           await plugin.zonedSchedule(
             id: NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
-            title: festival.name,
+            title: festivalDisplayName(
+              festival: festival,
+              locale: language,
+            ),
             body:
                 'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
             scheduledDate: eve,
@@ -562,6 +587,7 @@ class NotificationScheduler {
 
       final settingsBox = await StorageService().openSettingsBox();
       final prefs = readCalendarPrefs(settingsBox);
+      final language = festivalNotificationLanguage(settingsBox);
       final monthSystem = prefs.monthSystem;
 
       // The background isolate computes the same days the UI does, so it must
@@ -620,7 +646,7 @@ class NotificationScheduler {
           prefs.festivalRegion,
         );
         return (
-          title: festival.name,
+          title: festivalDisplayName(festival: festival, locale: language),
           body: '${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
         );
       }

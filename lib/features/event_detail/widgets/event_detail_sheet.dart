@@ -8,9 +8,9 @@ import '../../../models/panchang_data.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../providers/panchang_provider.dart';
+import '../../../providers/primary_date_label_provider.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
-import '../../../utils/tithi_localization.dart';
 import '../../ai/domain/ai_prompt.dart';
 import '../../ai/providers/ai_providers.dart';
 import '../../ai/widgets/ask_ai_sheet.dart';
@@ -122,10 +122,18 @@ class EventDetailSheet extends ConsumerWidget {
         AppTheme.highContrastOf(context) ||
         ref.watch(glassmorphismConfigProvider).isHighContrast;
 
-    // Hero date line: observance weekday + Gregorian date. Falls back to the
-    // requested occurrence date while the panchang loads, so date-only entry
-    // points show the date immediately instead of shifting it in later.
+    // Hero date line: observance weekday + primary-calendar date. Falls back
+    // to the requested occurrence date while the panchang loads, so date-only
+    // entry points show the date immediately instead of shifting it in later.
     final headerDate = dayPanchang?.date ?? requestedDate;
+    final headerDateLabel = headerDate == null
+        ? null
+        : primaryCalendarDatePart(
+            ref,
+            headerDate,
+            locale,
+            gregorianPattern: 'd MMMM y',
+          );
     final heroChips = heroLanguageChips(
       festival: festival,
       locale: appLanguage,
@@ -146,6 +154,7 @@ class EventDetailSheet extends ConsumerWidget {
         festival: festival,
         content: content,
         headerDate: headerDate,
+        headerDateLabel: headerDateLabel,
         displayName: displayName,
         categoryLabel: categoryLabel,
         heroChips: heroChips,
@@ -257,10 +266,11 @@ class EventDetailSheet extends ConsumerWidget {
             SheetLinkTile(
               icon: Icons.calendar_month_outlined,
               label: l10n?.viewFullPanchang ?? 'View full panchang',
-              supporting: formatLocalizedDate(
+              supporting: primaryCalendarDatePart(
+                ref,
                 dayPanchang.date,
-                'd MMMM y',
                 locale,
+                gregorianPattern: 'd MMMM y',
               ),
               onTap: () {
                 if (openedFromTithiSheet) {
