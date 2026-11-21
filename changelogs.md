@@ -20,6 +20,25 @@ Format:
 
 ## 2026-11-22 - 0.9.6+34
 
+### Festival dates follow the primary calendar
+
+Festival lists, countdowns and the festival sheet now show dates in the selected primary calendar instead of always falling back to Gregorian.
+
+- `lib/providers/primary_date_label_provider.dart` is the single resolver: Gregorian keeps the caller's intl pattern, Hindu shows Purnimant-correct masa + paksha/tithi, Bengali shows `day month year` (Bengali script/digits under `bn`). It falls back to Gregorian while resolving, under `none`, or when a calendar service fails; the weekday stays Gregorian so callers only swap the date half.
+- Applied in `lib/widgets/festival_row_tile.dart` (all-festivals rows, home card and tithi-sheet footer), `major_festival_card.dart`, `festival_countdown_card.dart`, and the event sheet (`event_detail_sheet.dart`, `event_sheet_hero.dart`, `event_puja_samay_section.dart`). Only labels changed — the dated occurrence and its countdown are untouched.
+- Regression: `test/primary_date_label_provider_test.dart` covers each calendar branch, the `bn` script rule, the failure fallback and the row's short date line; existing Gregorian date assertions stay unchanged.
+- Constraint: keep the Gregorian pattern argument and the synchronous fallback — the row must paint on the first frame, and the pattern preserves locale-specific month names. Do not widen the watch to the secondary calendar; this is a primary-calendar feature.
+
+### Festival names follow the app language everywhere
+
+Festival names now use the matching regional name from `assets/festivals.json` under Hindi, Bengali and Sanskrit instead of always showing English; the other name stays visible as a secondary line.
+
+- `lib/core/format/festival_labels.dart` owns the single resolvers: `festivalDisplayName` (locale-tag aware, English fallback), `festivalAlternateName` (English ↔ regional swap for card subtitles) and `festivalMatchesName` / `festivalSearchHaystack` (search across every catalogued script). Canonical English stays for IDs, export, AI prompts and file names.
+- Applied to rows/featured cards, schedule, both search delegates, countdowns and snack messages, share card/text, notification titles, home-widget payload, Daily Wisdom chip and hero artwork labels (`lib/widgets/`, `lib/features/{festival_search,countdown,hero,quote,schedule}/`, `lib/core/notifications/scheduler.dart`, `lib/services/{home_widget,share_service}.dart`).
+- Changing the language re-schedules enabled reminders (`NotificationService.rescheduleAfterLanguageChange`, called from `lib/features/settings/widgets/language_display_settings.dart`); already-scheduled Android notifications would otherwise keep the old-language title until the next place change or WorkManager pass.
+- Regression: `test/event_sheet_content_test.dart` covers locale tags, the secondary-name swap, multi-script search and blank/whitespace/unknown-locale fallbacks.
+- Constraint: do not change `Festival.name` / Hive field 1 — the English name remains the stable key for lookup, cache identity and export.
+
 ### Settings scroll stays smooth while location initializes
 
 The location row's loading spinner no longer makes the Preferences card repaint on every frame, so scrolling settings while the one-shot location read is pending no longer stutters.

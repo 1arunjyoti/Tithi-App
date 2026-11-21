@@ -295,6 +295,18 @@ class NotificationService {
     await _rescheduleEnabled();
   }
 
+  /// Re-schedules enabled reminders after the app language changed.
+  ///
+  /// Festival notification titles use the catalog's regional name for the
+  /// selected language. Already-scheduled Android notifications carry the old
+  /// title until re-scheduled, so changing the language must refresh them even
+  /// though the dates and the place clock are unchanged. Failures are already
+  /// contained per reminder type by [_rescheduleEnabled].
+  Future<void> rescheduleAfterLanguageChange() async {
+    if (!_isInitialized) return;
+    await _rescheduleEnabled();
+  }
+
   /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
     if (kDebugMode) {

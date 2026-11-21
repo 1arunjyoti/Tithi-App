@@ -2,12 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/date_only.dart';
+import '../../../core/format/festival_labels.dart';
+import '../../../core/locale/app_locale.dart';
 import '../../../core/perf/startup_timeline.dart';
 import '../../../models/festival.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../services/storage_service.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/festival_provider.dart';
+import '../../../providers/locale_provider.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../panchang/domain/occurrence_cache.dart';
 
@@ -244,9 +247,20 @@ final _festivalCountdownTargetProvider = FutureProvider.autoDispose
         return null;
       }
       if (targetDate == null) return null;
+      // Keep the curated short English title for the default countdowns;
+      // under a regional UI language prefer the catalog's localized name.
+      final locale = resolveAppLocale(ref.watch(localeProvider)).languageCode;
+      final displayName = festivalDisplayName(
+        festival: festival,
+        locale: locale,
+      );
+      final title =
+          displayName == festival.name
+              ? (_defaultCountdownTitles[id] ?? festival.name)
+              : displayName;
       return FestivalCountdownTarget(
         id: id,
-        title: _defaultCountdownTitles[id] ?? festival.name,
+        title: title,
         festival: festival,
         date: targetDate,
         // Calendar-day diff (DST-safe): local-midnight .difference().inDays

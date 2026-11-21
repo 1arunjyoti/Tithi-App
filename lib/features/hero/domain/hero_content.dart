@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/format/festival_labels.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../models/festival_region.dart';
@@ -107,6 +108,7 @@ class HeroContent {
 List<HeroArtwork> heroArtworks(
   PanchangData panchang, {
   FestivalRegion region = FestivalRegion.all,
+  String locale = 'en',
 }) {
   if (panchang.festivals.isEmpty) return const [];
   // Priority first (callers may hand over an unsorted list), then region
@@ -120,7 +122,10 @@ List<HeroArtwork> heroArtworks(
   for (final festival in ranked) {
     final source = festival.visuals.image.trim();
     if (source.isEmpty || !seen.add(source)) continue;
-    artworks.add((source: source, label: festival.name));
+    artworks.add((
+      source: source,
+      label: festivalDisplayName(festival: festival, locale: locale),
+    ));
   }
   return artworks;
 }
@@ -141,6 +146,7 @@ HeroContent heroContentData({
   required bool useBengaliScript,
   required bool isToday,
   FestivalRegion region = FestivalRegion.all,
+  String locale = 'en',
 }) {
   final isShukla = panchang.isShukla;
 
@@ -280,6 +286,6 @@ HeroContent heroContentData({
     title: title,
     subLabel: subLabel,
     chips: chips,
-    artworks: heroArtworks(panchang, region: region),
+    artworks: heroArtworks(panchang, region: region, locale: locale),
   );
 }

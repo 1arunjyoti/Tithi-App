@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../core/format/date_only.dart';
+import '../core/format/festival_labels.dart';
 import '../models/festival.dart';
 import '../models/panchang_data.dart';
 import '../core/feedback/app_haptics.dart';
@@ -252,7 +253,12 @@ class _OverflowLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gold = AppTheme.festivalAccent(context);
-    final names = hidden.map((e) => e.festival.name).join(' • ');
+    final locale = AppLocalizations.of(context)?.localeName ?? 'en';
+    final names = hidden
+        .map(
+          (e) => festivalDisplayName(festival: e.festival, locale: locale),
+        )
+        .join(' • ');
     final label = hidden.length == 1
         ? '+1 more: $names'
         : '+${hidden.length} more: $names';

@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
+import '../core/format/festival_labels.dart';
 import '../models/festival.dart';
 import '../core/feedback/app_haptics.dart';
 import '../features/countdown/providers/countdown_providers.dart';
+import '../providers/primary_date_label_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_motion.dart';
@@ -140,7 +142,12 @@ class FestivalCountdownTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final locale =
         l10n?.localeName ?? Localizations.localeOf(context).languageCode;
-    final dateLabel = formatLocalizedDate(target.date, 'EEE, MMM d', locale);
+    final dateLabel = primaryCalendarDateLine(
+      ref,
+      target.date,
+      locale,
+      gregorianPattern: 'MMM d',
+    );
 
     final row = Row(
       children: [
@@ -206,7 +213,11 @@ class FestivalCountdownTile extends ConsumerWidget {
                 const SizedBox(height: AppSpacing.s4),
               ],
               Text(
-                target.festival.name,
+                festivalDisplayName(
+                  festival: target.festival,
+                  locale:
+                      AppLocalizations.of(context)?.localeName ?? 'en',
+                ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: context.textTheme.titleMedium?.copyWith(

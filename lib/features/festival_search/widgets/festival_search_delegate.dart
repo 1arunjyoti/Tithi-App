@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../core/feedback/app_haptics.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../core/format/date_only.dart';
+import '../../../core/format/festival_labels.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../models/panchang_data.dart';
@@ -29,10 +30,8 @@ class FestivalSearchDelegate extends FestivalSearchShell<void> {
     final results = query.isEmpty
         ? <Festival>[] // Start empty or show recent?
         : allFestivals.where((f) {
-            final q = query.toLowerCase();
-            return f.name.toLowerCase().contains(q) ||
-                (f.nameHindi?.toLowerCase().contains(q) ?? false) ||
-                f.category.toLowerCase().contains(q);
+            return festivalMatchesName(f, query) ||
+                f.category.toLowerCase().contains(query.trim().toLowerCase());
           }).toList();
 
     if (query.isEmpty) {
@@ -61,6 +60,12 @@ class FestivalSearchDelegate extends FestivalSearchShell<void> {
 
   Widget _buildFestivalTile(BuildContext context, Festival festival) {
     final isMajor = festival.category == 'major';
+    final locale = AppLocalizations.of(context)?.localeName ?? 'en';
+    final displayName = festivalDisplayName(festival: festival, locale: locale);
+    final alternateName = festivalAlternateName(
+      festival: festival,
+      locale: locale,
+    );
 
     // We can reuse the glassmorphism style or keep it simpler for search results
     // Let's use a Card-like look that fits the theme
@@ -138,15 +143,15 @@ class FestivalSearchDelegate extends FestivalSearchShell<void> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    festival.name,
+                    displayName,
                     style: const TextStyle(
                       fontWeight: AppTypography.semibold,
                       fontSize: AppTypography.sizeSubtitle,
                     ),
                   ),
-                  if (festival.nameHindi != null)
+                  if (alternateName.isNotEmpty)
                     Text(
-                      festival.nameHindi!,
+                      alternateName,
                       style: TextStyle(
                         fontSize: AppTypography.sizeCaption,
                         color: context.secondaryInk,

@@ -5,6 +5,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../models/panchang_data.dart';
 import '../../../providers/panchang_provider.dart';
+import '../../../providers/primary_date_label_provider.dart';
 import '../../../services/solar_events_service.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
@@ -229,7 +230,12 @@ class EventPujaSamaySection extends ConsumerWidget {
           kalaName: kalaName.toUpperCase(),
           windowLabel: l10n?.pujaWindow ?? 'PUJA WINDOW',
           instant: formatLocalizedDate(span.instant, 'jm', locale),
-          date: formatLocalizedDate(span.instant, 'MMM d', locale),
+          date: primaryCalendarDatePart(
+            ref,
+            span.instant,
+            locale,
+            gregorianPattern: 'MMM d',
+          ),
           range: sheetTimeRange(span.start, span.end, panchang.date, locale),
           note: localizeDigits(
             l10n?.pujaWindowDuration(ghatis, kalaName) ??

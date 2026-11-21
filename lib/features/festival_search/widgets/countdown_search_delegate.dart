@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../../core/anim/press_scale.dart';
+import '../../../core/format/festival_labels.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../providers/festival_provider.dart';
@@ -69,13 +70,7 @@ class CountdownFestivalSearchDelegate extends FestivalSearchShell<Festival?> {
     final matches = festivals.where((festival) {
       if (existing.contains(festival.id)) return false;
 
-      return festival.name.toLowerCase().contains(normalizedQuery) ||
-          (festival.nameHindi?.toLowerCase().contains(normalizedQuery) ??
-              false) ||
-          (festival.nameRegional.nameBengali?.toLowerCase().contains(
-                normalizedQuery,
-              ) ??
-              false) ||
+      return festivalMatchesName(festival, normalizedQuery) ||
           festival.category.toLowerCase().contains(normalizedQuery);
     }).toList();
 
@@ -100,6 +95,12 @@ class _FestivalSearchTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isMajor = festival.category == 'major';
+    final locale = AppLocalizations.of(context)?.localeName ?? 'en';
+    final displayName = festivalDisplayName(festival: festival, locale: locale);
+    final alternateName = festivalAlternateName(
+      festival: festival,
+      locale: locale,
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.s12),
@@ -126,15 +127,15 @@ class _FestivalSearchTile extends StatelessWidget {
               ),
             ),
             title: Text(
-              festival.name,
+              displayName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(fontWeight: AppTypography.semibold),
             ),
-            subtitle: festival.nameHindi == null
+            subtitle: alternateName.isEmpty
                 ? null
                 : Text(
-                    festival.nameHindi!,
+                    alternateName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

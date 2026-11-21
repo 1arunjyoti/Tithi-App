@@ -19,6 +19,7 @@ class EventSheetHero extends StatelessWidget {
     required this.festival,
     required this.content,
     required this.headerDate,
+    this.headerDateLabel,
     required this.displayName,
     required this.categoryLabel,
     required this.heroChips,
@@ -29,6 +30,10 @@ class EventSheetHero extends StatelessWidget {
   final Festival festival;
   final EventSheetContent? content;
   final DateTime? headerDate;
+
+  /// Calendar-specific half of the header date, resolved in the primary
+  /// calendar by the sheet. Null falls back to the Gregorian date.
+  final String? headerDateLabel;
   final String displayName;
   final String categoryLabel;
   final List<String> heroChips;
@@ -55,7 +60,8 @@ class EventSheetHero extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Header date: observance weekday + Gregorian date.
+        // Header date: observance weekday + primary-calendar date (the sheet
+        // resolves the date half; the Gregorian string is its fallback).
         if (headerDate != null)
           Text.rich(
             TextSpan(
@@ -65,7 +71,9 @@ class EventSheetHero extends StatelessWidget {
                   style: dateBaseStyle,
                 ),
                 TextSpan(
-                  text: formatLocalizedDate(headerDate!, 'd MMMM y', locale),
+                  text:
+                      headerDateLabel ??
+                      formatLocalizedDate(headerDate!, 'd MMMM y', locale),
                   style: dateBaseStyle,
                 ),
               ],

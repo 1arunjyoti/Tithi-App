@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import '../core/format/festival_labels.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../theme/app_theme.dart';
@@ -15,6 +16,12 @@ class FestivalShareCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final textTheme = context.textTheme;
+    final locale = l10n.localeName;
+    final displayName = festivalDisplayName(festival: festival, locale: locale);
+    final alternateName = festivalAlternateName(
+      festival: festival,
+      locale: locale,
+    );
     final tithiText = festival.tithi != 0
         ? '${festival.paksha} • ${l10n.tithi} ${festival.tithi}'
         : festival.paksha;
@@ -81,7 +88,7 @@ class FestivalShareCard extends StatelessWidget {
                       const SizedBox(height: AppSpacing.s24),
 
                       Text(
-                        festival.name,
+                        displayName,
                         textAlign: TextAlign.center,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -91,10 +98,10 @@ class FestivalShareCard extends StatelessWidget {
                           letterSpacing: 1.2,
                         ),
                       ),
-                      if (festival.nameHindi != null) ...[
+                      if (alternateName.isNotEmpty) ...[
                         const SizedBox(height: AppSpacing.s8),
                         Text(
-                          festival.nameHindi!,
+                          alternateName,
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
