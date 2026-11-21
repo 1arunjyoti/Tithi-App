@@ -191,7 +191,7 @@ abstract final class AppIconSize {
   /// 56dp - a large empty-state or countdown glyph.
   static const double display = 56;
 
-  /// 64dp - the biggest glyph: splash, search prompt, weather.
+  /// 64dp - the biggest glyph: splash and empty search prompt.
   static const double splash = 64;
 
   /// The whole scale, smallest first. Tests walk this.

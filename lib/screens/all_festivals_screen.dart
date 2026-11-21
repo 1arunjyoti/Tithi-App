@@ -9,8 +9,7 @@ import '../models/festival.dart';
 import '../models/festival_filter.dart';
 import '../core/feedback/app_haptics.dart';
 import '../providers/calendar_provider.dart';
-import '../providers/festival_provider.dart';
-import '../providers/panchang_provider.dart';
+import '../providers/festival_occurrences_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_motion.dart';
@@ -30,115 +29,15 @@ import '../widgets/state_views.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../core/navigation/home_tab.dart';
-import '../core/async/keep_alive.dart';
 import '../core/format/date_only.dart';
-import '../features/countdown/data/festival_year_snapshot.dart';
 import '../features/countdown/domain/target_resolution.dart';
 
-export '../features/countdown/domain/target_resolution.dart'
-    show DatedFestival, sortDatedFestivals;
-export '../models/festival_filter.dart'
-    show
-        FestivalCategoryFilter,
-        FestivalFilterSelection,
-        festivalMatchesCategoryFilter,
-        festivalMatchesFilters,
-        festivalMatchesRegionFilter;
-
 /// Years the festival list can resolve for. Matches the calendar's Gregorian
-/// year picker range (calendar_widget.dart), which is the bundled ephemeris
-/// window; the year selector's arrows clamp to it.
+/// year picker range (`features/calendar/widgets/calendar_year_picker.dart`),
+/// which is the bundled ephemeris window; the year selector's arrows clamp to
+/// it.
 const int kFestivalFirstYear = 1976;
 const int kFestivalLastYear = 2076;
-
-/// All bundled festivals with [year]'s occurrence dates, ascending from
-/// January — past festivals first, then the upcoming ones (for the current
-/// year the screen auto-scrolls to those on open), undatable entries last.
-/// Recurring entries (Ekadashi, Purnima, Amavasya) appear once per
-/// occurrence, not once per catalog entry, so the yearly list shows all 24
-/// Ekadashis.
-///
-/// The year is the family parameter: the screen's year selector picks it and
-/// each year resolves (and caches) independently, so 2025, 2026 and 2027
-/// show their own dates, not today's year.
-///
-/// Each festival reuses the vriddhi-aware
-/// [PanchangService.findNextFestivalOccurrence] forward scan (the same source
-/// the countdowns use), run in small parallel batches. Scanning forward from
-/// Jan 1 of [year] is correct for past years too — the first match on/after
-/// that date lands inside the year.
-///
-/// Perf: the completed list is persisted as one Hive record per
-/// year/location/school/catalog generation ([readFestivalYearSnapshot]), so a
-/// revisit (or a launch after process death) paints from disk instead of
-/// rebuilding ~150 scans. Resolution always runs from Jan 1 through Dec 31,
-/// so a stored list cannot go stale inside the year; a moved place,
-/// school/engine bump or catalog edit changes the key and misses cleanly.
-///
-/// A 5-minute timed `keepAlive` (same pattern as `monthlyPanchangProvider`)
-/// still releases the in-memory list when the screen has been closed for a
-/// while; reopening then costs one box read. The watch on [todayDateProvider]
-/// refreshes the lists at midnight (the key only changes on Jan 1), and a
-/// location change invalidates via [resolvedCoordinatesProvider].
-final allFestivalOccurrencesProvider = FutureProvider.autoDispose
-    .family<List<DatedFestival>, int>((ref, year) async {
-      ref.keepAliveFor(const Duration(minutes: 5));
-
-      await ref.watch(panchangInitProvider.future);
-      await ref.watch(festivalInitProvider.future);
-
-      final festivals = ref.read(festivalProvider);
-      if (festivals.isEmpty) return const [];
-      // Watch (not read) so a midnight rollover re-resolves: the year key
-      // only changes on Jan 1, when the new year's list must first appear.
-      ref.watch(todayDateProvider);
-      final yearStart = DateTime(year);
-      final coords = ref.watch(resolvedCoordinatesProvider);
-      // Read the service first: building it resolves the persisted school,
-      // which is part of the snapshot key. Reading it after the snapshot
-      // could look up the wrong generation on a cold start.
-      final service = ref.read(panchangServiceProvider);
-      final catalogVersion = ref
-          .read(festivalRepositoryProvider)
-          .catalogVersion;
-
-      final snapshot = await readFestivalYearSnapshot(
-        yearStart: yearStart,
-        festivals: festivals,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        catalogVersion: catalogVersion,
-      );
-      if (snapshot != null) return snapshot;
-
-      try {
-        // Shared resolver (features/countdown/domain): batched cached
-        // scans — one bad rule resolves dateless instead of failing.
-        // Recurring vrats (Ekadashi, Purnima, Amavasya) expand to every
-        // occurrence through Dec 31, so the yearly list shows all of them.
-        // No month-system watch: resolution is Amanta-fixed, so toggling
-        // Amanta↔Purnimant no longer re-scans (rows show dates, not masas).
-        final resolved = await resolveDatedFestivals(
-          service: service,
-          festivals: festivals,
-          baseDate: yearStart,
-          through: DateTime(year, 12, 31),
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        );
-        await writeFestivalYearSnapshot(
-          yearStart: yearStart,
-          items: resolved,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          catalogVersion: catalogVersion,
-        );
-        return resolved;
-      } catch (e, st) {
-        debugPrint('allFestivalOccurrences failed: $e\n$st');
-        rethrow;
-      }
-    });
 
 /// Full browsable list behind the home card's "View all N festivals" button:
 /// every festival sorted by the selected year's occurrence date, January
@@ -147,12 +46,13 @@ final allFestivalOccurrencesProvider = FutureProvider.autoDispose
 /// current one — each year resolves independently through
 /// [allFestivalOccurrencesProvider]. On open the current year's list
 /// auto-scrolls to the current point (first festival dated today or later);
-/// other years open at January. A live search field filters by
-/// name/category/description, a chip strip under it applies the category
-/// (All / Major / Vrat / Recurring / Featured) in one tap, and the app-bar
-/// filter button opens a sheet with the same categories plus region (all
-/// regions or one zone) narrowing; search and filters compose, and a dot on
-/// the button marks an active filter. Tapping a row opens the festival detail
+/// other years open at January. The chip strip leading the list applies the
+/// category (All / Major / Vrat / Recurring / Featured) in one tap; its search
+/// icon reveals a field that filters by name/category/description in the same
+/// slot, so no permanent search bar steals list height. The app-bar filter
+/// button opens a sheet with the same categories plus region (all regions or
+/// one zone) narrowing; search and filters compose, and a dot on the button
+/// marks an active filter. Tapping a row opens the festival detail
 /// sheet with the row's occurrence date, so the sheet can backfill that day's
 /// panchang (timings, puja/paran windows).
 class AllFestivalsScreen extends ConsumerStatefulWidget {
@@ -185,6 +85,10 @@ class AllFestivalsScreen extends ConsumerStatefulWidget {
   /// filter sheet renders.
   static const categoryChipsKey = ValueKey('all-festivals-category-chips');
 
+  /// Key of the search icon that sits at the start of the chip strip, so tests
+  /// can open search without matching the field's own decorative search icon.
+  static const searchButtonKey = ValueKey('all-festivals-search-button');
+
   /// Key of the app-bar year stepper, so tests can reach its arrows without
   /// matching unrelated chevrons elsewhere on the screen.
   static const yearSelectorKey = ValueKey('all-festivals-year-selector');
@@ -195,9 +99,15 @@ class AllFestivalsScreen extends ConsumerStatefulWidget {
 
 class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   final _itemScrollController = ItemScrollController();
   Timer? _searchDebounce;
   String _query = '';
+
+  /// Search is a tap-away action, not a permanent bar: the chip strip owns the
+  /// single body row by default and the field replaces it only while searching,
+  /// so the list keeps the reclaimed vertical space.
+  bool _searchOpen = false;
   FestivalFilterSelection _filters = const FestivalFilterSelection();
 
   /// The year whose list is shown. Defaults to today's year; the selector
@@ -226,6 +136,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     _filterSource = null;
     _filterResult = null;
     _filterHaystacks = null;
@@ -242,10 +153,28 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     });
   }
 
-  void _clearSearch() {
+  /// Reveals the search field in the chip strip's slot and focuses it, so the
+  /// first keystrokes land in the field without an extra tap.
+  void _openSearch() {
+    AppHaptics.tap(ref);
+    setState(() => _searchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocusNode.requestFocus();
+    });
+  }
+
+  /// Drops out of search: clears any pending query and gives the row back to
+  /// the category chips. The debounce is cancelled so a keystroke typed just
+  /// before closing cannot resurrect the query afterwards.
+  void _closeSearch() {
+    AppHaptics.tap(ref);
     _searchDebounce?.cancel();
     _searchController.clear();
-    setState(() => _query = '');
+    _searchFocusNode.unfocus();
+    setState(() {
+      _query = '';
+      _searchOpen = false;
+    });
   }
 
   Future<void> _openFilters() async {
@@ -276,8 +205,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
   }
 
   /// Opens the same Material year picker the calendar header uses
-  /// (calendar_widget.dart's Gregorian picker), bounded to the ephemeris
-  /// window, and applies the picked year.
+  /// (`features/calendar/widgets/calendar_year_picker.dart`), bounded to the
+  /// ephemeris window, and applies the picked year.
   Future<void> _pickYear() async {
     AppHaptics.tap(ref);
     final picked = await showDatePicker(
@@ -390,47 +319,13 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
           ),
         ),
       ],
-      // Shared page frame: 12dp gutter and the 800 reading width. The
-      // search field, chip strip and list all sit inside it, so their
-      // own horizontal padding is gone and the cards line up with the
-      // home screen's.
+      // Shared page frame: 12dp gutter and the 800 reading width. The filter
+      // strip and list sit inside it, so their own horizontal padding is gone
+      // and the cards line up with the home screen's.
       body: ScreenBody(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.s8,
-                bottom: AppSpacing.s12,
-              ),
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _onSearchChanged,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color: context.hintInk,
-                    ),
-                    suffixIcon: _query.isEmpty
-                        ? null
-                        : IconButton(
-                            icon: const Icon(Icons.clear_rounded),
-                            tooltip: l10n?.clearSearch ?? 'Clear search',
-                            onPressed: _clearSearch,
-                          ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s16,
-                      vertical: AppSpacing.s14,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            _buildCategoryChips(context),
+            _buildFilterStrip(context),
             Expanded(
               child: occurrencesAsync.when(
                 // Same stale-first pattern as the home card: a recompute
@@ -514,30 +409,95 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     );
   }
 
-  /// The filter sheet's category dimension, surfaced as a chip strip under the
-  /// search field so the common narrowing (and Featured) takes one tap.
+  /// The single body row above the list. By default the chip strip carries a
+  /// search icon at its leading edge; while searching, the field takes over
+  /// this same slot. Search is therefore a tap away without a permanently
+  /// visible bar stealing list height.
+  Widget _buildFilterStrip(BuildContext context) {
+    if (_searchOpen || _query.isNotEmpty) return _buildSearchField(context);
+    return _buildCategoryChips(context);
+  }
+
+  /// Inline search field revealed by the strip's search icon. A single trailing
+  /// close button dismisses search and clears the query with it — two adjacent
+  /// X buttons (clear text vs. close field) read as duplicate dismiss actions.
+  Widget _buildSearchField(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.s8,
+        bottom: AppSpacing.s12,
+      ),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: TextField(
+          controller: _searchController,
+          focusNode: _searchFocusNode,
+          onChanged: _onSearchChanged,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
+            prefixIcon: Icon(Icons.search_rounded, color: context.hintInk),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.close_rounded),
+              tooltip: l10n?.closeFestivalSearch ?? 'Close search',
+              onPressed: _closeSearch,
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.s16,
+              vertical: AppSpacing.s14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The filter sheet's category dimension, surfaced as a chip strip with a
+  /// search icon at its leading edge so the common narrowing (and Featured)
+  /// and search both take one tap.
   ///
   /// Both entry points write the same [_filters] state: a chip tap updates the
   /// category through `copyWith`, and the sheet opens already showing that
-  /// choice. The strip scrolls horizontally instead of wrapping, so the list
-  /// below keeps its height on narrow screens and at large text scales.
+  /// choice. The chips scroll horizontally instead of wrapping, while the
+  /// search icon stays pinned at the start; the list keeps its height on narrow
+  /// screens and at large text scales.
   Widget _buildCategoryChips(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
-      key: AllFestivalsScreen.categoryChipsKey,
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.s8,
+        bottom: AppSpacing.s12,
+      ),
       child: Row(
         children: [
-          for (final filter in FestivalCategoryFilter.values)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.s8),
-              child: FestivalFilterChip(
-                label: festivalCategoryFilterLabel(l10n, filter),
-                selected: _filters.category == filter,
-                onTap: () => _selectCategory(filter),
+          IconButton(
+            key: AllFestivalsScreen.searchButtonKey,
+            tooltip: l10n?.searchFestivalsHint ?? 'Search festivals',
+            onPressed: _openSearch,
+            icon: Icon(Icons.search_rounded, color: context.colors.primary),
+          ),
+          const SizedBox(width: AppSpacing.s4),
+          Expanded(
+            child: SingleChildScrollView(
+              key: AllFestivalsScreen.categoryChipsKey,
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  for (final filter in FestivalCategoryFilter.values)
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.s8),
+                      child: FestivalFilterChip(
+                        label: festivalCategoryFilterLabel(l10n, filter),
+                        selected: _filters.category == filter,
+                        onTap: () => _selectCategory(filter),
+                      ),
+                    ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );

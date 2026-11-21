@@ -9,7 +9,7 @@ import '../../../providers/calendar_provider.dart' as cp;
 import '../../../services/storage_service.dart';
 import '../../panchang/data/panchang_cache.dart';
 
-// Phase 3a: calendar sync caches extracted from widgets/calendar_widget.dart.
+// Phase 3a: calendar sync caches extracted from the former calendar_widget.dart monolith.
 // These file-level LRUs let cells show stale labels/dots instantly while the
 // next month's FutureProvider is still doing FFI. Owned here (data layer) so
 // they are testable and independent of widget lifecycle; the widget imports
@@ -69,9 +69,9 @@ bool addBoundedPrecacheKey(Set<String> set, String key) {
   return true;
 }
 
-// Guards _scheduleAdjacentPrecache: it is called from build, so without
+// Guards scheduleAdjacentPrecache: it is called from build, so without
 // this every selection-change rebuild would queue another postFrame +
-// 300ms delayed precache run.
+// 800ms delayed precache run.
 String? lastPrecacheRequest;
 
 bool claimPrecacheRequest(String request) {

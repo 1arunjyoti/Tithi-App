@@ -3,7 +3,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 
-// Canonical drag handle extracted from widgets/tithi_detail_sheet.dart
+// Canonical drag handle extracted from the former
+// widgets/tithi_detail_sheet.dart monolith
 // (finalized design). The taller transparent zone makes the framework
 // drag-to-dismiss target easier to grab; visuals unchanged (pill stays
 // centered).

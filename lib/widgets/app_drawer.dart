@@ -13,6 +13,8 @@ import '../providers/location_provider.dart';
 import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/moon_phases_screen.dart';
+import '../screens/eclipse_screen.dart';
+import '../screens/solar_system_screen.dart';
 import '../screens/about_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
@@ -22,8 +24,6 @@ import '../core/feedback/app_messages.dart';
 import '../core/navigation/app_routes.dart';
 import 'responsive_layout.dart';
 import 'app_divider.dart';
-
-import 'native_screens/native_screens.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_metrics.dart';
 

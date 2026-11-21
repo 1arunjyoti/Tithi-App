@@ -4,8 +4,8 @@ import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
 
-// Canonical hero-style sun pill extracted from
-// widgets/tithi_detail_sheet.dart (_SheetChip, finalized design): same
+// Canonical hero-style sun pill, formerly _SheetChip in the
+// widgets/tithi_detail_sheet.dart monolith (finalized design): same
 // treatment as the home hero chips — hero-foreground ink on the gradient,
 // primary tint in high contrast.
 //

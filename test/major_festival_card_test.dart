@@ -191,6 +191,27 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('festival title uses full-strength ink like a list row', (
+      tester,
+    ) async {
+      // Arrange + Act
+      await pumpCard(tester, festival());
+
+      // Assert: the title carries an explicit onSurface colour. A colourless
+      // AppTypography.ui would inherit bodyMedium's secondaryInk and read
+      // muted next to the compact FestivalRowTile titles.
+      final cardElement = tester.element(find.byType(MajorFestivalCard));
+      final expected = Theme.of(cardElement).colorScheme.onSurface;
+      final title = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(MajorFestivalCard),
+          matching: find.text('Test Festival'),
+        ),
+      );
+      expect(title.style?.color, expected);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('hides the paran row when the kala is missing', (tester) async {
       // Arrange + Act: after_puja_kala needs the festival's own puja kala.
       await pumpCard(tester, festival(paranRule: 'after_puja_kala'));

@@ -16,8 +16,9 @@ import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/core/anim/press_scale.dart';
 import 'package:tithi/features/hero/widgets/artwork_window.dart';
 import 'package:tithi/features/hero/widgets/hero_festival_image.dart';
-import 'package:tithi/widgets/paksha_hero_card.dart';
-import 'package:tithi/widgets/tithi_detail_sheet.dart';
+import 'package:tithi/features/hero/widgets/paksha_hero_card.dart';
+import 'package:tithi/features/hero/providers/hero_providers.dart';
+import 'package:tithi/features/tithi_sheet/widgets/tithi_detail_sheet.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override

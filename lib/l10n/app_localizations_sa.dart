@@ -733,23 +733,8 @@ class AppLocalizationsSa extends AppLocalizations {
   }
 
   @override
-  String get weatherDetails => 'वातावरणविवरणम्';
-
-  @override
-  String get weatherDataUnavailable => 'वातावरणदत्तांशः अनुपलब्धः';
-
-  @override
   String errorMessage(String error) {
     return 'त्रुटिः: $error';
-  }
-
-  @override
-  String get weatherDataByOpenMeteo =>
-      'Open-Meteo द्वारा प्रदत्तः वातावरणदत्तांशः';
-
-  @override
-  String weatherCondition(String condition) {
-    return 'वातावरणस्थिति: $condition';
   }
 
   @override
@@ -763,21 +748,6 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get moonset => 'चन्द्रास्तः';
-
-  @override
-  String get humidity => 'आर्द्रता';
-
-  @override
-  String get wind => 'वायुः';
-
-  @override
-  String get realFeel => 'अनुभूततापः';
-
-  @override
-  String get uvIndex => 'यूवी सूचकः';
-
-  @override
-  String get forecast => 'पूर्वानुमानम्';
 
   @override
   String daylightDuration(int hours, int minutes) {
@@ -924,6 +894,9 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get searchFestivalsHint => 'उत्सवान् अन्विष्यताम्';
+
+  @override
+  String get closeFestivalSearch => 'अन्वेषणं बन्द कुरु';
 
   @override
   String get couldNotLoadFestivals =>
@@ -1612,11 +1585,6 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get krishnaPakshaInitial => 'कृ';
-
-  @override
-  String windSpeedKph(double speed) {
-    return '$speed कि.मी./घण्टा';
-  }
 
   @override
   String get tithiDisplayThirtyDays => '३० दिनानि';

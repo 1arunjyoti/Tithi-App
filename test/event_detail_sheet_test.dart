@@ -14,8 +14,8 @@ import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/theme/app_typography.dart';
-import 'package:tithi/widgets/event_detail_sheet.dart';
-import 'package:tithi/widgets/tithi_detail_sheet.dart';
+import 'package:tithi/features/event_detail/widgets/event_detail_sheet.dart';
+import 'package:tithi/features/tithi_sheet/widgets/tithi_detail_sheet.dart';
 
 /// Widget-level proof that the Puja Samay card and the paran line render in
 /// the event sheet once the festival's data carries pujaKala / paranRule —

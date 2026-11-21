@@ -5,7 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
 import '../models/festival.dart';
 import '../core/feedback/app_haptics.dart';
-import '../providers/festival_countdown_provider.dart';
+import '../features/countdown/providers/countdown_providers.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_motion.dart';

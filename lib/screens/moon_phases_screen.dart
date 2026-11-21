@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/feedback/app_haptics.dart';
-import '../providers/moon_phase_provider.dart';
+import '../features/moon/providers/moon_providers.dart';
 import '../providers/panchang_provider.dart';
 import '../services/moon_phase_service.dart';
 import '../l10n/app_localizations.dart';
@@ -14,17 +14,6 @@ import '../core/navigation/haptic_back_button.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
-
-/// Scrub offset in days from today for the hero moon. 0 = today.
-final moonScrubOffsetProvider = StateProvider.autoDispose<int>((ref) => 0);
-
-/// Scrub range in days. Panchang month batches are Hive-cached, so stepping
-/// through these dates stays cheap (no per-step ephemeris work).
-const int moonScrubRangeDays = 15;
-
-/// Clamps a scrub offset into the supported range.
-int clampMoonScrubOffset(int value) =>
-    value.clamp(-moonScrubRangeDays, moonScrubRangeDays);
 
 /// Full-screen moon phases view with detailed countdown and upcoming dates
 class MoonPhasesScreen extends ConsumerStatefulWidget {

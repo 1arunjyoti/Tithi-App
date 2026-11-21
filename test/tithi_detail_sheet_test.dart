@@ -18,9 +18,10 @@ import 'package:tithi/services/auspicious_timings.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/services/sunrise_calculator.dart';
 import 'package:tithi/utils/tithi_localization.dart';
-import 'package:tithi/widgets/event_detail_sheet.dart';
+import 'package:tithi/features/event_detail/widgets/event_detail_sheet.dart';
 import 'package:tithi/widgets/festival_row_tile.dart';
-import 'package:tithi/widgets/tithi_detail_sheet.dart';
+import 'package:tithi/features/tithi_sheet/providers/sheet_providers.dart';
+import 'package:tithi/features/tithi_sheet/widgets/tithi_detail_sheet.dart';
 
 /// Clock-time / short-date expectations built with the same formatter the
 /// sheet uses. intl renders the day-period gap as U+202F (narrow no-break

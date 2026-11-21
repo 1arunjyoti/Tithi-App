@@ -28,6 +28,16 @@ String sheetInstantValue(
       '${label ?? formatLocalizedDate(instant, 'MMM d', locale)}';
 }
 
+/// Clock time plus a short Gregorian date when the instant falls outside
+/// [day]. Used by chips and span cards that only need an unambiguous value,
+/// without the async primary-calendar label path in [sheetInstantValue].
+String sheetInstantLabel(DateTime instant, DateTime day, String locale) {
+  final time = formatLocalizedDate(instant, 'jm', locale);
+  return isSameDay(instant, day)
+      ? time
+      : '$time, ${formatLocalizedDate(instant, 'MMM d', locale)}';
+}
+
 /// Time range with a shared day period ("8:27 – 9:59 AM"): the start drops
 /// its own period, matching almanac convention. When the ends fall in
 /// different halves (Nishita spans midnight), both periods are shown

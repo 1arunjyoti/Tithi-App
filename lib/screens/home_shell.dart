@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/navigation/home_tab.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/calendar_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../widgets/animated_tab_layer.dart';

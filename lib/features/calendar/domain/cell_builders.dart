@@ -10,7 +10,7 @@ import '../../../services/hindu_calendar_service.dart';
 import '../data/calendar_caches.dart';
 import '../data/calendar_models.dart';
 
-// Phase 3b: cell builders extracted from widgets/calendar_widget.dart.
+// Phase 3b: cell builders extracted from the former calendar_widget.dart monolith.
 // Pure domain logic parameterized by [Ref]; no widget lifecycle.
 
 // Single date label for [system] (primary or secondary corner label).

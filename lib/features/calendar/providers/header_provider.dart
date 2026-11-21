@@ -7,7 +7,7 @@ import '../../../providers/panchang_provider.dart';
 import '../data/calendar_models.dart';
 import '../domain/header_builders.dart';
 
-// Phase 3c: header provider extracted from widgets/calendar_widget.dart.
+// Phase 3c: header provider extracted from the former calendar_widget.dart monolith.
 // Name and behavior unchanged; the widget re-exports it.
 
 // autoDispose: one tiny HeaderData per visited month; the sync LRU

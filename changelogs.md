@@ -18,6 +18,34 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-22 - 0.9.6+34
+
+### Settings scroll stays smooth while location initializes
+
+The location row's loading spinner no longer makes the Preferences card repaint on every frame, so scrolling settings while the one-shot location read is pending no longer stutters.
+
+- `SettingsSwitchTile` (`lib/widgets/settings_widgets.dart`) wraps its `InlineSpinner` in a `RepaintBoundary`; the animated `CircularProgressIndicator` used to invalidate the enclosing `SettingsGroupCard` boundary and re-rasterize all five rows each tick. No live stream is involved: `locationEnabledProvider` / `currentLocationProvider` are one-shot futures and are cached (`lib/providers/location_provider.dart`).
+- Regression: `test/settings_switch_spinner_test.dart` asserts the boundary sits between the spinner and the tile, and that no spinner is built when the row is idle.
+
+### Location picker opens without transition stutter
+
+Drilling into the map from Settings → Home Location or the home hero's location chip no longer drops frames mid-push.
+
+- `IndiaBoundaryLayer` (`lib/core/location/boundary_overlay.dart`) does the UTF-8 + JSON decode and ring extraction of the 7.5 MB / ~318k-point `assets/map_data/india_boundary.geojson` in a background isolate via `compute`, caches the flat rings for the app's lifetime, and renders an outline-only `PolylineLayer`. The old `GeoJsonLayer.asset` did all of that on the main isolate inside `initState`, which collided with the 300 ms `pushSharedX` animation.
+- `LocationPickerScreen` (`lib/screens/location_picker_screen.dart`) mounts the new layer; both entry paths (`HeroHeader` chip and `HomeLocationSetting`) keep calling `AppRoutes.pushSharedX`, so no navigation behaviour changed.
+- The outline keeps `AppTheme.mapBoundary` at 1.5 px with no fill, and a corrupt bundle yields no boundary rather than throwing during the push.
+- Regression: `test/boundary_overlay_test.dart` locks ring extraction (MultiPolygon + Polygon, holes, degenerate and malformed rings).
+
+## 2026-11-21 - 0.9.6+34
+
+### All Festivals: full-strength featured title, icon-only search
+
+The featured card's festival name now reads as strong as the compact rows, and searching is a tap on an icon in the chip strip instead of a permanent bar above the list.
+
+- `MajorFestivalCard` (`lib/widgets/major_festival_card.dart`) gives the title an explicit `colors.onSurface`; a colourless `AppTypography.ui` inherited `bodyMedium`'s `secondaryInk` and looked muted next to `FestivalRowTile` names. Do not drop that colour again.
+- `AllFestivalsScreen` (`lib/screens/all_festivals_screen.dart`) keeps one body row above the list: `_buildCategoryChips` leads with a search `IconButton`; tapping it swaps in a focused `_buildSearchField` in the same slot, with a single close button. `_closeSearch` cancels the debounce, clears the query and restores the chips, so no stale keystroke can re-filter after exit and no second clear-text X sits beside the dismiss button.
+- Added `closeFestivalSearch` to all four `.arb` files and regenerated `lib/l10n/`; `test/major_festival_card_test.dart` and `test/all_festivals_screen_test.dart` cover the title colour and the icon/field swap.
+
 ## 2026-11-19 - 0.9.5+33
 
 ### Home hero updates in place instead of blanking

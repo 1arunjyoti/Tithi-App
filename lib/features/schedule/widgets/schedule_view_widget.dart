@@ -1,29 +1,23 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
+
 import '../../../l10n/app_localizations.dart';
-import '../../../models/festival.dart';
-import '../../../models/hindu_month_system.dart';
-import '../../../models/panchang_data.dart';
-import '../../../core/feedback/app_haptics.dart';
 import '../../../providers/calendar_provider.dart' as cp;
-import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
+import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
 import '../../../utils/tithi_localization.dart';
-import '../providers/schedule_providers.dart';
-import '../../../features/sheets/sheet_launcher.dart';
-
-export '../providers/schedule_providers.dart'
-    show
-        HinduDateData,
-        ScheduleDateData,
-        hinduDateForScheduleProvider,
-        bengaliDateForScheduleProvider,
-        scheduleDateDataProvider;
+import '../domain/schedule_scroll.dart';
+import 'schedule_date_item.dart';
 
 /// Schedule View Widget - displays events in a vertical scrollable list
 /// similar to Google Calendar's Schedule view.
 /// Uses a CustomScrollView with center key for stable scroll anchoring.
+///
+/// This file owns the scroll shell (anchor day, bidirectional day range,
+/// sticky month header, today FAB). A row is [ScheduleDateItem]; the day's
+/// content is [ScheduleDayContent]; the scroll maths are in
+/// `features/schedule/domain/schedule_scroll.dart`.
 class ScheduleViewWidget extends ConsumerStatefulWidget {
   const ScheduleViewWidget({super.key});
 
@@ -88,24 +82,19 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
     }
 
     // Update visible month based on scroll position - relative to anchor date
-    const estimatedItemHeight = 80.0;
-    final daysOffset = (position.pixels / estimatedItemHeight).round();
-    final visibleDate = _anchorDate.add(Duration(days: daysOffset));
+    final visibleDate = scheduleVisibleDate(_anchorDate, position.pixels);
+    if (!scheduleMonthChanged(_currentVisibleMonth, visibleDate)) return;
 
-    // Only update if month/year changed
-    if (visibleDate.month != _currentVisibleMonth.month ||
-        visibleDate.year != _currentVisibleMonth.year) {
-      setState(() {
-        _currentVisibleMonth = visibleDate;
-      });
+    setState(() {
+      _currentVisibleMonth = visibleDate;
+    });
 
-      // Update focused month provider (for sync with calendar view)
-      Future.microtask(() {
-        if (mounted) {
-          cp.setCalendarMonth(ref, visibleDate);
-        }
-      });
-    }
+    // Update focused month provider (for sync with calendar view)
+    Future.microtask(() {
+      if (mounted) {
+        cp.setCalendarMonth(ref, visibleDate);
+      }
+    });
   }
 
   void _loadMorePastDates() {
@@ -226,16 +215,14 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
                 final daysAgo = index + 1;
                 if (daysAgo > _daysBefore) return null;
 
-                final date = DateTime(
-                  _anchorDate.year,
-                  _anchorDate.month,
-                  _anchorDate.day - daysAgo,
-                );
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.s16,
                   ),
-                  child: _ScheduleDateItem(date: date, isToday: false),
+                  child: ScheduleDateItem(
+                    date: scheduleDayAt(_anchorDate, -daysAgo),
+                    isToday: false,
+                  ),
                 );
               }, childCount: _daysBefore),
             ),
@@ -248,7 +235,7 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
                   horizontal: AppSpacing.s16,
                   vertical: AppSpacing.s8,
                 ),
-                child: _ScheduleDateItem(date: _anchorDate, isToday: true),
+                child: ScheduleDateItem(date: _anchorDate, isToday: true),
               ),
             ),
 
@@ -259,16 +246,14 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
                 final daysAhead = index + 1;
                 if (daysAhead > _daysAfter) return null;
 
-                final date = DateTime(
-                  _anchorDate.year,
-                  _anchorDate.month,
-                  _anchorDate.day + daysAhead,
-                );
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppSpacing.s16,
                   ),
-                  child: _ScheduleDateItem(date: date, isToday: false),
+                  child: ScheduleDateItem(
+                    date: scheduleDayAt(_anchorDate, daysAhead),
+                    isToday: false,
+                  ),
                 );
               }, childCount: _daysAfter),
             ),
@@ -351,500 +336,6 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Individual date item in the schedule view
-class _ScheduleDateItem extends ConsumerWidget {
-  final DateTime date;
-  final bool isToday;
-
-  const _ScheduleDateItem({required this.date, required this.isToday});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dateDataAsync = ref.watch(scheduleDateDataProvider(date));
-
-    return dateDataAsync.when(
-      data: (dateData) => _buildDateRow(context, ref, dateData),
-      loading: () => _buildLoadingRow(context),
-      error: (error, _) => _buildErrorRow(context, error),
-    );
-  }
-
-  Widget _buildDateRow(
-    BuildContext context,
-    WidgetRef ref,
-    ScheduleDateData dateData,
-  ) {
-    final panchang = dateData.panchang;
-    // Cached formatters via the shared helper: constructing three
-    // DateFormats per row per build janks scrolling (dozens of rows), and
-    // the helper also honors the UI locale (these were English-only).
-    final locale = Localizations.localeOf(context).languageCode;
-    final gregorianMonth = formatLocalizedDate(date, 'MMM', locale);
-    final gregorianDay = formatLocalizedDate(date, 'd', locale);
-    final weekday = formatLocalizedDate(date, 'EEE', locale);
-
-    final hasEvents = panchang.hasFestivals;
-    final bengaliDate = dateData.bengaliDate;
-    final hinduDate = dateData.hinduDate;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
-      decoration: isToday
-          ? BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.tile),
-              border: Border.all(
-                color: context.colors.primary.withValues(alpha: 0.5),
-                width: 2,
-              ),
-            )
-          : null,
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date Column (Left side)
-            _buildDateColumn(
-              context,
-              ref,
-              gregorianMonth.toUpperCase(),
-              gregorianDay,
-              weekday,
-              panchang,
-              bengaliDate,
-              hinduDate,
-            ),
-
-            // Vertical divider
-            Container(
-              width: 1,
-              color: context.colors.onSurface.withValues(alpha: 0.1),
-              margin: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-            ),
-
-            // Events Column (Right side)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.s12),
-                child: hasEvents
-                    ? _buildEventsList(context, ref, panchang)
-                    : _buildPanchangOnly(context, ref, panchang),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDateColumn(
-    BuildContext context,
-    WidgetRef ref,
-    String gregorianMonth,
-    String gregorianDay,
-    String weekday,
-    PanchangData panchang,
-    ({int day, String month, int year})? bengaliDate,
-    HinduDateData? hinduDate,
-  ) {
-    final primarySystem = ref.watch(cp.primaryCalendarSystemProvider);
-    final secondarySystem = ref.watch(cp.secondaryCalendarSystemProvider);
-    // Display settings for the panchang-data fallback below (Amanta values
-    // converted at render; Shukla days are identical in both systems).
-    final monthSystem = ref.watch(cp.hinduMonthSystemProvider);
-    final tithiMode = ref.watch(cp.tithiDisplayModeProvider);
-
-    // Determine what to show based on primary calendar system
-    String primaryMonth;
-    String primaryDay;
-    String? secondaryText;
-
-    if (primarySystem == cp.AppCalendarSystem.bengali) {
-      // Bengali as primary: show Bengali month and day
-      if (bengaliDate != null) {
-        primaryMonth = bengaliDate.month
-            .substring(0, bengaliDate.month.length.clamp(0, 4))
-            .toUpperCase();
-        primaryDay = '${bengaliDate.day}';
-      } else {
-        // Fallback to Gregorian if Bengali calculation not ready
-        primaryMonth = gregorianMonth;
-        primaryDay = gregorianDay;
-      }
-
-      // Show secondary based on selection
-      if (secondarySystem == cp.AppCalendarSystem.gregorian) {
-        secondaryText = '$gregorianMonth $gregorianDay';
-      } else if (secondarySystem == cp.AppCalendarSystem.hindu &&
-          hinduDate != null) {
-        secondaryText = '${hinduDate.paksha[0]}${hinduDate.day}';
-      }
-    } else if (primarySystem == cp.AppCalendarSystem.hindu) {
-      // Hindu as primary: show masa and tithi with proper settings
-      if (hinduDate != null) {
-        primaryMonth = hinduDate.month
-            .split(' ')
-            .last
-            .substring(0, hinduDate.month.split(' ').last.length.clamp(0, 4))
-            .toUpperCase();
-        primaryDay = '${hinduDate.day}';
-      } else {
-        // Fallback to panchang data (Amanta) with display settings applied.
-        final fallbackMasa = displayMasaName(
-          panchang.masa,
-          panchang.paksha,
-          monthSystem,
-        );
-        primaryMonth = panchang.masa.isNotEmpty
-            ? fallbackMasa
-                  .replaceAll('_', ' ')
-                  .split(' ')
-                  .last
-                  .substring(0, fallbackMasa.split('_').last.length.clamp(0, 4))
-                  .toUpperCase()
-            : gregorianMonth;
-        primaryDay =
-            '${tithiMode == cp.TithiDisplayMode.continuous30 ? panchang.tithiIndex : panchang.tithiNumber}';
-      }
-
-      // Show secondary based on selection
-      if (secondarySystem == cp.AppCalendarSystem.gregorian) {
-        secondaryText = '$gregorianMonth $gregorianDay';
-      } else if (secondarySystem == cp.AppCalendarSystem.bengali &&
-          bengaliDate != null) {
-        secondaryText =
-            '${bengaliDate.month.substring(0, 3)} ${bengaliDate.day}';
-      }
-    } else {
-      // Gregorian as primary
-      primaryMonth = gregorianMonth;
-      primaryDay = gregorianDay;
-
-      // Show secondary based on selection
-      if (secondarySystem == cp.AppCalendarSystem.hindu && hinduDate != null) {
-        // Show paksha initial + tithi number with month abbr
-        final pakshaInitial = hinduDate.paksha == 'Shukla' ? 'श' : 'क';
-        secondaryText =
-            '${hinduDate.month.substring(0, 3)} $pakshaInitial${hinduDate.day}';
-      } else if (secondarySystem == cp.AppCalendarSystem.bengali &&
-          bengaliDate != null) {
-        // Show Bengali date as secondary
-        secondaryText =
-            '${bengaliDate.month.substring(0, 3)} ${bengaliDate.day}';
-      }
-    }
-
-    final hasSecondary = secondaryText != null;
-
-    return Container(
-      width: hasSecondary ? 75 : 60,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.s12,
-        horizontal: AppSpacing.s8,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            primaryMonth,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: isToday ? context.colors.primary : context.secondaryInk,
-              fontWeight: AppTypography.semibold,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            primaryDay,
-            style: context.textTheme.headlineMedium?.copyWith(
-              color: isToday
-                  ? context.colors.primary
-                  : context.colors.onSurface,
-              fontWeight: AppTypography.bold,
-              fontSize: AppTypography.sizeDisplay,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.s2),
-          Text(
-            weekday,
-            style: context.textTheme.labelSmall?.copyWith(
-              color: isToday ? context.colors.primary : context.hintInk,
-            ),
-          ),
-          // Secondary calendar info
-          if (hasSecondary) ...[
-            const SizedBox(height: AppSpacing.s4),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.s4,
-                vertical: AppSpacing.s2,
-              ),
-              decoration: BoxDecoration(
-                color: context.colors.secondary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppRadius.small),
-              ),
-              child: Text(
-                secondaryText,
-                style: context.textTheme.labelSmall?.copyWith(
-                  color: context.colors.secondary,
-                  fontSize: AppTypography.sizeMicro,
-                  fontWeight: AppTypography.medium,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEventsList(
-    BuildContext context,
-    WidgetRef ref,
-    PanchangData panchang,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Panchang summary row
-        _buildPanchangSummaryRow(context, panchang),
-        // Sunrise/Sunset times
-        _buildSunTimesRow(context, panchang),
-        const SizedBox(height: AppSpacing.s8),
-        // Festival cards
-        ...panchang.festivals.map(
-          (festival) => _buildFestivalCard(context, ref, festival, panchang),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPanchangOnly(
-    BuildContext context,
-    WidgetRef ref,
-    PanchangData panchang,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildPanchangSummaryRow(context, panchang),
-        _buildSunTimesRow(context, panchang),
-      ],
-    );
-  }
-
-  Widget _buildPanchangSummaryRow(BuildContext context, PanchangData panchang) {
-    final isShukla = panchang.isShukla;
-
-    return Row(
-      children: [
-        Icon(
-          isShukla ? Icons.brightness_high_rounded : Icons.nights_stay_rounded,
-          size: AppIconSize.small,
-          color: context.colors.primary.withValues(alpha: 0.7),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        Expanded(
-          child: Text(
-            '${panchang.paksha} ${panchang.tithiName}',
-            style: context.textTheme.bodyMedium?.copyWith(
-              color: context.secondaryInk,
-            ),
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s2,
-          ),
-          decoration: BoxDecoration(
-            color: context.colors.primary.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(AppRadius.chip),
-          ),
-          child: Text(
-            '${panchang.tithiNumber}',
-            style: context.textTheme.labelSmall?.copyWith(
-              color: context.colors.primary,
-              fontWeight: AppTypography.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Builds sunrise/sunset time row
-  Widget _buildSunTimesRow(BuildContext context, PanchangData panchang) {
-    final l10n = AppLocalizations.of(context)!;
-    final locale = l10n.localeName;
-
-    if (panchang.sunrise == null && panchang.sunset == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.s6),
-      child: Row(
-        children: [
-          if (panchang.sunrise != null) ...[
-            Semantics(
-              label: l10n.sunrise,
-              child: Icon(
-                Icons.wb_sunny_outlined,
-                size: AppIconSize.inline,
-                color: context.secondaryInk,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            Text(
-              '${l10n.sunrise}: ${formatLocalizedDate(panchang.sunrise!, 'h:mm a', locale)}',
-              style: context.textTheme.labelSmall?.copyWith(
-                color: context.secondaryInk,
-              ),
-            ),
-          ],
-          if (panchang.sunrise != null && panchang.sunset != null)
-            const SizedBox(width: AppSpacing.s12),
-          if (panchang.sunset != null) ...[
-            Semantics(
-              label: l10n.sunset,
-              child: Icon(
-                Icons.nightlight_round,
-                size: AppIconSize.inline,
-                color: context.secondaryInk,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s4),
-            Text(
-              '${l10n.sunset}: ${formatLocalizedDate(panchang.sunset!, 'h:mm a', locale)}',
-              style: context.textTheme.labelSmall?.copyWith(
-                color: context.secondaryInk,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFestivalCard(
-    BuildContext context,
-    WidgetRef ref,
-    Festival festival,
-    PanchangData panchang,
-  ) {
-    final isMajor = festival.category == 'major';
-
-    return GestureDetector(
-      onTap: () {
-        AppHaptics.tap(ref);
-        _showFestivalDetail(context, festival, panchang);
-      },
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: AppSpacing.s8),
-        padding: const EdgeInsets.all(AppSpacing.s12),
-        decoration: AppTheme.glassmorphism(
-          context: context,
-          opacity: isMajor ? 0.25 : 0.15,
-          borderRadius: AppRadius.dense,
-          ref: ref,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 4,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isMajor
-                    ? context.colors.primary
-                    : context.colors.secondary,
-                borderRadius: BorderRadius.circular(AppRadius.micro),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    festival.name,
-                    style: context.textTheme.bodyLarge?.copyWith(
-                      fontWeight: AppTypography.semibold,
-                    ),
-                  ),
-                  if (festival.description.isNotEmpty)
-                    Text(
-                      festival.description,
-                      style: context.textTheme.bodySmall?.copyWith(
-                        color: context.secondaryInk,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                ],
-              ),
-            ),
-            Icon(
-              isMajor ? Icons.celebration_rounded : Icons.event_rounded,
-              size: AppIconSize.medium,
-              color: context.colors.primary.withValues(alpha: 0.7),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showFestivalDetail(
-    BuildContext context,
-    Festival festival,
-    PanchangData panchang,
-  ) {
-    showEventDetailSheet(context, festival: festival, panchang: panchang);
-  }
-
-  Widget _buildLoadingRow(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: context.colors.onSurface.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.s16),
-          Expanded(
-            child: Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.colors.onSurface.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorRow(BuildContext context, Object error) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.s8),
-      padding: const EdgeInsets.all(AppSpacing.s16),
-      child: Text(
-        'Error: $error',
-        style: TextStyle(color: context.colors.error),
       ),
     );
   }

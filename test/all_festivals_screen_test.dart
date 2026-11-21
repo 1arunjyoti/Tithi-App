@@ -8,11 +8,13 @@ import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:tithi/core/navigation/home_tab.dart';
 import 'package:tithi/features/countdown/domain/target_resolution.dart'
-    show collectRecurringOccurrences;
+    show DatedFestival, collectRecurringOccurrences, sortDatedFestivals;
 import 'package:tithi/models/festival.dart';
+import 'package:tithi/models/festival_filter.dart';
 import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
+import 'package:tithi/providers/festival_occurrences_provider.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/widgets/major_festival_card.dart';
@@ -718,6 +720,8 @@ void main() {
       // Search composes with the active filter: no vrat named "beta" among
       // the major-only rows would show if the filter were ignored.
       await applyFilters(tester, category: 'Vrat');
+      await tester.tap(find.byKey(AllFestivalsScreen.searchButtonKey));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'beta');
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
@@ -787,17 +791,24 @@ void main() {
         ],
       );
 
-      // Act
+      // Act: search is behind an icon, no permanent field on screen.
+      expect(find.byType(TextField), findsNothing);
+      await tester.tap(find.byKey(AllFestivalsScreen.searchButtonKey));
+      await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'beta');
+      // Flush the 250ms search debounce, then settle the filtered list.
+      await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
 
-      // Assert
+      // Assert: one dismiss button only — no separate clear-text X beside it.
       expect(find.text('Beta Vrat'), findsOneWidget);
       expect(find.text('Alpha Puja'), findsNothing);
+      expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.clear_rounded), findsNothing);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('category chips sit under the search field and start on All', (
+    testWidgets('search icon shares the chip strip and closing restores it', (
       tester,
     ) async {
       // Arrange
@@ -809,13 +820,12 @@ void main() {
         ],
       );
 
-      // Assert: the strip is the search field's sibling, directly below it.
+      // Assert: no permanent search bar; the strip owns the single body row
+      // and carries a leading search icon.
+      expect(find.byType(TextField), findsNothing);
       final strip = find.byKey(AllFestivalsScreen.categoryChipsKey);
       expect(strip, findsOneWidget);
-      expect(
-        tester.getTopLeft(strip).dy,
-        greaterThanOrEqualTo(tester.getBottomLeft(find.byType(TextField)).dy),
-      );
+      expect(find.byKey(AllFestivalsScreen.searchButtonKey), findsOneWidget);
 
       // Every category filter, in enum order, including the curated Featured.
       const labels = ['All', 'Major', 'Vrat', 'Recurring', 'Featured'];
@@ -837,6 +847,17 @@ void main() {
           isFalse,
         );
       }
+
+      // Tapping search replaces the strip with a focused field; closing it
+      // gives the row back to the chips.
+      await tester.tap(find.byKey(AllFestivalsScreen.searchButtonKey));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsOneWidget);
+      expect(strip, findsNothing);
+      await tester.tap(find.byIcon(Icons.close_rounded));
+      await tester.pumpAndSettle();
+      expect(find.byType(TextField), findsNothing);
+      expect(strip, findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

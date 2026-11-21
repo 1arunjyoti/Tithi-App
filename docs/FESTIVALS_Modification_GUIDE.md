@@ -230,7 +230,7 @@ external reference.
     `test/festival_image_assets_test.dart` fails on non-WebP, oversized, or
     unreferenced files, so CI catches what the script wasn't run on.
     `theme_color` is ignored by the event sheet (always app primary, per the
-    comment in `lib/widgets/event_detail_sheet.dart`); the entries carrying
+    comment in `lib/features/event_detail/widgets/event_detail_sheet.dart`); the entries carrying
     hex values are inert documentation for future surfaces — leave new
     entries `""`.
 6. **Empty sections are data, not bugs:** fasting/rituals/mantra blocks
@@ -767,7 +767,7 @@ this is where each piece lives — add new surfaces here, never around it:
   `lib/services/festival_matching_pipeline.dart` (single source of truth).
 - UI: month grid + single-day-from-month-map (`lib/providers/panchang_provider.dart`;
   single-day never matches independently), calendar dots
-  (`calendar_widget.dart` reads the filtered flag map).
+  (`features/calendar/domain/cell_builders.dart` reads the filtered flag map).
 - Occurrence scanners: `findNextFestivalOccurrence` in
   `lib/services/panchang/panchang_service.dart` (decision helpers shared with
   the provider) - feeds countdown, search, export.

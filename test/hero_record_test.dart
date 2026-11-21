@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/models/panchang_data.dart';
-import 'package:tithi/widgets/paksha_hero_card.dart';
+import 'package:tithi/features/hero/widgets/paksha_hero_card.dart';
 
 /// What the hero paints while its live record reloads.
 ///

@@ -12,7 +12,7 @@ import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
-import 'package:tithi/providers/moon_phase_provider.dart';
+import 'package:tithi/features/moon/providers/moon_providers.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/screens/moon_phases_screen.dart';
 import 'package:tithi/services/moon_phase_service.dart';

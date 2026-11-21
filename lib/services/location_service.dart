@@ -80,8 +80,7 @@ enum PlaceSearchError {
 
 /// Result of [LocationService.searchPlaces].
 ///
-/// Sealed so callers must handle the failure variant, matching the
-/// `WeatherResult` pattern used elsewhere in the app.
+/// Sealed so callers must handle the failure variant.
 sealed class PlaceSearchOutcome {
   const PlaceSearchOutcome();
 }

@@ -998,14 +998,6 @@
       }
     }
   },
-  "weatherDetails": "Weather Details",
-  "@weatherDetails": {
-    "description": "Weather bottom sheet title"
-  },
-  "weatherDataUnavailable": "Weather data unavailable",
-  "@weatherDataUnavailable": {
-    "description": "Shown when weather service returns no data"
-  },
   "errorMessage": "Error: {error}",
   "@errorMessage": {
     "description": "Generic error message with details",
@@ -1013,20 +1005,6 @@
       "error": {
         "type": "String",
         "example": "Network timeout"
-      }
-    }
-  },
-  "weatherDataByOpenMeteo": "Weather data by Open-Meteo",
-  "@weatherDataByOpenMeteo": {
-    "description": "Credit text for weather source"
-  },
-  "weatherCondition": "Weather condition: {condition}",
-  "@weatherCondition": {
-    "description": "Accessibility label for weather icon",
-    "placeholders": {
-      "condition": {
-        "type": "String",
-        "example": "Partly cloudy"
       }
     }
   },
@@ -1045,26 +1023,6 @@
   "moonset": "Moonset",
   "@moonset": {
     "description": "Label for moonset time"
-  },
-  "humidity": "Humidity",
-  "@humidity": {
-    "description": "Weather metric label"
-  },
-  "wind": "Wind",
-  "@wind": {
-    "description": "Weather metric label"
-  },
-  "realFeel": "Real Feel",
-  "@realFeel": {
-    "description": "Weather metric label for feels-like temperature"
-  },
-  "uvIndex": "UV Index",
-  "@uvIndex": {
-    "description": "Weather metric label"
-  },
-  "forecast": "Forecast",
-  "@forecast": {
-    "description": "Weather forecast section title"
   },
   "daylightDuration": "Daylight: {hours}h {minutes}m",
   "@daylightDuration": {
@@ -1266,6 +1224,10 @@
   "searchFestivalsHint": "Search festivals",
   "@searchFestivalsHint": {
     "description": "Hint text for festival search field"
+  },
+  "closeFestivalSearch": "Close search",
+  "@closeFestivalSearch": {
+    "description": "Tooltip for the button that closes the festival search field"
   },
   "couldNotLoadFestivals": "Could not load festivals. Please try again.",
   "@couldNotLoadFestivals": {
@@ -2025,13 +1987,6 @@
   "@shuklaPakshaInitial": { "description": "Single-letter Shukla Paksha marker in the schedule view" },
   "krishnaPakshaInitial": "K",
   "@krishnaPakshaInitial": { "description": "Single-letter Krishna Paksha marker in the schedule view" },
-  "windSpeedKph": "{speed} kph",
-  "@windSpeedKph": {
-    "description": "Wind speed in kilometers per hour in the weather sheet",
-    "placeholders": {
-      "speed": { "type": "double", "example": "12.5" }
-    }
-  },
   "tithiDisplayThirtyDays": "30 Days",
   "@tithiDisplayThirtyDays": {
     "description": "Continuous 30-day tithi display mode label"

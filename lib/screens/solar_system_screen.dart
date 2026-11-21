@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../features/solar_system/widgets/solar_system_painter.dart';
 import '../l10n/app_localizations.dart';
 import '../core/anim/press_scale.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../utils/tithi_localization.dart';
 import '../providers/planetary_view_provider.dart';
 import '../services/planetary_view_service.dart';
-import '../widgets/solar_system_painter.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/page_scaffold.dart';
 import '../widgets/state_views.dart';

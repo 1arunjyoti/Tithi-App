@@ -9,7 +9,7 @@ import '../data/calendar_caches.dart';
 import '../data/calendar_models.dart';
 import '../domain/cell_builders.dart';
 
-// Phase 3b: month cell providers extracted from widgets/calendar_widget.dart.
+// Phase 3b: month cell providers extracted from the former calendar_widget.dart monolith.
 // Names and args are unchanged so existing watchers keep working; the widget
 // re-exports this file.
 

@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_geojson2/flutter_map_geojson2.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,6 +16,7 @@ import '../theme/app_typography.dart';
 import '../app/bootstrap.dart';
 import '../providers/location_provider.dart';
 import '../services/location_service.dart';
+import '../core/location/boundary_overlay.dart';
 import '../core/location/location_defaults.dart';
 import '../widgets/app_divider.dart';
 import '../widgets/page_scaffold.dart';
@@ -501,15 +501,9 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                 userAgentPackageName: 'app.tithi.pro',
                 tileProvider: _tileProvider,
               ),
-              GeoJsonLayer.asset(
-                'assets/map_data/india_boundary.geojson',
-                styleDefaults: const GeoJsonStyleDefaults(
-                  strokeColor: AppTheme.mapBoundary,
-                  strokeWidth: 1.5,
-                  fillColor: Colors.transparent,
-                  fillOpacity: 0.0,
-                ),
-              ),
+              // Boundary decode + geometry build run in a background isolate
+              // so this screen's push stays smooth (see boundary_overlay.dart).
+              const IndiaBoundaryLayer(),
             ],
           ),
 

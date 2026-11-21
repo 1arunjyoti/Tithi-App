@@ -11,14 +11,15 @@ import 'package:tithi/providers/festival_provider.dart';
 import 'package:tithi/services/location_service.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/panchang_provider.dart';
-import 'package:tithi/providers/festival_countdown_provider.dart';
-import 'package:tithi/providers/moon_phase_provider.dart';
+import 'package:tithi/features/countdown/providers/countdown_providers.dart';
+import 'package:tithi/features/moon/providers/moon_providers.dart';
 import 'package:tithi/providers/home_widget_provider.dart';
 import 'package:tithi/services/moon_phase_service.dart';
-import 'package:tithi/widgets/calendar_widget.dart';
-import 'package:tithi/widgets/daily_quote_widget.dart';
+import 'package:tithi/features/calendar/data/calendar_models.dart';
+import 'package:tithi/features/calendar/providers/cell_providers.dart';
+import 'package:tithi/features/quote/providers/quote_providers.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
-import 'package:tithi/widgets/paksha_hero_card.dart';
+import 'package:tithi/features/hero/providers/hero_providers.dart';
 
 /// LocationService without native dependencies (GetStorage/Geolocator).
 /// The real init() never completes under flutter_test's FakeAsync clock and
@@ -150,7 +151,7 @@ void main() {
           panchangWidgetSyncProvider.overrideWith((ref) {}),
           // Calendar grid + neighbor precache otherwise run FFI cell builds
           // that never resolve under flutter_test (pending timer at
-          // calendar_widget.dart _scheduleAdjacentPrecache → "Timer is still
+          // calendar_precache.dart scheduleAdjacentPrecache → "Timer is still
           // pending" post-test failure). Empty cells are fine: this test
           // only asserts the app chrome renders.
           gregorianCalendarCellDataProvider.overrideWith(
@@ -162,7 +163,7 @@ void main() {
     );
     await tester.pump();
     // Keep total fake time under the calendar neighbor-precache delay
-    // (800ms, calendar_widget.dart _scheduleAdjacentPrecache): at 6x100ms =
+    // (800ms, calendar_precache.dart scheduleAdjacentPrecache): at 6x100ms =
     // 600ms the delayed precache never fires, so no pending timer survives
     // to fail post-test verification. 6 frames still settle the 350ms moon
     // tween, 250ms AnimatedSize and 180ms switchers with margin.
@@ -174,7 +175,7 @@ void main() {
     expect(find.text('Tithi'), findsOneWidget);
 
     // Drain the calendar neighbor-precache delay (800ms,
-    // calendar_widget.dart _scheduleAdjacentPrecache): it is scheduled on a
+    // calendar_precache.dart scheduleAdjacentPrecache): it is scheduled on a
     // post-frame callback, so merely staying under 800ms still leaves it
     // pending at dispose ("Timer is still pending"). Pumping past it with
     // every provider above mocked lets its async body resolve instantly and

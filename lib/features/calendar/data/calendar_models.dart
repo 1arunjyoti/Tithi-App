@@ -1,4 +1,4 @@
-// Phase 3b: calendar cell models extracted from widgets/calendar_widget.dart
+// Phase 3b: calendar cell models extracted from the former calendar_widget.dart monolith
 // (_CalendarCellData / _AdaptiveCalendarData, made public). The widget
 // re-exports these so existing grid code keeps working during migration.
 class CalendarCellData {
