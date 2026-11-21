@@ -18,6 +18,16 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-19 - 0.9.5+33
+
+### Home hero updates in place instead of blanking
+
+Returning to the app after a long suspend (or a place change) no longer makes the hero fade its text out and back in before showing the same day.
+
+- `heroRecordFor` (`lib/widgets/paksha_hero_card.dart`) keeps painting the live record's previous value while it reloads, so `resolved` - and the `_HeroBody` content key `(date, resolved)` - does not flip to false. Riverpod reports a dependency rebuild as `AsyncLoading(isReloading)`, and the old `panchangAsync.when` took its `loading` branch because `skipLoadingOnReload` defaults to false; the fallback body re-keyed the switcher, which drops the old child and fades the new one in from transparent (~180ms of empty hero, again when the record landed).
+- `AsyncError` still yields to the month-batch/last-visited cache, and `_TrueColdHeroPlaceholder` (extracted from the old inline fallback) now only appears when neither a live nor a cached record exists.
+- Regression: `test/hero_record_test.dart` (reloading state keeps the previous record and stays `resolved`).
+
 ## 2026-11-17 - 0.9.1+31
 
 ### All Festivals shows any year, not just the current one

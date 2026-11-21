@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart' show listEquals;
+import 'package:flutter/foundation.dart' show listEquals, visibleForTesting;
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -115,10 +115,11 @@ class PakshaHeroCard extends ConsumerWidget {
     final panchangAsync = ref.watch(livePanchangProvider(day));
     final cityAsync = ref.watch(cityNameProvider);
     final primarySystem = ref.watch(primaryCalendarSystemProvider);
+    final cachedDay = cachedPanchangUiSync(day);
     final adaptiveGridHasDay =
         (primarySystem == AppCalendarSystem.hindu ||
             primarySystem == AppCalendarSystem.bengali) &&
-        cachedPanchangUiSync(day) != null;
+        cachedDay != null;
     // The adaptive calendar has already resolved this date and its nearby
     // event-list window. Do not launch a duplicate Gregorian-month batch
     // merely to provide a fallback the shared cache can provide instantly.
@@ -126,49 +127,13 @@ class PakshaHeroCard extends ConsumerWidget {
         ? const AsyncValue<Map<DateTime, PanchangData>>.loading()
         : ref.watch(monthlyPanchangProvider(DateTime(day.year, day.month)));
 
-    Widget fallback() {
-      // Month data first, then last-visited stale. True-cold (fresh restart:
-      // both caches empty) reserves roughly the hero's full height with a
-      // gradient-tinted placeholder instead of a 76px stub — so the cards
-      // below never move when the real hero resolves, and its arrival reads
-      // as loading → content (fade + size glide) rather than appearing from
-      // nowhere. Any residual height difference still glides via the
-      // AnimatedSize below.
-      final cached = monthAsync.valueOrNull?[day] ?? cachedPanchangUiSync(day);
-      if (cached != null) {
-        return _HeroBody(
-          panchang: cached,
-          cityName: cityAsync.valueOrNull,
-          isToday: isToday,
-          resolved: false,
-        );
-      }
-      final highContrast = AppTheme.highContrastOf(context);
-      // Neutral block with festival-row-style placeholder bars (same look as
-      // the Festivals & Events loading skeleton) so a slow cold load reads
-      // as loading content rather than a spinner or a black hole.
-      Widget bar() => const SkeletonBox(height: 76);
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
-        height: _trueColdSkeletonHeight,
-        padding: const EdgeInsets.all(AppSpacing.s16),
-        decoration: BoxDecoration(
-          color: context.colors.onSurface.withValues(
-            alpha: highContrast ? 0.14 : 0.08,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.card),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            bar(),
-            const SizedBox(height: AppSpacing.s10),
-            bar(),
-          ],
-        ),
-      );
-    }
+    // Month data first, then last-visited stale, then — only on a true cold
+    // start (fresh restart: both caches empty) — the placeholder that
+    // reserves the resolved card's height.
+    final shown = heroRecordFor(
+      live: panchangAsync,
+      cached: monthAsync.valueOrNull?[day] ?? cachedDay,
+    );
 
     // Resize behavior on date taps: the swapped day can add/drop the
     // artwork column and the chips row, so the card height changes. That
@@ -190,16 +155,74 @@ class PakshaHeroCard extends ConsumerWidget {
         // mounted across date taps. Only the true-cold skeleton (a plain
         // Container) cross-fades by type. Day text animates in the content
         // switcher inside _HeroBody, so the background never flashes.
-        child: panchangAsync.when(
-          data: (panchang) => _HeroBody(
-            panchang: panchang,
-            cityName: cityAsync.valueOrNull,
-            isToday: isToday,
-            resolved: true,
-          ),
-          loading: fallback,
-          error: (_, _) => fallback(),
+        child: shown == null
+            ? const _TrueColdHeroPlaceholder()
+            : _HeroBody(
+                panchang: shown.record,
+                cityName: cityAsync.valueOrNull,
+                isToday: isToday,
+                resolved: shown.resolved,
+              ),
+      ),
+    );
+  }
+}
+
+/// The record the hero paints, and whether it is the fully resolved live one.
+///
+/// The last live record wins over both caches, even while a reload is in
+/// flight (resume after a suspend, place change, midnight re-sync). Riverpod
+/// keeps it as the previous value on reload, and re-painting it is what keeps
+/// the card still: falling back to the cached record would flip [resolved] to
+/// false, re-key the content switcher in [_HeroBody] and blank-fade the whole
+/// hero for ~180ms twice on every resume — the "card freezes, then updates"
+/// glitch. An error is the only state that reads as no live record, so a
+/// broken day still yields to the cache.
+///
+/// [cached] is the month-batch entry or the last-visited UI cache; when the
+/// live record is absent (true cold start) it gives the hero something to
+/// paint while the day resolves.
+@visibleForTesting
+({PanchangData record, bool resolved})? heroRecordFor({
+  required AsyncValue<PanchangData> live,
+  required PanchangData? cached,
+}) {
+  final liveRecord = live.hasError ? null : live.valueOrNull;
+  final record = liveRecord ?? cached;
+  if (record == null) return null;
+  return (record: record, resolved: liveRecord != null);
+}
+
+/// True-cold placeholder: neutral block with festival-row-style bars (same
+/// look as the Festivals & Events loading skeleton) so a slow first load
+/// reads as loading content rather than a spinner or a black hole. It
+/// reserves roughly the resolved card's height (see
+/// [_trueColdSkeletonHeight]) so the cards below never shift on arrival.
+class _TrueColdHeroPlaceholder extends StatelessWidget {
+  const _TrueColdHeroPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final highContrast = AppTheme.highContrastOf(context);
+    Widget bar() => const SkeletonBox(height: 76);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.homeCardGutter),
+      height: _trueColdSkeletonHeight,
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      decoration: BoxDecoration(
+        color: context.colors.onSurface.withValues(
+          alpha: highContrast ? 0.14 : 0.08,
         ),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          bar(),
+          const SizedBox(height: AppSpacing.s10),
+          bar(),
+        ],
       ),
     );
   }
