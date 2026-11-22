@@ -26,6 +26,41 @@ class AppLocalizationsHi extends AppLocalizations {
       'चुने गए वर्ष में प्रत्येक त्योहार का पहला आयोजन';
 
   @override
+  String get exportFestivalsCalendar => 'Google Calendar में जोड़ें (.ics)';
+
+  @override
+  String get exportFestivalsCalendarSubtitle =>
+      'त्योहारों की तारीखें ऐसी कैलेंडर फ़ाइल में सहेजें जिसे आयात कर सकें';
+
+  @override
+  String get exportJsonYearSheetSubtitle =>
+      'एक वर्ष चुनें। फिर JSON फ़ाइल सहेजने का स्थान चुनेंगे।';
+
+  @override
+  String get exportCalendarYearSheetSubtitle =>
+      'एक वर्ष चुनें। फिर Google Calendar के लिए .ics फ़ाइल सहेजने का स्थान चुनेंगे।';
+
+  @override
+  String exportYearAction(String year) {
+    return '$year निर्यात करें';
+  }
+
+  @override
+  String festivalCalendarShareSubject(String year) {
+    return 'Tithi त्योहार $year (Calendar)';
+  }
+
+  @override
+  String festivalCalendarShareText(String year) {
+    return 'Tithi के $year के त्योहारों की तारीखें Google Calendar में आयात करें (.ics)';
+  }
+
+  @override
+  String festivalsExportedToCalendar(int count, String year) {
+    return '$year के $count त्योहार कैलेंडर में निर्यात किए गए।';
+  }
+
+  @override
   String get vedaCalendar => 'वैदिक पंचांग';
 
   @override

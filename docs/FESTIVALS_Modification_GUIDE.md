@@ -73,7 +73,7 @@ its day with others and needs an explicit order (see Display Priority).
 `["all"]`; only set it for festivals rooted in specific zones (see
 Festival Region). `featured` (top-level, sibling of `id`) is optional and
 marks a flagship for the All Festivals featured card (see Featured Flag).
-`category` in use: `major` (96 entries), `vrat` (12),
+`category` in use: `major` (94 entries), `vrat` (31),
 `recurring` (2) - the sheet shows fasting/rituals/mantra sections only
 when those fields are non-empty, so an entry with empty
 `steps`/`mantra`/`fasting` renders fewer sections by design, not by bug.
@@ -82,7 +82,8 @@ when those fields are non-empty, so an entry with empty
 drive filtering, headlines, and yearly-list repetition. The vrat list is
 `category == 'vrat'` OR
 `recurring == true` (`vratProvider` in `lib/providers/festival_provider.dart`;
-today that is the two Ekadashi vrats plus `purnima`/`amavasya`), the major
+today that is the 24 named Ekadashis, the two Adhika-Ekadashis and
+`purnima`/`amavasya`), the major
 list is `category == 'major'`, and the day headline falls back to the
 first `major` only when no `displayPriority` rank is present (see Display
 Priority). So tagging a monthly vrat `recurring: true` controls which tab
@@ -257,16 +258,22 @@ external reference.
 
 ### Recurring Vrat (Monthly)
 
+Wildcards are for a genuinely generic monthly vrat, not for Ekadashi —
+each of the 24 named Ekadashis carries its own Amanta `masa` and `paksha`
+(`dominant_tithi: "strict"`, `vriddhi: "first"`,
+`paranRule: "dwadashi_window"`), and a leap year's two extra Ekadashis use
+`masa: "Adhika_Jyeshtha"`.
+
 ```json
 {
-  "id": "ekadashi",
-  "name": "Ekadashi",
-  "category": "vrat",
+  "id": "purnima",
+  "name": "Purnima (Full Moon)",
+  "category": "recurring",
   "panchang_rules": {
     "masa": "*",
-    "paksha": "*",
-    "tithi": 11,
-    "conditions": "",
+    "paksha": "Shukla",
+    "tithi": 15,
+    "conditions": "Purnima",
     "recurring": true
   }
 }
@@ -470,7 +477,10 @@ tithi "arriving" shortly after sunrise, but it is additive: it can add a day
 the tradition does not observe.
 
 The five Durga Puja days set `"dominant_tithi": "strict"` so only the tithi
-actually prevailing at sunrise counts. With vriddhi left at `"both"`, genuine
+actually prevailing at sunrise counts. The 26 named Ekadashis set it too,
+paired with `vriddhi: "first"`: grace must not pull a viddha Ekadashi (Dashami
+touching sunrise) onto the previous day, while a genuine two-sunrise run still
+keeps one observance. With vriddhi left at `"both"`, genuine
 two-sunrise runs survive and the two schools diverge correctly:
 
 | 2026 (Kolkata) | Shashthi | Saptami |
@@ -521,7 +531,7 @@ Rules:
 ### Weekday and Tithi-Range Constraints
 
 Two optional `panchang_rules` refinements narrow (never widen) a match.
-Neither is used by any of the 108 shipped entries — both parse, both are
+Neither is used by any of the 127 shipped entries — both parse, both are
 tested only synthetically, so treat them as available but unproven in
 production data:
 
@@ -655,10 +665,10 @@ observance. The All Festivals screen gives `"featured": true` entries the
 large featured card and every other entry — `major` included — the compact
 row (`AllFestivalsScreen`, `lib/widgets/major_festival_card.dart`).
 
-- 20 of the 110 records set it today. Omit it for everything else; absence
+- 16 of the 127 records set it today. Omit it for everything else; absence
   is `false`.
 - It is deliberately curated, because nothing else can stand in for
-  importance: 96 records are already `major`, `displayPriority` only
+  importance: 94 records are already `major`, `displayPriority` only
   orders entries that share a day (7 records), and only 7 ship artwork
   (6 of them the same `durga_puja.webp`).
 - It is date-independent: a past flagship keeps its card, and a run like

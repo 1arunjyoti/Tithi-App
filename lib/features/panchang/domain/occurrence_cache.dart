@@ -54,7 +54,11 @@ import '../data/panchang_cache.dart';
 // occ8: the location identity coarsened from 4 decimals (~11 m) to 2 (~1.1 km)
 // so GPS jitter no longer invalidates every occurrence on a cold start; occ7
 // keys are keyed by the old precision and would linger as January entries.
-const String _occPrefix = 'occ8';
+// occ9: the search-start hint no longer lands after the base date (a January
+// Pausha scan started on Oct 17 and cached the 2027 date for Shattila, so
+// All Festivals skipped the Jan 14 2026 occurrence — stale occ8 entries must
+// miss).
+const String _occPrefix = 'occ9';
 // Countdown/all-festivals/search/export share this box: ~150 festivals ×
 // a few retained months fit comfortably; evict oldest first past the cap so
 // hot (current-month) entries aren't churned by cold (January/export) ones.
@@ -81,8 +85,8 @@ void _storeOccMemory(String key, int millis) {
   _occMemory[key] = millis;
 }
 
-// One-time purge of pre-fix generations (occ2_*..occ7_*) so upgrades don't
-// leave stale keys beside occ8 indefinitely, plus TTL eviction of occ8
+// One-time purge of pre-fix generations (occ2_*..occ8_*) so upgrades don't
+// leave stale keys beside occ9 indefinitely, plus TTL eviction of occ9
 // entries whose base-month is long past (the box otherwise grows without
 // bound: one key per festival × month × system × location). Runs once per
 // process on first box access; best-effort.
@@ -118,7 +122,8 @@ Future<void> _purgeOldOccurrenceGenerations(Box<dynamic> box) async {
               k.startsWith('occ4_') ||
               k.startsWith('occ5_') ||
               k.startsWith('occ6_') ||
-              k.startsWith('occ7_'),
+              k.startsWith('occ7_') ||
+              k.startsWith('occ8_'),
         )
         .toList();
     for (final k in stale) {

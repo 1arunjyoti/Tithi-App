@@ -26,6 +26,41 @@ class AppLocalizationsBn extends AppLocalizations {
       'নির্বাচিত বছরে প্রতিটি উৎসবের প্রথম উদযাপন';
 
   @override
+  String get exportFestivalsCalendar => 'Google Calendar-এ যোগ করুন (.ics)';
+
+  @override
+  String get exportFestivalsCalendarSubtitle =>
+      'উৎসবের তারিখগুলো এমন ক্যালেন্ডার ফাইলে সংরক্ষণ করুন যা আমদানি করা যায়';
+
+  @override
+  String get exportJsonYearSheetSubtitle =>
+      'একটি বছর বেছে নিন। এরপর JSON ফাইলটি কোথায় সংরক্ষণ করবেন তা বেছে নেবেন।';
+
+  @override
+  String get exportCalendarYearSheetSubtitle =>
+      'একটি বছর বেছে নিন। এরপর Google Calendar-এর জন্য .ics ফাইলটি কোথায় সংরক্ষণ করবেন তা বেছে নেবেন।';
+
+  @override
+  String exportYearAction(String year) {
+    return '$year রপ্তানি করুন';
+  }
+
+  @override
+  String festivalCalendarShareSubject(String year) {
+    return 'Tithi উৎসব $year (Calendar)';
+  }
+
+  @override
+  String festivalCalendarShareText(String year) {
+    return '$year সালের Tithi উৎসবের তারিখ Google Calendar-এ আমদানি করুন (.ics)';
+  }
+
+  @override
+  String festivalsExportedToCalendar(int count, String year) {
+    return '$year সালের $count টি উৎসব ক্যালেন্ডারে রপ্তানি করা হয়েছে।';
+  }
+
+  @override
   String get vedaCalendar => 'বৈদিক পঞ্জিকা';
 
   @override

@@ -163,7 +163,7 @@ lib/
 | `providers/panchang_provider.dart` | `panchangForDateProvider`, `todayPanchangProvider`, `monthlyPanchangProvider`, live tick, timings providers (**large**). |
 | `providers/location_provider.dart` | Location service, permission gate, `placeClockProvider`, `calculationLocationProvider`, coordinates. |
 | `providers/festival_provider.dart` | Festival repository + init + major/vrat lists. |
-| `providers/festival_occurrences_provider.dart` | `allFestivalOccurrencesProvider`: one year's dated festivals, snapshot-cached. |
+| `features/countdown/providers/festival_occurrences_provider.dart` | `allFestivalOccurrencesProvider`: one year's dated festivals, snapshot-cached. |
 | `features/calendar/data/calendar_caches.dart` | Sync LRUs so cells paint stale labels while FFI runs. |
 | `features/calendar/data/calendar_models.dart` | Public cell/header models. |
 | `features/calendar/domain/cell_builders.dart` | Cell label builders. |
@@ -303,10 +303,9 @@ lib/
 ## App-wide providers
 
 `accessibility_provider`, `app_update_provider`, `calendar_provider`,
-`festival_provider`, `festival_occurrences_provider`,
-`home_cards_visibility_provider`, `home_widget_provider`,
+`festival_provider`, `home_cards_visibility_provider`, `home_widget_provider`,
 `locale_provider`, `location_provider`, `notification_provider`,
-`panchang_provider`, `planetary_view_provider`, `ritual_state_provider`,
+`panchang_provider`, `planetary_view_provider`,
 `sankalpa_provider`, `storage_provider`, `theme_provider`, `version_provider`,
 `view_mode_provider`.
 

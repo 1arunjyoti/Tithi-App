@@ -246,7 +246,7 @@ void main() {
       expect(anchor.expected.nakshatraAtSunrise, 'Rohini');
       expect(
         fixture.festivalCaseById(anchor.id)!.expectedFestivalIds,
-        contains('ekadashi_shukla'),
+        contains('jaya_ekadashi'),
       );
     });
 

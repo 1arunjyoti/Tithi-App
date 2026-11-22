@@ -86,6 +86,6 @@ void main() {
 
     // Assert: the asset is read again and the box is repopulated.
     expect(next.containsKey('festival-asset'), isTrue);
-    expect(box.length, 110);
+    expect(box.length, 127);
   });
 }

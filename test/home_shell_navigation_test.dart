@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:tithi/core/navigation/home_tab.dart';
 import 'package:tithi/l10n/app_localizations.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
@@ -15,7 +16,7 @@ import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
-import 'package:tithi/providers/festival_occurrences_provider.dart';
+import 'package:tithi/features/countdown/providers/festival_occurrences_provider.dart';
 import 'package:tithi/providers/home_cards_visibility_provider.dart';
 import 'package:tithi/providers/home_widget_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
@@ -24,6 +25,7 @@ import 'package:tithi/screens/home_screen.dart';
 import 'package:tithi/screens/home_shell.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/theme/app_theme.dart';
+import 'package:tithi/widgets/floating_nav_bar.dart';
 import 'package:tithi/features/calendar/data/calendar_models.dart';
 import 'package:tithi/features/calendar/providers/cell_providers.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
@@ -190,6 +192,20 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  /// Drags the floating bar horizontally. The swipe recognizer lives on the
+  /// shell around the bar, but the capsule is the hittable surface inside it.
+  Future<void> swipeBar(WidgetTester tester, Offset offset) async {
+    await tester.drag(find.byKey(FloatingNavBar.capsuleKey), offset);
+    // Bounded pumps: the shell's cross-fade runs on controllers, and several
+    // home cards own indefinite animations.
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  }
+
+  int selectedBarIndex(WidgetTester tester) =>
+      tester.widget<FloatingNavBar>(find.byType(FloatingNavBar)).selectedIndex;
+
   group('HomeShell tabs', () {
     testWidgets('the Today tab is wired to switch tabs, not push routes', (
       tester,
@@ -224,6 +240,95 @@ void main() {
       // and the shell is still on the first route.
       expect(find.byType(AllFestivalsScreen), findsOneWidget);
       expect(navigator.canPop(), isFalse);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('tapping a destination still switches tabs', (tester) async {
+      // Arrange
+      await pumpShell(tester);
+
+      // Act
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(FloatingNavBar.capsuleKey),
+          matching: find.text('Festivals'),
+        ),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Assert: the swipe recognizer above the bar must not win a plain tap.
+      expect(selectedBarIndex(tester), HomeTab.festivals.index);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('swiping the bar left opens the Festivals tab', (tester) async {
+      // Arrange
+      await pumpShell(tester);
+      expect(selectedBarIndex(tester), HomeTab.today.index);
+
+      // Act
+      await swipeBar(tester, const Offset(-120, 0));
+
+      // Assert: a swipe takes the same path as tapping the destination - the
+      // tab mounts in the shell, no route is pushed.
+      expect(selectedBarIndex(tester), HomeTab.festivals.index);
+      expect(find.byType(AllFestivalsScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('swiping the bar right returns to the Today tab', (
+      tester,
+    ) async {
+      // Arrange
+      await pumpShell(tester);
+      await swipeBar(tester, const Offset(-120, 0));
+      expect(selectedBarIndex(tester), HomeTab.festivals.index);
+
+      // Act
+      await swipeBar(tester, const Offset(120, 0));
+
+      // Assert: the outgoing tab stays mounted for its scroll state, so the
+      // selected destination is what proves the switch happened.
+      expect(selectedBarIndex(tester), HomeTab.today.index);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a short, slow drag on the bar does not switch tabs', (
+      tester,
+    ) async {
+      // Arrange
+      await pumpShell(tester);
+
+      // Act: 30px is past touch slop but short of the distance threshold.
+      await swipeBar(tester, const Offset(-30, 0));
+
+      // Assert: incidental finger movement while tapping a destination must
+      // not read as an intentional tab switch.
+      expect(selectedBarIndex(tester), HomeTab.today.index);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a fast fling on the bar switches without a long drag', (
+      tester,
+    ) async {
+      // Arrange
+      await pumpShell(tester);
+
+      // Act: 44px over 100ms is below the distance threshold but well above
+      // the velocity threshold, so this only works if release speed counts.
+      await tester.timedDrag(
+        find.byKey(FloatingNavBar.capsuleKey),
+        const Offset(-44, 0),
+        const Duration(milliseconds: 100),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // Assert
+      expect(selectedBarIndex(tester), HomeTab.festivals.index);
       expect(tester.takeException(), isNull);
     });
   });

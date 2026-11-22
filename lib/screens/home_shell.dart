@@ -53,6 +53,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   /// drawer and its scrim.
   bool _drawerOpen = false;
 
+  /// Running horizontal travel of a swipe on the bar. Accumulated across
+  /// updates so a slow, deliberate drag counts as well as a fling (the same
+  /// contract the calendar's month swipe uses).
+  double _barSwipeDx = 0;
+
   /// Tabs mount on first visit, not at startup. [AllFestivalsScreen] resolves
   /// ~100 festival occurrences through the ephemeris; paying that on launch
   /// would push work into the first frame for a tab the user may never open.
@@ -109,6 +114,19 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   void _onDrawerStateChanged(bool open) {
     if (_drawerOpen == open || !mounted) return;
     setState(() => _drawerOpen = open);
+  }
+
+  /// The bar is a swipe target for the same switch its destinations tap to.
+  /// Reuse [_select] rather than moving [_index] directly: the cross-fade,
+  /// drawer reset and "already selected" behaviour all stay in one place.
+  void _onBarSwipeEnd(DragEndDetails details) {
+    final direction = tabSwipeDirection(
+      velocity: details.primaryVelocity ?? 0,
+      distance: _barSwipeDx,
+    );
+    _barSwipeDx = 0;
+    if (direction == 0) return;
+    _select(_index + direction);
   }
 
   Widget _tab(int index) {
@@ -247,32 +265,43 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             bottom: 0,
             child: IgnorePointer(
               ignoring: _drawerOpen,
-              child: AnimatedOpacity(
-                opacity: _drawerOpen ? 0 : 1,
-                duration: AppTheme.animationDuration(
-                  context,
-                  const Duration(milliseconds: 160),
-                ),
-                // Scoped consumer: the "jump to today" rule depends on the
-                // calendar's focused month and selected day, so watching it in
-                // the shell's build would rebuild both tabs on every date
-                // tap. Here only the bar rebuilds.
-                child: Consumer(
-                  builder: (context, ref, child) {
-                    // The calendar is the Today tab's content, so its action
-                    // belongs to that tab: on the others the bar keeps its
-                    // full width.
-                    final showJumpToToday =
-                        HomeTab.values[_index] == HomeTab.today &&
-                        ref.watch(jumpToTodayVisibleProvider);
-                    return FloatingNavBar(
-                      destinations: destinations,
-                      selectedIndex: _index,
-                      onSelected: _select,
-                      trailingAction: const JumpToTodayButton(),
-                      showTrailingAction: showJumpToToday,
-                    );
-                  },
+              child: GestureDetector(
+                // Swiping the bar switches tabs just as tapping a destination
+                // does. The detector wraps the bar instead of living inside
+                // it: the bar stays presentation-only, and the calendar's own
+                // month-turn swipe in the content area never enters this arena.
+                onHorizontalDragStart: (_) => _barSwipeDx = 0,
+                onHorizontalDragUpdate: (details) {
+                  _barSwipeDx += details.delta.dx;
+                },
+                onHorizontalDragEnd: _onBarSwipeEnd,
+                child: AnimatedOpacity(
+                  opacity: _drawerOpen ? 0 : 1,
+                  duration: AppTheme.animationDuration(
+                    context,
+                    const Duration(milliseconds: 160),
+                  ),
+                  // Scoped consumer: the "jump to today" rule depends on the
+                  // calendar's focused month and selected day, so watching it
+                  // in the shell's build would rebuild both tabs on every date
+                  // tap. Here only the bar rebuilds.
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      // The calendar is the Today tab's content, so its action
+                      // belongs to that tab: on the others the bar keeps its
+                      // full width.
+                      final showJumpToToday =
+                          HomeTab.values[_index] == HomeTab.today &&
+                          ref.watch(jumpToTodayVisibleProvider);
+                      return FloatingNavBar(
+                        destinations: destinations,
+                        selectedIndex: _index,
+                        onSelected: _select,
+                        trailingAction: const JumpToTodayButton(),
+                        showTrailingAction: showJumpToToday,
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

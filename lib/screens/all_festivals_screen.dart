@@ -10,7 +10,7 @@ import '../models/festival_filter.dart';
 import '../core/feedback/app_haptics.dart';
 import '../core/format/festival_labels.dart';
 import '../providers/calendar_provider.dart';
-import '../providers/festival_occurrences_provider.dart';
+import '../features/countdown/providers/festival_occurrences_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_motion.dart';

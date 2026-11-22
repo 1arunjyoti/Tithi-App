@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/async/keep_alive.dart';
-import '../features/countdown/data/festival_year_snapshot.dart';
-import '../features/countdown/domain/target_resolution.dart';
-import 'calendar_provider.dart';
-import 'festival_provider.dart';
-import 'panchang_provider.dart';
+import '../../../core/async/keep_alive.dart';
+import '../../../providers/calendar_provider.dart';
+import '../../../providers/festival_provider.dart';
+import '../../../providers/panchang_provider.dart';
+import '../data/festival_year_snapshot.dart';
+import '../domain/target_resolution.dart';
 
 /// All bundled festivals with [year]'s occurrence dates, ascending from
 /// January — past festivals first, then the upcoming ones (for the current

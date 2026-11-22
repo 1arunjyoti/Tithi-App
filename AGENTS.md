@@ -106,6 +106,11 @@ Tests track behaviour, not diffs:
 - Imports: `dart:` -> `package:` -> relative. Widgets use
   `package:material_ui/material_ui.dart`, not `flutter/material.dart`.
 - Expensive autoDispose providers: `core/async/keep_alive.dart`.
+- Provider placement: one feature -> `features/<name>/providers/`; the shell
+  or >=2 features -> `lib/providers/`. A provider imported by a service stays
+  in `lib/providers/` (moving it under `features/` inverts the documented
+  `services -> models` direction); extract pure logic into `domain/` first.
+  If the feature has no slice yet, leave it at root until one exists.
 - Calendar-gated providers: `guarded()` / `showsCalendarSystem()`.
 - Platform checks are runtime (`Platform.isAndroid`, `defaultTargetPlatform`);
   capability lives in the service, not the UI.

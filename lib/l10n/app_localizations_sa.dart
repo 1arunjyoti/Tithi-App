@@ -26,6 +26,41 @@ class AppLocalizationsSa extends AppLocalizations {
       'चिते वर्षे प्रत्येकस्य उत्सवस्य प्रथमः आविर्भावः';
 
   @override
+  String get exportFestivalsCalendar => 'गूगल-कैलण्डरे निर्यातयतु (.ics)';
+
+  @override
+  String get exportFestivalsCalendarSubtitle =>
+      'उत्सवानां तिथयः कैलण्डरसञ्चिकायां संरक्षयतु याम् आयातयितुं शक्नोति';
+
+  @override
+  String get exportJsonYearSheetSubtitle =>
+      'एकं वर्षं चिनुत। ततः JSON-सञ्चिकायाः संरक्षणस्थानं चिनोष्यति।';
+
+  @override
+  String get exportCalendarYearSheetSubtitle =>
+      'एकं वर्षं चिनुत। ततः गूगल-कैलण्डराय .ics-सञ्चिकायाः संरक्षणस्थानं चिनोष्यति।';
+
+  @override
+  String exportYearAction(String year) {
+    return '$year निर्यातयतु';
+  }
+
+  @override
+  String festivalCalendarShareSubject(String year) {
+    return 'Tithi-उत्सवाः $year (Calendar)';
+  }
+
+  @override
+  String festivalCalendarShareText(String year) {
+    return '$year वर्षस्य Tithi-उत्सवानां तिथयः गूगल-कैलण्डरे आयातयतु (.ics)';
+  }
+
+  @override
+  String festivalsExportedToCalendar(int count, String year) {
+    return '$year वर्षस्य $count उत्सवाः कैलण्डरे निर्यातिताः।';
+  }
+
+  @override
   String get vedaCalendar => 'वैदिकं पञ्चाङ्गम्';
 
   @override

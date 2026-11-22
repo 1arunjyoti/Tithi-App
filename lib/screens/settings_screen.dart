@@ -124,6 +124,8 @@ class SettingsScreen extends ConsumerWidget {
                   AppDivider(),
                   ExportFestivalsSetting(),
                   AppDivider(),
+                  ExportFestivalsCalendarSetting(),
+                  AppDivider(),
                   ResetSettingsTile(),
                 ],
               ),
