@@ -14,7 +14,7 @@ import 'package:tithi/models/festival_filter.dart';
 import 'package:tithi/models/festival_region.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
-import 'package:tithi/providers/festival_occurrences_provider.dart';
+import 'package:tithi/features/countdown/providers/festival_occurrences_provider.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/widgets/major_festival_card.dart';
@@ -305,7 +305,7 @@ void main() {
     test('featured reads the curated flag, independent of category', () {
       // Arrange: a featured vrat and an ordinary major. `featured` is an
       // editorial flag, so it must not be confused with `category: 'major'`
-      // (96 of the catalog's 110 records) or with recurrence.
+      // (94 of the catalog's 127 records) or with recurrence.
       final featuredVrat = fixture(
         id: 'fv',
         name: 'Featured Vrat',
@@ -604,7 +604,7 @@ void main() {
       );
 
       // Assert: one card, and it is the featured entry. `category: 'major'`
-      // covers 96 of the catalog's 110 festivals, so it cannot decide this,
+      // covers 94 of the catalog's 127 festivals, so it cannot decide this,
       // and "next from today" would have featured Ordinary Major instead.
       expect(find.byType(MajorFestivalCard), findsOneWidget);
       expect(

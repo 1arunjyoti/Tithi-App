@@ -101,7 +101,7 @@ void main() {
       await FestivalRepository().init();
 
       // Assert: full catalog, including the curated flag from data.
-      expect(box.length, 110);
+      expect(box.length, 127);
       expect(box.get('diwali')?.featured, isTrue);
     }, (error, stack) => unhandled.add(error));
 

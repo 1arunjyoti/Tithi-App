@@ -20,6 +20,51 @@
   "@exportFestivalsSubtitleYear": {
     "description": "Subtitle for export festivals bottom sheet"
   },
+  "exportFestivalsCalendar": "Add to Google Calendar (.ics)",
+  "@exportFestivalsCalendar": {
+    "description": "Settings tile title for exporting festivals to Google Calendar"
+  },
+  "exportFestivalsCalendarSubtitle": "Save festival dates as a calendar file you can import",
+  "@exportFestivalsCalendarSubtitle": {
+    "description": "Settings tile subtitle for the calendar export"
+  },
+  "exportJsonYearSheetSubtitle": "Choose a year. You'll then pick where to save the JSON file.",
+  "@exportJsonYearSheetSubtitle": {
+    "description": "Subtitle of the JSON export year picker, explaining the next step"
+  },
+  "exportCalendarYearSheetSubtitle": "Choose a year. You'll then pick where to save the .ics file for Google Calendar.",
+  "@exportCalendarYearSheetSubtitle": {
+    "description": "Subtitle of the calendar export year picker, explaining the next step"
+  },
+  "exportYearAction": "Export {year}",
+  "@exportYearAction": {
+    "description": "Confirm button in the export year picker",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalCalendarShareSubject": "Tithi festivals {year} (Calendar)",
+  "@festivalCalendarShareSubject": {
+    "description": "Subject when sharing the exported festival calendar file",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalCalendarShareText": "Import Tithi festival dates for {year} into Google Calendar (.ics)",
+  "@festivalCalendarShareText": {
+    "description": "Message when sharing the exported festival calendar file",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalsExportedToCalendar": "{count} festivals exported to calendar for {year}.",
+  "@festivalsExportedToCalendar": {
+    "description": "Confirmation message after a successful calendar export",
+    "placeholders": {
+      "count": { "type": "int", "example": "50" },
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
   "vedaCalendar": "Vedic Calendar",
   "@vedaCalendar": {
     "description": "Subtitle describing the app as a Vedic Calendar"

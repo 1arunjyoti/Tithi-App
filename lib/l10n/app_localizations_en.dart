@@ -26,6 +26,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'First occurrence of each festival in the chosen year';
 
   @override
+  String get exportFestivalsCalendar => 'Add to Google Calendar (.ics)';
+
+  @override
+  String get exportFestivalsCalendarSubtitle =>
+      'Save festival dates as a calendar file you can import';
+
+  @override
+  String get exportJsonYearSheetSubtitle =>
+      'Choose a year. You\'ll then pick where to save the JSON file.';
+
+  @override
+  String get exportCalendarYearSheetSubtitle =>
+      'Choose a year. You\'ll then pick where to save the .ics file for Google Calendar.';
+
+  @override
+  String exportYearAction(String year) {
+    return 'Export $year';
+  }
+
+  @override
+  String festivalCalendarShareSubject(String year) {
+    return 'Tithi festivals $year (Calendar)';
+  }
+
+  @override
+  String festivalCalendarShareText(String year) {
+    return 'Import Tithi festival dates for $year into Google Calendar (.ics)';
+  }
+
+  @override
+  String festivalsExportedToCalendar(int count, String year) {
+    return '$count festivals exported to calendar for $year.';
+  }
+
+  @override
   String get vedaCalendar => 'Vedic Calendar';
 
   @override

@@ -25,12 +25,26 @@ import '../domain/target_resolution.dart';
 // of the stored rows.
 const String _snapshotPrefix = 'year1';
 
+/// Version of the occurrence-resolution semantics baked into a stored list.
+///
+/// The snapshot stores *answers*, so it must miss when the scanner changes
+/// even if the catalog and calculation engine do not. Bump when
+/// `PanchangService.findNextFestivalOccurrence` (or the vriddhi/recurring
+/// expansion) changes which dates it returns.
+///
+/// 2: the search-start hint no longer lands after the base date. A January
+/// scan for Pausha used to start on Oct 17, skipping Shattila Ekadashi
+/// (Jan 14 2026) and storing the 2027 date; lists written by that scanner
+/// must not be served.
+const int _resolutionVersion = 2;
+
 /// Identity of one persisted yearly list.
 ///
 /// [locationSignature] carries the location (rounded cache grid), the
 /// calculation version, the place-context version and the school. The catalog
 /// fingerprint is separate because editing `assets/festivals.json` changes the
-/// rules without changing the engine version.
+/// rules without changing the engine version. [_resolutionVersion] covers
+/// code-only scanner changes, which neither of those fingerprints sees.
 String festivalYearSnapshotKey({
   required DateTime yearStart,
   required double latitude,
@@ -38,7 +52,8 @@ String festivalYearSnapshotKey({
   required int catalogVersion,
 }) {
   return '${_snapshotPrefix}_${yearStart.year}_'
-      '${locationSignature(latitude, longitude)}_$catalogVersion';
+      '${locationSignature(latitude, longitude)}_$catalogVersion'
+      '_r$_resolutionVersion';
 }
 
 /// Stored date as `YYYYMMDD` in the *local* calendar, not epoch millis.

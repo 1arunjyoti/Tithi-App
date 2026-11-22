@@ -132,6 +132,54 @@ abstract class AppLocalizations {
   /// **'First occurrence of each festival in the chosen year'**
   String get exportFestivalsSubtitleYear;
 
+  /// Settings tile title for exporting festivals to Google Calendar
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Google Calendar (.ics)'**
+  String get exportFestivalsCalendar;
+
+  /// Settings tile subtitle for the calendar export
+  ///
+  /// In en, this message translates to:
+  /// **'Save festival dates as a calendar file you can import'**
+  String get exportFestivalsCalendarSubtitle;
+
+  /// Subtitle of the JSON export year picker, explaining the next step
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a year. You\'ll then pick where to save the JSON file.'**
+  String get exportJsonYearSheetSubtitle;
+
+  /// Subtitle of the calendar export year picker, explaining the next step
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a year. You\'ll then pick where to save the .ics file for Google Calendar.'**
+  String get exportCalendarYearSheetSubtitle;
+
+  /// Confirm button in the export year picker
+  ///
+  /// In en, this message translates to:
+  /// **'Export {year}'**
+  String exportYearAction(String year);
+
+  /// Subject when sharing the exported festival calendar file
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi festivals {year} (Calendar)'**
+  String festivalCalendarShareSubject(String year);
+
+  /// Message when sharing the exported festival calendar file
+  ///
+  /// In en, this message translates to:
+  /// **'Import Tithi festival dates for {year} into Google Calendar (.ics)'**
+  String festivalCalendarShareText(String year);
+
+  /// Confirmation message after a successful calendar export
+  ///
+  /// In en, this message translates to:
+  /// **'{count} festivals exported to calendar for {year}.'**
+  String festivalsExportedToCalendar(int count, String year);
+
   /// Subtitle describing the app as a Vedic Calendar
   ///
   /// In en, this message translates to:

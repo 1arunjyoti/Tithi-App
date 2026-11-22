@@ -23,6 +23,18 @@ import '../widgets/page_scaffold.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/state_views.dart';
 
+/// Interaction flags for the home-location map.
+///
+/// Rotation is deliberately excluded: flutter_map enables two-finger rotation
+/// together with pinch-zoom by default, so the slight twist in any real pinch
+/// rotates the map instead of only zooming it. Every other gesture stays on.
+const int kLocationPickerMapFlags =
+    InteractiveFlag.all & ~InteractiveFlag.rotate;
+
+/// Forces a north-up camera. Only safe once the controller has been attached
+/// to a `FlutterMap` - `MapOptions.onMapReady` is that point.
+void resetMapToNorth(MapController controller) => controller.rotate(0);
+
 class LocationPickerScreen extends ConsumerStatefulWidget {
   const LocationPickerScreen({super.key});
 
@@ -112,6 +124,10 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     _resetLiveLocationSubscription();
     super.dispose();
   }
+
+  /// Guarantees a north-up camera whenever the map is entered. The controller
+  /// is attached by the time `onMapReady` fires, so it is safe to rotate here.
+  void _resetNorthOnEntry() => resetMapToNorth(_mapController);
 
   /// Starts (or repairs) the live GPS follow stream.
   ///
@@ -486,6 +502,10 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _center,
+              onMapReady: _resetNorthOnEntry,
+              interactionOptions: const InteractionOptions(
+                flags: kLocationPickerMapFlags,
+              ),
               onPositionChanged: (pos, hasGesture) {
                 if (hasGesture) {
                   _autoCenterEnabled = false;

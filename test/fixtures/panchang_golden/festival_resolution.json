@@ -35,85 +35,85 @@
     {
       "caseId": "delhi-2026-01-14",
       "expectedFestivalIds": [
-        "ekadashi_krishna",
         "makar_sankranti",
-        "pongal"
+        "pongal",
+        "shattila_ekadashi"
       ]
     },
     {
       "caseId": "kolkata-2026-01-14",
       "expectedFestivalIds": [
-        "ekadashi_krishna",
         "makar_sankranti",
-        "pongal"
+        "pongal",
+        "shattila_ekadashi"
       ]
     },
     {
       "caseId": "mumbai-2026-01-14",
       "expectedFestivalIds": [
-        "ekadashi_krishna",
         "makar_sankranti",
-        "pongal"
+        "pongal",
+        "shattila_ekadashi"
       ]
     },
     {
       "caseId": "varanasi-2026-01-14",
       "expectedFestivalIds": [
-        "ekadashi_krishna",
         "makar_sankranti",
-        "pongal"
+        "pongal",
+        "shattila_ekadashi"
       ]
     },
     {
       "caseId": "chennai-2026-01-14",
       "expectedFestivalIds": [
-        "ekadashi_krishna",
         "makar_sankranti",
-        "pongal"
+        "pongal",
+        "shattila_ekadashi"
       ]
     },
     {
       "caseId": "guwahati-2026-01-14",
       "expectedFestivalIds": [
-        "ekadashi_krishna",
         "makar_sankranti",
-        "pongal"
+        "pongal",
+        "shattila_ekadashi"
       ]
     },
     {
       "caseId": "delhi-2026-01-29",
       "expectedFestivalIds": [
-        "ekadashi_shukla"
+        "jaya_ekadashi"
       ]
     },
     {
       "caseId": "kolkata-2026-01-29",
       "expectedFestivalIds": [
-        "ekadashi_shukla"
+        "jaya_ekadashi"
       ]
     },
     {
       "caseId": "mumbai-2026-01-29",
       "expectedFestivalIds": [
-        "ekadashi_shukla"
+        "jaya_ekadashi"
       ]
     },
     {
       "caseId": "varanasi-2026-01-29",
       "expectedFestivalIds": [
-        "ekadashi_shukla"
+        "jaya_ekadashi"
       ]
     },
     {
       "caseId": "chennai-2026-01-29",
       "expectedFestivalIds": [
-        "ekadashi_shukla"
+        "jaya_ekadashi"
       ]
     },
     {
       "caseId": "guwahati-2026-01-29",
       "expectedFestivalIds": [
-        "ekadashi_shukla"
+        "jaya_ekadashi"
       ]
     },
     {
