@@ -3930,11 +3930,12 @@
       "addtional_description": "Rash Purnima is kept on the full moon of Kartik, one month after the Braj Maharaas of Sharad Purnima; both honour the same Rasa Panchadhyayi of the Bhagavatam (Canto 10, chapters 29-33), on different regional nights. In Bengal the night is Rash Yatra or Rash Utsav: Radha-Krishna idols are installed in temples and homes and kirtan runs till dawn. Nabadwip holds the Shakta Rash, where clay images of Durga, Kali and Lakshmi are worshipped beside Krishna; Santipur leads the Rai Raja procession; Cooch Behar and Kaliberia hold their Rash Melas. In Manipur the same full moon brings the Maha Raas, the classical Manipuri Raas Leela dance-drama performed at the Shree Govindajee Temple in Imphal and in the Assam satras. In Odisha it is Rash Purnima alongside the Kartik Purnima Boita Bandana rites. Devotees keep the Kartik Purnima vrat, light lamps and stay awake through the night in remembrance of the Raas."
     },
     "panchang_rules": {
-      "masa": "Kartik",
+      "masa": "Kartika",
       "paksha": "Shukla",
       "tithi": 15,
       "conditions": "Purnima",
       "recurring": false,
+      "timingOverride": "nishita",
       "pujaKala": "nishita"
     },
     "rituals": {

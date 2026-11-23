@@ -173,12 +173,11 @@ class EventListWidget extends ConsumerWidget {
       children: [
         for (var i = 0; i < shown.length; i++) ...[
           // Rows are flush on the card: no per-row box, just a hairline
-          // divider between them (none after the last row).
-          if (i > 0)
-            const InsetRowDivider(
-              leadingInset:
-                  FestivalRowTile.textColumnInset + AppTheme.homeCardRowInset,
-            ),
+          // divider between them (none after the last row). Two rows that
+          // both carry the selected-day accent wash are the exception — a
+          // hairline would read as a seam inside one merged block, so they
+          // get a real gap to stay two distinct cards.
+          if (i > 0) _rowSeparator(shown[i - 1], shown[i], selectedDate),
           // No per-row entrance: the card's own skeleton → content fade
           // already covers loading, and a row stagger on the home screen
           // delayed the first visible festival after every date tap.
@@ -206,6 +205,24 @@ class EventListWidget extends ConsumerWidget {
           _OverflowLine(hidden: hidden),
         ],
       ],
+    );
+  }
+
+  /// Separator between two adjacent rows. Rows on the selected day carry the
+  /// accent wash, so two of them need actual breathing room to read as
+  /// separate cards; every other pair stays flush with the inset hairline.
+  Widget _rowSeparator(
+    UpcomingFestival previous,
+    UpcomingFestival current,
+    DateTime selectedDate,
+  ) {
+    final bothHighlighted =
+        isSameDay(previous.date, selectedDate) &&
+        isSameDay(current.date, selectedDate);
+    if (bothHighlighted) return const SizedBox(height: AppSpacing.s8);
+    return const InsetRowDivider(
+      leadingInset:
+          FestivalRowTile.textColumnInset + AppTheme.homeCardRowInset,
     );
   }
 

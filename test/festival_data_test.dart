@@ -488,5 +488,52 @@ void main() {
         expect(krishnaIds, isNot(contains('devutthani_ekadashi')), reason: '$system');
       }
     });
+
+    test('every non-solar festival uses a canonical Amanta masa', () {
+      // The matcher compares festival.masa to the computed month literally, so
+      // a near-miss spelling such as "Kartik" silently never matches.
+      const canonical = <String>{
+        '*',
+        'Chaitra',
+        'Vaishakha',
+        'Jyeshtha',
+        'Adhika_Jyeshtha',
+        'Ashadha',
+        'Shravana',
+        'Bhadrapada',
+        'Ashwin',
+        'Kartika',
+        'Margashirsha',
+        'Pausha',
+        'Magha',
+        'Phalguna',
+      };
+      for (final entry in _loadFestivalJson()) {
+        final rules = (entry['panchang_rules'] as Map).cast<String, dynamic>();
+        if (rules['conditions'] == 'Solar') continue;
+        final masa = rules['masa'] as String?;
+        expect(
+          masa,
+          isIn(canonical),
+          reason: '${entry['id']} masa "$masa" never matches a computed month',
+        );
+      }
+    });
+
+    test('Rash Purnima matches Kartika Shukla 15', () {
+      final festival = Festival.fromJson(
+        _loadFestivalJson().firstWhere((f) => f['id'] == 'rash_purnima'),
+      );
+      expect(
+        matchesFestivalOnDay(
+          festival: festival,
+          paksha: 'Shukla',
+          tithiNumber: 15,
+          masa: 'Kartika',
+          nakshatra: null,
+        ),
+        isTrue,
+      );
+    });
   });
 }

@@ -18,6 +18,24 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-23 - 0.9.16+45
+
+### Highlighted rows on the Festivals & Events card keep their spacing
+
+Two festivals on the selected day now read as separate cards instead of one merged wash.
+
+- Consecutive selected-day rows each carry the accent wash; stacked flush they looked like a single block, with the hairline as a seam inside it. Neighbouring washed rows now get an 8px gap instead of that hairline.
+- Constraint: the gap applies only when *both* adjacent rows are highlighted. A washed row next to a plain row keeps the inset `InsetRowDivider`, with its text-column inset unchanged.
+- `lib/widgets/event_list_widget.dart` owns the choice (`_buildRows` + new `_rowSeparator`); `AppTheme.festivalRowDecoration` and `FestivalRowTile` are untouched.
+- Regression: `test/festivals_home_card_test.dart` pins the gap for two highlighted rows and keeps the hairline case for a mixed pair.
+
+### Rash Purnima matches Kartika Purnima
+
+- The entry used `"masa": "Kartik"`, but the matcher compares a festival's month literally against the computed Amanta name, so it never matched any day. The canonical name is `Kartika` (`docs/FESTIVALS_Modification_GUIDE.md`).
+- `assets/festivals.json`: `rash_purnima` now uses `"masa": "Kartika"` and `timingOverride: "nishita"` so the night tithi decides the day; `pujaKala: "nishita"` stays for the displayed puja window.
+- Constraint: every non-solar festival's `masa` must be a canonical Amanta month name (or `*`). A near-miss spelling does not error — it silently hides the festival.
+- Regression: `test/festival_data_test.dart` pins canonical months for the whole catalog and an explicit Kartika Shukla 15 match for `rash_purnima`.
+
 ## 2026-11-23 - 0.9.10+43
 
 ### Updater reads the un-offset build number from the manifest

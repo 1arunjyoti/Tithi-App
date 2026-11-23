@@ -342,16 +342,53 @@ void main() {
       expect(laterRow.border, isNull);
     });
 
-    testWidgets('rows are flush and separated by an inset hairline', (
+    testWidgets('consecutive highlighted rows keep a gap between washes', (
       tester,
     ) async {
-      // Arrange: two rows in the window.
+      // Arrange: both rows land on the selected day, so both carry the
+      // accent wash. Two washed rows must not merge into one block.
       await pumpCard(
         tester,
         days: {
           DateTime(2026, 9, 14): dayData(
             date: DateTime(2026, 9, 14),
             festivals: [festA, festB],
+          ),
+        },
+        all: [festA, festB],
+      );
+
+      final rows = find.byType(FestivalRowTile);
+      expect(rows, findsNWidgets(2));
+      final first = tester.getRect(rows.at(0));
+      final second = tester.getRect(rows.at(1));
+
+      // Assert: a visible gap separates the two accent surfaces, and the
+      // flush-row hairline is dropped where a wash already separates them.
+      expect(
+        second.top - first.bottom,
+        greaterThanOrEqualTo(AppSpacing.s8 - 0.5),
+      );
+      expect(find.byType(InsetRowDivider), findsNothing);
+    });
+
+    testWidgets('rows are flush and separated by an inset hairline', (
+      tester,
+    ) async {
+      // Arrange: only the first row is on the selected day; a washed row
+      // next to a flush one still uses the hairline as its separator.
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [festA],
+          ),
+          DateTime(2026, 9, 16): dayData(
+            date: DateTime(2026, 9, 16),
+            festivals: [festB],
+            tithiName: 'Shashthi',
+            tithiNumber: 6,
           ),
         },
         all: [festA, festB],
