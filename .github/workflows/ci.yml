@@ -308,12 +308,33 @@ jobs:
         run: flutter pub get
 
       # Two ABIs only: physical devices (arm64) and x86_64 tablets/emulators.
+      # Maven Central rate-limits shared runner IPs (HTTP 429). Gradle then
+      # disables the repository it was resolving from and *every* plugin fails
+      # with "Could not resolve ...", so one transient rate limit used to kill
+      # a signed release. Retry only that download class of failure, with
+      # backoff; a real build/signing error fails on the first attempt.
       - name: Build release APKs (arm64-v8a + x86_64)
         run: |
           set -euo pipefail
-          rm -rf build/app/outputs/flutter-apk
-          flutter build apk --release --no-pub --split-per-abi \
-            --target-platform android-arm64,android-x64
+          attempts=3
+          for attempt in $(seq 1 "$attempts"); do
+            rm -rf build/app/outputs/flutter-apk
+            log="${RUNNER_TEMP:-/tmp}/apk-build-${attempt}.log"
+            # pipefail keeps flutter's exit status through tee, so the `if`
+            # sees a real failure while the log still streams to the job.
+            if flutter build apk --release --no-pub --split-per-abi \
+                --target-platform android-arm64,android-x64 2>&1 | tee "$log"; then
+              break
+            fi
+            if [ "$attempt" -eq "$attempts" ] || \
+               ! grep -Eq 'HTTP 429|Too Many Requests|Could not resolve|Could not (GET|get resource|download)|Failed to download|Connection reset|Read timed out|Gradle threw an error while downloading' "$log"; then
+              echo "::error::Release APK build failed on attempt $attempt (not retryable or out of attempts)."
+              exit 1
+            fi
+            delay=$((15 * 2 ** (attempt - 1)))
+            echo "::warning::Gradle dependency download was throttled; retrying in ${delay}s (attempt $((attempt + 1))/$attempts)."
+            sleep "$delay"
+          done
           mkdir -p release-apks
           # One Gradle invocation for both ABIs: gradle.properties caps
           # org.gradle.workers.max at 2, so two sequential builds roughly

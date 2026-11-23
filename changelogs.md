@@ -20,6 +20,13 @@ Format:
 
 ## 2026-11-23 - 0.9.16+45
 
+### Release builds survive a Maven Central 429
+
+- A single `429 Too Many Requests` while Gradle resolved Kotlin plugin artifacts disabled the repository and cascaded into "Could not resolve" for every plugin, failing `assembleRelease` before any code compiled. Both artifacts named in the error (`kotlin-stdlib:2.4.21` and `kotlin-gradle-plugins-bom:2.2.20`) exist, so this was throttling, not a version conflict.
+- Constraint: `.github/workflows/ci.yml` retries the signed APK build up to 3 times with 15/30s backoff only when the log matches a download/network failure; a real build or signing error still fails on the first attempt.
+- Each attempt starts from a clean `build/app/outputs/flutter-apk` and tees its log to `$RUNNER_TEMP`, so a retry cannot ship stale APKs and the throttled log stays inspectable.
+- The Gradle dependency cache (`~/.gradle/caches`, `~/.gradle/wrapper`) and its `restore-keys` remain in place; the retry covers the cold-cache case a restored cache cannot.
+
 ### Highlighted rows on the Festivals & Events card keep their spacing
 
 Two festivals on the selected day now read as separate cards instead of one merged wash.
