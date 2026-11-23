@@ -100,10 +100,10 @@ APK.
       wrong, delete the whole release (tag included) and cut a new build
       number — users who already installed it have consumed that
       `versionCode`
-- [ ] Release notes written in the release body, as **plain text**.
-      Markdown (`#`, `-`, links) is shown raw in the app; keep it simple.
-      CI takes them from the `## <date> - <version>` block in
-      `changelogs.md` and fails before building when that block is missing
+- [ ] Write the concise public release body in
+      **`.github/release-notes.md`**. Keep maintainer implementation details
+      in `changelogs.md`; CI does not copy the changelog into the release.
+      The file is validated before building and uploaded as the release body.
 - [ ] Only the intended APKs are attached. An asset for a foreign ABI is
       ignored rather than installed, so a missing ABI leaves those devices
       with no update

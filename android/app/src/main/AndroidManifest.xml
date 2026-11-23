@@ -170,6 +170,13 @@
             </intent-filter>
         </receiver>
         
+        <!-- Base +N from pubspec.yaml, filled by Gradle from flutter.versionCode
+             before Flutter's split-ABI versionCode offset. MainActivity reads it
+             for the updater so an arm64 2043 build still compares as +43. -->
+        <meta-data
+            android:name="baseBuildNumber"
+            android:value="${baseBuildNumber}" />
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -80,6 +80,33 @@ void main() {
       expect(AppUpdateService.fullVersion('v0.5.0', '5'), equals('0.5.0+5'));
       expect(AppUpdateService.fullVersion('0.5.0', ''), equals('0.5.0'));
     });
+
+  });
+
+  group('AppUpdateService.baseBuildNumber', () {
+    test('legacy fallback strips the per-ABI versionCode offset', () {
+      // Only used for APKs predating the manifest meta-data, whose base is
+      // necessarily below the 1000 stride.
+      expect(AppUpdateService.baseBuildNumber('2043'), equals('43'));
+      expect(AppUpdateService.baseBuildNumber('4043'), equals('43'));
+      expect(AppUpdateService.baseBuildNumber('43'), equals('43'));
+      expect(AppUpdateService.baseBuildNumber(''), equals(''));
+    });
+  });
+
+  group('AppUpdateService.resolveBuildNumber', () {
+    test('prefers the manifest +N even when it passes the ABI stride', () async {
+      // 1044 cannot be decoded from a versionCode alone: 2044 would be
+      // ambiguous between arm64 base 44 and universal base 2044.
+      final service = AppUpdateService(baseBuildNumber: () async => '1044');
+      expect(await service.resolveBuildNumber('3044'), equals('1044'));
+    });
+
+    test('falls back to the versionCode when the manifest has no value',
+        () async {
+      final service = AppUpdateService(baseBuildNumber: () async => '');
+      expect(await service.resolveBuildNumber('2043'), equals('43'));
+    });
   });
 
   group('AppUpdateService.isNewerThan', () {

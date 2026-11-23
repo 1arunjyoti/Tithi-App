@@ -1,6 +1,7 @@
 package app.tithi.pro
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
@@ -117,6 +118,26 @@ class MainActivity : FlutterActivity() {
                             result.success(true)
                         } catch (e: Exception) {
                             result.error("SETTINGS_FAILED", e.message, null)
+                        }
+                    }
+                    // Flutter adds abiIndex * 1000 to versionCode for split
+                    // APKs, so PackageInfo.buildNumber is not the +N that
+                    // release tags carry. The manifest meta-data is filled
+                    // from flutter.versionCode before that offset is applied,
+                    // and stays exact even after +N passes 1000.
+                    "baseBuildNumber" -> {
+                        val meta = packageManager
+                            .getApplicationInfo(packageName, PackageManager.GET_META_DATA)
+                            .metaData
+                        val base = meta?.get("baseBuildNumber")
+                        if (base == null) {
+                            result.error(
+                                "NO_BASE_BUILD_NUMBER",
+                                "baseBuildNumber meta-data is missing",
+                                null,
+                            )
+                        } else {
+                            result.success(base.toString())
                         }
                     }
                     // Release APKs are published per ABI; the Dart side picks

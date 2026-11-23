@@ -195,8 +195,10 @@ class AppUpdateService {
     AppUpdateConfig? config,
     this._httpClient,
     Future<List<String>> Function()? supportedAbis,
+    Future<String> Function()? baseBuildNumber,
   }) : config = config ?? AppUpdateConfig.fromEnvironment(),
-       _supportedAbis = supportedAbis ?? querySupportedAbis;
+       _supportedAbis = supportedAbis ?? querySupportedAbis,
+       _baseBuildNumber = baseBuildNumber ?? queryBaseBuildNumber;
 
   final AppUpdateConfig config;
   final http.Client? _httpClient;
@@ -204,6 +206,9 @@ class AppUpdateService {
   /// Source of `Build.SUPPORTED_ABIS`, used to pick the matching per-ABI APK.
   /// Injectable so the fetch path is testable without a platform channel.
   final Future<List<String>> Function() _supportedAbis;
+
+  /// Source of the un-offset `+N` from the manifest. Injectable for tests.
+  final Future<String> Function() _baseBuildNumber;
 
   static const Duration _checkTimeout = Duration(seconds: 15);
 
@@ -221,6 +226,9 @@ class AppUpdateService {
   /// are limited to 60/hour per IP, and carrier NAT makes many users
   /// share one, so accidental double taps must not burn the quota.
   static const Duration _minCheckInterval = Duration(minutes: 2);
+
+  /// Stride Flutter uses to give each `--split-per-abi` APK its own versionCode.
+  static const int _abiVersionCodeStride = 1000;
 
   DateTime? _lastCheckAt;
 
@@ -248,13 +256,40 @@ class AppUpdateService {
     return version.trim();
   }
 
+  /// The base `+N` of the installed APK, matched to what release tags carry.
+  ///
+  /// The authoritative value is the `baseBuildNumber` manifest meta-data that
+  /// Gradle writes from `flutter.versionCode` *before* Flutter's split-ABI
+  /// offset is applied. It stays exact even once `+N` passes 1000, when the
+  /// offset versionCode can no longer be decoded unambiguously. The modulo
+  /// fallback only serves builds that predate that meta-data (their base is
+  /// necessarily below the stride) and non-Android/test platforms.
+  Future<String> resolveBuildNumber(String packageBuildNumber) async {
+    final declared = (await _baseBuildNumber()).trim();
+    if (declared.isNotEmpty) return declared;
+    return baseBuildNumber(packageBuildNumber);
+  }
+
+  /// Legacy fallback: strips Flutter's per-ABI versionCode offset.
+  ///
+  /// Flutter stores `abiIndex * 1000 + +N` (arm32=1, arm64=2, x86_64=4), so
+  /// while `+N` is below [_abiVersionCodeStride] the remainder is the base.
+  /// Above that the encoding is ambiguous; [resolveBuildNumber] must be used.
+  static String baseBuildNumber(String buildNumber) {
+    final trimmed = buildNumber.trim();
+    final value = int.tryParse(trimmed);
+    if (value == null || value <= _abiVersionCodeStride) return trimmed;
+    return (value % _abiVersionCodeStride).toString();
+  }
+
   /// Joins `PackageInfo`'s separate `version` (e.g. `0.5.0`) and
   /// `buildNumber` (e.g. `5`) into the `major.minor.patch+build` form
   /// used for comparison.
   ///
   /// Comparing with only `version` would treat an identical sideloaded
   /// build as an update: installed `0.5.0` reads as build `0` while the
-  /// published `0.5.0+5` reads as build `5`.
+  /// published `0.5.0+5` reads as build `5`. Callers pass the base `+N` from
+  /// [resolveBuildNumber], never the raw ABI-offset versionCode.
   static String fullVersion(String version, String buildNumber) {
     final v = normalizeVersion(version);
     final b = buildNumber.trim();

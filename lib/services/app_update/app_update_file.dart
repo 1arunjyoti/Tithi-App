@@ -154,6 +154,23 @@ Future<void> openUnknownAppsSettings() async {
   await _installerChannel.invokeMethod<bool>('openInstallPermissionSettings');
 }
 
+/// The un-offset `+N` from pubspec, read from the manifest meta-data that
+/// Gradle fills in before Flutter applies its split-ABI versionCode offset.
+///
+/// An empty string means "unknown" (non-Android, tests, APKs built before the
+/// meta-data existed); callers then fall back to `PackageInfo.buildNumber`.
+Future<String> queryBaseBuildNumber() async {
+  if (defaultTargetPlatform != TargetPlatform.android) return '';
+  try {
+    return await _installerChannel.invokeMethod<String>('baseBuildNumber') ??
+        '';
+  } on MissingPluginException {
+    return '';
+  } on PlatformException {
+    return '';
+  }
+}
+
 /// The device's supported ABIs (`Build.SUPPORTED_ABIS`), primary first.
 ///
 /// Release builds publish one APK per ABI, and installing the arm64 build on

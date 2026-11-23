@@ -20,6 +20,14 @@ Format:
 
 ## 2026-11-23 - 0.9.10+43
 
+### Updater reads the un-offset build number from the manifest
+
+- Constraint: a release tag carries the base `+N`, but an installed `--split-per-abi` APK reports `abiIndex * 1000 + +N` as its `versionCode` (arm32=1, arm64=2, x86_64=4). Once `+N` reaches 1000 that number is ambiguous, so never decode the base from it while the manifest value is available. Keep the `baseBuildNumber` meta-data on every build.
+- Gradle fills the `baseBuildNumber` meta-data from `flutter.versionCode` before Flutter applies the split-ABI offset (`android/app/build.gradle.kts`, `android/app/src/main/AndroidManifest.xml`); `MainActivity` exposes it on the `app.tithi.pro/app_update` channel and `queryBaseBuildNumber` reads it.
+- `AppUpdateService.resolveBuildNumber` prefers that value; `fullVersion` is a pure join again and the old `% 1000` path is only a fallback for APKs predating the meta-data. The About chip still shows the real versionCode.
+- Before this, a device on `0.9.10 (2043)` treated `v0.9.10+44` as older and Check for updates said "up to date", even though Android would have installed the 2044 APK.
+- Regression: `test/app_update_service_test.dart` pins the legacy fallback and a manifest base above 1000; `test/app_update_notifier_test.dart` pins end-to-end offers for 2043 and for base 1044 (`PackageInfo.setMockInitialValues`, since `fromPlatform()` caches); `test/base_build_number_metadata_test.dart` pins the Gradle placeholder, manifest meta-data and Kotlin channel handler.
+
 ### Release publishing uses the clean version tag
 
 - CI builds the release APKs in one `flutter build apk --split-per-abi` pass and publishes the GitHub release under the clean `vX.Y.Z+N` tag; the `--release` suffix only triggers the workflow. `AppUpdateService` parses `tag_name`, so a marker in the tag reads as build 0 and suppresses every update (`.github/workflows/ci.yml`, `lib/services/app_update_service.dart`).

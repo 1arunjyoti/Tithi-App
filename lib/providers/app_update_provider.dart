@@ -87,9 +87,11 @@ class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
   Future<String> _currentVersion() async {
     if (state.currentVersion != null) return state.currentVersion!;
     final info = await PackageInfo.fromPlatform();
-    // PackageInfo splits versionName ("0.5.0") from versionCode ("5");
-    // join them so an identical sideloaded build is not seen as older.
-    final full = AppUpdateService.fullVersion(info.version, info.buildNumber);
+    // PackageInfo splits versionName ("0.5.0") from versionCode ("5"). Use
+    // the manifest's un-offset +N, not the split-ABI versionCode, so the
+    // comparison matches the build number in the GitHub release tag.
+    final base = await _service.resolveBuildNumber(info.buildNumber);
+    final full = AppUpdateService.fullVersion(info.version, base);
     state = state.copyWith(currentVersion: full);
     return full;
   }

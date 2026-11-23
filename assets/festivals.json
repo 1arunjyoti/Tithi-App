@@ -3904,6 +3904,48 @@
     }
   },
   {
+    "id": "rash_purnima",
+    "regions": [
+      "east",
+      "northeast"
+    ],
+    "name": "Rash Purnima",
+    "category": "major",
+    "nameRegional": {
+      "nameSanskrith": "रासपूर्णिमा",
+      "nameEnglish": "Rash Purnima",
+      "nameHindi": "रास पूर्णिमा",
+      "nameBengali": "রাস পূর্ণিমা",
+      "nameTelugu": "",
+      "nameKannada": "",
+      "nameTamil": "",
+      "nameMalayalam": ""
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Kartik Purnima night of Krishna's Raas Leela with Radha and the gopis - Bengal's Rash Yatra, Odisha's Rash Purnima and Manipur's Maha Raas.",
+      "addtional_description": "Rash Purnima is kept on the full moon of Kartik, one month after the Braj Maharaas of Sharad Purnima; both honour the same Rasa Panchadhyayi of the Bhagavatam (Canto 10, chapters 29-33), on different regional nights. In Bengal the night is Rash Yatra or Rash Utsav: Radha-Krishna idols are installed in temples and homes and kirtan runs till dawn. Nabadwip holds the Shakta Rash, where clay images of Durga, Kali and Lakshmi are worshipped beside Krishna; Santipur leads the Rai Raja procession; Cooch Behar and Kaliberia hold their Rash Melas. In Manipur the same full moon brings the Maha Raas, the classical Manipuri Raas Leela dance-drama performed at the Shree Govindajee Temple in Imphal and in the Assam satras. In Odisha it is Rash Purnima alongside the Kartik Purnima Boita Bandana rites. Devotees keep the Kartik Purnima vrat, light lamps and stay awake through the night in remembrance of the Raas."
+    },
+    "panchang_rules": {
+      "masa": "Kartik",
+      "paksha": "Shukla",
+      "tithi": 15,
+      "conditions": "Purnima",
+      "recurring": false,
+      "pujaKala": "nishita"
+    },
+    "rituals": {
+      "mantra": "श्री राधा-कृष्णाभ्यां नमः",
+      "fasting": "Kartik Purnima vrat, kept with a night-long vigil for the Raas; broken the next morning."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
     "id": "kalbhairav_jayanti",
     "regions": ["all"],
     "name": "Kalbhairav Jayanti",

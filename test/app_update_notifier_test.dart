@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart' show Response;
 import 'package:http/testing.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:tithi/providers/app_update_provider.dart';
 import 'package:tithi/services/app_update_service.dart';
 
@@ -187,6 +188,84 @@ void main() {
           .where((f) => f.path.contains('tithi-update-'));
       expect(leftovers, isEmpty);
       await client.body.close();
+    });
+  });
+
+  group('AppUpdateNotifier with a split-ABI install', () {
+    // fromPlatform() caches its result, so replace the singleton directly.
+    tearDown(() {
+      PackageInfo.setMockInitialValues(
+        appName: 'Tithi',
+        packageName: 'app.tithi.pro',
+        version: '0.5.0',
+        buildNumber: '2',
+        buildSignature: '',
+        installerStore: 'sideload',
+      );
+    });
+
+    test('offers the next release despite the ABI-offset versionCode', () async {
+      // Arrange: arm64 CI APK reports 2043 while the manifest says +43.
+      PackageInfo.setMockInitialValues(
+        appName: 'Tithi',
+        packageName: 'app.tithi.pro',
+        version: '0.9.10',
+        buildNumber: '2043',
+        buildSignature: '',
+        installerStore: 'sideload',
+      );
+      final client = MockClient(
+        (_) async => Response(
+          '{"tag_name":"v0.9.10+44","assets":[{"name":'
+          '"tithi-arm64-v8a-release.apk",'
+          '"browser_download_url":"https://x/a.apk","size":100}]}',
+          200,
+        ),
+      );
+      final notifier = AppUpdateNotifier(
+        AppUpdateService(httpClient: client, baseBuildNumber: () async => '43'),
+      );
+
+      // Act
+      await notifier.checkForUpdates(force: true);
+
+      // Assert: the installed build is compared on the base +N, so +44 wins.
+      expect(notifier.state.currentVersion, equals('0.9.10+43'));
+      expect(notifier.state.status, equals(AppUpdateStatus.available));
+    });
+
+    test('keeps working after the base build number passes 1000', () async {
+      // 3044 = arm64 offset 2000 + base 1044. Decoding the versionCode by
+      // modulo would wrongly read 44, so the manifest value must win.
+      PackageInfo.setMockInitialValues(
+        appName: 'Tithi',
+        packageName: 'app.tithi.pro',
+        version: '1.0.0',
+        buildNumber: '3044',
+        buildSignature: '',
+        installerStore: 'sideload',
+      );
+      final client = MockClient(
+        (_) async => Response(
+          '{"tag_name":"v1.0.0+1045","assets":[{"name":'
+          '"tithi-arm64-v8a-release.apk",'
+          '"browser_download_url":"https://x/a.apk","size":100}]}',
+          200,
+        ),
+      );
+      final notifier = AppUpdateNotifier(
+        AppUpdateService(
+          httpClient: client,
+          baseBuildNumber: () async => '1044',
+        ),
+      );
+
+      // Act
+      await notifier.checkForUpdates(force: true);
+
+      // Assert
+      expect(notifier.state.currentVersion, equals('1.0.0+1044'));
+      expect(notifier.state.status, equals(AppUpdateStatus.available));
     });
   });
 

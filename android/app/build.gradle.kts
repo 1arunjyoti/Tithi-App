@@ -73,6 +73,11 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Flutter's --split-per-abi offsets each output's versionCode by
+        // abiIndex * 1000, but the in-app updater must compare against the
+        // base +N in the GitHub release tag. Publish the pre-offset value in
+        // manifest meta-data so Kotlin can expose it over the update channel.
+        manifestPlaceholders["baseBuildNumber"] = flutter.versionCode.toString()
     }
 
     signingConfigs {

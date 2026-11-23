@@ -23,8 +23,8 @@ name: CI
 #
 # Cheap release gates run in the first job, before any signed build: the tag
 # must match pubspec.yaml, `+N` must be higher than every published release,
-# and changelogs.md must contain a block for it (extracted there and handed
-# to the publish job as an artifact). The publish job creates a draft, uploads
+# and the dedicated `.github/release-notes.md` file must be present (handed to
+# the publish job as an artifact). The publish job creates a draft, uploads
 # both APKs, then publishes, and reconciles the assets when the release
 # already exists, so an interrupted run cannot leave a permanently broken
 # release behind.
@@ -118,35 +118,29 @@ jobs:
             exit 1
           fi
 
-      # changelogs.md is newest-first under a `## <date> - <version>` heading.
-      # Take the block for this tag's version, stop at the next `## ` heading,
-      # and hand it to the publish job. Doing this first means a missing or
-      # misspelled block fails in seconds instead of after two signed builds.
-      - name: Extract release notes
+      # Release notes are intentionally separate from changelogs.md. The
+      # changelog is maintainer history; this short file is the public GitHub
+      # release body and must not accidentally include every changelog detail.
+      - name: Check release notes file
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME%--release*}"
           version="${tag#v}"
-          awk -v v="$version" '
-            /^## / {
-              heading = $0
-              sub(/^## .* - /, "", heading)
-              if (heading == v) { found = 1; next }
-            }
-            found && /^## / { exit }
-            found { print }
-          ' changelogs.md > release-notes.md
-          if [ ! -s release-notes.md ]; then
-            echo "::error::No changelog block found for version $version in changelogs.md"
+          if [ ! -s .github/release-notes.md ]; then
+            echo "::error::Missing or empty .github/release-notes.md"
             exit 1
           fi
-          cat release-notes.md
+          if ! grep -q "^# Tithi ${version}$" .github/release-notes.md; then
+            echo "::error::.github/release-notes.md must start with '# Tithi ${version}'"
+            exit 1
+          fi
+          cat .github/release-notes.md
 
       - name: Upload release notes
         uses: actions/upload-artifact@v4
         with:
           name: release-notes-${{ github.sha }}
-          path: release-notes.md
+          path: .github/release-notes.md
           if-no-files-found: error
           retention-days: 7
 
@@ -357,8 +351,8 @@ jobs:
           name: tithi-release-${{ github.sha }}
           path: release-apks
 
-      # Extracted and validated in analyze-and-test, so a changelog typo
-      # failed before the signed builds ran.
+      # Validated in analyze-and-test, so a missing release-notes file fails
+      # before the signed builds run.
       - name: Download release notes
         uses: actions/download-artifact@v4
         with:
