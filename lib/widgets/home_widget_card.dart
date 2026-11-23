@@ -1,17 +1,21 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
 import '../features/home_widget/providers/home_widget_promo_providers.dart';
 import '../l10n/app_localizations.dart';
-import '../providers/accessibility_provider.dart';
+import '../core/feedback/app_haptics.dart';
 import '../providers/home_widget_provider.dart';
 import '../services/home_widget.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_motion.dart';
+import 'app_card.dart';
+import 'skeleton.dart';
 
 export '../features/home_widget/providers/home_widget_promo_providers.dart'
     show homeWidgetPromoDismissedProvider, HomeWidgetPromoDismissNotifier;
@@ -46,9 +50,7 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
   bool _expanded = false;
 
   void _toggleExpanded() {
-    if (ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.lightImpact();
-    }
+    AppHaptics.tap(ref);
     setState(() => _expanded = !_expanded);
   }
 
@@ -64,11 +66,8 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
     // the column below. Expansion rides the same size animation.
     return AnimatedSize(
       alignment: Alignment.topCenter,
-      duration: AppTheme.animationDuration(
-        context,
-        const Duration(milliseconds: 250),
-      ),
-      curve: Curves.easeInOutCubic,
+      duration: AppMotion.of(context, AppMotion.emphasized),
+      curve: AppMotion.emphasizedCurve,
       child: _supportedBody(context),
     );
   }
@@ -139,8 +138,8 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
       ),
     ];
 
-    return Container(
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
+    return AppCard(
+      padding: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +147,20 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
           Padding(
             // Tighter bottom gap while the rows are open; the collapsed card
             // keeps the standard 16dp edge.
-            padding: EdgeInsets.fromLTRB(16, 16, 16, _expanded ? 8 : 16),
+            //
+            // The left edge takes less, because the header's press highlight
+            // gets `homeCardRowInset` of breathing room inside it: the icon
+            // still starts on the 16dp gutter the gallery rows below use,
+            // while the ripple no longer runs flush under the icon. With the
+            // dismiss button the right edge stays at 16 (the button owns that
+            // corner); without it the right edge matches the left, so the
+            // highlight and the content are symmetric on both sides.
+            padding: EdgeInsets.fromLTRB(
+              AppTheme.homeCardRowPadding,
+              AppSpacing.s16,
+              widget.showDismiss ? AppSpacing.s16 : AppTheme.homeCardRowPadding,
+              _expanded ? AppSpacing.s8 : AppSpacing.s16,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -159,88 +171,109 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: _toggleExpanded,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppTheme.festivalTileBackground(context),
-                                borderRadius: BorderRadius.circular(13),
-                              ),
-                              child: Icon(
-                                Icons.widgets_rounded,
-                                color: accent,
-                                size: 22,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n?.homeScreenWidget ??
-                                        'Home Screen Widgets',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: context.textTheme.titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.w700),
+                        borderRadius: BorderRadius.circular(AppRadius.dense),
+                        // Highlight padding: same inset as the festival /
+                        // countdown rows, so the header ripple has left and
+                        // right breathing room instead of hugging the icon
+                        // and the chevron.
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.homeCardRowInset,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.festivalTileBackground(
+                                    context,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    canPin
-                                        ? l10n?.homeWidgetGallerySubtitle ??
-                                              'Add panchang widgets to your home screen'
-                                        : l10n?.homeWidgetManualHint ??
-                                              'Long-press home screen → Widgets → Tithi',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: context.textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: colors.onSurface.withValues(
-                                            alpha: AppTheme.contrastAlpha(
-                                              context,
-                                              0.64,
-                                            ),
-                                          ),
-                                        ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.dense,
                                   ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            AnimatedRotation(
-                              turns: _expanded ? 0.5 : 0.0,
-                              duration: AppTheme.animationDuration(
-                                context,
-                                const Duration(milliseconds: 200),
-                              ),
-                              curve: Curves.easeInOutCubic,
-                              child: Icon(
-                                Icons.keyboard_arrow_down_rounded,
-                                size: 22,
-                                color: colors.onSurface.withValues(
-                                  alpha: AppTheme.contrastAlpha(context, 0.55),
+                                ),
+                                child: Icon(
+                                  Icons.widgets_rounded,
+                                  color: accent,
+                                  size: AppIconSize.large,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: AppSpacing.s12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n?.homeScreenWidget ??
+                                          'Home Screen Widgets',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: context.textTheme.titleSmall
+                                          ?.copyWith(
+                                            fontWeight: AppTypography.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.s2),
+                                    Text(
+                                      canPin
+                                          ? l10n?.homeWidgetGallerySubtitle ??
+                                                'Add panchang widgets to your home screen'
+                                          : l10n?.homeWidgetManualHint ??
+                                                'Long-press home screen → Widgets → Tithi',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: context.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: colors.onSurface.withValues(
+                                              alpha: AppTheme.contrastAlpha(
+                                                context,
+                                                0.64,
+                                              ),
+                                            ),
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.s4),
+                              AnimatedRotation(
+                                turns: _expanded ? 0.5 : 0.0,
+                                duration: AppMotion.of(
+                                  context,
+                                  AppMotion.standard,
+                                ),
+                                curve: AppMotion.emphasizedCurve,
+                                child: Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: AppIconSize.large,
+                                  color: colors.onSurface.withValues(
+                                    alpha: AppTheme.contrastAlpha(
+                                      context,
+                                      0.55,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
                 if (widget.showDismiss) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSpacing.s4),
                   PressScale(
                     child: IconButton(
                       tooltip: l10n?.dismissTooltip ?? 'Dismiss',
                       onPressed: () => ref
                           .read(homeWidgetPromoDismissedProvider.notifier)
                           .dismiss(),
-                      icon: const Icon(Icons.close_rounded, size: 18),
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: AppIconSize.dense,
+                      ),
                       color: colors.onSurface.withValues(
                         alpha: AppTheme.contrastAlpha(context, 0.5),
                       ),
@@ -256,7 +289,12 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
           ),
           if (_expanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.s16,
+                0,
+                AppSpacing.s16,
+                AppSpacing.s16,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -352,11 +390,11 @@ class _WidgetTile extends StatelessWidget {
       alpha: AppTheme.contrastAlpha(context, 0.6),
     );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s6),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: accent),
-          const SizedBox(width: 12),
+          Icon(icon, size: AppIconSize.medium, color: accent),
+          const SizedBox(width: AppSpacing.s12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +402,7 @@ class _WidgetTile extends StatelessWidget {
                 Text(
                   label,
                   style: context.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: AppTypography.semibold,
                   ),
                 ),
                 const SizedBox(height: 1),
@@ -377,13 +415,9 @@ class _WidgetTile extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.s8),
           if (isLoading)
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2, color: accent),
-            )
+            InlineSpinner(size: AppIconSize.dense, color: accent)
           else if (canPin)
             Tooltip(
               message: l10n?.widgetAddTooltip ?? 'Add to home screen',
@@ -393,7 +427,9 @@ class _WidgetTile extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: AppTheme.festivalTileBackground(context),
                     foregroundColor: accent,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s14,
+                    ),
                     minimumSize: const Size(0, 34),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
@@ -406,7 +442,10 @@ class _WidgetTile extends StatelessWidget {
               child: IconButton(
                 tooltip: l10n?.infoTooltip ?? 'Info',
                 onPressed: onInfo,
-                icon: const Icon(Icons.info_outline_rounded, size: 20),
+                icon: const Icon(
+                  Icons.info_outline_rounded,
+                  size: AppIconSize.medium,
+                ),
                 style: IconButton.styleFrom(
                   minimumSize: const Size(34, 34),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,

@@ -1,326 +1,148 @@
-# AGENTS.md - Tithi Project Development Guide
+# AGENTS.md - Tithi
 
-## Build, Lint, and Test Commands
+Offline Hindu calendar / Panchang app. Flutter, Android-first,
+`flutter_riverpod` + Hive, Swiss Ephemeris through the local `packages/jyotish`
+FFI package. **No web target.**
 
-### Running the App
+This file is the always-loaded index. Use the routing table first; open a
+linked detail doc only for the layer you are changing. Do not scan `lib/`.
+
+## Commands
+
 ```bash
-flutter run                          # Run on connected device/emulator
-flutter run -d <device_id>           # Run on specific device
-flutter build apk --debug           # Build debug APK
-flutter build apk --release         # Build release APK
-flutter build appbundle --release   # Build Android App Bundle
+flutter analyze                     # CI fails on infos too: keep it at zero
+flutter test                        # full suite
+flutter test test/<name>_test.dart  # one file
+flutter test test/<name>_test.dart -n "<group>"
+
+flutter pub run build_runner build --delete-conflicting-outputs   # Hive model changes
+flutter gen-l10n                                                  # lib/l10n/*.arb changes
+pwsh scripts/check_architecture.ps1                               # architecture guardrails
 ```
 
-### Linting and Analysis
-```bash
-flutter analyze                     # Run static analysis (linter)
-flutter analyze lib/                # Analyze specific directory
-flutter analyze lib/services/      # Analyze specific folder
-```
+- FFI tests need `SWISSEPH_LIB_PATH` (host `libswisseph.so`). On Windows the host
+  cannot run real ephemeris maths - validate on a device or with
+  `integration_test/`.
+- `flutter test` also runs `test/no_web_target_test.dart`; it fails if web
+  scaffolding returns.
+- Dart SDK `^3.13.0`, Flutter `>=3.47.0`; CI pins Flutter `3.47.4` stable.
 
-The project uses `flutter_lints` with custom rules defined in `analysis_options.yaml`:
-- `prefer_const_constructors`: Use const constructors where possible
-- `prefer_const_literals_to_create_immutables`: Use const for list/set literals
-- `prefer_const_declarations`: Use const for compile-time constants
-- `use_key_in_widget_constructors`: Always provide keys in widget constructors
-- `avoid_unnecessary_containers`: Avoid wrapping widgets in unnecessary containers
-- `sized_box_for_whitespace`: Use SizedBox instead of Container for spacing
-- `prefer_is_empty`: Use `.isEmpty` instead of `.length == 0`
-- `prefer_is_not_empty`: Use `.isNotEmpty` instead of `.length > 0`
-- `avoid_redundant_argument_values`: Avoid redundant argument values
-- `unawaited_futures`: Always handle async results properly
+## Routing: task -> first files
 
-### Running Tests
-```bash
-flutter test                        # Run all tests
-flutter test test/panchang_data_test.dart          # Run single test file
-flutter test test/panchang_data_test.dart -n "PanchangData Model Tests"  # Run specific test group
-flutter test test/panchang_data_test.dart --name "fromRawTithi creates"  # Run tests matching pattern
-flutter test --reporter expanded     # Run with expanded output
-flutter test --reporter compact     # Run with compact output
-```
+Paths are relative to the repo root. Logic first: each row names the smallest
+file that owns the behaviour before the renderer. A KB figure marks a large
+renderer - open it only when changing that rendering itself.
 
-`flutter test` also runs `test/no_web_target_test.dart`, which fails if the
-`web/` target, a `kIsWeb` branch, a `dart.library.*` conditional import, or a
-web entry in `analysis_options.yaml` / `flutter_launcher_icons.yaml` / `.metadata`
-ever comes back. See `docs/web-removal/BASELINE.md`.
+| Task | Start with |
+|---|---|
+| App startup / bootstrap order | `lib/main.dart`, `lib/app/bootstrap.dart` |
+| Panchang values / one day | `features/panchang/domain/`, `services/panchang/panchang_service.dart` |
+| Ayanamsa / school / ephemeris | `models/panchang_profile.dart`, `models/panchang_school.dart`, `services/panchang/ephemeris/` |
+| Sunrise / sunset / moonrise / timings | `services/solar_events_service.dart`, `moon_events_service.dart`, `auspicious_timings.dart`, `inauspicious_timings.dart` |
+| Festival matching / dates | `models/festival.dart`, `services/festival_matching_pipeline.dart` |
+| Festival data | `assets/festivals.json` (+ `docs/FESTIVALS_QUICK_GUIDE.md`) |
+| Calendar / today / selected date | `providers/calendar_provider.dart`, `features/calendar/` (`data/`, `domain/`, `providers/`, `widgets/`) |
+| Home / hero / home cards | `features/hero/` (`domain/`, `providers/`, `widgets/`), `screens/home_*.dart`, `widgets/*card.dart` |
+| Daily Wisdom / quote card | `features/quote/` (`domain/`, `providers/`, `widgets/`) |
+| Schedule view | `features/schedule/` (`domain/`, `providers/`, `widgets/`) |
+| Detail sheets | `features/sheets/`, `features/tithi_sheet/`, `features/event_detail/` (`domain/`, `providers/`, `widgets/`) |
+| All Festivals / countdowns / upcoming | `features/countdown/`, `features/event_list/`, `features/festival_search/`, `screens/all_festivals_screen.dart` (27 KB) |
+| Notifications | `services/notification_service.dart`, `core/notifications/` |
+| Location / GPS / timezone | `services/location_service.dart`, `providers/location_provider.dart`, `core/location/` |
+| Settings | `screens/settings_screen.dart`, `features/settings/` |
+| Design tokens (colour, spacing, type, motion) | `theme/app_theme.dart`, `app_metrics.dart`, `app_typography.dart`, `app_motion.dart` |
+| Localization | `lib/l10n/*.arb`, then `flutter gen-l10n` |
+| Hive boxes / adapters / type IDs | `core/storage/`, `models/hive_type_ids.dart` |
+| Android home-screen widgets | `services/home_widget.dart`, `features/home_widget/`, `android/app/src/main/kotlin/app/tithi/pro/widget/` |
+| In-app update / sharing / Ask-AI | `services/app_update*`, `services/share*`, `features/ai/`, `services/ai_handoff_service.dart` |
+| Eclipse / solar system / moon / weather | `services/eclipse_service.dart`, `planetary_view_service.dart`, `weather_service.dart`, `features/{eclipse,solar_system,moon,weather}/` |
+| Sankalpa / Bengali / Hindu calendar | `models/sankalpa.dart`, `services/sankalpa_service.dart`, `services/bengali_calendar/`, `services/hindu_calendar_service.dart` |
 
-### Code Generation
-```bash
-flutter pub run build_runner build  # Run build_runner for code generation
-flutter pub run build_runner watch  # Watch mode for code generation
-flutter pub run build_runner build --delete-conflicting-outputs  # Force regenerate
-```
+## Common changes (multi-file touchpoints)
 
-This project uses Hive for local storage - run build_runner after modifying models.
+| Change | Touch |
+|---|---|
+| Add / fix a festival | `assets/festivals.json`, `docs/FESTIVALS_QUICK_GUIDE.md`, artwork in `assets/images/festival/`, `test/festival_data_test.dart` |
+| Add a setting | `features/settings/widgets/<section>.dart`, provider in `lib/providers`, key in `core/storage/box_names.dart`, all four `.arb` files |
+| Add a UI string | `lib/l10n/app_{en,hi,bn,sa}.arb`, then `flutter gen-l10n` |
+| Add a home card | `features/<name>/`, `providers/home_cards_visibility_provider.dart`, `screens/home_screen.dart`, `screens/home_cards_screen.dart` |
 
----
+## Validation
 
-## Code Style Guidelines
+| Change | Run |
+|---|---|
+| Any Dart | `flutter analyze` + nearest `test/<subject>_test.dart` |
+| Panchang maths | `test/panchang_data_test.dart`, `panchang_day_resolver_test.dart`, `panchang_golden_*` |
+| Festival rules/data | `test/festival_data_test.dart`, `festivals_rule_test.dart`, `vriddhi_filter_test.dart`, `dominant_grace_test.dart`, `nakshatra_matching_test.dart` |
+| Hive model | `build_runner` + the affected tests |
+| Localization | `flutter gen-l10n` + the affected widget test |
+| jyotish native | `packages/jyotish` tests with `SWISSEPH_LIB_PATH` |
 
-### General Principles
-- Follow Flutter and Dart conventions as defined in the official style guide
-- Use `flutter analyze` to check code before committing
-- Keep files under 500 lines when possible
-- Use meaningful, descriptive names
+Tests track behaviour, not diffs:
 
-### Project Structure
-```
-lib/
-├── main.dart              # App entry point
-├── theme/                 # Theme definitions
-├── models/               # Data models (with Hive adapters)
-├── services/             # Business logic services
-├── providers/            # Riverpod providers
-├── screens/              # Screen widgets
-├── widgets/              # Reusable widgets
-└── l10n/                 # Localization files
-```
+- Bug fix -> write the failing test first, then fix.
+- New behaviour -> test it.
+- Refactor -> add no new test, but the existing tests over the moved code must
+  pass; if that path has none, add a characterization test *before* moving it.
+- Formatting / docs / dependency bump -> no test, `flutter analyze` is enough.
 
-### Imports
-- Use relative imports for same-package imports
-- Use package imports for cross-package imports
-- Order imports: dart: → package: → relative
-- Group imports by package with blank line separation
+## Hard rules
 
-```dart
-// Good import order
-import 'dart:async';
-import 'dart:convert';
+- No web: no `web/`, `kIsWeb`, or `dart.library.*` conditional imports.
+- No `Hive.box()` or provider definitions in `lib/widgets` / `lib/screens`.
+- Only `core/storage/hive_adapters.dart` registers Hive adapters.
+- Never edit generated files: `*.g.dart`, `lib/l10n/app_localizations*.dart`.
+- `models/panchang_data.dart` is a projection of `PanchangDay` - change the
+  resolver, not the model.
+- No hardcoded colours/radii/shadows: use `AppTheme`, `AppRadius`, `AppSpacing`.
+- Append-only: `PanchangSchool` order, Hive type IDs, Hive model field order.
+- Panchang cache identity = school + place grid (~1.1 km) + catalog generation +
+  date. Do not widen it to date-only.
+- Compatibility barrels are `export` shims only; add logic at the target.
+- New providers go in `lib/providers` or `features/*/providers`.
 
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+## Conventions
 
-import '../models/festival.dart';
-import '../providers/festival_provider.dart';
-import '../theme/app_theme.dart';
-```
+- Imports: `dart:` -> `package:` -> relative. Widgets use
+  `package:material_ui/material_ui.dart`, not `flutter/material.dart`.
+- Expensive autoDispose providers: `core/async/keep_alive.dart`.
+- Provider placement: one feature -> `features/<name>/providers/`; the shell
+  or >=2 features -> `lib/providers/`. A provider imported by a service stays
+  in `lib/providers/` (moving it under `features/` inverts the documented
+  `services -> models` direction); extract pure logic into `domain/` first.
+  If the feature has no slice yet, leave it at root until one exists.
+- Calendar-gated providers: `guarded()` / `showsCalendarSystem()`.
+- Platform checks are runtime (`Platform.isAndroid`, `defaultTargetPlatform`);
+  capability lives in the service, not the UI.
+- Hive type IDs: `models/hive_type_ids.dart` (next free 7-9, 11+).
+- Keep new files under ~500 lines; extract a helper instead of growing a
+  `(large)` file. Split along seams (a state machine, pure computation, an
+  independently testable unit), not by chopping one cohesive render tree.
+  - Exceptions: single-purpose tables/registries (theme, generated, data) and
+    cohesive state machines may exceed it.
+  - Existing `(large)` files are grandfathered: split them when you touch
+    them, not for their own sake.
+  - Above ~800 lines, a split is always justified.
+- Lint rules live in `analysis_options.yaml`.
 
-### Naming Conventions
-- **Files**: snake_case (e.g., `home_screen.dart`, `panchang_data.dart`)
-- **Classes**: PascalCase (e.g., `class HomeScreen`, `class FestivalData`)
-- **Constants**: camelCase with k prefix (e.g., `kDefaultLocation`)
-- **Enums**: PascalCase with values in PascalCase (e.g., `enum ThemeMode { light, dark }`)
-- **Private members**: Prefix with underscore (e.g., `_internalState`)
+## Changelog
 
-### Types and Type Safety
-- Always provide explicit return types for public functions
-- Use `void` return type explicitly for side-effect-only functions
-- Prefer `final` over `var` for immutable variables
-- Use `const` constructors wherever possible
-- Enable strict typing in analysis_options.yaml
+A user-facing feature, setting, screen, sheet, reusable service/provider, or
+behaviour change adds an entry to `changelogs.md` **in the same commit**.
+Newest first under the current version heading; 3-6 bullets: the constraint a
+maintainer must not break, then paths/Hive keys. Skip refactors, formatting,
+tests/docs, dependency bumps, generated files.
 
-```dart
-// Good
-Widget build(BuildContext context) {
-  final List<Festival> festivals = [];
-  const Duration timeout = Duration(seconds: 30);
-  return const SizedBox.shrink();
-}
+## On-demand references
 
-// Avoid
-var festivals = [];
-Widget build(context) => new SizedBox();
-```
-
-### Widgets
-- Use `const` constructors for StatelessWidgets
-- Prefer composition over inheritance
-- Extract widgets into separate files when > 50 lines
-- Use trailing commas for better formatting
-
-```dart
-// Good
-class CalendarWidget extends StatelessWidget {
-  const CalendarWidget({super.key, required this.selectedDate});
-
-  final DateTime selectedDate;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Calendar(
-        selectedDate: selectedDate,
-      ),
-    );
-  }
-}
-```
-
-### Error Handling
-- Use try-catch for expected error conditions
-- Provide meaningful error messages
-- Use Result types or sealed classes for error states
-- Never swallow exceptions silently
-
-```dart
-// Good - handle errors explicitly
-try {
-  final result = await service.fetchData();
-  return Result.success(result);
-} on NetworkException catch (e) {
-  return Result.failure(NetworkError(e.message));
-} catch (e) {
-  return Result.failure(UnknownError(e.toString()));
-}
-```
-
-### Async/Await
-- Always handle futures properly with await or unawaited_futures lint
-- Use try-catch for async operations
-- Show loading states during async operations
-
-### Riverpod Providers
-- Use `flutter_riverpod` for all state management
-- Prefix provider names with descriptive scope (e.g., `panchangProvider`, `locationProvider`)
-- Use `ConsumerWidget` or `ConsumerStatefulWidget` for reactive UI
-- Prefer `ref.watch` over `ref.read` for UI that rebuilds
-
-```dart
-// Good provider definition
-final panchangProvider = StateNotifierProvider<PanchangNotifier, PanchangState>((ref) {
-  return PanchangNotifier(ref.read(locationServiceProvider));
-});
-
-// Good provider consumption
-final panchang = ref.watch(panchangProvider);
-```
-
-### Testing
-- Follow AAA pattern: Arrange, Act, Assert
-- Use descriptive test names that explain expected behavior
-- Group related tests with `group()`
-- Use `setUp()` for common test fixtures
-
-```dart
-group('PanchangData Model Tests', () {
-  test('fromRawTithi creates correct Shukla Paksha data', () {
-    // Arrange
-    final testDate = DateTime(2024, 3, 15);
-    
-    // Act
-    final panchang = PanchangData.fromRawTithi(
-      date: testDate,
-      rawTithi: 8.5,
-      masa: 'Chaitra',
-      allFestivals: [],
-      sunrise: sunrise,
-      sunset: sunset,
-    );
-    
-    // Assert
-    expect(panchang.paksha, equals('Shukla'));
-    expect(panchang.tithiNumber, equals(8));
-  });
-});
-```
-
----
-
-## Platform-Specific Code
-
-There is no web target and no stub / conditional-export layer. Native functionality
-lives behind plain imports and is dispatched with runtime checks:
-
-- `lib/services/panchang_init/` - copies the bundled ephemeris files into the app's
-  documents directory before the panchang service initializes
-- `lib/services/share_file/` - temp/documents file helpers used by sharing and export
-- `lib/widgets/native_screens/` - barrel for the FFI-dependent screens
-  (eclipse, solar system)
-- `packages/jyotish/` - Swiss Ephemeris FFI bindings (requires NDK)
-
-Because these use `dart:io`, gate the platform-specific entry point with a runtime
-check instead of a conditional import:
-
-```dart
-// dart:io guard
-if (!Platform.isAndroid) return;
-
-// flutter/foundation guard
-if (defaultTargetPlatform != TargetPlatform.android) {
-  await openReleasesPage();
-  return;
-}
-```
-
-Both forms compile on every target; the guard only decides what runs. Capability
-questions belong to the service (e.g. `HomeWidgetService.isWidgetSupported()`,
-`AppUpdateService.supportsInAppInstall`), not to the UI, so screens stay
-platform-agnostic.
-
----
-
-## Working with the jyotish Package
-
-The `packages/jyotish/` directory contains:
-- Dart FFI bindings to Swiss Ephemeris
-- Native Android code (Kotlin/JNI)
-- Hindu calendar calculation logic
-
-To rebuild native bindings:
-```bash
-cd packages/jyotish
-flutter pub get
-# Requires NDK installed
-```
-
----
-
-## Changelog Process
-
-Every new feature implementation must add an entry to `changelogs.md` (repo
-root) **in the same commit as the feature**. Do not batch entries later; the
-changelog is written from the change, not from memory.
-
-What qualifies:
-
-- New user-facing features, new settings/preferences, new screens or sheets.
-- New domain models, services, providers, or platform integrations that other
-  code is expected to reuse.
-- Behaviour changes to an existing feature (e.g. new ordering rules) - update
-  that feature's existing entry if the change is part of it, otherwise add a
-  new one.
-
-What does not: pure refactors, formatting, test-only or docs-only commits,
-dependency bumps, and generated files (`*.g.dart`, `app_localizations*.dart`).
-
-Entry format (newest first, under the heading for today's date and the version
-in `pubspec.yaml`):
-
-```markdown
-## YYYY-MM-DD - <version from pubspec.yaml>
-
-### <Feature name>
-<one line: what the user gets>
-
-- <key behaviour or constraint a maintainer must not break>
-- <where it lives: files / services / providers / settings key>
-```
-
-Rules:
-
-- Brief. 3-6 bullets per feature. Rationale and design debate belong in the
-  commit message and code comments, not here.
-- User outcome first, then the implementation map (paths, Hive fields, settings
-  keys), so the entry stays useful while the code moves.
-- Record constraints that are easy to break silently: exclusive flag values,
-  "append only" enum/field ordering, shared storage keys, fallback behaviour.
-- Reuse the existing date/version heading when adding to a version that has not
-  been released yet; open a new heading after a version bump.
-
----
-
-## Resources
-- Changelog (add a feature entry per implementation): changelogs.md
-- Festival data guide: docs/FESTIVALS_Modification_GUIDE.md
-- Festival artwork guide (compression script, 800px / 200 KB budget): docs/FESTIVAL_ARTWORK_GUIDE.md
-- Surya Siddhanta calibration guide (manual verification, `fit`, tuning): docs/SURYA_SIDDHANTA_CALIBRATION.md
-- Flutter Docs: https://flutter.dev/docs
-- Riverpod Docs: https://riverpod.dev/docs
-- Dart Lints: https://dart.dev/tools/linter-rules
-- Hive Docs: https://docs.hivedb.dev/
+| When | Read |
+|---|---|
+| Need the full per-file map | `docs/AGENT_FILE_MAP.md` (open only your section) |
+| Choosing or adding tests | `docs/AGENT_TESTING.md` |
+| Festival data workflow | `docs/FESTIVALS_QUICK_GUIDE.md` |
+| Festival rules, traps, full reference | `docs/FESTIVALS_Modification_GUIDE.md` |
+| Festival artwork budget (800px / 200 KB) | `docs/FESTIVAL_ARTWORK_GUIDE.md` |
+| Surya Siddhanta calibration | `docs/SURYA_SIDDHANTA_CALIBRATION.md` |
+| Release / versioning | `docs/RELEASE_GUIDE.md` |
+| jyotish FFI / native build | `packages/jyotish/AGENTS.md` |
+| Why web stays deleted | `docs/web-removal/BASELINE.md` |

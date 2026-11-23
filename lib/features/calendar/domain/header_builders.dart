@@ -14,7 +14,7 @@ import '../../panchang/data/panchang_cache.dart';
 import '../data/calendar_caches.dart';
 import '../data/calendar_models.dart';
 
-// Phase 3c: header builders extracted from widgets/calendar_widget.dart.
+// Phase 3c: header builders extracted from the former calendar_widget.dart monolith.
 // Provider-side builders run without a BuildContext, resolving
 // AppLocalizations through the localeProvider-then-system rule.
 
@@ -106,7 +106,8 @@ void storeHeaderSync(
 // Provider-side localizations: calendar header/range builders run without a
 // BuildContext, so they resolve AppLocalizations through the same
 // localeProvider-then-system rule the app shell uses (cf.
-// hinduInstantLabelProvider in tithi_detail_sheet.dart).
+// hinduInstantLabelProvider in
+// features/tithi_sheet/providers/sheet_providers.dart).
 Future<AppLocalizations> calendarL10n(Ref ref) async {
   final locale = resolveAppLocale(ref.read(localeProvider));
   try {
@@ -467,10 +468,7 @@ Future<MonthRangeParts?> getSecondaryTraditionalRangeForLunarPrimary(
         nextIndex = 0;
         nextYear++;
       }
-      final nextStart = await bengaliService.getMonthStart(
-        nextYear,
-        nextIndex,
-      );
+      final nextStart = await bengaliService.getMonthStart(nextYear, nextIndex);
       spanEnd = nextStart.subtract(const Duration(days: 1));
     }
 

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:tithi/features/quote/domain/quote_day_navigation.dart';
+import 'package:tithi/features/quote/domain/shloka_share_text.dart';
+import 'package:tithi/features/quote/domain/shloka_translation.dart';
 import 'package:tithi/models/shloka.dart';
 import 'package:tithi/services/share_file/share_file.dart';
 import 'package:tithi/services/shloka_service.dart';
-import 'package:tithi/widgets/daily_quote_widget.dart';
 
 void main() {
   group('Shloka Model Tests', () {
@@ -159,6 +161,67 @@ void main() {
       expect(otherShlokaTranslation(both, hindiFirst: false), equals('हिन्दी'));
       expect(otherShlokaTranslation(both, hindiFirst: true), equals('English'));
       expect(otherShlokaTranslation(englishOnly, hindiFirst: false), isNull);
+    });
+  });
+
+  group('Quote Translation View Tests', () {
+    const both = Shloka(
+      text: 't',
+      translation: 'English',
+      hindiTranslation: 'हिन्दी',
+      source: 's',
+    );
+    const englishOnly = Shloka(text: 't', translation: 'English', source: 's');
+    const empty = Shloka(text: 't', translation: '', source: 's');
+
+    test('hindiFirst makes the Hindi string primary and Devanagari', () {
+      // Act
+      final view = QuoteTranslationView.resolve(both, hindiFirst: true);
+
+      // Assert
+      expect(view.primary, equals('हिन्दी'));
+      expect(view.primaryIsHindi, isTrue);
+      expect(view.secondary, equals('English'));
+      expect(view.secondaryIsHindi, isFalse);
+    });
+
+    test('english-first makes English primary and Hindi secondary', () {
+      // Act
+      final view = QuoteTranslationView.resolve(both, hindiFirst: false);
+
+      // Assert
+      expect(view.primary, equals('English'));
+      expect(view.primaryIsHindi, isFalse);
+      expect(view.secondary, equals('हिन्दी'));
+      expect(view.secondaryIsHindi, isTrue);
+    });
+
+    test('single-translation verse exposes no secondary', () {
+      // Act
+      final view = QuoteTranslationView.resolve(
+        englishOnly,
+        hindiFirst: false,
+      );
+
+      // Assert
+      expect(view.primary, equals('English'));
+      expect(view.secondary, isNull);
+      expect(view.secondaryIsHindi, isFalse);
+    });
+
+    test('carries showAll through and nulls primary when nothing exists', () {
+      // Act
+      final expanded = QuoteTranslationView.resolve(
+        both,
+        hindiFirst: false,
+        showAll: true,
+      );
+      final nothing = QuoteTranslationView.resolve(empty, hindiFirst: false);
+
+      // Assert
+      expect(expanded.showAll, isTrue);
+      expect(nothing.primary, isNull);
+      expect(nothing.secondary, isNull);
     });
   });
 

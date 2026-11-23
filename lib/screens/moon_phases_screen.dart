@@ -1,27 +1,19 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../providers/accessibility_provider.dart';
-import '../providers/moon_phase_provider.dart';
+import '../core/feedback/app_haptics.dart';
+import '../features/moon/providers/moon_providers.dart';
 import '../providers/panchang_provider.dart';
 import '../services/moon_phase_service.dart';
 import '../l10n/app_localizations.dart';
 import '../widgets/moon_animation_widget.dart';
+import '../widgets/page_scaffold.dart';
+import '../widgets/state_views.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../theme/app_theme.dart';
-
-/// Scrub offset in days from today for the hero moon. 0 = today.
-final moonScrubOffsetProvider = StateProvider.autoDispose<int>((ref) => 0);
-
-/// Scrub range in days. Panchang month batches are Hive-cached, so stepping
-/// through these dates stays cheap (no per-step ephemeris work).
-const int moonScrubRangeDays = 15;
-
-/// Clamps a scrub offset into the supported range.
-int clampMoonScrubOffset(int value) =>
-    value.clamp(-moonScrubRangeDays, moonScrubRangeDays);
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 
 /// Full-screen moon phases view with detailed countdown and upcoming dates
 class MoonPhasesScreen extends ConsumerStatefulWidget {
@@ -67,9 +59,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
   void _resetScrub() {
     _dragAccum = 0;
     if (ref.read(moonScrubOffsetProvider) != 0) {
-      if (ref.read(accessibilityProvider).hapticFeedback) {
-        HapticFeedback.lightImpact();
-      }
+      AppHaptics.tap(ref);
       ref.read(moonScrubOffsetProvider.notifier).state = 0;
     }
   }
@@ -81,69 +71,37 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: const HapticBackButton(),
-        title: Text(l10n.moonPhases),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          dividerColor: Colors.transparent,
-          tabs: [
-            Tab(text: l10n.purnima),
-            Tab(text: l10n.amavasya),
-          ],
-          indicatorColor: theme.colorScheme.primary,
-          labelColor: theme.colorScheme.primary,
-          unselectedLabelColor: theme.colorScheme.onSurface.withValues(
-            alpha: 0.6,
+    return PageScaffold(
+      leading: const HapticBackButton(),
+      title: Text(l10n.moonPhases),
+      bottom: TabBar(
+        controller: _tabController,
+        dividerColor: Colors.transparent,
+        tabs: [
+          Tab(text: l10n.purnima),
+          Tab(text: l10n.amavasya),
+        ],
+        indicatorColor: theme.colorScheme.primary,
+        labelColor: theme.colorScheme.primary,
+        unselectedLabelColor: context.secondaryInk,
+      ),
+      // Each tab list pads its own last row clear of the gesture handle.
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: moonPhaseAsync.when(
+            data: (data) => _buildContent(context, data, l10n, isDark),
+            loading: () =>
+                const Center(child: CircularProgressIndicator.adaptive()),
+            error: (error, _) {
+              debugPrint('Moon phase data failed: $error');
+              return ErrorState(
+                message: l10n.errorLoadingData,
+                onRetry: () => ref.invalidate(moonPhaseDataProvider),
+              );
+            },
           ),
         ),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: RepaintBoundary(
-              child: Container(
-                decoration: AppTheme.backgroundDecoration(context),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 800),
-                child: moonPhaseAsync.when(
-                  data: (data) => _buildContent(context, data, l10n, isDark),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator.adaptive()),
-                  error: (e, _) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: theme.colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(l10n.errorLoadingData),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () => ref.refresh(moonPhaseDataProvider),
-                          child: Text(l10n.retry),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -181,7 +139,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
 
     return Column(
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.s16),
         // Scrubbable moon visualization - wrapped in RepaintBoundary for performance
         RepaintBoundary(
           child: Semantics(
@@ -229,15 +187,13 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.s8),
                     Text(
                       offset == 0
                           ? l10n.today
                           : DateFormat.yMMMd().format(shownDate),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: context.hintInk,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -250,18 +206,15 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                             ? Text(
                                 '${dayPanchang.tithiName} • ${dayPanchang.paksha}',
                                 style: Theme.of(context).textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w600),
+                                    ?.copyWith(
+                                      fontWeight: AppTypography.semibold,
+                                    ),
                               )
                             : offset == 0
                             ? Text(
                                 'Drag to explore • Double-tap resets',
                                 style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.4),
-                                    ),
+                                    ?.copyWith(color: context.hintInk),
                               )
                             : null,
                       ),
@@ -272,7 +225,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
         // Precise illumination percentage
         Text(
           l10n.moonIllumination((illumination01 * 100).toStringAsFixed(1)),
@@ -280,13 +233,13 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
             color: Theme.of(
               context,
             ).colorScheme.onSurface.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500,
+            fontWeight: AppTypography.medium,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.s24),
         // Main countdown cards
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppTheme.pageGutter),
           child: Row(
             children: [
               Expanded(
@@ -299,7 +252,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
                   isDark: isDark,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: _CountdownCard(
                   title: l10n.amavasya,
@@ -313,7 +266,7 @@ class _MoonPhasesScreenState extends ConsumerState<MoonPhasesScreen>
             ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.s24),
         // Tab content - upcoming dates
         Expanded(
           child: TabBarView(
@@ -401,9 +354,9 @@ class _CountdownCardState extends State<_CountdownCard> {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -424,31 +377,31 @@ class _CountdownCardState extends State<_CountdownCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(widget.icon, color: widget.color, size: 20),
-              const SizedBox(width: 8),
+              Icon(widget.icon, color: widget.color, size: AppIconSize.medium),
+              const SizedBox(width: AppSpacing.s8),
               Text(
                 widget.title,
                 style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: AppTypography.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             widget.subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              color: context.secondaryInk,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           // Countdown display
           _buildCountdownDisplay(context, l10n),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Text(
             DateFormat.yMMMd().format(widget.targetDate),
             style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              color: context.secondaryInk,
             ),
           ),
         ],
@@ -463,7 +416,7 @@ class _CountdownCardState extends State<_CountdownCard> {
       return Text(
         l10n.now,
         style: theme.textTheme.headlineMedium?.copyWith(
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
           color: widget.color,
         ),
       );
@@ -478,10 +431,10 @@ class _CountdownCardState extends State<_CountdownCard> {
       children: [
         if (days > 0) ...[
           _TimeUnit(value: days, unit: 'd'),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.s6),
         ],
         _TimeUnit(value: hours, unit: 'h'),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSpacing.s6),
         _TimeUnit(value: minutes, unit: 'm'),
       ],
     );
@@ -503,13 +456,13 @@ class _TimeUnit extends StatelessWidget {
         Text(
           value.toString().padLeft(2, '0'),
           style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: AppTypography.bold,
           ),
         ),
         Text(
           unit,
           style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: context.secondaryInk,
           ),
         ),
       ],
@@ -537,22 +490,33 @@ class _UpcomingDatesTab extends ConsumerWidget {
     return datesAsync.when(
       data: (dates) {
         if (dates.isEmpty) {
-          return Center(child: Text(emptyMessage));
+          return EmptyState(
+            icon: Icons.calendar_month_outlined,
+            title: emptyMessage,
+          );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        return ListView.separated(
+          padding: EdgeInsets.fromLTRB(
+            AppTheme.pageGutter,
+            0,
+            AppTheme.pageGutter,
+            AppSpacing.s8 + AppTheme.navigationBarInset(context),
+          ),
           itemCount: dates.length,
+          separatorBuilder: (_, _) => const SizedBox(height: AppTheme.cardGap),
           itemBuilder: (context, index) {
             final date = dates[index];
             final now = DateTime.now();
             final daysUntil = date.difference(now).inDays;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s16,
+                vertical: AppSpacing.s12,
+              ),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppTheme.cardRadiusCompact),
                 color: isDark
                     ? AppTheme.spaceStar.withValues(alpha: 0.05)
                     : AppTheme.spaceStar.withValues(alpha: 0.6),
@@ -565,15 +529,18 @@ class _UpcomingDatesTab extends ConsumerWidget {
                       children: [
                         Text(
                           DateFormat.yMMMMEEEEd().format(date),
+                          // Full ink: this is the row's primary content, and
+                          // `bodyMedium` is the theme's tertiary (hint) ink.
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: AppTypography.semibold,
                           ),
                         ),
                         Text(
                           DateFormat.jm().format(date),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
+                              alpha: 0.72,
                             ),
                           ),
                         ),
@@ -582,15 +549,16 @@ class _UpcomingDatesTab extends ConsumerWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: AppSpacing.s12,
+                      vertical: AppSpacing.s6,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: (isDark
-                              ? AppTheme.moonGlowDark
-                              : AppTheme.moonGlowLight)
-                          .withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(AppRadius.tile),
+                      color:
+                          (isDark
+                                  ? AppTheme.moonGlowDark
+                                  : AppTheme.moonGlowLight)
+                              .withValues(alpha: 0.3),
                     ),
                     child: Text(
                       daysUntil == 0
@@ -599,7 +567,11 @@ class _UpcomingDatesTab extends ConsumerWidget {
                           ? l10n.tomorrow
                           : l10n.daysFromNow(daysUntil),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: AppTypography.bold,
+                        // The pill is a tint of the moon glow; pin the text to
+                        // `onSurface` so it stays dark-on-amber in light and
+                        // light-on-indigo in the dark palettes.
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -610,7 +582,15 @@ class _UpcomingDatesTab extends ConsumerWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator.adaptive()),
-      error: (_, _) => Center(child: Text(emptyMessage)),
+      error: (error, _) {
+        // An error is not an empty result: say so, and offer the reload the
+        // old `Center(child: Text(emptyMessage))` could not.
+        debugPrint('Moon phase dates failed: $error');
+        return ErrorState(
+          message: l10n.unexpectedErrorOccurred,
+          onRetry: () => ref.invalidate(provider),
+        );
+      },
     );
   }
 }

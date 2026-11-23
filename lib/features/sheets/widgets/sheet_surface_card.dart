@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
 
 // Canonical surface body card shared by the tithi detail sheet
 // (TimingsCard/NakshatraCard/AuspiciousCard idiom: cardTheme fill, 16pt
@@ -12,7 +13,7 @@ class SheetSurfaceCard extends StatelessWidget {
   const SheetSurfaceCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(AppSpacing.s16),
     this.border,
     this.clipBehavior = Clip.none,
   });

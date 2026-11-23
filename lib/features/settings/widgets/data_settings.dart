@@ -1,23 +1,19 @@
-import 'package:flutter/material.dart';
+import 'dart:convert' show JsonEncoder;
+
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:share_plus/share_plus.dart';
-import 'dart:async' show unawaited;
-import 'dart:convert' show utf8;
-import 'dart:typed_data';
 import '../../../providers/calendar_provider.dart';
-import '../../../providers/festival_provider.dart';
 import '../../../providers/location_provider.dart';
 import '../../../providers/notification_provider.dart';
-import '../../../providers/panchang_provider.dart';
 import '../../../providers/storage_provider.dart';
 import '../../../providers/theme_provider.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../providers/accessibility_provider.dart';
-import '../../../services/festival_export_service.dart';
-import '../../../services/share_file/share_file.dart';
+import '../../../services/festival_calendar_export_service.dart';
+import 'festival_export_flow.dart';
+import 'festival_export_year_sheet.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class ClearCacheSetting extends ConsumerWidget {
@@ -55,245 +51,107 @@ class ExportFestivalsSetting extends ConsumerWidget {
     return SettingsActionTile(
       icon: Icons.ios_share_rounded,
       title: l10n?.exportFestivalsJson ?? 'Export Festivals (JSON)',
-      subtitle: l10n?.exportFestivalsSubtitle ?? 'Save all festivals with Panchang details to a file',
-      onTap: () => _showYearPicker(context, ref),
+      subtitle:
+          l10n?.exportFestivalsSubtitle ??
+          'Save all festivals with Panchang details to a file',
+      onTap: () => FestivalExportYearSheet.show(
+        context: context,
+        title: l10n?.exportFestivalsJson ?? 'Export Festivals (JSON)',
+        subtitle:
+            l10n?.exportJsonYearSheetSubtitle ??
+            "Choose a year. You'll then pick where to save the JSON file.",
+        onExport: (year) => _runJsonExport(context, ref, year, l10n),
+      ),
     );
   }
 
-  Future<void> _showYearPicker(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context);
-    final thisYear = DateTime.now().year;
-    final years = [thisYear - 1, thisYear, thisYear + 1, thisYear + 2];
-
-    await SettingsBottomSheet.show(
-      context: context,
-      title: l10n?.exportFestivals ?? 'Export Festivals',
-      subtitle: l10n?.exportFestivalsSubtitleYear ?? 'First occurrence of each festival in the chosen year',
-      children: years.map((year) {
-        return SettingsPickerItem(
-          title: year.toString(),
-          isSelected: year == thisYear,
-          onTap: () {
-            Navigator.pop(context);
-            _runExport(context, ref, year);
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Future<void> _runExport(
+  Future<void> _runJsonExport(
     BuildContext context,
     WidgetRef ref,
     int year,
+    AppLocalizations? l10n,
   ) async {
+    await runFestivalExport(
+      context: context,
+      ref: ref,
+      year: year,
+      buildPayload: (document) {
+        final count = document['festivalCount'] ?? 0;
+        return FestivalExportPayload(
+          filename: 'tithi-festivals-$year.json',
+          content: const JsonEncoder.withIndent('  ').convert(document),
+          mimeType: 'application/json',
+          shareSubject:
+              l10n?.festivalExportShareSubject(year.toString()) ??
+              'Tithi festivals $year',
+          shareText:
+              l10n?.festivalExportShareText(year.toString()) ??
+              'Tithi festivals $year with Panchang details (JSON)',
+          savedMessage:
+              l10n?.festivalsExportedForYear(count, year.toString()) ??
+              '$count festivals exported for $year.',
+        );
+      },
+    );
+  }
+}
+
+/// Exports festival dates as an iCalendar (.ics) file that Google Calendar
+/// (and any other calendar app) can import. Each festival is an all-day event
+/// on its observance date, with the Panchang timings in the description.
+class ExportFestivalsCalendarSetting extends ConsumerWidget {
+  const ExportFestivalsCalendarSetting({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-
-    try {
-      await ref.read(festivalInitProvider.future);
-      // Shared init: a Panjika switch replaces the service instance, so
-      // initializing it here directly could race the app-wide init.
-      await ref.read(panchangInitProvider.future);
-      final service = ref.read(panchangServiceProvider);
-      final festivals = ref.read(festivalProvider);
-      if (festivals.isEmpty) {
-        if (!context.mounted) return;
-        showAppMessage(
-          context,
-          l10n?.noFestivalsToExport ?? 'No festivals to export',
-          kind: AppMessageKind.error,
-        );
-        return;
-      }
-      final coords = ref.read(resolvedCoordinatesProvider);
-      final monthSystem = ref.read(hinduMonthSystemProvider);
-      final yearEra = ref.read(hinduYearEraProvider);
-
-      final progress = ValueNotifier<int>(0);
-      var cancelled = false;
-      var dialogOpen = false;
-      if (!context.mounted) {
-        progress.dispose();
-        return;
-      }
-      unawaited(
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) => PopScope(
-            canPop: false,
-            child: AlertDialog(
-              title: Text(l10n?.exportingYear(year.toString()) ?? 'Exporting $year'),
-              content: ValueListenableBuilder<int>(
-                valueListenable: progress,
-                builder: (_, done, _) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    LinearProgressIndicator(
-                      value: festivals.isEmpty
-                          ? null
-                          : done / festivals.length,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(l10n?.festivalsExportedProgress(done, festivals.length) ?? '$done / ${festivals.length} festivals'),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => cancelled = true,
-                  child: Text(l10n?.cancel ?? 'Cancel'),
-                ),
-              ],
-            ),
-          ),
-        ).whenComplete(() => dialogOpen = false),
-      );
-      dialogOpen = true;
-
-      String? json;
-      try {
-        json = await FestivalExportService().exportYearJson(
-          festivals: festivals,
-          service: service,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-          monthSystem: monthSystem,
-          yearEra: yearEra,
-          year: year,
-          onProgress: (done, _) => progress.value = done,
-          isCancelled: () => cancelled,
-        );
-      } finally {
-        progress.dispose();
-        if (dialogOpen && context.mounted) {
-          Navigator.of(context).pop();
-        }
-      }
-
-      if (json == null) {
-        if (!context.mounted) return;
-        showAppMessage(
-          context,
-          l10n?.exportCancelled ?? 'Export cancelled',
-        );
-        return;
-      }
-
-      // System save picker: the user chooses where the file goes
-      // (Downloads, Drive, SD card...); a null result means cancelled. If the
-      // picker itself throws (e.g. the plugin is missing from a stale
-      // install), fall back to app-private storage so the export still
-      // succeeds.
-      final filename = 'tithi-festivals-$year.json';
-      String? savedPath;
-      var pickerFailed = false;
-      try {
-        // file_picker 13.x returns a Uri (was String?); keep the String
-        // path contract below, with the raw URI as display fallback.
-        final savedUri = await FilePicker.saveFile(
-          dialogTitle: l10n?.saveFestivalsYear(year.toString()) ?? 'Save festivals $year',
-          fileName: filename,
-          type: FileType.custom,
-          allowedExtensions: ['json'],
-          bytes: Uint8List.fromList(utf8.encode(json)),
-        );
-        try {
-          savedPath = savedUri?.toFilePath();
-        } catch (_) {
-          savedPath = savedUri?.toString();
-        }
-      } catch (e) {
-        debugPrint('Save picker unavailable, using app storage: $e');
-        pickerFailed = true;
-      }
-
-      if (!context.mounted) return;
-
-      if (savedPath == null && !pickerFailed) {
-        showAppMessage(
-          context,
-          l10n?.exportCancelled ?? 'Export cancelled',
-        );
-        return;
-      }
-
-      // Picker unavailable: persist in app-private documents instead.
-      savedPath ??= await saveTextToDocuments(json, filename);
-      if (!context.mounted) return;
-      if (savedPath == null) {
-        showAppMessage(
-          context,
-          l10n?.couldNotSaveExportFile ?? 'Could not save export file',
-          kind: AppMessageKind.error,
-        );
-        return;
-      }
-      final displayPath = savedPath;
-
-      // Temp copy backs the optional Share action below.
-      final sharePath = await saveTextToTemp(json, filename);
-      if (!context.mounted) return;
-
-      await showDialog<void>(
+    return SettingsActionTile(
+      icon: Icons.calendar_month_rounded,
+      title: l10n?.exportFestivalsCalendar ?? 'Add to Google Calendar (.ics)',
+      subtitle:
+          l10n?.exportFestivalsCalendarSubtitle ??
+          'Save festival dates as a calendar file you can import',
+      onTap: () => FestivalExportYearSheet.show(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(l10n?.saved ?? 'Saved'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n?.festivalsExportedForYear(festivals.length, year.toString()) ?? '${festivals.length} festivals exported for $year.'),
-              const SizedBox(height: 8),
-              Text(
-                filename,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                displayPath,
-                style: Theme.of(
-                  dialogContext,
-                ).textTheme.bodySmall,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text(l10n?.done ?? 'Done'),
-            ),
-            if (sharePath != null)
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(dialogContext);
-                  await SharePlus.instance.share(
-                    ShareParams(
-                      files: [XFile(sharePath, mimeType: 'application/json')],
-                      subject: l10n?.festivalExportShareSubject(year.toString()) ??
-                          'Tithi festivals $year',
-                      text: l10n?.festivalExportShareText(year.toString()) ??
-                          'Tithi festivals $year with Panchang details (JSON)',
-                    ),
-                  );
-                },
-                child: Text(l10n?.share ?? 'Share'),
-              ),
-          ],
-        ),
-      );
-    } catch (e) {
-      debugPrint('Festival export failed: $e');
-      if (context.mounted) {
-        showAppMessage(
-          context,
-          l10n?.exportFailed(e.toString()) ?? 'Export failed: $e',
-          kind: AppMessageKind.error,
+        title: l10n?.exportFestivalsCalendar ?? 'Add to Google Calendar (.ics)',
+        subtitle:
+            l10n?.exportCalendarYearSheetSubtitle ??
+            "Choose a year. You'll then pick where to save the .ics file for Google Calendar.",
+        onExport: (year) => _runCalendarExport(context, ref, year, l10n),
+      ),
+    );
+  }
+
+  Future<void> _runCalendarExport(
+    BuildContext context,
+    WidgetRef ref,
+    int year,
+    AppLocalizations? l10n,
+  ) async {
+    await runFestivalExport(
+      context: context,
+      ref: ref,
+      year: year,
+      buildPayload: (document) {
+        // Report events actually written, not the raw festival count: a year
+        // may contain festivals whose dates could not be resolved.
+        final count = FestivalCalendarExportService.countEvents(document);
+        return FestivalExportPayload(
+          filename: 'tithi-festivals-$year.ics',
+          content: FestivalCalendarExportService().buildIcs(document),
+          mimeType: 'text/calendar',
+          shareSubject:
+              l10n?.festivalCalendarShareSubject(year.toString()) ??
+              'Tithi festivals $year (Calendar)',
+          shareText:
+              l10n?.festivalCalendarShareText(year.toString()) ??
+              'Import Tithi festival dates for $year into Google Calendar (.ics)',
+          savedMessage:
+              l10n?.festivalsExportedToCalendar(count, year.toString()) ??
+              '$count festivals exported to calendar for $year.',
         );
-      }
-    }
+      },
+    );
   }
 }
 
@@ -327,9 +185,7 @@ class ResetSettingsTile extends ConsumerWidget {
                 onPressed: () => Navigator.pop(c, true),
                 child: Text(
                   l10n?.reset ?? 'Reset',
-                  style: TextStyle(
-                    color: Theme.of(c).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(c).colorScheme.error),
                 ),
               ),
             ],
@@ -384,4 +240,3 @@ class ResetSettingsTile extends ConsumerWidget {
     );
   }
 }
-

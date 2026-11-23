@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../providers/accessibility_provider.dart';
+import '../../../core/feedback/app_haptics.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 import 'sheet_surface_card.dart';
 
 /// Tappable "go to the other sheet" row in the shared sheet kit.
@@ -40,7 +41,7 @@ class SheetLinkTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ink = accent ?? context.colors.primary;
-    final muted = context.colors.onSurface.withValues(alpha: 0.7);
+    final muted = context.secondaryInk;
 
     return Semantics(
       button: true,
@@ -52,21 +53,19 @@ class SheetLinkTile extends ConsumerWidget {
           color: Colors.transparent,
           child: InkWell(
             onTap: () {
-              if (ref.read(accessibilityProvider).hapticFeedback) {
-                HapticFeedback.lightImpact();
-              }
+              AppHaptics.tap(ref);
               onTap();
             },
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppSpacing.s14),
               // The composed Semantics label above already carries both
               // lines; excluding the visible Texts avoids announcing them
               // twice.
               child: ExcludeSemantics(
                 child: Row(
                   children: [
-                    Icon(icon, size: 20, color: ink),
-                    const SizedBox(width: 12),
+                    Icon(icon, size: AppIconSize.medium, color: ink),
+                    const SizedBox(width: AppSpacing.s12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,18 +74,18 @@ class SheetLinkTile extends ConsumerWidget {
                           Text(
                             label,
                             style: TextStyle(
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w700,
+                              fontSize: AppTypography.sizeBody,
+                              fontWeight: AppTypography.bold,
                               color: context.colors.onSurface,
                             ),
                           ),
                           if (supporting != null) ...[
-                            const SizedBox(height: 2),
+                            const SizedBox(height: AppSpacing.s2),
                             Text(
                               supporting!,
                               style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
+                                fontSize: AppTypography.sizeCaption,
+                                fontWeight: AppTypography.medium,
                                 color: muted,
                               ),
                             ),
@@ -94,8 +93,12 @@ class SheetLinkTile extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.chevron_right_rounded, size: 20, color: ink),
+                    const SizedBox(width: AppSpacing.s8),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: AppIconSize.medium,
+                      color: ink,
+                    ),
                   ],
                 ),
               ),

@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show debugPrint;
+
 import '../features/countdown/domain/target_resolution.dart';
 import '../features/panchang/domain/panchang_day.dart';
 import '../features/panchang/domain/panchang_day_resolver.dart';
@@ -21,6 +23,7 @@ import 'panchang_service.dart';
 ///   "category": "major",
 ///   "regions": ["all"],
 ///   "displayPriority": null,
+///   "featured": true,
 ///   "rule": {"masa": "Bhadrapada", "paksha": "Shukla",
 ///            "tithi": 4, "conditions": "Chaturthi"},
 ///   "occurrence": {
@@ -57,6 +60,8 @@ import 'panchang_service.dart';
 /// - `regions` is the normalized region tags list (`["all"]` for pan-India)
 ///   and `displayPriority` is the same-day rank (null when unranked), so an
 ///   exported year describes the ordering metadata the UI actually uses.
+/// - `featured` is the curated flagship flag, the one the all-festivals list
+///   uses to pick its large card.
 /// - All instants are local wall-clock ISO-8601; see `location` in the
 ///   document header for the coordinates they were computed for.
 class FestivalExportService {
@@ -64,10 +69,13 @@ class FestivalExportService {
 
   /// Builds the complete export document for [year].
   ///
-  /// Returns the JSON string, or null when cancelled via [isCancelled].
-  /// Reports progress through [onProgress] and yields to the event loop
-  /// after each festival so progress UI stays responsive.
-  Future<String?> exportYearJson({
+  /// Returns the structured document, or null when cancelled via
+  /// [isCancelled]. Reports progress through [onProgress] and yields to the
+  /// event loop after each festival so progress UI stays responsive.
+  ///
+  /// Both the JSON and the iCalendar export render from this one document, so
+  /// the festival dates in the two formats can never drift apart.
+  Future<Map<String, dynamic>?> exportYear({
     required List<Festival> festivals,
     required PanchangService service,
     required double latitude,
@@ -84,23 +92,32 @@ class FestivalExportService {
     for (var i = 0; i < festivals.length; i++) {
       if (isCancelled != null && isCancelled()) return null;
 
-      entries.add(
-        await _exportOne(
-          festivals[i],
-          service,
-          latitude,
-          longitude,
-          monthSystem,
-          startOfYear,
-          year,
-        ),
-      );
+      try {
+        entries.add(
+          await _exportOne(
+            festivals[i],
+            service,
+            latitude,
+            longitude,
+            monthSystem,
+            startOfYear,
+            year,
+          ),
+        );
+      } catch (e) {
+        // One festival with unusable rules or a transient ephemeris failure
+        // must not discard the other ~100 rows. Keep its identity and an
+        // empty occurrence so the export stays structurally complete, and
+        // surface the failure in the console for diagnosis.
+        debugPrint('Festival export skipped ${festivals[i].id}: $e');
+        entries.add(buildEntry(festival: festivals[i]));
+      }
       onProgress?.call(i + 1, festivals.length);
       // Let progress UI paint between festivals.
       await Future<void>.delayed(Duration.zero);
     }
 
-    final document = {
+    return {
       'app': 'Tithi',
       'exportedAt': DateTime.now().toIso8601String(),
       'year': year,
@@ -110,6 +127,34 @@ class FestivalExportService {
       'festivalCount': entries.length,
       'festivals': entries,
     };
+  }
+
+  /// JSON rendering of [exportYear]. Kept as the public JSON API (the export
+  /// day tests call it directly); the settings UI renders every format from
+  /// the shared [exportYear] document instead.
+  Future<String?> exportYearJson({
+    required List<Festival> festivals,
+    required PanchangService service,
+    required double latitude,
+    required double longitude,
+    required HinduMonthSystem monthSystem,
+    required HinduYearEra yearEra,
+    required int year,
+    void Function(int done, int total)? onProgress,
+    bool Function()? isCancelled,
+  }) async {
+    final document = await exportYear(
+      festivals: festivals,
+      service: service,
+      latitude: latitude,
+      longitude: longitude,
+      monthSystem: monthSystem,
+      yearEra: yearEra,
+      year: year,
+      onProgress: onProgress,
+      isCancelled: isCancelled,
+    );
+    if (document == null) return null;
     return const JsonEncoder.withIndent('  ').convert(document);
   }
 
@@ -210,8 +255,9 @@ class FestivalExportService {
             festival.tithi >= 1
         ? festival.resolvePaksha(panchang.paksha)
         : panchang.paksha;
-    final observedNum =
-        observedIndex <= 15 ? observedIndex : observedIndex - 15;
+    final observedNum = observedIndex <= 15
+        ? observedIndex
+        : observedIndex - 15;
 
     // Era years from the AMANTA masa (the +56/+57 boundary is defined by
     // Amanta Chaitra; feeding the Purnimant display label here would flip
@@ -263,8 +309,8 @@ class FestivalExportService {
     String? day(DateTime? dt) => dt == null
         ? null
         : '${dt.year.toString().padLeft(4, '0')}-'
-            '${dt.month.toString().padLeft(2, '0')}-'
-            '${dt.day.toString().padLeft(2, '0')}';
+              '${dt.month.toString().padLeft(2, '0')}-'
+              '${dt.day.toString().padLeft(2, '0')}';
     String? instant(DateTime? dt) => dt?.toIso8601String();
 
     return {
@@ -274,6 +320,7 @@ class FestivalExportService {
       'category': festival.category,
       'regions': festival.regions,
       'displayPriority': festival.displayPriority,
+      'featured': festival.featured,
       'rule': {
         'masa': festival.masa,
         'paksha': festival.paksha,

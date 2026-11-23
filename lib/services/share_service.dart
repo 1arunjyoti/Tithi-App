@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../l10n/app_localizations.dart';
 import '../core/feedback/app_messages.dart';
+import '../core/format/festival_labels.dart';
 import '../models/festival.dart';
 import '../widgets/festival_share_card.dart';
 
@@ -34,9 +35,13 @@ class ShareService {
       // Resolve locale-dependent strings before any await: the sheet may
       // close while capturing/sharing, unmounting [context].
       final l10n = AppLocalizations.of(context);
+      final displayName = festivalDisplayName(
+        festival: festival,
+        locale: l10n?.localeName ?? 'en',
+      );
       final shareText =
-          l10n?.celebratingFestivalWithTithi(festival.name) ??
-          'Celebrating ${festival.name} with Tithi App!';
+          l10n?.celebratingFestivalWithTithi(displayName) ??
+          'Celebrating $displayName with Tithi App!';
 
       // 2. Capture the widget
       final Uint8List imageBytes = await _screenshotController
@@ -56,7 +61,7 @@ class ShareService {
       // 4. Share the file
       final xFile = XFile(imagePath);
       await SharePlus.instance.share(
-        ShareParams(subject: festival.name, text: shareText, files: [xFile]),
+        ShareParams(subject: displayName, text: shareText, files: [xFile]),
       );
     } catch (e) {
       debugPrint("Error sharing festival: $e");

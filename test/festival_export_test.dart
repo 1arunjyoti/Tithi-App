@@ -7,33 +7,34 @@ import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/services/festival_export_service.dart';
 
 Festival _ganesh() => Festival.fromJson({
-      'id': 'ganesh_chaturthi',
-      'name': 'Ganesh Chaturthi',
-      'category': 'major',
-      'nameRegional': {'nameHindi': 'गणेश चतुर्थी'},
-      'panchang_rules': {
-        'masa': 'Bhadrapada',
-        'paksha': 'Shukla',
-        'tithi': 4,
-        'conditions': 'Chaturthi',
-        'timingOverride': 'madhyahna',
-      },
-    });
+  'id': 'ganesh_chaturthi',
+  'name': 'Ganesh Chaturthi',
+  'category': 'major',
+  'nameRegional': {'nameHindi': 'गणेश चतुर्थी'},
+  'panchang_rules': {
+    'masa': 'Bhadrapada',
+    'paksha': 'Shukla',
+    'tithi': 4,
+    'conditions': 'Chaturthi',
+    'timingOverride': 'madhyahna',
+  },
+});
 
 Festival _regionalChhath() => Festival.fromJson({
-      'id': 'chhath_puja',
-      'name': 'Chhath Puja',
-      'category': 'major',
-      'regions': ['north', 'east'],
-      'displayPriority': 2,
-      'nameRegional': {'nameHindi': 'छठ पूजा'},
-      'panchang_rules': {
-        'masa': 'Kartika',
-        'paksha': 'Shukla',
-        'tithi': 6,
-        'conditions': 'Shashthi',
-      },
-    });
+  'id': 'chhath_puja',
+  'name': 'Chhath Puja',
+  'category': 'major',
+  'regions': ['north', 'east'],
+  'displayPriority': 2,
+  'featured': true,
+  'nameRegional': {'nameHindi': 'छठ पूजा'},
+  'panchang_rules': {
+    'masa': 'Kartika',
+    'paksha': 'Shukla',
+    'tithi': 6,
+    'conditions': 'Shashthi',
+  },
+});
 
 void main() {
   group('FestivalExportService.buildEntry', () {
@@ -98,13 +99,16 @@ void main() {
       expect(entry['occurrence'], isNull);
     });
 
-    test('encodes region tags and display priority', () {
+    test('encodes region tags, display priority and the featured flag', () {
       final entry = FestivalExportService.buildEntry(
         festival: _regionalChhath(),
       );
 
       expect(entry['regions'], equals(['north', 'east']));
       expect(entry['displayPriority'], equals(2));
+      // The curated flag round-trips: an exported description of the year
+      // says which observances the UI treated as flagship.
+      expect(entry['featured'], isTrue);
       // Metadata survives the no-occurrence path too.
       expect(entry['occurrence'], isNull);
     });

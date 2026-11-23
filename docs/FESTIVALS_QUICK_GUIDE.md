@@ -61,7 +61,11 @@ Match by Amanta month, paksha, and tithi:
 
 ### Recurring vrat
 
-Use wildcards for festivals such as monthly Ekadashi:
+Use wildcards only for a genuinely generic monthly vrat (such as
+`purnima`/`amavasya`). **Do not** use a wildcard for Ekadashi: all 24 are named
+and stored with a specific Amanta `masa` and `paksha`, so the matcher resolves
+each one individually. A leftover `masa: "*"` Ekadashi would match every
+Ekadashi and render one name for all of them (and duplicate the named entries).
 
 ```json
 "category": "vrat",
@@ -75,7 +79,13 @@ Use wildcards for festivals such as monthly Ekadashi:
 ```
 
 `recurring` controls filtering and yearly-list repetition. It does **not**
-change how the festival matches a day.
+change how the festival matches a day. Named Ekadashis are `vrat` with a
+specific month, `dominant_tithi: "strict"` (no post-sunrise grace — this is
+what resolves a viddha Dashami to the true sunrise day), `vriddhi: "first"`
+(one observance even in a genuine two-sunrise run) and
+`paranRule: "dwadashi_window"`. Keep the strict + first pair together. A leap
+year's two extra Ekadashis live in `masa: "Adhika_Jyeshtha"` (Padmini /
+Parama), matching the engine's `Adhika_` string.
 
 ### Solar festival
 
@@ -142,6 +152,11 @@ different dates.
 - `displayPriority` is a **top-level** integer, not part of
   `panchang_rules`. Use it only when festivals collide; lower numbers appear
   first.
+- `featured` is a **top-level** boolean, not part of `panchang_rules`.
+  `"featured": true` marks a flagship: the All Festivals screen gives it the
+  large featured card. It is curated (16 entries today), independent of
+  `category`, and does not depend on today's date. Leave it out for
+  everything else.
 - `regions` is a top-level list. Use lowercase `north`, `south`, `east`,
   `west`, `central`, `northeast`, or `all`. Omit it for pan-India festivals.
 - `visuals.image` should normally remain empty. If artwork is needed, follow

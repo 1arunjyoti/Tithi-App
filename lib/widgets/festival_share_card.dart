@@ -1,7 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import '../core/format/festival_labels.dart';
 import '../l10n/app_localizations.dart';
 import '../models/festival.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
 
 class FestivalShareCard extends StatelessWidget {
   final Festival festival;
@@ -13,6 +16,12 @@ class FestivalShareCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colors = context.colors;
     final textTheme = context.textTheme;
+    final locale = l10n.localeName;
+    final displayName = festivalDisplayName(festival: festival, locale: locale);
+    final alternateName = festivalAlternateName(
+      festival: festival,
+      locale: locale,
+    );
     final tithiText = festival.tithi != 0
         ? '${festival.paksha} • ${l10n.tithi} ${festival.tithi}'
         : festival.paksha;
@@ -68,27 +77,31 @@ class FestivalShareCard extends StatelessWidget {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppSpacing.s24),
                   child: Column(
                     children: [
-                      Icon(Icons.auto_awesome, size: 64, color: colors.primary),
-                      const SizedBox(height: 24),
+                      Icon(
+                        Icons.auto_awesome,
+                        size: AppIconSize.splash,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(height: AppSpacing.s24),
 
                       Text(
-                        festival.name,
+                        displayName,
                         textAlign: TextAlign.center,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                         style: textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: AppTypography.bold,
                           color: colors.onSurface,
                           letterSpacing: 1.2,
                         ),
                       ),
-                      if (festival.nameHindi != null) ...[
-                        const SizedBox(height: 8),
+                      if (alternateName.isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.s8),
                         Text(
-                          festival.nameHindi!,
+                          alternateName,
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -97,16 +110,16 @@ class FestivalShareCard extends StatelessWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.s16),
 
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+                          horizontal: AppSpacing.s20,
+                          vertical: AppSpacing.s12,
                         ),
                         decoration: BoxDecoration(
                           color: colors.surface.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(50),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: colors.outline.withValues(alpha: 0.4),
                           ),
@@ -115,12 +128,12 @@ class FestivalShareCard extends StatelessWidget {
                           tithiText,
                           style: textTheme.bodyMedium?.copyWith(
                             color: colors.onSurface,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: AppTypography.medium,
                             letterSpacing: 0.5,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.s24),
 
                       Expanded(
                         child: Center(
@@ -138,7 +151,7 @@ class FestivalShareCard extends StatelessWidget {
                         ),
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.s16),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -146,20 +159,20 @@ class FestivalShareCard extends StatelessWidget {
                           Icon(
                             Icons.calendar_month,
                             color: colors.primary,
-                            size: 20,
+                            size: AppIconSize.medium,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.s8),
                           Text(
                             l10n.appTitle,
                             style: textTheme.titleMedium?.copyWith(
                               color: colors.primary,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: AppTypography.bold,
                               letterSpacing: 1.5,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.s8),
                     ],
                   ),
                 ),

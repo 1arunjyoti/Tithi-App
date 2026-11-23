@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../providers/location_provider.dart';
@@ -107,7 +107,6 @@ class LocationSettingsSection extends ConsumerWidget {
   }
 }
 
-
 class HomeLocationSetting extends ConsumerWidget {
   const HomeLocationSetting({super.key});
 
@@ -127,7 +126,7 @@ class HomeLocationSetting extends ConsumerWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.labelSmall?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.6),
+            color: context.secondaryInk,
           ),
         ),
       ),
@@ -138,4 +137,3 @@ class HomeLocationSetting extends ConsumerWidget {
     );
   }
 }
-

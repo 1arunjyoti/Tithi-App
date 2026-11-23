@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/format/festival_labels.dart';
 import '../core/locale/app_locale.dart';
+import '../features/countdown/providers/countdown_providers.dart';
 import '../features/hero/domain/hero_content.dart';
 import '../features/hero/providers/hero_providers.dart';
 import '../features/home_widget/domain/panchang_widget_payload.dart';
@@ -19,7 +20,6 @@ import '../models/festival_region.dart';
 import '../services/home_widget.dart';
 import '../utils/tithi_localization.dart';
 import 'calendar_provider.dart';
-import 'festival_countdown_provider.dart';
 import 'locale_provider.dart';
 import 'location_provider.dart';
 import 'panchang_provider.dart';
@@ -127,12 +127,11 @@ final panchangWidgetSyncProvider = Provider<void>((ref) {
       primarySystem: primarySystem,
       secondarySystem: secondarySystem,
       monthSystem: monthSystem,
-      bengali: ref
-          .watch(bengaliDateForHeroProvider(panchang.date))
-          .valueOrNull,
+      bengali: ref.watch(bengaliDateForHeroProvider(panchang.date)).valueOrNull,
       useBengaliScript: locale.languageCode == 'bn',
       isToday: true,
       region: region,
+      locale: locale.languageCode,
     );
     final names = masaTithiNames(
       masa: panchang.masa,
@@ -147,10 +146,7 @@ final panchangWidgetSyncProvider = Provider<void>((ref) {
     ].where((part) => part.trim().isNotEmpty).join(' · ');
 
     // Widget text follows the app language, including festival names.
-    final festivals = sortedFestivalsForRegion(
-      panchang.festivals,
-      region,
-    )
+    final festivals = sortedFestivalsForRegion(panchang.festivals, region)
         .map(
           (festival) => festivalDisplayName(
             festival: festival,

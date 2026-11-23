@@ -10,7 +10,7 @@ import '../../../services/hindu_calendar_service.dart';
 import '../data/calendar_caches.dart';
 import '../data/calendar_models.dart';
 
-// Phase 3b: cell builders extracted from widgets/calendar_widget.dart.
+// Phase 3b: cell builders extracted from the former calendar_widget.dart monolith.
 // Pure domain logic parameterized by [Ref]; no widget lifecycle.
 
 // Single date label for [system] (primary or secondary corner label).
@@ -86,10 +86,7 @@ Future<Map<DateTime, CalendarCellData>> buildCalendarCellData(
       ? ref.watch(resolvedSolarContextProvider)
       : null;
   final flagCacheBox = includeFestivals
-      ? await preparePanchangCacheBox(
-          flagSolar!.latitude,
-          flagSolar.longitude,
-        )
+      ? await preparePanchangCacheBox(flagSolar!.latitude, flagSolar.longitude)
       : null;
 
   // Batched to avoid a ~42-wide FFI burst on cold months: Hindu secondary

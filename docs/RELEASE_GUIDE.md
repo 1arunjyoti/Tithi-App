@@ -40,7 +40,9 @@ APK.
 ### Version and code
 
 - [ ] `pubspec.yaml` `version:` uses `X.Y.Z+N`
-- [ ] `+N` is **higher than every previously published release**
+- [ ] `+N` is **higher than every previously published release** (CI checks
+      this against `gh release list` before it builds; a stale `+N` fails the
+      run instead of shipping a downgrade no device installs)
 - [ ] `+N` is higher than the `versionCode` already on Google Play
       (if you ship both — they must share one rising counter)
 - [ ] The version **name** (`X.Y.Z`) has not gone backwards versus any
@@ -78,19 +80,33 @@ APK.
 
 - [ ] Create the GitHub release with tag **`vX.Y.Z+N`** — exactly
       matching `pubspec.yaml`
-- [ ] Release is **published**, not left as a draft
+- [ ] CI path: push the trigger tag **`vX.Y.Z+N--release`**. The workflow
+      checks it against `pubspec.yaml`, builds both APKs and publishes the
+      release under the clean `vX.Y.Z+N` tag (`--target` points at the
+      tested commit). Never publish a release under the marker tag — the
+      app reads `tag_name` and parses the `+N` build number from it.
+- [ ] Release is **published**, not left as a draft (CI creates a draft,
+      uploads both APKs, then publishes; an interrupted run leaves a draft
+      that the next run repairs without re-tagging)
 - [ ] Release is **not** marked as a pre-release (unless you intend
       nobody to receive it yet)
-- [ ] Attach the asset named exactly
-      `tithi-X.Y.Z+N-release.apk`
+- [ ] Assets are `tithi-arm64-v8a-release.apk` and
+      `tithi-x86_64-release.apk` for CI builds, or the universal
+      `tithi-X.Y.Z+N-release.apk` from a local `build_release.ps1` run. Keep
+      the ABI token in the name: the app matches it against
+      `Build.SUPPORTED_ABIS`, and a name without one is treated as universal,
+      so a renamed arm64-only build would be offered to every device
 - [ ] Never reuse an existing tag for different bits. If a release is
       wrong, delete the whole release (tag included) and cut a new build
       number — users who already installed it have consumed that
       `versionCode`
 - [ ] Release notes written in the release body, as **plain text**.
-      Markdown (`#`, `-`, links) is shown raw in the app; keep it simple
-- [ ] Only the intended APK is attached. If a `-release.apk` is missing,
-      the app will happily install some other `.apk` you uploaded
+      Markdown (`#`, `-`, links) is shown raw in the app; keep it simple.
+      CI takes them from the `## <date> - <version>` block in
+      `changelogs.md` and fails before building when that block is missing
+- [ ] Only the intended APKs are attached. An asset for a foreign ABI is
+      ignored rather than installed, so a missing ABI leaves those devices
+      with no update
 
 ### After publishing
 
@@ -176,8 +192,9 @@ which loses their data.
 | "You're up to date" on a build you expect to be older | `+N` was reset or is not higher than the installed build |
 | Update never appears after publishing | Tag lacks `+N`, or the build number is not higher than the installed one |
 | Install fails / "app not installed" | Different signing key, or a build number lower than the installed one |
-| "This release has no APK attached" | No `.apk` asset on the release |
-| Installs the wrong APK | No `*-release.apk` on the release; a staging or debug `.apk` was attached instead |
+| "This release has no APK attached" | No `.apk` asset on the release, or no asset matches this device's ABI |
+| "…has no APK for this device" | The release only carries another ABI (e.g. arm64 only, checked from x86_64). Publish both ABI assets or a universal APK |
+| Installs the wrong APK | An asset name lost its ABI token, so it is treated as universal; or a staging/debug `.apk` was attached instead of a `-release.apk` |
 | Progress bar freezes | Connection stalled with no data for 60s; the download aborts and can be retried |
 | "GitHub is temporarily rate limiting" | Unauthenticated API limit is 60/hour per IP, and carrier NAT shares one IP across many users. Wait a few minutes |
 | "The update repository could not be found" | Repo renamed, moved, or made private |

@@ -2,7 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:tithi/widgets/paksha_hero_card.dart';
+import 'package:tithi/features/hero/widgets/hero_grain_painter.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

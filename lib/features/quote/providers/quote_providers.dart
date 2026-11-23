@@ -1,12 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../models/shloka.dart';
+import '../../../core/format/festival_labels.dart';
+import '../../../core/locale/app_locale.dart';
+import '../../../core/perf/startup_timeline.dart';
+import '../../../providers/locale_provider.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../../services/shloka_service.dart';
 
-// Phase 5a: quote providers extracted from widgets/daily_quote_widget.dart.
-// Names unchanged; the widget re-exports. Pure helpers (quoteDayLabel,
-// stepQuoteDay, buildShlokaShareText) stay with the widget for now.
+// Daily-wisdom providers for the quote card. Pure rules live in
+// features/quote/domain/ (day navigation, translation picking, share text);
+// renderers live in features/quote/widgets/.
 
 // Verse shown on the Daily Wisdom card for one day, plus display metadata.
 class DailyWisdom {
@@ -54,13 +58,15 @@ final dailyShlokaProvider = FutureProvider.autoDispose<DailyWisdom?>((
     festivalIds: festivals.map((festival) => festival.id).toList(),
   );
   if (shloka == null) return null;
+  final locale = resolveAppLocale(ref.watch(localeProvider)).languageCode;
   String? festivalName;
   for (final festival in festivals) {
     if (shloka.festivalIds.contains(festival.id)) {
-      festivalName = festival.name;
+      festivalName = festivalDisplayName(festival: festival, locale: locale);
       break;
     }
   }
+  StartupTimeline.mark('wisdom-ready', {'offset': offset});
   return DailyWisdom(
     shloka: shloka,
     date: date,

@@ -46,11 +46,10 @@ typedef PanchangMasaSampler =
 /// Computes [PanchangDay] values from the Panchang and solar-event services.
 class PanchangDayResolver {
   PanchangDayResolver({
-    required PanchangService service,
+    required this._service,
     SolarEventsService? solarEvents,
     MoonEventsService? moonEvents,
-  }) : _service = service,
-       _solar = solarEvents ?? solarEventsService,
+  }) : _solar = solarEvents ?? solarEventsService,
        _moon = moonEvents ?? moonEventsService;
 
   final PanchangService _service;
@@ -155,11 +154,7 @@ class PanchangDayResolver {
           )
         : null;
     final sankranti = computeSankranti
-        ? await _sankranti(
-            date: normalized,
-            solar: solar,
-            place: place,
-          )
+        ? await _sankranti(date: normalized, solar: solar, place: place)
         : null;
 
     return PanchangDay(

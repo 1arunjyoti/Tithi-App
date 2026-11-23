@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Screen type enumeration for responsive layouts
 enum ScreenType { mobile, tablet, desktop }
@@ -60,19 +60,6 @@ class ResponsiveLayout extends StatelessWidget {
     }
   }
 
-  /// Get responsive padding based on screen size
-  static EdgeInsets responsivePadding(BuildContext context) {
-    final screenType = getScreenType(context);
-    switch (screenType) {
-      case ScreenType.desktop:
-        return const EdgeInsets.symmetric(horizontal: 48, vertical: 24);
-      case ScreenType.tablet:
-        return const EdgeInsets.symmetric(horizontal: 32, vertical: 20);
-      case ScreenType.mobile:
-        return const EdgeInsets.symmetric(horizontal: 16, vertical: 16);
-    }
-  }
-
   /// Get max content width for different screen sizes
   static double maxContentWidth(BuildContext context) {
     final screenType = getScreenType(context);
@@ -98,27 +85,6 @@ class ResponsiveLayout extends StatelessWidget {
       case ScreenType.mobile:
         return mobile;
     }
-  }
-}
-
-/// Centered content wrapper with max width constraint
-/// Useful for keeping content readable on large screens
-class CenteredContent extends StatelessWidget {
-  final Widget child;
-  final double? maxWidth;
-
-  const CenteredContent({super.key, required this.child, this.maxWidth});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: maxWidth ?? ResponsiveLayout.maxContentWidth(context),
-        ),
-        child: child,
-      ),
-    );
   }
 }
 

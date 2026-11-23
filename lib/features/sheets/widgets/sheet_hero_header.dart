@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
 import 'sheet_drag_handle.dart';
 
 // Canonical hero-gradient sheet header shared by the tithi detail sheet
@@ -27,14 +28,17 @@ class SheetHeroHeader extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          if (!highContrast)
+          if (!highContrast && Theme.of(context).brightness == Brightness.dark)
             Positioned.fill(
-              child: Container(
-                decoration: AppTheme.heroGlowBackdrop(context),
-              ),
+              child: Container(decoration: AppTheme.heroGlowBackdrop(context)),
             ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s20,
+              AppSpacing.s8,
+              AppSpacing.s20,
+              AppSpacing.s20,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,

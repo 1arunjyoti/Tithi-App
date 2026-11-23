@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival_region.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/settings_widgets.dart';
 
 /// Localized label for a [FestivalRegion].
@@ -73,7 +74,7 @@ class FestivalRegionSetting extends ConsumerWidget {
         festivalRegionLabel(l10n, region),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showRegionPicker(context, ref),

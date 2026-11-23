@@ -18,6 +18,7 @@ import 'location_provider.dart';
 import 'calendar_provider.dart';
 import '../core/location/location_defaults.dart';
 import '../core/format/date_only.dart';
+import '../core/perf/startup_timeline.dart';
 
 export '../features/panchang/data/panchang_cache.dart'
     show
@@ -59,7 +60,8 @@ final resolvedCoordinatesProvider =
       final coords = ref.watch(coordinatesProvider);
       return coords.maybeWhen(
         data: (value) => (latitude: value.latitude, longitude: value.longitude),
-        orElse: () => (latitude: kDefaultLatitude, longitude: kDefaultLongitude),
+        orElse: () =>
+            (latitude: kDefaultLatitude, longitude: kDefaultLongitude),
       );
     });
 
@@ -170,12 +172,14 @@ final panchangForDateProvider = FutureProvider.autoDispose
                   transitionTithiIndex: transition.index,
                 );
           storePanchangUiSync(normalized, data);
+          StartupTimeline.mark('day-ready', {'path': 'adaptive'});
           return data;
         } catch (e) {
           // The cached daily record is complete enough for the selected-date
           // UI. A failed optional transition lookup must not fall through to
           // an expensive duplicate month batch.
           debugPrint('Cached single-day transition lookup skipped: $e');
+          StartupTimeline.mark('day-ready', {'path': 'adaptive-cached'});
           return adaptiveGridEntry;
         }
       }
@@ -185,8 +189,9 @@ final panchangForDateProvider = FutureProvider.autoDispose
 
       try {
         final monthData = await ref.watch(
-          monthlyPanchangProvider(DateTime(normalized.year, normalized.month))
-              .future,
+          monthlyPanchangProvider(
+            DateTime(normalized.year, normalized.month),
+          ).future,
         );
         final entry = monthData[normalized];
         if (entry != null) {
@@ -217,6 +222,7 @@ final panchangForDateProvider = FutureProvider.autoDispose
                 );
           // Feed the stale-UI LRU so date taps render instantly next time.
           storePanchangUiSync(date, data);
+          StartupTimeline.mark('day-ready', {'path': 'month'});
           return data;
         }
       } catch (e) {
@@ -243,6 +249,7 @@ final panchangForDateProvider = FutureProvider.autoDispose
       );
       // Feed the stale-UI LRU so date taps render instantly next time.
       storePanchangUiSync(date, data);
+      StartupTimeline.mark('day-ready', {'path': 'direct'});
       return data;
     });
 
@@ -498,6 +505,10 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
       ) {
         allDates.add(DateTime(date.year, date.month, date.day));
       }
+      StartupTimeline.mark('month-batch-start', {
+        'month': '${focusedMonth.year}-${focusedMonth.month}',
+        'days': allDates.length,
+      });
 
       for (var i = 0; i < allDates.length; i += batchSize) {
         final end = (i + batchSize) > allDates.length
@@ -524,6 +535,7 @@ final monthlyPanchangProvider = FutureProvider.autoDispose
         if (value != null) monthData[key] = value;
       }
 
+      StartupTimeline.mark('month-batch-ready', {'days': monthData.length});
       return monthData;
     });
 
@@ -583,49 +595,50 @@ final tithiTimingsProvider =
 /// Returns null when the nakshatra can't be resolved or a boundary search
 /// fails: callers hide the card instead of showing a wrong span - same
 /// hide-on-null contract as [tithiTimingsProvider].
-final nakshatraTimingsProvider = FutureProvider.family<
-  ({int index, String nakshatra, DateTime start, DateTime end})?,
-  ({DateTime date, double latitude, double longitude})
->((ref, params) async {
-  // School-scoped: this family is cached for the process, so it must watch the
-  // shared init to recompute when the Panjika system replaces the service (and
-  // to never call into an uninitialized instance).
-  await ref.watch(panchangInitProvider.future);
-  final service = ref.read(panchangServiceProvider);
+final nakshatraTimingsProvider =
+    FutureProvider.family<
+      ({int index, String nakshatra, DateTime start, DateTime end})?,
+      ({DateTime date, double latitude, double longitude})
+    >((ref, params) async {
+      // School-scoped: this family is cached for the process, so it must watch the
+      // shared init to recompute when the Panjika system replaces the service (and
+      // to never call into an uninitialized instance).
+      await ref.watch(panchangInitProvider.future);
+      final service = ref.read(panchangServiceProvider);
 
-  final normalized = DateTime(
-    params.date.year,
-    params.date.month,
-    params.date.day,
-  );
-  final sunrise = solarEventsService.sunrise(
-    date: normalized,
-    latitude: params.latitude,
-    longitude: params.longitude,
-  );
-
-  final span = await resolveNakshatraSpan(
-    sunrise: sunrise,
-    indexAt: (time) async {
-      final name = await service.calculateNakshatra(
-        time,
+      final normalized = DateTime(
+        params.date.year,
+        params.date.month,
+        params.date.day,
+      );
+      final sunrise = solarEventsService.sunrise(
+        date: normalized,
         latitude: params.latitude,
         longitude: params.longitude,
       );
-      if (name == null) return null;
-      final idx = hinduNakshatras.indexOf(name);
-      return idx >= 0 ? idx : null;
-    },
-  );
-  if (span == null) return null;
 
-  return (
-    index: span.index,
-    nakshatra: span.nakshatra,
-    start: span.start,
-    end: span.end,
-  );
-});
+      final span = await resolveNakshatraSpan(
+        sunrise: sunrise,
+        indexAt: (time) async {
+          final name = await service.calculateNakshatra(
+            time,
+            latitude: params.latitude,
+            longitude: params.longitude,
+          );
+          if (name == null) return null;
+          final idx = hinduNakshatras.indexOf(name);
+          return idx >= 0 ? idx : null;
+        },
+      );
+      if (span == null) return null;
+
+      return (
+        index: span.index,
+        nakshatra: span.nakshatra,
+        start: span.start,
+        end: span.end,
+      );
+    });
 
 /// Provider for the sunrise yoga's and karana's end times on a date.
 ///
@@ -638,57 +651,58 @@ final nakshatraTimingsProvider = FutureProvider.family<
 /// Returns null when longitudes are unavailable or a search fails: callers
 /// hide the card instead of showing a wrong span - same hide-on-null
 /// contract as [tithiTimingsProvider].
-final yogaKaranaTimingsProvider = FutureProvider.family<
-  ({
-    int yogaIndex,
-    String yoga,
-    DateTime yogaEnd,
-    int karanaIndex,
-    String karana,
-    DateTime karanaEnd,
-  })?,
-  ({DateTime date, double latitude, double longitude})
->((ref, params) async {
-  // School-scoped: this family is cached for the process, so it must watch the
-  // shared init to recompute when the Panjika system replaces the service (and
-  // to never call into an uninitialized instance).
-  await ref.watch(panchangInitProvider.future);
-  final service = ref.read(panchangServiceProvider);
+final yogaKaranaTimingsProvider =
+    FutureProvider.family<
+      ({
+        int yogaIndex,
+        String yoga,
+        DateTime yogaEnd,
+        int karanaIndex,
+        String karana,
+        DateTime karanaEnd,
+      })?,
+      ({DateTime date, double latitude, double longitude})
+    >((ref, params) async {
+      // School-scoped: this family is cached for the process, so it must watch the
+      // shared init to recompute when the Panjika system replaces the service (and
+      // to never call into an uninitialized instance).
+      await ref.watch(panchangInitProvider.future);
+      final service = ref.read(panchangServiceProvider);
 
-  final normalized = DateTime(
-    params.date.year,
-    params.date.month,
-    params.date.day,
-  );
-  final sunrise = solarEventsService.sunrise(
-    date: normalized,
-    latitude: params.latitude,
-    longitude: params.longitude,
-  );
+      final normalized = DateTime(
+        params.date.year,
+        params.date.month,
+        params.date.day,
+      );
+      final sunrise = solarEventsService.sunrise(
+        date: normalized,
+        latitude: params.latitude,
+        longitude: params.longitude,
+      );
 
-  final span = await resolveYogaKaranaSpan(
-    sunrise: sunrise,
-    longitudesAt: (time) => service.calculateSunMoonLongitudes(
-      time,
-      latitude: params.latitude,
-      longitude: params.longitude,
-    ),
-  );
-  if (span == null) return null;
+      final span = await resolveYogaKaranaSpan(
+        sunrise: sunrise,
+        longitudesAt: (time) => service.calculateSunMoonLongitudes(
+          time,
+          latitude: params.latitude,
+          longitude: params.longitude,
+        ),
+      );
+      if (span == null) return null;
 
-  // Guard: spans reaching absurdly far are failed searches (same 2-day rule
-  // as the tithi/nakshatra timings).
-  if (span.yogaEnd.difference(normalized).inDays.abs() > 2 ||
-      span.karanaEnd.difference(normalized).inDays.abs() > 2) {
-    return null;
-  }
+      // Guard: spans reaching absurdly far are failed searches (same 2-day rule
+      // as the tithi/nakshatra timings).
+      if (span.yogaEnd.difference(normalized).inDays.abs() > 2 ||
+          span.karanaEnd.difference(normalized).inDays.abs() > 2) {
+        return null;
+      }
 
-  return (
-    yogaIndex: span.yogaIndex,
-    yoga: yogaNames[span.yogaIndex],
-    yogaEnd: span.yogaEnd,
-    karanaIndex: span.karanaIndex,
-    karana: karanaNameForIndex(span.karanaIndex),
-    karanaEnd: span.karanaEnd,
-  );
-});
+      return (
+        yogaIndex: span.yogaIndex,
+        yoga: yogaNames[span.yogaIndex],
+        yogaEnd: span.yogaEnd,
+        karanaIndex: span.karanaIndex,
+        karana: karanaNameForIndex(span.karanaIndex),
+        karanaEnd: span.karanaEnd,
+      );
+    });

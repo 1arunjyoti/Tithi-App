@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/skeleton.dart';
 
 /// Nakshatra span card in the tithi-timings visual language: surface fill
 /// (no tinted outline), bold onSurface headline ("Rohini until 3:42 PM"),
@@ -10,7 +13,8 @@ import '../../../theme/app_theme.dart';
 /// card. Null strings render a spinner (loading state); a null [progress]
 /// hides the bar, a null [nextline] hides the upcoming line.
 class NakshatraCard extends StatelessWidget {
-  const NakshatraCard({super.key, 
+  const NakshatraCard({
+    super.key,
     this.headline,
     this.subline,
     this.progress,
@@ -30,44 +34,38 @@ class NakshatraCard extends StatelessWidget {
       alpha: highContrast ? 0.2 : 0.1,
     );
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       decoration: AppTheme.sheetCardDecoration(
         context,
         highContrast: highContrast,
       ),
       child: (headline == null)
-          ? const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
+          ? const Center(child: InlineSpinner(size: AppIconSize.medium))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   headline!,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: AppTypography.sizeSubtitle,
+                    fontWeight: AppTypography.bold,
                     color: context.colors.onSurface,
                   ),
                 ),
                 if (subline != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     subline!,
                     style: TextStyle(
-                      fontSize: 13,
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
+                      fontSize: AppTypography.sizeDetail,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],
                 if (progress != null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.s10),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     child: LinearProgressIndicator(
                       value: progress!.clamp(0.0, 1.0),
                       minHeight: 6,
@@ -79,12 +77,12 @@ class NakshatraCard extends StatelessWidget {
                   ),
                 ],
                 if (nextline != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s8),
                   Text(
                     nextline!,
                     style: TextStyle(
-                      fontSize: 13,
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
+                      fontSize: AppTypography.sizeDetail,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],

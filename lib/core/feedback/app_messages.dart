@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import '../../theme/app_metrics.dart';
 
 /// Severity of an app message. Drives icon, tint and default duration —
 /// callers never style SnackBars by hand.
@@ -68,8 +69,8 @@ void showAppMessageOn(
       content: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 20, color: iconColor),
-            const SizedBox(width: 10),
+            Icon(icon, size: AppIconSize.medium, color: iconColor),
+            const SizedBox(width: AppSpacing.s10),
           ],
           Expanded(
             child: Text(
@@ -88,7 +89,7 @@ void showAppMessageOn(
       behavior: SnackBarBehavior.floating,
       backgroundColor: colors.inverseSurface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.dense),
       ),
     ),
   );

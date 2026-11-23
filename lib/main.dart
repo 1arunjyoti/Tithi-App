@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kReleaseMode;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'widgets/error_display_widget.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +13,8 @@ import 'package:jyotish/jyotish.dart';
 import 'app/bootstrap.dart';
 import 'core/feedback/app_messages.dart';
 import 'core/location/place_clock.dart';
+import 'core/location/place_grid.dart';
+import 'core/perf/startup_timeline.dart';
 import 'core/storage/hive_adapters.dart';
 import 'providers/location_provider.dart';
 import 'providers/panchang_provider.dart';
@@ -21,19 +23,25 @@ import 'providers/accessibility_provider.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/home_widget_provider.dart';
 import 'providers/locale_provider.dart';
+import 'services/location_service.dart';
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'theme/app_metrics.dart';
+import 'theme/app_typography.dart';
+import 'screens/home_shell.dart';
+import 'widgets/animated_splash.dart';
 import 'widgets/panchang_init_failure_overlay.dart';
-
-// Conditional import for platform-specific features
-import 'platform/platform_init.dart';
 
 void main() {
   runZonedGuarded(
     () async {
+      StartupTimeline.start();
       WidgetsFlutterBinding.ensureInitialized();
+      StartupTimeline.mark('binding-ready');
+      // Bundled font licenses (SIL OFL) for the About/license page.
+      AppTypography.registerFontLicenses();
       const bootstrap = AppBootstrap();
       await bootstrap.initSystem();
+      StartupTimeline.mark('system-ready');
 
       // Set custom error widget to replace the red error screen
       ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -55,26 +63,31 @@ void main() {
         debugPrint('Stack trace: ${details.stack}');
       };
 
-      // Optimized Display Mode (90Hz/120Hz), Android only.
-      await initPlatformFeatures();
+      // Set the high refresh rate before the first frame so the animated
+      // loading splash runs at 90/120Hz from the start and the switch happens
+      // behind the static native splash. It is one platform-channel call, and
+      // any failure is swallowed by initDisplay().
+      await bootstrap.initDisplay();
 
-      // Independent warm-ups run concurrently: version metadata, Hive +
-      // adapters + core boxes, and font preloads (bounded internally).
+      // Version metadata, the place boundary index, the tile cache and
+      // Workmanager do not paint the splash, so they run after the first frame.
       registerHiveAdapters();
-      await Future.wait([
-        bootstrap.warmVersionInfo(),
-        bootstrap.initStorage(),
-        bootstrap.warmFonts(),
-      ]);
+      await bootstrap.initStorage();
+      StartupTimeline.mark('storage-ready');
 
-      // Initialize timezone for notifications
+      // tzdata must be loaded before `TithiApp.initState` builds the place
+      // clock; the boundary index it used to warm here is deferred below.
       await bootstrap.initTimezones();
+      StartupTimeline.mark('timezones-ready');
 
       runApp(const ProviderScope(child: TithiApp()));
 
-      // Post-first-frame: tile cache + Workmanager must never block it.
+      // Post-first-frame: nothing below may block the splash.
       // The temple map awaits AppBootstrap.tileCacheReady before tiles.
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        StartupTimeline.mark('first-frame');
+        unawaited(bootstrap.warmVersionInfo());
+        unawaited(bootstrap.warmTimezoneIndex());
         unawaited(bootstrap.initTileCache());
         unawaited(bootstrap.initBackgroundWork());
       });
@@ -264,18 +277,9 @@ class _TithiAppState extends ConsumerState<TithiApp>
       builder: (context, child) {
         final scale = accessibility.largeText ? 1.3 : 1.0;
         final mediaQuery = MediaQuery.of(context);
-        final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-        final overlayStyle = isDarkTheme
-            ? const SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.light,
-                statusBarBrightness: Brightness.dark,
-              )
-            : const SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.dark,
-                statusBarBrightness: Brightness.light,
-              );
+        final overlayStyle = AppTheme.systemUiOverlayStyle(
+          Theme.of(context).brightness,
+        );
         return MediaQuery(
           data: mediaQuery.copyWith(
             textScaler: TextScaler.linear(scale),
@@ -329,6 +333,10 @@ class _LocationPermissionWrapperState
   }
 
   Future<void> _initLocationFlow() async {
+    // The place the previous session ended on, when there is one. Read after
+    // the first-launch dialog: skipping it disables location, which changes
+    // what `lastKnownLocation` answers.
+    LocationData? savedPlace;
     try {
       // Wait for location service to initialize
       await ref.read(locationInitProvider.future);
@@ -350,26 +358,30 @@ class _LocationPermissionWrapperState
           await locationService.markFirstLaunchComplete();
         }
       }
+      savedPlace = locationService.lastKnownLocation;
     } finally {
-      // Wait for the device-location lookup to settle before unblocking
-      // background festival seeding. The granted path only invalidates
-      // `currentLocationProvider` without awaiting it, so without this the
-      // gate completes while `resolvedCoordinatesProvider` still holds the
-      // Delhi fallback — the month batch then computes once with fallback
-      // coordinates and again when GPS finishes. Awaiting here (with a
-      // timeout fallback) ensures seeding computes once with final
-      // coordinates (granted → device; denied/skipped/failed → default).
-      // Runs on every path — including later launches, where it completes
-      // immediately — so seeding can never deadlock. Guarded: the wrapper
-      // outlives the flow, but never crash teardown.
-      try {
-        await ref
-            .read(currentLocationProvider.future)
-            .timeout(const Duration(seconds: 10));
-      } catch (_) {
-        // GPS unavailable/timed out: fallback coordinates apply and
-        // seeding still proceeds.
+      // A saved place is enough to start computing: the first frame paints the
+      // place the user actually used, and the device fix (with its reverse
+      // geocode) refreshes in the background. Waiting for it here meant every
+      // home card sat on a skeleton behind a GPS fix + Nominatim round trip
+      // that can take seconds after Android evicted the process.
+      //
+      // With no saved place (first launch, or a failed cache read) keep the old
+      // behaviour: wait for the device lookup so the month batch does not
+      // compute once with the Delhi fallback and again with the real fix.
+      if (savedPlace != null) {
+        unawaited(_refreshDevicePlace(savedPlace));
+      } else {
+        try {
+          await ref
+              .read(currentLocationProvider.future)
+              .timeout(const Duration(seconds: 10));
+        } catch (_) {
+          // GPS unavailable/timed out: fallback coordinates apply and
+          // seeding still proceeds.
+        }
       }
+      StartupTimeline.mark('location-gate', {'saved': savedPlace != null});
       try {
         final gate = ref.read(locationPermissionGateProvider);
         if (!gate.isCompleted) gate.complete();
@@ -377,6 +389,34 @@ class _LocationPermissionWrapperState
         // Seeding stays gated only if the scope itself is gone (app exit).
       }
     }
+  }
+
+  /// Fetches the device fix without blocking the gate, then reports whether it
+  /// moved far enough to invalidate the day computation.
+  ///
+  /// The recompute itself is not triggered here:
+  /// [calculationLocationProvider] adopts the new fix once it is known, and
+  /// ignoring sub-grid moves keeps a stationary device from restarting the
+  /// month batch right after it painted.
+  Future<void> _refreshDevicePlace(LocationData savedPlace) async {
+    final LocationData? fresh;
+    try {
+      fresh = await ref.read(currentLocationProvider.future);
+    } catch (_) {
+      // GPS or geocoding unavailable: the saved place stands for this session.
+      return;
+    }
+    if (fresh == null) return;
+    final moved = !samePlaceGrid(
+      latitudeA: savedPlace.latitude,
+      longitudeA: savedPlace.longitude,
+      latitudeB: fresh.latitude,
+      longitudeB: fresh.longitude,
+    );
+    StartupTimeline.mark('location-fresh', {
+      'moved': moved,
+      'city': fresh.cityName ?? '-',
+    });
   }
 
   Future<void> _showFirstLaunchDialog() async {
@@ -388,7 +428,7 @@ class _LocationPermissionWrapperState
         title: Row(
           children: [
             const Icon(Icons.location_on, color: AppTheme.locationAccent),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Text(l10n?.locationAccess ?? 'Location Access'),
           ],
         ),
@@ -399,19 +439,17 @@ class _LocationPermissionWrapperState
             Text(
               l10n?.locationAccessDescription ??
                   'Tithi uses your location to calculate accurate Panchang data for your city.',
-              style: const TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: AppTypography.sizeSubtitle),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             Text(
               l10n?.locationAccessBenefits ??
                   '• More accurate tithi calculations\n'
                       '• Location-specific moonrise/sunset times\n'
                       '• Your location data stays on your device',
               style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.6),
+                fontSize: AppTypography.sizeBody,
+                color: context.secondaryInk,
               ),
             ),
           ],
@@ -493,27 +531,13 @@ class _LocationPermissionWrapperState
 
   @override
   Widget build(BuildContext context) {
-    // Show HomeScreen as soon as location service is initialized
-    // Permission dialog will appear in background if first launch
+    // Keep the app off screen until the saved place is loaded, so the first
+    // frame is the place the user actually used. The animated mandala is the
+    // loading UI: it replaces the old "Initializing..." spinner and starts on
+    // the same colour as the native splash, so the hand-off is continuous.
     if (_showHomeScreen) {
-      return const HomeScreen();
+      return const HomeShell();
     }
-
-    // Only show loading screen while waiting for location service init
-    return Scaffold(
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Initializing...'),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const AnimatedSplash();
   }
 }

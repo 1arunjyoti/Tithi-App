@@ -4,6 +4,7 @@ import '../../../models/panchang_data.dart';
 import '../../../models/panchang_profile.dart';
 import '../../../models/panchang_school.dart';
 import '../../../core/format/date_only.dart';
+import '../../../core/location/place_grid.dart';
 import '../../../services/storage_service.dart';
 import '../../../utils/date_utils.dart';
 
@@ -46,8 +47,9 @@ void storePanchangUiSync(DateTime date, PanchangData data) {
     );
   }
   if (panchangUiCache.length >= panchangUiCacheMax) {
-    final toRemove =
-        panchangUiCache.keys.take(panchangUiCacheMax ~/ 5).toList();
+    final toRemove = panchangUiCache.keys
+        .take(panchangUiCacheMax ~/ 5)
+        .toList();
     for (final k in toRemove) {
       panchangUiCache.remove(k);
     }
@@ -79,8 +81,8 @@ const int kPlaceContextVersion = 3;
 /// Keeping it out of every call site avoids threading a parameter through the
 /// dozen cache-key builders that all sit below the settings layer.
 PanchangSchool get activePanchangSchool => _activePanchangSchool;
-set activePanchangSchool(PanchangSchool school) => _activePanchangSchool =
-    school;
+set activePanchangSchool(PanchangSchool school) =>
+    _activePanchangSchool = school;
 PanchangSchool _activePanchangSchool = PanchangSchool.bisuddha;
 
 String locationSignature(
@@ -89,7 +91,15 @@ String locationSignature(
   PanchangSchool? school,
 }) {
   final resolved = school ?? _activePanchangSchool;
-  return '${latitude.toStringAsFixed(4)}_${longitude.toStringAsFixed(4)}'
+  // ~1.1 km grid ([placeGridKey]), NOT the precision used for the calculation.
+  //
+  // This is a cache *identity*: the scan still receives the exact fix. At 4
+  // decimals (~11 m) ordinary GPS jitter moved a stationary device onto a new
+  // identity between launches; [preparePanchangCacheBox] then cleared the
+  // whole box and the all-festivals screen re-ran every scan on each cold
+  // start. Two decimals keeps a city on one identity; the worst case move is
+  // a few seconds of sunrise, well below a tithi boundary's display precision.
+  return '${placeGridKey(latitude, longitude)}'
       '_v$kPanchangCalculationVersion'
       '_p$kPlaceContextVersion'
       '_s${resolved.name}';
@@ -113,8 +123,7 @@ Future<Box<dynamic>> preparePanchangCacheBox(
 ) async {
   final cacheBox = await StorageService().openPanchangCacheBox();
   final expectedSignature = locationSignature(latitude, longitude);
-  final storedSignature =
-      cacheBox.get(panchangLocationSignatureKey) as String?;
+  final storedSignature = cacheBox.get(panchangLocationSignatureKey) as String?;
 
   if (storedSignature != expectedSignature) {
     await cacheBox.clear();

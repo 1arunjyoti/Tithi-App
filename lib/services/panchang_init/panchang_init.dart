@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -7,6 +8,8 @@ import 'package:flutter/services.dart' show AssetBundle;
 import 'package:jyotish/jyotish.dart' show EphemerisDataRange;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+
+import '../../core/perf/startup_timeline.dart';
 
 /// Swiss Ephemeris data files the panchang engine reads at runtime.
 ///
@@ -51,6 +54,44 @@ final Uint8List _se1Magic = Uint8List.fromList('SWISSEPH'.codeUnits);
 /// under a kilobyte is a truncated copy or a stray placeholder, not data Swiss
 /// Ephemeris can read.
 const int _minSe1Bytes = 1024;
+
+/// Name of the record that lets a launch skip re-hashing the installed files.
+///
+/// Hashing the trio is the single most expensive step of panchang init
+/// (~200-600 ms on the emulator, and worse on a mid-range phone), and the
+/// files only change when the app is reinstalled. The record stores each
+/// installed file's expected SHA-256, size and mtime; when all three still
+/// match, the file is exactly the one that was verified last time.
+const String _verifyStampFileName = '.verify.json';
+
+/// Bumped when the stamp's shape changes; an older record is ignored and
+/// rewritten after one full verification.
+const int _verifyStampFormat = 1;
+
+/// One installed file, as last verified on this device.
+class _VerifiedFile {
+  const _VerifiedFile({
+    required this.sha256,
+    required this.size,
+    required this.modifiedMs,
+  });
+
+  /// Manifest hash the file was verified against. Storing it (rather than
+  /// trusting any old record) means a new build with different ephemeris bytes
+  /// cannot inherit a stale "already verified" claim.
+  final String sha256;
+
+  final int size;
+  final int modifiedMs;
+
+  /// True when [stat] describes the file this record was written for.
+  bool matches(FileStat stat, String expectedSha256) =>
+      sha256 == expectedSha256 &&
+      stat.type == FileSystemEntityType.file &&
+      stat.size == size &&
+      stat.size >= _minSe1Bytes &&
+      stat.modified.millisecondsSinceEpoch == modifiedMs;
+}
 
 /// An init failure whose [message] is written for the user, not the developer.
 ///
@@ -190,6 +231,12 @@ void ensureEphemerisRangeInstalled(EphemerisDataRange range) {
 /// a corrupt install could have left truncated, and Swiss Ephemeris then failed
 /// later with an opaque `swe_calc` error far from the cause.
 ///
+/// The full verification is paid once per installed file. Its outcome is
+/// recorded in [_verifyStampFileName] together with the file's size and mtime,
+/// so later launches only stat the files (see [_VerifiedFile.matches]). A
+/// modified file, a changed manifest hash or a missing record falls back to
+/// hashing and repairing.
+///
 /// [sha256ByFile] is a parameter rather than a direct read of
 /// [kEphemerisAssetSha256] so tests can install synthetic bytes; production
 /// callers use the default.
@@ -199,6 +246,9 @@ Future<String> copyEphemerisFiles(
 }) async {
   final appDir = await getApplicationDocumentsDirectory();
   final epheDir = Directory(p.join(appDir.path, 'ephe'));
+  final startedAt = DateTime.now();
+  var copied = 0;
+  var hashed = 0;
 
   try {
     if (!await epheDir.exists()) {
@@ -212,6 +262,9 @@ Future<String> copyEphemerisFiles(
       cause: error,
     );
   }
+
+  final previous = await _readVerifyStamp(epheDir);
+  final verified = <String, _VerifiedFile>{};
 
   for (final name in kEphemerisAssets) {
     final expected = sha256ByFile[name];
@@ -228,7 +281,21 @@ Future<String> copyEphemerisFiles(
     }
 
     final target = File(p.join(epheDir.path, name));
+    final stat = await target.stat();
+
+    final stamp = previous[name];
+    if (stamp != null && stamp.matches(stat, expected)) {
+      verified[name] = stamp;
+      continue;
+    }
+
+    hashed++;
     if (await _invalidReason(target, expectedSha256: expected) == null) {
+      verified[name] = _VerifiedFile(
+        sha256: expected,
+        size: stat.size,
+        modifiedMs: stat.modified.millisecondsSinceEpoch,
+      );
       continue;
     }
 
@@ -244,9 +311,92 @@ Future<String> copyEphemerisFiles(
     }
 
     await _writeAtomically(target, bytes, expectedSha256: expected);
+    final installedStat = await target.stat();
+    verified[name] = _VerifiedFile(
+      sha256: expected,
+      size: installedStat.size,
+      modifiedMs: installedStat.modified.millisecondsSinceEpoch,
+    );
+    copied++;
   }
 
+  await _writeVerifyStamp(epheDir, verified, changed: copied > 0 || hashed > 0);
+
+  // `hashed=0` is the steady state after the first launch of a build; a full
+  // verification is paid only when a file changed or the record is missing.
+  StartupTimeline.mark('ephe-files', {
+    'copied': copied,
+    'hashed': hashed,
+    'ms': DateTime.now().difference(startedAt).inMilliseconds,
+  });
+
   return epheDir.path;
+}
+
+/// Reads the verification record, or an empty map when it is missing,
+/// unreadable or written by another format version.
+///
+/// A lost record only costs one full verification; it must never fail startup,
+/// so every parse error is treated as "no record".
+Future<Map<String, _VerifiedFile>> _readVerifyStamp(Directory dir) async {
+  final file = File(p.join(dir.path, _verifyStampFileName));
+  try {
+    if (!await file.exists()) return const {};
+    final decoded = jsonDecode(await file.readAsString());
+    if (decoded is! Map) return const {};
+    if (decoded['format'] != _verifyStampFormat) return const {};
+    final files = decoded['files'];
+    if (files is! Map) return const {};
+
+    final result = <String, _VerifiedFile>{};
+    for (final entry in files.entries) {
+      final name = entry.key;
+      final value = entry.value;
+      if (name is! String || value is! Map) continue;
+      final sha256 = value['sha256'];
+      final size = value['size'];
+      final modifiedMs = value['mtime_ms'];
+      if (sha256 is! String || size is! int || modifiedMs is! int) continue;
+      result[name] = _VerifiedFile(
+        sha256: sha256,
+        size: size,
+        modifiedMs: modifiedMs,
+      );
+    }
+    return result;
+  } on Object {
+    return const {};
+  }
+}
+
+/// Writes the verification record when this launch learned something new.
+///
+/// [changed] is false on the steady-state path (every file matched its record),
+/// where rewriting an identical record would only cost a write. Best effort: a
+/// failure here only means the next launch hashes the files again.
+Future<void> _writeVerifyStamp(
+  Directory dir,
+  Map<String, _VerifiedFile> verified, {
+  required bool changed,
+}) async {
+  if (!changed) return;
+  final file = File(p.join(dir.path, _verifyStampFileName));
+  try {
+    final payload = <String, Object?>{
+      'format': _verifyStampFormat,
+      'files': {
+        for (final entry in verified.entries)
+          entry.key: <String, Object?>{
+            'sha256': entry.value.sha256,
+            'size': entry.value.size,
+            'mtime_ms': entry.value.modifiedMs,
+          },
+      },
+    };
+    await file.writeAsString(jsonEncode(payload), flush: true);
+  } on FileSystemException {
+    // Ignored on purpose: verification remains correct, only slower.
+  }
 }
 
 /// Loads `assets/ephe/[name]` and translates a missing asset into an

@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
 
 // Canonical 46pt hero icon tile shared by the tithi detail sheet (moon
 // tile) and the festival event sheet (festival icon tile): 14pt radius,
@@ -21,7 +22,7 @@ class SheetHeroTile extends StatelessWidget {
       width: 46,
       height: 46,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         color: highContrast
             ? context.colors.primary.withValues(alpha: 0.1)
             : AppTheme.heroChipBackground(context),

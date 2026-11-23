@@ -9,6 +9,9 @@ export '../../../core/format/festival_labels.dart'
     show
         regionalNamesOf,
         festivalDisplayName,
+        festivalAlternateName,
+        festivalMatchesName,
+        festivalSearchHaystack,
         heroLanguageChips,
         observanceRuleKey,
         observanceRuleLabel,
@@ -16,7 +19,7 @@ export '../../../core/format/festival_labels.dart'
         capitalizedMasaLabel,
         localizedMasaLabel;
 
-// Event-sheet view-model extracted from widgets/event_detail_sheet.dart.
+// Event-sheet view-model extracted from the former widgets/event_detail_sheet.dart monolith.
 // Pure data derived from (festival, panchang?, month system, display mode):
 // observed-tithi resolution, labels, flags. No BuildContext (l10n is passed
 // in, nullable like the widget's AppLocalizations.of) — unit-testable.

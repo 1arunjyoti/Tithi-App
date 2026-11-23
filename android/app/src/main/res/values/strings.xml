@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Launcher label. Debug/profile resource overlays append a build-type
+         tag so dev installs are distinguishable from a release install. -->
+    <string name="app_name">Tithi</string>
+
     <string name="widget_description">Shows your pinned festival countdowns — days remaining until the next celebrations.</string>
 
     <!-- Widget picker labels/descriptions. The in-app gallery localizes these

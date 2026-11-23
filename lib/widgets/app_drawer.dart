@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../l10n/app_localizations.dart';
@@ -13,6 +13,8 @@ import '../providers/location_provider.dart';
 import '../screens/festival_countdown_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/moon_phases_screen.dart';
+import '../screens/eclipse_screen.dart';
+import '../screens/solar_system_screen.dart';
 import '../screens/about_screen.dart';
 import '../providers/version_provider.dart';
 import '../providers/view_mode_provider.dart';
@@ -21,8 +23,9 @@ import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
 import '../core/navigation/app_routes.dart';
 import 'responsive_layout.dart';
-
-import 'native_screens/native_screens.dart';
+import 'app_divider.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_metrics.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key, this.isSidebar = false});
@@ -31,8 +34,8 @@ class AppDrawer extends StatelessWidget {
   final bool isSidebar;
 
   static const _drawerBorderRadius = BorderRadius.only(
-    topRight: Radius.circular(32),
-    bottomRight: Radius.circular(32),
+    topRight: Radius.circular(AppRadius.sheet),
+    bottomRight: Radius.circular(AppRadius.sheet),
   );
 
   @override
@@ -90,9 +93,16 @@ class _DrawerHeader extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s24,
+        60,
+        AppSpacing.s24,
+        AppSpacing.s24,
+      ),
       decoration: const BoxDecoration(
-        borderRadius: BorderRadius.only(topRight: Radius.circular(32)),
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(AppRadius.sheet),
+        ),
       ),
       child: Row(
         children: [
@@ -100,8 +110,9 @@ class _DrawerHeader extends StatelessWidget {
             'assets/icons/app_drawer_image.png',
             width: 52,
             height: 52,
+            excludeFromSemantics: true,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.s16),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -109,7 +120,7 @@ class _DrawerHeader extends StatelessWidget {
               Text(
                 l10n?.appTitle ?? 'Tithi',
                 style: textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                  fontWeight: AppTypography.bold,
                   color: colors.onSurface,
                 ),
               ),
@@ -197,7 +208,10 @@ class _DrawerMenuList extends ConsumerWidget {
     //    (FFI compute),
     // 5. settings, then the social/utility footer below the divider.
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s16,
+        vertical: AppSpacing.s24,
+      ),
       children: [
         // View Mode Toggle
         const _ViewModeToggleItem(),
@@ -268,9 +282,9 @@ class _DrawerMenuList extends ConsumerWidget {
           onTap: () => _navigateTo(context, const SettingsScreen()),
         ),
 
-        const SizedBox(height: 12),
-        Divider(color: colors.onSurface.withValues(alpha: 0.1)),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.s12),
+        const AppDivider(),
+        const SizedBox(height: AppSpacing.s12),
 
         _DrawerMenuItem(
           icon: Icons.share_rounded,
@@ -327,7 +341,7 @@ class _DrawerMenuItem extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: Material(
         color: Colors.transparent,
         // Gated press haptic + scale live in PressScale (Stateless-safe,
@@ -335,18 +349,20 @@ class _DrawerMenuItem extends StatelessWidget {
         child: PressScale(
           child: ListTile(
             onTap: onTap,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            leading: Icon(icon, color: colors.primary, size: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.tile),
+            ),
+            leading: Icon(icon, color: colors.primary, size: AppIconSize.nav),
             title: Text(
               title,
               style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
+                fontWeight: AppTypography.medium,
+                fontSize: AppTypography.sizeProse,
               ),
             ),
             trailing: Icon(
               Icons.chevron_right_rounded,
-              size: 16,
+              size: AppIconSize.small,
               color: colors.onSurface.withValues(alpha: 0.4),
             ),
           ),
@@ -369,7 +385,7 @@ class _ViewModeToggleItem extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: Material(
         color: Colors.transparent,
         child: PressScale(
@@ -381,36 +397,40 @@ class _ViewModeToggleItem extends ConsumerWidget {
                 navigator.pop();
               }
             },
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          leading: Icon(
-            isSchedule ? Icons.calendar_month_rounded : Icons.view_agenda_rounded,
-            color: colors.primary,
-            size: 24,
-          ),
-          title: Text(
-            isSchedule
-                ? (l10n?.calendarView ?? 'Calendar View')
-                : (l10n?.scheduleView ?? 'Schedule View'),
-            style: textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.tile),
+            ),
+            leading: Icon(
+              isSchedule
+                  ? Icons.calendar_month_rounded
+                  : Icons.view_agenda_rounded,
+              color: colors.primary,
+              size: AppIconSize.nav,
+            ),
+            title: Text(
+              isSchedule
+                  ? (l10n?.calendarView ?? 'Calendar View')
+                  : (l10n?.scheduleView ?? 'Schedule View'),
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: AppTypography.medium,
+                fontSize: AppTypography.sizeProse,
+              ),
+            ),
+            subtitle: Text(
+              isSchedule
+                  ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
+                  : (l10n?.switchToSchedule ?? 'Switch to event list'),
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.onSurface.withValues(alpha: 0.5),
+                fontSize: AppTypography.sizeCaption,
+              ),
+            ),
+            trailing: Icon(
+              Icons.swap_horiz_rounded,
+              size: AppIconSize.medium,
+              color: colors.primary.withValues(alpha: 0.7),
             ),
           ),
-          subtitle: Text(
-            isSchedule
-                ? (l10n?.switchToCalendar ?? 'Switch to month calendar')
-                : (l10n?.switchToSchedule ?? 'Switch to event list'),
-            style: textTheme.bodySmall?.copyWith(
-              color: colors.onSurface.withValues(alpha: 0.5),
-              fontSize: 12,
-            ),
-          ),
-          trailing: Icon(
-            Icons.swap_horiz_rounded,
-            size: 20,
-            color: colors.primary.withValues(alpha: 0.7),
-          ),
-        ),
         ),
       ),
     );
@@ -428,28 +448,30 @@ class _AboutMenuItem extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s8),
       child: Material(
         color: Colors.transparent,
         child: PressScale(
           child: ListTile(
             onTap: () => _navigateToAbout(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppRadius.tile),
+            ),
             leading: Icon(
               Icons.info_outline_rounded,
               color: colors.primary,
-              size: 24,
+              size: AppIconSize.nav,
             ),
             title: Text(
               l10n?.aboutApp ?? 'About',
               style: textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 15,
+                fontWeight: AppTypography.medium,
+                fontSize: AppTypography.sizeProse,
               ),
             ),
             trailing: Icon(
               Icons.chevron_right_rounded,
-              size: 16,
+              size: AppIconSize.small,
               color: colors.onSurface.withValues(alpha: 0.4),
             ),
           ),
@@ -478,11 +500,14 @@ class _DrawerFooter extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    final versionStr =
-        versionAsync.when(data: (v) => v, loading: () => '...', error: (e, s) => '?');
+    final versionStr = versionAsync.when(
+      data: (v) => v,
+      loading: () => '...',
+      error: (e, s) => '?',
+    );
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.s24),
       child: Text(
         l10n?.versionText(versionStr) ?? 'Version $versionStr',
         style: textTheme.labelSmall?.copyWith(

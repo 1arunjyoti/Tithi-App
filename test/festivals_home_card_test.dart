@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -9,18 +9,22 @@ import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/festival_provider.dart';
+import 'package:tithi/features/countdown/providers/festival_occurrences_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
+import 'package:tithi/core/navigation/home_tab.dart';
 import 'package:tithi/screens/all_festivals_screen.dart';
 import 'package:tithi/services/storage_service.dart';
+import 'package:tithi/theme/app_metrics.dart';
 import 'package:tithi/theme/app_theme.dart';
-import 'package:tithi/widgets/event_detail_sheet.dart';
+import 'package:tithi/features/event_detail/widgets/event_detail_sheet.dart';
 import 'package:tithi/widgets/event_list_widget.dart';
 import 'package:tithi/widgets/festival_row_tile.dart';
+import 'package:tithi/widgets/festival_thumbnail.dart';
+import 'package:tithi/widgets/inset_row_divider.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override
-  AccessibilityState build() =>
-      const AccessibilityState(hapticFeedback: false);
+  AccessibilityState build() => const AccessibilityState(hapticFeedback: false);
 }
 
 class _FixedDateNotifier extends SelectedDateNotifier {
@@ -100,6 +104,8 @@ void main() {
     required Map<DateTime, PanchangData> days,
     required List<Festival> all,
     List<Override> extraOverrides = const [],
+    ValueChanged<HomeTab>? onSelectTab,
+    bool highContrast = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -115,9 +121,14 @@ void main() {
           festivalProvider.overrideWithValue(all),
           accessibilityProvider.overrideWith(_NoHapticsNotifier.new),
         ],
-        child: const MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(child: EventListWidget()),
+        child: MaterialApp(
+          home: MediaQuery(
+            data: MediaQueryData(highContrast: highContrast),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                child: EventListWidget(onSelectTab: onSelectTab),
+              ),
+            ),
           ),
         ),
       ),
@@ -232,7 +243,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('selected-day rows get the accent wash, later days neutral', (
+    testWidgets('selected-day rows get the accent wash, later days flush', (
       tester,
     ) async {
       // Arrange: fixed selection (9/14) and a different fixed "today"
@@ -271,23 +282,107 @@ void main() {
       final selectedRow = decorationOf('Balarama Jayanti');
       final laterRow = decorationOf('Vishwakarma Puja');
 
-      // Assert: the selected day's fill/border are the festival accent (hue
-      // match), no later row shares them, and the selected row is labelled
-      // with its date (it is not "today" in this fixture).
+      // Assert: the selected day is a borderless accent wash, later days are
+      // fully transparent (rows sit flush on the card), and the selected row
+      // is labelled with its date (it is not "today" in this fixture).
       final context = tester.element(find.byType(FestivalRowTile).first);
       final accent = AppTheme.festivalAccent(context);
       expect(find.text('Mon, 14 Sep · Shukla Chaturthi'), findsOneWidget);
       expect(selectedRow.color, isNotNull);
       expect(selectedRow.color!.withValues(alpha: 1), equals(accent));
-      expect(selectedRow.color, isNot(equals(laterRow.color)));
-      expect(
-        (selectedRow.border! as Border).top.color,
-        isNot(equals((laterRow.border! as Border).top.color)),
+      expect(selectedRow.color!.a, closeTo(0.08, 0.001));
+      expect(selectedRow.border, isNull);
+      expect(selectedRow.borderRadius, BorderRadius.circular(AppRadius.tile));
+      expect(laterRow.color, isNull);
+      expect(laterRow.border, isNull);
+    });
+
+    testWidgets('selected-day wash gains a hairline in high contrast', (
+      tester,
+    ) async {
+      // Arrange: identical window, but High Contrast (MediaQuery flag is what
+      // AppTheme.highContrastOf reads).
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [festA],
+          ),
+          DateTime(2026, 9, 16): dayData(
+            date: DateTime(2026, 9, 16),
+            festivals: [festB],
+          ),
+        },
+        all: [festA, festB],
+        highContrast: true,
       );
-      expect(
-        (selectedRow.border! as Border).top.color.r,
-        closeTo(accent.r, 0.001),
+
+      BoxDecoration decorationOf(String name) {
+        final row = find.ancestor(
+          of: find.text(name),
+          matching: find.byType(FestivalRowTile),
+        );
+        return tester
+                .widget<Ink>(
+                  find.descendant(of: row, matching: find.byType(Ink)).first,
+                )
+                .decoration!
+            as BoxDecoration;
+      }
+
+      // Assert: colour alone would not carry the selection here, so the wash
+      // keeps a 1px accent edge; the unselected row stays flush.
+      final selectedRow = decorationOf('Balarama Jayanti');
+      final laterRow = decorationOf('Vishwakarma Puja');
+      expect(selectedRow.color!.a, closeTo(0.18, 0.001));
+      expect(selectedRow.border, isA<Border>());
+      expect((selectedRow.border! as Border).top.width, 1.0);
+      expect(laterRow.color, isNull);
+      expect(laterRow.border, isNull);
+    });
+
+    testWidgets('rows are flush and separated by an inset hairline', (
+      tester,
+    ) async {
+      // Arrange: two rows in the window.
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 14): dayData(
+            date: DateTime(2026, 9, 14),
+            festivals: [festA, festB],
+          ),
+        },
+        all: [festA, festB],
       );
+
+      // Assert: no nested row boxes — one divider between two rows, none
+      // after the last, indented past the leading tile.
+      expect(find.byType(InsetRowDivider), findsOneWidget);
+      final divider = tester.widget<InsetRowDivider>(
+        find.byType(InsetRowDivider),
+      );
+      // The rows sit inset inside the card (their wash must not hug the
+      // edge), so the hairline follows them past the text column.
+      expect(
+        divider.leadingInset,
+        FestivalRowTile.textColumnInset + AppTheme.homeCardRowInset,
+      );
+      expect(find.byType(FestivalRowTile), findsNWidgets(2));
+
+      // Assert: the leading tile lines up with the section heading (both at
+      // the card's content edge, no inner row padding).
+      final header = tester.getTopLeft(find.text('Festivals & Events'));
+      final tile = tester.getTopLeft(
+        find
+            .descendant(
+              of: find.byType(FestivalRowTile).first,
+              matching: find.byType(FestivalThumbnail),
+            )
+            .first,
+      );
+      expect(tile.dx, closeTo(header.dx, 0.5));
     });
 
     testWidgets('empty window keeps the view-all button', (tester) async {
@@ -315,7 +410,7 @@ void main() {
         all: [festA, festB, festC],
         extraOverrides: [
           allFestivalOccurrencesProvider.overrideWith(
-            (ref) => Future.value([
+            (ref, year) => Future.value([
               (festival: festB, date: DateTime(2026, 9, 17)),
               (festival: festA, date: DateTime(2026, 9, 14)),
               (festival: festC, date: null),
@@ -333,6 +428,25 @@ void main() {
       expect(find.text('Distant Festival'), findsOneWidget);
       expect(find.textContaining('Mon, 14 Sep'), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('hosted view-all selects the Festivals tab', (tester) async {
+      // Arrange
+      HomeTab? selectedTab;
+      await pumpCard(
+        tester,
+        days: const {},
+        all: [festA],
+        onSelectTab: (tab) => selectedTab = tab,
+      );
+
+      // Act
+      await tester.tap(find.textContaining('View all'));
+      await tester.pump();
+
+      // Assert
+      expect(selectedTab, HomeTab.festivals);
+      expect(find.byType(AllFestivalsScreen), findsNothing);
     });
 
     testWidgets('tapping a row opens its detail sheet', (tester) async {

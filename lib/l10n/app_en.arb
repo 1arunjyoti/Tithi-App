@@ -20,6 +20,51 @@
   "@exportFestivalsSubtitleYear": {
     "description": "Subtitle for export festivals bottom sheet"
   },
+  "exportFestivalsCalendar": "Add to Google Calendar (.ics)",
+  "@exportFestivalsCalendar": {
+    "description": "Settings tile title for exporting festivals to Google Calendar"
+  },
+  "exportFestivalsCalendarSubtitle": "Save festival dates as a calendar file you can import",
+  "@exportFestivalsCalendarSubtitle": {
+    "description": "Settings tile subtitle for the calendar export"
+  },
+  "exportJsonYearSheetSubtitle": "Choose a year. You'll then pick where to save the JSON file.",
+  "@exportJsonYearSheetSubtitle": {
+    "description": "Subtitle of the JSON export year picker, explaining the next step"
+  },
+  "exportCalendarYearSheetSubtitle": "Choose a year. You'll then pick where to save the .ics file for Google Calendar.",
+  "@exportCalendarYearSheetSubtitle": {
+    "description": "Subtitle of the calendar export year picker, explaining the next step"
+  },
+  "exportYearAction": "Export {year}",
+  "@exportYearAction": {
+    "description": "Confirm button in the export year picker",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalCalendarShareSubject": "Tithi festivals {year} (Calendar)",
+  "@festivalCalendarShareSubject": {
+    "description": "Subject when sharing the exported festival calendar file",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalCalendarShareText": "Import Tithi festival dates for {year} into Google Calendar (.ics)",
+  "@festivalCalendarShareText": {
+    "description": "Message when sharing the exported festival calendar file",
+    "placeholders": {
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
+  "festivalsExportedToCalendar": "{count} festivals exported to calendar for {year}.",
+  "@festivalsExportedToCalendar": {
+    "description": "Confirmation message after a successful calendar export",
+    "placeholders": {
+      "count": { "type": "int", "example": "50" },
+      "year": { "type": "String", "example": "2026" }
+    }
+  },
   "vedaCalendar": "Vedic Calendar",
   "@vedaCalendar": {
     "description": "Subtitle describing the app as a Vedic Calendar"
@@ -998,14 +1043,6 @@
       }
     }
   },
-  "weatherDetails": "Weather Details",
-  "@weatherDetails": {
-    "description": "Weather bottom sheet title"
-  },
-  "weatherDataUnavailable": "Weather data unavailable",
-  "@weatherDataUnavailable": {
-    "description": "Shown when weather service returns no data"
-  },
   "errorMessage": "Error: {error}",
   "@errorMessage": {
     "description": "Generic error message with details",
@@ -1013,20 +1050,6 @@
       "error": {
         "type": "String",
         "example": "Network timeout"
-      }
-    }
-  },
-  "weatherDataByOpenMeteo": "Weather data by Open-Meteo",
-  "@weatherDataByOpenMeteo": {
-    "description": "Credit text for weather source"
-  },
-  "weatherCondition": "Weather condition: {condition}",
-  "@weatherCondition": {
-    "description": "Accessibility label for weather icon",
-    "placeholders": {
-      "condition": {
-        "type": "String",
-        "example": "Partly cloudy"
       }
     }
   },
@@ -1045,26 +1068,6 @@
   "moonset": "Moonset",
   "@moonset": {
     "description": "Label for moonset time"
-  },
-  "humidity": "Humidity",
-  "@humidity": {
-    "description": "Weather metric label"
-  },
-  "wind": "Wind",
-  "@wind": {
-    "description": "Weather metric label"
-  },
-  "realFeel": "Real Feel",
-  "@realFeel": {
-    "description": "Weather metric label for feels-like temperature"
-  },
-  "uvIndex": "UV Index",
-  "@uvIndex": {
-    "description": "Weather metric label"
-  },
-  "forecast": "Forecast",
-  "@forecast": {
-    "description": "Weather forecast section title"
   },
   "daylightDuration": "Daylight: {hours}h {minutes}m",
   "@daylightDuration": {
@@ -1207,6 +1210,26 @@
   "@allFestivals": {
     "description": "Title for all festivals screen"
   },
+  "previousYear": "Previous year",
+  "@previousYear": {
+    "description": "Tooltip of the all-festivals year selector's back arrow"
+  },
+  "nextYear": "Next year",
+  "@nextYear": {
+    "description": "Tooltip of the all-festivals year selector's forward arrow"
+  },
+  "navToday": "Today",
+  "@navToday": {
+    "description": "Floating navigation bar label for the home tab. Keep it a single short word: the selected pill grows with it."
+  },
+  "navFestivals": "Festivals",
+  "@navFestivals": {
+    "description": "Floating navigation bar label for the all-festivals tab. Keep it short."
+  },
+  "navCountdowns": "Countdowns",
+  "@navCountdowns": {
+    "description": "Floating navigation bar label for the festival countdowns tab. Keep it short."
+  },
   "festivalFilterAll": "All",
   "@festivalFilterAll": {
     "description": "Filter chip: show every festival"
@@ -1222,6 +1245,10 @@
   "festivalFilterRecurring": "Recurring",
   "@festivalFilterRecurring": {
     "description": "Filter chip: observances that repeat every lunar month"
+  },
+  "festivalFilterFeatured": "Featured",
+  "@festivalFilterFeatured": {
+    "description": "Filter chip: the curated flagship festivals (the ones the all-festivals list renders as large cards)"
   },
   "festivalFilterTitle": "Filter festivals",
   "@festivalFilterTitle": {
@@ -1242,6 +1269,10 @@
   "searchFestivalsHint": "Search festivals",
   "@searchFestivalsHint": {
     "description": "Hint text for festival search field"
+  },
+  "closeFestivalSearch": "Close search",
+  "@closeFestivalSearch": {
+    "description": "Tooltip for the button that closes the festival search field"
   },
   "couldNotLoadFestivals": "Could not load festivals. Please try again.",
   "@couldNotLoadFestivals": {
@@ -2001,13 +2032,6 @@
   "@shuklaPakshaInitial": { "description": "Single-letter Shukla Paksha marker in the schedule view" },
   "krishnaPakshaInitial": "K",
   "@krishnaPakshaInitial": { "description": "Single-letter Krishna Paksha marker in the schedule view" },
-  "windSpeedKph": "{speed} kph",
-  "@windSpeedKph": {
-    "description": "Wind speed in kilometers per hour in the weather sheet",
-    "placeholders": {
-      "speed": { "type": "double", "example": "12.5" }
-    }
-  },
   "tithiDisplayThirtyDays": "30 Days",
   "@tithiDisplayThirtyDays": {
     "description": "Continuous 30-day tithi display mode label"

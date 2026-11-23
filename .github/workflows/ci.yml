@@ -9,9 +9,35 @@ name: CI
 # is what lets `flutter test` exercise the FFI bindings: without
 # SWISSEPH_LIB_PATH the app's Jyotish-backed tests fail with
 # "Failed to initialize Jyotish" (they do not skip).
+#
+# Release builds are a second, gated job: they only run after analyze/test pass
+# and are signed from repository secrets, never from a committed keystore.
+# A final job publishes the tag as a GitHub release with both APKs attached.
+#
+# The whole workflow runs only on tags containing the --release marker,
+# e.g. v0.9.10+42--release. Ordinary pushes, PRs and tags without the marker
+# do not trigger CI. The marker is stripped wherever a version is derived
+# from the tag, and the GitHub release is published under the clean
+# `vX.Y.Z+N` tag the in-app updater parses: a marker left in `tag_name`
+# would read as build 0 and silently suppress every update.
+#
+# Cheap release gates run in the first job, before any signed build: the tag
+# must match pubspec.yaml, `+N` must be higher than every published release,
+# and changelogs.md must contain a block for it (extracted there and handed
+# to the publish job as an artifact). The publish job creates a draft, uploads
+# both APKs, then publishes, and reconciles the assets when the release
+# already exists, so an interrupted run cannot leave a permanently broken
+# release behind.
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - '*--release*'
+
+# Least privilege by default: only the publishing job can write. Everything
+# else (checkout, release list/read for the gates) needs contents: read.
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -20,7 +46,7 @@ concurrency:
 jobs:
   analyze-and-test:
     name: Analyze and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       # The suite asserts local-time formatting and day boundaries; a runner in
@@ -35,6 +61,95 @@ jobs:
           channel: stable
           cache: true
 
+      # The SDK pin is part of the contract (pubspec.yaml declares
+      # `sdk: ^3.13.0`, `flutter: >=3.47.0`); printing it makes a mismatch name
+      # the SDK instead of a transitive package.
+      - name: Print toolchain versions
+        run: flutter --version
+
+      # docs/RELEASE_GUIDE.md: the tag's version must equal pubspec.yaml.
+      - name: Check release tag matches pubspec version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME%--release*}"
+          expected="v$(grep -m1 '^version:' pubspec.yaml | awk '{print $2}')"
+          if [ "$tag" != "$expected" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pubspec.yaml version ($expected)."
+            exit 1
+          fi
+
+      # Android refuses to install a lower versionCode and the updater compares
+      # `+N`, so a re-tag with a stale build number publishes a downgrade no
+      # device accepts. Drafts are ignored: they were never offered to an app.
+      - name: Check build number is higher than every published release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME%--release*}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)$ ]]; then
+            echo "::error::Tag $tag is not vX.Y.Z+N; cannot check the build number."
+            exit 1
+          fi
+          current="${BASH_REMATCH[1]}"
+          # A failed API call must fail the gate: silently comparing against
+          # an empty list would wave the downgrade through. The list is
+          # newest-first, so a generous limit still covers every older bump.
+          published_tags="$(gh release list --exclude-drafts --limit 1000 \
+            --json tagName --jq '.[].tagName')"
+          highest=0
+          highest_tag=""
+          for published in $published_tags; do
+            # Earlier runs published under the marker tag; strip it so the
+            # comparison sees those releases. Without this a marker tag looks
+            # like an unparseable name and a clean re-release of the same +N
+            # would pass even though the build was already published.
+            published="${published%--release*}"
+            [ "$published" = "$tag" ] && continue
+            [[ "$published" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+([0-9]+)$ ]] || continue
+            number="${BASH_REMATCH[1]}"
+            if [ "$number" -gt "$highest" ]; then
+              highest="$number"
+              highest_tag="$published"
+            fi
+          done
+          if [ "$current" -le "$highest" ]; then
+            echo "::error::Build number +$current is not higher than the published $highest_tag (+$highest). Bump the +N in pubspec.yaml."
+            exit 1
+          fi
+
+      # changelogs.md is newest-first under a `## <date> - <version>` heading.
+      # Take the block for this tag's version, stop at the next `## ` heading,
+      # and hand it to the publish job. Doing this first means a missing or
+      # misspelled block fails in seconds instead of after two signed builds.
+      - name: Extract release notes
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME%--release*}"
+          version="${tag#v}"
+          awk -v v="$version" '
+            /^## / {
+              heading = $0
+              sub(/^## .* - /, "", heading)
+              if (heading == v) { found = 1; next }
+            }
+            found && /^## / { exit }
+            found { print }
+          ' changelogs.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error::No changelog block found for version $version in changelogs.md"
+            exit 1
+          fi
+          cat release-notes.md
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-notes-${{ github.sha }}
+          path: release-notes.md
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Build Swiss Ephemeris for the host
         run: |
           set -euo pipefail
@@ -48,28 +163,37 @@ jobs:
             "$src/swemplan.c" "$src/sweph.c" "$src/swephlib.c" \
             -lm -o build/swisseph/libswisseph.so
 
-      - name: Flutter version
-        run: flutter --version
-
-      # The suite's local-time expectations were written for IST. A runner in
-      # UTC changes ten of them, so fail fast here instead of debugging them.
+      # Cheap guard: the suite's local-time expectations were written for IST.
       - name: Check test timezone
-        run: |
-          date
-          test "$(date +%Z)" = "IST"
+        run: test "$(date +%Z)" = "IST"
 
       - name: Install dependencies
         run: flutter pub get
 
+      # `generate: true` in pubspec.yaml regenerates lib/l10n during `pub get`,
+      # so a stale committed copy would be silently replaced instead of caught.
+      # Fail when regeneration leaves the tracked generated files dirty.
+      - name: Check generated l10n is committed
+        run: |
+          set -euo pipefail
+          flutter gen-l10n
+          if ! git diff --exit-code -- 'lib/l10n/app_localizations*.dart'; then
+            echo "::error::Generated l10n is stale for the pinned Flutter SDK; run 'flutter gen-l10n' and commit lib/l10n/app_localizations*.dart."
+            exit 1
+          fi
+
+      # --no-pub everywhere below: dependency resolution just ran once.
       # Fails on infos too, which is why the Phase 6 analyzer baseline had to
-      # reach zero before this job could exist.
+      # reach zero before this job could exist. The generated l10n files are
+      # analyzer-excluded (analysis_options.yaml) so SDK deprecations inside
+      # generator output cannot turn this gate red.
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --no-pub
 
       - name: Test
         env:
           SWISSEPH_LIB_PATH: ${{ github.workspace }}/build/swisseph/libswisseph.so
-        run: flutter test --reporter compact
+        run: flutter test --no-pub --reporter compact
 
       - name: Package tests
         working-directory: packages/jyotish
@@ -77,4 +201,215 @@ jobs:
           SWISSEPH_LIB_PATH: ${{ github.workspace }}/build/swisseph/libswisseph.so
         run: |
           flutter pub get
-          flutter test --reporter compact
+          flutter test --no-pub --reporter compact
+
+  release-build:
+    name: Release build (arm64 + x86_64 APKs)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    needs: analyze-and-test
+    env:
+      # Gradle validates these at `validateSigningRelease` / `packageRelease`.
+      # See android/app/build.gradle.kts and build_release.ps1 for the local
+      # equivalents. Never commit the keystore itself.
+      #
+      # The base64 keystore is deliberately NOT here: job-level env reaches
+      # every step, including `flutter build` and third-party actions, so it is
+      # scoped to the step that decodes it.
+      TITHI_RELEASE_STORE_FILE: ${{ github.workspace }}/tithi-release.jks
+      TITHI_RELEASE_STORE_PASSWORD: ${{ secrets.TITHI_RELEASE_STORE_PASSWORD }}
+      TITHI_RELEASE_KEY_ALIAS: ${{ secrets.TITHI_RELEASE_KEY_ALIAS }}
+      TITHI_RELEASE_KEY_PASSWORD: ${{ secrets.TITHI_RELEASE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # gradle.properties enables Gradle's own build cache; these paths hold
+      # the distribution, dependency jars and wrapper that a fresh runner
+      # would otherwise download on every release tag.
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          # `*.gradle*` covers build.gradle.kts/settings.gradle.kts but not
+          # gradle.properties (JVM args, workers, Kotlin flags), so hash that
+          # file too or a JVM/worker change reuses an unrelated cache.
+          key: ${{ runner.os }}-gradle-${{ hashFiles('android/**/*.gradle*', 'android/gradle.properties', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.4
+          channel: stable
+          cache: true
+
+      - name: Print toolchain versions
+        run: flutter --version
+
+      # Cache only the NDK this Flutter SDK provisions. Caching all of
+      # $ANDROID_HOME/ndk would archive the three preinstalled toolchains and
+      # evict the Gradle caches; the image does not ship every version Flutter
+      # can ask for, so Gradle/Flutter would otherwise download it every run.
+      - name: Resolve Flutter's NDK version
+        id: ndk
+        run: |
+          set -euo pipefail
+          flutter_root="$(dirname "$(dirname "$(readlink -f "$(command -v flutter)")")")"
+          extension="$flutter_root/packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt"
+          version=""
+          if [ -f "$extension" ]; then
+            version="$(sed -n 's/.*val ndkVersion: String = "\([0-9.]*\)".*/\1/p' "$extension")"
+          fi
+          sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          if [ -z "$version" ]; then
+            echo "::warning::Could not read flutter.ndkVersion; skipping the NDK cache."
+          else
+            echo "Flutter provisions Android NDK $version"
+          fi
+          {
+            echo "version=$version"
+            echo "path=$sdk/ndk/$version"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Cache Android NDK
+        if: steps.ndk.outputs.version != ''
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.ndk.outputs.path }}
+          key: ${{ runner.os }}-ndk-${{ steps.ndk.outputs.version }}
+
+      # Fail before spending time on a build we know cannot be signed.
+      - name: Verify release signing secrets
+        env:
+          # Step-scoped on purpose: the base64 keystore is only needed for the
+          # decode below, and job-level env would expose it to every step.
+          KEYSTORE_B64: ${{ secrets.TITHI_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          for name in KEYSTORE_B64 TITHI_RELEASE_STORE_PASSWORD TITHI_RELEASE_KEY_ALIAS TITHI_RELEASE_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing repository secret for $name. Add TITHI_RELEASE_KEYSTORE_BASE64 (base64 of the .jks), TITHI_RELEASE_STORE_PASSWORD, TITHI_RELEASE_KEY_ALIAS and TITHI_RELEASE_KEY_PASSWORD."
+              exit 1
+            fi
+          done
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/tithi-release.jks"
+          test -s "$GITHUB_WORKSPACE/tithi-release.jks"
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Two ABIs only: physical devices (arm64) and x86_64 tablets/emulators.
+      - name: Build release APKs (arm64-v8a + x86_64)
+        run: |
+          set -euo pipefail
+          rm -rf build/app/outputs/flutter-apk
+          flutter build apk --release --no-pub --split-per-abi \
+            --target-platform android-arm64,android-x64
+          mkdir -p release-apks
+          # One Gradle invocation for both ABIs: gradle.properties caps
+          # org.gradle.workers.max at 2, so two sequential builds roughly
+          # double the job time. Copy explicit file names so a Flutter naming
+          # change fails here instead of shipping the wrong ABI.
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+            release-apks/tithi-arm64-v8a-release.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk \
+            release-apks/tithi-x86_64-release.apk
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tithi-release-${{ github.sha }}
+          path: release-apks/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-release:
+    name: Publish GitHub release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: release-build
+    # The workflow only runs on pushed tags containing --release, but the
+    # release is published under the clean `vX.Y.Z+N` tag (see the publish
+    # step), because the in-app updater parses build numbers out of `tag_name`.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download release APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: tithi-release-${{ github.sha }}
+          path: release-apks
+
+      # Extracted and validated in analyze-and-test, so a changelog typo
+      # failed before the signed builds ran.
+      - name: Download release notes
+        uses: actions/download-artifact@v4
+        with:
+          name: release-notes-${{ github.sha }}
+          path: release-notes
+
+      - name: Publish release with both APKs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Publish under the clean tag, not the `--release` trigger tag:
+          # AppUpdateService reads `tag_name` and parses the `+N` build number,
+          # so a marker tag would read as build 0 and no app would ever be
+          # offered the update. `--target` creates the clean tag on the commit
+          # this run built and tested.
+          tag="${GITHUB_REF_NAME%--release*}"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+[+][0-9]+$ ]]; then
+            echo "::error::Refusing to publish with tag '$tag'; expected vX.Y.Z+N."
+            exit 1
+          fi
+          expected_apks=(
+            tithi-arm64-v8a-release.apk
+            tithi-x86_64-release.apk
+          )
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            # A cancelled or force-pushed run can leave the release with one
+            # APK. Exiting 0 whenever the tag existed made that permanent:
+            # every retry no-opped and `releases/latest` advertised a broken
+            # pair. Reconcile the assets instead.
+            echo "Release $tag exists; reconciling its assets."
+          else
+            # Create the draft without assets first: `gh release create` with
+            # files can be interrupted midway, and the draft is invisible to
+            # `releases/latest`, so a partial upload is repairable rather than
+            # advertised. The clean tag is created from --target on publish.
+            gh release create "$tag" \
+              --draft \
+              --title "$tag" \
+              --notes-file release-notes/release-notes.md \
+              --target "$GITHUB_SHA"
+          fi
+
+          # --clobber makes the upload idempotent: a retry replaces a truncated
+          # or missing asset instead of failing on "asset already exists".
+          gh release upload "$tag" release-apks/*.apk --clobber
+
+          # Publish only after both assets are in place.
+          if [ "$(gh release view "$tag" --json isDraft --jq '.isDraft')" = true ]; then
+            gh release edit "$tag" --draft=false
+          fi
+
+          # Verify the pair instead of trusting the upload's exit code.
+          assets="$(gh release view "$tag" --json assets --jq '.assets[].name')"
+          missing=0
+          for name in "${expected_apks[@]}"; do
+            if ! printf '%s\n' "$assets" | grep -qx "$name"; then
+              echo "::error::Release $tag is missing $name."
+              missing=1
+            fi
+          done
+          exit "$missing"

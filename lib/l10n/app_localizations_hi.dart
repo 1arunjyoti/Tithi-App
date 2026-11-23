@@ -26,6 +26,41 @@ class AppLocalizationsHi extends AppLocalizations {
       'चुने गए वर्ष में प्रत्येक त्योहार का पहला आयोजन';
 
   @override
+  String get exportFestivalsCalendar => 'Google Calendar में जोड़ें (.ics)';
+
+  @override
+  String get exportFestivalsCalendarSubtitle =>
+      'त्योहारों की तारीखें ऐसी कैलेंडर फ़ाइल में सहेजें जिसे आयात कर सकें';
+
+  @override
+  String get exportJsonYearSheetSubtitle =>
+      'एक वर्ष चुनें। फिर JSON फ़ाइल सहेजने का स्थान चुनेंगे।';
+
+  @override
+  String get exportCalendarYearSheetSubtitle =>
+      'एक वर्ष चुनें। फिर Google Calendar के लिए .ics फ़ाइल सहेजने का स्थान चुनेंगे।';
+
+  @override
+  String exportYearAction(String year) {
+    return '$year निर्यात करें';
+  }
+
+  @override
+  String festivalCalendarShareSubject(String year) {
+    return 'Tithi त्योहार $year (Calendar)';
+  }
+
+  @override
+  String festivalCalendarShareText(String year) {
+    return 'Tithi के $year के त्योहारों की तारीखें Google Calendar में आयात करें (.ics)';
+  }
+
+  @override
+  String festivalsExportedToCalendar(int count, String year) {
+    return '$year के $count त्योहार कैलेंडर में निर्यात किए गए।';
+  }
+
+  @override
   String get vedaCalendar => 'वैदिक पंचांग';
 
   @override
@@ -734,22 +769,8 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get weatherDetails => 'मौसम विवरण';
-
-  @override
-  String get weatherDataUnavailable => 'मौसम डेटा उपलब्ध नहीं';
-
-  @override
   String errorMessage(String error) {
     return 'त्रुटि: $error';
-  }
-
-  @override
-  String get weatherDataByOpenMeteo => 'Open-Meteo द्वारा मौसम डेटा';
-
-  @override
-  String weatherCondition(String condition) {
-    return 'मौसम स्थिति: $condition';
   }
 
   @override
@@ -763,21 +784,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get moonset => 'चंद्रास्त';
-
-  @override
-  String get humidity => 'आर्द्रता';
-
-  @override
-  String get wind => 'हवा';
-
-  @override
-  String get realFeel => 'अनुभूत ताप';
-
-  @override
-  String get uvIndex => 'यूवी सूचकांक';
-
-  @override
-  String get forecast => 'पूर्वानुमान';
 
   @override
   String daylightDuration(int hours, int minutes) {
@@ -881,6 +887,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String get allFestivals => 'सभी त्योहार';
 
   @override
+  String get previousYear => 'पिछला वर्ष';
+
+  @override
+  String get nextYear => 'अगला वर्ष';
+
+  @override
+  String get navToday => 'आज';
+
+  @override
+  String get navFestivals => 'त्योहार';
+
+  @override
+  String get navCountdowns => 'काउंटडाउन';
+
+  @override
   String get festivalFilterAll => 'सभी';
 
   @override
@@ -891,6 +912,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get festivalFilterRecurring => 'आवर्ती';
+
+  @override
+  String get festivalFilterFeatured => 'विशेष';
 
   @override
   String get festivalFilterTitle => 'त्योहार फ़िल्टर करें';
@@ -907,6 +931,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get searchFestivalsHint => 'त्योहार खोजें';
+
+  @override
+  String get closeFestivalSearch => 'खोज बंद करें';
 
   @override
   String get couldNotLoadFestivals =>
@@ -1594,11 +1621,6 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get krishnaPakshaInitial => 'कृ';
-
-  @override
-  String windSpeedKph(double speed) {
-    return '$speed किमी/घंटा';
-  }
 
   @override
   String get tithiDisplayThirtyDays => '३० दिन';

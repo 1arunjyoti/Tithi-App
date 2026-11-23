@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../models/festival.dart';
 import '../../models/panchang_data.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/event_detail_sheet.dart';
-import '../../widgets/tithi_detail_sheet.dart';
+import '../event_detail/widgets/event_detail_sheet.dart';
+import '../tithi_sheet/widgets/tithi_detail_sheet.dart';
 
 /// Single entry point for the two day-detail sheets.
 ///

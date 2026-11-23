@@ -97,8 +97,8 @@ const Map<Planet, double> geocentricOrbitRadii = {
 /// orbit rings render without a resolved [SolarSystemData].
 Map<Planet, double> orbitRadiiForViewMode(SolarSystemViewMode mode) =>
     mode == SolarSystemViewMode.heliocentric
-        ? heliocentricOrbitRadii
-        : geocentricOrbitRadii;
+    ? heliocentricOrbitRadii
+    : geocentricOrbitRadii;
 
 /// Reference points for the heliocentric radial scale:
 /// (mean distance from the Sun in AU, drawing radius).
@@ -135,8 +135,7 @@ double heliocentricDisplayRadius(double distanceAU) {
     final upper = heliocentricRadiusAnchors[i];
     if (distanceAU <= upper.$1) {
       final lower = heliocentricRadiusAnchors[i - 1];
-      final t =
-          math.log(distanceAU / lower.$1) / math.log(upper.$1 / lower.$1);
+      final t = math.log(distanceAU / lower.$1) / math.log(upper.$1 / lower.$1);
       return lower.$2 + (upper.$2 - lower.$2) * t;
     }
   }

@@ -387,6 +387,7 @@
     "regions": ["all"],
     "name": "Ram Navami",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Ram Navami",
@@ -863,39 +864,41 @@
     "name": "Varuthini Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "वारुथिनी एकादशी",
       "nameEnglish": "Varuthini Ekadashi",
       "nameHindi": "वरुथिनी एकादशी",
       "nameBengali": "বরুথিনী একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "వరుతిని ఏకాదశి",
+      "nameKannada": "ವರುತಿನಿ ಏಕಾದಶಿ",
+      "nameTamil": "வருதினி ஏகாதசி",
+      "nameMalayalam": "വരുതിനി ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Ekadashi that protects from calamities",
-      "addtional_description": ""
+      "description": "The Ekadashi that protects — Krishna Ekadashi of Chaitra, kept as a shield against calamity",
+      "addtional_description": "Varuthini Ekadashi falls on the Krishna Ekadashi whose Amavasya closes Chaitra, and is known in North India as Vaishakha Krishna Ekadashi. Its name means 'protected' or 'armoured'. The Padma Purana tells its story through King Mandhata, who lost his kingdom and his merit and was restored by observing this vrat; the fast is said to shield the devotee from calamity, accident and sudden loss, and to carry the merit of a gift of land. Vishnu is worshipped with Tulsi, a ghee lamp and the Vishnu Sahasranama, and the fast is broken on Dwadashi."
     },
     "panchang_rules": {
       "masa": "Chaitra",
       "paksha": "Krishna",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Vishnu Puja",
-        "Fasting",
-        "Charity",
-        "Tulsi worship"
+        "Vishnu puja with Tulsi leaves, sandalwood and a ghee lamp",
+        "Grain-free fast from sunrise, with the Vishnu Sahasranama recited",
+        "Katha recitation and charity to the needy",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
@@ -1036,24 +1039,26 @@
     "name": "Nirjala Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "निर्जला एकादशी",
       "nameEnglish": "Nirjala Ekadashi",
       "nameHindi": "निर्जला एकादशी",
       "nameBengali": "নিরজলা একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "నిర్జల ఏకాదశి",
+      "nameKannada": "ನಿರ್ಜಲ ಏಕಾದಶಿ",
+      "nameTamil": "நிர்ஜல ஏகாதசி",
+      "nameMalayalam": "നിർജല ഏകാദശി"
     },
     "purpose": {
-      "description": "Nirjala Ekadashi- The Sacred Waterless Fast",
-      "addtional_description": "Nirjala Ekadashi, observed on the 11th day of Shukla Paksha in the Hindu month of Jyeshtha (June 25, 2026), is the most powerful and spiritually significant of all Ekadashi fasts.\n\nThe term \"Nirjala\" means \"without water,\" making this the strictest fasting observance where devotees abstain completely from both food and water for the entire day. This sacred day grants the combined spiritual merit of all 24 Ekadashis observed throughout the year and is dedicated to Lord Vishnu, also known as Bhimseni Ekadashi due to its association with Bhima's devotion."
+      "description": "Nirjala Ekadashi — the sacred waterless fast, the strictest of all Ekadashis",
+      "addtional_description": "Nirjala Ekadashi is observed on Jyeshtha Shukla Ekadashi and is the strictest of the twenty-four Ekadashis: devotees abstain from both food and water for the full day. The name means 'without water'. Tradition holds that this single vrat carries the merit of all twenty-four Ekadashis of the year, and it is also called Bhimseni Ekadashi after Bhima, who was told he could not keep every Ekadashi and was given this one day as their equal. Vishnu is worshipped with Tulsi and a ghee lamp, water and cooling offerings are given in charity, and the fast is broken on Dwadashi morning with water first, then Tulsi, then sattvic food."
     },
     "panchang_rules": {
       "masa": "Jyeshtha",
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
@@ -1064,8 +1069,8 @@
         "Charity and Service Donate water pots, food, clothes to Brahmins and needy people while setting up water stalls for public service.",
         "Parana (Breaking Fast) Break the complete waterless fast on Dwadashi morning by drinking water first, then Tulsi leaves, followed by sattvic food."
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "The strictest Ekadashi fast — no food and no water from sunrise until parana on Dwadashi morning, broken with water first and then Tulsi. Vaishnava and ISKCON households may keep the vrat a day later."
     }
   },
   {
@@ -1200,40 +1205,44 @@
     "id": "devshayani_ekadashi",
     "regions": ["all"],
     "name": "Devshayani Ekadashi",
-    "category": "major",
+    "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "देवशायनी एकादशी",
       "nameEnglish": "Devshayani Ekadashi",
-      "nameHindi": "देवशयनी एकादशी",
-      "nameBengali": "দেবশয়নী একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameHindi": "देवशयनी (शयनी / आषाढ़ी) एकादशी",
+      "nameBengali": "দেবশয়নী (শয়নী / আষাঢ়ি) একাদশী",
+      "nameTelugu": "దేవశయని ఏకాదశి",
+      "nameKannada": "ದೇವಶಯನಿ ಏಕಾದಶಿ",
+      "nameTamil": "தேவசயனி ஏகாதசி",
+      "nameMalayalam": "ദേവശയനി ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Lord Vishnu goes to sleep - Beginning of Chaturmas",
-      "addtional_description": ""
+      "description": "Devshayani Ekadashi — the day Lord Vishnu begins His four-month sleep, opening Chaturmas",
+      "addtional_description": "Devshayani Ekadashi, also called Shayani, Ashadhi or Padma Ekadashi, falls on Ashadha Shukla Ekadashi. On this day Lord Vishnu is held to close His eyes and sleep on the cosmic serpent Shesha for four months, and Chaturmas — the season of austerity, pilgrimage and suspended weddings — begins. The Chaturmas vrat of fasting, silence and study runs from here to Devutthani Ekadashi. Vishnu is worshipped with Tulsi and a ghee lamp, and the day is held especially meritorious for a holy bath and for charity."
     },
     "panchang_rules": {
       "masa": "Ashadha",
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Vishnu Puja",
-        "Fasting",
-        "Beginning of Chaturmas vrat"
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Sankalpa for the Chaturmas vrat, which begins today",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
@@ -1244,6 +1253,7 @@
     "regions": ["all"],
     "name": "Raksha Bandhan",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Raksha Bandhan",
@@ -1420,6 +1430,7 @@
     "regions": ["all"],
     "name": "Krishna Janmashtami",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "कृष्ण जन्माष्टमी",
       "nameEnglish": "Krishna Janmashtami",
@@ -1470,83 +1481,91 @@
     "name": "Kamika Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "कामिका एकादशी",
       "nameEnglish": "Kamika Ekadashi",
       "nameHindi": "कामिका एकादशी",
       "nameBengali": "কামিকা একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "కామిక ఏకాదశి",
+      "nameKannada": "ಕಾಮಿಕ ಏಕಾದಶಿ",
+      "nameTamil": "காமிக ஏகாதசி",
+      "nameMalayalam": "കാമിക ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Ekadashi that fulfills desires",
-      "addtional_description": ""
+      "description": "The sin-destroying Ekadashi of Ashadha Krishna, kept during Chaturmas",
+      "addtional_description": "Kamika Ekadashi falls on Ashadha Krishna Ekadashi, within Chaturmas, and is said to wash away even sins committed unknowingly. The Padma Purana's account holds that the merit of this vrat equals the merit of bathing in every holy river and of giving away a thousand cows. Vishnu is worshipped with Tulsi and a ghee lamp, and the day is kept with a grain-free fast, a night vigil and charity. In some regions it is known simply as Kama Ekadashi."
     },
     "panchang_rules": {
       "masa": "Ashadha",
       "paksha": "Krishna",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Vishnu Puja",
-        "Fasting",
-        "Tulsi leaves offering",
-        "Night vigil"
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and night vigil (jagran)",
+        "Charity to the needy",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
     }
   },
   {
-    "id": "pavitra_ekadashi",
-    "regions": ["all"],
-    "name": "Pavitra Ekadashi",
+    "id": "shravana_putrada_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Shravana Putrada Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Pavitra Ekadashi",
-      "nameHindi": "पवित्रा एकादशी",
-      "nameBengali": "পবিত্রা একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "श्रावणपुत्रदा एकादशी",
+      "nameEnglish": "Shravana Putrada Ekadashi",
+      "nameHindi": "श्रावण पुत्रदा एकादशी",
+      "nameBengali": "শ্রাবণ পুত্রদা একাদশী",
+      "nameTelugu": "శ్రావణ పుత్రద ఏకాదశి",
+      "nameKannada": "ಶ್ರಾವಣ ಪುತ್ರದ ಏಕಾದಶಿ",
+      "nameTamil": "சிராவண புத்ரத ஏகாதசி",
+      "nameMalayalam": "ശ്രാവണ പുത്രദ ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Ekadashi that purifies past sins",
-      "addtional_description": ""
+      "description": "The son-bestowing Ekadashi of Shravana Shukla — one of the two Putrada Ekadashis",
+      "addtional_description": "Shravana Putrada Ekadashi falls on Shravana Shukla Ekadashi and is kept by couples seeking a virtuous son. It is one of two Ekadashis bearing this name; the other falls in Pausha, and the two are told apart by their month. The Bhavishya Purana tells of King Mahijit, childless and blamed by his subjects, who was advised by the sage Lomesha to observe this vrat — and a son was duly born to him. Vishnu is worshipped with Tulsi and a ghee lamp, a sacred thread and new clothes are offered, and the fast is broken on Dwadashi."
     },
     "panchang_rules": {
       "masa": "Shravana",
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Vishnu Puja",
-        "Sacred thread offering",
-        "Fasting",
-        "Holy bath"
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Offering of a sacred thread and new clothes",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
@@ -1651,6 +1670,7 @@
     "regions": ["all"],
     "name": "Ganesh Chaturthi",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "गणेश चतुर्थी",
       "nameEnglish": "Ganesh Chaturthi",
@@ -2257,6 +2277,7 @@
     "regions": ["all"],
     "name": "Sharad Navratri Begins",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "शारदीय नवरात्रि",
       "nameEnglish": "Sharad Navratri Begins",
@@ -2759,6 +2780,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Shashthi",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- षष्ठी",
@@ -2805,6 +2827,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Saptami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- सप्तमी",
@@ -2851,6 +2874,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Mahashtami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- महाष्टमी",
@@ -2940,6 +2964,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Maha Navami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- महानवमी",
@@ -2986,6 +3011,7 @@
     "regions": ["east"],
     "name": "Durga Puja- Dasami",
     "category": "major",
+    "featured": true,
     "displayPriority": 1,
     "nameRegional": {
       "nameSanskrith": "दुर्गा पूजा- विजयादशमी",
@@ -3032,6 +3058,7 @@
     "regions": ["all"],
     "name": "Dussehra / Vijayadashami",
     "category": "major",
+    "featured": true,
     "displayPriority": 3,
     "nameRegional": {
       "nameSanskrith": "विजयादशमी",
@@ -3383,6 +3410,7 @@
     "regions": ["all"],
     "name": "Diwali",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Diwali",
@@ -3699,43 +3727,48 @@
   },
   {
     "id": "devutthani_ekadashi",
-    "regions": ["all"],
+    "regions": [
+      "all"
+    ],
     "name": "Devutthani Ekadashi",
-    "category": "major",
+    "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "देवोत्थान्य एकादशी",
       "nameEnglish": "Devutthani Ekadashi",
-      "nameHindi": "देवउठनी एकादशी",
-      "nameBengali": "দেবুথনী একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameHindi": "देवउठनी (प्रबोधिनी / देव उथानी) एकादशी",
+      "nameBengali": "দেবুথনী (প্রবোধিনী) একাদশী",
+      "nameTelugu": "దేవుత్థాన ఏకాదశి",
+      "nameKannada": "ದೇವುತ್ಥಾನ ಏಕಾದಶಿ",
+      "nameTamil": "தேவுதான ஏகாதசி",
+      "nameMalayalam": "ദേവുത്ഥാന ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Lord Vishnu awakens - End of Chaturmas",
-      "addtional_description": ""
+      "description": "Devutthani Ekadashi — the day Lord Vishnu wakes from His four-month sleep, closing Chaturmas",
+      "addtional_description": "Devutthani Ekadashi, also called Devutthana, Dev Uthani or Prabodhini Ekadashi, falls on Kartika Shukla Ekadashi. On this day Lord Vishnu wakes from the four-month sleep begun on Devshayani, and Chaturmas ends. It is one of the most consulted days of the Hindu year: weddings, griha pravesh and other samskaras suspended through Chaturmas resume from here, and the Tulsi Vivah season opens — the marriage of the Tulsi plant to Vishnu is held on this day or the next. Vishnu is worshipped with Tulsi and a ghee lamp, and the day is kept with a fast and a night vigil."
     },
     "panchang_rules": {
       "masa": "Kartika",
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Vishnu Puja",
-        "Tulsi Vivah",
-        "Wedding season begins",
-        "Fasting"
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and night vigil (jagran)",
+        "Tulsi Vivah, held today or on the following day",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
@@ -3827,6 +3860,7 @@
   },
   {
     "id": "dev_diwali",
+    "regions": ["all"],
     "name": "Dev Diwali",
     "category": "major",
     "nameRegional": {
@@ -4174,43 +4208,48 @@
   },
   {
     "id": "pausha_putrada_ekadashi",
-    "regions": ["all"],
+    "regions": [
+      "all"
+    ],
     "name": "Pausha Putrada Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
+      "nameSanskrith": "पौषपुत्रदा एकादशी",
       "nameEnglish": "Pausha Putrada Ekadashi",
       "nameHindi": "पौष पुत्रदा एकादशी",
       "nameBengali": "পৌষ পুত্রদা একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameTelugu": "పౌష పుత్రద ఏకాదశి",
+      "nameKannada": "ಪೌಷ ಪುತ್ರದ ಏಕಾದಶಿ",
+      "nameTamil": "பௌஷ புத்ரத ஏகாதசி",
+      "nameMalayalam": "പൗഷ പുത്രദ ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Ekadashi for blessing of sons",
-      "addtional_description": ""
+      "description": "The son-bestowing Ekadashi of Pausha Shukla — the second of the two Putrada Ekadashis",
+      "addtional_description": "Pausha Putrada Ekadashi falls on Pausha Shukla Ekadashi and, like its Shravana namesake, is kept by couples praying for a virtuous son. The two Putrada Ekadashis are told apart by month: this is the Pausha one, the other falls in Shravana. The Bhavishya Purana's account tells of King Suketuman and Queen Shaibya, who observed the vrat and were blessed with a son. Vishnu is worshipped with Tulsi and a ghee lamp, and the day is kept with a grain-free fast, a night vigil and charity."
     },
     "panchang_rules": {
       "masa": "Pausha",
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Vishnu Puja",
-        "Fasting",
-        "Charity",
-        "Night vigil"
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and night vigil (jagran)",
+        "Charity to the needy",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
@@ -4265,6 +4304,7 @@
     "regions": ["all"],
     "name": "Basant Panchami",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Basant Panchami",
@@ -4433,6 +4473,7 @@
     "regions": ["all"],
     "name": "Maha Shivaratri",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Maha Shivaratri",
@@ -4523,6 +4564,7 @@
     "regions": ["all"],
     "name": "Holi",
     "category": "major",
+    "featured": true,
     "nameRegional": {
       "nameSanskrith": "",
       "nameEnglish": "Holi",
@@ -4599,80 +4641,853 @@
     }
   },
   {
-    "id": "ekadashi_shukla",
-    "regions": ["all"],
-    "name": "Ekadashi (Shukla)",
+    "id": "kamada_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Kamada Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Ekadashi (Shukla)",
-      "nameHindi": "एकादशी",
-      "nameBengali": "একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "कामदा एकादशी",
+      "nameEnglish": "Kamada Ekadashi",
+      "nameHindi": "कामदा एकादशी",
+      "nameBengali": "কামদা একাদশী",
+      "nameTelugu": "కామద ఏకాదశి",
+      "nameKannada": "ಕಾಮದ ಏಕಾದಶಿ",
+      "nameTamil": "காமத ஏகாதசி",
+      "nameMalayalam": "കാമദ ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Auspicious fasting day dedicated to Lord Vishnu",
-      "addtional_description": "Ekadashi is the eleventh lunar day observed twice monthly (on Shukla Paksha and Krishna Paksha) dedicated to Lord Vishnu, considered one of the most meritorious fasts in Sanatana Dharma that purifies the mind, body, and soul while helping devotees gain control over their senses and overcome past sins.\n\nThe core rituals remain identical for both Shukla and Krishna Paksha Ekadashi, with the primary difference being that Shukla Paksha Ekadashi symbolizes growth and spiritual expansion, while Krishna Paksha Ekadashi focuses on introspection, renunciation, and inner purification."
+      "description": "The wish-fulfilling Ekadashi of Chaitra Shukla",
+      "addtional_description": "Kamada Ekadashi is observed on Chaitra Shukla Ekadashi. The vrat is said to fulfil sincere desires and wash away the sins of a whole year."
     },
     "panchang_rules": {
-      "masa": "*",
+      "masa": "Chaitra",
       "paksha": "Shukla",
       "tithi": 11,
       "conditions": "Ekadashi",
-      "recurring": true,
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
       "steps": [
-        "Sankalp (Vow Taking) Take a formal vow before Lord Vishnu by holding water in your right palm and stating your intention to observe the Ekadashi fast sincerely.",
-        "Morning Puja Worship Lord Vishnu with Tulsi leaves (most essential), yellow flowers, sandalwood paste, incense, and ghee lamps at the home altar.",
-        "Fasting Observance Observe the chosen fast type - Nirjala (no food/water), Phalahar (fruits/milk only), or Farali (sattvic foods) while completely avoiding grains, rice, pulses, onion, and garlic.",
-        "Katha Reading Listen to or recite the specific Ekadashi story associated with that particular tithi, as reading the katha is considered as important as the fast itself.",
-        "Parana (Breaking Fast) Break the fast on Dwadashi morning after sunrise by first offering food to Lord Vishnu, then feeding Brahmins or the needy, and finally consuming simple satvik food within the prescribed time window."
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""
     }
   },
   {
-    "id": "ekadashi_krishna",
-    "regions": ["all"],
-    "name": "Ekadashi (Krishna)",
+    "id": "papamochani_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Papamochani Ekadashi",
     "category": "vrat",
     "nameRegional": {
-      "nameSanskrith": "",
-      "nameEnglish": "Ekadashi (Krishna)",
-      "nameHindi": "एकादशी",
-      "nameBengali": "একাদশী",
-      "nameTelugu": "",
-      "nameKannada": "",
-      "nameTamil": "",
-      "nameMalayalam": ""
+      "nameSanskrith": "पापमोचनी एकादशी",
+      "nameEnglish": "Papamochani Ekadashi",
+      "nameHindi": "पापमोचनी एकादशी",
+      "nameBengali": "পাপমোচনী একাদশী",
+      "nameTelugu": "పాపమోచని ఏకాదశి",
+      "nameKannada": "ಪಾಪಮೋಚನಿ ಏಕಾದಶಿ",
+      "nameTamil": "பாபமோசனி ஏகாதசி",
+      "nameMalayalam": "പാപമോചനി ഏകാദശി"
     },
     "visuals": {
       "image": "",
       "theme_color": ""
     },
     "purpose": {
-      "description": "Auspicious fasting day dedicated to Lord Vishnu",
-      "addtional_description": "Ekadashi is the eleventh lunar day observed twice monthly (on Shukla Paksha and Krishna Paksha) dedicated to Lord Vishnu, considered one of the most meritorious fasts in Sanatana Dharma that purifies the mind, body, and soul while helping devotees gain control over their senses and overcome past sins.\n\nThe core rituals remain identical for both Shukla and Krishna Paksha Ekadashi, with the primary difference being that Shukla Paksha Ekadashi symbolizes growth and spiritual expansion, while Krishna Paksha Ekadashi focuses on introspection, renunciation, and inner purification."
+      "description": "The Ekadashi that destroys sin — Krishna Ekadashi before Chaitra, when Vishnu's Papamochani vrat cleanses past wrongdoing",
+      "addtional_description": "Papamochani Ekadashi falls on the Krishna Ekadashi that closes Phalguna, and is known in North India as Chaitra Krishna Ekadashi — the last Ekadashi before Chaitra Navratri. Its name means 'the remover of sin'. The Bhavishya Purana tells of the sage Medhavi, cursed by a yaksha and freed from the curse by observing this vrat; the fast is said to cleanse wrongdoing committed knowingly or unknowingly. Vishnu is worshipped with Tulsi and a ghee lamp, and the fast is broken on Dwadashi."
     },
     "panchang_rules": {
-      "masa": "*",
+      "masa": "Phalguna",
       "paksha": "Krishna",
       "tithi": 11,
       "conditions": "Ekadashi",
-      "recurring": true,
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity to the needy",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A full-day grain-free fast, broken at parana the next morning within the Dwadashi window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "mohini_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Mohini Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "मोहिनी एकादशी",
+      "nameEnglish": "Mohini Ekadashi",
+      "nameHindi": "मोहिनी एकादशी",
+      "nameBengali": "মোহিনী একাদশী",
+      "nameTelugu": "మోహిని ఏకాదశి",
+      "nameKannada": "ಮೋಹಿನಿ ಏಕಾದಶಿ",
+      "nameTamil": "மோகினி ஏகாதசி",
+      "nameMalayalam": "മോഹിനി ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The enchanting Ekadashi of Vaishakha Shukla",
+      "addtional_description": "Mohini Ekadashi frees the devotee from debt, disease and sin, and is said to grant the reward of all good deeds."
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "apara_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Apara Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "अपरा एकादशी",
+      "nameEnglish": "Apara Ekadashi",
+      "nameHindi": "अपरा एकादशी",
+      "nameBengali": "অপরা একাদশী",
+      "nameTelugu": "అపర ఏకాదశి",
+      "nameKannada": "ಅಪರ ಏಕಾದಶಿ",
+      "nameTamil": "அபர ஏகாதசி",
+      "nameMalayalam": "അപര ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The incomparable Ekadashi — Krishna Ekadashi of Vaishakha (Jyeshtha in the Purnimant naming)",
+      "addtional_description": "Apara Ekadashi is kept on the Krishna Ekadashi whose Amavasya ends Vaishakha. The vrat is said to erase even the gravest sins."
+    },
+    "panchang_rules": {
+      "masa": "Vaishakha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "yogini_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Yogini Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "योगिनी एकादशी",
+      "nameEnglish": "Yogini Ekadashi",
+      "nameHindi": "योगिनी एकादशी",
+      "nameBengali": "যোগিনী একাদশী",
+      "nameTelugu": "యోగిని ఏకాదశి",
+      "nameKannada": "ಯೋಗಿನಿ ಏಕಾದಶಿ",
+      "nameTamil": "யோகினி ஏகாதசி",
+      "nameMalayalam": "യോഗിനി ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The liberating Ekadashi — Krishna Ekadashi of Jyeshtha (Ashadha in the Purnimant naming)",
+      "addtional_description": "Yogini Ekadashi is said to free a person from bondage, illness and the consequences of cheating or stealing."
+    },
+    "panchang_rules": {
+      "masa": "Jyeshtha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "parivartini_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Parivartini Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "परिवर्तिनी एकादशी",
+      "nameEnglish": "Parivartini Ekadashi",
+      "nameHindi": "परिवर्तिनी (पार्श्व / वामन) एकादशी",
+      "nameBengali": "পরিবর্তিনী (পার্শ্ব) একাদশী",
+      "nameTelugu": "పరివర్తిని ఏకాదశి",
+      "nameKannada": "ಪರಿವರ್ತಿನಿ ಏಕಾದಶಿ",
+      "nameTamil": "பரிவர்த்தினி ஏகாதசி",
+      "nameMalayalam": "പരിവർത്തിനി ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "Vishnu turns on His side — also called Parsva or Vamana Ekadashi, the day before Vamana Dwadashi",
+      "addtional_description": "Parivartini (Parsva / Vamana) Ekadashi marks Vishnu changing His posture at the onset of the rains. The fast is observed on Bhadrapada Shukla Ekadashi."
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi before the Vamana puja"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "aja_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Aja Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "अजा एकादशी",
+      "nameEnglish": "Aja Ekadashi",
+      "nameHindi": "अजा एकादशी",
+      "nameBengali": "অজা একাদশী",
+      "nameTelugu": "అజ ఏకాదశి",
+      "nameKannada": "ಅಜ ಏಕಾದಶಿ",
+      "nameTamil": "அஜ ஏகாதசி",
+      "nameMalayalam": "അജ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The unborn one — Krishna Ekadashi of Shravana (Bhadrapada in the Purnimant naming)",
+      "addtional_description": "Aja Ekadashi is observed for progeny and relief from worldly affliction; the vrat is said to grant both worldly comfort and final liberation."
+    },
+    "panchang_rules": {
+      "masa": "Shravana",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "pashankusha_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Papankusha Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "पापाङ्कुशा एकादशी",
+      "nameEnglish": "Papankusha Ekadashi",
+      "nameHindi": "पापांकुशा एकादशी",
+      "nameBengali": "পাপাঙ্কুশা একাদশী",
+      "nameTelugu": "పాపాంకుశ ఏకాదశి",
+      "nameKannada": "ಪಾಪಾಂಕುಶ ಏಕಾದಶಿ",
+      "nameTamil": "பாபாங்குச ஏகாதசி",
+      "nameMalayalam": "പാപാംകുശ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The goad that drives away sin — Ashwin Shukla Ekadashi, kept for Vishnu as Padmanabha",
+      "addtional_description": "Papankusha Ekadashi falls on Ashwin Shukla Ekadashi, usually the day after Vijayadashami, and is also spelled Pashankusha. Its name joins papa (sin) with ankusha, the hooked goad a mahout uses to steer an elephant: the vrat is said to hold sin in check the way a goad controls the animal. Vishnu is worshipped in his Padmanabha form — the lotus-navelled Lord reclining on Shesha in the ocean of milk — and the fast is held to erase a lifetime's accumulated fault and to release ten generations of ancestors. Vishnu is worshipped with Tulsi and a ghee lamp, and the fast is broken on Dwadashi."
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "indira_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Indira Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "इंदिरा एकादशी",
+      "nameEnglish": "Indira Ekadashi",
+      "nameHindi": "इंदिरा एकादशी",
+      "nameBengali": "ইন্দিরা একাদশী",
+      "nameTelugu": "ఇందిర ఏకాదశి",
+      "nameKannada": "ಇಂದಿರ ಏಕಾದಶಿ",
+      "nameTamil": "இந்திர ஏகாதசி",
+      "nameMalayalam": "ഇന്ദിര ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The Ekadashi that liberates departed ancestors — Krishna Ekadashi of Bhadrapada (Ashwin in the Purnimant naming)",
+      "addtional_description": "Indira Ekadashi is observed for the moksha of one's ancestors. Offerings made on this day are said to reach them across the worlds."
+    },
+    "panchang_rules": {
+      "masa": "Bhadrapada",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and pinda / ancestor offering",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "rama_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Rama Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "राम एकादशी",
+      "nameEnglish": "Rama Ekadashi",
+      "nameHindi": "राम एकादशी",
+      "nameBengali": "রাম একাদশী",
+      "nameTelugu": "రామ ఏకాదశి",
+      "nameKannada": "ರಾಮ ಏಕಾದಶಿ",
+      "nameTamil": "ராம ஏகாதசி",
+      "nameMalayalam": "രാമ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The deliverer — Krishna Ekadashi of Ashwin (Kartik in the Purnimant naming)",
+      "addtional_description": "Rama Ekadashi is named for the king Rama who was freed from hell by observing it. The vrat is said to remove the fear of an untimely death."
+    },
+    "panchang_rules": {
+      "masa": "Ashwin",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "mokshada_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Mokshada Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "मोक्षदा एकादशी",
+      "nameEnglish": "Mokshada Ekadashi",
+      "nameHindi": "मोक्षदा (वैकुंठ) एकादशी",
+      "nameBengali": "মোক্ষদা (বৈকুণ্ঠ) একাদশী",
+      "nameTelugu": "మోక్షద ఏకాదశి",
+      "nameKannada": "ಮೋಕ್ಷದ ಏಕಾದಶಿ",
+      "nameTamil": "மோக்ஷத ஏகாதசி",
+      "nameMalayalam": "മോക്ഷദ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The liberating Ekadashi, also called Vaikuntha Ekadashi — the day Krishna taught the Bhagavad Gita to Arjuna",
+      "addtional_description": "Mokshada (Vaikuntha) Ekadashi falls on Margashirsha Shukla Ekadashi, the same day as Gita Jayanti. The fast is said to grant moksha and is held to open Vaikuntha's gate."
+    },
+    "panchang_rules": {
+      "masa": "Margashirsha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Bhagavad Gita recitation and katha",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "utpanna_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Utpanna Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "उत्पन्ना एकादशी",
+      "nameEnglish": "Utpanna Ekadashi",
+      "nameHindi": "उत्पन्ना एकादशी",
+      "nameBengali": "উৎপন্না একাদশী",
+      "nameTelugu": "ఉత్పన్న ఏకాదశి",
+      "nameKannada": "ಉತ್ಪನ್ನ ಏಕಾದಶಿ",
+      "nameTamil": "உத்பன்ன ஏகாதசி",
+      "nameMalayalam": "ഉത്പന്ന ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The manifested one — Kartik Krishna Ekadashi (Margashirsha in the Purnimant naming)",
+      "addtional_description": "Utpanna Ekadashi falls on the Krishna Ekadashi of Kartika — Margashirsha Krishna in the Purnimant naming — and commemorates Vishnu's manifestation to slay the demons Madhu and Kaitabha, from whom the Lord takes the title Madhusudana. It is traditionally counted as the first Ekadashi of the annual cycle of twenty-four. Vishnu is worshipped with Tulsi and a ghee lamp, and the fast is broken on Dwadashi."
+    },
+    "panchang_rules": {
+      "masa": "Kartika",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "saphala_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Saphala Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "सफला एकादशी",
+      "nameEnglish": "Saphala Ekadashi",
+      "nameHindi": "सफला एकादशी",
+      "nameBengali": "সফলা একাদশী",
+      "nameTelugu": "సఫల ఏకాదశి",
+      "nameKannada": "ಸಫಲ ಏಕಾದಶಿ",
+      "nameTamil": "சபல ஏகாதசி",
+      "nameMalayalam": "സഫല ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The fruitful Ekadashi — Krishna Ekadashi of Margashirsha (Pausha in the Purnimant naming)",
+      "addtional_description": "Saphala Ekadashi is fasted for success and the restoration of lost fortune, position or respect."
+    },
+    "panchang_rules": {
+      "masa": "Margashirsha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "jaya_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Jaya Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "जया एकादशी",
+      "nameEnglish": "Jaya Ekadashi",
+      "nameHindi": "जया एकादशी",
+      "nameBengali": "জয়া একাদশী",
+      "nameTelugu": "జయ ఏకాదశి",
+      "nameKannada": "ಜಯ ಏಕಾದಶಿ",
+      "nameTamil": "ஜய ஏகாதசி",
+      "nameMalayalam": "ജയ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The victorious Ekadashi of Magha Shukla",
+      "addtional_description": "Jaya Ekadashi is said to grant victory over sins and to deliver even a sinner from hell and an animal birth."
+    },
+    "panchang_rules": {
+      "masa": "Magha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "shattila_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Shattila Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "षट्तिला एकादशी",
+      "nameEnglish": "Shattila Ekadashi",
+      "nameHindi": "षट्तिला एकादशी",
+      "nameBengali": "ষট্টিলা একাদশী",
+      "nameTelugu": "షట్టిల ఏకాదశి",
+      "nameKannada": "ಷಟ್ಟಿಲ ಏಕಾದಶಿ",
+      "nameTamil": "ஷட்டில ஏகாதசி",
+      "nameMalayalam": "ഷട്ടില ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The sesame Ekadashi — Krishna Ekadashi of Pausha (Magha in the Purnimant naming)",
+      "addtional_description": "Shattila takes its name from the six sesame offerings; the fast with til is said to atone for a whole year of sins."
+    },
+    "panchang_rules": {
+      "masa": "Pausha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Six sesame (til) offerings at the prescribed time",
+        "Grain-free fast from sunrise and katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "amalaki_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Amalaki Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "आमलकी एकादशी",
+      "nameEnglish": "Amalaki Ekadashi",
+      "nameHindi": "आमलकी एकादशी",
+      "nameBengali": "আমলকী একাদশী",
+      "nameTelugu": "ఆమలకి ఏకాదశి",
+      "nameKannada": "ಆಮಲಕಿ ಏಕಾದಶಿ",
+      "nameTamil": "ஆமலகி ஏகாதசி",
+      "nameMalayalam": "ആമലകി ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The gooseberry Ekadashi of Phalguna Shukla",
+      "addtional_description": "Amalaki Ekadashi honours the sacred amalaki (gooseberry) tree. The vrat is said to bring prosperity, health and moksha."
+    },
+    "panchang_rules": {
+      "masa": "Phalguna",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Worship the amalaki tree and Vishnu with Tulsi leaves",
+        "Grain-free fast from sunrise",
+        "Katha recitation and charity",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "vijaya_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Vijaya Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "विजया एकादशी",
+      "nameEnglish": "Vijaya Ekadashi",
+      "nameHindi": "विजया एकादशी",
+      "nameBengali": "বিজয়া একাদশী",
+      "nameTelugu": "విజయ ఏకాదశి",
+      "nameKannada": "ವಿಜಯ ಏಕಾದಶಿ",
+      "nameTamil": "விஜய ஏகாதசி",
+      "nameMalayalam": "വിജയ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The victorious Ekadashi — Krishna Ekadashi of Magha (Phalguna in the Purnimant naming)",
+      "addtional_description": "Vijaya Ekadashi is kept for success in difficult undertakings; tradition says Rama observed it before crossing the ocean to Lanka."
+    },
+    "panchang_rules": {
+      "masa": "Magha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Vishnu puja with Tulsi leaves and a ghee lamp",
+        "Grain-free fast from sunrise",
+        "Katha recitation",
+        "Parana on Dwadashi within the prescribed window"
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "padmini_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Padmini Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "पद्मिनी एकादशी",
+      "nameEnglish": "Padmini Ekadashi",
+      "nameHindi": "पद्मिनी एकादशी",
+      "nameBengali": "পদ্মিনী একাদশী",
+      "nameTelugu": "పద్మిని ఏకాదశి",
+      "nameKannada": "ಪದ್ಮಿನಿ ಏಕಾದಶಿ",
+      "nameTamil": "பத்மினி ஏகாதசி",
+      "nameMalayalam": "പദ്മിനി ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The lotus-like Ekadashi of the Adhika (intercalary) month",
+      "addtional_description": "In a leap-lunar year the extra intercalary month carries its own pair of Ekadashis. Padmini is its Shukla Ekadashi, kept like any other Ekadashi with a grain-free fast, Vishnu puja and charity; the name means 'lotus-like'. Its pair is Parama, the Krishna Ekadashi of the same intercalary month. Both are observed only in years that contain an Adhika month."
+    },
+    "panchang_rules": {
+      "masa": "Adhika_Jyeshtha",
+      "paksha": "Shukla",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
       "paranRule": "dwadashi_window"
     },
     "rituals": {
@@ -4683,8 +5498,57 @@
         "Katha Reading Listen to or recite the specific Ekadashi story associated with that particular tithi, as reading the katha is considered as important as the fast itself.",
         "Parana (Breaking Fast) Break the fast on Dwadashi morning after sunrise by first offering food to Lord Vishnu, then feeding Brahmins or the needy, and finally consuming simple satvik food within the prescribed time window."
       ],
-      "mantra": "",
-      "fasting": ""
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
+    },
+    "media": {
+      "audio_stotra": ""
+    }
+  },
+  {
+    "id": "parama_ekadashi",
+    "regions": [
+      "all"
+    ],
+    "name": "Parama Ekadashi",
+    "category": "vrat",
+    "nameRegional": {
+      "nameSanskrith": "परमा एकादशी",
+      "nameEnglish": "Parama Ekadashi",
+      "nameHindi": "परमा एकादशी",
+      "nameBengali": "পরমা একাদশী",
+      "nameTelugu": "పరమ ఏకాదశి",
+      "nameKannada": "ಪರಮ ಏಕಾದಶಿ",
+      "nameTamil": "பரம ஏகாதசி",
+      "nameMalayalam": "പരമ ഏകാദശി"
+    },
+    "visuals": {
+      "image": "",
+      "theme_color": ""
+    },
+    "purpose": {
+      "description": "The supreme Ekadashi of the Adhika (intercalary) month",
+      "addtional_description": "Parama Ekadashi is the Krishna Ekadashi of the intercalary Adhika month, the second of the leap month's pair after Padmini; the name means 'supreme'. It is observed only in years that contain an Adhika month, and is kept like any Ekadashi with a grain-free fast, Vishnu puja and charity."
+    },
+    "panchang_rules": {
+      "masa": "Adhika_Jyeshtha",
+      "paksha": "Krishna",
+      "tithi": 11,
+      "conditions": "Ekadashi",
+      "dominant_tithi": "strict",
+      "vriddhi": "first",
+      "paranRule": "dwadashi_window"
+    },
+    "rituals": {
+      "steps": [
+        "Sankalp (Vow Taking) Take a formal vow before Lord Vishnu by holding water in your right palm and stating your intention to observe the Ekadashi fast sincerely.",
+        "Morning Puja Worship Lord Vishnu with Tulsi leaves (most essential), yellow flowers, sandalwood paste, incense, and ghee lamps at the home altar.",
+        "Fasting Observance Observe the chosen fast type - Nirjala (no food/water), Phalahar (fruits/milk only), or Farali (sattvic foods) while completely avoiding grains, rice, pulses, onion, and garlic.",
+        "Katha Reading Listen to or recite the specific Ekadashi story associated with that particular tithi, as reading the katha is considered as important as the fast itself.",
+        "Parana (Breaking Fast) Break the fast on Dwadashi morning after sunrise by first offering food to Lord Vishnu, then feeding Brahmins or the needy, and finally consuming simple satvik food within the prescribed time window."
+      ],
+      "mantra": "ॐ नमो भगवते वासुदेवाय",
+      "fasting": "A grain-free fast from sunrise; break at parana on Dwadashi within the prescribed window. Vaishnava and ISKCON households may keep the vrat a day later, since they test the day at arunodaya rather than sunrise."
     },
     "media": {
       "audio_stotra": ""

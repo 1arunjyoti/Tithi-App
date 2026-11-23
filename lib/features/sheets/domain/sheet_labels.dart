@@ -23,8 +23,7 @@ BengaliLabels bengaliDateLabels({
     final idx = bengaliMonthIndexOf(month);
     final monthBn = idx >= 0 ? kBengaliMonthsBn[idx] : month;
     return (
-      compact:
-          '${toBengaliDigits(day)} $monthBn ${toBengaliDigits(year)}',
+      compact: '${toBengaliDigits(day)} $monthBn ${toBengaliDigits(year)}',
       title: '${toBengaliDigits(day)} $monthBn',
     );
   }

@@ -1,9 +1,13 @@
 name: tithi
 description: "A new Flutter project."
 publish_to: "none"
-version: 0.8.1+24
+version: 0.9.10+43
 environment:
-  sdk: ^3.10.4
+  # `material_ui` (and the rest of the lock) already requires Dart 3.13 and
+  # Flutter 3.47; declaring less than that only pushes the failure into a
+  # transitive package's error message.
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:
@@ -23,7 +27,6 @@ dependencies:
   intl: ^0.20.2
   http: ^1.2.0
   crypto: ^3.0.7 # SHA-256 verification of downloaded update APKs
-  google_fonts: ^6.3.3
   package_info_plus: ^10.2.1
   share_plus: ^13.3.0
   url_launcher: ^6.3.2
@@ -49,6 +52,8 @@ dependencies:
   scrollable_positioned_list: ^0.3.8
   android_intent_plus: ^6.1.0
 
+  material_ui: any
+  cupertino_ui: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -76,6 +81,132 @@ flutter:
     - assets/images/festival/
     - assets/icons/
     - assets/map_data/
+    - assets/licenses/
+
+  # Bundled cross-script type system. Fonts are shipped, never fetched at
+  # runtime (privacy/offline): see lib/theme/app_typography.dart for the
+  # fallback chains and the three tiers. Keep family names in sync with
+  # AppTypography.*Family.
+  fonts:
+    # Tier 1 - Latin editorial serif.
+    - family: Newsreader
+      fonts:
+        - asset: assets/fonts/Newsreader-Regular.ttf
+        - asset: assets/fonts/Newsreader-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Newsreader-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Newsreader-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Newsreader-RegularItalic.ttf
+          style: italic
+        - asset: assets/fonts/Newsreader-SemiBoldItalic.ttf
+          weight: 600
+          style: italic
+        - asset: assets/fonts/Newsreader-BoldItalic.ttf
+          weight: 700
+          style: italic
+    # Tier 1 - Indic editorial serifs (Tiro, one design DNA).
+    - family: TiroDevanagariHindi
+      fonts:
+        - asset: assets/fonts/TiroDevanagariHindi-Regular.ttf
+        - asset: assets/fonts/TiroDevanagariHindi-RegularItalic.ttf
+          style: italic
+    - family: TiroDevanagariSanskrit
+      fonts:
+        - asset: assets/fonts/TiroDevanagariSanskrit-Regular.ttf
+        - asset: assets/fonts/TiroDevanagariSanskrit-RegularItalic.ttf
+          style: italic
+    - family: TiroBangla
+      fonts:
+        - asset: assets/fonts/TiroBangla-Regular.ttf
+        - asset: assets/fonts/TiroBangla-RegularItalic.ttf
+          style: italic
+    - family: TiroTamil
+      fonts:
+        - asset: assets/fonts/TiroTamil-Regular.ttf
+        - asset: assets/fonts/TiroTamil-RegularItalic.ttf
+          style: italic
+    - family: TiroTelugu
+      fonts:
+        - asset: assets/fonts/TiroTelugu-Regular.ttf
+        - asset: assets/fonts/TiroTelugu-RegularItalic.ttf
+          style: italic
+    - family: NotoSerifMalayalam
+      fonts:
+        - asset: assets/fonts/NotoSerifMalayalam-Regular.ttf
+        - asset: assets/fonts/NotoSerifMalayalam-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSerifMalayalam-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSerifMalayalam-Bold.ttf
+          weight: 700
+    # Tier 2 - Latin UI sans.
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-Regular.ttf
+        - asset: assets/fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-Bold.ttf
+          weight: 700
+    # Tier 2 - Indic UI sans (uniform stroke, clean conjuncts).
+    - family: NotoSansDevanagari
+      fonts:
+        - asset: assets/fonts/NotoSansDevanagari-Regular.ttf
+        - asset: assets/fonts/NotoSansDevanagari-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansDevanagari-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansDevanagari-Bold.ttf
+          weight: 700
+    - family: NotoSansBengali
+      fonts:
+        - asset: assets/fonts/NotoSansBengali-Regular.ttf
+        - asset: assets/fonts/NotoSansBengali-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansBengali-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansBengali-Bold.ttf
+          weight: 700
+    - family: NotoSansTamil
+      fonts:
+        - asset: assets/fonts/NotoSansTamil-Regular.ttf
+        - asset: assets/fonts/NotoSansTamil-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansTamil-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansTamil-Bold.ttf
+          weight: 700
+    - family: NotoSansTelugu
+      fonts:
+        - asset: assets/fonts/NotoSansTelugu-Regular.ttf
+        - asset: assets/fonts/NotoSansTelugu-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansTelugu-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansTelugu-Bold.ttf
+          weight: 700
+    - family: NotoSansMalayalam
+      fonts:
+        - asset: assets/fonts/NotoSansMalayalam-Regular.ttf
+        - asset: assets/fonts/NotoSansMalayalam-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansMalayalam-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansMalayalam-Bold.ttf
+          weight: 700
+    # Tier 3 - technical/monospaced-feel Latin.
+    - family: SpaceGrotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Regular.ttf
+        - asset: assets/fonts/SpaceGrotesk-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SpaceGrotesk-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/SpaceGrotesk-Bold.ttf
+          weight: 700
 
   # fonts:
   #   - family: Schyler

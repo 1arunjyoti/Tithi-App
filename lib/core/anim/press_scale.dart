@@ -1,10 +1,11 @@
 import 'package:flutter/gestures.dart' show kTouchSlop;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../providers/accessibility_provider.dart';
+import '../../core/feedback/app_haptics.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/app_motion.dart';
 
 /// Press-down microinteraction (100ms tier): scales [child] to
 /// [pressedScale] while the pointer is down, springs back on
@@ -71,8 +72,8 @@ class _PressScaleState extends ConsumerState<PressScale> {
     _pointer = event.pointer;
     _downAt = event.position;
     if (!widget.enabled) return;
-    if (widget.haptic && ref.read(accessibilityProvider).hapticFeedback) {
-      HapticFeedback.lightImpact();
+    if (widget.haptic) {
+      AppHaptics.tap(ref);
     }
     setState(() => _pressed = true);
   }
@@ -99,10 +100,7 @@ class _PressScaleState extends ConsumerState<PressScale> {
   @override
   Widget build(BuildContext context) {
     final reduceMotion = AppTheme.reduceMotionOf(context);
-    final pressDuration = AppTheme.animationDuration(
-      context,
-      const Duration(milliseconds: 100),
-    );
+    final pressDuration = AppMotion.of(context, AppMotion.press);
     Widget content = widget.child;
     // Press fill above the child (negligible text wash at these alphas),
     // kept out of the scale transform's way by living inside it.

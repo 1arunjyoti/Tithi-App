@@ -1,8 +1,12 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme.dart';
-import '../providers/accessibility_provider.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_typography.dart';
+import '../theme/app_motion.dart';
+import '../core/feedback/app_haptics.dart';
+import 'app_card.dart';
+import 'skeleton.dart';
 
 class SettingsSectionHeader extends StatelessWidget {
   final String title;
@@ -12,12 +16,15 @@ class SettingsSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 12),
+      padding: const EdgeInsets.only(
+        left: AppSpacing.s8,
+        bottom: AppSpacing.s12,
+      ),
       child: Text(
         title,
         style: context.textTheme.labelSmall?.copyWith(
           letterSpacing: 2,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
           color: context.colors.primary,
         ),
       ),
@@ -25,29 +32,26 @@ class SettingsSectionHeader extends StatelessWidget {
   }
 }
 
-class SettingsGroupCard extends ConsumerWidget {
+class SettingsGroupCard extends StatelessWidget {
   final List<Widget> children;
 
   const SettingsGroupCard({super.key, required this.children});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Use cached config that only rebuilds on accessibility changes
-    final config = ref.watch(glassmorphismConfigProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final isPureDark = theme.scaffoldBackgroundColor == Colors.black;
-
+  Widget build(BuildContext context) {
     // RepaintBoundary: the glass shadow (blur 20) would otherwise repaint
     // on every scroll frame and flicker on the GPU thread. Isolated here
     // it caches as a display list and just translates while scrolling.
     return RepaintBoundary(
-      child: Container(
-        decoration: config.getDecoration(
-          isDark: isDark,
-          isPureDark: isPureDark,
-          primaryColor: theme.primaryColor,
-        ),
+      // The group card owns no padding: each tile brings its own, so the
+      // row dividers can run edge to edge like the home cards.
+      //
+      // Clip to the card shape: the rows are Material InkWell/ListTile lifts
+      // whose hover wash is a square, so without the clip it paints past the
+      // rounded corners. The RepaintBoundary above keeps the clip cheap.
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
         child: Column(mainAxisSize: MainAxisSize.min, children: children),
       ),
     );
@@ -79,24 +83,26 @@ class SettingsActionTile extends ConsumerWidget {
         onTap: onTap == null
             ? null
             : () {
-                if (ref.read(accessibilityProvider).hapticFeedback) {
-                  HapticFeedback.lightImpact();
-                }
+                AppHaptics.tap(ref);
                 onTap!.call();
               },
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding: const EdgeInsets.all(AppSpacing.s16),
         leading: Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(AppSpacing.s10),
           decoration: BoxDecoration(
             color: context.colors.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.dense),
           ),
-          child: Icon(icon, color: context.colors.primary, size: 22),
+          child: Icon(
+            icon,
+            color: context.colors.primary,
+            size: AppIconSize.large,
+          ),
         ),
         title: Text(
           title,
           style: context.textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.w600,
+            fontWeight: AppTypography.semibold,
           ),
         ),
         subtitle: subtitle == null
@@ -104,7 +110,7 @@ class SettingsActionTile extends ConsumerWidget {
             : Text(
                 subtitle!,
                 style: context.textTheme.labelSmall?.copyWith(
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  color: context.secondaryInk,
                 ),
               ),
         trailing: Row(
@@ -114,11 +120,8 @@ class SettingsActionTile extends ConsumerWidget {
             // (hive_generator pins analyzer <7): keep the collection-if.
             // ignore: use_null_aware_elements
             if (trailing != null) trailing!,
-            const SizedBox(width: 8),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: context.colors.onSurface.withValues(alpha: 0.4),
-            ),
+            const SizedBox(width: AppSpacing.s8),
+            Icon(Icons.chevron_right_rounded, color: context.hintInk),
           ],
         ),
       ),
@@ -147,18 +150,22 @@ class SettingsSwitchTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.s16),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(AppSpacing.s10),
             decoration: BoxDecoration(
               color: context.colors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.dense),
             ),
-            child: Icon(icon, color: context.colors.primary, size: 22),
+            child: Icon(
+              icon,
+              color: context.colors.primary,
+              size: AppIconSize.large,
+            ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.s16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,13 +173,13 @@ class SettingsSwitchTile extends ConsumerWidget {
                 Text(
                   title,
                   style: context.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: AppTypography.semibold,
                   ),
                 ),
                 Text(
                   subtitle,
                   style: context.textTheme.labelSmall?.copyWith(
-                    color: context.colors.onSurface.withValues(alpha: 0.6),
+                    color: context.secondaryInk,
                   ),
                 ),
               ],
@@ -183,40 +190,21 @@ class SettingsSwitchTile extends ConsumerWidget {
             onChanged: isLoading
                 ? null
                 : (val) {
-                    if (ref.read(accessibilityProvider).hapticFeedback) {
-                      HapticFeedback.lightImpact();
-                    }
+                    AppHaptics.tap(ref);
                     onChanged?.call(val);
                   },
             activeThumbColor: context.colors.primary,
           ),
           if (isLoading) ...[
-            const SizedBox(width: 8),
-            SizedBox(
-              height: 16,
-              width: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  context.colors.primary,
-                ),
-              ),
-            ),
+            const SizedBox(width: AppSpacing.s8),
+            // The spinner ticks every frame. Without its own boundary the
+            // repaint climbs to SettingsGroupCard's RepaintBoundary and
+            // re-rasterizes the entire card (5 rows here), stuttering scroll
+            // while a one-shot provider such as location init is pending.
+            const RepaintBoundary(child: InlineSpinner()),
           ],
         ],
       ),
-    );
-  }
-}
-
-class SettingsDivider extends StatelessWidget {
-  const SettingsDivider({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      color: context.colors.onSurface.withValues(alpha: 0.1),
     );
   }
 }
@@ -239,20 +227,18 @@ class ThemeOptionButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () {
-        if (ref.read(accessibilityProvider).hapticFeedback) {
-          HapticFeedback.lightImpact();
-        }
+        AppHaptics.tap(ref);
         onTap();
       },
       child: AnimatedContainer(
-        duration: AppTheme.animationDuration(
-          context,
-          const Duration(milliseconds: 200),
+        duration: AppMotion.of(context, AppMotion.standard),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s20,
+          vertical: AppSpacing.s12,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? context.colors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(
             color: context.colors.primary.withValues(alpha: 0.2),
           ),
@@ -263,16 +249,18 @@ class ThemeOptionButton extends ConsumerWidget {
               icon,
               color: isSelected
                   ? context.colors.onPrimary
-                  : context.colors.onSurface.withValues(alpha: 0.6),
+                  : context.secondaryInk,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.s4),
             Text(
               label,
               style: context.textTheme.labelSmall?.copyWith(
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected
+                    ? AppTypography.bold
+                    : AppTypography.regular,
                 color: isSelected
                     ? context.colors.onPrimary
-                    : context.colors.onSurface.withValues(alpha: 0.6),
+                    : context.secondaryInk,
               ),
             ),
           ],
@@ -300,9 +288,11 @@ class SettingsBottomSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
@@ -313,26 +303,26 @@ class SettingsBottomSheet extends StatelessWidget {
             Text(
               title,
               style: context.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
+                fontWeight: AppTypography.bold,
                 color: context.colors.onSurface,
               ),
             ),
             if (subtitle != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
                 child: Text(
                   subtitle!,
                   textAlign: TextAlign.center,
                   style: context.textTheme.bodySmall?.copyWith(
-                    color: context.colors.onSurface.withValues(alpha: 0.6),
+                    color: context.secondaryInk,
                   ),
                 ),
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             ...children,
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
           ],
         ),
       ),
@@ -382,15 +372,17 @@ class SettingsPickerItem extends StatelessWidget {
         title: Text(
           title,
           style: TextStyle(
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            color: isSelected ? context.colors.primary : context.colors.onSurface,
+            fontWeight: isSelected ? AppTypography.bold : AppTypography.regular,
+            color: isSelected
+                ? context.colors.primary
+                : context.colors.onSurface,
           ),
         ),
         subtitle: subtitle != null
             ? Text(
                 subtitle!,
                 style: context.textTheme.bodySmall?.copyWith(
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  color: context.secondaryInk,
                 ),
               )
             : null,

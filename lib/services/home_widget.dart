@@ -5,8 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 
+import '../core/format/festival_labels.dart';
+import '../features/countdown/providers/countdown_providers.dart';
 import '../features/home_widget/domain/panchang_widget_payload.dart';
-import '../providers/festival_countdown_provider.dart';
 import 'storage_service.dart';
 
 /// Every Android home-screen widget the app ships.
@@ -103,7 +104,7 @@ class HomeWidgetService {
             final statusLabel = _statusLabel(t, lang);
             return {
               'title': t.title,
-              'name': t.festival.name,
+              'name': festivalDisplayName(festival: t.festival, locale: lang),
               'date': _isoFormat.format(t.date),
               'dateLabel': dateLabel,
               'daysRemaining': t.daysRemaining,

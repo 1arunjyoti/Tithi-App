@@ -2,11 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/format/date_only.dart';
+import '../../../core/format/festival_labels.dart';
+import '../../../core/locale/app_locale.dart';
+import '../../../core/perf/startup_timeline.dart';
 import '../../../models/festival.dart';
 import '../../../models/hindu_month_system.dart';
 import '../../../services/storage_service.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/festival_provider.dart';
+import '../../../providers/locale_provider.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../panchang/domain/occurrence_cache.dart';
 
@@ -243,9 +247,20 @@ final _festivalCountdownTargetProvider = FutureProvider.autoDispose
         return null;
       }
       if (targetDate == null) return null;
+      // Keep the curated short English title for the default countdowns;
+      // under a regional UI language prefer the catalog's localized name.
+      final locale = resolveAppLocale(ref.watch(localeProvider)).languageCode;
+      final displayName = festivalDisplayName(
+        festival: festival,
+        locale: locale,
+      );
+      final title =
+          displayName == festival.name
+              ? (_defaultCountdownTitles[id] ?? festival.name)
+              : displayName;
       return FestivalCountdownTarget(
         id: id,
-        title: _defaultCountdownTitles[id] ?? festival.name,
+        title: title,
         festival: festival,
         date: targetDate,
         // Calendar-day diff (DST-safe): local-midnight .difference().inDays
@@ -284,16 +299,20 @@ Future<List<FestivalCountdownTarget>> _loadCountdownTargets(
     out.addAll(batch.nonNulls);
   }
 
-  return out
+  out.sort((a, b) {
     // Name breaks same-day ties so shared dates never reorder across
     // rebuilds (list jumping); id keeps identical names stable.
-    ..sort((a, b) {
-      final byDate = a.daysRemaining.compareTo(b.daysRemaining);
-      if (byDate != 0) return byDate;
-      final byName = a.festival.name.compareTo(b.festival.name);
-      if (byName != 0) return byName;
-      return a.id.compareTo(b.id);
-    });
+    final byDate = a.daysRemaining.compareTo(b.daysRemaining);
+    if (byDate != 0) return byDate;
+    final byName = a.festival.name.compareTo(b.festival.name);
+    if (byName != 0) return byName;
+    return a.id.compareTo(b.id);
+  });
+  StartupTimeline.mark('countdowns-ready', {
+    'targets': out.length,
+    'ids': ids.length,
+  });
+  return out;
 }
 
 Festival? _findFestivalById(List<Festival> festivals, String id) {
@@ -313,8 +332,10 @@ Festival? _findFestivalById(List<Festival> festivals, String id) {
   normalizedHit ??= _matchNormalized(festivals, fallbackName);
   normalizedHit ??= _matchTokenOverlap(festivals, fallbackName);
   if (normalizedHit != null) {
-    debugPrint('Countdown fallback: "$id" resolved via name match '
-        '("${normalizedHit.name}"). Consider updating the id map.');
+    debugPrint(
+      'Countdown fallback: "$id" resolved via name match '
+      '("${normalizedHit.name}"). Consider updating the id map.',
+    );
   }
   return normalizedHit;
 }
@@ -360,4 +381,3 @@ Festival? _matchTokenOverlap(List<Festival> festivals, String fallbackName) {
   }
   return best;
 }
-

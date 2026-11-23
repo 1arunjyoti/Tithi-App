@@ -94,11 +94,38 @@ class AppReleaseInfo {
   /// `true` when the release carries an installable `.apk` asset.
   bool get hasApk => apkUrl != null;
 
+  /// ABIs Flutter encodes in split APK names, longest match first so
+  /// `x86_64` is not read as `x86` and `armeabi-v7a` not as `armeabi`.
+  static const _abiTokens = <String>[
+    'arm64-v8a',
+    'armeabi-v7a',
+    'x86_64',
+    'x86',
+  ];
+
+  /// The ABI named in [assetName], or `null` for a universal APK.
+  static String? _abiOf(String assetName) {
+    final name = assetName.toLowerCase();
+    for (final abi in _abiTokens) {
+      if (name.contains(abi)) return abi;
+    }
+    return null;
+  }
+
   /// Parses `GET /repos/{owner}/{repo}/releases/latest` JSON.
   ///
   /// Prefers the `-release.apk` asset (the name this project's Gradle
   /// build produces) and falls back to any other `.apk` asset.
-  factory AppReleaseInfo.fromJson(Map<String, dynamic> json) {
+  ///
+  /// [supportedAbis] is `Build.SUPPORTED_ABIS`, primary first. Release builds
+  /// publish one APK per ABI, so the asset is matched to the device: an
+  /// ABI-specific APK for another CPU fails to install with
+  /// `INSTALL_FAILED_NO_MATCHING_ABIS`. An empty list means unknown (tests,
+  /// non-Android) and keeps the first-asset behaviour.
+  factory AppReleaseInfo.fromJson(
+    Map<String, dynamic> json, {
+    List<String> supportedAbis = const [],
+  }) {
     final assets = json['assets'];
     final List<Map<String, dynamic>> assetList = assets is List
         ? assets.whereType<Map<String, dynamic>>().toList()
@@ -110,12 +137,25 @@ class AppReleaseInfo {
         return name.endsWith('.apk');
       }).toList();
       if (apks.isEmpty) return null;
-      for (final apk in apks) {
-        if ((apk['name']?.toString() ?? '').contains('-release.apk')) {
-          return apk;
+      final releaseApks = apks.where((apk) {
+        final name = (apk['name']?.toString() ?? '').toLowerCase();
+        return name.contains('-release.apk');
+      }).toList();
+      final candidates = releaseApks.isEmpty ? apks : releaseApks;
+      if (supportedAbis.isEmpty) return candidates.first;
+      // Device preference order: the primary ABI wins even when a 32-bit
+      // compatibility asset appears earlier in the release.
+      for (final abi in supportedAbis) {
+        for (final apk in candidates) {
+          if (_abiOf(apk['name']?.toString() ?? '') == abi) return apk;
         }
       }
-      return apks.first;
+      // A universal asset carries no ABI token and installs on any device.
+      for (final apk in candidates) {
+        if (_abiOf(apk['name']?.toString() ?? '') == null) return apk;
+      }
+      // Only foreign-ABI assets: offering one would end in an install error.
+      return null;
     }
 
     final apk = pickApk();
@@ -131,10 +171,12 @@ class AppReleaseInfo {
       version: AppUpdateService.normalizeVersion(tag),
       name: json['name']?.toString() ?? tag,
       body: json['body']?.toString() ?? '',
-      htmlUrl: Uri.tryParse(json['html_url']?.toString() ?? '') ??
+      htmlUrl:
+          Uri.tryParse(json['html_url']?.toString() ?? '') ??
           Uri.https('github.com', '/'),
-      publishedAt:
-          publishedRaw == null ? null : DateTime.tryParse(publishedRaw),
+      publishedAt: publishedRaw == null
+          ? null
+          : DateTime.tryParse(publishedRaw),
       apkUrl: apkUrlRaw == null ? null : Uri.tryParse(apkUrlRaw),
       apkSizeBytes: sizeRaw is int ? sizeRaw : int.tryParse('$sizeRaw'),
       apkDigest: digestRaw == null || digestRaw.isEmpty ? null : digestRaw,
@@ -149,12 +191,19 @@ class AppReleaseInfo {
 /// are already used by the app. Off Android the service falls back to
 /// opening the releases page in the browser.
 class AppUpdateService {
-  AppUpdateService({AppUpdateConfig? config, http.Client? httpClient})
-    : config = config ?? AppUpdateConfig.fromEnvironment(),
-      _httpClient = httpClient;
+  AppUpdateService({
+    AppUpdateConfig? config,
+    this._httpClient,
+    Future<List<String>> Function()? supportedAbis,
+  }) : config = config ?? AppUpdateConfig.fromEnvironment(),
+       _supportedAbis = supportedAbis ?? querySupportedAbis;
 
   final AppUpdateConfig config;
   final http.Client? _httpClient;
+
+  /// Source of `Build.SUPPORTED_ABIS`, used to pick the matching per-ABI APK.
+  /// Injectable so the fetch path is testable without a platform channel.
+  final Future<List<String>> Function() _supportedAbis;
 
   static const Duration _checkTimeout = Duration(seconds: 15);
 
@@ -181,10 +230,20 @@ class AppUpdateService {
   }
 
   /// Strips a leading `v` and surrounding whitespace: `v0.6.0+3` -> `0.6.0+3`.
+  ///
+  /// Also drops a `--<marker>` suffix. Release tags are cut as
+  /// `v0.9.10+42--release`, and the `+N` segment becomes Android's
+  /// `versionCode`: leaving the marker in place makes `int.tryParse` return
+  /// null, the build read as `0`, and every update be suppressed. The workflow
+  /// publishes under the clean tag; this is the safety net for older tags.
   static String normalizeVersion(String tag) {
     var version = tag.trim();
     if (version.startsWith('v') || version.startsWith('V')) {
       version = version.substring(1);
+    }
+    final marker = version.indexOf('--');
+    if (marker != -1) {
+      version = version.substring(0, marker);
     }
     return version.trim();
   }
@@ -255,8 +314,7 @@ class AppUpdateService {
   /// therefore count as updates, while a higher version name with a
   /// lower-or-equal build number does not.
   static bool isNewerThan(String current, String latest) {
-    if (normalizeVersion(current).isEmpty ||
-        normalizeVersion(latest).isEmpty) {
+    if (normalizeVersion(current).isEmpty || normalizeVersion(latest).isEmpty) {
       return false;
     }
     if (compareVersions(current, latest) >= 0) return false;
@@ -275,6 +333,17 @@ class AppUpdateService {
     final last = _lastCheckAt;
     if (last == null) return false;
     return DateTime.now().difference(last) < _minCheckInterval;
+  }
+
+  /// `Build.SUPPORTED_ABIS`, or an empty list when the platform cannot answer.
+  /// A missing ABI list must never turn a successful check into a failure.
+  Future<List<String>> _supportedAbisSafely() async {
+    try {
+      return await _supportedAbis();
+    } catch (e) {
+      debugPrint('Supported ABI lookup failed: $e');
+      return const [];
+    }
   }
 
   /// Fetches the latest GitHub release.
@@ -316,7 +385,10 @@ class AppUpdateService {
       if (decoded is! Map<String, dynamic>) {
         throw const AppUpdateException('Unexpected response from GitHub.');
       }
-      return AppReleaseInfo.fromJson(decoded);
+      return AppReleaseInfo.fromJson(
+        decoded,
+        supportedAbis: await _supportedAbisSafely(),
+      );
     } on AppUpdateException {
       // A failed check must stay immediately retryable (e.g. the user
       // just came back online); only a completed check starts the
@@ -392,8 +464,9 @@ class AppUpdateService {
       final request = http.Request('GET', url)
         ..headers['Accept'] = 'application/octet-stream'
         ..headers['User-Agent'] = 'Tithi-App';
-      final streamed =
-          await client.send(request).timeout(const Duration(minutes: 10));
+      final streamed = await client
+          .send(request)
+          .timeout(const Duration(minutes: 10));
       if (streamed.statusCode != 200) {
         throw AppUpdateException(
           'Download failed with HTTP ${streamed.statusCode}.',

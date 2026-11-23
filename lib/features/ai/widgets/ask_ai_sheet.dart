@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/feedback/app_messages.dart';
@@ -17,6 +17,9 @@ import '../../../services/ai_handoff_service.dart'
 import '../../../services/auspicious_timings.dart';
 import '../../../services/inauspicious_timings.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../theme/app_motion.dart';
 import '../../../utils/tithi_localization.dart';
 import '../../calendar/data/calendar_caches.dart' show normalizeMonthKey;
 import '../../sheets/widgets/section_header.dart';
@@ -253,7 +256,7 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
     final showPrompt = _showFullPrompt && isReady;
 
     return AnimatedPadding(
-      duration: const Duration(milliseconds: 150),
+      duration: AppMotion.of(context, AppMotion.chrome),
       curve: Curves.easeOut,
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SheetScaffold(
@@ -264,9 +267,12 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SectionHeader(text: l10n.aiYourQuestion),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             SheetSurfaceCard(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s4,
+                vertical: AppSpacing.s2,
+              ),
               child: TextField(
                 controller: _question,
                 minLines: 2,
@@ -274,13 +280,13 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                 maxLength: 280,
                 textCapitalization: TextCapitalization.sentences,
                 style: TextStyle(
-                  fontSize: 14.5,
+                  fontSize: AppTypography.sizeBody,
                   height: 1.4,
                   color: context.colors.onSurface,
                 ),
                 decoration: InputDecoration(
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(12),
+                  contentPadding: const EdgeInsets.all(AppSpacing.s12),
                   hintText: l10n.aiQuestionHint,
                   // The counter is visual noise inside a sheet; the hard cap
                   // still applies.
@@ -288,34 +294,34 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Row(
               children: [
                 // Expanded: at large text scales the label and "Show all"
                 // cannot both take their intrinsic width.
-                Expanded(
-                  child: SectionHeader(text: l10n.aiWhatWillBeShared),
-                ),
+                Expanded(child: SectionHeader(text: l10n.aiWhatWillBeShared)),
                 if (!showPrompt && isReady && _contextLineCount > 6)
                   TextButton(
                     onPressed: () =>
                         setState(() => _showFullPreview = !_showFullPreview),
                     style: TextButton.styleFrom(
                       visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.s8,
+                      ),
                     ),
                     child: Text(
                       _showFullPreview ? l10n.aiHidePreview : l10n.aiShowAll,
                       style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                        fontSize: AppTypography.sizeCaption,
+                        fontWeight: AppTypography.semibold,
                         color: context.colors.primary,
                       ),
                     ),
                   ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             SheetSurfaceCard(
               child: _PreviewBody(
                 text: showPrompt
@@ -331,13 +337,13 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
             // The data block is only part of the message: say so, so "what
             // will be shared" is not mistaken for "everything that is sent".
             if (!showPrompt) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               Text(
                 l10n.aiAlsoSends,
                 style: TextStyle(
-                  fontSize: 11.5,
+                  fontSize: AppTypography.sizeFootnote,
                   height: 1.35,
-                  color: context.colors.onSurface.withValues(alpha: 0.65),
+                  color: context.secondaryInk,
                 ),
               ),
             ],
@@ -353,17 +359,19 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                     showPrompt
                         ? Icons.short_text_rounded
                         : Icons.receipt_long_outlined,
-                    size: 16,
+                    size: AppIconSize.small,
                   ),
                   label: Text(
                     showPrompt ? l10n.aiPreviewSummary : l10n.aiPreviewFull,
                   ),
                   style: TextButton.styleFrom(
                     visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s8,
+                    ),
                     textStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: AppTypography.sizeCaption,
+                      fontWeight: AppTypography.semibold,
                     ),
                   ),
                 ),
@@ -372,24 +380,28 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
             // "Preparing..." forever with both actions disabled. Say what went
             // wrong and offer the one action that can recover it.
             if (monthFailed) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.s4),
               TextButton.icon(
-                onPressed: () =>
-                    ref.invalidate(monthlyPanchangProvider(month)),
-                icon: const Icon(Icons.refresh_rounded, size: 18),
+                onPressed: () => ref.invalidate(monthlyPanchangProvider(month)),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  size: AppIconSize.dense,
+                ),
                 label: Text(l10n.retry),
                 style: TextButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s8,
+                  ),
                 ),
               ),
             ],
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.s10),
             SheetExplainerCard(
               icon: Icons.lock_outline_rounded,
               text: l10n.aiLocationNote,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
             Row(
               children: [
                 Expanded(
@@ -397,7 +409,10 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                     onPressed: isReady
                         ? () => _openAiApp(prompt, targetId)
                         : null,
-                    icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                    icon: const Icon(
+                      Icons.auto_awesome_outlined,
+                      size: AppIconSize.dense,
+                    ),
                     label: Text(
                       selectedTarget == null
                           ? l10n.aiOpenApp
@@ -405,17 +420,20 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.s10),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: isReady ? () => _copyPrompt(prompt) : null,
-                    icon: const Icon(Icons.copy_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.copy_rounded,
+                      size: AppIconSize.dense,
+                    ),
                     label: Text(l10n.aiCopy),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             SheetExplainerCard(
               icon: Icons.auto_awesome_outlined,
               text: l10n.aiFooterNote,
@@ -449,9 +467,14 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
         'EEE, d MMM',
         localeCode,
       ),
-      AiIntent.festival => widget.panchang == null
-          ? null
-          : formatLocalizedDate(widget.panchang!.date, 'EEE, d MMM', localeCode),
+      AiIntent.festival =>
+        widget.panchang == null
+            ? null
+            : formatLocalizedDate(
+                widget.panchang!.date,
+                'EEE, d MMM',
+                localeCode,
+              ),
       AiIntent.monthDigest => formatLocalizedDate(month, 'MMMM y', localeCode),
     };
 
@@ -465,11 +488,11 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
               highContrast: highContrast,
               child: Icon(
                 Icons.auto_awesome_outlined,
-                size: 22,
+                size: AppIconSize.large,
                 color: context.colors.onSurface,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -480,20 +503,20 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                      fontSize: AppTypography.sizeHeading,
+                      fontWeight: AppTypography.bold,
                       color: context.colors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     [dateLine, city].whereType<String>().join(' · '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
+                      fontSize: AppTypography.sizeCaption,
+                      fontWeight: AppTypography.medium,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],
@@ -657,7 +680,7 @@ class _PreviewBody extends StatelessWidget {
       text,
       maxLines: expanded ? null : 6,
       style: TextStyle(
-        fontSize: 12.5,
+        fontSize: AppTypography.sizeCaption,
         height: 1.45,
         color: context.colors.onSurface.withValues(alpha: 0.8),
       ),

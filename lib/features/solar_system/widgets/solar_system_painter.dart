@@ -1,9 +1,10 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:jyotish/jyotish.dart';
 import '../data/solar_models.dart';
 import '../../../services/planetary_view_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 
 /// Static background layer: gradient, stars, guides, zodiac ring, orbit
 /// paths, and the center body. Depends only on view configuration — never
@@ -96,7 +97,8 @@ class SolarSystemStaticPainter extends CustomPainter {
     // Draw stars
     // We use a deterministic random seed so stars don't flicker on repaint
     final random = math.Random(42);
-    final starPaint = Paint()..color = AppTheme.spaceStar.withValues(alpha: 0.8);
+    final starPaint = Paint()
+      ..color = AppTheme.spaceStar.withValues(alpha: 0.8);
 
     // Draw about 100 random stars
     for (int i = 0; i < 100; i++) {
@@ -166,12 +168,14 @@ class SolarSystemStaticPainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: label,
-        style: TextStyle(
+        // Canvas text inherits no theme, so the family has to be asked for
+        // explicitly or the ring renders in the platform default face.
+        style: AppTypography.telemetry(
           color: isDark
               ? AppTheme.spaceStar.withValues(alpha: 0.5)
               : AppTheme.spaceStar.withValues(alpha: 0.6),
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
+          fontSize: AppTypography.sizeMicro,
+          fontWeight: AppTypography.medium,
         ),
       );
       textPainter.layout();
@@ -191,12 +195,12 @@ class SolarSystemStaticPainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: '$degree°',
-        style: TextStyle(
+        style: AppTypography.telemetry(
           color: isDark
               ? AppTheme.spaceStar.withValues(alpha: 0.45)
               : AppTheme.spaceStar.withValues(alpha: 0.55),
-          fontSize: 9,
-          fontWeight: FontWeight.w500,
+          fontSize: AppTypography.sizeMicro,
+          fontWeight: AppTypography.medium,
         ),
       );
       textPainter.layout();
@@ -273,11 +277,7 @@ class SolarSystemStaticPainter extends CustomPainter {
     // Draw earth core (blue ocean with green land hints)
     final earthPaint = Paint()
       ..shader = const RadialGradient(
-        colors: [
-          AppTheme.earthLight,
-          AppTheme.earthMid,
-          AppTheme.earthDeep,
-        ],
+        colors: [AppTheme.earthLight, AppTheme.earthMid, AppTheme.earthDeep],
       ).createShader(Rect.fromCircle(center: center, radius: 18));
 
     canvas.drawCircle(center, 18, earthPaint);
@@ -287,7 +287,10 @@ class SolarSystemStaticPainter extends CustomPainter {
     final textPainter = TextPainter(
       text: const TextSpan(
         text: '🌍',
-        style: TextStyle(fontSize: 16, shadows: [Shadow(blurRadius: 10)]),
+        style: TextStyle(
+          fontSize: AppTypography.sizeSubtitle,
+          shadows: [Shadow(blurRadius: 10)],
+        ),
       ),
       textDirection: TextDirection.ltr,
     );
@@ -300,6 +303,7 @@ class SolarSystemStaticPainter extends CustomPainter {
       ),
     );
   }
+
   @override
   bool shouldRepaint(covariant SolarSystemStaticPainter oldDelegate) {
     return oldDelegate.viewMode != viewMode ||
@@ -309,7 +313,6 @@ class SolarSystemStaticPainter extends CustomPainter {
         oldDelegate.panOffset != panOffset;
   }
 }
-
 
 /// Dynamic planet layer: positions, selection, retrograde rings, labels.
 /// Repaints every data frame; the static background stays cached.
@@ -468,13 +471,17 @@ class SolarSystemPainter extends CustomPainter {
 
     final textPainter = TextPainter(
       text: TextSpan(
+        // Localized planet names: without the family chain a Bengali name
+        // falls back to the platform's generic face.
         text: PlanetaryViewService.getPlanetDisplayName(planet.planet),
-        style: TextStyle(
+        style: AppTypography.ui(
           color: textColor.withValues(alpha: isSelected ? 1.0 : 0.7),
-          fontSize: isSelected ? 12 : 10,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          shadows: const [Shadow(blurRadius: 2)],
-        ),
+          fontSize: isSelected
+              ? AppTypography.sizeCaption
+              : AppTypography.sizeMicro,
+          fontWeight: isSelected ? AppTypography.bold : AppTypography.regular,
+          tabularNumbers: false,
+        ).copyWith(shadows: const [Shadow(blurRadius: 2)]),
       ),
       textDirection: TextDirection.ltr,
     );
@@ -486,6 +493,7 @@ class SolarSystemPainter extends CustomPainter {
     );
     textPainter.paint(canvas, offset);
   }
+
   @override
   bool shouldRepaint(covariant SolarSystemPainter oldDelegate) {
     return oldDelegate.solarSystemData != solarSystemData ||
@@ -494,7 +502,6 @@ class SolarSystemPainter extends CustomPainter {
         oldDelegate.panOffset != panOffset;
   }
 }
-
 
 class PlanetHitTester {
   PlanetHitTester({

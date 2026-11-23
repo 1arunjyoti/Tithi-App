@@ -132,6 +132,54 @@ abstract class AppLocalizations {
   /// **'First occurrence of each festival in the chosen year'**
   String get exportFestivalsSubtitleYear;
 
+  /// Settings tile title for exporting festivals to Google Calendar
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Google Calendar (.ics)'**
+  String get exportFestivalsCalendar;
+
+  /// Settings tile subtitle for the calendar export
+  ///
+  /// In en, this message translates to:
+  /// **'Save festival dates as a calendar file you can import'**
+  String get exportFestivalsCalendarSubtitle;
+
+  /// Subtitle of the JSON export year picker, explaining the next step
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a year. You\'ll then pick where to save the JSON file.'**
+  String get exportJsonYearSheetSubtitle;
+
+  /// Subtitle of the calendar export year picker, explaining the next step
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a year. You\'ll then pick where to save the .ics file for Google Calendar.'**
+  String get exportCalendarYearSheetSubtitle;
+
+  /// Confirm button in the export year picker
+  ///
+  /// In en, this message translates to:
+  /// **'Export {year}'**
+  String exportYearAction(String year);
+
+  /// Subject when sharing the exported festival calendar file
+  ///
+  /// In en, this message translates to:
+  /// **'Tithi festivals {year} (Calendar)'**
+  String festivalCalendarShareSubject(String year);
+
+  /// Message when sharing the exported festival calendar file
+  ///
+  /// In en, this message translates to:
+  /// **'Import Tithi festival dates for {year} into Google Calendar (.ics)'**
+  String festivalCalendarShareText(String year);
+
+  /// Confirmation message after a successful calendar export
+  ///
+  /// In en, this message translates to:
+  /// **'{count} festivals exported to calendar for {year}.'**
+  String festivalsExportedToCalendar(int count, String year);
+
   /// Subtitle describing the app as a Vedic Calendar
   ///
   /// In en, this message translates to:
@@ -1446,35 +1494,11 @@ abstract class AppLocalizations {
   /// **'Completed on {date}'**
   String completedOn(String date);
 
-  /// Weather bottom sheet title
-  ///
-  /// In en, this message translates to:
-  /// **'Weather Details'**
-  String get weatherDetails;
-
-  /// Shown when weather service returns no data
-  ///
-  /// In en, this message translates to:
-  /// **'Weather data unavailable'**
-  String get weatherDataUnavailable;
-
   /// Generic error message with details
   ///
   /// In en, this message translates to:
   /// **'Error: {error}'**
   String errorMessage(String error);
-
-  /// Credit text for weather source
-  ///
-  /// In en, this message translates to:
-  /// **'Weather data by Open-Meteo'**
-  String get weatherDataByOpenMeteo;
-
-  /// Accessibility label for weather icon
-  ///
-  /// In en, this message translates to:
-  /// **'Weather condition: {condition}'**
-  String weatherCondition(String condition);
 
   /// Label for sunrise time
   ///
@@ -1499,36 +1523,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Moonset'**
   String get moonset;
-
-  /// Weather metric label
-  ///
-  /// In en, this message translates to:
-  /// **'Humidity'**
-  String get humidity;
-
-  /// Weather metric label
-  ///
-  /// In en, this message translates to:
-  /// **'Wind'**
-  String get wind;
-
-  /// Weather metric label for feels-like temperature
-  ///
-  /// In en, this message translates to:
-  /// **'Real Feel'**
-  String get realFeel;
-
-  /// Weather metric label
-  ///
-  /// In en, this message translates to:
-  /// **'UV Index'**
-  String get uvIndex;
-
-  /// Weather forecast section title
-  ///
-  /// In en, this message translates to:
-  /// **'Forecast'**
-  String get forecast;
 
   /// Daylight duration text
   ///
@@ -1722,6 +1716,36 @@ abstract class AppLocalizations {
   /// **'All Festivals'**
   String get allFestivals;
 
+  /// Tooltip of the all-festivals year selector's back arrow
+  ///
+  /// In en, this message translates to:
+  /// **'Previous year'**
+  String get previousYear;
+
+  /// Tooltip of the all-festivals year selector's forward arrow
+  ///
+  /// In en, this message translates to:
+  /// **'Next year'**
+  String get nextYear;
+
+  /// Floating navigation bar label for the home tab. Keep it a single short word: the selected pill grows with it.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get navToday;
+
+  /// Floating navigation bar label for the all-festivals tab. Keep it short.
+  ///
+  /// In en, this message translates to:
+  /// **'Festivals'**
+  String get navFestivals;
+
+  /// Floating navigation bar label for the festival countdowns tab. Keep it short.
+  ///
+  /// In en, this message translates to:
+  /// **'Countdowns'**
+  String get navCountdowns;
+
   /// Filter chip: show every festival
   ///
   /// In en, this message translates to:
@@ -1745,6 +1769,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recurring'**
   String get festivalFilterRecurring;
+
+  /// Filter chip: the curated flagship festivals (the ones the all-festivals list renders as large cards)
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get festivalFilterFeatured;
 
   /// Title of the festival filter sheet and tooltip of its icon button
   ///
@@ -1775,6 +1805,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search festivals'**
   String get searchFestivalsHint;
+
+  /// Tooltip for the button that closes the festival search field
+  ///
+  /// In en, this message translates to:
+  /// **'Close search'**
+  String get closeFestivalSearch;
 
   /// Error message when festivals fail to load
   ///
@@ -2891,12 +2927,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'K'**
   String get krishnaPakshaInitial;
-
-  /// Wind speed in kilometers per hour in the weather sheet
-  ///
-  /// In en, this message translates to:
-  /// **'{speed} kph'**
-  String windSpeedKph(double speed);
 
   /// Continuous 30-day tithi display mode label
   ///

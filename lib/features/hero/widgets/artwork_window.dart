@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
-import '../../../theme/app_theme.dart';
+import '../../../theme/app_motion.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 import '../domain/hero_content.dart';
 
 /// Opens [images] (asset paths or http(s) URLs) in a floating window above the
@@ -24,10 +26,7 @@ Future<void> showArtworkWindow(
   // Nothing to show, or the card went away between the gesture and this call:
   // opening a dialog from a defunct context throws.
   if (images.isEmpty || !context.mounted) return Future<void>.value();
-  final duration = AppTheme.animationDuration(
-    context,
-    const Duration(milliseconds: 220),
-  );
+  final duration = AppMotion.of(context, AppMotion.resize);
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
@@ -39,8 +38,8 @@ Future<void> showArtworkWindow(
     transitionBuilder: (context, animation, _, child) {
       final curved = CurvedAnimation(
         parent: animation,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.easeInCubic,
+        curve: AppMotion.standardCurve,
+        reverseCurve: AppMotion.exitCurve,
       );
       return FadeTransition(
         opacity: curved,
@@ -104,7 +103,7 @@ class _ArtworkWindowState extends State<ArtworkWindow> {
       child: Material(
         color: Colors.black,
         elevation: 12,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.card),
         clipBehavior: Clip.antiAlias,
         child: SizedBox(
           width: width,
@@ -256,7 +255,12 @@ class _ArtworkPageState extends State<_ArtworkPage> {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 14),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.s16,
+                  AppSpacing.s24,
+                  AppSpacing.s16,
+                  AppSpacing.s14,
+                ),
                 // The picture above already carries this label as its
                 // semantic label; without this a reader says it twice.
                 child: ExcludeSemantics(
@@ -265,8 +269,8 @@ class _ArtworkPageState extends State<_ArtworkPage> {
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontSize: AppTypography.sizeProse,
+                      fontWeight: AppTypography.semibold,
                     ),
                   ),
                 ),
@@ -289,17 +293,20 @@ class _ArtworkCounter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s10,
+        vertical: AppSpacing.s4,
+      ),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         '${index + 1} / $count',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+          fontSize: AppTypography.sizeCaption,
+          fontWeight: AppTypography.semibold,
         ),
       ),
     );
@@ -344,7 +351,11 @@ class _ArtworkPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Icon(Icons.image_outlined, color: Colors.white24, size: 48),
+      child: Icon(
+        Icons.image_outlined,
+        color: Colors.white24,
+        size: AppIconSize.empty,
+      ),
     );
   }
 }
@@ -355,7 +366,11 @@ class _ArtworkUnavailable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Icon(Icons.broken_image_outlined, color: Colors.white38, size: 48),
+      child: Icon(
+        Icons.broken_image_outlined,
+        color: Colors.white38,
+        size: AppIconSize.empty,
+      ),
     );
   }
 }

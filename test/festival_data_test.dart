@@ -14,10 +14,7 @@ List<Map<String, dynamic>> _loadFestivalJson() {
   return (decoded as List).cast<Map<String, dynamic>>();
 }
 
-Map<String, dynamic> _rulesOf(
-  List<Map<String, dynamic>> festivals,
-  String id,
-) {
+Map<String, dynamic> _rulesOf(List<Map<String, dynamic>> festivals, String id) {
   final entry = festivals.firstWhere(
     (f) => f['id'] == id,
     orElse: () => throw StateError('festival $id not found in dataset'),
@@ -196,25 +193,39 @@ void main() {
 
     test('Shivaratri and Lakshmi Puja carry night kalas', () {
       // Arrange + Act + Assert
-      expect(
-        normalizedPujaKala(loaded('maha_shivaratri')),
-        equals('nishita'),
-      );
+      expect(normalizedPujaKala(loaded('maha_shivaratri')), equals('nishita'));
       expect(normalizedPujaKala(loaded('lakshmi_puja')), equals('pradosha'));
     });
 
     test('every Ekadashi entry breaks in the Dwadashi window', () {
       // Arrange + Act
       const ids = [
+        'kamada_ekadashi',
+        'papamochani_ekadashi',
+        'mohini_ekadashi',
         'varuthini_ekadashi',
         'nirjala_ekadashi',
+        'apara_ekadashi',
         'devshayani_ekadashi',
+        'yogini_ekadashi',
+        'shravana_putrada_ekadashi',
         'kamika_ekadashi',
-        'pavitra_ekadashi',
+        'parivartini_ekadashi',
+        'aja_ekadashi',
+        'pashankusha_ekadashi',
+        'indira_ekadashi',
         'devutthani_ekadashi',
+        'rama_ekadashi',
+        'mokshada_ekadashi',
+        'utpanna_ekadashi',
         'pausha_putrada_ekadashi',
-        'ekadashi_shukla',
-        'ekadashi_krishna',
+        'saphala_ekadashi',
+        'jaya_ekadashi',
+        'shattila_ekadashi',
+        'amalaki_ekadashi',
+        'vijaya_ekadashi',
+        'padmini_ekadashi',
+        'parama_ekadashi',
       ];
 
       // Assert
@@ -236,24 +247,27 @@ void main() {
       expect(tulsi.panchangRules.timingOverride, isNull);
     });
 
-    test('Makar Sankranti and Pongal match the transit and show punya kala', () {
-      // Arrange + Act
-      final makar = loaded('makar_sankranti');
-      final pongal = loaded('pongal');
+    test(
+      'Makar Sankranti and Pongal match the transit and show punya kala',
+      () {
+        // Arrange + Act
+        final makar = loaded('makar_sankranti');
+        final pongal = loaded('pongal');
 
-      // Assert
-      for (final festival in [makar, pongal]) {
-        expect(
-          festival.panchangRules.sankrantiRashi,
-          equals('Makara'),
-          reason: '${festival.id} must follow the Sun into Makara',
-        );
-        expect(normalizedPujaKala(festival), equals('punya_kala'));
-        // The fixed date stays as the fallback when the ingress search is
-        // skipped, so both surfaces agree on the shipped date.
-        expect(festival.panchangRules.solarDate, equals('01-14'));
-      }
-    });
+        // Assert
+        for (final festival in [makar, pongal]) {
+          expect(
+            festival.panchangRules.sankrantiRashi,
+            equals('Makara'),
+            reason: '${festival.id} must follow the Sun into Makara',
+          );
+          expect(normalizedPujaKala(festival), equals('punya_kala'));
+          // The fixed date stays as the fallback when the ingress search is
+          // skipped, so both surfaces agree on the shipped date.
+          expect(festival.panchangRules.solarDate, equals('01-14'));
+        }
+      },
+    );
 
     test('Raksha Bandhan avoids Bhadra', () {
       // Arrange + Act
@@ -262,6 +276,217 @@ void main() {
       // Assert
       expect(rakhi.panchangRules.avoidBhadra, isTrue);
       expect(normalizedPujaKala(rakhi), equals('aparahna'));
+    });
+  });
+
+  group('Curated featured flag in the shipped catalog', () {
+    test('flags a small curated set and nothing else', () {
+      // Arrange
+      final festivals = _loadFestivalJson();
+      final flagged = [
+        for (final entry in festivals)
+          if (entry['featured'] != null)
+            (id: entry['id'] as String, featured: entry['featured']),
+      ];
+
+      // Assert: only a real `true` counts, and the set stays rare. "major"
+      // covers 94 of the 127 records, which is exactly why the featured card
+      // cannot use the category; if this set grows past a quarter of the
+      // catalog, "featured" has stopped meaning anything.
+      expect(flagged, isNotEmpty);
+      expect(flagged.where((f) => f.featured != true), isEmpty);
+      expect(flagged.length, lessThanOrEqualTo(festivals.length ~/ 4));
+    });
+
+    test('covers the flagship observances, not just the artwork entries', () {
+      // Arrange
+      final featured = {
+        for (final entry in _loadFestivalJson())
+          if (entry['featured'] == true) entry['id'] as String,
+      };
+
+      // Assert: the set is an editorial fact, so it is neither the 7 records
+      // that ship artwork nor the 96 in the major category.
+      expect(featured, containsAll(['diwali', 'holi', 'dussehra']));
+      // Karva Chauth is categorised `vrat` and is still featured - the
+      // clearest proof the flag is independent of `category`.
+      expect(featured, contains('karva_chauth'));
+      expect(featured, isNot(contains('hanuman_jayanti')));
+      expect(featured.length, greaterThan(7));
+    });
+
+    test('keeps a multi-day celebration whole', () {
+      // Arrange
+      final featured = {
+        for (final entry in _loadFestivalJson())
+          if (entry['featured'] == true) entry['id'] as String,
+      };
+
+      // Assert: Durga Puja runs for days. Featuring one day and dropping the
+      // rest is what "the next major from today" did, and it looked broken.
+      expect(
+        featured,
+        containsAll([
+          'shashthi_durga_puja',
+          'saptami_durga_puja',
+          'ashtami_durga_puja',
+          'navami_durga_puja',
+          'dasami_durga_puja',
+        ]),
+      );
+    });
+
+    test('parses into Festival.featured and defaults to false', () {
+      // Arrange
+      final festivals = _loadFestivalJson();
+
+      // Act
+      final diwali = Festival.fromJson(
+        festivals.firstWhere((entry) => entry['id'] == 'diwali'),
+      );
+      final unflagged = Festival.fromJson(
+        festivals.firstWhere((entry) => entry['id'] == 'hanuman_jayanti'),
+      );
+
+      // Assert
+      expect(diwali.featured, isTrue);
+      expect(unflagged.featured, isFalse);
+    });
+  });
+
+  group('Named Ekadashis resolve individually', () {
+    // Amanta month that is STORED for each of the 24 named Ekadashis. The
+    // Krishna ones are the month that ends with that Amavasya, so they read
+    // one month earlier than the Purnimanta name devotees know them by.
+    const named = [
+      ('kamada_ekadashi', 'Chaitra', 'Shukla'),
+      ('papamochani_ekadashi', 'Phalguna', 'Krishna'),
+      ('mohini_ekadashi', 'Vaishakha', 'Shukla'),
+      ('varuthini_ekadashi', 'Chaitra', 'Krishna'),
+      ('nirjala_ekadashi', 'Jyeshtha', 'Shukla'),
+      ('apara_ekadashi', 'Vaishakha', 'Krishna'),
+      ('devshayani_ekadashi', 'Ashadha', 'Shukla'),
+      ('yogini_ekadashi', 'Jyeshtha', 'Krishna'),
+      ('shravana_putrada_ekadashi', 'Shravana', 'Shukla'),
+      ('kamika_ekadashi', 'Ashadha', 'Krishna'),
+      ('parivartini_ekadashi', 'Bhadrapada', 'Shukla'),
+      ('aja_ekadashi', 'Shravana', 'Krishna'),
+      ('pashankusha_ekadashi', 'Ashwin', 'Shukla'),
+      ('indira_ekadashi', 'Bhadrapada', 'Krishna'),
+      ('devutthani_ekadashi', 'Kartika', 'Shukla'),
+      ('rama_ekadashi', 'Ashwin', 'Krishna'),
+      ('mokshada_ekadashi', 'Margashirsha', 'Shukla'),
+      ('utpanna_ekadashi', 'Kartika', 'Krishna'),
+      ('pausha_putrada_ekadashi', 'Pausha', 'Shukla'),
+      ('saphala_ekadashi', 'Margashirsha', 'Krishna'),
+      ('jaya_ekadashi', 'Magha', 'Shukla'),
+      ('shattila_ekadashi', 'Pausha', 'Krishna'),
+      ('amalaki_ekadashi', 'Phalguna', 'Shukla'),
+      ('vijaya_ekadashi', 'Magha', 'Krishna'),
+    ];
+
+    test('all 24 names carry specific Amanta rules', () {
+      final festivals = _loadFestivalJson();
+      expect(named, hasLength(24));
+
+      for (final (id, masa, paksha) in named) {
+        final entry = festivals.firstWhere(
+          (f) => f['id'] == id,
+          orElse: () => throw StateError('$id is missing from festivals.json'),
+        );
+        final rules = (entry['panchang_rules'] as Map).cast<String, dynamic>();
+        expect(entry['category'], equals('vrat'), reason: '$id category');
+        expect(rules['masa'], equals(masa), reason: '$id masa');
+        expect(rules['paksha'], equals(paksha), reason: '$id paksha');
+        expect(rules['tithi'], equals(11), reason: '$id tithi');
+        expect(rules['conditions'], equals('Ekadashi'), reason: '$id condition');
+        // Strict sunrise matching resolves a viddha day (Dashami at sunrise)
+        // to the true day; vriddhi "first" keeps a genuine two-sunrise run to
+        // one observance. Together they replace the viddha rule the engine
+        // cannot express on its own.
+        expect(
+          rules['dominant_tithi'],
+          equals('strict'),
+          reason: '$id dominant_tithi',
+        );
+        expect(rules['vriddhi'], equals('first'), reason: '$id vriddhi');
+      }
+    });
+
+    test('no wildcard entry competes with a named Ekadashi', () {
+      final festivals = _loadFestivalJson();
+      final ids = festivals.map((f) => f['id'] as String).toSet();
+      expect(ids, isNot(contains('ekadashi_shukla')));
+      expect(ids, isNot(contains('ekadashi_krishna')));
+
+      for (final entry in festivals) {
+        final rules = (entry['panchang_rules'] as Map).cast<String, dynamic>();
+        if (rules['conditions'] == 'Ekadashi') {
+          expect(
+            rules['masa'],
+            isNot(equals('*')),
+            reason: '${entry['id']} would match every Ekadashi',
+          );
+        }
+      }
+    });
+
+    test('Adhika Jyeshtha supplies Padmini and Parama', () {
+      final festivals = _loadFestivalJson();
+      for (final (id, paksha) in [
+        ('padmini_ekadashi', 'Shukla'),
+        ('parama_ekadashi', 'Krishna'),
+      ]) {
+        final rules = _rulesOf(festivals, id);
+        expect(rules['masa'], equals('Adhika_Jyeshtha'), reason: '$id masa');
+        expect(rules['paksha'], equals(paksha), reason: '$id paksha');
+        expect(rules['tithi'], equals(11));
+        expect(
+          rules['dominant_tithi'],
+          equals('strict'),
+          reason: 'Adhika entry $id timing',
+        );
+        expect(
+          rules['vriddhi'],
+          equals('first'),
+          reason: 'Adhika entry $id vriddhi',
+        );
+      }
+    });
+
+    test('Kartika Shukla and Krishna resolve to different names', () {
+      final namedIds = named.map((e) => e.$1).toList();
+      final festivals = _loadFestivalJson()
+          .where((f) => namedIds.contains(f['id']))
+          .map(Festival.fromJson)
+          .toList();
+
+      for (final system in HinduMonthSystem.values) {
+        final shukla = PanchangData.fromRawTithi(
+          date: DateTime(2026, 11, 20),
+          rawTithi: 11.5,
+          masa: 'Kartika',
+          allFestivals: festivals,
+          monthSystem: system,
+          sunrise: DateTime(2026, 11, 20, 6),
+          sunset: DateTime(2026, 11, 20, 18),
+        );
+        final krishna = PanchangData.fromRawTithi(
+          date: DateTime(2026, 12, 5),
+          rawTithi: 26.5,
+          masa: 'Kartika',
+          allFestivals: festivals,
+          monthSystem: system,
+          sunrise: DateTime(2026, 12, 5, 6),
+          sunset: DateTime(2026, 12, 5, 18),
+        );
+        final shuklaIds = shukla.festivals.map((f) => f.id).toList();
+        final krishnaIds = krishna.festivals.map((f) => f.id).toList();
+        expect(shuklaIds, contains('devutthani_ekadashi'), reason: '$system');
+        expect(shuklaIds, isNot(contains('utpanna_ekadashi')), reason: '$system');
+        expect(krishnaIds, contains('utpanna_ekadashi'), reason: '$system');
+        expect(krishnaIds, isNot(contains('devutthani_ekadashi')), reason: '$system');
+      }
     });
   });
 }

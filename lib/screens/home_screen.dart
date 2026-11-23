@@ -1,26 +1,67 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/navigation/home_tab.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart';
 import '../providers/home_cards_visibility_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/calendar_widget.dart';
+import '../theme/app_metrics.dart';
+import '../theme/app_motion.dart';
+import '../features/calendar/widgets/calendar_widget.dart';
 import '../widgets/event_list_widget.dart';
-import '../widgets/schedule_view_widget.dart';
+import '../features/schedule/widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
-import '../widgets/daily_quote_widget.dart';
+import '../features/quote/widgets/daily_quote_widget.dart';
+import '../widgets/app_drawer_button.dart';
 import '../widgets/festival_countdown_card.dart';
-import '../widgets/festival_search_delegate.dart';
-import '../widgets/paksha_hero_card.dart';
+import '../features/festival_search/widgets/festival_search_delegate.dart';
+import '../widgets/jump_to_today_button.dart';
+import '../features/hero/widgets/paksha_hero_card.dart';
 import '../widgets/responsive_layout.dart';
+import '../widgets/page_scaffold.dart';
 import '../core/anim/press_scale.dart';
 import '../widgets/home_widget_card.dart';
 import '../providers/home_widget_provider.dart';
 
 /// Main home screen with calendar and event list
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({
+    super.key,
+    this.bottomContentInset = 0,
+    this.showJumpToToday = true,
+    this.onDrawerStateChanged,
+    this.onSelectTab,
+  });
+
+  /// Extra bottom padding for the scroll view and the FAB.
+  ///
+  /// The shell passes `FloatingNavBar.reserve` so the last card can be
+  /// scrolled clear of the capsule. Zero when this screen is the whole screen
+  /// (wide layout), where nothing floats over the content.
+  final double bottomContentInset;
+
+  /// Whether the "jump to today" action is drawn in this Scaffold's FAB slot.
+  ///
+  /// The narrow shell passes false: it renders the same [JumpToTodayButton]
+  /// beside the floating capsule instead, and two live copies would both jump.
+  final bool showJumpToToday;
+
+  /// Reports the navigation drawer opening/closing.
+  ///
+  /// Needed only when this screen is embedded (see `HomeShell`): the drawer is
+  /// painted inside this Scaffold, which sits below any sibling overlay, so
+  /// the shell has to retract the floating bar while the drawer is out.
+  final ValueChanged<bool>? onDrawerStateChanged;
+
+  /// Switches the hosting shell to another tab, when this screen is one tab of
+  /// [HomeShell] rather than the whole app.
+  ///
+  /// The drawer lists destinations the shell already keeps mounted, so picking
+  /// one must select that tab, not push a second copy of the same screen over
+  /// the shell. Null (wide layout, where there is no shell) keeps the drawer's
+  /// own push navigation.
+  final ValueChanged<HomeTab>? onSelectTab;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -34,65 +75,43 @@ class _HomeScreenState extends State<HomeScreen> {
     final l10n = AppLocalizations.of(context);
     final isWideScreen = ResponsiveLayout.isTabletOrLarger(context);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
+    return PageScaffold(
       // Only show drawer on mobile, desktop uses persistent sidebar
       drawer: isWideScreen ? null : const AppDrawer(),
       onDrawerChanged: (isOpened) {
+        widget.onDrawerStateChanged?.call(isOpened);
         if (_isDrawerOpen != isOpened) {
           setState(() => _isDrawerOpen = isOpened);
         }
       },
-      appBar: AppBar(
-        // Explicit hamburger (not automaticallyImplyLeading): the
-        // framework-built one can't carry PressScale's gated haptic.
-        automaticallyImplyLeading: false,
-        leading: isWideScreen
-            ? null
-            : Builder(
-                builder: (innerContext) => PressScale(
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.menu_rounded,
-                      color: context.colors.onSurface,
-                    ),
-                    tooltip: MaterialLocalizations.of(
-                      innerContext,
-                    ).openAppDrawerTooltip,
-                    onPressed: () =>
-                        Scaffold.of(innerContext).openDrawer(),
-                  ),
+      // Explicit hamburger (not automaticallyImplyLeading): the
+      // framework-built one can't carry PressScale's gated haptic.
+      leading: isWideScreen ? null : const AppDrawerButton(),
+      title: Text(l10n?.appTitle ?? 'Tithi'),
+      actions: [
+        // Search button (press-scale owns the gated haptic + press feel)
+        Consumer(
+          builder: (context, ref, _) {
+            return PressScale(
+              child: IconButton(
+                icon: Icon(
+                  Icons.search_rounded,
+                  color: context.colors.onSurface,
                 ),
+                tooltip: l10n?.searchFestivals ?? 'Search Festivals',
+                onPressed: () {
+                  showSearch(
+                    context: context,
+                    delegate: FestivalSearchDelegate(ref: ref),
+                  );
+                },
               ),
-        title: Text(l10n?.appTitle ?? 'Tithi'),
-        backgroundColor: Colors.transparent,
-        actions: [
-          // Search button (press-scale owns the gated haptic + press feel)
-          Consumer(
-            builder: (context, ref, _) {
-              return PressScale(
-                child: IconButton(
-                  icon: Icon(
-                    Icons.search_rounded,
-                    color: context.colors.onSurface,
-                  ),
-                  tooltip: l10n?.searchFestivals ?? 'Search Festivals',
-                  onPressed: () {
-                    showSearch(
-                      context: context,
-                      delegate: FestivalSearchDelegate(
-                        ref: ref,
-                        parentContext: context,
-                      ),
-                    );
-                  },
-                ),
-              );
-            },
-          ),
+            );
+          },
+        ),
 
-          // Location refresh button
-          /*
+        // Location refresh button
+        /*
           Consumer(
             builder: (context, ref, _) {
               return IconButton(
@@ -106,10 +125,21 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           */
-          const SizedBox(width: 8),
-        ],
-      ),
-      floatingActionButton: const _JumpToTodayFab(),
+        const SizedBox(width: AppSpacing.s8),
+      ],
+      floatingActionButton: widget.showJumpToToday
+          ? Padding(
+              // The FAB anchors to the window bottom, so it lands under the
+              // capsule unless it is lifted by the capsule's own strip.
+              padding: EdgeInsets.only(bottom: widget.bottomContentInset),
+              child: const _JumpToTodayFab(),
+            )
+          : null,
+      // The body paints the ambient background and carries its own SafeArea
+      // (the wide layout keeps the drawer flush to the edge), so the shell
+      // adds neither.
+      background: false,
+      safeArea: false,
       // Use distinct layouts for mobile and desktop to prevent any regression on mobile
       body: isWideScreen
           ? Row(
@@ -123,7 +153,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       constraints: const BoxConstraints(maxWidth: 800),
                       // Force full height to ensure background gradient fills screen
                       // and Column/Expanded widgets work correctly
-                      child: const SizedBox.expand(child: _HomeBody()),
+                      child: SizedBox.expand(
+                        child: _HomeBody(
+                          bottomInset: widget.bottomContentInset,
+                          onSelectTab: widget.onSelectTab,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -132,7 +167,10 @@ class _HomeScreenState extends State<HomeScreen> {
           : RepaintBoundary(
               child: TickerMode(
                 enabled: !_isDrawerOpen,
-                child: const _HomeBody(),
+                child: _HomeBody(
+                  bottomInset: widget.bottomContentInset,
+                  onSelectTab: widget.onSelectTab,
+                ),
               ),
             ), // Mobile layout remains exactly as before
     );
@@ -152,7 +190,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.s12),
             const Text('Fetching location...'),
           ],
         ),
@@ -171,53 +209,27 @@ class _JumpToTodayFab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final focusedMonth = ref.watch(focusedMonthProvider);
-    final selectedDate = ref.watch(selectedDateProvider);
-    final l10n = AppLocalizations.of(context);
+    final visible = ref.watch(jumpToTodayVisibleProvider);
 
-    final now = DateTime.now();
-    final isSameMonth =
-        focusedMonth.year == now.year && focusedMonth.month == now.month;
-    final isToday =
-        selectedDate.year == now.year &&
-        selectedDate.month == now.month &&
-        selectedDate.day == now.day;
-    final showJumpToToday = !isSameMonth || !isToday;
-
-    // Scale + fade instead of popping between FAB and SizedBox.shrink:
+    // Scale + fade instead of popping between button and SizedBox.shrink:
     // month browsing feels calm, and Reduce Motion collapses to 1ms.
     return IgnorePointer(
-      ignoring: !showJumpToToday,
+      ignoring: !visible,
       child: AnimatedScale(
-        scale: showJumpToToday ? 1.0 : 0.0,
-        duration: AppTheme.animationDuration(
-          context,
-          const Duration(milliseconds: 200),
-        ),
-        curve: Curves.easeOutCubic,
+        scale: visible ? 1.0 : 0.0,
+        duration: AppMotion.of(context, AppMotion.standard),
+        curve: AppMotion.standardCurve,
         child: AnimatedOpacity(
-          opacity: showJumpToToday ? 1.0 : 0.0,
-          duration: AppTheme.animationDuration(
-            context,
-            const Duration(milliseconds: 200),
-          ),
-          // Press-down microinteraction (scale + haptic live in
-          // PressScale); the outer AnimatedScale above owns show/hide.
-          // IgnorePointer above already blocks input while hidden,
-          // so PressScale stays enabled: no double-gating.
-          child: PressScale(
-            child: FloatingActionButton(
-              onPressed: showJumpToToday
-                  ? () {
-                      final now = DateTime.now();
-                      setCalendarMonth(ref, now);
-                      ref.read(selectedDateProvider.notifier).setDate(now);
-                    }
-                  : null,
-              tooltip: l10n?.goToToday ?? 'Go to Today',
-              backgroundColor: context.colors.primary,
-              foregroundColor: context.colors.onPrimary,
-              child: const Icon(Icons.today_rounded),
+          opacity: visible ? 1.0 : 0.0,
+          duration: AppMotion.of(context, AppMotion.standard),
+          // Press-down microinteraction (scale + haptic) lives in the button's
+          // own PressScale; IgnorePointer above already blocks input while
+          // hidden, so there is no double-gating.
+          child: const JumpToTodayButton(
+            // The wide layout keeps the M3 FAB outline it had before this
+            // action also started floating beside the nav capsule.
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(AppRadius.tile)),
             ),
           ),
         ),
@@ -226,11 +238,56 @@ class _JumpToTodayFab extends ConsumerWidget {
   }
 }
 
-class _HomeBody extends ConsumerWidget {
-  const _HomeBody();
+class _HomeBody extends ConsumerStatefulWidget {
+  const _HomeBody({required this.bottomInset, this.onSelectTab});
+
+  /// Scroll padding that lets the last card come to rest above the floating
+  /// capsule instead of behind it.
+  final double bottomInset;
+
+  final ValueChanged<HomeTab>? onSelectTab;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HomeBody> createState() => _HomeBodyState();
+}
+
+class _HomeBodyState extends ConsumerState<_HomeBody> {
+  /// Owns the calendar view's offset so a re-tap of the Today destination can
+  /// return to the top. The schedule view owns its own controller (its list is
+  /// anchored to today), so a re-tap is a no-op while that view is showing.
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Re-tapping the already-selected Today destination means "take me back to
+  /// the top" (the same gesture every other tab bar has).
+  ///
+  /// The shell owns the tap but not this scroll view, so it bumps
+  /// [tabRevealProvider] and the tab reacts here.
+  void _revealTop() {
+    if (!_scrollController.hasClients) return;
+    final ScrollPosition position = _scrollController.position;
+    if (!position.hasContentDimensions ||
+        position.pixels <= position.minScrollExtent) {
+      return;
+    }
+    _scrollController.animateTo(
+      position.minScrollExtent,
+      duration: AppMotion.of(context, AppMotion.scroll),
+      curve: AppMotion.standardCurve,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<int>(tabRevealProvider(HomeTab.today), (previous, next) {
+      if (previous == next) return;
+      _revealTop();
+    });
     // Keep home widget in sync with all countdowns
     ref.watch(homeWidgetSyncProvider);
     final viewMode = ref.watch(homeViewModeProvider);
@@ -260,9 +317,15 @@ class _HomeBody extends ConsumerWidget {
         ),
 
         SafeArea(
+          // The page background (the `Positioned.fill` layer above) paints
+          // edge-to-edge, so only the content is inset from the sides and the
+          // status bar. The navigation area is handled by the scroll padding
+          // below instead: insetting the viewport here would stop the last
+          // card above the gesture handle and leave a bare background band.
+          bottom: false,
           child: Column(
             children: [
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.s8),
 
               if (isScheduleView)
                 // Schedule View
@@ -275,6 +338,7 @@ class _HomeBody extends ConsumerWidget {
                 // behind its own RepaintBoundary.
                 Expanded(
                   child: CustomScrollView(
+                    controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       // No entrance animation here: this is a SliverList, so
@@ -293,10 +357,8 @@ class _HomeBody extends ConsumerWidget {
                       // as its own slide-down independent of the scroll.
                       const SliverToBoxAdapter(
                         child: Padding(
-                          padding: EdgeInsets.only(bottom: 20),
-                          child: RepaintBoundary(
-                            child: PakshaHeroCard(),
-                          ),
+                          padding: EdgeInsets.only(bottom: AppSpacing.s20),
+                          child: RepaintBoundary(child: PakshaHeroCard()),
                         ),
                       ),
                       // Calendar View — genuinely lazy: SliverList.builder
@@ -311,28 +373,32 @@ class _HomeBody extends ConsumerWidget {
                             case _HomeCard.calendar:
                               // Calendar.
                               return const Padding(
-                                padding: EdgeInsets.only(bottom: 16),
-                                child: RepaintBoundary(
-                                  child: CalendarWidget(),
+                                padding: EdgeInsets.only(
+                                  bottom: AppSpacing.s16,
                                 ),
+                                child: RepaintBoundary(child: CalendarWidget()),
                               );
                             case _HomeCard.events:
                               // Event list (uniform 16px gaps; cards carry
                               // no vertical margin; gutter via theme).
-                              return const Padding(
-                                padding: EdgeInsets.only(
+                              return Padding(
+                                padding: const EdgeInsets.only(
                                   left: AppTheme.homeCardGutter,
                                   right: AppTheme.homeCardGutter,
-                                  bottom: 16,
+                                  bottom: AppSpacing.s16,
                                 ),
                                 child: RepaintBoundary(
-                                  child: EventListWidget(),
+                                  child: EventListWidget(
+                                    onSelectTab: widget.onSelectTab,
+                                  ),
                                 ),
                               );
                             case _HomeCard.wisdom:
                               // Daily Shloka (hideable in Settings).
                               return const Padding(
-                                padding: EdgeInsets.only(bottom: 16),
+                                padding: EdgeInsets.only(
+                                  bottom: AppSpacing.s16,
+                                ),
                                 child: RepaintBoundary(
                                   child: DailyQuoteWidget(),
                                 ),
@@ -343,7 +409,7 @@ class _HomeBody extends ConsumerWidget {
                                 padding: EdgeInsets.only(
                                   left: AppTheme.homeCardGutter,
                                   right: AppTheme.homeCardGutter,
-                                  bottom: 16,
+                                  bottom: AppSpacing.s16,
                                 ),
                                 child: RepaintBoundary(
                                   child: FestivalCountdownCard(),
@@ -364,8 +430,18 @@ class _HomeBody extends ConsumerWidget {
                         },
                       ),
 
-                      // Bottom padding for FAB.
-                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                      // Bottom padding for the FAB and the floating capsule.
+                      // The system inset is part of it: the viewport now runs
+                      // behind the gesture handle, so the last card needs this
+                      // much padding to rest clear of it.
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height:
+                              40 +
+                              widget.bottomInset +
+                              AppTheme.navigationBarInset(context),
+                        ),
+                      ),
                     ],
                   ),
                 ),

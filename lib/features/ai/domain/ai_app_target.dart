@@ -62,11 +62,7 @@ const List<AiAppTarget> kAiAppTargets = <AiAppTarget>[
     label: 'Perplexity',
     packageName: 'ai.perplexity.app.android',
   ),
-  AiAppTarget(
-    id: 'indus',
-    label: 'Indus',
-    packageName: 'ai.sarvam.indus',
-  ),
+  AiAppTarget(id: 'indus', label: 'Indus', packageName: 'ai.sarvam.indus'),
 ];
 
 /// The target stored under [id], or null for [kAiTargetAuto] and for values

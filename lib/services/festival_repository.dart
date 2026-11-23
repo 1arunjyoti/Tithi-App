@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../models/festival.dart';
+import '../core/perf/startup_timeline.dart';
 import 'storage_service.dart';
 
 /// Repository for handling Festival data persistence with Hive
@@ -19,8 +21,32 @@ class FestivalRepository {
   // the asset fingerprint is unchanged.
   static const int _festivalSeedVersion = 2;
 
+  /// Settings key holding the fingerprint of the catalog the box was seeded
+  /// from (also the value the reseed check compares).
+  static const String _versionKey = 'version';
+
+  /// App build that produced [_versionKey]. The bundled JSON can only change
+  /// when the APK does, so a matching build means the fingerprint can be
+  /// reused instead of re-hashing 230 KB on every launch.
+  ///
+  /// Consequence for maintainers: editing `assets/festivals.json` without
+  /// bumping `version`+`build number` in pubspec.yaml keeps the old catalog on
+  /// installed devices (only a fresh install re-reads it). Bump the build.
+  static const String _versionBuildKey = 'version_build';
+
+  /// Value of [_festivalSeedVersion] at the time [_versionKey] was written.
+  static const String _versionSeedKey = 'version_seed';
+
   /// Cached festival list to avoid repeated toList() calls
   List<Festival>? _cachedFestivals;
+
+  /// Fingerprint of the bundled catalog this session seeded/loaded.
+  ///
+  /// Persisted snapshots of derived data (the all-festivals year list) include
+  /// it in their key, so editing `assets/festivals.json` invalidates them even
+  /// when the calculation version did not change.
+  int _catalogVersion = 0;
+  int get catalogVersion => _catalogVersion;
 
   /// Initialize the repository
   ///
@@ -31,24 +57,42 @@ class FestivalRepository {
     final box = await storageService.openFestivalsBox();
     final settingsBox = await storageService.openFestivalSettingsBox();
 
-    final jsonString = await rootBundle.loadString('assets/festivals.json');
-    final festivalsVersion = _versionFromJsonContent(jsonString);
+    final storedVersion = settingsBox.get(_versionKey, defaultValue: 0) as int;
+    final storedSeed = settingsBox.get(_versionSeedKey, defaultValue: 0) as int;
+    final storedBuild = settingsBox.get(_versionBuildKey) as String?;
+    final build = await _currentBuildStamp();
 
-    final storedVersion = settingsBox.get('version', defaultValue: 0);
+    // The asset is only worth reading when this build has not already hashed
+    // it, the box still holds that seed, and the seed rules have not changed.
+    final canTrustFingerprint =
+        build != null &&
+        build == storedBuild &&
+        storedSeed == _festivalSeedVersion &&
+        storedVersion != 0 &&
+        box.isNotEmpty;
+
+    String? jsonString;
+    var festivalsVersion = storedVersion;
+    if (!canTrustFingerprint) {
+      jsonString = await _loadCatalogAsset();
+      festivalsVersion = _versionFromJsonContent(jsonString);
+    }
+
     final needsReseed = box.isEmpty || storedVersion != festivalsVersion;
 
     if (needsReseed) {
+      // The trusted path does not hold the JSON; a reseed always needs it.
+      jsonString ??= await _loadCatalogAsset();
+      _catalogVersion = festivalsVersion;
       debugPrint(
         'Festival data needs update (stored version: $storedVersion, current: $festivalsVersion)',
       );
       // Clear old data and re-seed
       await box.clear();
       await _seedData(box, jsonString);
-      // Update stored version
-      await settingsBox.put('version', festivalsVersion);
-      // Cache the list after init (unmodifiable to avoid accidental mutation)
       _cachedFestivals = List<Festival>.unmodifiable(box.values);
     } else {
+      _catalogVersion = festivalsVersion;
       try {
         _cachedFestivals = List<Festival>.unmodifiable(box.values);
         debugPrint(
@@ -59,11 +103,46 @@ class FestivalRepository {
         // non-nullable HiveField landed) and can no longer be read. Wipe and
         // re-seed from the asset JSON rather than crashing on upgrade.
         debugPrint('Festival cache unreadable ($e); re-seeding from JSON...');
+        jsonString ??= await _loadCatalogAsset();
         await box.clear();
         await _seedData(box, jsonString);
-        await settingsBox.put('version', festivalsVersion);
+        await settingsBox.put(_versionKey, festivalsVersion);
         _cachedFestivals = List<Festival>.unmodifiable(box.values);
       }
+    }
+
+    // Record what this build verified, so the next launch can skip the hash.
+    // Written on the trusted path too: it refreshes the stamp after an upgrade
+    // that reused a matching build string (test runners, sideloads).
+    await settingsBox.put(_versionKey, festivalsVersion);
+    await settingsBox.put(_versionSeedKey, _festivalSeedVersion);
+    if (build != null) await settingsBox.put(_versionBuildKey, build);
+
+    StartupTimeline.mark('festival-init', {
+      'reseeds': needsReseed,
+      'count': _cachedFestivals?.length ?? 0,
+      'hashed': jsonString != null,
+    });
+  }
+
+  /// Reads the bundled catalog, reporting the transfer so a cold start shows
+  /// whether the 230 KB asset was touched at all.
+  Future<String> _loadCatalogAsset() async {
+    final jsonString = await rootBundle.loadString('assets/festivals.json');
+    StartupTimeline.mark('festival-asset', {
+      'kb': (jsonString.length / 1024).round(),
+    });
+    return jsonString;
+  }
+
+  /// Identity of the installed build, or null when it cannot be read (tests,
+  /// plugin unavailable). A null stamp always falls back to hashing.
+  Future<String?> _currentBuildStamp() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      return '${info.version}+${info.buildNumber}';
+    } on Object {
+      return null;
     }
   }
 

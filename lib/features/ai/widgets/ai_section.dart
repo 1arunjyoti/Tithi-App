@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/feedback/app_messages.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/app_localizations_en.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/app_divider.dart';
 import '../../../widgets/settings_widgets.dart';
 import '../domain/ai_app_target.dart';
 import '../providers/ai_providers.dart';
@@ -55,7 +58,7 @@ class AiSection extends ConsumerWidget {
           },
         ),
         if (directOpen) ...[
-          const SettingsDivider(),
+          const AppDivider(),
           SettingsActionTile(
             icon: Icons.open_in_new_rounded,
             title: l10n.aiAppSetting,
@@ -63,7 +66,7 @@ class AiSection extends ConsumerWidget {
             onTap: () => _showAppPicker(context, ref, l10n),
           ),
         ],
-        const SettingsDivider(),
+        const AppDivider(),
         SettingsActionTile(
           icon: Icons.info_outline_rounded,
           title: l10n.aiHowItWorks,
@@ -98,7 +101,7 @@ class AiSection extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(l10n.aiAppPickerTitle),
-        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -132,7 +135,9 @@ class AiSection extends ConsumerWidget {
       ),
     );
     if (chosen == null || !context.mounted) return;
-    final saved = await ref.read(aiTargetAppProvider.notifier).setTarget(chosen);
+    final saved = await ref
+        .read(aiTargetAppProvider.notifier)
+        .setTarget(chosen);
     if (!saved && context.mounted) {
       // Not `aiToggleFailed`: the switch is not what failed to save here.
       showAppMessage(
@@ -156,7 +161,7 @@ class AiSection extends ConsumerWidget {
               Icons.auto_awesome_outlined,
               color: Theme.of(dialogContext).colorScheme.primary,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.s8),
             Expanded(child: Text(l10n.aiConsentTitle)),
           ],
         ),
@@ -166,9 +171,9 @@ class AiSection extends ConsumerWidget {
           children: [
             Text(
               l10n.aiConsentBody,
-              style: const TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: AppTypography.sizeProse),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _ConsentBullet(text: l10n.aiConsentBulletSend),
             _ConsentBullet(text: l10n.aiConsentBulletLocation),
             _ConsentBullet(text: l10n.aiConsentBulletWhere),
@@ -203,7 +208,7 @@ class AiSection extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(l10n.aiHowItWorksRule),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.s12),
               Text(l10n.aiHowItWorksBody),
             ],
           ),
@@ -249,17 +254,21 @@ class _AppOption extends StatelessWidget {
           onTap: onTap,
           leading: Icon(
             selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-            color: selected
-                ? context.colors.primary
-                : context.colors.onSurface.withValues(alpha: 0.35),
+            color: selected ? context.colors.primary : context.faintInk,
           ),
           title: Text(
             label,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              fontSize: AppTypography.sizeProse,
+              fontWeight: AppTypography.semibold,
+            ),
           ),
           subtitle: subtitle == null
               ? null
-              : Text(subtitle!, style: const TextStyle(fontSize: 12.5)),
+              : Text(
+                  subtitle!,
+                  style: const TextStyle(fontSize: AppTypography.sizeCaption),
+                ),
         ),
       ),
     );
@@ -275,7 +284,7 @@ class _ConsentBullet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpacing.s6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -283,14 +292,14 @@ class _ConsentBullet extends StatelessWidget {
             '•  ',
             style: TextStyle(
               color: context.colors.primary,
-              fontWeight: FontWeight.bold,
+              fontWeight: AppTypography.bold,
             ),
           ),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: AppTypography.sizeDetail,
                 height: 1.4,
                 color: context.colors.onSurface.withValues(alpha: 0.75),
               ),

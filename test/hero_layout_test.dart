@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -14,7 +14,7 @@ import 'package:tithi/providers/location_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/storage_service.dart';
 import 'package:tithi/widgets/moon_animation_widget.dart';
-import 'package:tithi/widgets/paksha_hero_card.dart';
+import 'package:tithi/features/hero/widgets/paksha_hero_card.dart';
 
 class _NoHapticsNotifier extends AccessibilityNotifier {
   @override

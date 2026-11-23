@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -8,7 +8,11 @@ import '../../../providers/app_update_provider.dart';
 import '../../../providers/version_provider.dart';
 import '../../../services/app_update_service.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/app_card.dart';
 import '../../../widgets/settings_widgets.dart';
+import '../../../widgets/skeleton.dart';
 
 String _formatApkSize(int? bytes) {
   if (bytes == null || bytes <= 0) return '';
@@ -27,7 +31,8 @@ class CheckForUpdatesTile extends ConsumerWidget {
         ref.watch(packageInfoProvider).valueOrNull?.version ??
         state.currentVersion;
 
-    final busy = state.status == AppUpdateStatus.checking ||
+    final busy =
+        state.status == AppUpdateStatus.checking ||
         state.status == AppUpdateStatus.downloading ||
         state.status == AppUpdateStatus.installing;
 
@@ -36,17 +41,10 @@ class CheckForUpdatesTile extends ConsumerWidget {
       title: l10n?.checkForUpdates ?? 'Check for updates',
       subtitle: _subtitle(l10n, state, installed),
       trailing: busy
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+          ? const InlineSpinner(size: AppIconSize.medium)
           : state.status == AppUpdateStatus.available
-              ? Icon(
-                  Icons.fiber_new_rounded,
-                  color: context.colors.primary,
-                )
-              : null,
+          ? Icon(Icons.fiber_new_rounded, color: context.colors.primary)
+          : null,
       onTap: busy ? null : () async => _handleTap(context, ref),
     );
   }
@@ -94,27 +92,26 @@ class AppUpdateCard extends ConsumerWidget {
         ref.watch(packageInfoProvider).valueOrNull?.version ??
         state.currentVersion;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: AppTheme.glassmorphism(context: context, ref: ref),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.s20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSpacing.s10),
                 decoration: BoxDecoration(
                   color: context.colors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.dense),
                 ),
                 child: Icon(
                   Icons.system_update_rounded,
                   color: context.colors.primary,
-                  size: 22,
+                  size: AppIconSize.large,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,15 +121,15 @@ class AppUpdateCard extends ConsumerWidget {
                           ? l10n?.updateAvailable ?? 'Update available'
                           : l10n?.checkForUpdates ?? 'Check for updates',
                       style: context.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                        fontWeight: AppTypography.bold,
                         color: context.colors.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.s2),
                     Text(
                       _subtitle(l10n, state, installed),
                       style: context.textTheme.bodySmall?.copyWith(
-                        color: context.colors.onSurface.withValues(alpha: 0.7),
+                        color: context.secondaryInk,
                       ),
                     ),
                   ],
@@ -142,16 +139,16 @@ class AppUpdateCard extends ConsumerWidget {
             ],
           ),
           if (state.release != null && _showsReleaseDetails(state.status)) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _ReleaseNotesPreview(release: state.release!),
           ],
           if (state.status == AppUpdateStatus.downloading) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             _DownloadProgress(state: state),
           ],
           if (state.status == AppUpdateStatus.error &&
               state.errorMessage != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.s8),
             Text(
               state.errorMessage!,
               style: context.textTheme.bodySmall?.copyWith(
@@ -159,7 +156,7 @@ class AppUpdateCard extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -170,7 +167,10 @@ class AppUpdateCard extends ConsumerWidget {
                   child: TextButton.icon(
                     onPressed: () =>
                         ref.read(appUpdateProvider.notifier).cancelDownload(),
-                    icon: const Icon(Icons.close_rounded, size: 18),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: AppIconSize.dense,
+                    ),
                     label: Text(l10n?.cancel ?? 'Cancel'),
                   ),
                 ),
@@ -181,7 +181,10 @@ class AppUpdateCard extends ConsumerWidget {
                         .read(appUpdateProvider.notifier)
                         .openReleasesPage();
                   },
-                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  icon: const Icon(
+                    Icons.open_in_new_rounded,
+                    size: AppIconSize.dense,
+                  ),
                   label: Text(
                     l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
                   ),
@@ -210,22 +213,20 @@ class _RefreshButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final busy = status == AppUpdateStatus.downloading ||
+    final busy =
+        status == AppUpdateStatus.downloading ||
         status == AppUpdateStatus.cancelling ||
         status == AppUpdateStatus.installing;
 
     if (status == AppUpdateStatus.checking) {
       return const Padding(
-        padding: EdgeInsets.all(12),
-        child: SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
+        padding: EdgeInsets.all(AppSpacing.s12),
+        child: InlineSpinner(size: AppIconSize.medium),
       );
     }
 
-    final showRefresh = status == AppUpdateStatus.available ||
+    final showRefresh =
+        status == AppUpdateStatus.available ||
         status == AppUpdateStatus.readyToInstall;
     if (!showRefresh) return const SizedBox.shrink();
 
@@ -242,9 +243,7 @@ class _RefreshButton extends ConsumerWidget {
         tooltip: l10n?.checkForUpdates ?? 'Check for updates',
         icon: Icon(
           Icons.refresh_rounded,
-          color: busy
-              ? context.colors.onSurface.withValues(alpha: 0.3)
-              : context.colors.primary,
+          color: busy ? context.faintInk : context.colors.primary,
         ),
       ),
     );
@@ -351,19 +350,19 @@ class _ReleaseNotesPreview extends StatelessWidget {
         Text(
           header,
           style: context.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+            fontWeight: AppTypography.bold,
             color: context.colors.primary,
           ),
         ),
         if (release.body.trim().isNotEmpty) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.s4),
           Text(
             l10n?.releaseNotes ?? "What's new",
             style: context.textTheme.labelSmall?.copyWith(
-              color: context.colors.onSurface.withValues(alpha: 0.6),
+              color: context.secondaryInk,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.s2),
           Text(
             release.body.trim(),
             maxLines: 4,
@@ -395,13 +394,13 @@ class _DownloadProgress extends StatelessWidget {
         LinearProgressIndicator(
           value: determinate ? state.progress.clamp(0, 1) : null,
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.s6),
         Text(
           determinate
               ? l10n?.downloadProgressPercent(percent) ?? '$percent% downloaded'
               : l10n?.downloadingUpdate ?? 'Downloading update…',
           style: context.textTheme.labelSmall?.copyWith(
-            color: context.colors.onSurface.withValues(alpha: 0.7),
+            color: context.secondaryInk,
           ),
         ),
       ],
@@ -445,18 +444,18 @@ class UpdateAvailableDialog extends ConsumerWidget {
                 Text(
                   release.name.isNotEmpty ? release.name : release.version,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.s8),
                 if (release.body.trim().isNotEmpty) ...[
                   Text(
                     l10n?.releaseNotes ?? "What's new",
                     style: Theme.of(context).textTheme.labelSmall,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.s4),
                   Text(release.body.trim()),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.s8),
                 ],
               ],
               switch (state.status) {
@@ -563,8 +562,7 @@ bool _showsReleaseDetails(AppUpdateStatus status) {
 /// Keeps the build visible (`0.5.0+3` -> `0.5.0 (3)`): a same-name
 /// rebuild is a legitimate update, so announcing only "0.5.0" would
 /// claim a version the user is already running.
-String _displayName(String version) =>
-    AppUpdateService.displayVersion(version);
+String _displayName(String version) => AppUpdateService.displayVersion(version);
 
 String _subtitle(
   AppLocalizations? l10n,
@@ -615,11 +613,7 @@ Future<void> _reportError(BuildContext context, WidgetRef ref) async {
   if (state.status == AppUpdateStatus.error &&
       state.errorMessage != null &&
       context.mounted) {
-    showAppMessage(
-      context,
-      state.errorMessage!,
-      kind: AppMessageKind.error,
-    );
+    showAppMessage(context, state.errorMessage!, kind: AppMessageKind.error);
   }
 }
 

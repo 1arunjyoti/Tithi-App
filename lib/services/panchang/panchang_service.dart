@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:jyotish/jyotish.dart';
+import '../../features/panchang/domain/festival_search_start.dart';
 import '../../features/panchang/domain/panchang_crossings.dart';
 import '../../features/panchang/domain/panchang_day.dart';
 import '../../features/panchang/domain/panchang_day_projection.dart';
@@ -13,6 +14,7 @@ import '../moon_events_service.dart';
 import '../panchang_init/panchang_init.dart';
 import '../solar_events_service.dart';
 import '../../core/location/location_defaults.dart';
+import '../../core/perf/startup_timeline.dart';
 import 'ephemeris/panchang_ephemeris.dart';
 
 /// Native (mobile/desktop) implementation of PanchangService
@@ -31,7 +33,6 @@ class PanchangService {
   final PanchangSchool school;
 
   final PanchangEphemeris _ephemeris;
-
 
   bool _isInitialized = false;
   late String _ephePath;
@@ -66,7 +67,10 @@ class PanchangService {
   }
 
   Future<void> init() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      StartupTimeline.mark('panchang-init', {'cached': true});
+      return;
+    }
 
     try {
       // Copy ephemeris files and initialize
@@ -74,6 +78,7 @@ class PanchangService {
 
       // Initialize Jyotish/SwissEph with the path
       await Jyotish().initialize(ephemerisPath: _ephePath);
+      StartupTimeline.mark('ephe-engine');
 
       // A missing or truncated file does not make Swiss Ephemeris fail: it
       // silently falls back to Moshier. Check the range the library actually
@@ -81,6 +86,7 @@ class PanchangService {
       if (kNativeEnginePlatforms.contains(defaultTargetPlatform)) {
         ensureEphemerisRangeInstalled(await Jyotish().probeDataRange());
       }
+      StartupTimeline.mark('ephe-range');
 
       // Install the native rise/set calculators after the ephemeris files
       // exist. Both record their own setup error instead of throwing, because
@@ -107,6 +113,7 @@ class PanchangService {
       }
 
       _isInitialized = true;
+      StartupTimeline.mark('panchang-init');
     } catch (e) {
       if (kDebugMode) {
         print("Error initializing PanchangService: $e");
@@ -466,12 +473,24 @@ class PanchangService {
     // and search forward once. 420 (not 380) covers Adhika-stretched gaps:
     // a lunisolar year is ~354d but an intercalary month pushes same-festival
     // gaps toward ~384d, and a Kshaya-skip year can push further.
-    var date = _estimateFestivalSearchStart(baseDate, festival);
-    if (date.isBefore(baseDate)) {
-      date = baseDate;
-    }
+    final baseDay = DateTime(baseDate.year, baseDate.month, baseDate.day);
+    var date = festivalScanStart(baseDate, festival.panchangRules.masa);
+    if (date.isAfter(baseDay)) date = baseDay;
 
-    for (int i = 0; i < 420; i++) {
+    // 420 days from the requested base, not from the (possibly earlier) hint:
+    // pre-base days only build a vriddhi run and must not eat the search budget.
+    final scanEnd = baseDay.add(const Duration(days: 420));
+    while (!date.isAfter(scanEnd)) {
+      // A month hint may start before the requested window (e.g. the 2025
+      // Pausha hint for a Jan 1 2026 scan). Skip those days without
+      // evaluating them: resolveVriddhiCandidate walks back across the base
+      // date itself when a run straddles it, and nothing before the window
+      // may be returned.
+      if (date.isBefore(baseDay)) {
+        date = date.add(const Duration(days: 1));
+        continue;
+      }
+
       // One canonical day, projected into the same PanchangData the UI grid
       // matches against, so the scan and the grid cannot disagree about a
       // match. The previous inline copy of sunrise/override/dominant/Kshaya
@@ -519,15 +538,10 @@ class PanchangService {
       if (await matchesOn(date)) {
         // Shared pipeline: a Vriddhi run resolves to first/last/both days so
         // countdown, search, export and notifications agree with the UI grid.
-        final baseDateOnly = DateTime(
-          baseDate.year,
-          baseDate.month,
-          baseDate.day,
-        );
         final resolved = await resolveVriddhiCandidate(
           festival: festival,
           candidate: date,
-          baseDate: baseDateOnly,
+          baseDate: baseDay,
           matchesDay: matchesOn,
         );
         if (resolved.occurrence != null) {
@@ -547,46 +561,4 @@ class PanchangService {
     return null;
   }
 
-  DateTime _estimateFestivalSearchStart(DateTime from, Festival festival) {
-    final masa = festival.panchangRules.masa;
-    if (masa.isEmpty || masa == '*') {
-      return from;
-    }
-
-    const approxMonth = {
-      'Chaitra': 3,
-      'Vaishakha': 4,
-      'Jyeshtha': 5,
-      'Ashadha': 6,
-      'Shravana': 7,
-      'Bhadrapada': 8,
-      'Ashwin': 9,
-      'Kartika': 10,
-      'Margashirsha': 11,
-      'Pausha': 12,
-      'Magha': 1,
-      'Phalguna': 2,
-    };
-
-    final targetMonth = approxMonth[masa];
-    if (targetMonth == null) return from;
-
-    // No year rollover here: the 420-day forward scan from [baseDate] finds
-    // next year's occurrence on its own when this year's has truly passed.
-    // Rolling to year+1 when targetMonth < from.month - 1 skipped imminent
-    // occurrences whose real lunar date falls 1-2 months AFTER the crude
-    // Gregorian approximation (e.g. Bhadrapada ~= Aug but Mahalaya 2026 is
-    // Oct 10: on Oct 3 the old code jumped to Aug 2027 and returned the 2027
-    // date, flipping the countdown from 7 days to ~362 days). The estimate
-    // is only a fast-forward optimization, so it must never start AFTER
-    // [from]: an early estimate is clamped up by the caller (safe, just scans
-    // more), a late estimate would skip the very occurrence we want.
-    // SMELL-14: Subtract 45 days from the Gregorian approximation so that
-    // Adhika (intercalary) months — which can shift the real Hindu month ~30
-    // days later than the heuristic estimates — are still covered by the
-    // caller’s 420-day forward search window.  The caller clamps the result
-    // back to [baseDate] if it falls in the past.
-    final estimate = DateTime(from.year, targetMonth);
-    return estimate.subtract(const Duration(days: 45));
-  }
 }

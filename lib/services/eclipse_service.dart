@@ -36,9 +36,7 @@ class EclipseService {
     var lunarJd = startJd;
     for (int i = 0; i < count ~/ 2 + 1; i++) {
       final lunarResult = SwissEphBindings.withNativeLock(
-        () => _bindings.findNextLunarEclipse(
-          startJulianDay: lunarJd,
-        ),
+        () => _bindings.findNextLunarEclipse(startJulianDay: lunarJd),
       );
 
       if (lunarResult != null) {
@@ -58,9 +56,7 @@ class EclipseService {
     var solarJd = startJd;
     for (int i = 0; i < count ~/ 2 + 1; i++) {
       final solarResult = SwissEphBindings.withNativeLock(
-        () => _bindings.findNextSolarEclipseGlobal(
-          startJulianDay: solarJd,
-        ),
+        () => _bindings.findNextSolarEclipseGlobal(startJulianDay: solarJd),
       );
 
       if (solarResult != null) {
@@ -292,7 +288,8 @@ class EclipseService {
   /// Convert DateTime to Julian Day
   double _dateTimeToJulianDay(DateTime dt) {
     final utc = dt.toUtc();
-    final hour = utc.hour +
+    final hour =
+        utc.hour +
         utc.minute / 60.0 +
         utc.second / 3600.0 +
         utc.millisecond / 3600000.0 +
@@ -307,6 +304,5 @@ class EclipseService {
     );
   }
 
-  T _native<T>(T Function() action) =>
-      SwissEphBindings.withNativeLock(action);
+  T _native<T>(T Function() action) => SwissEphBindings.withNativeLock(action);
 }

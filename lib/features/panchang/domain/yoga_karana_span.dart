@@ -26,7 +26,7 @@ typedef YogaKaranaSpan = ({
 Future<YogaKaranaSpan?> resolveYogaKaranaSpan({
   required DateTime sunrise,
   required Future<({double sun, double moon})?> Function(DateTime instant)
-      longitudesAt,
+  longitudesAt,
   Duration yogaStep = const Duration(hours: 2),
   Duration karanaStep = const Duration(hours: 1),
   Duration tolerance = const Duration(seconds: 1),
@@ -81,7 +81,7 @@ Future<DateTime?> _spanEnd({
   required Duration step,
   required double Function(({double sun, double moon}) longitudes) value,
   required Future<({double sun, double moon})?> Function(DateTime instant)
-      longitudesAt,
+  longitudesAt,
   required Duration tolerance,
 }) async {
   var inner = sunrise;

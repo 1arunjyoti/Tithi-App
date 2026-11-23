@@ -1,5 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'dart:math' as math;
+
+import 'package:cupertino_ui/cupertino_ui.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'
+    show GlobalWidgetsLocalizations;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
@@ -8,10 +12,11 @@ import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
-import 'package:tithi/providers/moon_phase_provider.dart';
+import 'package:tithi/features/moon/providers/moon_providers.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/screens/moon_phases_screen.dart';
 import 'package:tithi/services/moon_phase_service.dart';
+import 'package:tithi/theme/app_theme.dart';
 
 PanchangData mockDayPanchang(DateTime date) {
   return PanchangData(
@@ -33,7 +38,9 @@ class FakeAccessibilityNotifier extends AccessibilityNotifier {
   AccessibilityState build() => const AccessibilityState();
 }
 
-({Widget widget, ProviderContainer container}) moonTestScreen() {
+({Widget widget, ProviderContainer container, DateTime now}) moonTestScreen({
+  ThemeData? theme,
+}) {
   final now = DateTime.now();
   final container = ProviderContainer(
     overrides: [
@@ -62,18 +69,19 @@ class FakeAccessibilityNotifier extends AccessibilityNotifier {
   );
   final widget = UncontrolledProviderScope(
     container: container,
-    child: const MaterialApp(
-      localizationsDelegates: [
+    child: MaterialApp(
+      theme: theme,
+      localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      home: MoonPhasesScreen(),
+      home: const MoonPhasesScreen(),
     ),
   );
-  return (widget: widget, container: container);
+  return (widget: widget, container: container, now: now);
 }
 
 void main() {
@@ -197,5 +205,73 @@ void main() {
       // Assert
       expect(find.text('Today'), findsOneWidget);
     });
+  });
+
+  group('Upcoming dates list legibility', () {
+    double channel(double c) =>
+        c <= 0.03928 ? c / 12.92 : math.pow((c + 0.055) / 1.055, 2.4) as double;
+
+    double luminance(Color color) =>
+        0.2126 * channel(color.r) +
+        0.7152 * channel(color.g) +
+        0.0722 * channel(color.b);
+
+    double contrastRatio(Color a, Color b) {
+      final la = luminance(a) + 0.05;
+      final lb = luminance(b) + 0.05;
+      return la > lb ? la / lb : lb / la;
+    }
+
+    final themes = <String, ThemeData>{
+      'Shukla': AppTheme.shuklaTheme,
+      'Krishna': AppTheme.krishnaTheme,
+      'Pure Dark': AppTheme.pureDarkTheme,
+    };
+
+    for (final entry in themes.entries) {
+      testWidgets('${entry.key}: row date line and time clear contrast', (
+        tester,
+      ) async {
+        // Arrange: real palette, so the tertiary ink that `bodyMedium` resolves
+        // to is what the row actually paints with. The default 800x600 test
+        // surface is shorter than the hero + countdown cards, which would
+        // leave the list zero-height and unbuilt.
+        tester.view.physicalSize = const Size(500, 1400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        final harness = moonTestScreen(theme: entry.value);
+        addTearDown(harness.container.dispose);
+        await tester.pumpWidget(harness.widget);
+        await tester.pump(const Duration(milliseconds: 200));
+        // Second frame: the tab lists resolve after the two async providers.
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final along = harness.now.add(const Duration(days: 7));
+        final dateText = tester.widget<Text>(
+          find.text(DateFormat.yMMMMEEEEd().format(along)),
+        );
+        final timeText = tester.widget<Text>(
+          find.text(DateFormat.jm().format(along)),
+        );
+        final page = entry.value.scaffoldBackgroundColor;
+
+        // Assert: the date is full ink and semibold; the time is a composited
+        // secondary (translucent ink must be blended before measuring).
+        final dateInk = dateText.style!.color!;
+        final timeInk = Color.alphaBlend(timeText.style!.color!, page);
+        expect(dateInk.a, 1.0, reason: '${entry.key} date is not translucent');
+        expect(
+          contrastRatio(dateInk, page),
+          greaterThanOrEqualTo(7.0),
+          reason: '${entry.key} date line must read as primary text',
+        );
+        expect(
+          contrastRatio(timeInk, page),
+          greaterThanOrEqualTo(4.5),
+          reason: '${entry.key} time line must clear body-text contrast',
+        );
+        expect(dateText.style!.fontWeight, FontWeight.w600);
+      });
+    }
   });
 }

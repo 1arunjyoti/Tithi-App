@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -115,8 +116,9 @@ Future<int> purgeOldUpdateApks({String? keepPath}) async {
   }
 }
 
-const MethodChannel _installerChannel =
-    MethodChannel('app.tithi.pro/app_update');
+const MethodChannel _installerChannel = MethodChannel(
+  'app.tithi.pro/app_update',
+);
 
 /// Hands a downloaded `.apk` to the Android package installer.
 ///
@@ -138,8 +140,9 @@ Future<void> installDownloadedApk(String path) async {
 /// "Installer is unavailable" error instead.
 Future<bool> queryCanRequestInstalls() async {
   try {
-    final result =
-        await _installerChannel.invokeMethod<bool>('canRequestInstalls');
+    final result = await _installerChannel.invokeMethod<bool>(
+      'canRequestInstalls',
+    );
     return result ?? true;
   } on MissingPluginException {
     return true;
@@ -149,4 +152,24 @@ Future<bool> queryCanRequestInstalls() async {
 /// Opens the system "install unknown apps" settings for this app.
 Future<void> openUnknownAppsSettings() async {
   await _installerChannel.invokeMethod<bool>('openInstallPermissionSettings');
+}
+
+/// The device's supported ABIs (`Build.SUPPORTED_ABIS`), primary first.
+///
+/// Release builds publish one APK per ABI, and installing the arm64 build on
+/// an x86_64 device fails with `INSTALL_FAILED_NO_MATCHING_ABIS`. An empty
+/// list means "unknown" (non-Android, tests, missing handler), and callers
+/// fall back to the first published APK as before.
+Future<List<String>> querySupportedAbis() async {
+  if (defaultTargetPlatform != TargetPlatform.android) return const [];
+  try {
+    final abis = await _installerChannel.invokeListMethod<String>(
+      'supportedAbis',
+    );
+    return abis ?? const [];
+  } on MissingPluginException {
+    return const [];
+  } on PlatformException {
+    return const [];
+  }
 }

@@ -1,9 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../models/eclipse.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/app_divider.dart';
 import '../../../features/sheets/widgets/info_row.dart';
 
 /// Presents the eclipse details bottom sheet.
@@ -20,9 +23,11 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
     builder: (context) => Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.card),
+        ),
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.s24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,30 +39,33 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
               height: 4,
               decoration: BoxDecoration(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(AppRadius.micro),
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
 
           // Title
           Row(
             children: [
-              Text(eclipse.type.icon, style: const TextStyle(fontSize: 32)),
-              const SizedBox(width: 12),
+              Text(
+                eclipse.type.icon,
+                style: const TextStyle(fontSize: AppTypography.sizeHero),
+              ),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Text(
                   isHindi
                       ? eclipse.type.displayNameHi
                       : eclipse.type.displayName,
                   style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: AppTypography.bold,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
 
           // Date and time
           buildInfoRow(
@@ -67,7 +75,7 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
             DateFormat.yMMMMEEEEd().format(eclipse.maxEclipseTime.toLocal()),
             dense: true,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.s12),
           buildInfoRow(
             context,
             Icons.access_time,
@@ -78,7 +86,7 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
 
           // Phase times
           if (eclipse.partialStart != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             buildInfoRow(
               context,
               Icons.play_arrow,
@@ -88,7 +96,7 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
             ),
           ],
           if (eclipse.totalStart != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             buildInfoRow(
               context,
               Icons.brightness_7,
@@ -98,7 +106,7 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
             ),
           ],
           if (eclipse.totalEnd != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             buildInfoRow(
               context,
               Icons.brightness_5,
@@ -108,7 +116,7 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
             ),
           ],
           if (eclipse.partialEnd != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.s12),
             buildInfoRow(
               context,
               Icons.stop,
@@ -120,9 +128,9 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
 
           // Duration
           if (eclipse.totalDuration != null) ...[
-            const SizedBox(height: 16),
-            Divider(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.s16),
+            const AppDivider(),
+            const SizedBox(height: AppSpacing.s16),
             buildInfoRow(
               context,
               Icons.timer,
@@ -133,9 +141,9 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
           ],
 
           // Visibility
-          const SizedBox(height: 16),
-          Divider(color: theme.colorScheme.onSurface.withValues(alpha: 0.1)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.s16),
+          const AppDivider(),
+          const SizedBox(height: AppSpacing.s16),
           Row(
             children: [
               Icon(
@@ -144,9 +152,9 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
                     : Icons.visibility_off,
                 color: eclipse.visibleAtLocation
                     ? AppTheme.success(theme.brightness == Brightness.dark)
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    : context.hintInk,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.s12),
               Expanded(
                 child: Text(
                   eclipse.visibleAtLocation
@@ -155,15 +163,15 @@ void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: eclipse.visibleAtLocation
                         ? AppTheme.success(theme.brightness == Brightness.dark)
-                        : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontWeight: FontWeight.w500,
+                        : context.hintInk,
+                    fontWeight: AppTypography.medium,
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.s24),
         ],
       ),
     ),

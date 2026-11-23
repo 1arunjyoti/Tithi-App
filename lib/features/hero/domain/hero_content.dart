@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
+import '../../../core/format/festival_labels.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../models/festival.dart';
 import '../../../models/festival_region.dart';
@@ -10,7 +11,8 @@ import '../../../services/moon_phase_service.dart';
 import '../../../utils/tithi_localization.dart';
 import '../../sheets/domain/sheet_labels.dart';
 
-// Hero view-model extracted from widgets/paksha_hero_card.dart (_HeroBody).
+// Hero view-model extracted from the former widgets/paksha_hero_card.dart
+// monolith (HeroBody).
 // Pure data: every string, chip spec, and artwork descriptor the hero
 // renders, computed from (panchang, l10n, calendar settings, Bengali date).
 // No BuildContext — unit-testable without widgets.
@@ -106,6 +108,7 @@ class HeroContent {
 List<HeroArtwork> heroArtworks(
   PanchangData panchang, {
   FestivalRegion region = FestivalRegion.all,
+  String locale = 'en',
 }) {
   if (panchang.festivals.isEmpty) return const [];
   // Priority first (callers may hand over an unsorted list), then region
@@ -119,7 +122,10 @@ List<HeroArtwork> heroArtworks(
   for (final festival in ranked) {
     final source = festival.visuals.image.trim();
     if (source.isEmpty || !seen.add(source)) continue;
-    artworks.add((source: source, label: festival.name));
+    artworks.add((
+      source: source,
+      label: festivalDisplayName(festival: festival, locale: locale),
+    ));
   }
   return artworks;
 }
@@ -140,6 +146,7 @@ HeroContent heroContentData({
   required bool useBengaliScript,
   required bool isToday,
   FestivalRegion region = FestivalRegion.all,
+  String locale = 'en',
 }) {
   final isShukla = panchang.isShukla;
 
@@ -279,6 +286,6 @@ HeroContent heroContentData({
     title: title,
     subLabel: subLabel,
     chips: chips,
-    artworks: heroArtworks(panchang, region: region),
+    artworks: heroArtworks(panchang, region: region, locale: locale),
   );
 }

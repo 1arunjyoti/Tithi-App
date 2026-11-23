@@ -27,15 +27,17 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       rituals: fields[7] as Rituals,
       media: fields[8] as Media,
       displayPriority: fields[9] as int?,
-      regions:
-          fields[10] == null ? ['all'] : (fields[10] as List).cast<String>(),
+      regions: fields[10] == null
+          ? ['all']
+          : (fields[10] as List).cast<String>(),
+      featuredFlag: fields[11] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Festival obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -57,7 +59,9 @@ class FestivalAdapter extends TypeAdapter<Festival> {
       ..writeByte(9)
       ..write(obj.displayPriority)
       ..writeByte(10)
-      ..write(obj.regions);
+      ..write(obj.regions)
+      ..writeByte(11)
+      ..write(obj.featuredFlag);
   }
 
   @override
@@ -136,10 +140,7 @@ class VisualsAdapter extends TypeAdapter<Visuals> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Visuals(
-      image: fields[0] as String,
-      themeColor: fields[1] as String,
-    );
+    return Visuals(image: fields[0] as String, themeColor: fields[1] as String);
   }
 
   @override
@@ -329,9 +330,7 @@ class MediaAdapter extends TypeAdapter<Media> {
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Media(
-      audioStotra: fields[0] as String,
-    );
+    return Media(audioStotra: fields[0] as String);
   }
 
   @override

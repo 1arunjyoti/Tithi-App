@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#ffffff</color>
+    <!-- Splash colour, kept equal to `AppTheme.splashBackgroundLight` (night
+         variant in values-night/colors.xml). Do NOT reference this from a v31
+         LaunchTheme: MIUI 13 cannot resolve an app colour resource in the
+         pre-process starting window and paints its own fallback (white in light
+         mode, magenta in dark mode). The v31 themes use a literal
+         `windowSplashScreenBackground` instead; this resource is retained only
+         so the colour has a single named definition. -->
+    <color name="splash_background">#F5F5F7</color>
 </resources>

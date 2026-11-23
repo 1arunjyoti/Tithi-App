@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
 
 /// Inauspicious day-window slot kinds, each with its timeline color.
 /// Yamaganda follows onSurface so the slot stays legible in dark themes;
@@ -38,7 +40,8 @@ class DiagonalStripesPainter extends CustomPainter {
 /// (striped red Rahu, dark Yamaganda, green Gulika), and one legend row per
 /// slot (dot + name + right-aligned "8:27 – 9:59 AM" range).
 class InauspiciousCard extends StatelessWidget {
-  const InauspiciousCard({super.key, 
+  const InauspiciousCard({
+    super.key,
     required this.axisStart,
     required this.axisMid,
     required this.axisEnd,
@@ -55,7 +58,7 @@ class InauspiciousCard extends StatelessWidget {
   final int rahuSegment;
   final int yamagandaSegment;
   final int gulikaSegment;
-  final List<({ WindowKind kind, String name, String time })> rows;
+  final List<({WindowKind kind, String name, String time})> rows;
   final bool highContrast;
 
   static const _rahuColor = Color(0xFFD32F2F);
@@ -81,7 +84,7 @@ class InauspiciousCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final neutral = context.colors.onSurface.withValues(alpha: 0.1);
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(AppSpacing.s18),
       decoration: AppTheme.sheetCardDecoration(
         context,
         highContrast: highContrast,
@@ -96,42 +99,44 @@ class InauspiciousCard extends StatelessWidget {
               Text(
                 axisStart,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  fontSize: AppTypography.sizeCaption,
+                  color: context.secondaryInk,
                 ),
               ),
               Text(
                 axisMid,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  fontSize: AppTypography.sizeCaption,
+                  color: context.secondaryInk,
                 ),
               ),
               Text(
                 axisEnd,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: context.colors.onSurface.withValues(alpha: 0.6),
+                  fontSize: AppTypography.sizeCaption,
+                  color: context.secondaryInk,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.s8),
           Row(
             children: [
               for (var i = 1; i <= 8; i++)
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(right: i < 8 ? 6 : 0),
+                    padding: EdgeInsets.only(right: i < 8 ? AppSpacing.s6 : 0),
                     child: _slot(i, neutral, context),
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.s14),
           for (var j = 0; j < rows.length; j++)
             Padding(
-              padding: EdgeInsets.only(bottom: j < rows.length - 1 ? 12 : 0),
+              padding: EdgeInsets.only(
+                bottom: j < rows.length - 1 ? AppSpacing.s12 : 0,
+              ),
               child: Row(
                 children: [
                   Container(
@@ -139,15 +144,15 @@ class InauspiciousCard extends StatelessWidget {
                     height: 10,
                     decoration: BoxDecoration(
                       color: _slotColor(rows[j].kind, context),
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(AppRadius.micro),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.s10),
                   Text(
                     rows[j].name,
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                      fontSize: AppTypography.sizeProse,
+                      fontWeight: AppTypography.medium,
                       color: context.colors.onSurface,
                     ),
                   ),
@@ -155,8 +160,8 @@ class InauspiciousCard extends StatelessWidget {
                   Text(
                     rows[j].time,
                     style: TextStyle(
-                      fontSize: 14,
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
+                      fontSize: AppTypography.sizeBody,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],
@@ -174,14 +179,12 @@ class InauspiciousCard extends StatelessWidget {
       height: 36,
       decoration: BoxDecoration(
         color: base,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
       ),
       clipBehavior: Clip.antiAlias,
       child: kind == WindowKind.rahu
           ? const CustomPaint(
-              painter: DiagonalStripesPainter(
-                color: _rahuStripeColor,
-              ),
+              painter: DiagonalStripesPainter(color: _rahuStripeColor),
             )
           : null,
     );

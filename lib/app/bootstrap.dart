@@ -1,9 +1,10 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 // `latest_all` (not `latest`) because place lookups can return any of the
 // 419 zone identifiers in the timezone boundary data; 106 of them are absent
@@ -14,9 +15,11 @@ import 'tile_orphan.dart';
 
 import '../core/location/timezone_resolver.dart';
 import '../core/storage/hive_adapters.dart';
+import '../platform/platform_init.dart';
 import '../providers/version_provider.dart' as version_warmup;
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
+import '../theme/app_theme.dart';
 import '../utils/tithi_localization.dart';
 
 /// Phase-1 app startup pipeline extracted from `main.dart`.
@@ -31,11 +34,19 @@ class AppBootstrap {
   /// `WidgetsFlutterBinding.ensureInitialized`.
   Future<void> initSystem() async {
     await initializeLocalizedDateFormatting();
+    // Android 15+ enforces edge-to-edge, but below that the Flutter engine only
+    // lays the view out behind the system bars once Dart opts in. Ask for it
+    // explicitly so the page background reaches the gesture / 3-button area on
+    // every supported version (`MainActivity` handles API < 29, where the
+    // engine ignores this mode).
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
+    // Transparent bars with no contrast scrim; the launch window uses the
+    // platform brightness, then `MaterialApp` re-applies the theme-aware style.
     SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+      AppTheme.systemUiOverlayStyle(
+        WidgetsBinding.instance.platformDispatcher.platformBrightness,
       ),
     );
   }
@@ -49,32 +60,38 @@ class AppBootstrap {
     return storageService;
   }
 
-  /// Timezone DB (required before any `tz.TZDateTime` scheduling) and the
-  /// place-boundary index (required before the first coordinate lookup).
+  /// Timezone DB, required before the first `tz.TZDateTime` — `TithiApp` builds
+  /// the place clock in `initState`, so this must stay on the critical path.
   ///
-  /// Decoding the boundary index here keeps the first place resolution
-  /// (location init or a pick) off the UI thread's critical path.
+  /// The place-boundary index is *not* decoded here: `warmTimezoneIndex` runs
+  /// it after the first frame so the native window is not held open for it.
   Future<void> initTimezones() async {
     tz_data.initializeTimeZones();
-    await warmPlaceTimezoneIndex();
   }
 
-  /// Version/package metadata warm-up before first drawer animation.
-  Future<void> warmVersionInfo() => version_warmup.warmVersionInfo();
+  /// Decodes the place-boundary index so the first coordinate lookup does not
+  /// pay for it. Post-first-frame: the splash is already painting, and the
+  /// first place resolution only starts from the same post-frame batch.
+  Future<void> warmTimezoneIndex() => warmPlaceTimezoneIndex();
 
-  /// Preloads the app's GoogleFonts families (Poppins, Martel, Noto Sans
-  /// Bengali) so first paint doesn't flash fallback type or shift layout.
-  /// Safe offline (failures swallowed); bounded by timeout so a stalled
-  /// fetch can never hold up startup when awaited in [Future.wait].
-  Future<void> warmFonts() async {
+  /// Android display-mode opt-in (90/120 Hz). Awaited before `runApp` so the
+  /// animated loading splash renders at the high rate from its first frame and
+  /// the refresh-rate switch is hidden behind the static native splash.
+  /// Errors are swallowed inside [initPlatformFeatures].
+  Future<void> initDisplay() => initPlatformFeatures();
+
+  /// Version/package metadata warm-up before first drawer animation.
+  ///
+  /// Best-effort: when the platform channel is unavailable the drawer falls
+  /// back to its placeholder version, which must not cost the user the app.
+  /// Self-swallowing, so a failed channel can never surface as a startup error.
+  /// Started post-first-frame (see `main`): it only improves the drawer, and
+  /// awaiting it here used to hold `runApp` for a platform round trip.
+  Future<void> warmVersionInfo() async {
     try {
-      GoogleFonts.poppins();
-      GoogleFonts.poppinsTextTheme();
-      GoogleFonts.martel();
-      GoogleFonts.notoSansBengali();
-      await GoogleFonts.pendingFonts().timeout(const Duration(seconds: 8));
-    } catch (_) {
-      // Offline or store unavailable: runtime fallback type applies.
+      await version_warmup.warmVersionInfo();
+    } catch (error) {
+      debugPrint('Version warm-up failed (non-fatal): $error');
     }
   }
 
@@ -116,5 +133,3 @@ class AppBootstrap {
     await NotificationService().initWorkManager();
   }
 }
-
-

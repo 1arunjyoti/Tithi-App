@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
 
-// Canonical drag handle extracted from widgets/tithi_detail_sheet.dart
+// Canonical drag handle extracted from the former
+// widgets/tithi_detail_sheet.dart monolith
 // (finalized design). The taller transparent zone makes the framework
 // drag-to-dismiss target easier to grab; visuals unchanged (pill stays
 // centered).
@@ -23,7 +25,7 @@ class SheetDragHandle extends StatelessWidget {
           color: highContrast
               ? context.colors.onSurface.withValues(alpha: 0.35)
               : AppTheme.heroForeground(context).withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(2),
+          borderRadius: BorderRadius.circular(AppRadius.micro),
         ),
       ),
     );

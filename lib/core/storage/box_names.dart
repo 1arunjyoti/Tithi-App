@@ -11,5 +11,6 @@ abstract final class BoxNames {
   static const String sankalpas = 'sankalpas';
   static const String festivalSettings = 'festival_settings';
   static const String festivals = 'festivals';
+  static const String festivalOccurrences = 'festival_occurrences';
   static const String panchangCache = 'panchang_cache';
 }

@@ -189,8 +189,7 @@ class BengaliCalendarService {
     // [month.index] can differ from the noon's rashi: on the sankranti civil
     // day the Sun is already in the new sign while the Bengal rule still puts
     // the day in the outgoing month (see `_resolveMonthStart`).
-    final int bengaliYear =
-        month.start.year - (month.index <= 8 ? 593 : 594);
+    final int bengaliYear = month.start.year - (month.index <= 8 ? 593 : 594);
 
     final result = (
       day: day,

@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
+import '../../../theme/app_metrics.dart';
 
-// Right-side festival artwork for the hero moon row. Moved verbatim from
-// widgets/paksha_hero_card.dart (_HeroFestivalImage).
+// Right-side festival artwork for the hero moon row. Moved verbatim from the
+// former widgets/paksha_hero_card.dart monolith (_HeroFestivalImage).
 //
 // Handles asset paths and network URLs. Shows a translucent placeholder
 // while a network image loads, and collapses to nothing if the image fails
@@ -94,6 +95,7 @@ class _HeroFestivalImageState extends State<HeroFestivalImage> {
         widget.source,
         cacheWidth: cacheWidth,
         fit: BoxFit.cover,
+        semanticLabel: widget.semanticsLabel,
         errorBuilder: (context, _, _) {
           _markFailed();
           return const SizedBox.shrink();
@@ -101,7 +103,7 @@ class _HeroFestivalImageState extends State<HeroFestivalImage> {
       );
     }
 
-    const radius = BorderRadius.all(Radius.circular(24));
+    const radius = BorderRadius.all(Radius.circular(AppRadius.card));
     Widget framed = SizedBox(
       width: widget.width,
       height: widget.width * 1.2,

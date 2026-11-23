@@ -11,8 +11,8 @@ import '../../../services/bengali_calendar_service.dart';
 import '../../../services/hindu_calendar_service.dart';
 import '../../../utils/tithi_localization.dart';
 
-// Phase 5a: tithi-sheet providers extracted from
-// widgets/tithi_detail_sheet.dart. Names unchanged; the widget re-exports.
+// Phase 5a: tithi-sheet providers. Names unchanged from the former
+// widgets/tithi_detail_sheet.dart monolith; the sheet imports them directly.
 
 /// Bengali date for the sheet header. Only resolves when Bengali is the
 /// primary calendar; null otherwise (and on failure) — same guarded pattern
@@ -65,7 +65,8 @@ final bengaliInstantLabelProvider = FutureProvider.autoDispose
         final b = await ref
             .watch(bengaliCalendarServiceProvider)
             .calculateDate(instant);
-        final useBn = resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
+        final useBn =
+            resolveAppLocale(ref.watch(localeProvider)).languageCode == 'bn';
         if (useBn) {
           final idx = bengaliMonthIndexOf(b.month);
           final monthBn = idx >= 0 ? kBengaliMonthsBn[idx] : b.month;

@@ -26,6 +26,41 @@ class AppLocalizationsEn extends AppLocalizations {
       'First occurrence of each festival in the chosen year';
 
   @override
+  String get exportFestivalsCalendar => 'Add to Google Calendar (.ics)';
+
+  @override
+  String get exportFestivalsCalendarSubtitle =>
+      'Save festival dates as a calendar file you can import';
+
+  @override
+  String get exportJsonYearSheetSubtitle =>
+      'Choose a year. You\'ll then pick where to save the JSON file.';
+
+  @override
+  String get exportCalendarYearSheetSubtitle =>
+      'Choose a year. You\'ll then pick where to save the .ics file for Google Calendar.';
+
+  @override
+  String exportYearAction(String year) {
+    return 'Export $year';
+  }
+
+  @override
+  String festivalCalendarShareSubject(String year) {
+    return 'Tithi festivals $year (Calendar)';
+  }
+
+  @override
+  String festivalCalendarShareText(String year) {
+    return 'Import Tithi festival dates for $year into Google Calendar (.ics)';
+  }
+
+  @override
+  String festivalsExportedToCalendar(int count, String year) {
+    return '$count festivals exported to calendar for $year.';
+  }
+
+  @override
   String get vedaCalendar => 'Vedic Calendar';
 
   @override
@@ -733,22 +768,8 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get weatherDetails => 'Weather Details';
-
-  @override
-  String get weatherDataUnavailable => 'Weather data unavailable';
-
-  @override
   String errorMessage(String error) {
     return 'Error: $error';
-  }
-
-  @override
-  String get weatherDataByOpenMeteo => 'Weather data by Open-Meteo';
-
-  @override
-  String weatherCondition(String condition) {
-    return 'Weather condition: $condition';
   }
 
   @override
@@ -762,21 +783,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get moonset => 'Moonset';
-
-  @override
-  String get humidity => 'Humidity';
-
-  @override
-  String get wind => 'Wind';
-
-  @override
-  String get realFeel => 'Real Feel';
-
-  @override
-  String get uvIndex => 'UV Index';
-
-  @override
-  String get forecast => 'Forecast';
 
   @override
   String daylightDuration(int hours, int minutes) {
@@ -880,6 +886,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allFestivals => 'All Festivals';
 
   @override
+  String get previousYear => 'Previous year';
+
+  @override
+  String get nextYear => 'Next year';
+
+  @override
+  String get navToday => 'Today';
+
+  @override
+  String get navFestivals => 'Festivals';
+
+  @override
+  String get navCountdowns => 'Countdowns';
+
+  @override
   String get festivalFilterAll => 'All';
 
   @override
@@ -890,6 +911,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get festivalFilterRecurring => 'Recurring';
+
+  @override
+  String get festivalFilterFeatured => 'Featured';
 
   @override
   String get festivalFilterTitle => 'Filter festivals';
@@ -905,6 +929,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get searchFestivalsHint => 'Search festivals';
+
+  @override
+  String get closeFestivalSearch => 'Close search';
 
   @override
   String get couldNotLoadFestivals =>
@@ -1585,11 +1612,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get krishnaPakshaInitial => 'K';
-
-  @override
-  String windSpeedKph(double speed) {
-    return '$speed kph';
-  }
 
   @override
   String get tithiDisplayThirtyDays => '30 Days';

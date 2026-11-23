@@ -1,9 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/locale_provider.dart';
+import '../../../services/notification_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_typography.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class LanguageSetting extends ConsumerWidget {
@@ -25,7 +27,7 @@ class LanguageSetting extends ConsumerWidget {
         currentName,
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () => _showLanguagePicker(context, ref),
@@ -46,6 +48,8 @@ class LanguageSetting extends ConsumerWidget {
           isSelected: currentLocale == null,
           onTap: () async {
             await ref.read(localeProvider.notifier).clearLocale();
+            // Scheduled notifications already carry the old-language title.
+            await NotificationService().rescheduleAfterLanguageChange();
             if (context.mounted) Navigator.pop(context);
           },
         ),
@@ -60,6 +64,7 @@ class LanguageSetting extends ConsumerWidget {
               await ref
                   .read(localeProvider.notifier)
                   .setLocale(supported.locale);
+              await NotificationService().rescheduleAfterLanguageChange();
               if (context.mounted) Navigator.pop(context);
             },
           );
@@ -85,7 +90,7 @@ class StartOfWeekSetting extends ConsumerWidget {
             : (l10n?.monday ?? 'Monday'),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () async {
@@ -118,7 +123,7 @@ class PrimaryViewSetting extends ConsumerWidget {
             : (l10n?.moon ?? 'Moon'),
         style: context.textTheme.bodyMedium?.copyWith(
           color: context.colors.primary,
-          fontWeight: FontWeight.bold,
+          fontWeight: AppTypography.bold,
         ),
       ),
       onTap: () {
@@ -131,4 +136,3 @@ class PrimaryViewSetting extends ConsumerWidget {
     );
   }
 }
-

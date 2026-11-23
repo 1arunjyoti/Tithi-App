@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,8 +13,8 @@ import 'package:tithi/providers/calendar_provider.dart';
 import 'package:tithi/providers/location_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/storage_service.dart';
-import 'package:tithi/widgets/paksha_hero_card.dart';
-import 'package:tithi/widgets/tithi_detail_sheet.dart';
+import 'package:tithi/features/hero/widgets/paksha_hero_card.dart';
+import 'package:tithi/features/tithi_sheet/widgets/tithi_detail_sheet.dart';
 
 /// Records the names of pushed routes so a tap can be asserted to drill into
 /// the picker rather than open the card's detail sheet.

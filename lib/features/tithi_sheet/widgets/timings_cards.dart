@@ -1,13 +1,21 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/app_localizations_en.dart';
 import '../../../theme/app_theme.dart';
+import '../../../theme/app_metrics.dart';
+import '../../../theme/app_typography.dart';
+import '../../../widgets/skeleton.dart';
 
 /// Side-by-side Begins/Ends card with a center divider. Null values render
 /// a spinner (loading state).
 class TimingsCard extends StatelessWidget {
-  const TimingsCard({super.key, this.begins, this.ends, required this.highContrast});
+  const TimingsCard({
+    super.key,
+    this.begins,
+    this.ends,
+    required this.highContrast,
+  });
 
   final String? begins;
   final String? ends;
@@ -27,39 +35,39 @@ class TimingsCard extends StatelessWidget {
       return Expanded(
         child: Container(
           color: Theme.of(context).cardTheme.color ?? context.colors.surface,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
-                  Icon(icon, size: 16, color: context.colors.primary),
-                  const SizedBox(width: 6),
+                  Icon(
+                    icon,
+                    size: AppIconSize.small,
+                    color: context.colors.primary,
+                  ),
+                  const SizedBox(width: AppSpacing.s6),
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: AppTypography.sizeMicro,
                       letterSpacing: 1.0,
-                      fontWeight: FontWeight.w600,
-                      color: context.colors.onSurface.withValues(alpha: 0.6),
+                      fontWeight: AppTypography.semibold,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.s6),
               if (value == null)
-                const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                const InlineSpinner(size: AppIconSize.medium)
               else
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: AppTypography.sizeSubtitle,
+                    fontWeight: AppTypography.bold,
                     color: context.colors.onSurface,
                   ),
                 ),
@@ -105,7 +113,8 @@ class TimingsCard extends StatelessWidget {
 /// Tinted transition card: orange label row, bold primary headline, dim
 /// subline. Null strings render a spinner (loading state).
 class TransitionCard extends StatelessWidget {
-  const TransitionCard({super.key, 
+  const TransitionCard({
+    super.key,
     this.headline,
     this.subline,
     required this.highContrast,
@@ -120,54 +129,52 @@ class TransitionCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context) ?? AppLocalizationsEn();
     final primary = context.colors.primary;
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.s14),
       decoration: BoxDecoration(
         color: primary.withValues(alpha: highContrast ? 0.15 : 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.tile),
         border: Border.all(color: primary.withValues(alpha: 0.35)),
       ),
       child: (headline == null)
-          ? const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
+          ? const Center(child: InlineSpinner(size: AppIconSize.medium))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.swap_horiz, size: 16, color: primary),
-                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.swap_horiz,
+                      size: AppIconSize.small,
+                      color: primary,
+                    ),
+                    const SizedBox(width: AppSpacing.s6),
                     Text(
                       l10n.transition,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: AppTypography.sizeFootnote,
                         letterSpacing: 1.5,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: AppTypography.semibold,
                         color: primary,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.s6),
                 Text(
                   headline!,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
+                    fontSize: AppTypography.sizeProse,
+                    fontWeight: AppTypography.bold,
                     color: primary,
                   ),
                 ),
                 if (subline != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSpacing.s2),
                   Text(
                     subline!,
                     style: TextStyle(
-                      fontSize: 13,
-                      color: context.colors.onSurface.withValues(alpha: 0.7),
+                      fontSize: AppTypography.sizeDetail,
+                      color: context.secondaryInk,
                     ),
                   ),
                 ],

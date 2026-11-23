@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/accessibility_provider.dart';
+import '../../../widgets/app_divider.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class AccessibilitySettings extends ConsumerWidget {
@@ -22,7 +23,7 @@ class AccessibilitySettings extends ConsumerWidget {
           value: accessibility.reduceMotion,
           onChanged: (v) async => notifier.toggleReduceMotion(v),
         ),
-        const SettingsDivider(),
+        const AppDivider(),
         SettingsSwitchTile(
           icon: Icons.vibration_rounded,
           title: l10n?.hapticFeedback ?? 'Haptic Feedback',
@@ -30,7 +31,7 @@ class AccessibilitySettings extends ConsumerWidget {
           value: accessibility.hapticFeedback,
           onChanged: (v) async => notifier.toggleHapticFeedback(v),
         ),
-        const SettingsDivider(),
+        const AppDivider(),
         SettingsSwitchTile(
           icon: Icons.contrast_rounded,
           title: l10n?.highContrast ?? 'High Contrast',
@@ -40,7 +41,7 @@ class AccessibilitySettings extends ConsumerWidget {
           value: accessibility.highContrast,
           onChanged: (v) async => notifier.toggleHighContrast(v),
         ),
-        const SettingsDivider(),
+        const AppDivider(),
         SettingsSwitchTile(
           icon: Icons.text_fields_rounded,
           title: l10n?.largeText ?? 'Large Text',
