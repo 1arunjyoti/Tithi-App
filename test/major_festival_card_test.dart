@@ -2,10 +2,13 @@ import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'
+    show GlobalWidgetsLocalizations;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:tithi/l10n/app_localizations.dart';
 import 'package:tithi/l10n/app_localizations_en.dart';
+import 'package:tithi/l10n/fallback_localization_delegates.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/providers/calendar_provider.dart';
@@ -128,7 +131,15 @@ void main() {
         ],
         child: MaterialApp(
           locale: locale,
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          // Match the app's delegates: material_ui's MaterialLocalizations is
+          // a different type from flutter_localizations', so the generated
+          // list cannot localize a non-default locale in widget tests.
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            FallbackMaterialLocalizationsDelegate(),
+            GlobalWidgetsLocalizations.delegate,
+            FallbackCupertinoLocalizationsDelegate(),
+          ],
           supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(

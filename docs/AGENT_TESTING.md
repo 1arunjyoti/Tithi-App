@@ -28,10 +28,6 @@ When you skip a test, report which command you ran instead.
 | Path | Purpose |
 |---|---|
 | `test/flutter_test_config.dart` | Suite-wide config: disables `StartupTimeline` logging. |
-| `test/jyotish_probe.dart` | Shared FFI/ephemeris init for tests that need real positions. |
-| `test/panchang_verification.dart` | Shared assertions for panchang value checks. |
-| `test/verify_dates.dart` | Date-verification helpers. |
-| `test/test_tithi_boundary.dart` | Boundary-case fixtures. |
 
 ## Panchang engine and maths
 

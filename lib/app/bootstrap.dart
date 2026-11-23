@@ -15,6 +15,7 @@ import 'tile_orphan.dart';
 
 import '../core/location/timezone_resolver.dart';
 import '../core/storage/hive_adapters.dart';
+import '../platform/platform_init.dart';
 import '../providers/version_provider.dart' as version_warmup;
 import '../services/notification_service.dart';
 import '../services/storage_service.dart';
@@ -59,22 +60,33 @@ class AppBootstrap {
     return storageService;
   }
 
-  /// Timezone DB (required before any `tz.TZDateTime` scheduling) and the
-  /// place-boundary index (required before the first coordinate lookup).
+  /// Timezone DB, required before the first `tz.TZDateTime` — `TithiApp` builds
+  /// the place clock in `initState`, so this must stay on the critical path.
   ///
-  /// Decoding the boundary index here keeps the first place resolution
-  /// (location init or a pick) off the UI thread's critical path.
+  /// The place-boundary index is *not* decoded here: `warmTimezoneIndex` runs
+  /// it after the first frame so the native window is not held open for it.
   Future<void> initTimezones() async {
     tz_data.initializeTimeZones();
-    await warmPlaceTimezoneIndex();
   }
+
+  /// Decodes the place-boundary index so the first coordinate lookup does not
+  /// pay for it. Post-first-frame: the splash is already painting, and the
+  /// first place resolution only starts from the same post-frame batch.
+  Future<void> warmTimezoneIndex() => warmPlaceTimezoneIndex();
+
+  /// Android display-mode opt-in (90/120 Hz). Awaited before `runApp` so the
+  /// animated loading splash renders at the high rate from its first frame and
+  /// the refresh-rate switch is hidden behind the static native splash.
+  /// Errors are swallowed inside [initPlatformFeatures].
+  Future<void> initDisplay() => initPlatformFeatures();
 
   /// Version/package metadata warm-up before first drawer animation.
   ///
   /// Best-effort: when the platform channel is unavailable the drawer falls
   /// back to its placeholder version, which must not cost the user the app.
-  /// Self-swallowing (like [warmFonts]) so awaiting it in a `Future.wait`
-  /// during startup can never prevent `runApp`.
+  /// Self-swallowing, so a failed channel can never surface as a startup error.
+  /// Started post-first-frame (see `main`): it only improves the drawer, and
+  /// awaiting it here used to hold `runApp` for a platform round trip.
   Future<void> warmVersionInfo() async {
     try {
       await version_warmup.warmVersionInfo();

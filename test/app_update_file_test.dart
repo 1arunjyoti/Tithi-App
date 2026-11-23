@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' show Response;
@@ -15,6 +16,36 @@ void main() {
     test('builds a file-safe name from the release version', () {
       expect(updateApkFileName('0.6.0+3'), equals('tithi-update-0.6.0_3.apk'));
       expect(updateApkFileName('0.6.0'), equals('tithi-update-0.6.0.apk'));
+    });
+  });
+
+  group('querySupportedAbis', () {
+    const channel = MethodChannel('app.tithi.pro/app_update');
+
+    setUp(() {
+      // `querySupportedAbis` only talks to Android.
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    });
+
+    tearDown(() {
+      debugDefaultTargetPlatformOverride = null;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('reads Build.SUPPORTED_ABIS in platform order', () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            expect(call.method, equals('supportedAbis'));
+            return <String>['arm64-v8a', 'armeabi-v7a'];
+          });
+
+      expect(await querySupportedAbis(), equals(['arm64-v8a', 'armeabi-v7a']));
+    });
+
+    test('returns an empty list when the platform has no handler', () async {
+      // Unknown ABIs must keep the update check working, not fail it.
+      expect(await querySupportedAbis(), isEmpty);
     });
   });
 
@@ -46,9 +77,7 @@ void main() {
 
     test('returns the path of an already-downloaded APK', () async {
       // Arrange
-      final file = File(
-        '${tempDir.path}/${updateApkFileName('0.6.0+6')}',
-      );
+      final file = File('${tempDir.path}/${updateApkFileName('0.6.0+6')}');
       await file.writeAsString('apk-bytes');
 
       // Act
@@ -97,10 +126,7 @@ void main() {
       ]);
 
       // Act
-      final path = await saveApkStream(
-        stream,
-        updateApkFileName('0.6.0+6'),
-      );
+      final path = await saveApkStream(stream, updateApkFileName('0.6.0+6'));
 
       // Assert
       expect(await File(path).readAsBytes(), equals([1, 2, 3, 4, 5]));
@@ -224,21 +250,24 @@ void main() {
       expect(intact, isTrue);
     });
 
-    test('ignores a malformed digest instead of failing the download', () async {
-      // Arrange
-      final file = File('${tempDir.path}/ok2.apk');
-      await file.writeAsString('abc');
+    test(
+      'ignores a malformed digest instead of failing the download',
+      () async {
+        // Arrange
+        final file = File('${tempDir.path}/ok2.apk');
+        await file.writeAsString('abc');
 
-      // Act
-      final intact = await AppUpdateService.isApkIntact(
-        file.path,
-        expectedSize: 3,
-        expectedDigest: 'not-a-digest',
-      );
+        // Act
+        final intact = await AppUpdateService.isApkIntact(
+          file.path,
+          expectedSize: 3,
+          expectedDigest: 'not-a-digest',
+        );
 
-      // Assert
-      expect(intact, isTrue);
-    });
+        // Assert
+        expect(intact, isTrue);
+      },
+    );
 
     test('findDownloadedApk deletes a truncated leftover', () async {
       // Arrange: cached file exists but is far smaller than the release.

@@ -371,7 +371,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         IconButton(
           tooltip: l10n?.previousYear ?? 'Previous year',
           onPressed: canGoBack ? () => _shiftYear(-1) : null,
-          icon: const Icon(Icons.chevron_left_rounded, size: 20),
+          icon: const Icon(Icons.chevron_left_rounded, size: AppIconSize.medium),
           visualDensity: VisualDensity.compact,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
         ),
@@ -394,7 +394,10 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                       fontWeight: AppTypography.semibold,
                     ),
                   ),
-                  const Icon(Icons.expand_more_rounded, size: 16),
+                  const Icon(
+                    Icons.expand_more_rounded,
+                    size: AppIconSize.small,
+                  ),
                 ],
               ),
             ),
@@ -403,7 +406,7 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         IconButton(
           tooltip: l10n?.nextYear ?? 'Next year',
           onPressed: canGoForward ? () => _shiftYear(1) : null,
-          icon: const Icon(Icons.chevron_right_rounded, size: 20),
+          icon: const Icon(Icons.chevron_right_rounded, size: AppIconSize.medium),
           visualDensity: VisualDensity.compact,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
         ),

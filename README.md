@@ -6,7 +6,7 @@
 Accurate daily Panchang, moon phases, and festival data — powered entirely by on-device Swiss Ephemeris calculations, with **no Google Play Services required**.
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev/)
-[![Dart](https://img.shields.io/badge/Dart-3.10%2B-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
+[![Dart](https://img.shields.io/badge/Dart-3.13%2B-0175C2?logo=dart&logoColor=white)](https://dart.dev/)
 [![Riverpod](https://img.shields.io/badge/State-Riverpod-6650a4)](https://riverpod.dev/)
 [![Offline First](https://img.shields.io/badge/Offline-First-success)]()
 [![No GMS](https://img.shields.io/badge/Google%20Play%20Services-Not%20Required-orange)]()
@@ -128,7 +128,7 @@ Accurate daily Panchang, moon phases, and festival data — powered entirely by 
 
 | Layer            | Technology                                                                                                                                                                                |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Framework        | [Flutter](https://flutter.dev/) 3.x / Dart 3.10+                                                                                                                                          |
+| Framework        | [Flutter](https://flutter.dev/) 3.x / Dart 3.13+                                                                                                                                          |
 | State Management | [Riverpod](https://riverpod.dev/) (`flutter_riverpod`)                                                                                                                                    |
 | Local Storage    | [Hive](https://pub.dev/packages/hive) + `hive_flutter` (codegen via `build_runner`)                                                                                                       |
 | Astronomy Engine | [Swiss Ephemeris](https://www.astro.com/swisseph/) via the `jyotish` package (`packages/jyotish`, Dart FFI + native Android bindings) |
@@ -145,7 +145,7 @@ Accurate daily Panchang, moon phases, and festival data — powered entirely by 
 
 ### Prerequisites
 
-- Flutter SDK 3.x (Dart 3.10 or higher — see `environment` in `pubspec.yaml`)
+- Flutter SDK 3.x (Dart 3.13 or higher - see `environment` in `pubspec.yaml`)
 - Android Studio / VS Code with Flutter extensions
 - Android NDK (for compiling the Swiss Ephemeris bindings in `packages/jyotish`)
 - A connected device or emulator for full functionality

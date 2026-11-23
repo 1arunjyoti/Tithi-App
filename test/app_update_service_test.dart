@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +22,20 @@ void main() {
     test('leaves plain versions untouched', () {
       expect(AppUpdateService.normalizeVersion('0.5.0+2'), equals('0.5.0+2'));
     });
+
+    test('strips the CI --release tag marker', () {
+      // Release tags are pushed as `v0.9.10+42--release`. If the marker leaks
+      // into the build-number segment, `int.tryParse('42--release')` is null,
+      // the build reads as 0, and every update is silently suppressed.
+      expect(
+        AppUpdateService.normalizeVersion('v0.9.10+42--release'),
+        equals('0.9.10+42'),
+      );
+      expect(
+        AppUpdateService.normalizeVersion('0.9.10+42--release'),
+        equals('0.9.10+42'),
+      );
+    });
   });
 
   group('AppUpdateService.compareVersions', () {
@@ -40,10 +55,7 @@ void main() {
         AppUpdateService.compareVersions('0.5.0+2', '0.5.0+3'),
         lessThan(0),
       );
-      expect(
-        AppUpdateService.compareVersions('0.5.0', '0.5.0+1'),
-        lessThan(0),
-      );
+      expect(AppUpdateService.compareVersions('0.5.0', '0.5.0+1'), lessThan(0));
     });
 
     test('treats missing segments as zero', () {
@@ -61,10 +73,7 @@ void main() {
 
   group('AppUpdateService.fullVersion', () {
     test('joins PackageInfo version and build number', () {
-      expect(
-        AppUpdateService.fullVersion('0.5.0', '5'),
-        equals('0.5.0+5'),
-      );
+      expect(AppUpdateService.fullVersion('0.5.0', '5'), equals('0.5.0+5'));
     });
 
     test('handles tags and blank build numbers', () {
@@ -121,17 +130,35 @@ void main() {
       expect(AppUpdateService.isNewerThan('', '0.6.0+3'), isFalse);
       expect(AppUpdateService.isNewerThan('0.5.0+2', ''), isFalse);
     });
+
+    test('treats a --release tag as the release it names', () {
+      // The workflow publishes under the clean tag, but a marker tag must not
+      // turn an otherwise valid release into "no update available".
+      expect(
+        AppUpdateService.isNewerThan('0.9.10+42', 'v0.9.11+43--release'),
+        isTrue,
+      );
+      expect(
+        AppUpdateService.isNewerThan('0.9.11+43', 'v0.9.11+43--release'),
+        isFalse,
+      );
+      expect(
+        AppUpdateService.isNewerThan('0.9.11+43', 'v0.9.10+42--release'),
+        isFalse,
+      );
+    });
   });
 
   group('AppUpdateService.displayVersion', () {
     test('keeps the build number visible', () {
       // A same-name rebuild must not look like the installed version.
-      expect(
-        AppUpdateService.displayVersion('0.5.0+3'),
-        equals('0.5.0 (3)'),
-      );
+      expect(AppUpdateService.displayVersion('0.5.0+3'), equals('0.5.0 (3)'));
       expect(AppUpdateService.displayVersion('0.6.0'), equals('0.6.0'));
       expect(AppUpdateService.displayVersion('v0.6.0+7'), equals('0.6.0 (7)'));
+      expect(
+        AppUpdateService.displayVersion('v0.9.10+42--release'),
+        equals('0.9.10 (42)'),
+      );
     });
   });
 
@@ -172,6 +199,119 @@ void main() {
     });
   });
 
+  group('AppReleaseInfo ABI-aware APK selection', () {
+    Map<String, dynamic> releaseWith(List<String> assetNames) {
+      return {
+        'tag_name': 'v0.9.10+42',
+        'assets': [
+          for (final name in assetNames)
+            {
+              'name': name,
+              'browser_download_url': 'https://example.com/$name',
+              'size': 42000000,
+            },
+        ],
+      };
+    }
+
+    test('picks the asset for the device ABI', () {
+      // CI publishes tithi-arm64-v8a-release.apk and
+      // tithi-x86_64-release.apk in the same release.
+      final json = releaseWith([
+        'tithi-x86_64-release.apk',
+        'tithi-arm64-v8a-release.apk',
+      ]);
+
+      expect(
+        AppReleaseInfo.fromJson(
+          json,
+          supportedAbis: const ['arm64-v8a', 'armeabi-v7a'],
+        ).apkUrl.toString(),
+        contains('tithi-arm64-v8a-release.apk'),
+      );
+      expect(
+        AppReleaseInfo.fromJson(
+          json,
+          supportedAbis: const ['x86_64', 'x86'],
+        ).apkUrl.toString(),
+        contains('tithi-x86_64-release.apk'),
+      );
+    });
+
+    test('follows the device ABI preference order', () {
+      // Build.SUPPORTED_ABIS lists the 32-bit compat ABI last; the primary
+      // ABI must win even when its asset appears later in the release.
+      final json = releaseWith([
+        'tithi-armeabi-v7a-release.apk',
+        'tithi-arm64-v8a-release.apk',
+      ]);
+
+      expect(
+        AppReleaseInfo.fromJson(
+          json,
+          supportedAbis: const ['arm64-v8a', 'armeabi-v7a'],
+        ).apkUrl.toString(),
+        contains('tithi-arm64-v8a-release.apk'),
+      );
+    });
+
+    test('falls back to a universal asset when no ABI matches', () {
+      final json = releaseWith(['tithi-0.9.10+42-release.apk']);
+
+      final info = AppReleaseInfo.fromJson(
+        json,
+        supportedAbis: const ['arm64-v8a'],
+      );
+
+      expect(info.apkUrl.toString(), contains('tithi-0.9.10+42-release.apk'));
+    });
+
+    test('reports no APK instead of a foreign-ABI build', () {
+      final json = releaseWith(['tithi-arm64-v8a-release.apk']);
+
+      final info = AppReleaseInfo.fromJson(
+        json,
+        supportedAbis: const ['x86_64', 'x86'],
+      );
+
+      expect(info.hasApk, isFalse);
+    });
+
+    test('keeps first-asset behaviour when the ABI list is unknown', () {
+      final json = releaseWith([
+        'tithi-arm64-v8a-release.apk',
+        'tithi-x86_64-release.apk',
+      ]);
+
+      expect(
+        AppReleaseInfo.fromJson(json).apkUrl.toString(),
+        contains('tithi-arm64-v8a-release.apk'),
+      );
+    });
+
+    test('fetchLatestRelease picks the APK for the device', () async {
+      final service = AppUpdateService(
+        httpClient: MockClient(
+          (_) async => Response(
+            jsonEncode(
+              releaseWith([
+                'tithi-arm64-v8a-release.apk',
+                'tithi-x86_64-release.apk',
+              ]),
+            ),
+            200,
+          ),
+        ),
+        supportedAbis: () async => const ['x86_64', 'x86'],
+      );
+
+      final release = await service.fetchLatestRelease();
+
+      expect(release, isNotNull);
+      expect(release!.apkUrl.toString(), contains('tithi-x86_64-release.apk'));
+    });
+  });
+
   group('AppUpdateConfig.fromEnvironment', () {
     test('falls back to defaults without a dart-define', () {
       final config = AppUpdateConfig.fromEnvironment();
@@ -202,16 +342,19 @@ void main() {
       );
     }
 
-    test('reports no releases when the repository exists but is empty', () async {
-      // Arrange: 404 on the release, 200 on the repository probe.
-      final service = serviceWith(releasesStatus: 404, repoStatus: 200);
+    test(
+      'reports no releases when the repository exists but is empty',
+      () async {
+        // Arrange: 404 on the release, 200 on the repository probe.
+        final service = serviceWith(releasesStatus: 404, repoStatus: 200);
 
-      // Act
-      final release = await service.fetchLatestRelease();
+        // Act
+        final release = await service.fetchLatestRelease();
 
-      // Assert
-      expect(release, isNull);
-    });
+        // Assert
+        expect(release, isNull);
+      },
+    );
 
     test('reports a missing repository instead of "no releases"', () async {
       // Arrange: both endpoints 404 (renamed, moved or private repo).
@@ -233,20 +376,23 @@ void main() {
       );
     });
 
-    test('assumes the repository is fine when the probe itself fails', () async {
-      // Arrange: probe throws, so the "no releases" path is used.
-      final service = AppUpdateService(
-        httpClient: MockClient((request) async {
-          if (request.url.path.endsWith('/releases/latest')) {
-            return Response('{"message":"Not Found"}', 404);
-          }
-          throw const SocketException('probe failed');
-        }),
-      );
+    test(
+      'assumes the repository is fine when the probe itself fails',
+      () async {
+        // Arrange: probe throws, so the "no releases" path is used.
+        final service = AppUpdateService(
+          httpClient: MockClient((request) async {
+            if (request.url.path.endsWith('/releases/latest')) {
+              return Response('{"message":"Not Found"}', 404);
+            }
+            throw const SocketException('probe failed');
+          }),
+        );
 
-      // Act + Assert
-      expect(await service.fetchLatestRelease(), isNull);
-    });
+        // Act + Assert
+        expect(await service.fetchLatestRelease(), isNull);
+      },
+    );
   });
 
   group('AppUpdateService.fetchLatestRelease rate limiting', () {
@@ -300,28 +446,31 @@ void main() {
       );
     });
 
-    test('keeps the generic message for a 403 that is not rate limiting', () async {
-      // Arrange: forbidden for some other reason, quota still available.
-      final service = serviceReturning(
-        Response(
-          '{"message":"Forbidden"}',
-          403,
-          headers: {'x-ratelimit-remaining': '57'},
-        ),
-      );
-
-      // Act + Assert
-      await expectLater(
-        service.fetchLatestRelease(),
-        throwsA(
-          isA<AppUpdateException>().having(
-            (e) => e.message,
-            'message',
-            allOf(contains('HTTP 403'), isNot(contains('rate limiting'))),
+    test(
+      'keeps the generic message for a 403 that is not rate limiting',
+      () async {
+        // Arrange: forbidden for some other reason, quota still available.
+        final service = serviceReturning(
+          Response(
+            '{"message":"Forbidden"}',
+            403,
+            headers: {'x-ratelimit-remaining': '57'},
           ),
-        ),
-      );
-    });
+        );
+
+        // Act + Assert
+        await expectLater(
+          service.fetchLatestRelease(),
+          throwsA(
+            isA<AppUpdateException>().having(
+              (e) => e.message,
+              'message',
+              allOf(contains('HTTP 403'), isNot(contains('rate limiting'))),
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('AppUpdateService check throttling', () {
@@ -329,10 +478,7 @@ void main() {
       // Arrange
       final service = AppUpdateService(
         httpClient: MockClient(
-          (_) async => Response(
-            '{"tag_name":"v0.6.0+3","assets":[]}',
-            200,
-          ),
+          (_) async => Response('{"tag_name":"v0.6.0+3","assets":[]}', 200),
         ),
       );
       expect(service.isCheckThrottled(), isFalse);
@@ -364,9 +510,8 @@ void main() {
       // Arrange
       final service = AppUpdateService(
         httpClient: MockClient(
-          (_) async => Response('{}', 403, headers: {
-            'x-ratelimit-remaining': '0',
-          }),
+          (_) async =>
+              Response('{}', 403, headers: {'x-ratelimit-remaining': '0'}),
         ),
       );
 
@@ -387,7 +532,8 @@ void main() {
         'tag_name': 'v0.6.0+3',
         'name': 'Tithi 0.6.0',
         'body': 'Bug fixes and improvements.',
-        'html_url': 'https://github.com/1arunjyoti/Tithi-App/releases/tag/v0.6.0',
+        'html_url':
+            'https://github.com/1arunjyoti/Tithi-App/releases/tag/v0.6.0',
         'published_at': '2026-09-20T10:00:00Z',
         'assets': [
           {
@@ -421,10 +567,7 @@ void main() {
       expect(release.name, equals('Tithi 0.6.0'));
       expect(release.body, contains('Bug fixes'));
       expect(release.hasApk, isTrue);
-      expect(
-        release.apkUrl.toString(),
-        contains('tithi-0.6.0+3-release.apk'),
-      );
+      expect(release.apkUrl.toString(), contains('tithi-0.6.0+3-release.apk'));
       expect(release.apkSizeBytes, equals(42000000));
       expect(release.publishedAt?.year, equals(2026));
     });

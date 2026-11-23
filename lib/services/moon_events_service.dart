@@ -276,9 +276,8 @@ class MoonEvents {
 class MoonEventsService {
   MoonEventsService({
     MoonEventCalculator? calculator,
-    PanchangProfile profile = PanchangProfile.standard,
-  }) : _calculator = calculator ?? const ApproximateMoonEventCalculator(),
-       _profile = profile;
+    this._profile = PanchangProfile.standard,
+  }) : _calculator = calculator ?? const ApproximateMoonEventCalculator();
 
   MoonEventCalculator _calculator;
   PanchangProfile _profile;

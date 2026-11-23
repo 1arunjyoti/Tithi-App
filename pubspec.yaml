@@ -1,9 +1,13 @@
 name: tithi
 description: "A new Flutter project."
 publish_to: "none"
-version: 0.9.6+35
+version: 0.9.10+43
 environment:
-  sdk: ^3.10.4
+  # `material_ui` (and the rest of the lock) already requires Dart 3.13 and
+  # Flutter 3.47; declaring less than that only pushes the failure into a
+  # transitive package's error message.
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
 
 dependencies:
   flutter:

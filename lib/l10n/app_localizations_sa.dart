@@ -1872,184 +1872,186 @@ class AppLocalizationsSa extends AppLocalizations {
       'अन्यचित्रं द्रष्टुं स्वाइप् कुरुत, वर्धयितुं दीर्घं निपीडयतु';
 
   @override
-  String get aiAssistSection => 'AI ASSIST';
+  String get aiAssistSection => 'कृत्रिमबुद्धिसहायः';
 
   @override
-  String get aiAssist => 'AI assist';
+  String get aiAssist => 'कृत्रिमबुद्धिसहायः';
 
   @override
   String get aiAssistSubtitle =>
-      'Send panchang details to your AI app when you ask';
+      'पृच्छति चेत् पञ्चाङ्गविवरणं भवतः कृत्रिमबुद्धि-अनुप्रयोगाय प्रेष्यते';
 
   @override
-  String get aiAskAi => 'Ask AI';
+  String get aiAskAi => 'कृत्रिमबुद्धिं पृच्छतु';
 
   @override
-  String get aiAskAboutToday => 'Ask AI about today';
+  String get aiAskAboutToday => 'अद्यतनविषये कृत्रिमबुद्धिं पृच्छतु';
 
   @override
-  String get aiAskAboutDay => 'Ask AI about this day';
+  String get aiAskAboutDay => 'अस्मिन् दिने कृत्रिमबुद्धिं पृच्छतु';
 
   @override
-  String get aiAskAboutFestival => 'Ask AI about this festival';
+  String get aiAskAboutFestival => 'अस्मिन् उत्सवे कृत्रिमबुद्धिं पृच्छतु';
 
   @override
-  String get aiOpensYourApp => 'Opens your AI app';
+  String get aiOpensYourApp => 'भवतः कृत्रिमबुद्धि-अनुप्रयोगम् उद्घाटयति';
 
   @override
-  String get aiYourQuestion => 'YOUR QUESTION';
+  String get aiYourQuestion => 'भवतः प्रश्नः';
 
   @override
-  String get aiQuestionHint => 'What would you like to know?';
+  String get aiQuestionHint => 'किं ज्ञातुम् इच्छथ?';
 
   @override
-  String get aiWhatWillBeShared => 'WHAT WILL BE SHARED';
+  String get aiWhatWillBeShared => 'किं प्रेषयिष्यते';
 
   @override
-  String get aiShowAll => 'Show all';
+  String get aiShowAll => 'सर्वं दर्शयतु';
 
   @override
-  String get aiHidePreview => 'Hide';
+  String get aiHidePreview => 'गोपयतु';
 
   @override
-  String get aiPreviewFull => 'Show the exact message';
+  String get aiPreviewFull => 'यथावत् सन्देशं दर्शयतु';
 
   @override
-  String get aiPreviewSummary => 'Show the summary';
+  String get aiPreviewSummary => 'सङ्क्षेपं दर्शयतु';
 
   @override
   String get aiAlsoSends =>
-      'Also sends your question, and asks for the answer in your app language.';
+      'भवतः प्रश्नम् अपि प्रेषयति, उत्तरं च भवतः अनुप्रयोगभाषायां याचते।';
 
   @override
-  String get aiPreparing => 'Preparing the month\'s panchang…';
+  String get aiPreparing => 'मासस्य पञ्चाङ्गं सज्जीक्रियते...';
 
   @override
-  String get aiMonthFailed => 'Couldn\'t prepare this month\'s panchang.';
+  String get aiMonthFailed => 'अस्य मासस्य पञ्चाङ्गं सज्जीकर्तुं न शक्यते।';
 
   @override
   String get aiLocationNote =>
-      'Your GPS location is never sent — only the city name.';
+      'भवतः GPS-स्थानं कदापि न प्रेष्यते — केवलं नगरनाम प्रेष्यते।';
 
   @override
-  String get aiOpenApp => 'Open AI app';
+  String get aiOpenApp => 'कृत्रिमबुद्धि-अनुप्रयोगम् उद्घाटयतु';
 
   @override
   String aiOpenInApp(String app) {
-    return 'Open $app';
+    return '$app उद्घाटयतु';
   }
 
   @override
-  String get aiAppSetting => 'AI app';
+  String get aiAppSetting => 'कृत्रिमबुद्धि-अनुप्रयोगः';
 
   @override
-  String get aiAppAutomatic => 'Automatic';
+  String get aiAppAutomatic => 'स्वचालितम्';
 
   @override
   String get aiAppAutomaticSubtitle =>
-      'Tries Gemini first, then other installed AI apps';
+      'प्रथमं Gemini, ततः अन्ये संस्थापिताः कृत्रिमबुद्धि-अनुप्रयोगाः प्रयुज्यन्ते';
 
   @override
-  String get aiAppPickerTitle => 'Open prompts in';
+  String get aiAppPickerTitle => 'प्रश्नाः कस्मिन् उद्घाट्यन्ताम्';
 
   @override
-  String get aiAppPickerFailed => 'Couldn\'t save the AI app choice';
+  String get aiAppPickerFailed =>
+      'कृत्रिमबुद्धि-अनुप्रयोगस्य चयनं संरक्षितुं न शक्यते';
 
   @override
-  String get aiAppNotInstalled => 'Not installed';
+  String get aiAppNotInstalled => 'न संस्थापितः';
 
   @override
   String aiAppUnavailable(String app) {
-    return '$app isn\'t available';
+    return '$app उपलब्धः नास्ति';
   }
 
   @override
   String get aiAppUnavailableBody =>
-      'It may have been uninstalled. You can share the prompt instead, or copy it and paste it into your AI app.';
+      'तत् अपसारितं भवेत्। तस्य स्थाने प्रश्नं सम्प्रेषयितुं शक्नोति, अथवा तं प्रतिलिख्य भवतः कृत्रिमबुद्धि-अनुप्रयोगे स्थापयितुं शक्नोति।';
 
   @override
-  String get aiOpenShareSheet => 'Share instead';
+  String get aiOpenShareSheet => 'तस्य स्थाने सम्प्रेषयतु';
 
   @override
-  String get aiCopy => 'Copy';
+  String get aiCopy => 'प्रतिलिख्यताम्';
 
   @override
-  String get aiCopied => 'Prompt copied';
+  String get aiCopied => 'प्रश्नः प्रतिलिखितः';
 
   @override
-  String get aiCopyFailed => 'Couldn\'t copy the prompt';
+  String get aiCopyFailed => 'प्रश्नः प्रतिलिखितुं न शक्यते';
 
   @override
-  String get aiShareFailed => 'Couldn\'t open an app to share this';
+  String get aiShareFailed =>
+      'एतत् सम्प्रेषयितुम् अनुप्रयोगः उद्घाटयितुं न शक्यते';
 
   @override
   String get aiShareFailedCopied =>
-      'Couldn\'t open an app to share this — the prompt is copied instead.';
+      'एतत् सम्प्रेषयितुम् अनुप्रयोगः न उद्घाटितः — तस्य स्थाने प्रश्नः प्रतिलिखितः।';
 
   @override
   String get aiFooterNote =>
-      'Tithi has no AI of its own. This opens your AI app with the details filled in — the answer appears there.';
+      'तिथेः स्वकीया कृत्रिमबुद्धिः नास्ति। एतत् विवरणैः सह भवतः कृत्रिमबुद्धि-अनुप्रयोगम् उद्घाटयति — उत्तरं तत्रैव दृश्यते।';
 
   @override
-  String get aiTitleToday => 'Ask about today';
+  String get aiTitleToday => 'अद्यतनविषये पृच्छतु';
 
   @override
-  String get aiTitleMonth => 'Ask about this month';
+  String get aiTitleMonth => 'अस्मिन् मासे पृच्छतु';
 
   @override
-  String get aiDefaultQuestionToday =>
-      'Explain today\'s tithi in plain language.';
+  String get aiDefaultQuestionToday => 'अद्यतनां तिथिं सरलभाषया व्याख्यातु।';
 
   @override
   String get aiDefaultQuestionFestival =>
-      'Explain this festival\'s meaning and how it is observed.';
+      'अस्य उत्सवस्य अर्थं तस्य आचरणप्रकारं च व्याख्यातु।';
 
   @override
   String get aiDefaultQuestionMonth =>
-      'Summarise this month\'s festivals and notable tithis.';
+      'अस्य मासस्य उत्सवान् प्रमुखाः तिथीः च सङ्क्षेपेण वदतु।';
 
   @override
-  String get aiConsentTitle => 'Turn on AI assist?';
+  String get aiConsentTitle => 'कृत्रिमबुद्धिसहायः सक्रियः कर्तव्यः?';
 
   @override
   String get aiConsentBody =>
-      'When you ask AI, Tithi will build a short summary of the panchang and hand it to the AI app you choose.';
+      'यदा भवान् कृत्रिमबुद्धिं पृच्छति, तदा तिथिः पञ्चाङ्गस्य लघुसङ्क्षेपं निर्माय भवता चिताय कृत्रिमबुद्धि-अनुप्रयोगाय समर्पयति।';
 
   @override
   String get aiConsentBulletSend =>
-      'Sends the panchang for your city (tithi, nakshatra, sunrise, sunset), the festival details when you ask about one, and the question you type.';
+      'भवतः नगरस्य पञ्चाङ्गं (तिथिः, नक्षत्रम्, सूर्योदयः, सूर्यास्तः), उत्सवविषये पृष्टे तस्य विवरणं, तथा भवता लिखितं प्रश्नं प्रेषयति।';
 
   @override
   String get aiConsentBulletLocation =>
-      'Never your GPS coordinates or exact position.';
+      'भवतः GPS-निर्देशाङ्काः यथार्थं स्थानं वा कदापि न प्रेष्यन्ते।';
 
   @override
   String get aiConsentBulletWhere =>
-      'Opens your AI app — the answer appears there, not in Tithi.';
+      'भवतः कृत्रिमबुद्धि-अनुप्रयोगम् उद्घाटयति — उत्तरं तत्रैव दृश्यते, तिथौ न।';
 
   @override
-  String get aiConsentEnable => 'Turn on';
+  String get aiConsentEnable => 'सक्रियं करोतु';
 
   @override
-  String get aiHowItWorks => 'How it works';
+  String get aiHowItWorks => 'कथं कार्यं करोति';
 
   @override
-  String get aiHowItWorksSubtitle => 'What is shared and what isn\'t';
+  String get aiHowItWorksSubtitle => 'किं प्रेष्यते किं न';
 
   @override
-  String get aiHowItWorksRule => 'Tithi calculates. The assistant explains.';
+  String get aiHowItWorksRule => 'तिथिः गणयति। सहायकः व्याख्याति।';
 
   @override
   String get aiHowItWorksBody =>
-      'Every tithi, nakshatra and sunrise/sunset time in the summary comes from Tithi\'s own on-device calculations. The AI is only asked to explain those numbers in your language, so it cannot change them. You see the exact text before anything leaves the app, and you can copy it instead of opening an AI app.';
+      'सङ्क्षेपे ये तिथि-नक्षत्र-सूर्योदयसूर्यास्तसमयाः सन्ति, ते सर्वे तिथेः स्वकीयगणनया यन्त्रे एव निर्धारिताः। कृत्रिमबुद्धिः केवलं तान् सङ्ख्यान् भवतः भाषया व्याख्यातुम् अर्थ्यते, अतः तान् परिवर्तयितुं न शक्नोति। अनुप्रयोगात् किमपि प्रेषणात् पूर्वं भवान् यथावत् पाठं पश्यति, तथा कृत्रिमबुद्धि-अनुप्रयोगम् उद्घाटयितुम् इच्छा न चेत् तं प्रतिलिखितुम् अपि शक्नोति।';
 
   @override
-  String get aiToggleFailed => 'Couldn\'t save the AI assist setting';
+  String get aiToggleFailed =>
+      'कृत्रिमबुद्धिसहायस्य संस्थापनं संरक्षितुं न शक्यते';
 
   @override
-  String get privacyAiTitle => 'AI Assist (Optional)';
+  String get privacyAiTitle => 'कृत्रिमबुद्धिसहायः (ऐच्छिकः)';
 
   @override
   String get privacyAiDesc =>
-      'AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary — the panchang for your city (date, tithi, nakshatra, sunrise and sunset), the festival details when you ask about one, and the question you type — and hands it to the AI app you chose in Settings, or to the system share sheet when that app is not available. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app\'s own privacy policy.';
+      'कृत्रिमबुद्धिसहायः मूलरूपेण निष्क्रियः अस्ति। यदा भवान् तं सक्रियं कृत्वा कृत्रिमबुद्धिं पृच्छितुम् इच्छति, तदा तिथिः लघुसङ्क्षेपं निर्माति — भवतः नगरस्य पञ्चाङ्गं (दिनाङ्कः, तिथिः, नक्षत्रम्, सूर्योदयः, सूर्यास्तः), उत्सवविषये पृष्टे तस्य विवरणं, भवता लिखितं प्रश्नं च — तं च भवता संस्थापनेषु चिताय कृत्रिमबुद्धि-अनुप्रयोगाय समर्पयति, सः अनुप्रयोगः अनुपलब्धः चेत् तन्त्रस्य सम्प्रेषणपटलाय। भवतः GPS-निर्देशाङ्काः कदापि न समाविष्टाः, तिथिः स्वयम् किमपि न प्रेषयति, ततः परं संवादः तस्य अनुप्रयोगस्य स्वकीयगोपनीयतानीत्या नियम्यते।';
 }

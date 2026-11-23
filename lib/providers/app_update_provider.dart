@@ -123,6 +123,18 @@ class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
         return;
       }
       if (AppUpdateService.isNewerThan(current, release.version)) {
+        if (!release.hasApk) {
+          // Newer build, but none of its APKs matches this device's ABI (or
+          // the release ships no APK at all). An "available" state would end
+          // in "No installable update found" after the user taps Install.
+          state = state.copyWith(
+            status: AppUpdateStatus.error,
+            errorMessage:
+                'Release ${release.version} has no APK for this device. '
+                'Open the release page to download it manually.',
+          );
+          return;
+        }
         // Resume: the APK may already be cached from an earlier download
         // (e.g. the user downloaded but installed later / restarted).
         final cached = await _service.findDownloadedApk(release);

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Night variant of `splash_background`; must stay equal to
+         `AppTheme.splashBackgroundDark`. See values/colors.xml for why the
+         splash colour has to be a @color/ resource rather than a literal. -->
+    <color name="splash_background">#10002B</color>
+</resources>

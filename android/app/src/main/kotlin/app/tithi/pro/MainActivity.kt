@@ -119,6 +119,11 @@ class MainActivity : FlutterActivity() {
                             result.error("SETTINGS_FAILED", e.message, null)
                         }
                     }
+                    // Release APKs are published per ABI; the Dart side picks
+                    // the asset that matches this device instead of always
+                    // taking the arm64 one. Preference order is the platform
+                    // order, primary ABI first.
+                    "supportedAbis" -> result.success(Build.SUPPORTED_ABIS.toList())
                     else -> result.notImplemented()
                 }
             }

@@ -18,7 +18,126 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-23 - 0.9.10+43
+
+### Release publishing uses the clean version tag
+
+- CI builds the release APKs in one `flutter build apk --split-per-abi` pass and publishes the GitHub release under the clean `vX.Y.Z+N` tag; the `--release` suffix only triggers the workflow. `AppUpdateService` parses `tag_name`, so a marker in the tag reads as build 0 and suppresses every update (`.github/workflows/ci.yml`, `lib/services/app_update_service.dart`).
+- `AppUpdateService.normalizeVersion` also drops a `--<marker>` suffix as a safety net; `test/app_update_service_test.dart` pins `normalizeVersion`, `displayVersion` and `isNewerThan` against `--release` tags.
+- Constraint: `lib/l10n/app_localizations*.dart` is analyzer-excluded (CI treats infos as fatal). Keep `flutter gen-l10n` output committed - CI regenerates it and fails when the committed copy is stale.
+- The release job caches only the NDK version `flutter.ndkVersion` names, under `$ANDROID_HOME/ndk`, instead of the whole preinstalled NDK tree.
+
+### Release pipeline hardening (ABI-aware updates, repairable releases)
+
+- The updater now picks the asset matching `Build.SUPPORTED_ABIS` (new `supportedAbis` method on `app.tithi.pro/app_update`) before downloading. CI ships two ABI-specific APKs, and the old "first `-release.apk`" rule handed x86_64 devices the arm64 build, which fails with `INSTALL_FAILED_NO_MATCHING_ABIS`. Keep the ABI token in asset names: a name without one is treated as universal, and an unknown ABI list (tests, non-Android) keeps the old order (`lib/services/app_update_service.dart`, `lib/services/app_update/app_update_file.dart`, `MainActivity.kt`).
+- A newer release with no APK for this device's ABI now reports that instead of showing an Install button that dead-ends in "No installable update found" (`lib/providers/app_update_provider.dart`).
+- Publishing is draft-first and idempotent: `gh release create --draft`, `gh release upload --clobber`, then publish. An existing release is reconciled instead of skipped, so a cancelled run can no longer leave one APK attached to a published release forever.
+- CI refuses a `+N` that is not higher than every published release (`gh release list --exclude-drafts`, compared in `analyze-and-test`), and validates the `changelogs.md` block there too - a typo now fails in seconds instead of after two signed builds. The notes travel to the publish job as an artifact.
+- Security of the release path: tags reach the shell only as `$GITHUB_REF_NAME` (stripped of `--release*`), the workflow defaults to `permissions: contents: read` with `contents: write` only on `publish-release`, and the base64 keystore is scoped to the step that decodes it instead of job-level env (so `flutter build` and third-party actions never see it).
+- The root SDK constraint now matches what the lock already required (`sdk: ^3.13.0`, `flutter: >=3.47.0`), both CI jobs print `flutter --version`, and the Gradle cache key hashes `android/gradle.properties` (not matched by `android/**/*.gradle*`).
+
+### Native splash is static; the mandala animates only while loading
+
+- The platform splash is a single static mandala again: `splash.png` at every density, the centred bitmap in every `launch_background.xml`, and the mark in `android12splash.png`. `flutter_native_splash.yaml` points both image slots at `assets/splash/splash_icon.png`, with neutral colours (`#ffffff` / `#121212`) — saturated purple in any native resource was the MIUI magenta trigger.
+- `lib/main.dart` keeps the location gate: `LocationPermissionWrapper` waits for `locationInitProvider` before showing `HomeShell`, so the first frame uses the saved place. The old "Initializing..." spinner is replaced by `AnimatedSplash`, which paints the same neutral colours as the native window and rotates/breathes while location loads. There is no forced hold, so a warm start does not add time.
+- This is one brand moment, not two: the native mark is static, then the same mandala animates as a loading indicator before the app. `lib/widgets/animated_splash.dart` is wired back in; do not put the brand purple in its dark background or any native resource, or MIUI repaints magenta.
+- `bootstrap.initDisplay()` (high refresh rate) is awaited before `runApp` again, so the animated loading splash renders at 90/120Hz from its first frame and the refresh-rate switch is hidden behind the static native splash. Version metadata, the boundary index, the tile cache and Workmanager stay post-frame.
+- Release CI (`.github/workflows/ci.yml`) runs only on `v*` tags: analyze/test, signed arm64 + x86_64 APK builds, then a GitHub release whose notes are extracted from this changelog section.
+- Regression: `test/animated_splash_test.dart` pins the static native config, the neutral Android 12 colours and the widget's motion/Reduce Motion behaviour.
+
+### Android 12 starting window no longer magenta on MIUI dark mode
+
+Cold starts in dark mode on MIUI 13 / Android 12 no longer paint a full-screen magenta fill.
+
+- Root cause: MIUI ignores the Android 12 `windowSplashScreen*` attributes entirely and falls back to the legacy `windowBackground` (`@drawable/launch_background`). We had regenerated its `background.png` from the brand dark colour `#10002B`; MIUI's non-linear dark-mode inversion turned that bitmap into magenta. Restoring the neutral `#ffffff` / `#121212` bitmaps fixed it on-device. Every v31 theme permutation was irrelevant.
+- Every dark-mode native colour is neutral: the YAML root and `android_12.color_dark`, `values-night-v31/styles.xml` and the legacy `background.png` bitmaps all use `#121212`. MIUI inverts saturated colours anywhere in the native phase, including the Android 12 background and the icon bitmap, so `#10002B` must never appear there. Light mode keeps `#ffffff` / `#F5F5F7`.
+- The Android 12 icon is the static mandala from `assets/splash/splash_icon.png`. An opaque colour tile rendered as a masked square, and an empty slot substituted the launcher icon — both were rejected on-device.
+- `AnimatedSplash` paints the MIUI-safe neutral `#121212` in dark mode (`_kNativeSplashDark`) instead of `AppTheme.splashBackgroundDark`, so the native window and the Flutter surface are one continuous screen. The brand purple is unchanged everywhere else.
+- Regression: `test/animated_splash_test.dart` pins the neutral dark values, the static native icon, minimal v31 parents and the absence of app-resource `windowBackground` / `colorBackground` / `opacity` in the v31 launch theme.
+- Constraint: keep every native dark colour neutral and the Android 12 icon on the static mandala. Re-check after every `dart run flutter_native_splash:create`; the brand colour belongs only in Flutter. If magenta returns, sample the native PNGs first.
+
+## 2026-11-22 - 0.9.6+35
+
+### Export festivals to Google Calendar (.ics)
+
+A new Data & Storage tile writes the year's festival dates as an all-day iCalendar file that Google Calendar can import, alongside the existing JSON export.
+
+- `lib/services/festival_calendar_export_service.dart` renders one VEVENT per resolved occurrence from the export document: all-day `DTSTART`/exclusive `DTEND`, stable UID, and Panchang timings (tithi span, sunrise/sunset) in the description. It folds lines to 75 octets, escapes TEXT values and never splits a UTF-8 character. No OAuth/internet — the .ics is saved/shared like the JSON file.
+- `lib/services/festival_export_service.dart` now exposes `exportYear()` as the shared document builder; `exportYearJson()` renders the same document so both formats always describe the same dates. `lib/features/settings/widgets/festival_export_flow.dart` holds the progress/save/share flow used by both tiles.
+- New tile in `lib/features/settings/widgets/data_settings.dart`, registered in `lib/screens/settings_screen.dart`. `lib/features/settings/widgets/festival_export_year_sheet.dart` owns the year picker: a row tap only moves the checkmark and an explicit "Export {year}" button proceeds, so selecting and proceeding are distinct steps. Both tiles name their format in the sheet title and explain that a save dialog comes next (three more keys in the four `.arb` files; regenerate with `flutter gen-l10n`).
+- Hardening: the ICS builder reads every field through safe string/map helpers so a malformed row is skipped instead of throwing; UIDs use the catalog position (not the emitted-event ordinal) so re-import after a data change does not duplicate events. A tithi that ends on the next day gets both ends date-qualified in the description; the success message reports events actually written, not raw festival count. `exportYear()` isolates per-festival failures so one bad ephemeris read cannot discard the whole year, and the save/share flow tolerates empty picker paths and share-sheet errors.
+- Constraint: keep festival events all-day (a tithi can cross midnight and wall-clock instants are location-bound); timing text belongs in the description. Never let the two exporters compute dates independently.
+- Regression: `test/festival_calendar_export_test.dart` pins date formatting, escaping, folding/UTF-8, cross-midnight labels, stable UIDs, malformed-row skipping and accurate event counts. `test/festival_export_year_sheet_test.dart` pins that selecting a year keeps the sheet open and only the confirm button exports.
+
+### All Festivals no longer skips early-year observances
+
+The yearly festival list now resolves January vrats such as Shattila Ekadashi instead of jumping ahead to the following year.
+
+- `lib/features/panchang/domain/festival_search_start.dart` owns the Gregorian fast-forward hint for `PanchangService.findNextFestivalOccurrence`. The old hint for a Jan 1 scan of Pausha landed on Oct 17 2026, so Shattila (Jan 14 2026) was skipped in All Festivals while the live month grid and home card still showed it. The hint now falls back to the previous lunisolar year when its current-year estimate is after the scan start, and the scan skips matches before its base date without spending the 420-day budget on them.
+- Cache identity moved: the occurrence cache prefix is `occ9` (`occ8_*` purged) because the buggy scan cached the 2027 date under a Jan 1 2026 key, and `festivalYearSnapshotKey` gained `_r2` (`_resolutionVersion`) because the yearly list is a stored answer that the catalog fingerprint cannot invalidate. Bump both when scan semantics change, or an upgraded install keeps serving the old list.
+- Regression: `test/festival_search_start_test.dart` pins the January Pausha case and the "never start after the base date" rule for all 12 Amanta months.
+- Constraint: the month hint stays a pure optimization; the returned day still comes from the shared projection pipeline so calendar, countdown, search and export agree.
+
+### Home-location map no longer spins while zooming
+
+Pinching to zoom the Location screen used to rotate the map too; now only zoom and drag gestures move the camera.
+
+- flutter_map enables `InteractiveFlag.rotate` together with pinch-zoom by default. With its gesture race off, both fire on the same two-finger pinch, so any slight finger twist spins the map.
+- `lib/screens/location_picker_screen.dart` sets `MapOptions.interactionOptions` to `InteractionOptions(flags: kLocationPickerMapFlags)` - every flag except rotate. Pinch zoom, drag, double-tap and scroll-wheel zoom are unchanged.
+- `MapOptions.onMapReady` calls `resetMapToNorth(_mapController)` so entry always lands north-up; that hook is the first point where the controller is attached and `rotate(0)` is safe.
+- Constraint: keep `InteractiveFlag.rotate` out of `kLocationPickerMapFlags`; re-adding it makes every pinch rotate the map again. Keep the north reset on `onMapReady`, not in `initState`, where the controller has no map yet.
+- Regression: `test/location_picker_map_test.dart` pins rotate off and pinch zoom / drag / double-tap on, and checks `resetMapToNorth` takes a rotated camera back to 0.
+
+### Swipe the floating nav bar to switch tabs
+
+On phone layouts, swiping the floating nav capsule moves between Today and Festivals just like tapping a destination.
+
+- The swipe recognizer wraps the bar in `lib/screens/home_shell.dart`, not the bar widget: `FloatingNavBar` stays presentation-only, and the calendar's month-turn swipe in the content area never competes for the same gesture arena.
+- Slow drags past 48px and fast flings past 300px/s both count; direction is resolved by `tabSwipeDirection` in `lib/core/navigation/home_tab.dart`, and the shell reuses its existing `select` path so the cross-fade, drawer reset and out-of-range guard stay in one place.
+- Regression: `test/home_shell_navigation_test.dart` covers both directions, the short-drag no-op, the velocity-only fling and that a plain tap still switches tabs.
+- Constraint: keep the detector outside the bar and inside `IgnorePointer` - moving it into the tabs would break month swiping, and moving it above the drawer gate would let a swipe reach through an open drawer.
+
+### Animated branded splash
+
+Startup now has a single animated logo moment: a colour-only platform splash hands off to the lotus mandala, which fades/scales in, rotates slowly, breathes and pulses inside a halo instead of a bare "Initializing..." spinner.
+
+- `flutter_native_splash.yaml` is image-free; regenerated Android drawables drop `splash.png` from every density and `launch_background.xml` paints only the background colour. `android_12.image` points at `assets/splash/transparent.png` because Android 12 otherwise substitutes the launcher icon (also the mandala). The platform phase shows no logo at all. The old padded `assets/splash/splash_icon.png` is deleted and its hard-coded call removed from `scripts/pad_image.py` (the script itself stays as a reusable Pillow helper).
+- `lib/widgets/animated_splash.dart` owns the four controllers; with no native mark to match, `kSplashLogoSize` is back to a hero-sized 168dp and the entrance fade/scale is restored. `lib/main.dart` (`LocationPermissionWrapper`) holds it for at least 400ms so the entrance is perceivable on warm starts; the hold and all loops collapse to zero/static under Reduce Motion.
+- Regression: `test/animated_splash_test.dart` pins the native config (no root image, transparent Android 12 icon, no `@drawable/splash` in any launch background), the hold arithmetic, the rendered mark/name/tagline, and that rotation/loops are absent when motion is disabled.
+- Constraint: do not restore an image to the root of `flutter_native_splash.yaml` or swap `assets/splash/transparent.png` for the mandala — either reintroduces a static logo phase before Flutter. Keep the 400ms hold off when `AppTheme.reduceMotionOf` is true.
+
+### Splash hand-off has no colour flash
+
+The brief solid-white window between process start and the first Flutter frame is gone: the native window already paints the splash colour, and less work runs before `runApp`.
+
+- Native light colour is `#F5F5F7` and dark is `#121212` (neutral for MIUI, deliberately NOT `AppTheme.splashBackgroundDark`); legacy bitmaps are `#ffffff` / `#121212`. All four `values*/styles.xml` keep `NormalTheme`'s `android:windowBackground` at the platform default `?android:colorBackground`; pointing it at an app colour was a failed attempt to remove a white flash.
+- MIUI/Xiaomi (reproduced on Redmi Note 10 Pro, Android 12) force-inverts saturated colours in the native splash; a purple `#10002B` background bitmap painted magenta. Both v31 `LaunchTheme` blocks keep the original platform parent and minimal item set with a literal `windowSplashScreenBackground` (`#F5F5F7` light, `#121212` dark). See "Android 12 starting window no longer magenta" above.
+- The Android 12 icon is fully transparent (`assets/splash/transparent.png` at every density). An opaque colour tile rendered as a visible masked square; the earlier claim that transparency causes magenta was wrong — the bitmap colour was the cause.
+- `AnimatedSplash` paints a flat `AppTheme.splashBackgroundLight`/`Dark` chosen from **system** brightness instead of `AppTheme.backgroundDecoration`'s dark `LinearGradient`, and the halo is a flat translucent disc rather than a `RadialGradient`. This keeps the hand-off predictable; the Impeller-gradient theory of the magenta was wrong.
+- `lib/main.dart` now only awaits system setup, Hive and tzdata before `runApp`; display-mode opt-in, version warm-up, the place-boundary index, the tile cache and Workmanager all start in the post-frame callback.
+- `lib/app/bootstrap.dart`: `initTimezones()` is tzdata only; `warmTimezoneIndex()` decodes the boundary index after the first frame. tzdata stays on the critical path because `TithiApp.initState` builds the place clock.
+- Regression: `test/animated_splash_test.dart` pins the neutral native colours, the transparent Android 12 icon, platform-default `NormalTheme` backgrounds, literal v31 colours with app-resource `windowBackground`/`colorBackground` absent, and that the dark splash paints a flat background with **no gradient** in the tree.
+- Constraint: keep the native dark colours neutral; the brand purple belongs only in Flutter. Never add app-resource `windowBackground`/`colorBackground` or `android:opacity` to a v31 `LaunchTheme`, and never reintroduce a `Gradient` into `AnimatedSplash`.
+
 ## 2026-11-22 - 0.9.6+34
+
+### Ekadashi copy and timing tightened
+
+The 26 named Ekadashis now use a strict sunrise rule and ship complete, reader-facing copy in every language the app shows.
+
+- `assets/festivals.json`: all 26 carry `dominant_tithi: "strict"` alongside `vriddhi: "first"` — strict removes the post-sunrise grace that would pull a viddha day back onto Dashami, first keeps one observance in a genuine two-sunrise run. All 26 `panchang_rules` use the same seven keys in the same order.
+- Every regional-name block fills Telugu, Kannada, Tamil and Malayalam; `pashankusha_ekadashi` displays as "Papankusha Ekadashi" (Pashankusha kept in the copy as the variant), with the etymology corrected to papa + ankusha and Padmanabha named as the deity. Mantras, fasting notes and five-step rituals are complete; developer-only prose and the hardcoded 2026 Nirjala date are gone, and the Vaishnava arunodaya caveat lives in the fasting field instead of all 26 descriptions.
+- Regression: `test/festival_data_test.dart` now requires strict + first on the 24 named Ekadashis and both Adhika entries; both festival guides keep the pair together.
+- Constraint: keep `strict` and `first` together — dropping either resolves viddha/vriddhi days to the wrong sunrise or shows the vrat twice.
+
+### Ekadashis show their own names
+
+Every Ekadashi now resolves to its own named vrat instead of all 24 days sharing one generic "Ekadashi" label.
+
+- `assets/festivals.json` has one entry per named Ekadashi with a specific Amanta `masa`/`paksha` (the Krishna ones stored one month earlier, same offset as Diwali), `category: "vrat"`, `vriddhi: "first"` (one sunrise only — the pipeline cannot express the Dashami-touching viddha rule) and `paranRule: "dwadashi_window"`. Shravana Putrada replaces the mislabelled `pavitra_ekadashi`; Devshayani/Devutthani move from `major` to `vrat`; variant names (Shayani, Parsva/Vamana, Prabodhini, Vaikuntha) are in the regional-name copy.
+- The wildcard `ekadashi_shukla` / `ekadashi_krishna` entries are gone; their slots now hold `padmini_ekadashi` / `parama_ekadashi` with `masa: "Adhika_Jyeshtha"` (the engine's exact `Adhika_` string), so an intercalary year such as 2026 shows its two extra Ekadashis while ordinary years show only the 24 named ones. No pipeline change.
+- Regression: `test/festival_data_test.dart` pins all 24 rules, the absence of wildcard Ekadashis, the Adhika entries and distinct Kartika Shukla/Krishna matching in both month systems; cache/stamp tests follow the 127-entry catalog. Also restored the curated `featured` flag on `karva_chauth` and explicit `regions: ["all"]` on `dev_diwali`, both already required by existing dataset tests.
+- Constraint: keep the Amanta storage convention and `vriddhi: "first"` — a wildcard masa or the default `"both"` silently re-collapses all days to one name or double-shows a vriddhi Ekadashi.
 
 ### Festival dates follow the primary calendar
 
