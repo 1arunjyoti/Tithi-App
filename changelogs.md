@@ -24,7 +24,7 @@ Format:
 
 - CI builds the release APKs in one `flutter build apk --split-per-abi` pass and publishes the GitHub release under the clean `vX.Y.Z+N` tag; the `--release` suffix only triggers the workflow. `AppUpdateService` parses `tag_name`, so a marker in the tag reads as build 0 and suppresses every update (`.github/workflows/ci.yml`, `lib/services/app_update_service.dart`).
 - `AppUpdateService.normalizeVersion` also drops a `--<marker>` suffix as a safety net; `test/app_update_service_test.dart` pins `normalizeVersion`, `displayVersion` and `isNewerThan` against `--release` tags.
-- Constraint: `lib/l10n/app_localizations*.dart` is analyzer-excluded (CI treats infos as fatal). Keep `flutter gen-l10n` output committed - CI regenerates it and fails when the committed copy is stale.
+- Constraint: `lib/l10n/app_localizations*.dart` is analyzer-excluded (CI treats infos as fatal). Keep `flutter gen-l10n` output committed - CI regenerates it and fails when the committed copy is stale. Blank-line-only differences are ignored, because the pinned SDK inserts a blank line between the `intl` and localizations imports where newer generators do not.
 - The release job caches only the NDK version `flutter.ndkVersion` names, under `$ANDROID_HOME/ndk`, instead of the whole preinstalled NDK tree.
 
 ### Release pipeline hardening (ABI-aware updates, repairable releases)

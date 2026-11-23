@@ -172,13 +172,15 @@ jobs:
 
       # `generate: true` in pubspec.yaml regenerates lib/l10n during `pub get`,
       # so a stale committed copy would be silently replaced instead of caught.
-      # Fail when regeneration leaves the tracked generated files dirty.
+      # Fail when regeneration changes tracked generated files. Blank lines are
+      # ignored: the pinned SDK inserts one between the intl and localizations
+      # imports where newer generators do not, which is formatting, not drift.
       - name: Check generated l10n is committed
         run: |
           set -euo pipefail
           flutter gen-l10n
-          if ! git diff --exit-code -- 'lib/l10n/app_localizations*.dart'; then
-            echo "::error::Generated l10n is stale for the pinned Flutter SDK; run 'flutter gen-l10n' and commit lib/l10n/app_localizations*.dart."
+          if ! git diff --ignore-blank-lines --exit-code -- 'lib/l10n/app_localizations*.dart'; then
+            echo "::error::Generated l10n is stale for the pinned Flutter SDK; run 'flutter gen-l10n' with that SDK and commit lib/l10n/app_localizations*.dart."
             exit 1
           fi
 
