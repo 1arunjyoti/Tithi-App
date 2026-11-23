@@ -1,9 +1,16 @@
 flutter_native_splash:
+  # One static branded splash, drawn by the platform only. There is no Flutter
+  # splash phase: the app goes straight to HomeShell after the native window.
+  #
+  # Keep the colours neutral. MIUI 13 ignores the Android 12 splash attributes
+  # and falls back to the legacy background bitmap, force-inverting saturated
+  # colours in dark mode: a purple #10002B there painted full-screen magenta on
+  # the Redmi Note 10 Pro. The mandala itself is transparent, so it is safe.
   color: "#ffffff"
   color_dark: "#121212"
   image: "assets/splash/splash_icon.png"
   android_12:
     image: "assets/splash/splash_icon.png"
-    color: "#ffffff"
+    color: "#F5F5F7"
     color_dark: "#121212"
   fullscreen: false

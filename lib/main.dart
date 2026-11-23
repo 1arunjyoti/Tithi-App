@@ -28,10 +28,8 @@ import 'theme/app_theme.dart';
 import 'theme/app_metrics.dart';
 import 'theme/app_typography.dart';
 import 'screens/home_shell.dart';
+import 'widgets/animated_splash.dart';
 import 'widgets/panchang_init_failure_overlay.dart';
-
-// Conditional import for platform-specific features
-import 'platform/platform_init.dart';
 
 void main() {
   runZonedGuarded(
@@ -65,29 +63,31 @@ void main() {
         debugPrint('Stack trace: ${details.stack}');
       };
 
-      // Optimized Display Mode (90Hz/120Hz), Android only.
-      await initPlatformFeatures();
+      // Set the high refresh rate before the first frame so the animated
+      // loading splash runs at 90/120Hz from the start and the switch happens
+      // behind the static native splash. It is one platform-channel call, and
+      // any failure is swallowed by initDisplay().
+      await bootstrap.initDisplay();
 
-      // Storage is required before the first frame, and it self-heals a
-      // festivals cache written by an older model
-      // (StorageService.openFestivalsBox). Version metadata only improves
-      // first paint: it runs alongside it and swallows its own failures,
-      // because a warm-up must never keep `runApp` from happening. Fonts are
-      // bundled assets now, so there is no font warm-up to await.
+      // Version metadata, the place boundary index, the tile cache and
+      // Workmanager do not paint the splash, so they run after the first frame.
       registerHiveAdapters();
-      await Future.wait([bootstrap.initStorage(), bootstrap.warmVersionInfo()]);
+      await bootstrap.initStorage();
       StartupTimeline.mark('storage-ready');
 
-      // Initialize timezone for notifications
+      // tzdata must be loaded before `TithiApp.initState` builds the place
+      // clock; the boundary index it used to warm here is deferred below.
       await bootstrap.initTimezones();
       StartupTimeline.mark('timezones-ready');
 
       runApp(const ProviderScope(child: TithiApp()));
 
-      // Post-first-frame: tile cache + Workmanager must never block it.
+      // Post-first-frame: nothing below may block the splash.
       // The temple map awaits AppBootstrap.tileCacheReady before tiles.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         StartupTimeline.mark('first-frame');
+        unawaited(bootstrap.warmVersionInfo());
+        unawaited(bootstrap.warmTimezoneIndex());
         unawaited(bootstrap.initTileCache());
         unawaited(bootstrap.initBackgroundWork());
       });
@@ -531,27 +531,13 @@ class _LocationPermissionWrapperState
 
   @override
   Widget build(BuildContext context) {
-    // Show HomeScreen as soon as location service is initialized
-    // Permission dialog will appear in background if first launch
+    // Keep the app off screen until the saved place is loaded, so the first
+    // frame is the place the user actually used. The animated mandala is the
+    // loading UI: it replaces the old "Initializing..." spinner and starts on
+    // the same colour as the native splash, so the hand-off is continuous.
     if (_showHomeScreen) {
       return const HomeShell();
     }
-
-    // Only show loading screen while waiting for location service init
-    return Scaffold(
-      body: Container(
-        decoration: AppTheme.backgroundDecoration(context),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: AppSpacing.s16),
-              Text('Initializing...'),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const AnimatedSplash();
   }
 }

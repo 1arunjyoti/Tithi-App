@@ -189,4 +189,31 @@ void main() {
       await client.body.close();
     });
   });
+
+  group('AppUpdateNotifier ABI availability', () {
+    test('explains a newer release with no APK for this device', () async {
+      // Arrange: CI publishes one APK per ABI, and this device is x86_64.
+      final client = MockClient(
+        (_) async => Response(
+          '{"tag_name":"v9.9.9+99","assets":[{"name":'
+          '"tithi-arm64-v8a-release.apk",'
+          '"browser_download_url":"https://x/a.apk","size":100}]}',
+          200,
+        ),
+      );
+      final notifier = AppUpdateNotifier(
+        AppUpdateService(
+          httpClient: client,
+          supportedAbis: () async => const ['x86_64', 'x86'],
+        ),
+      );
+
+      // Act
+      await notifier.checkForUpdates(force: true);
+
+      // Assert: an explanatory error, not a dead Install button.
+      expect(notifier.state.status, equals(AppUpdateStatus.error));
+      expect(notifier.state.errorMessage, contains('no APK for this device'));
+    });
+  });
 }

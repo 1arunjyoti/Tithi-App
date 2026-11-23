@@ -42,6 +42,14 @@ class AppTheme {
   static const Color shuklaTile = Color(0xFFF2F2F7); // neutral icon tile
   static const Color shuklaTodayFill = Color(0xFFEDEDF2); // calendar today
 
+  // Native launch-window colours. The platform splash and `NormalTheme`'s
+  // window background both paint these, so the window is already the colour of
+  // the first Flutter frame and the hand-off has no visible flash. Keep in
+  // sync with `flutter_native_splash.yaml` (guarded by
+  // `test/animated_splash_test.dart`).
+  static const Color splashBackgroundLight = shuklaBackground; // #F5F5F7
+  static const Color splashBackgroundDark = Color(0xFF10002B); // gradient stop
+
   // Warning / error-display palette (replaces hardcoded Colors.orange shades).
   static const Color warning = Color(0xFFFF9800);
   static const Color warningLightContainer = Color(
@@ -1484,7 +1492,7 @@ class AppTheme {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFF10002B), Color(0xFF240046), Color(0xFF10002B)],
+        colors: [splashBackgroundDark, Color(0xFF240046), splashBackgroundDark],
       ),
     );
   }

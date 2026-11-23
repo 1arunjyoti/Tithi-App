@@ -25,7 +25,7 @@ pwsh scripts/check_architecture.ps1                               # architecture
   `integration_test/`.
 - `flutter test` also runs `test/no_web_target_test.dart`; it fails if web
   scaffolding returns.
-- Flutter SDK `^3.10.4`; CI pins Flutter `3.47.4` stable.
+- Dart SDK `^3.13.0`, Flutter `>=3.47.0`; CI pins Flutter `3.47.4` stable.
 
 ## Routing: task -> first files
 

@@ -10,6 +10,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Release keeps the canonical id; development build types get their own ids
+// so they install side by side instead of replacing a release install.
+val baseApplicationId = "app.tithi.pro"
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -51,7 +55,7 @@ fun missingReleaseSigningValues(): List<String> {
 }
 
 android {
-    namespace = "app.tithi.pro"
+    namespace = baseApplicationId
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -62,8 +66,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "app.tithi.pro"
+        applicationId = baseApplicationId
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -112,6 +115,16 @@ android {
 // APK output naming is configured through the public variant API in AGP 9.
 androidComponents {
     onVariants { variant ->
+        // Set the id on the variant itself instead of using build-type
+        // applicationIdSuffix: Flutter copies app build types onto plugin
+        // library modules with initWith(), and suffixes are invalid there.
+        // The manifest's ${applicationId} placeholder (FileProvider authority)
+        // follows this value; the Kotlin namespace stays `app.tithi.pro`.
+        when (variant.name) {
+            "debug" -> variant.applicationId.set("$baseApplicationId.debug")
+            "profile" -> variant.applicationId.set("$baseApplicationId.profile")
+        }
+
         variant.outputs.forEach { output ->
             if (output.outputType == VariantOutputConfiguration.OutputType.SINGLE) {
                 val outputName =

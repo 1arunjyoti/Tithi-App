@@ -22,6 +22,3 @@ def add_padding(input_path, output_path, padding_ratio=0.5):
         print(f"Successfully created padded image at {output_path}")
     except Exception as e:
         print(f"Error processing image: {e}")
-
-if __name__ == "__main__":
-    add_padding('assets/icons/logo_transparent.png', 'assets/splash/splash_icon.png', 0.6)
