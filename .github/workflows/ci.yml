@@ -202,7 +202,11 @@ jobs:
         env:
           SWISSEPH_LIB_PATH: ${{ github.workspace }}/build/swisseph/libswisseph.so
         run: |
+          set -euo pipefail
           flutter pub get
+          # Nested package is excluded from the root analyzer (its test imports
+          # resolve against its own package_config), so analyze it here.
+          flutter analyze --no-pub
           flutter test --no-pub --reporter compact
 
   release-build:

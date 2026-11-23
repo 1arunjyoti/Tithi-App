@@ -20,6 +20,11 @@ analyzer:
     # that trip deprecation infos, and CI treats infos as fatal. The workflow
     # still regenerates these and fails when the committed copy is stale.
     - lib/l10n/app_localizations*.dart
+    # Nested package with its own pubspec/lock/package_config. The root
+    # analyzer would resolve its test imports (package:test) against the app's
+    # package config, where that package does not exist, and report every
+    # `expect` as undefined. CI analyzes it in its own step instead.
+    - packages/jyotish/**
 include: package:flutter_lints/flutter.yaml
 
 linter:
