@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +12,11 @@ import 'package:tithi/services/storage_service.dart';
 /// Hashing the bundled 230 KB catalog on every launch is wasted work: the
 /// asset only changes when the APK does. These tests pin the cache that lets a
 /// relaunch of the same build skip it, and the cases that must NOT trust it.
+
+/// The bundled catalog size, so adding a festival never breaks this test.
+int get _bundledFestivalCount =>
+    (jsonDecode(File('assets/festivals.json').readAsStringSync()) as List).length;
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -86,6 +92,6 @@ void main() {
 
     // Assert: the asset is read again and the box is repopulated.
     expect(next.containsKey('festival-asset'), isTrue);
-    expect(box.length, 127);
+    expect(box.length, _bundledFestivalCount);
   });
 }

@@ -305,7 +305,7 @@ void main() {
     test('featured reads the curated flag, independent of category', () {
       // Arrange: a featured vrat and an ordinary major. `featured` is an
       // editorial flag, so it must not be confused with `category: 'major'`
-      // (94 of the catalog's 127 records) or with recurrence.
+      // (94 of the bundled records) or with recurrence.
       final featuredVrat = fixture(
         id: 'fv',
         name: 'Featured Vrat',
@@ -604,7 +604,7 @@ void main() {
       );
 
       // Assert: one card, and it is the featured entry. `category: 'major'`
-      // covers 94 of the catalog's 127 festivals, so it cannot decide this,
+      // covers 94 of the bundled festivals, so it cannot decide this,
       // and "next from today" would have featured Ordinary Major instead.
       expect(find.byType(MajorFestivalCard), findsOneWidget);
       expect(

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,10 @@ import 'package:tithi/core/storage/hive_adapters.dart';
 import 'package:tithi/models/festival.dart';
 import 'package:tithi/services/festival_repository.dart';
 import 'package:tithi/services/storage_service.dart';
+
+/// The bundled catalog size, so adding a festival never breaks this test.
+int get _bundledFestivalCount =>
+    (jsonDecode(File('assets/festivals.json').readAsStringSync()) as List).length;
 
 /// A record whose frame is valid but whose payload can no longer be decoded.
 ///
@@ -101,7 +106,7 @@ void main() {
       await FestivalRepository().init();
 
       // Assert: full catalog, including the curated flag from data.
-      expect(box.length, 127);
+      expect(box.length, _bundledFestivalCount);
       expect(box.get('diwali')?.featured, isTrue);
     }, (error, stack) => unhandled.add(error));
 

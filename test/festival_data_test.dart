@@ -290,7 +290,7 @@ void main() {
       ];
 
       // Assert: only a real `true` counts, and the set stays rare. "major"
-      // covers 94 of the 127 records, which is exactly why the featured card
+      // covers 94 of the bundled records, which is exactly why the featured card
       // cannot use the category; if this set grows past a quarter of the
       // catalog, "featured" has stopped meaning anything.
       expect(flagged, isNotEmpty);
