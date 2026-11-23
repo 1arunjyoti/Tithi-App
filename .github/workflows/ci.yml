@@ -232,7 +232,10 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          # AGP's lint calls java.util.List.removeLast(), a Java 21 API: on
+          # JDK 17 `lintVitalAnalyzeRelease` dies with NoSuchMethodError.
+          # The app still targets Java 17 bytecode; only the build JVM moves.
+          java-version: '21'
 
       # gradle.properties enables Gradle's own build cache; these paths hold
       # the distribution, dependency jars and wrapper that a fresh runner
