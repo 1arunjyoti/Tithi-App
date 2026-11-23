@@ -308,9 +308,9 @@ void main() {
       // Assert: the set is an editorial fact, so it is neither the 7 records
       // that ship artwork nor the 96 in the major category.
       expect(featured, containsAll(['diwali', 'holi', 'dussehra']));
-      // Karva Chauth is categorised `vrat` and is still featured - the
-      // clearest proof the flag is independent of `category`.
-      expect(featured, contains('karva_chauth'));
+      // Karva Chauth is a vrat and is deliberately not in the curated set:
+      // `featured` is an editorial choice, not a category or an artwork flag.
+      expect(featured, isNot(contains('karva_chauth')));
       expect(featured, isNot(contains('hanuman_jayanti')));
       expect(featured.length, greaterThan(7));
     });

@@ -91,6 +91,13 @@ class SwissEphBindings {
   }
   late final ffi.DynamicLibrary _lib;
 
+  /// Dart's `lockSync` uses a non-blocking flock on Linux: a second isolate
+  /// that tries while another one holds the lock gets EAGAIN instead of
+  /// waiting. `flutter test` runs test files in parallel isolates, so that is
+  /// normal contention - wait briefly and retry instead of failing setUpAll.
+  static const _nativeLockRetry = Duration(milliseconds: 5);
+  static const _nativeLockMaxWait = Duration(seconds: 10);
+
   /// Runs one operation while holding the process-wide Swiss Ephemeris lock.
   ///
   /// Swiss Ephemeris stores sidereal mode, topocentric coordinates, and other
@@ -104,8 +111,16 @@ class SwissEphBindings {
     final handle = lockFile.openSync(mode: FileMode.append);
     var locked = false;
     try {
-      handle.lockSync(FileLock.exclusive);
-      locked = true;
+      final deadline = DateTime.now().add(_nativeLockMaxWait);
+      while (!locked) {
+        try {
+          handle.lockSync(FileLock.exclusive);
+          locked = true;
+        } on FileSystemException {
+          if (DateTime.now().isAfter(deadline)) rethrow;
+          sleep(_nativeLockRetry);
+        }
+      }
       return action();
     } finally {
       if (locked) {

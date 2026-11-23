@@ -665,7 +665,7 @@ observance. The All Festivals screen gives `"featured": true` entries the
 large featured card and every other entry — `major` included — the compact
 row (`AllFestivalsScreen`, `lib/widgets/major_festival_card.dart`).
 
-- 16 of the 127 records set it today. Omit it for everything else; absence
+- 15 of the 127 records set it today. Omit it for everything else; absence
   is `false`.
 - It is deliberately curated, because nothing else can stand in for
   importance: 94 records are already `major`, `displayPriority` only
@@ -674,7 +674,9 @@ row (`AllFestivalsScreen`, `lib/widgets/major_festival_card.dart`).
 - It is date-independent: a past flagship keeps its card, and a run like
   Durga Puja Shashthi→Dasami stays featured as a whole instead of
   splitting at the first day.
-- It is independent of `category` — `karva_chauth` is `vrat` and featured.
+- It is an editorial flag, not a category: every current entry happens to be
+  `major`, but neither `major` nor `vrat` implies it (`karva_chauth` is
+  `vrat` and deliberately not featured).
 - Adding one is a data edit only: `Festival.fromJson` reads it, the export
   round-trips it, and the UI reads the `Festival.featured` getter
   (`lib/models/festival.dart`). No code change, no provider change.
