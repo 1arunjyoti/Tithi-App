@@ -22,6 +22,20 @@ Festival definitions and rules stay in `assets/festivals.json`. The fixture only
 stores IDs, so changing a festival description or translation does not touch
 the calculation baseline.
 
+## Running the engine comparison
+
+The fixture-validation tests run with the normal suite. The **engine comparison**
+is opt-in because its fixtures are characterization snapshots that legitimately
+drift when festival rules change; it must not block a release. Run it locally with
+the host library, an IST timezone, and the explicit flag:
+
+```bash
+TITHI_RUN_GOLDEN_ENGINE=1 SWISSEPH_LIB_PATH=/path/to/libswisseph.so \
+  flutter test test/panchang_golden_engine_test.dart
+```
+
+CI does not set `TITHI_RUN_GOLDEN_ENGINE`, so the comparison skips there.
+
 ## Current baseline
 
 - Engine tag: `panchang-v3` (`kPanchangCalculationVersion = 3`).

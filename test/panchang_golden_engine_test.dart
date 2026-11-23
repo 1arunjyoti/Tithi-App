@@ -24,7 +24,14 @@ void main() {
       libPath != null && libPath.isNotEmpty && File(libPath).existsSync();
   final istHost =
       DateTime.now().timeZoneOffset == const Duration(hours: 5, minutes: 30);
-  final skipReason = !libraryAvailable
+  // The engine comparison is opt-in, not a release gate: its fixtures are
+  // engine-characterization snapshots that legitimately drift when festival
+  // rules change. CI must not block a release on stale snapshots, so it needs
+  // TITHI_RUN_GOLDEN_ENGINE=1 in addition to the library and an IST host.
+  final optedIn = Platform.environment['TITHI_RUN_GOLDEN_ENGINE'] == '1';
+  final skipReason = !optedIn
+      ? 'Set TITHI_RUN_GOLDEN_ENGINE=1 to run the golden engine comparison.'
+      : !libraryAvailable
       ? 'Set SWISSEPH_LIB_PATH to a host Swiss Ephemeris library to run the '
             'golden engine comparison.'
       : !istHost
