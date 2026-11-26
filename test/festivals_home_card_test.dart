@@ -372,11 +372,12 @@ void main() {
       expect(find.byType(InsetRowDivider), findsNothing);
     });
 
-    testWidgets('rows are flush and separated by an inset hairline', (
+    testWidgets('a washed row keeps a gap from an adjacent plain row', (
       tester,
     ) async {
-      // Arrange: only the first row is on the selected day; a washed row
-      // next to a flush one still uses the hairline as its separator.
+      // Arrange: the first row is on the selected day (washed), the second
+      // is a later day (flush) - the case where an inset hairline would sit
+      // on the wash's bottom edge and read as a seam on the highlighted card.
       await pumpCard(
         tester,
         days: {
@@ -387,6 +388,34 @@ void main() {
           DateTime(2026, 9, 16): dayData(
             date: DateTime(2026, 9, 16),
             festivals: [festB],
+            tithiName: 'Shashthi',
+            tithiNumber: 6,
+          ),
+        },
+        all: [festA, festB],
+      );
+
+      final rows = find.byType(FestivalRowTile);
+      expect(rows, findsNWidgets(2));
+      final first = tester.getRect(rows.at(0));
+      final second = tester.getRect(rows.at(1));
+      expect(
+        second.top - first.bottom,
+        greaterThanOrEqualTo(AppSpacing.s8 - 0.5),
+      );
+      expect(find.byType(InsetRowDivider), findsNothing);
+    });
+
+    testWidgets('plain rows are flush and separated by an inset hairline', (
+      tester,
+    ) async {
+      // Arrange: both rows are on a later day, so neither carries the wash.
+      await pumpCard(
+        tester,
+        days: {
+          DateTime(2026, 9, 16): dayData(
+            date: DateTime(2026, 9, 16),
+            festivals: [festA, festB],
             tithiName: 'Shashthi',
             tithiNumber: 6,
           ),

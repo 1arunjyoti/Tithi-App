@@ -20,6 +20,13 @@ Format:
 
 ## 2026-11-23 - 0.9.16+45
 
+### Rash Purnima keeps one day on the home card
+
+- Purnima 2026 begins 23 Nov ~23:42: the 23rd's nishita window closes inside the tithi and the 24th's sunset still carries it, so the per-day home card showed Rash Purnima twice while the all-festivals occurrence scan showed one. Both readings come from the same matcher; the difference was that the card keeps every matching sunrise.
+- `assets/festivals.json`: `rash_purnima` now sets `"vriddhi": "first"`, so the shared `applyVriddhiFilter` trims the extended run to the nishita night (23 Nov) in the month grid, home card and notifications — the same day the forward scan resolves.
+- Constraint: `vriddhi` is the per-festival knob for a tithi spanning two sunrises; do not fix this by changing the nishita gap guard, which exists to keep Janmashtami from disappearing when its tithi ends before the window opens.
+- Regression: `test/festival_data_test.dart` pins the rule so the two screens cannot drift again.
+
 ### Release builds survive a Maven Central 429
 
 - A single `429 Too Many Requests` while Gradle resolved Kotlin plugin artifacts disabled the repository and cascaded into "Could not resolve" for every plugin, failing `assembleRelease` before any code compiled. Both artifacts named in the error (`kotlin-stdlib:2.4.21` and `kotlin-gradle-plugins-bom:2.2.20`) exist, so this was throttling, not a version conflict.
@@ -31,10 +38,10 @@ Format:
 
 Two festivals on the selected day now read as separate cards instead of one merged wash.
 
-- Consecutive selected-day rows each carry the accent wash; stacked flush they looked like a single block, with the hairline as a seam inside it. Neighbouring washed rows now get an 8px gap instead of that hairline.
-- Constraint: the gap applies only when *both* adjacent rows are highlighted. A washed row next to a plain row keeps the inset `InsetRowDivider`, with its text-column inset unchanged.
-- `lib/widgets/event_list_widget.dart` owns the choice (`_buildRows` + new `_rowSeparator`); `AppTheme.festivalRowDecoration` and `FestivalRowTile` are untouched.
-- Regression: `test/festivals_home_card_test.dart` pins the gap for two highlighted rows and keeps the hairline case for a mixed pair.
+- A selected-day row carries an accent wash whose horizontal span contains the inset hairline's start. Drawn flush at that row's edge, the hairline merged into the wash instead of separating it. Any pair with at least one washed row now gets an 8px gap; only plain/plain pairs keep the hairline.
+- Constraint: the wash is the separator around it, so no `InsetRowDivider` is emitted adjacent to a washed row. The divider's text-column inset is unchanged for plain rows.
+- `lib/widgets/event_list_widget.dart` owns the choice (`_buildRows` + `_rowSeparator`); `AppTheme.festivalRowDecoration` and `FestivalRowTile` are untouched.
+- Regression: `test/festivals_home_card_test.dart` pins the gap for washed/washed and washed/plain pairs, and keeps the hairline case for a plain/plain pair.
 
 ### Rash Purnima matches Kartika Purnima
 

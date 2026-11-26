@@ -3935,7 +3935,6 @@
       "tithi": 15,
       "conditions": "Purnima",
       "recurring": false,
-      "timingOverride": "nishita",
       "pujaKala": "nishita"
     },
     "rituals": {

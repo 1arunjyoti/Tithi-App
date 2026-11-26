@@ -535,5 +535,19 @@ void main() {
         isTrue,
       );
     });
+
+    test('Rash Purnima keeps one day of an extended tithi run', () {
+      // 2026: Purnima begins 23 Nov ~23:42, so the nishita window of the 23rd
+      // and the sunset of the 24th both satisfy the rule. Without a vriddhi
+      // preference the home card (per-day panchang) shows both days while the
+      // all-festivals occurrence scan shows only the first - pin 'first' so
+      // the shared applyVriddhiFilter trims the extra day everywhere.
+      final entry = _loadFestivalJson().firstWhere(
+        (f) => f['id'] == 'rash_purnima',
+      );
+      final rules = (entry['panchang_rules'] as Map).cast<String, dynamic>();
+      expect(rules['vriddhi'], equals('first'));
+      expect(Festival.fromJson(entry).panchangRules.vriddhi, equals('first'));
+    });
   });
 }
