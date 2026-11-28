@@ -26,6 +26,7 @@ abstract final class NotificationKeys {
   static const String minute = 'notification_minute';
   static const String shlokaEnabled = 'shloka_enabled';
   static const String festivalEnabled = 'festival_enabled';
+  static const String moonEnabled = 'moon_enabled';
 
   /// Stores [FestivalReminderTiming] as its enum index.
   static const String festivalTiming = 'festival_timing';
@@ -38,6 +39,12 @@ abstract final class NotificationKeys {
   static const int shlokaNotificationIdBase = 1000;
   static const int festivalNotificationIdBase = 2000;
   static const int festivalWindowDays = 8;
+
+  /// Moon alerts: one ID slot per event type per day in the window.
+  static const int moonNotificationIdBase = 3000;
+  static const int moonWindowDays = 8;
+  static const int moonEventTypes = 4;
+  static const int moonNotificationSlots = moonWindowDays * moonEventTypes;
 
   // Base ID for sankalpa notifications (unique range to avoid collision).
   static const int sankalpaNotificationIdBase = 10000;

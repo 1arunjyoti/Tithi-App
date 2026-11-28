@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_motion.dart';
-import '../../../theme/app_theme.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../sheets/widgets/sheet_chip.dart';
 import '../providers/event_detail_providers.dart';
 
@@ -130,12 +130,6 @@ class _HeroLanguageChipsState extends ConsumerState<HeroLanguageChips> {
     if (widget.chips.isEmpty) return const SizedBox.shrink();
     final expanded = ref.watch(heroChipsExpandedProvider);
     final l10n = AppLocalizations.of(context);
-    // Toggle ink matches the hero titles (primary is unreadable on the
-    // peach gradient in light mode — same call as ObservanceCaption).
-    final ink = widget.highContrast
-        ? context.colors.primary
-        : AppTheme.heroForeground(context);
-
     Wrap chipsWrap() {
       return Wrap(
         spacing: 8,
@@ -159,24 +153,16 @@ class _HeroLanguageChipsState extends ConsumerState<HeroLanguageChips> {
     // The existing translations/less strings serve as the tooltip so the
     // icon-only button stays localized and screen-reader friendly.
     Widget arrowButton({required bool isExpanded}) {
-      return IconButton(
+      return AppIconButton(
         onPressed: () =>
             ref.read(heroChipsExpandedProvider.notifier).state = !isExpanded,
         icon: Icon(
           isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-          color: ink,
           size: AppIconSize.medium,
         ),
         tooltip: isExpanded
             ? (l10n?.showLess ?? 'Show less')
             : (l10n?.showMoreTranslations ?? 'Show more translations'),
-        style: IconButton.styleFrom(
-          foregroundColor: ink,
-          padding: EdgeInsets.zero,
-          minimumSize: const Size(32, 32),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-        ),
       );
     }
 

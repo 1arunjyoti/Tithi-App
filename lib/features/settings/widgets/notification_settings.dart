@@ -1,6 +1,9 @@
-import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart'
+    hide CornerRounding, RoundedPolygon;
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+
 import '../../../providers/notification_provider.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../l10n/app_localizations.dart';
@@ -41,8 +44,7 @@ class NotificationSettings extends ConsumerWidget {
                 if (context.mounted) {
                   showAppMessage(
                     context,
-                    l10n?.notificationPermissionDenied ??
-                        'Notification permission denied. Please enable it in system settings.',
+                    l10n?.notificationPermissionDenied ?? 'Notification permission denied. Please enable it in system settings.',
                     kind: AppMessageKind.error,
                     action: SnackBarAction(
                       label: l10n?.openSettings ?? 'Open Settings',
@@ -105,8 +107,7 @@ class NotificationSettings extends ConsumerWidget {
                 if (context.mounted) {
                   showAppMessage(
                     context,
-                    l10n?.notificationPermissionDenied ??
-                        'Notification permission denied. Please enable it in system settings.',
+                    l10n?.notificationPermissionDenied ?? 'Notification permission denied. Please enable it in system settings.',
                     kind: AppMessageKind.error,
                   );
                 }
@@ -156,8 +157,7 @@ class NotificationSettings extends ConsumerWidget {
                 if (context.mounted) {
                   showAppMessage(
                     context,
-                    l10n?.notificationPermissionDenied ??
-                        'Notification permission denied. Please enable it in system settings.',
+                    l10n?.notificationPermissionDenied ?? 'Notification permission denied. Please enable it in system settings.',
                     kind: AppMessageKind.error,
                   );
                 }
@@ -190,6 +190,50 @@ class NotificationSettings extends ConsumerWidget {
             }
           },
         ),
+        const AppDivider(),
+        // Moon & eclipse alerts (independent of the daily master switch).
+        SettingsSwitchTile(
+          icon: Icons.nightlight_round,
+          title: l10n?.moonEventsToggle ?? 'Moon & eclipse alerts',
+          subtitle:
+              l10n?.moonEventsToggleSubtitle ??
+              'Full Moon, New Moon, Blue Moon and eclipses',
+          value: ref.watch(moonNotificationEnabledProvider),
+          onChanged: (val) async {
+            if (val) {
+              final granted = await notificationService.requestPermission();
+              if (!granted) {
+                if (context.mounted) {
+                  showAppMessage(
+                    context,
+                    l10n?.notificationPermissionDenied ?? 'Notification permission denied. Please enable it in system settings.',
+                    kind: AppMessageKind.error,
+                  );
+                }
+                return;
+              }
+            }
+            ref.read(moonNotificationEnabledProvider.notifier).setEnabled(val);
+            try {
+              await notificationService.setMoonEnabled(val);
+            } catch (e) {
+              debugPrint('Failed to set moon notifications to $val: $e');
+              ref
+                  .read(moonNotificationEnabledProvider.notifier)
+                  .setEnabled(!val);
+              if (context.mounted) {
+                showAppMessage(
+                  context,
+                  l10n?.moonEventsToggleFailed ??
+                      'Could not update moon alerts ($e). Please try again.',
+                  kind: AppMessageKind.error,
+                );
+              }
+            } finally {
+              ref.invalidate(loadNotificationStateProvider);
+            }
+          },
+        ),
         if (ref.watch(festivalNotificationEnabledProvider)) ...[
           const AppDivider(),
           SettingsActionTile(
@@ -212,7 +256,8 @@ class NotificationSettings extends ConsumerWidget {
         // any of them is on, so single-type users can still change it.
         if (isEnabled ||
             ref.watch(shlokaNotificationEnabledProvider) ||
-            ref.watch(festivalNotificationEnabledProvider)) ...[
+            ref.watch(festivalNotificationEnabledProvider) ||
+            ref.watch(moonNotificationEnabledProvider)) ...[
           const AppDivider(),
           SettingsActionTile(
             icon: Icons.access_time_rounded,
@@ -228,31 +273,17 @@ class NotificationSettings extends ConsumerWidget {
               ),
             ),
             onTap: () async {
-              final time = await showTimePicker(
-                context: context,
-                initialTime: TimeOfDay(
+              // M3E owns the dialog chrome and resolves its colours from
+              // M3ETheme (which adapts the ambient app theme), so the old
+              // TimePickerThemeData override is no longer needed. M3ETime is
+              // a plain 24-hour hour/minute pair, matching the provider's
+              // shape; only the row's display label still uses TimeOfDay.
+              final time = await M3ETimePicker.show(
+                context,
+                initialTime: M3ETime(
                   hour: notifTime.hour,
                   minute: notifTime.minute,
                 ),
-                builder: (context, child) {
-                  return Theme(
-                    data: context.theme.copyWith(
-                      timePickerTheme: TimePickerThemeData(
-                        backgroundColor: context.colors.surface,
-                        // hourMinute{Color,TextColor} and dayPeriod* are all
-                        // left at their theme defaults on purpose: they are
-                        // a matched set (primary fill + onPrimary text, or a
-                        // transparent fill + onSurface text). Overriding one
-                        // side alone is what produced both the orange-on-
-                        // orange block and then the dark pill.
-                        dialHandColor: context.colors.primary,
-                        dialBackgroundColor: context.colors.onSurface
-                            .withValues(alpha: 0.1),
-                      ),
-                    ),
-                    child: child!,
-                  );
-                },
               );
 
               if (time != null) {
@@ -303,33 +334,33 @@ class NotificationSettings extends ConsumerWidget {
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.festivalReminderTime ?? 'Festival Reminder Time',
-      children: FestivalReminderTiming.values.map((timing) {
-        final label = _festivalTimingLabel(timing.index, l10n);
-        return SettingsPickerItem(
-          title: label,
-          isSelected: timing.index == current,
-          onTap: () async {
-            ref.read(festivalTimingProvider.notifier).setTiming(timing.index);
-            try {
-              await notificationService.setFestivalTiming(timing.index);
-            } catch (e) {
-              debugPrint('Failed to set festival timing: $e');
-              ref.read(festivalTimingProvider.notifier).setTiming(current);
-              if (context.mounted) {
-                showAppMessage(
-                  context,
-                  l10n?.reminderTimeUpdateFailed(e.toString()) ??
-                      'Could not update reminder time ($e). Please try again.',
-                  kind: AppMessageKind.error,
-                );
+      selectedIndex: current,
+      options: [
+        for (final timing in FestivalReminderTiming.values)
+          SettingsPickerOption(
+            title: _festivalTimingLabel(timing.index, l10n),
+            onSelected: () async {
+              ref.read(festivalTimingProvider.notifier).setTiming(timing.index);
+              try {
+                await notificationService.setFestivalTiming(timing.index);
+              } catch (e) {
+                debugPrint('Failed to set festival timing: $e');
+                ref.read(festivalTimingProvider.notifier).setTiming(current);
+                if (context.mounted) {
+                  showAppMessage(
+                    context,
+                    l10n?.reminderTimeUpdateFailed(e.toString()) ??
+                        'Could not update reminder time ($e). Please try again.',
+                    kind: AppMessageKind.error,
+                  );
+                }
+              } finally {
+                ref.invalidate(loadNotificationStateProvider);
               }
-            } finally {
-              ref.invalidate(loadNotificationStateProvider);
-            }
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+      ],
     );
   }
 

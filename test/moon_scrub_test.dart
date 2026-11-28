@@ -8,10 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:tithi/l10n/app_localizations.dart';
+import 'package:tithi/models/eclipse.dart';
 import 'package:tithi/models/panchang_data.dart';
 import 'package:tithi/models/panchang_school.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/calendar_provider.dart';
+import 'package:tithi/features/eclipse/providers/eclipse_providers.dart';
+import 'package:tithi/features/moon/providers/moon_details_providers.dart';
 import 'package:tithi/features/moon/providers/moon_providers.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/screens/moon_phases_screen.dart';
@@ -65,6 +68,15 @@ class FakeAccessibilityNotifier extends AccessibilityNotifier {
       panchangForDateProvider.overrideWith(
         (ref, date) async => mockDayPanchang(date),
       ),
+      // The new detail cards read the native/location seams. Host tests have
+      // neither, so pin them to inert values and keep the hero/list behaviour
+      // under test.
+      moonSkyTimesProvider.overrideWith(
+        (ref, date) async => const MoonSkyTimes(),
+      ),
+      moonViewingWindowProvider.overrideWith((ref, date) async => null),
+      moonDistanceInfoProvider.overrideWith((ref, date) async => null),
+      upcomingEclipsesProvider.overrideWith((ref) async => <Eclipse>[]),
     ],
   );
   final widget = UncontrolledProviderScope(
@@ -204,6 +216,83 @@ void main() {
 
       // Assert
       expect(find.text('Today'), findsOneWidget);
+    });
+  });
+
+  group('Moon halo', () {
+    testWidgets('glow fades inside its own box instead of clipping at the app bar', (
+      tester,
+    ) async {
+      final harness = moonTestScreen();
+      addTearDown(harness.container.dispose);
+      await tester.pumpWidget(harness.widget);
+      await tester.pump(const Duration(milliseconds: 200));
+
+      final halo = tester.widget<Container>(
+        find.byKey(const ValueKey('moon-halo')),
+      );
+      final decoration = halo.decoration! as BoxDecoration;
+      expect(decoration.boxShadow, isNull);
+      expect(decoration.gradient, isA<RadialGradient>());
+      // Layered bloom: warm core, bright amber rim, faint cool scatter, fade.
+      final gradient = decoration.gradient! as RadialGradient;
+      Color opaque(Color color) => color.withValues(alpha: 1);
+      expect(gradient.stops, hasLength(5));
+      expect(opaque(gradient.colors[0]), AppTheme.moonGlowCore);
+      expect(opaque(gradient.colors[2]), AppTheme.moonGlowRim);
+      expect(opaque(gradient.colors[3]), AppTheme.moonGlowScatter);
+      expect(gradient.colors[4], Colors.transparent);
+    });
+  });
+
+  group('Card placement and tabs', () {
+    testWidgets('countdown cards stay directly under the hero', (tester) async {
+      tester.view.physicalSize = const Size(500, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final harness = moonTestScreen();
+      addTearDown(harness.container.dispose);
+      await tester.pumpWidget(harness.widget);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      final countdownTop = tester
+          .getTopLeft(find.byKey(const ValueKey('moon-countdown-purnima')))
+          .dy;
+      final viewingTop = tester.getTopLeft(find.text('Best viewing time')).dy;
+      expect(countdownTop, lessThan(viewingTop));
+    });
+
+    testWidgets('tabs sit with the list and switch between Purnima/Amavasya', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(500, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      final harness = moonTestScreen();
+      addTearDown(harness.container.dispose);
+      await tester.pumpWidget(harness.widget);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text('Upcoming dates'), findsOneWidget);
+      final purnimaDate = DateFormat.yMMMMEEEEd().format(
+        harness.now.add(const Duration(days: 7)),
+      );
+      final amavasyaDate = DateFormat.yMMMMEEEEd().format(
+        harness.now.add(const Duration(days: 22)),
+      );
+      expect(find.text(purnimaDate), findsOneWidget);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(TabBar),
+          matching: find.text('Amavasya'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(amavasyaDate), findsOneWidget);
     });
   });
 

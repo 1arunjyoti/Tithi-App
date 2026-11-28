@@ -19,14 +19,27 @@ class SheetScaffold extends StatelessWidget {
     required this.highContrast,
     required this.hero,
     required this.body,
+    this.expressive = false,
   });
 
   final bool highContrast;
   final Widget hero;
   final Widget body;
 
+  /// When true, the M3E sheet owns the chrome: drop this widget's own surface,
+  /// height cap, SafeArea and edge-dismiss, and attach the scroll view to the
+  /// sheet's primary scroll controller.
+  final bool expressive;
+
   @override
   Widget build(BuildContext context) {
+    if (expressive) {
+      return SingleChildScrollView(
+        primary: true,
+        padding: const EdgeInsets.only(bottom: AppSpacing.s28),
+        child: _content(),
+      );
+    }
     // Cap the sheet at 85% of the screen height: below the cap the column
     // still shrink-wraps (min height is unconstrained).
     final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
@@ -42,26 +55,31 @@ class SheetScaffold extends StatelessWidget {
           child: EdgeDismiss(
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: AppSpacing.s28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SheetHeroHeader(highContrast: highContrast, child: hero),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.s20,
-                      AppSpacing.s16,
-                      AppSpacing.s20,
-                      0,
-                    ),
-                    child: body,
-                  ),
-                ],
-              ),
+              child: _content(),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// Hero + body shared by the classic and expressive variants.
+  Widget _content() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SheetHeroHeader(highContrast: highContrast, child: hero),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.s20,
+            AppSpacing.s16,
+            AppSpacing.s20,
+            0,
+          ),
+          child: body,
+        ),
+      ],
     );
   }
 }

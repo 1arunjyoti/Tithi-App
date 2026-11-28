@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../services/moon_phase_service.dart';
 import '../../../services/location_service.dart';
 import '../../../providers/location_provider.dart';
 import '../../../providers/panchang_provider.dart';
 import '../../../core/location/location_defaults.dart';
+import '../../../core/format/date_only.dart';
+import 'moon_details_providers.dart';
 
 /// Helper to get LocationData value or null from AsyncValue
 LocationData? _getLocationOrNull(AsyncValue<LocationData?> asyncValue) {
@@ -61,7 +64,14 @@ final upcomingPurnimasProvider = FutureProvider<List<DateTime>>((ref) async {
 });
 
 /// Scrub offset in days from today for the hero moon. 0 = today.
-final moonScrubOffsetProvider = StateProvider.autoDispose<int>((ref) => 0);
+///
+/// Derived from [moonSelectedDateProvider] so the date picker and the drag
+/// gesture share one source of truth: picking a far-away date updates the
+/// hero, and scrubbing back towards today never fights a separate offset.
+final moonScrubOffsetProvider = Provider<int>((ref) {
+  final selected = ref.watch(moonSelectedDateProvider);
+  return calendarDaysBetween(dateOnly(DateTime.now()), selected);
+});
 
 /// Scrub range in days. Panchang month batches are Hive-cached, so stepping
 /// through these dates stays cheap (no per-step ephemeris work).

@@ -1,7 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../../core/anim/press_scale.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
@@ -90,45 +90,19 @@ class QuoteCardHeader extends StatelessWidget {
             ),
           ),
           if (showTodayReset) ...[
-            // Gated press haptic + scale live in PressScale.
-            PressScale(
-              child: FilledButton(
-                onPressed: onJumpToToday,
-                style: FilledButton.styleFrom(
-                  backgroundColor: accent,
-                  // Shared helper: white-on-deep-gold (light),
-                  // near-black-on-gold (dark), onPrimary in high contrast.
-                  foregroundColor: AppTheme.onFestivalAccent(context),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s12,
-                  ),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                  textStyle: const TextStyle(
-                    fontSize: AppTypography.sizeDetail,
-                    fontWeight: AppTypography.bold,
-                  ),
-                ),
-                child: Text(l10n?.today ?? 'Today'),
-              ),
+            AppButton(
+              onPressed: onJumpToToday,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s12),
+              minimumSize: const Size(0, 32),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              label: Text(l10n?.today ?? 'Today'),
             ),
             const SizedBox(width: AppSpacing.s8),
           ],
-          PressScale(
-            child: IconButton(
-              onPressed: onShare,
-              tooltip: l10n?.share ?? 'Share',
-              icon: const Icon(Icons.share_rounded, size: AppIconSize.dense),
-              color: context.colors.onSurface.withValues(
-                alpha: AppTheme.contrastAlpha(context, 0.7),
-              ),
-              style: IconButton.styleFrom(
-                backgroundColor: accent.withValues(alpha: 0.1),
-                minimumSize: const Size(36, 36),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
+          AppIconButton(
+            onPressed: onShare,
+            tooltip: l10n?.share ?? 'Share',
+            icon: const Icon(Icons.share_rounded, size: AppIconSize.dense),
           ),
         ],
       ),

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 
 import '../theme/app_metrics.dart';
 import '../theme/app_theme.dart';
@@ -89,7 +90,8 @@ class InlineSpinner extends StatelessWidget {
     return SizedBox(
       height: size,
       width: size,
-      child: CircularProgressIndicator(
+      child: M3EProgressIndicator.circular(
+        size: size,
         strokeWidth: 2,
         color: color ?? context.colors.primary,
       ),

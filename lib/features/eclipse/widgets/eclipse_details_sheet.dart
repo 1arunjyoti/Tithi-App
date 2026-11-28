@@ -6,175 +6,212 @@ import '../../../models/eclipse.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_bottom_sheet.dart';
 import '../../../widgets/app_divider.dart';
 import '../../../features/sheets/widgets/info_row.dart';
 
 /// Presents the eclipse details bottom sheet.
 void showEclipseDetailsSheet(BuildContext context, Eclipse eclipse) {
-  final theme = Theme.of(context);
   final l10n = AppLocalizations.of(context)!;
   final isHindi = Localizations.localeOf(context).languageCode == 'hi';
+  final maximum = eclipse.maxEclipseTime.toLocal();
 
-  showModalBottomSheet(
-    context: context,
-    sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (context) => Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.card),
-        ),
-      ),
+  AppBottomSheet.show<void>(
+    context,
+    builder: (_) => SingleChildScrollView(
+      primary: true,
       padding: const EdgeInsets.all(AppSpacing.s24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        // Stretch so the section rules span the full content width; the rows
+        // own their own internal alignment.
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(AppRadius.micro),
-              ),
-            ),
+          _Title(
+            icon: eclipse.type.icon,
+            title: isHindi
+                ? eclipse.type.displayNameHi
+                : eclipse.type.displayName,
           ),
-          const SizedBox(height: AppSpacing.s24),
-
-          // Title
-          Row(
-            children: [
-              Text(
-                eclipse.type.icon,
-                style: const TextStyle(fontSize: AppTypography.sizeHero),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Text(
-                  isHindi
-                      ? eclipse.type.displayNameHi
-                      : eclipse.type.displayName,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: AppTypography.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.s24),
-
-          // Date and time
-          buildInfoRow(
-            context,
-            Icons.calendar_today,
-            l10n.date,
-            DateFormat.yMMMMEEEEd().format(eclipse.maxEclipseTime.toLocal()),
-            dense: true,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          buildInfoRow(
-            context,
-            Icons.access_time,
-            l10n.maxEclipse,
-            DateFormat.jms().format(eclipse.maxEclipseTime.toLocal()),
-            dense: true,
-          ),
-
-          // Phase times
-          if (eclipse.partialStart != null) ...[
-            const SizedBox(height: AppSpacing.s12),
-            buildInfoRow(
-              context,
-              Icons.play_arrow,
-              l10n.partialBegins,
-              DateFormat.jm().format(eclipse.partialStart!.toLocal()),
-              dense: true,
-            ),
-          ],
-          if (eclipse.totalStart != null) ...[
-            const SizedBox(height: AppSpacing.s12),
-            buildInfoRow(
-              context,
-              Icons.brightness_7,
-              l10n.totalityBegins,
-              DateFormat.jm().format(eclipse.totalStart!.toLocal()),
-              dense: true,
-            ),
-          ],
-          if (eclipse.totalEnd != null) ...[
-            const SizedBox(height: AppSpacing.s12),
-            buildInfoRow(
-              context,
-              Icons.brightness_5,
-              l10n.totalityEnds,
-              DateFormat.jm().format(eclipse.totalEnd!.toLocal()),
-              dense: true,
-            ),
-          ],
-          if (eclipse.partialEnd != null) ...[
-            const SizedBox(height: AppSpacing.s12),
-            buildInfoRow(
-              context,
-              Icons.stop,
-              l10n.partialEnds,
-              DateFormat.jm().format(eclipse.partialEnd!.toLocal()),
-              dense: true,
-            ),
-          ],
-
-          // Duration
-          if (eclipse.totalDuration != null) ...[
-            const SizedBox(height: AppSpacing.s16),
-            const AppDivider(),
-            const SizedBox(height: AppSpacing.s16),
-            buildInfoRow(
-              context,
-              Icons.timer,
-              l10n.duration,
-              _formatDuration(eclipse.totalDuration!),
-              dense: true,
-            ),
-          ],
-
-          // Visibility
-          const SizedBox(height: AppSpacing.s16),
-          const AppDivider(),
-          const SizedBox(height: AppSpacing.s16),
-          Row(
-            children: [
-              Icon(
-                eclipse.visibleAtLocation
-                    ? Icons.visibility
-                    : Icons.visibility_off,
-                color: eclipse.visibleAtLocation
-                    ? AppTheme.success(theme.brightness == Brightness.dark)
-                    : context.hintInk,
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: Text(
-                  eclipse.visibleAtLocation
-                      ? l10n.visibleFromYourLocation
-                      : l10n.notVisibleFromYourLocation,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: eclipse.visibleAtLocation
-                        ? AppTheme.success(theme.brightness == Brightness.dark)
-                        : context.hintInk,
-                    fontWeight: AppTypography.medium,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
+          const SizedBox(height: AppSpacing.s20),
+          ..._detailRows(context, eclipse, l10n, maximum),
           const SizedBox(height: AppSpacing.s24),
         ],
       ),
     ),
+  );
+}
+
+/// Heading icon + title. The glyph keeps its intrinsic width and never wraps:
+/// constraining it to the row-icon slot made it break into several lines at
+/// large text scales. The 12dp gap is explicit so the title always reads as a
+/// separate column from the glyph.
+class _Title extends StatelessWidget {
+  const _Title({required this.icon, required this.title});
+
+  final String icon;
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          icon,
+          softWrap: false,
+          overflow: TextOverflow.visible,
+          style: const TextStyle(fontSize: AppTypography.sizeHero),
+        ),
+        const SizedBox(width: AppSpacing.s12),
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: AppTypography.bold),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Builds the detail rows with one rhythm: 12dp between rows in a section,
+/// 16dp on either side of a section rule. The pending gap is replaced (not
+/// stacked) by a divider so the space above and below it always matches.
+List<Widget> _detailRows(
+  BuildContext context,
+  Eclipse eclipse,
+  AppLocalizations l10n,
+  DateTime maximum,
+) {
+  final rows = <Widget>[];
+  var gap = 0.0;
+
+  void addRow(Widget row) {
+    if (gap > 0) rows.add(SizedBox(height: gap));
+    rows.add(row);
+    gap = AppSpacing.s12;
+  }
+
+  void addDivider() {
+    if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.s16));
+    rows.add(const AppDivider());
+    rows.add(const SizedBox(height: AppSpacing.s16));
+    gap = 0; // the rule already owns the space below it
+  }
+
+  addRow(
+    buildInfoRow(
+      context,
+      Icons.calendar_today,
+      l10n.date,
+      DateFormat.yMMMd().format(maximum),
+      dense: true,
+    ),
+  );
+  addRow(
+    buildInfoRow(
+      context,
+      Icons.access_time,
+      l10n.maxEclipse,
+      DateFormat.jm().format(maximum),
+      dense: true,
+    ),
+  );
+
+  if (eclipse.partialStart != null) {
+    addRow(
+      buildInfoRow(
+        context,
+        Icons.play_arrow,
+        l10n.partialBegins,
+        DateFormat.jm().format(eclipse.partialStart!.toLocal()),
+        dense: true,
+      ),
+    );
+  }
+  if (eclipse.totalStart != null) {
+    addRow(
+      buildInfoRow(
+        context,
+        Icons.brightness_7,
+        l10n.totalityBegins,
+        DateFormat.jm().format(eclipse.totalStart!.toLocal()),
+        dense: true,
+      ),
+    );
+  }
+  if (eclipse.totalEnd != null) {
+    addRow(
+      buildInfoRow(
+        context,
+        Icons.brightness_5,
+        l10n.totalityEnds,
+        DateFormat.jm().format(eclipse.totalEnd!.toLocal()),
+        dense: true,
+      ),
+    );
+  }
+  if (eclipse.partialEnd != null) {
+    addRow(
+      buildInfoRow(
+        context,
+        Icons.stop,
+        l10n.partialEnds,
+        DateFormat.jm().format(eclipse.partialEnd!.toLocal()),
+        dense: true,
+      ),
+    );
+  }
+
+  if (eclipse.totalDuration != null) {
+    addDivider();
+    addRow(
+      buildInfoRow(
+        context,
+        Icons.timer,
+        l10n.duration,
+        _formatDuration(eclipse.totalDuration!),
+        dense: true,
+      ),
+    );
+  }
+
+  addDivider();
+  addRow(_visibilityRow(context, l10n, eclipse.visibleAtLocation));
+  return rows;
+}
+
+/// Same icon + gap + body-medium metrics as the dense info rows, so the
+/// visibility message starts on the same text column as every label above it.
+Widget _visibilityRow(
+  BuildContext context,
+  AppLocalizations l10n,
+  bool visible,
+) {
+  final color = visible
+      ? AppTheme.success(Theme.of(context).brightness == Brightness.dark)
+      : context.hintInk;
+  return Row(
+    children: [
+      Icon(
+        visible ? Icons.visibility : Icons.visibility_off,
+        size: AppIconSize.medium,
+        color: color,
+      ),
+      const SizedBox(width: AppSpacing.s12),
+      Expanded(
+        child: Text(
+          visible
+              ? l10n.visibleFromYourLocation
+              : l10n.notVisibleFromYourLocation,
+          style: context.textTheme.bodyMedium?.copyWith(
+            color: color,
+            fontWeight: AppTypography.medium,
+          ),
+        ),
+      ),
+    ],
   );
 }
 

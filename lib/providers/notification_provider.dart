@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../services/notification_service.dart';
 
 /// Provider for NotificationService instance
@@ -63,6 +64,21 @@ final festivalNotificationEnabledProvider =
       FestivalNotificationEnabledNotifier.new,
     );
 
+/// Provider for moon/eclipse alert enabled state (default false, synced).
+class MoonNotificationEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void setEnabled(bool enabled) {
+    state = enabled;
+  }
+}
+
+final moonNotificationEnabledProvider =
+    NotifierProvider<MoonNotificationEnabledNotifier, bool>(
+      MoonNotificationEnabledNotifier.new,
+    );
+
 /// Provider for festival reminder timing index (0 = on the day,
 /// 1 = one day before, 2 = both). Mirrors FestivalReminderTiming.
 class FestivalTimingNotifier extends Notifier<int> {
@@ -110,6 +126,9 @@ final loadNotificationStateProvider = FutureProvider<void>((ref) async {
   ref
       .read(festivalNotificationEnabledProvider.notifier)
       .setEnabled(festivalEnabled);
+
+  final moonEnabled = await service.isMoonEnabled();
+  ref.read(moonNotificationEnabledProvider.notifier).setEnabled(moonEnabled);
 
   final festivalTiming = await service.getFestivalTiming();
   ref.read(festivalTimingProvider.notifier).setTiming(festivalTiming);

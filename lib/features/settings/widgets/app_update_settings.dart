@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
-import '../../../core/anim/press_scale.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../providers/app_update_provider.dart';
 import '../../../providers/version_provider.dart';
@@ -10,7 +10,9 @@ import '../../../services/app_update_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../../widgets/app_card.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/settings_widgets.dart';
 import '../../../widgets/skeleton.dart';
 
@@ -163,31 +165,27 @@ class AppUpdateCard extends ConsumerWidget {
             children: [
               _PrimaryActionButton(state: state),
               if (state.status == AppUpdateStatus.downloading)
-                PressScale(
-                  child: TextButton.icon(
-                    onPressed: () =>
-                        ref.read(appUpdateProvider.notifier).cancelDownload(),
-                    icon: const Icon(
-                      Icons.close_rounded,
-                      size: AppIconSize.dense,
-                    ),
-                    label: Text(l10n?.cancel ?? 'Cancel'),
-                  ),
-                ),
-              PressScale(
-                child: TextButton.icon(
-                  onPressed: () async {
-                    await ref
-                        .read(appUpdateProvider.notifier)
-                        .openReleasesPage();
-                  },
+                AppButton(
+                  style: M3EButtonStyle.text,
+                  onPressed: () =>
+                      ref.read(appUpdateProvider.notifier).cancelDownload(),
                   icon: const Icon(
-                    Icons.open_in_new_rounded,
+                    Icons.close_rounded,
                     size: AppIconSize.dense,
                   ),
-                  label: Text(
-                    l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
-                  ),
+                  label: Text(l10n?.cancel ?? 'Cancel'),
+                ),
+              AppButton(
+                style: M3EButtonStyle.text,
+                onPressed: () async {
+                  await ref.read(appUpdateProvider.notifier).openReleasesPage();
+                },
+                icon: const Icon(
+                  Icons.open_in_new_rounded,
+                  size: AppIconSize.dense,
+                ),
+                label: Text(
+                  l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
                 ),
               ),
             ],
@@ -230,21 +228,17 @@ class _RefreshButton extends ConsumerWidget {
         status == AppUpdateStatus.readyToInstall;
     if (!showRefresh) return const SizedBox.shrink();
 
-    return PressScale(
-      // Busy states disable the button, so PressScale must stay quiet too.
-      enabled: !busy,
-      child: IconButton(
-        key: const Key('app-update-refresh'),
-        onPressed: busy
-            ? null
-            : () => ref
-                  .read(appUpdateProvider.notifier)
-                  .checkForUpdates(force: true),
-        tooltip: l10n?.checkForUpdates ?? 'Check for updates',
-        icon: Icon(
-          Icons.refresh_rounded,
-          color: busy ? context.faintInk : context.colors.primary,
-        ),
+    return AppIconButton(
+      key: const Key('app-update-refresh'),
+      onPressed: busy
+          ? null
+          : () => ref
+                .read(appUpdateProvider.notifier)
+                .checkForUpdates(force: true),
+      tooltip: l10n?.checkForUpdates ?? 'Check for updates',
+      icon: Icon(
+        Icons.refresh_rounded,
+        color: busy ? context.faintInk : context.colors.primary,
       ),
     );
   }
@@ -267,66 +261,62 @@ class _PrimaryActionButton extends ConsumerWidget {
 
     switch (state.status) {
       case AppUpdateStatus.checking:
-        return FilledButton.tonal(
+        return AppButton(
+          style: M3EButtonStyle.tonal,
           onPressed: null,
           child: Text(l10n?.checkingForUpdates ?? 'Checking for updates…'),
         );
       case AppUpdateStatus.downloading:
-        return FilledButton.tonal(
+        return AppButton(
+          style: M3EButtonStyle.tonal,
           onPressed: null,
           child: Text(l10n?.downloadingUpdate ?? 'Downloading update…'),
         );
       case AppUpdateStatus.cancelling:
-        return FilledButton.tonal(
+        return AppButton(
+          style: M3EButtonStyle.tonal,
           onPressed: null,
           child: Text(l10n?.cancellingUpdate ?? 'Cancelling…'),
         );
       case AppUpdateStatus.installing:
-        return FilledButton.tonal(
+        return AppButton(
+          style: M3EButtonStyle.tonal,
           onPressed: null,
           child: Text(l10n?.installingUpdate ?? 'Opening installer…'),
         );
       case AppUpdateStatus.available:
         if (!AppUpdateService.supportsInAppInstall) {
-          return PressScale(
-            child: FilledButton(
-              onPressed: () async => notifier.openReleasesPage(),
-              child: Text(
-                l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
-              ),
+          return AppButton(
+            onPressed: () async => notifier.openReleasesPage(),
+            child: Text(
+              l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
             ),
           );
         }
-        return PressScale(
-          child: FilledButton.icon(
-            onPressed: () async {
-              await notifier.downloadUpdate();
-              if (context.mounted) await _reportError(context, ref);
-            },
-            icon: const Icon(Icons.download_rounded),
-            label: Text(l10n?.downloadUpdate ?? 'Download update'),
-          ),
+        return AppButton(
+          onPressed: () async {
+            await notifier.downloadUpdate();
+            if (context.mounted) await _reportError(context, ref);
+          },
+          icon: const Icon(Icons.download_rounded),
+          label: Text(l10n?.downloadUpdate ?? 'Download update'),
         );
       case AppUpdateStatus.readyToInstall:
-        return PressScale(
-          child: FilledButton.icon(
-            onPressed: () async {
-              await notifier.installUpdate();
-              if (context.mounted) await _reportError(context, ref);
-            },
-            icon: const Icon(Icons.install_mobile_rounded),
-            label: Text(l10n?.installUpdate ?? 'Install update'),
-          ),
+        return AppButton(
+          onPressed: () async {
+            await notifier.installUpdate();
+            if (context.mounted) await _reportError(context, ref);
+          },
+          icon: const Icon(Icons.install_mobile_rounded),
+          label: Text(l10n?.installUpdate ?? 'Install update'),
         );
       case AppUpdateStatus.idle:
       case AppUpdateStatus.upToDate:
       case AppUpdateStatus.error:
-        return PressScale(
-          child: FilledButton.icon(
-            onPressed: check,
-            icon: const Icon(Icons.refresh_rounded),
-            label: Text(l10n?.checkForUpdates ?? 'Check for updates'),
-          ),
+        return AppButton(
+          onPressed: check,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(l10n?.checkForUpdates ?? 'Check for updates'),
         );
     }
   }
@@ -391,7 +381,7 @@ class _DownloadProgress extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        LinearProgressIndicator(
+        M3EProgressIndicator.linear(
           value: determinate ? state.progress.clamp(0, 1) : null,
         ),
         const SizedBox(height: AppSpacing.s6),
@@ -414,9 +404,9 @@ class UpdateAvailableDialog extends ConsumerWidget {
   const UpdateAvailableDialog({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showDialog<void>(
-      context: context,
-      builder: (context) => const UpdateAvailableDialog(),
+    return AppDialog.showWidget<void>(
+      context,
+      (_) => const UpdateAvailableDialog(),
     );
   }
 
@@ -427,111 +417,97 @@ class UpdateAvailableDialog extends ConsumerWidget {
     final notifier = ref.read(appUpdateProvider.notifier);
     final release = state.release;
 
-    return AlertDialog(
-      title: Text(
-        state.status == AppUpdateStatus.available
-            ? l10n?.updateAvailable ?? 'Update available'
-            : l10n?.checkForUpdates ?? 'Check for updates',
-      ),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (release != null) ...[
-                Text(
-                  release.name.isNotEmpty ? release.name : release.version,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: AppTypography.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                if (release.body.trim().isNotEmpty) ...[
-                  Text(
-                    l10n?.releaseNotes ?? "What's new",
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.s4),
-                  Text(release.body.trim()),
-                  const SizedBox(height: AppSpacing.s8),
-                ],
-              ],
-              switch (state.status) {
-                AppUpdateStatus.downloading => _DownloadProgress(state: state),
-                AppUpdateStatus.readyToInstall => Text(
-                  l10n?.updateDownloaded ?? 'Update downloaded',
-                ),
-                AppUpdateStatus.installing => Text(
-                  l10n?.installingUpdate ?? 'Opening installer…',
-                ),
-                AppUpdateStatus.error => Text(
-                  state.errorMessage ??
-                      l10n?.updateCheckFailed ??
-                      "Couldn't check for updates",
-                ),
-                _ => const SizedBox.shrink(),
-              },
+    return M3EDialog(
+      title: state.status == AppUpdateStatus.available
+          ? l10n?.updateAvailable ?? 'Update available'
+          : l10n?.checkForUpdates ?? 'Check for updates',
+      // M3EDialog pins the headline and actions and scrolls the release
+      // notes between them, so no nested SingleChildScrollView is needed.
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (release != null) ...[
+            Text(
+              release.name.isNotEmpty ? release.name : release.version,
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: AppTypography.bold),
+            ),
+            const SizedBox(height: AppSpacing.s8),
+            if (release.body.trim().isNotEmpty) ...[
+              Text(
+                l10n?.releaseNotes ?? "What's new",
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+              const SizedBox(height: AppSpacing.s4),
+              Text(release.body.trim()),
+              const SizedBox(height: AppSpacing.s8),
             ],
-          ),
-        ),
+          ],
+          switch (state.status) {
+            AppUpdateStatus.downloading => _DownloadProgress(state: state),
+            AppUpdateStatus.readyToInstall => Text(
+              l10n?.updateDownloaded ?? 'Update downloaded',
+            ),
+            AppUpdateStatus.installing => Text(
+              l10n?.installingUpdate ?? 'Opening installer…',
+            ),
+            AppUpdateStatus.error => Text(
+              state.errorMessage ??
+                  l10n?.updateCheckFailed ??
+                  "Couldn't check for updates",
+            ),
+            _ => const SizedBox.shrink(),
+          },
+        ],
       ),
       actions: [
-        PressScale(
-          child: TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n?.cancel ?? 'Cancel'),
-          ),
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n?.cancel ?? 'Cancel'),
         ),
         if (state.status == AppUpdateStatus.downloading)
-          PressScale(
-            child: TextButton(
-              onPressed: () => notifier.cancelDownload(),
-              child: Text(l10n?.cancel ?? 'Cancel'),
-            ),
+          AppButton(
+            style: M3EButtonStyle.text,
+            onPressed: () => notifier.cancelDownload(),
+            child: Text(l10n?.cancel ?? 'Cancel'),
           ),
         if (state.status == AppUpdateStatus.available &&
             AppUpdateService.supportsInAppInstall)
-          PressScale(
-            child: FilledButton.icon(
-              onPressed: () async {
-                await notifier.downloadUpdate();
-                if (context.mounted) await _reportError(context, ref);
-              },
-              icon: const Icon(Icons.download_rounded),
-              label: Text(l10n?.downloadUpdate ?? 'Download update'),
-            ),
+          AppButton(
+            onPressed: () async {
+              await notifier.downloadUpdate();
+              if (context.mounted) await _reportError(context, ref);
+            },
+            icon: const Icon(Icons.download_rounded),
+            label: Text(l10n?.downloadUpdate ?? 'Download update'),
           ),
         if (state.status == AppUpdateStatus.available &&
             !AppUpdateService.supportsInAppInstall)
-          PressScale(
-            child: FilledButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await notifier.openReleasesPage();
-              },
-              child: Text(
-                l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
-              ),
+          AppButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await notifier.openReleasesPage();
+            },
+            child: Text(
+              l10n?.viewReleasesOnGitHub ?? 'View releases on GitHub',
             ),
           ),
         if (state.status == AppUpdateStatus.readyToInstall)
-          PressScale(
-            child: FilledButton.icon(
-              onPressed: () async {
-                await notifier.installUpdate();
-                if (context.mounted) {
-                  final next = ref.read(appUpdateProvider);
-                  if (next.status == AppUpdateStatus.error) {
-                    Navigator.pop(context);
-                    await _reportError(context, ref);
-                  }
+          AppButton(
+            onPressed: () async {
+              await notifier.installUpdate();
+              if (context.mounted) {
+                final next = ref.read(appUpdateProvider);
+                if (next.status == AppUpdateStatus.error) {
+                  Navigator.pop(context);
+                  await _reportError(context, ref);
                 }
-              },
-              icon: const Icon(Icons.install_mobile_rounded),
-              label: Text(l10n?.installUpdate ?? 'Install update'),
-            ),
+              }
+            },
+            icon: const Icon(Icons.install_mobile_rounded),
+            label: Text(l10n?.installUpdate ?? 'Install update'),
           ),
       ],
     );

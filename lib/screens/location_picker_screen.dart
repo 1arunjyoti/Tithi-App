@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+
 import '../l10n/app_localizations.dart';
 import '../core/feedback/app_messages.dart';
 import '../core/navigation/haptic_back_button.dart';
@@ -18,7 +20,9 @@ import '../providers/location_provider.dart';
 import '../services/location_service.dart';
 import '../core/location/boundary_overlay.dart';
 import '../core/location/location_defaults.dart';
+import '../widgets/app_buttons.dart';
 import '../widgets/app_divider.dart';
+import '../widgets/app_search_field.dart';
 import '../widgets/page_scaffold.dart';
 import '../widgets/skeleton.dart';
 import '../widgets/state_views.dart';
@@ -619,23 +623,13 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
                   const SizedBox(height: AppSpacing.s16),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: AppButton(
                       onPressed: _isLoading ? null : _onSelectLocation,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: context.colors.primary,
-                        foregroundColor: context.colors.onPrimary,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.s16,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.tile),
-                        ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.s16,
                       ),
                       child: _isLoading
-                          ? InlineSpinner(
-                              size: AppIconSize.medium,
-                              color: context.colors.onPrimary,
-                            )
+                          ? const InlineSpinner(size: AppIconSize.medium)
                           : Text(
                               l10n?.setThisLocation ?? 'Set This Location',
                               style: const TextStyle(
@@ -672,36 +666,28 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   }
 
   Widget _buildSearchField(AppLocalizations? l10n) {
-    return Container(
-      decoration: AppTheme.glassmorphism(context: context, opacity: 0.9),
-      child: TextField(
-        controller: _searchController,
-        textInputAction: TextInputAction.search,
-        onChanged: _onSearchChanged,
-        onSubmitted: (value) {
-          _searchDebounce?.cancel();
-          _performSearch(value);
-        },
-        style: context.textTheme.bodyMedium?.copyWith(
-          color: context.colors.onSurface,
-        ),
-        decoration: InputDecoration(
-          hintText: l10n?.searchLocationHint ?? 'Search for a city or area',
-          hintStyle: context.textTheme.bodyMedium?.copyWith(
-            color: context.secondaryInk,
-          ),
-          prefixIcon: Icon(Icons.search_rounded, color: context.secondaryInk),
-          suffixIcon: _searchController.text.isEmpty
-              ? null
-              : IconButton(
+    return AppSearchField(
+      controller: _searchController,
+      hintText: l10n?.searchLocationHint ?? 'Search for a city or area',
+      onChanged: _onSearchChanged,
+      onSubmitted: (value) {
+        _searchDebounce?.cancel();
+        _performSearch(value);
+      },
+      // Keep the app's full clear handler: it also cancels the debounce and
+      // invalidates in-flight search requests, not just the text.
+      trailing: [
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _searchController,
+          builder: (context, value, _) => value.text.isEmpty
+              ? const SizedBox.shrink()
+              : AppIconButton(
+                  icon: const Icon(Icons.close_rounded),
                   tooltip: l10n?.clearSearch ?? 'Clear search',
-                  icon: Icon(Icons.close_rounded, color: context.secondaryInk),
                   onPressed: _clearSearch,
                 ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s14),
         ),
-      ),
+      ],
     );
   }
 
@@ -829,11 +815,7 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
       onTap: isBusy ? null : onTap,
       child: tooltip == null
           ? button
-          : Tooltip(
-              message: tooltip,
-              excludeFromSemantics: true,
-              child: button,
-            ),
+          : M3ETooltip(message: tooltip, child: button),
     );
   }
 }

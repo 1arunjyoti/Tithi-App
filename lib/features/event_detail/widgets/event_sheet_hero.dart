@@ -7,6 +7,7 @@ import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
 import '../../../utils/tithi_localization.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../sheets/widgets/sheet_hero_tile.dart';
 import '../domain/event_content.dart';
 import 'hero_language_chips.dart';
@@ -146,10 +147,9 @@ class EventSheetHero extends StatelessWidget {
                   ),
                 ),
               ),
-            IconButton(
+            AppIconButton(
               onPressed: () => ShareService().shareFestival(context, festival),
               icon: const Icon(Icons.share_outlined),
-              color: heroInk,
               tooltip: AppLocalizations.of(context)?.shareCard ?? 'Share Card',
             ),
           ],

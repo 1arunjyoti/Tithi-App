@@ -15,10 +15,19 @@ import 'package:tithi/services/panchang/ephemeris/panchang_ephemeris.dart';
 /// direction of the difference: `suryasiddhanta` is the one that reproduces the
 /// New Delhi reference boundaries, `bisuddha` is the one that does not.
 void main() {
+  final libPath = Platform.environment['SWISSEPH_LIB_PATH'];
+  final libraryAvailable =
+      libPath != null && libPath.isNotEmpty && File(libPath).existsSync();
+  final skipReason = libraryAvailable
+      ? null
+      : 'Set SWISSEPH_LIB_PATH to a host Swiss Ephemeris library to run the '
+            'school dispatch tests.';
+
   late DrikPanchangEphemeris drik;
   late SuryaSiddhantaEphemeris ss;
 
   setUpAll(() async {
+    if (skipReason != null) return;
     await Jyotish().initialize(
       ephemerisPath: Directory('assets/ephe').absolute.path,
     );
@@ -40,7 +49,7 @@ void main() {
       ephemerisFor(PanchangSchool.suryasiddhanta),
       isA<SuryaSiddhantaEphemeris>(),
     );
-  });
+  }, skip: skipReason);
 
   test('the schools disagree on both bodies, not just by rounding', () async {
     // 2005-10-20 14:51 IST is a tithi-end row in the reference file. Any
@@ -69,7 +78,7 @@ void main() {
       greaterThan(0.5),
       reason: 'moon: drik ${a.moon} vs SS ${b.moon}',
     );
-  });
+  }, skip: skipReason);
 
   test('suryasiddhanta reproduces the reference boundary, bisuddha does not',
       () async {
@@ -107,7 +116,7 @@ void main() {
       _signedDelta(_norm(drikTithi.moon - drikTithi.sun) - 216).abs(),
       greaterThan(0.2),
     );
-  });
+  }, skip: skipReason);
 
   test('the Surya Siddhanta path is geocentric: position is ignored', () async {
     final instant = _ist('2026-10-28', '12:00');
@@ -124,7 +133,7 @@ void main() {
 
     expect(atKolkata.sun, atDelhi.sun);
     expect(atKolkata.moon, atDelhi.moon);
-  });
+  }, skip: skipReason);
 }
 
 /// Panjika times are IST; the engine works in real instants.

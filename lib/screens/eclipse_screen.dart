@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/eclipse/providers/eclipse_providers.dart';
@@ -76,8 +77,7 @@ class _EclipseScreenState extends ConsumerState<EclipseScreen>
             ),
           ],
         ),
-        loading: () =>
-            const Center(child: CircularProgressIndicator.adaptive()),
+        loading: () => const Center(child: M3EProgressIndicator.circular()),
         error: (error, _) {
           debugPrint('Eclipse list failed: $error');
           return ErrorState(

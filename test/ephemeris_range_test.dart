@@ -7,9 +7,18 @@ import 'package:jyotish/jyotish.dart';
 /// bundled `.se1` files must actually load, cover 1800-2399, and be the backend
 /// that produced the position.
 void main() {
+  final libPath = Platform.environment['SWISSEPH_LIB_PATH'];
+  final libraryAvailable =
+      libPath != null && libPath.isNotEmpty && File(libPath).existsSync();
+  final skipReason = libraryAvailable
+      ? null
+      : 'Set SWISSEPH_LIB_PATH to a host Swiss Ephemeris library to run the '
+            'ephemeris data-range tests.';
+
   late Jyotish jyotish;
 
   setUpAll(() async {
+    if (skipReason != null) return;
     jyotish = Jyotish();
     await jyotish.initialize(
       ephemerisPath: Directory('assets/ephe').absolute.path,
@@ -17,6 +26,7 @@ void main() {
   });
 
   tearDownAll(() {
+    if (skipReason != null) return;
     jyotish.dispose();
   });
 
@@ -32,7 +42,7 @@ void main() {
     expect(range.moon, isNotNull);
     expect(range.planets!.path, contains('sepl_18.se1'));
     expect(range.moon!.path, contains('semo_18.se1'));
-  });
+  }, skip: skipReason);
 
   test('a position reports Swiss Ephemeris rather than Moshier', () async {
     final position = await jyotish.getPlanetPosition(
@@ -46,5 +56,5 @@ void main() {
         reason: '${position.provenance}');
     expect(position.provenance!.usedFallback, isFalse);
     expect(position.provenance!.warning, isNull);
-  });
+  }, skip: skipReason);
 }

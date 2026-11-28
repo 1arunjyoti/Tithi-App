@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 
 import '../theme/app_theme.dart';
 
@@ -36,8 +37,9 @@ class AppDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
+    // Expressive divider chrome comes from the M3E theme; only the two
+    // app-specific weights (section/row) and the insets stay here.
+    return M3EDivider(
       thickness: 1,
       indent: indent,
       endIndent: endIndent,

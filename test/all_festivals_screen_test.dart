@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -100,7 +101,7 @@ void main() {
   /// The labels also exist on the screen's inline strip behind the sheet, so
   /// every sheet interaction has to be scoped to the modal.
   Finder sheetCategoryChip(String label) => find.descendant(
-    of: find.byType(BottomSheet),
+    of: find.byKey(const Key('festival-filter-sheet')),
     matching: find.widgetWithText(FestivalFilterChip, label),
   );
 
@@ -130,7 +131,7 @@ void main() {
     if (reset) {
       await tester.tap(
         find.descendant(
-          of: find.byType(BottomSheet),
+          of: find.byKey(const Key('festival-filter-sheet')),
           matching: find.text('Reset'),
         ),
       );
@@ -143,7 +144,7 @@ void main() {
     if (region != null) {
       await tester.tap(
         find.descendant(
-          of: find.byType(BottomSheet),
+          of: find.byKey(const Key('festival-filter-sheet')),
           matching: find.text(region),
         ),
       );
@@ -151,7 +152,7 @@ void main() {
     }
     await tester.tap(
       find.descendant(
-        of: find.byType(BottomSheet),
+        of: find.byKey(const Key('festival-filter-sheet')),
         matching: find.text('Done'),
       ),
     );
@@ -692,7 +693,7 @@ void main() {
       );
 
       // Default: no filter selected, so no dot on the filter icon.
-      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+      expect(tester.widget<M3EBadge>(find.byType(M3EBadge)).showDot, isFalse);
       expect(find.text('Alpha Major'), findsOneWidget);
       expect(find.text('Beta Vrat'), findsOneWidget);
       expect(find.text('Gamma Recurring'), findsOneWidget);
@@ -701,7 +702,7 @@ void main() {
       expect(find.byType(FestivalRowTile), findsNWidgets(2));
       // Vrat: category vrat + recurring (Ekadashi/Purnima convention).
       await applyFilters(tester, category: 'Vrat');
-      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
+      expect(tester.widget<M3EBadge>(find.byType(M3EBadge)).showDot, isTrue);
       expect(find.text('Alpha Major'), findsNothing);
       expect(find.text('Beta Vrat'), findsOneWidget);
       expect(find.text('Gamma Recurring'), findsOneWidget);
@@ -722,7 +723,7 @@ void main() {
       await applyFilters(tester, category: 'Vrat');
       await tester.tap(find.byKey(AllFestivalsScreen.searchButtonKey));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'beta');
+      await tester.enterText(find.byType(M3ESearchBar), 'beta');
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
       expect(find.text('Alpha Major'), findsNothing);
@@ -770,7 +771,7 @@ void main() {
 
       // Reset returns both dimensions to no filtering.
       await applyFilters(tester, reset: true);
-      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isFalse);
+      expect(tester.widget<M3EBadge>(find.byType(M3EBadge)).showDot, isFalse);
       expect(find.text('Pan India Festival'), findsOneWidget);
       expect(find.text('South Vrat'), findsOneWidget);
       expect(find.text('North Vrat'), findsOneWidget);
@@ -792,10 +793,10 @@ void main() {
       );
 
       // Act: search is behind an icon, no permanent field on screen.
-      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(M3ESearchBar), findsNothing);
       await tester.tap(find.byKey(AllFestivalsScreen.searchButtonKey));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'beta');
+      await tester.enterText(find.byType(M3ESearchBar), 'beta');
       // Flush the 250ms search debounce, then settle the filtered list.
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pumpAndSettle();
@@ -822,7 +823,7 @@ void main() {
 
       // Assert: no permanent search bar; the strip owns the single body row
       // and carries a leading search icon.
-      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(M3ESearchBar), findsNothing);
       final strip = find.byKey(AllFestivalsScreen.categoryChipsKey);
       expect(strip, findsOneWidget);
       expect(find.byKey(AllFestivalsScreen.searchButtonKey), findsOneWidget);
@@ -852,11 +853,11 @@ void main() {
       // gives the row back to the chips.
       await tester.tap(find.byKey(AllFestivalsScreen.searchButtonKey));
       await tester.pumpAndSettle();
-      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(M3ESearchBar), findsOneWidget);
       expect(strip, findsNothing);
       await tester.tap(find.byIcon(Icons.close_rounded));
       await tester.pumpAndSettle();
-      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(M3ESearchBar), findsNothing);
       expect(strip, findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -904,7 +905,7 @@ void main() {
       expect(find.text('Featured Vrat'), findsOneWidget);
       expect(find.byType(MajorFestivalCard), findsNWidgets(2));
       expect(find.byType(FestivalRowTile), findsNothing);
-      expect(tester.widget<Badge>(find.byType(Badge)).isLabelVisible, isTrue);
+      expect(tester.widget<M3EBadge>(find.byType(M3EBadge)).showDot, isTrue);
       expect(tester.takeException(), isNull);
     });
 
@@ -950,7 +951,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
-          of: find.byType(BottomSheet),
+          of: find.byKey(const Key('festival-filter-sheet')),
           matching: find.text('Done'),
         ),
       );
@@ -1176,9 +1177,8 @@ void main() {
             // The drawer header's icon + two text lines is wider than 280dp in
             // the square test font (Ahem) and would overflow there only.
             builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: const TextScaler.linear(0.8)),
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(0.8)),
               child: child!,
             ),
             home: AllFestivalsScreen(

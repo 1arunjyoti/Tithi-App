@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/feedback/app_haptics.dart';
@@ -8,7 +9,6 @@ import '../../../providers/calendar_provider.dart' as cp;
 import '../../../providers/panchang_provider.dart';
 import '../../../services/bengali_calendar_service.dart';
 import '../../../services/hindu_calendar_service.dart';
-import '../../../theme/app_theme.dart';
 import '../../../utils/tithi_localization.dart';
 import 'year_picker_dialogs.dart';
 
@@ -34,30 +34,18 @@ Future<void> showCalendarYearPicker(
   }
 }
 
-/// Gregorian year picker using native Flutter dialog.
+/// Gregorian year picker using the expressive date picker.
 Future<void> _showGregorianYearPicker(
   BuildContext context,
   WidgetRef ref,
   DateTime focusedMonth,
 ) async {
-  final selectedDate = await showDatePicker(
-    context: context,
+  final selectedDate = await M3EDatePicker.show(
+    context,
     initialDate: focusedMonth,
     firstDate: DateTime(1976),
     lastDate: DateTime(2076, 12, 31),
-    initialDatePickerMode: DatePickerMode.year,
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-            primary: context.colors.primary,
-            onPrimary: Theme.of(context).colorScheme.onPrimary,
-            surface: Theme.of(context).scaffoldBackgroundColor,
-          ),
-        ),
-        child: child!,
-      );
-    },
+    initialCalendarMode: M3EDatePickerMode.year,
   );
 
   if (selectedDate != null) {

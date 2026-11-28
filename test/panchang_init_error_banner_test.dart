@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/panchang_init/panchang_init.dart';
 import 'package:tithi/widgets/panchang_init_error_banner.dart';
@@ -13,11 +14,19 @@ import 'package:tithi/widgets/panchang_init_error_banner.dart';
 // The banner is the only surface that explains it, which makes these
 // assertions the user-visible half of the init fix.
 
+class _StubAccessibility extends AccessibilityNotifier {
+  @override
+  AccessibilityState build() => const AccessibilityState();
+}
+
 void main() {
   Future<void> pumpBanner(WidgetTester tester, Override override) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [override],
+        overrides: [
+          override,
+          accessibilityProvider.overrideWith(_StubAccessibility.new),
+        ],
         child: const MaterialApp(
           home: Scaffold(body: PanchangInitErrorBanner()),
         ),

@@ -1,13 +1,16 @@
 import 'dart:async';
+
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../features/solar_system/widgets/solar_system_painter.dart';
 import '../l10n/app_localizations.dart';
-import '../core/anim/press_scale.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../utils/tithi_localization.dart';
 import '../providers/planetary_view_provider.dart';
 import '../services/planetary_view_service.dart';
+import '../widgets/app_buttons.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/page_scaffold.dart';
 import '../widgets/state_views.dart';
@@ -73,25 +76,19 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
       leading: const HapticBackButton(),
       title: Text(l10n.solarSystem),
       actions: [
-        // Date picker button (gated press haptic + scale in PressScale).
-        PressScale(
-          child: IconButton(
-            icon: const Icon(Icons.calendar_today),
-            tooltip: l10n.selectDate,
-            onPressed: () => _selectDate(context),
-          ),
+        AppIconButton(
+          icon: const Icon(Icons.calendar_today),
+          tooltip: l10n.selectDate,
+          onPressed: () => _selectDate(context),
         ),
-        // Reset to today
-        PressScale(
-          child: IconButton(
-            icon: const Icon(Icons.today),
-            tooltip: l10n.goToToday,
-            onPressed: () {
-              ref
-                  .read(planetaryViewDateProvider.notifier)
-                  .setDate(DateTime.now());
-            },
-          ),
+        AppIconButton(
+          icon: const Icon(Icons.today),
+          tooltip: l10n.goToToday,
+          onPressed: () {
+            ref
+                .read(planetaryViewDateProvider.notifier)
+                .setDate(DateTime.now());
+          },
         ),
       ],
       // The time panel paints behind the gesture handle and pads its own
@@ -118,9 +115,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                         isDark,
                         showZodiac: _showZodiac,
                       ),
-                      loading: () => const Center(
-                        child: CircularProgressIndicator.adaptive(),
-                      ),
+                      loading: () =>
+                          const Center(child: M3EProgressIndicator.circular()),
                       error: (error, _) {
                         debugPrint('Solar system data failed: $error');
                         return ErrorState(
@@ -379,14 +375,13 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
+                    AppIconButton(
                       icon: Icon(
                         _isAnimating
                             ? Icons.pause_circle_filled
                             : Icons.play_circle_fill,
                       ),
-                      iconSize: AppIconSize.hero,
-                      color: theme.colorScheme.primary,
+                      size: M3EIconButtonSize.lg,
                       onPressed: _toggleAnimation,
                       tooltip: _isAnimating
                           ? l10n.pauseAnimation
@@ -400,7 +395,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
                       ),
                       SizedBox(
                         width: 100,
-                        child: Slider(
+                        child: M3ESlider(
                           value: _animationSpeed,
                           min: 0.1,
                           max: 5.0,
@@ -417,35 +412,14 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
 
               const SizedBox(height: AppSpacing.s2),
 
-              // Slider
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 4,
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 8,
-                  ),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 16,
-                  ),
-                  activeTrackColor: theme.colorScheme.primary,
-                  inactiveTrackColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.2,
-                  ),
-                  thumbColor: theme.colorScheme.primary,
-                  overlayColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.2,
-                  ),
-                ),
-                child: Slider(
-                  value: sliderValue,
-                  max: 730,
-                  onChanged: (value) {
-                    final newDate = minDate.add(Duration(days: value.round()));
-                    ref
-                        .read(planetaryViewDateProvider.notifier)
-                        .setDate(newDate);
-                  },
-                ),
+              // Slider — M3E owns track/thumb tokens and spring interaction.
+              M3ESlider(
+                value: sliderValue,
+                max: 730,
+                onChanged: (value) {
+                  final newDate = minDate.add(Duration(days: value.round()));
+                  ref.read(planetaryViewDateProvider.notifier).setDate(newDate);
+                },
               ),
 
               // Date labels
@@ -489,16 +463,10 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
     required VoidCallback onPressed,
     required String tooltip,
   }) {
-    final theme = Theme.of(context);
-    return IconButton(
+    return AppIconButton(
       onPressed: onPressed,
       tooltip: tooltip,
-      icon: Icon(icon),
-      iconSize: AppIconSize.title,
-      color: theme.colorScheme.primary,
-      style: IconButton.styleFrom(
-        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-      ),
+      icon: Icon(icon, size: AppIconSize.title),
     );
   }
 
@@ -528,8 +496,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
         // Vertical column for better mobile ergonomics
         mainAxisSize: MainAxisSize.min,
         children: [
-          FloatingActionButton.small(
-            heroTag: 'zoom_in',
+          M3EFab(
+            icon: const Icon(Icons.add),
+            size: M3EFabSize.small,
             onPressed: () {
               final currentZoom =
                   (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
@@ -540,7 +509,6 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               }
             },
             tooltip: l10n.zoomIn,
-            child: const Icon(Icons.add),
           ),
           const SizedBox(height: AppSpacing.s8),
           Container(
@@ -560,8 +528,9 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.s8),
-          FloatingActionButton.small(
-            heroTag: 'zoom_out',
+          M3EFab(
+            icon: const Icon(Icons.remove),
+            size: M3EFabSize.small,
             onPressed: () {
               final currentZoom =
                   (ref.read(zoomLevelProvider) as num?)?.toDouble() ?? 1.0;
@@ -572,7 +541,6 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
               }
             },
             tooltip: l10n.zoomOut,
-            child: const Icon(Icons.remove),
           ),
         ],
       ),
@@ -887,7 +855,7 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   }) {
     final theme = Theme.of(context);
 
-    return Tooltip(
+    return M3ETooltip(
       message: tooltip,
       child: Semantics(
         button: true,
@@ -922,8 +890,8 @@ class _SolarSystemScreenState extends ConsumerState<SolarSystemScreen> {
   Future<void> _selectDate(BuildContext context) async {
     final currentDate = ref.read(planetaryViewDateProvider);
 
-    final selectedDate = await showDatePicker(
-      context: context,
+    final selectedDate = await M3EDatePicker.show(
+      context,
       initialDate: currentDate,
       firstDate: DateTime(1900),
       lastDate: DateTime(2100),

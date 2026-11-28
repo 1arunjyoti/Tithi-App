@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../providers/calendar_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
@@ -86,19 +87,20 @@ class HinduMonthSystemSetting extends ConsumerWidget {
       subtitle:
           l10n?.hinduMonthSystemSubtitle ??
           'Choose how months are named during Krishna Paksha',
-      children: HinduMonthSystem.values.map((system) {
-        return SettingsPickerItem(
-          title: system.label,
-          subtitle: system.description,
-          isSelected: system == currentSystem,
-          onTap: () async {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setHinduMonthSystem(system);
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
+      selectedIndex: HinduMonthSystem.values.indexOf(currentSystem),
+      options: [
+        for (final system in HinduMonthSystem.values)
+          SettingsPickerOption(
+            title: system.label,
+            subtitle: system.description,
+            onSelected: () async {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setHinduMonthSystem(system);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+      ],
     );
   }
 }
@@ -143,19 +145,20 @@ class PanchangSchoolSetting extends ConsumerWidget {
           l10n?.panchangSchoolSubtitle ??
           'Choose the calculation system behind every tithi, nakshatra and '
               'festival date',
-      children: PanchangSchool.values.map((school) {
-        return SettingsPickerItem(
-          title: school.label,
-          subtitle: school.description,
-          isSelected: school == currentSchool,
-          onTap: () async {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setPanchangSchool(school);
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
+      selectedIndex: PanchangSchool.values.indexOf(currentSchool),
+      options: [
+        for (final school in PanchangSchool.values)
+          SettingsPickerOption(
+            title: school.label,
+            subtitle: school.description,
+            onSelected: () async {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setPanchangSchool(school);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+      ],
     );
   }
 }
@@ -194,19 +197,20 @@ class HinduYearEraSetting extends ConsumerWidget {
       subtitle:
           l10n?.hinduYearEraSubtitle ??
           'Choose the calendar era for year display',
-      children: HinduYearEra.values.map((era) {
-        return SettingsPickerItem(
-          title: era.label,
-          subtitle: era.description,
-          isSelected: era == currentEra,
-          onTap: () async {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setHinduYearEra(era);
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
+      selectedIndex: HinduYearEra.values.indexOf(currentEra),
+      options: [
+        for (final era in HinduYearEra.values)
+          SettingsPickerOption(
+            title: era.label,
+            subtitle: era.description,
+            onSelected: () async {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setHinduYearEra(era);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+      ],
     );
   }
 }
@@ -247,25 +251,26 @@ class TithiDisplayModeSetting extends ConsumerWidget {
       subtitle:
           l10n?.tithiDisplaySubtitle ??
           'Choose how tithis are numbered in the calendar',
-      children: TithiDisplayMode.values.map((mode) {
-        return SettingsPickerItem(
-          title: mode == TithiDisplayMode.pakshaBased
-              ? (l10n?.tithiDisplayPakshaBased ?? 'Paksha Based')
-              : (l10n?.tithiDisplayThirtyDays ?? '30 Days'),
-          subtitle: mode == TithiDisplayMode.pakshaBased
-              ? (l10n?.tithiDisplayPakshaDescription ??
-                    'Show 1-15 for each paksha separately')
-              : (l10n?.tithiDisplayContinuousDescription ??
-                    'Show 1-30 continuously'),
-          isSelected: mode == currentMode,
-          onTap: () async {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setTithiDisplayMode(mode);
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
+      selectedIndex: TithiDisplayMode.values.indexOf(currentMode),
+      options: [
+        for (final mode in TithiDisplayMode.values)
+          SettingsPickerOption(
+            title: mode == TithiDisplayMode.pakshaBased
+                ? (l10n?.tithiDisplayPakshaBased ?? 'Paksha Based')
+                : (l10n?.tithiDisplayThirtyDays ?? '30 Days'),
+            subtitle: mode == TithiDisplayMode.pakshaBased
+                ? (l10n?.tithiDisplayPakshaDescription ??
+                      'Show 1-15 for each paksha separately')
+                : (l10n?.tithiDisplayContinuousDescription ??
+                      'Show 1-30 continuously'),
+            onSelected: () async {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setTithiDisplayMode(mode);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+      ],
     );
   }
 }
@@ -285,23 +290,24 @@ Future<void> showCalendarSystemPicker(
     title: isPrimary
         ? (l10n?.selectPrimaryCalendar ?? 'Select Primary Calendar')
         : (l10n?.selectSecondaryCalendar ?? 'Select Secondary Calendar'),
-    children: AppCalendarSystem.values.map((system) {
-      return SettingsPickerItem(
-        title: system.label,
-        isSelected: system == currentSystem,
-        onTap: () async {
-          if (isPrimary) {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setPrimaryCalendarSystem(system);
-          } else {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setSecondaryCalendarSystem(system);
-          }
-          if (context.mounted) Navigator.pop(context);
-        },
-      );
-    }).toList(),
+    selectedIndex: AppCalendarSystem.values.indexOf(currentSystem),
+    options: [
+      for (final system in AppCalendarSystem.values)
+        SettingsPickerOption(
+          title: system.label,
+          onSelected: () async {
+            if (isPrimary) {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setPrimaryCalendarSystem(system);
+            } else {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setSecondaryCalendarSystem(system);
+            }
+            if (context.mounted) Navigator.pop(context);
+          },
+        ),
+    ],
   );
 }

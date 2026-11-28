@@ -12,11 +12,11 @@ import '../providers/home_widget_provider.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
-import '../core/anim/press_scale.dart';
 import '../core/anim/stagger_entrance.dart';
 import '../core/navigation/haptic_back_button.dart';
 import '../core/navigation/home_tab.dart';
 import '../core/feedback/app_messages.dart';
+import '../widgets/app_buttons.dart';
 import '../widgets/festival_countdown_card.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_drawer.dart';
@@ -86,13 +86,10 @@ class _FestivalCountdownScreenState
           : const AppDrawerButton(),
       title: Text(l10n?.festivalCountdowns ?? 'Festival Countdowns'),
       actions: [
-        // Gated press haptic + scale live in PressScale.
-        PressScale(
-          child: IconButton(
-            icon: const Icon(Icons.add_rounded),
-            tooltip: l10n?.addCountdown ?? 'Add countdown',
-            onPressed: () => _addCountdown(context, ref),
-          ),
+        AppIconButton(
+          icon: const Icon(Icons.add_rounded),
+          tooltip: l10n?.addCountdown ?? 'Add countdown',
+          onPressed: () => _addCountdown(context, ref),
         ),
         const SizedBox(width: AppSpacing.s8),
       ],
@@ -411,17 +408,10 @@ class _UnresolvableCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  PressScale(
-                    child: IconButton(
-                      onPressed: () => onRemove(entry.id),
-                      icon: const Icon(Icons.delete_outline_rounded),
-                      tooltip: removeTooltip,
-                      color: context.colors.error,
-                      style: IconButton.styleFrom(
-                        minimumSize: const Size(40, 40),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
+                  AppIconButton(
+                    onPressed: () => onRemove(entry.id),
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    tooltip: removeTooltip,
                   ),
                 ],
               ),

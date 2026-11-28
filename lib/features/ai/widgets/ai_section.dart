@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/feedback/app_messages.dart';
@@ -7,6 +8,8 @@ import '../../../l10n/app_localizations_en.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_buttons.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/app_divider.dart';
 import '../../../widgets/settings_widgets.dart';
 import '../domain/ai_app_target.dart';
@@ -97,42 +100,43 @@ class AiSection extends ConsumerWidget {
     };
     if (!context.mounted) return;
 
-    final chosen = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.aiAppPickerTitle),
-        contentPadding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _AppOption(
-                label: l10n.aiAppAutomatic,
-                subtitle: l10n.aiAppAutomaticSubtitle,
-                selected: current == kAiTargetAuto,
-                onTap: () => Navigator.of(dialogContext).pop(kAiTargetAuto),
-              ),
-              for (final target in kAiAppTargets)
-                _AppOption(
-                  label: target.label,
-                  subtitle: available[target.id] == true
-                      ? null
-                      : l10n.aiAppNotInstalled,
-                  selected: current == target.id,
-                  onTap: available[target.id] == true
-                      ? () => Navigator.of(dialogContext).pop(target.id)
-                      : null,
-                ),
-            ],
+    final chosen = await AppDialog.show<String>(
+      context,
+      title: l10n.aiAppPickerTitle,
+      // M3EDialog scrolls its content between the pinned title and actions.
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _AppOption(
+            label: l10n.aiAppAutomatic,
+            subtitle: l10n.aiAppAutomaticSubtitle,
+            selected: current == kAiTargetAuto,
+            onTap: () =>
+                Navigator.of(context, rootNavigator: true).pop(kAiTargetAuto),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
+          for (final target in kAiAppTargets)
+            _AppOption(
+              label: target.label,
+              subtitle: available[target.id] == true
+                  ? null
+                  : l10n.aiAppNotInstalled,
+              selected: current == target.id,
+              onTap: available[target.id] == true
+                  ? () => Navigator.of(
+                      context,
+                      rootNavigator: true,
+                    ).pop(target.id)
+                  : null,
+            ),
         ],
       ),
+      actions: [
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+          child: Text(l10n.cancel),
+        ),
+      ],
     );
     if (chosen == null || !context.mounted) return;
     final saved = await ref
@@ -152,44 +156,39 @@ class AiSection extends ConsumerWidget {
     BuildContext context,
     AppLocalizations l10n,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.auto_awesome_outlined,
-              color: Theme.of(dialogContext).colorScheme.primary,
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Expanded(child: Text(l10n.aiConsentTitle)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.aiConsentBody,
-              style: const TextStyle(fontSize: AppTypography.sizeProse),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            _ConsentBullet(text: l10n.aiConsentBulletSend),
-            _ConsentBullet(text: l10n.aiConsentBulletLocation),
-            _ConsentBullet(text: l10n.aiConsentBulletWhere),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.cancel),
+    final confirmed = await AppDialog.show<bool>(
+      context,
+      title: l10n.aiConsentTitle,
+      icon: Icon(
+        Icons.auto_awesome_outlined,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.aiConsentBody,
+            style: const TextStyle(fontSize: AppTypography.sizeProse),
           ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(l10n.aiConsentEnable),
-          ),
+          const SizedBox(height: AppSpacing.s12),
+          _ConsentBullet(text: l10n.aiConsentBulletSend),
+          _ConsentBullet(text: l10n.aiConsentBulletLocation),
+          _ConsentBullet(text: l10n.aiConsentBulletWhere),
         ],
       ),
+      actions: [
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () =>
+              Navigator.of(context, rootNavigator: true).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        AppButton(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+          child: Text(l10n.aiConsentEnable),
+        ),
+      ],
     );
     return confirmed ?? false;
   }
@@ -198,28 +197,24 @@ class AiSection extends ConsumerWidget {
     BuildContext context,
     AppLocalizations l10n,
   ) async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.aiHowItWorks),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.aiHowItWorksRule),
-              const SizedBox(height: AppSpacing.s12),
-              Text(l10n.aiHowItWorksBody),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.gotIt),
-          ),
+    await AppDialog.show<void>(
+      context,
+      title: l10n.aiHowItWorks,
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.aiHowItWorksRule),
+          const SizedBox(height: AppSpacing.s12),
+          Text(l10n.aiHowItWorksBody),
         ],
       ),
+      actions: [
+        AppButton(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+          child: Text(l10n.gotIt),
+        ),
+      ],
     );
   }
 }
@@ -245,30 +240,33 @@ class _AppOption extends StatelessWidget {
   Widget build(BuildContext context) {
     // MergeSemantics + selected: without it the check icon is the only signal,
     // which a screen reader cannot see.
-    return MergeSemantics(
-      child: Semantics(
-        selected: selected,
-        inMutuallyExclusiveGroup: true,
-        child: ListTile(
-          enabled: onTap != null,
-          onTap: onTap,
-          leading: Icon(
-            selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-            color: selected ? context.colors.primary : context.faintInk,
-          ),
-          title: Text(
-            label,
-            style: const TextStyle(
-              fontSize: AppTypography.sizeProse,
-              fontWeight: AppTypography.semibold,
+    return Material(
+      type: MaterialType.transparency,
+      child: MergeSemantics(
+        child: Semantics(
+          selected: selected,
+          inMutuallyExclusiveGroup: true,
+          child: ListTile(
+            enabled: onTap != null,
+            onTap: onTap,
+            leading: Icon(
+              selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+              color: selected ? context.colors.primary : context.faintInk,
             ),
+            title: Text(
+              label,
+              style: const TextStyle(
+                fontSize: AppTypography.sizeProse,
+                fontWeight: AppTypography.semibold,
+              ),
+            ),
+            subtitle: subtitle == null
+                ? null
+                : Text(
+                    subtitle!,
+                    style: const TextStyle(fontSize: AppTypography.sizeCaption),
+                  ),
           ),
-          subtitle: subtitle == null
-              ? null
-              : Text(
-                  subtitle!,
-                  style: const TextStyle(fontSize: AppTypography.sizeCaption),
-                ),
         ),
       ),
     );

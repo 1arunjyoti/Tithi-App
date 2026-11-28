@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../l10n/app_localizations.dart';
@@ -113,7 +114,7 @@ class CalendarHeader extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadius.dense),
           onTap: onTap,
-          child: Tooltip(
+          child: M3ETooltip(
             message: tooltip,
             child: Container(
               width: 36,

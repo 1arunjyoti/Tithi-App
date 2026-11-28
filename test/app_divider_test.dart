@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tithi/theme/app_theme.dart';
 import 'package:tithi/widgets/app_divider.dart';
@@ -18,7 +19,7 @@ Widget _host(Widget child, {bool highContrast = false}) {
 }
 
 double _alphaOf(WidgetTester tester) {
-  final divider = tester.widget<Divider>(find.byType(Divider));
+  final divider = tester.widget<M3EDivider>(find.byType(M3EDivider));
   return divider.color!.a;
 }
 
@@ -27,8 +28,7 @@ void main() {
     testWidgets('section rule is a 1px hairline at 0.1', (tester) async {
       await tester.pumpWidget(_host(const AppDivider()));
 
-      final divider = tester.widget<Divider>(find.byType(Divider));
-      expect(divider.height, 1);
+      final divider = tester.widget<M3EDivider>(find.byType(M3EDivider));
       expect(divider.thickness, 1);
       expect(divider.indent, 0);
       expect(divider.endIndent, 0);
@@ -47,7 +47,7 @@ void main() {
         _host(const AppDivider(indent: 16, endIndent: 8)),
       );
 
-      final divider = tester.widget<Divider>(find.byType(Divider));
+      final divider = tester.widget<M3EDivider>(find.byType(M3EDivider));
       expect(divider.indent, 16);
       expect(divider.endIndent, 8);
     });

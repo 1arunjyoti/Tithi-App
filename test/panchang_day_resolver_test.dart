@@ -26,6 +26,7 @@ void main() {
   late Directory tempDir;
 
   setUpAll(() async {
+    if (skipReason != null) return;
     tempDir = await Directory.systemTemp.createTemp('tithi_panchang_day');
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

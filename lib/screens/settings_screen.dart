@@ -1,9 +1,12 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../providers/theme_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../core/navigation/app_routes.dart';
 import '../core/navigation/haptic_back_button.dart';
+import '../core/feedback/app_haptics.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../providers/accessibility_provider.dart';
@@ -158,50 +161,60 @@ class SettingsScreen extends ConsumerWidget {
       builder: (context, ref, _) {
         final l10n = AppLocalizations.of(context);
         final currentOverride = ref.watch(themeOverrideProvider);
-        final autoMode = currentOverride == null;
+        // Four icon+label segments are tight on a phone. Keep the expressive
+        // segment chrome but tighten its spacing so labels are not ellipsized.
+        final m3e = M3ETheme.of(context);
+        final compactSegments = m3e.copyWith(
+          segmentedButtonTheme: m3e.segmentedButtonTheme.copyWith(
+            segmentHorizontalPadding: AppSpacing.s4,
+            iconLabelGap: AppSpacing.s2,
+            iconSize: AppIconSize.small,
+          ),
+        );
 
         // RepaintBoundary for the same reason as SettingsGroupCard:
         // glass shadow must not repaint on every scroll frame.
         return RepaintBoundary(
           child: AppCard(
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              alignment: WrapAlignment.spaceEvenly,
-              children: [
-                ThemeOptionButton(
-                  label: l10n?.themeAuto ?? 'Auto',
-                  icon: Icons.brightness_auto_rounded,
-                  isSelected: autoMode,
-                  onTap: () => ref
-                      .read(themeOverrideProvider.notifier)
-                      .setOverride(null),
+            child: Center(
+              child: M3ETheme(
+                data: compactSegments,
+                child: M3ESegmentedButton<String?>(
+                  segments: [
+                    M3ESegment(
+                      value: null,
+                      label: l10n?.themeAuto ?? 'Auto',
+                      icon: const Icon(Icons.brightness_auto_rounded),
+                    ),
+                    M3ESegment(
+                      value: 'Shukla',
+                      label: l10n?.themeShukla ?? 'Shukla',
+                      icon: const Icon(Icons.light_mode_rounded),
+                    ),
+                    M3ESegment(
+                      value: 'PureDark',
+                      label: l10n?.themeDark ?? 'Dark',
+                      icon: const Icon(Icons.contrast),
+                    ),
+                    M3ESegment(
+                      value: 'Krishna',
+                      label: l10n?.themePurple ?? 'Purple',
+                      icon: const Icon(Icons.bubble_chart),
+                    ),
+                  ],
+                  selected: {currentOverride},
+                  // Keep each theme's own icon; the default check would replace
+                  // it on the selected segment.
+                  showSelectedIcon: false,
+                  semanticLabel: l10n?.appearance ?? 'Appearance',
+                  onSelectionChanged: (selection) {
+                    AppHaptics.tap(ref);
+                    ref
+                        .read(themeOverrideProvider.notifier)
+                        .setOverride(selection.first);
+                  },
                 ),
-                ThemeOptionButton(
-                  label: l10n?.themeShukla ?? 'Shukla',
-                  icon: Icons.light_mode_rounded,
-                  isSelected: currentOverride == 'Shukla',
-                  onTap: () => ref
-                      .read(themeOverrideProvider.notifier)
-                      .setOverride('Shukla'),
-                ),
-                ThemeOptionButton(
-                  label: l10n?.themeDark ?? 'Dark',
-                  icon: Icons.contrast,
-                  isSelected: currentOverride == 'PureDark',
-                  onTap: () => ref
-                      .read(themeOverrideProvider.notifier)
-                      .setOverride('PureDark'),
-                ),
-                ThemeOptionButton(
-                  label: l10n?.themePurple ?? 'Purple',
-                  icon: Icons.bubble_chart,
-                  isSelected: currentOverride == 'Krishna',
-                  onTap: () => ref
-                      .read(themeOverrideProvider.notifier)
-                      .setOverride('Krishna'),
-                ),
-              ],
+              ),
             ),
           ),
         );

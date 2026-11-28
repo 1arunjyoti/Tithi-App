@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:tithi/features/settings/widgets/app_update_settings.dart';
 import 'package:tithi/providers/accessibility_provider.dart';
@@ -159,7 +160,7 @@ void main() {
 
       // Assert
       expect(find.byKey(const Key('app-update-refresh')), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      expect(find.byType(M3EProgressIndicator), findsWidgets);
     });
   });
 }

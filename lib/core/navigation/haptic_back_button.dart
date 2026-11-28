@@ -1,9 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../anim/press_scale.dart';
 import '../../theme/app_metrics.dart';
+import '../../widgets/app_buttons.dart';
 
-/// Framework back-button replacement with gated press haptic + press scale.
+/// Framework back-button replacement with an expressive press and haptics
+/// gated by the app's Accessibility setting (via [AppIconButton]).
 ///
 /// Drop-in for pushed screens: `automaticallyImplyLeading: false` plus
 /// `leading: const HapticBackButton()`. Pops via [Navigator.maybePop] (same
@@ -25,23 +26,20 @@ class HapticBackButton extends StatelessWidget {
     if (!(ModalRoute.of(context)?.canPop ?? false)) {
       return const SizedBox.shrink();
     }
-    return PressScale(
-      child: IconButton(
-        icon: circled
-            ? Container(
-                padding: const EdgeInsets.all(AppSpacing.s8),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.surface.withValues(alpha: 0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.arrow_back_rounded),
-              )
-            : const Icon(Icons.arrow_back_rounded),
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        onPressed: () => Navigator.of(context).maybePop(),
-      ),
+    return AppIconButton(
+      icon: circled
+          ? Container(
+              padding: const EdgeInsets.all(AppSpacing.s8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface
+                    .withValues(alpha: 0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.arrow_back_rounded),
+            )
+          : const Icon(Icons.arrow_back_rounded),
+      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+      onPressed: () => Navigator.of(context).maybePop(),
     );
   }
 }

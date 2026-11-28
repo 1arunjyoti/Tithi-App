@@ -18,6 +18,89 @@ Format:
 - <where it lives: files / services / providers>
 ```
 
+## 2026-11-27 - 0.9.16+46
+
+### Moon Phases revamp: sky timings, distance, names and alerts
+
+- The Moon screen now shows moonrise/moonset (native prev/next fallbacks), the longest offline Moon-up/Sun-below viewing window, geocentric Moon distance with Supermoon/Micromoon labels, a next-eclipse card, and phase-name/lunar-age/full-moon-name chips; a date picker jumps to any day while the drag scrub stays ±15 days. Logic lives in `features/moon/domain/`, providers in `features/moon/providers/moon_details_providers.dart`, cards in `features/moon/widgets/`; `moonScrubOffsetProvider` is now derived from `moonSelectedDateProvider` — do not reintroduce a second date state.
+- Full/New/Blue Moon and eclipse alerts are scheduled from the same place clock as festival reminders: keys `moon_enabled`, IDs 3000–3031 in `core/notifications/notification_keys.dart`, fan-out via `NotificationService._rescheduleEnabled()` and `NotificationScheduler.scheduleUpcomingMoonEvents()`. Blue Moon = second Purnima in a Gregorian month; eclipse times convert from UTC before choosing a civil day.
+- Distance uses `Jyotish().getPlanetPosition` with geocentric tropical flags and `requireSwissEphemeris`; the card hides on FFI failure instead of showing a wrong number. Do not change the 360,000/405,000 km thresholds without updating `features/moon/domain/moon_distance.dart` and its test.
+- The viewing window pairs a rise with the first set *after* it (`setFollowingRise` in `features/moon/domain/moon_viewing.dart`): a civil day's morning set precedes its evening rise, and feeding that backwards pair to the intersection made "Moon below the horizon" show every day. The eclipse card is now lunar-only; solar eclipses stay on the dedicated Eclipse screen.
+- Countdown cards sit directly under the hero; the "Upcoming dates" heading and tab bar sit directly above their list (no second app-bar `TabBar`). The `moon-halo` glow is a self-contained radial gradient with 32dp clearance — never restore an out-of-bounds `BoxShadow`, which the scroll viewport clips under the app bar. See `screens/moon_phases_screen.dart` and `features/moon/widgets/moon_hero.dart`.
+- The hero halo is a layered, illumination-driven bloom: warm ivory core → luminous amber rim just outside the disc → faint cool sky scatter → transparent (`AppTheme.moonGlowCore/Rim/Scatter`). Keep the warm centre — a flat cool gradient reads washed out — and keep the rim at stop 0.74 so it lines up with the 168px disc in the 232px halo box. Light themes damp the bloom to 0.82.
+- New l10n keys were added to all four `.arb` files and generated with `flutter gen-l10n`; generated files are never hand-edited.
+
+### Rash Purnima uses the default sunrise rule
+
+- `assets/festivals.json`: `rash_purnima` no longer sets `timingOverride: "nishita"` or `vriddhi: "first"`. It matches on the Kartika Purnima sunrise tithi with the default `vriddhi: "both"`, so the home card and the forward scan resolve the same single day without per-festival knobs.
+- Constraint: do not re-add the nishita checkpoint or a vriddhi preference to this entry; those knobs were the source of the earlier two-day reading. `pujaKala: "nishita"` stays for the displayed puja window only.
+- `test/festival_data_test.dart` pins the default rule instead of the removed overrides.
+
+## 2026-11-26 - 0.9.16+46
+
+### Remaining Material widgets move to M3E
+
+- Raw `TextButton`/`FilledButton`/`OutlinedButton`/`ElevatedButton`/`IconButton` sites across the AI sheet, quote controls, home-widget card, countdown card, solar system, festival screens, Sankalpa, location picker and error banners now go through `AppButton`/`AppIconButton`; `PressScale` wrappers were dropped and callbacks that already buzz pass `haptic: false`.
+- The ten remaining `AlertDialog` sites now use `AppDialog`; M3E dialog content scrolls between its pinned title and actions, so nested `SingleChildScrollView`s are gone. The AI app picker wraps its shared `ListTile` rows in a transparent `Material` because the M3E dialog surface is not a Material ancestor.
+- Sankalpa uses `M3ETimePicker.show`, the five `showDatePicker` sites use `M3EDatePicker.show` (year mode preserved, theme overrides dropped), and Sankalpa's form uses `M3ETextField` with an explicit title-error state since M3ETextField has no `Form` validator.
+- Progress indicators, FABs, tooltips, badges and the Sankalpa overflow menu now use `M3EProgressIndicator`, `M3EFab`/`M3EExtendedFab`, `M3ETooltip`, `M3EBadge` and `M3EMenu`.
+- Constraint: `TabBar`/`TabBarView` and `ListTile` rows were deliberately left alone in this pass. Tests that pinned framework widget types now find the M3E equivalents.
+
+### Notification time uses the expressive time picker
+
+- The Notification Time row (`lib/features/settings/widgets/notification_settings.dart`) now opens `M3ETimePicker.show` with an `M3ETime` built from the stored hour/minute. The framework `TimePickerDialog` and its hand-tuned `TimePickerThemeData` builder are gone; M3E resolves the picker colours from `M3ETheme`, which adapts the ambient app palette.
+- Constraint: do not wrap the picker in a `Theme`/`TimePickerThemeData` override or a second dialog route — `M3ETimePicker` owns its route and returns hour/minute straight into `setNotificationTime`. `test/notification_time_picker_test.dart` pins the component swap.
+
+### Settings switches respect Reduce Motion
+
+- `AppSwitch` (`lib/widgets/app_switch.dart`) is the single owner of the expressive toggle and its Reduce Motion gate. `M3ESwitch` springs and its fixed-duration track fade ignore `MediaQuery.disableAnimations`, so with Reduce Motion on the control is remounted at its final value: the handle jumps to the settled position instead of springing.
+- `SettingsSwitchTile` (`lib/widgets/settings_widgets.dart`) delegates to `AppSwitch`. The wrapper owns a stable `FocusNode` and restores it after the remount, so toggling by keyboard does not drop focus.
+- Constraint: do not build `M3ESwitch` directly in settings rows; keep `AppTheme.reduceMotionOf(context)` as the gate (it covers both the in-app setting and the OS flag). `test/settings_switch_spinner_test.dart` pins instant travel with motion off and spring travel with it on, plus focus retention.
+
+### Eclipse details sheet layout and formatting
+
+- Dense info rows no longer put a `Spacer` between two `Flexible` texts: that split the row into three equal flex slots, ellipsized long labels early and left an 80dp hole before the value. `buildInfoRow(dense: true)` (`lib/features/sheets/widgets/info_row.dart`) now shares the remaining width between a constrained label and a right-aligned, still-constrained value with an 8dp gap.
+- One spacing vocabulary in `lib/features/eclipse/widgets/eclipse_details_sheet.dart`: 12dp between rows in a section, 16dp on each side of an `AppDivider` (the pending row gap is replaced, never stacked). The title glyph keeps its intrinsic width with an explicit 12dp gap to the heading; a fixed-width slot made it wrap into stacked glyphs at large text scales.
+- Clock times all use `DateFormat.jm()` (only the max-eclipse row showed seconds) and the date uses compact `yMMMd`, which keeps it on one line at large text scales.
+- Constraint: keep divider gaps symmetric and do not reintroduce a `Spacer` or a nested scroll view here. `test/eclipse_details_sheet_test.dart` pins text alignment, row/rule gaps and time formatting at 320dp/1.6x.
+
+### Search field and eclipse row layout fixes
+
+- `AppSearchField` (`lib/widgets/app_search_field.dart`) is the single owner of the dedicated `M3ESearchBar` (56dp pill, spring focus, optional clear/trailing icons). Location and festival search no longer wrap it in the old glassmorphism/`AppCard` box, which showed a square field over the old rounded bar; the standalone 24→12 focus margin is disabled because these bars live inside a guttered screen.
+- `buildInfoRow(dense: true)` now constrains label and value with `Flexible` + ellipsis, fixing the eclipse sheet's overflow below the sun/moon glyph at narrow widths and large text scales. `test/eclipse_details_sheet_test.dart` pins a 320dp/1.6x case.
+
+### Remaining bottom sheets move to the expressive sheet
+
+- `AppBottomSheet` (`lib/widgets/app_bottom_sheet.dart`) is now the only wrapper around `M3EBottomSheet.show`; the settings picker delegates to it too. The Ask-AI, festival-filter, eclipse-details and quote-share sheets no longer build their own drag handle, rounded container or 85% height cap.
+- `SheetScaffold` gained `expressive: true` so the M3E sheet owns the chrome while the hero/body layout stays shared with the tithi and event sheets.
+- Quote-share actions are `M3EListItem`s; the filter sheet's Reset/Done are `AppButton`s and its root has a `festival-filter-sheet` key for widget tests.
+- Constraint: do not reintroduce `showModalBottomSheet` or a nested `BottomSheet` finder here — M3E hosts the sheet in its own route and surface.
+
+### Tier 2 moves shared chrome, dialogs and text fields to M3E
+
+- `ErrorState`, `ErrorDisplayWidget`, `HapticBackButton` and `AppDrawerButton` now use `AppButton`/`AppIconButton`; `PressScale` is gone from those rows because the M3E button owns its press feel.
+- `AppDialog` (`lib/widgets/app_dialog.dart`) is the single owner of `M3EDialog`, including `showWidget` for provider-driven dialogs. The update dialog's release notes rely on M3EDialog's pinned-header/actions scrolling, so its nested `SingleChildScrollView` was removed. Export progress/save, reset-settings and the year/month grids use the same wrapper; the two calendar grids now share one private helper.
+- Text fields in location search, festival search and Ask-AI use `M3ETextField` (label + leading/trailing affordances, counter hidden for Ask-AI). Location search keeps its custom clear handler via a trailing `AppIconButton` so debounce and in-flight request ids are still cancelled.
+- Constraint: `AppDialog` actions must be `AppButton`s; never reintroduce `AlertDialog` or a nested scroll view around dialog content. `showAppMessage` passes the live context to `M3ESnackbar` (needs an Overlay); `showAppMessageOn` remains for flows whose context is unmounted.
+
+### More settings chrome moves to Material 3 Expressive
+
+- The theme picker is now a four-segment `M3ESegmentedButton` with per-theme icons; the hand-built `ThemeOptionButton` is gone. `showSelectedIcon: false` keeps the icons visible on the selected segment, and segment padding/icon gap are tightened in a scoped `M3ETheme` so all four labels fit on a phone.
+- Transient feedback goes through `M3ESnackbar` in `lib/core/feedback/app_messages.dart`; `AppMessageKind` still drives 3s/5s duration. M3E snackbars have no leading-icon slot, so the severity glyphs were dropped.
+- `AppDivider` delegates to `M3EDivider` but keeps the two app-specific weights; settings buttons use `M3EButton`/`M3EIconButton`, festival and Sankalpa chips use `M3EChip`, and the solar-system sliders use `M3ESlider`.
+- `AppButton` labels are semibold at size `md` (M3E's regular `sm` label read as flat); foreground colour still resolves from the M3E style. `test/app_buttons_test.dart` pins it.
+- Constraint: M3E components resolve their tokens from `M3ETheme`, which adapts the ambient `ThemeData`, so no theme rewrite is needed. Keep the shared wrappers (`AppDivider`, `AppButton`/`AppIconButton`, `showAppMessage`, `FestivalFilterChip`) as the single owners of these components. `AppButton`/`AppIconButton` fire the haptic through `AppHaptics.tap(ref)` (gated by Accessibility > Haptic Feedback) and set `enableFeedback: false` so a press never double-buzzes; `haptic: false` opts out where the callback already buzzes. M3E's own haptic defaults to `none`, so do not swap this for `M3EButtonDecoration(haptic: ...)` — the app keeps every buzz behind the one `AppHaptics` gate.
+
+### Settings switches and pickers use Material 3 Expressive
+
+- Toggles now have the spring-driven handle, state layer and drag-to-toggle; pickers open in a sheet with a drag handle, 28dp corners, scrim and resizable detents instead of a custom 24dp container capped at 85% height.
+- Constraint: do not reintroduce `activeThumbColor` or `showModalBottomSheet` here. Colours come from `M3ETheme`, which adapts the ambient `ThemeData`, so Shukla/Krishna/PureDark palettes still apply. Import `package:material_3_expressive/material_3_expressive.dart` and hide `CornerRounding`/`RoundedPolygon` from `material_ui` to avoid the export clash.
+- `pubspec.yaml` adds `material_3_expressive: ^1.2.3`; `lib/widgets/settings_widgets.dart` is the single owner of `SettingsSwitchTile`, `SettingsBottomSheet` and `SettingsPickerOption` for every settings row.
+- The sheet is data-driven: callers pass `SettingsPickerOption`s plus a `selectedIndex` (and an optional `footer` for the export-year confirm button) instead of prebuilt widgets. Rows live in one `M3EList`, which owns the segmented surfaces and gap and dispatches taps by index — do not give rows their own `onTap`, it is ignored when embedded.
+- Constraint: never put loose `M3EListItem`s back to back in a sheet; their rest fills and hover layers merge into one slab in dark mode without the parent list's surface.
+- The selected fill comes from `M3EList.colorBuilder`/`borderRadiusBuilder`, not the embedded row's `selected` flag. Light mode uses `primary` + `onPrimary` (white) text; dark keeps `secondaryContainer` + its on-container ink. Do not enable `M3EList.selection`: its triggers are icon/double-tap, and once anything is selected it treats taps as toggles and drops the picker callback.
+- No Hive keys or provider contracts changed: `SettingsSwitchTile.onChanged` is still async and owns its own error handling.
+
 ## 2026-11-23 - 0.9.16+45
 
 ### Rash Purnima keeps one day on the home card

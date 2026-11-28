@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,9 +73,7 @@ void main() {
       ProviderScope(
         overrides: [
           cityNameProvider.overrideWithValue(const AsyncData('Pune')),
-          aiDeviceTimeZoneProvider.overrideWith(
-            (ref) async => 'Asia/Kolkata',
-          ),
+          aiDeviceTimeZoneProvider.overrideWith((ref) async => 'Asia/Kolkata'),
           // The host is not Android, but these tests exercise the Android
           // experience (named apps in the primary action).
           aiDirectOpenSupportedProvider.overrideWithValue(true),
@@ -107,104 +106,110 @@ void main() {
     return tester.widget<SelectableText>(find.byType(SelectableText)).data!;
   }
 
-  testWidgets('preview shows the computed panchang and city, never coordinates', (
-    tester,
-  ) async {
-    await pumpTrigger(tester);
+  testWidgets(
+    'preview shows the computed panchang and city, never coordinates',
+    (tester) async {
+      await pumpTrigger(tester);
 
-    final preview = previewText(tester);
-    expect(preview, contains('City: Pune'));
-    expect(preview, contains('Time zone: Asia/Kolkata'));
-    expect(preview, contains('Shukla Tritiya'));
-    expect(preview, contains('Sunrise: 06:34'));
-    expect(preview, contains('Sunset: 18:12'));
-    // The consent dialog promises no coordinates; four decimal places is how
-    // a latitude/longitude would leak in.
-    expect(RegExp(r'\d+\.\d{4,}').hasMatch(preview), isFalse);
+      final preview = previewText(tester);
+      expect(preview, contains('City: Pune'));
+      expect(preview, contains('Time zone: Asia/Kolkata'));
+      expect(preview, contains('Shukla Tritiya'));
+      expect(preview, contains('Sunrise: 06:34'));
+      expect(preview, contains('Sunset: 18:12'));
+      // The consent dialog promises no coordinates; four decimal places is how
+      // a latitude/longitude would leak in.
+      expect(RegExp(r'\d+\.\d{4,}').hasMatch(preview), isFalse);
 
-    // The question is seeded and editable.
-    expect(
-      find.text("Explain today's tithi in plain language."),
-      findsOneWidget,
-    );
-  });
+      // The question is seeded and editable.
+      expect(
+        find.text("Explain today's tithi in plain language."),
+        findsOneWidget,
+      );
+    },
+  );
 
-  testWidgets('copy puts the preview plus the edited question on the clipboard', (
-    tester,
-  ) async {
-    final clipboard = <MethodCall>[];
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      SystemChannels.platform,
-      (call) async {
-        if (call.method == 'Clipboard.setData') clipboard.add(call);
-        return null;
-      },
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+  testWidgets(
+    'copy puts the preview plus the edited question on the clipboard',
+    (tester) async {
+      final clipboard = <MethodCall>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         SystemChannels.platform,
-        null,
-      ),
-    );
-
-    await pumpTrigger(tester);
-
-    await tester.enterText(find.byType(TextField), 'When should I do puja?');
-    await tester.pumpAndSettle();
-    // The sheet body scrolls: bring the action row into view first.
-    await tester.ensureVisible(find.text('Copy'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Copy'));
-    await tester.pumpAndSettle();
-
-    expect(clipboard, hasLength(1));
-    final prompt = clipboard.single.arguments['text'] as String;
-    expect(prompt, contains('City: Pune'));
-    expect(prompt, contains('Question: When should I do puja?'));
-    expect(prompt.trimRight(), endsWith('Answer in English.'));
-    expect(find.text('Prompt copied'), findsOneWidget);
-  });
-
-  testWidgets('month digest waits for the panchang before enabling the actions', (
-    tester,
-  ) async {
-    final pending = Completer<Map<DateTime, PanchangData>>();
-    await pumpTrigger(
-      tester,
-      intent: AiIntent.monthDigest,
-      month: DateTime(2026, 11),
-      overrides: [
-        monthlyPanchangProvider.overrideWith((ref, month) => pending.future),
-      ],
-    );
-
-    expect(find.text("Preparing the month's panchang…"), findsOneWidget);
-    final openButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Open AI app'),
-    );
-    expect(openButton.onPressed, isNull);
-
-    // Resolving the month fills the preview and re-enables the hand-off.
-    // One festival per day on purpose: the digest must carry the whole month,
-    // not the first few entries.
-    pending.complete({
-      for (var d = 1; d <= 25; d++)
-        DateTime(2026, 11, d): day(
-          date: DateTime(2026, 11, d),
-          festival: 'Festival $d',
+        (call) async {
+          if (call.method == 'Clipboard.setData') clipboard.add(call);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
         ),
-    });
-    await tester.pumpAndSettle();
+      );
 
-    final preview = previewText(tester);
-    expect(preview, contains('Month: November 2026'));
-    expect(preview, contains('- 1 Nov: Festival 1'));
-    expect(preview, contains('- 25 Nov: Festival 25'));
-    final readyButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, 'Open AI app'),
-    );
-    expect(readyButton.onPressed, isNotNull);
-  });
+      await pumpTrigger(tester);
+
+      await tester.enterText(
+        find.byType(M3ETextField),
+        'When should I do puja?',
+      );
+      await tester.pumpAndSettle();
+      // The sheet body scrolls: bring the action row into view first.
+      await tester.ensureVisible(find.text('Copy'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Copy'));
+      await tester.pumpAndSettle();
+
+      expect(clipboard, hasLength(1));
+      final prompt = clipboard.single.arguments['text'] as String;
+      expect(prompt, contains('City: Pune'));
+      expect(prompt, contains('Question: When should I do puja?'));
+      expect(prompt.trimRight(), endsWith('Answer in English.'));
+      expect(find.text('Prompt copied'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'month digest waits for the panchang before enabling the actions',
+    (tester) async {
+      final pending = Completer<Map<DateTime, PanchangData>>();
+      await pumpTrigger(
+        tester,
+        intent: AiIntent.monthDigest,
+        month: DateTime(2026, 11),
+        overrides: [
+          monthlyPanchangProvider.overrideWith((ref, month) => pending.future),
+        ],
+      );
+
+      expect(find.text("Preparing the month's panchang…"), findsOneWidget);
+      final openButton = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Open AI app'),
+      );
+      expect(openButton.onPressed, isNull);
+
+      // Resolving the month fills the preview and re-enables the hand-off.
+      // One festival per day on purpose: the digest must carry the whole month,
+      // not the first few entries.
+      pending.complete({
+        for (var d = 1; d <= 25; d++)
+          DateTime(2026, 11, d): day(
+            date: DateTime(2026, 11, d),
+            festival: 'Festival $d',
+          ),
+      });
+      await tester.pumpAndSettle();
+
+      final preview = previewText(tester);
+      expect(preview, contains('Month: November 2026'));
+      expect(preview, contains('- 1 Nov: Festival 1'));
+      expect(preview, contains('- 25 Nov: Festival 25'));
+      final readyButton = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Open AI app'),
+      );
+      expect(readyButton.onPressed, isNotNull);
+    },
+  );
 
   testWidgets('month digest asks for the month-normalized key', (tester) async {
     // `focusedMonthProvider` carries a day and a time (`DateTime.now()`, the
@@ -227,7 +232,9 @@ void main() {
     expect(requested.single, DateTime(2026, 11));
   });
 
-  testWidgets('month digest failure says so and offers a retry', (tester) async {
+  testWidgets('month digest failure says so and offers a retry', (
+    tester,
+  ) async {
     var calls = 0;
     await pumpTrigger(
       tester,
@@ -251,7 +258,9 @@ void main() {
     expect(find.text('Preparing the month\'s panchang…'), findsNothing);
     expect(
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Open AI app'))
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Open AI app'),
+          )
           .onPressed,
       isNull,
     );
@@ -296,9 +305,7 @@ void main() {
       tester,
       overrides: [
         aiTargetAppProvider.overrideWith(_GeminiTargetNotifier.new),
-        aiHandoffServiceProvider.overrideWithValue(
-          const _MissingAppHandoff(),
-        ),
+        aiHandoffServiceProvider.overrideWithValue(const _MissingAppHandoff()),
       ],
     );
 
@@ -356,7 +363,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(previewText(tester), isNot(contains('Do not invent')));
     expect(
-      find.text('Also sends your question, and asks for the answer in your app language.'),
+      find.text(
+        'Also sends your question, and asks for the answer in your app language.',
+      ),
       findsOneWidget,
     );
   });

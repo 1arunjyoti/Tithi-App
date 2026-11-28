@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../widgets/app_buttons.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
@@ -23,64 +25,26 @@ Widget buildTimingInfoButton(BuildContext context) {
 }
 
 void showTimingDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-        titlePadding: const EdgeInsets.fromLTRB(
-          AppSpacing.s20,
-          AppSpacing.s16,
-          AppSpacing.s20,
-          AppSpacing.s8,
-        ),
-        contentPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.s20,
-          0,
-          AppSpacing.s20,
-          AppSpacing.s8,
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(
-          AppSpacing.s20,
-          0,
-          AppSpacing.s16,
-          AppSpacing.s12,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.tile),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.info_outline_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: AppIconSize.medium,
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Text(
-              AppLocalizations.of(context)?.timingNote ?? 'Timing Note',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: AppTypography.bold),
-            ),
-          ],
-        ),
-        content: Text(
-          AppLocalizations.of(context)?.timingNoteDescription ??
-              'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            height: 1.35,
-            fontSize: AppTypography.sizeBody,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(AppLocalizations.of(context)?.gotIt ?? 'Got it'),
-          ),
-        ],
-      );
-    },
+  final l10n = AppLocalizations.of(context);
+  AppDialog.show<void>(
+    context,
+    title: l10n?.timingNote ?? 'Timing Note',
+    icon: Icon(
+      Icons.info_outline_rounded,
+      color: Theme.of(context).colorScheme.primary,
+      size: AppIconSize.medium,
+    ),
+    content: Text(
+      l10n?.timingNoteDescription ?? 'Timings are calculated astronomically based on coordinates and may vary by a few minutes from local temple calendars due to atmospheric refraction, elevation, or calculation methods.',
+      style: Theme.of(context).textTheme.bodyMedium
+          ?.copyWith(height: 1.35, fontSize: AppTypography.sizeBody),
+    ),
+    actions: [
+      AppButton(
+        onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+        child: Text(l10n?.gotIt ?? 'Got it'),
+      ),
+    ],
   );
 }
 

@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/feedback/app_messages.dart';
@@ -21,6 +22,9 @@ import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
 import '../../../theme/app_motion.dart';
 import '../../../utils/tithi_localization.dart';
+import '../../../widgets/app_bottom_sheet.dart';
+import '../../../widgets/app_buttons.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../calendar/data/calendar_caches.dart' show normalizeMonthKey;
 import '../../sheets/widgets/section_header.dart';
 import '../../sheets/widgets/sheet_explainer_card.dart';
@@ -53,11 +57,8 @@ Future<void> showAskAiSheet(
     intent != AiIntent.festival || festival != null,
     'AiIntent.festival needs the festival it is about',
   );
-  await showModalBottomSheet<void>(
-    context: context,
-    sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+  await AppBottomSheet.show<void>(
+    context,
     builder: (context) => AskAiSheet(
       intent: intent,
       panchang: panchang,
@@ -260,6 +261,7 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
       curve: Curves.easeOut,
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SheetScaffold(
+        expressive: true,
         highContrast: highContrast,
         hero: _buildHero(context, l10n, highContrast, localeCode, city, month),
         body: Column(
@@ -273,25 +275,16 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                 horizontal: AppSpacing.s4,
                 vertical: AppSpacing.s2,
               ),
-              child: TextField(
+              child: M3ETextField(
                 controller: _question,
+                label: l10n.aiQuestionHint,
                 minLines: 2,
                 maxLines: 4,
                 maxLength: 280,
+                // The counter is visual noise inside a sheet; the hard cap
+                // still applies.
+                showCounter: false,
                 textCapitalization: TextCapitalization.sentences,
-                style: TextStyle(
-                  fontSize: AppTypography.sizeBody,
-                  height: 1.4,
-                  color: context.colors.onSurface,
-                ),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(AppSpacing.s12),
-                  hintText: l10n.aiQuestionHint,
-                  // The counter is visual noise inside a sheet; the hard cap
-                  // still applies.
-                  counterText: '',
-                ),
               ),
             ),
             const SizedBox(height: AppSpacing.s16),
@@ -301,22 +294,15 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                 // cannot both take their intrinsic width.
                 Expanded(child: SectionHeader(text: l10n.aiWhatWillBeShared)),
                 if (!showPrompt && isReady && _contextLineCount > 6)
-                  TextButton(
+                  AppButton(
+                    style: M3EButtonStyle.text,
                     onPressed: () =>
                         setState(() => _showFullPreview = !_showFullPreview),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.s8,
-                      ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.s8,
                     ),
-                    child: Text(
+                    label: Text(
                       _showFullPreview ? l10n.aiHidePreview : l10n.aiShowAll,
-                      style: TextStyle(
-                        fontSize: AppTypography.sizeCaption,
-                        fontWeight: AppTypography.semibold,
-                        color: context.colors.primary,
-                      ),
                     ),
                   ),
               ],
@@ -350,7 +336,8 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
             if (isReady)
               Align(
                 alignment: Alignment.centerLeft,
-                child: TextButton.icon(
+                child: AppButton(
+                  style: M3EButtonStyle.text,
                   onPressed: () => setState(() {
                     _showFullPrompt = !_showFullPrompt;
                     _showFullPreview = false;
@@ -364,15 +351,8 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                   label: Text(
                     showPrompt ? l10n.aiPreviewSummary : l10n.aiPreviewFull,
                   ),
-                  style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s8,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: AppTypography.sizeCaption,
-                      fontWeight: AppTypography.semibold,
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s8,
                   ),
                 ),
               ),
@@ -381,19 +361,15 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
             // wrong and offer the one action that can recover it.
             if (monthFailed) ...[
               const SizedBox(height: AppSpacing.s4),
-              TextButton.icon(
+              AppButton(
+                style: M3EButtonStyle.text,
                 onPressed: () => ref.invalidate(monthlyPanchangProvider(month)),
                 icon: const Icon(
                   Icons.refresh_rounded,
                   size: AppIconSize.dense,
                 ),
                 label: Text(l10n.retry),
-                style: TextButton.styleFrom(
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s8,
-                  ),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
               ),
             ],
             const SizedBox(height: AppSpacing.s10),
@@ -405,7 +381,7 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
             Row(
               children: [
                 Expanded(
-                  child: FilledButton.icon(
+                  child: AppButton(
                     onPressed: isReady
                         ? () => _openAiApp(prompt, targetId)
                         : null,
@@ -422,7 +398,8 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
                 ),
                 const SizedBox(width: AppSpacing.s10),
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: AppButton(
+                    style: M3EButtonStyle.outlined,
                     onPressed: isReady ? () => _copyPrompt(prompt) : null,
                     icon: const Icon(
                       Icons.copy_rounded,
@@ -597,28 +574,33 @@ class _AskAiSheetState extends ConsumerState<AskAiSheet> {
     required String subject,
     required String appLabel,
   }) async {
-    final choice = await showDialog<_FallbackChoice>(
-      context: navigator.context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.aiAppUnavailable(appLabel)),
-        content: Text(l10n.aiAppUnavailableBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(_FallbackChoice.copy),
-            child: Text(l10n.aiCopy),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(_FallbackChoice.share),
-            child: Text(l10n.aiOpenShareSheet),
-          ),
-        ],
-      ),
+    final choice = await AppDialog.show<_FallbackChoice>(
+      navigator.context,
+      title: l10n.aiAppUnavailable(appLabel),
+      subhead: l10n.aiAppUnavailableBody,
+      actions: [
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () =>
+              Navigator.of(navigator.context, rootNavigator: true).pop(),
+          child: Text(l10n.cancel),
+        ),
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () => Navigator.of(
+            navigator.context,
+            rootNavigator: true,
+          ).pop(_FallbackChoice.copy),
+          child: Text(l10n.aiCopy),
+        ),
+        AppButton(
+          onPressed: () => Navigator.of(
+            navigator.context,
+            rootNavigator: true,
+          ).pop(_FallbackChoice.share),
+          child: Text(l10n.aiOpenShareSheet),
+        ),
+      ],
     );
     if (choice == null || !navigator.mounted) return;
 

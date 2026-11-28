@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../../core/anim/press_scale.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../../theme/app_typography.dart';
 
 /// Shared chrome for the app's festival search overlays.
@@ -45,25 +45,20 @@ abstract class FestivalSearchShell<T> extends SearchDelegate<T?> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       if (query.isNotEmpty)
-        PressScale(
-          child: IconButton(
-            icon: const Icon(Icons.clear_rounded),
-            tooltip:
-                AppLocalizations.of(context)?.clearSearch ?? 'Clear search',
-            onPressed: () => query = '',
-          ),
+        AppIconButton(
+          icon: const Icon(Icons.clear_rounded),
+          tooltip: AppLocalizations.of(context)?.clearSearch ?? 'Clear search',
+          onPressed: () => query = '',
         ),
     ];
   }
 
   @override
   Widget buildLeading(BuildContext context) {
-    return PressScale(
-      child: IconButton(
-        icon: const Icon(Icons.arrow_back_rounded),
-        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-        onPressed: () => close(context, null),
-      ),
+    return AppIconButton(
+      icon: const Icon(Icons.arrow_back_rounded),
+      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+      onPressed: () => close(context, null),
     );
   }
 

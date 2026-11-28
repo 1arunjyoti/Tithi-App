@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:hive/hive.dart';
@@ -13,13 +15,17 @@ import '../../models/festival_region.dart';
 import '../../models/hindu_month_system.dart';
 import '../../models/panchang_data.dart';
 import '../../models/sankalpa.dart';
+import '../../l10n/app_localizations.dart';
+import '../../services/eclipse_service.dart';
 import '../../services/festival_matching_pipeline.dart';
+import '../../services/moon_phase_service.dart';
 import '../../services/panchang_service.dart';
 import '../../services/shloka_service.dart';
 import '../../services/storage_service.dart';
 import '../../utils/date_utils.dart';
 import '../location/place_clock.dart';
 import 'festival_store.dart';
+import 'moon_notification_content.dart';
 import 'notification_keys.dart';
 import 'scheduling_parts.dart';
 
@@ -294,10 +300,7 @@ class NotificationScheduler {
         if (!onDay.isBefore(now)) {
           await plugin.zonedSchedule(
             id: NotificationKeys.festivalNotificationIdBase + i * 2,
-            title: festivalDisplayName(
-              festival: festival,
-              locale: language,
-            ),
+            title: festivalDisplayName(festival: festival, locale: language),
             body: 'Today • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
             scheduledDate: onDay,
             notificationDetails: notificationDetails,
@@ -316,10 +319,7 @@ class NotificationScheduler {
         if (!eve.isBefore(now)) {
           await plugin.zonedSchedule(
             id: NotificationKeys.festivalNotificationIdBase + i * 2 + 1,
-            title: festivalDisplayName(
-              festival: festival,
-              locale: language,
-            ),
+            title: festivalDisplayName(festival: festival, locale: language),
             body:
                 'Tomorrow • ${bodyLines.tithiIdentity}\n${bodyLines.dateLines}',
             scheduledDate: eve,
@@ -332,6 +332,109 @@ class NotificationScheduler {
 
     if (kDebugMode) {
       print('Scheduled upcoming festival notifications');
+    }
+  }
+
+  /// Cancel all moon-event notifications (one slot per event type per day).
+  Future<void> cancelMoonNotifications() async {
+    for (int i = 0; i < NotificationKeys.moonNotificationSlots; i++) {
+      await plugin.cancel(id: NotificationKeys.moonNotificationIdBase + i);
+    }
+  }
+
+  /// Schedules Full Moon, New Moon, Blue Moon and eclipse reminders.
+  ///
+  /// Mirrors the festival pipeline: gate on the flag, cancel every owned ID
+  /// first, then schedule at the shared wall time on the place clock. A
+  /// 6-hourly WorkManager pass re-runs this, so events entering the window are
+  /// never missed. All data work is isolate-safe (no Riverpod/BuildContext).
+  Future<void> scheduleUpcomingMoonEvents() async {
+    final enabled =
+        box?.get(NotificationKeys.moonEnabled, defaultValue: false) ?? false;
+    if (!enabled) return;
+
+    await cancelMoonNotifications();
+
+    final coords = await readLastKnownLatLng();
+    final latitude = coords.latitude;
+    final longitude = coords.longitude;
+    final settingsBox = await StorageService().openSettingsBox();
+    final prefs = readCalendarPrefs(settingsBox);
+    final language = festivalNotificationLanguage(settingsBox);
+    final now = _now;
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Same school publication as the festival path: the background isolate
+    // computes tithis through a fresh service and its own cache signature.
+    activePanchangSchool = prefs.panchangSchool;
+    final panchangService = PanchangService(school: prefs.panchangSchool);
+    await panchangService.init();
+    final moonService = MoonPhaseService(panchangService);
+    // An 8-day window can hold at most one of each phase, so three
+    // occurrences give a safety margin without a long background FFI scan.
+    final purnimas = await moonService.getUpcomingPurnimas(
+      count: 3,
+      latitude: latitude,
+      longitude: longitude,
+      from: today,
+    );
+    final amavasyas = await moonService.getUpcomingAmavasyas(
+      count: 3,
+      latitude: latitude,
+      longitude: longitude,
+      from: today,
+    );
+    // Eclipse times arrive in UTC; the scheduler converts them to the place
+    // clock before deciding which civil day a reminder belongs to.
+    final eclipses = await EclipseService().getUpcomingEclipses(
+      count: 4,
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    final l10n = lookupAppLocalizations(Locale(language));
+    final time = await getNotificationTime();
+    final zone = _zone ?? tz.local;
+    final events = buildMoonNotifications(
+      purnimas: purnimas,
+      amavasyas: amavasyas,
+      eclipses: eclipses,
+      from: today,
+      days: NotificationKeys.moonWindowDays,
+      l10n: l10n,
+      toLocal: (instant) => tz.TZDateTime.from(instant, zone),
+    );
+
+    final notificationDetails = notificationChannel(
+      id: 'tithi_moon',
+      name: 'Moon Events',
+      description: 'Full Moon, New Moon, Blue Moon and eclipse reminders',
+    );
+
+    var slot = 0;
+    for (final event in events) {
+      if (slot >= NotificationKeys.moonNotificationSlots) break;
+      final scheduled = _wallTime(
+        event.date.year,
+        event.date.month,
+        event.date.day,
+        time.hour,
+        time.minute,
+      );
+      if (scheduled.isBefore(now)) continue;
+      await plugin.zonedSchedule(
+        id: NotificationKeys.moonNotificationIdBase + slot,
+        title: event.title,
+        body: event.body,
+        scheduledDate: scheduled,
+        notificationDetails: notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      );
+      slot++;
+    }
+
+    if (kDebugMode) {
+      print('Scheduled $slot moon event notifications');
     }
   }
 

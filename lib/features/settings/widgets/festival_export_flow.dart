@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/feedback/app_messages.dart';
@@ -16,6 +17,8 @@ import '../../../services/festival_export_service.dart';
 import '../../../services/share_file/share_file.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_buttons.dart';
+import '../../../widgets/app_dialog.dart';
 
 /// A rendered festival export file plus the strings used to present it.
 class FestivalExportPayload {
@@ -83,40 +86,45 @@ Future<void> runFestivalExport({
       return;
     }
     unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) => PopScope(
-          canPop: false,
-          child: AlertDialog(
-            title: Text(
-              l10n?.exportingYear(year.toString()) ?? 'Exporting $year',
-            ),
-            content: ValueListenableBuilder<int>(
-              valueListenable: progress,
-              builder: (_, done, _) => Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  LinearProgressIndicator(
-                    value: festivals.isEmpty ? null : done / festivals.length,
+      AppDialog.showWidget<void>(
+            context,
+            (_) => PopScope(
+              canPop: false,
+              child: M3EDialog(
+                title:
+                    l10n?.exportingYear(year.toString()) ?? 'Exporting $year',
+                content: ValueListenableBuilder<int>(
+                  valueListenable: progress,
+                  builder: (_, done, _) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      M3EProgressIndicator.linear(
+                        value: festivals.isEmpty
+                            ? null
+                            : done / festivals.length,
+                      ),
+                      const SizedBox(height: AppSpacing.s12),
+                      Text(
+                        l10n?.festivalsExportedProgress(
+                              done,
+                              festivals.length,
+                            ) ??
+                            '$done / ${festivals.length} festivals',
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.s12),
-                  Text(
-                    l10n?.festivalsExportedProgress(done, festivals.length) ??
-                        '$done / ${festivals.length} festivals',
+                ),
+                actions: [
+                  AppButton(
+                    style: M3EButtonStyle.text,
+                    onPressed: () => cancelled = true,
+                    child: Text(l10n?.cancel ?? 'Cancel'),
                   ),
                 ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => cancelled = true,
-                child: Text(l10n?.cancel ?? 'Cancel'),
-              ),
-            ],
-          ),
-        ),
-      )
+            barrierDismissible: false,
+          )
           .whenComplete(() => dialogOpen = false)
           // A dialog that fails to show (lost context, route overflow) must
           // not surface as an unhandled async error from this fire-and-forget.
@@ -206,10 +214,10 @@ Future<void> runFestivalExport({
     final sharePath = await saveTextToTemp(content, filename);
     if (!context.mounted) return;
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n?.saved ?? 'Saved'),
+    await AppDialog.showWidget<void>(
+      context,
+      (dialogContext) => M3EDialog(
+        title: l10n?.saved ?? 'Saved',
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,12 +238,14 @@ Future<void> runFestivalExport({
           ],
         ),
         actions: [
-          TextButton(
+          AppButton(
+            style: M3EButtonStyle.text,
             onPressed: () => Navigator.pop(dialogContext),
             child: Text(l10n?.done ?? 'Done'),
           ),
           if (sharePath != null)
-            TextButton(
+            AppButton(
+              style: M3EButtonStyle.text,
               onPressed: () async {
                 Navigator.pop(dialogContext);
                 try {

@@ -3713,6 +3713,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary — the panchang for your city (date, tithi, nakshatra, sunrise and sunset), the festival details when you ask about one, and the question you type — and hands it to the AI app you chose in Settings, or to the system share sheet when that app is not available. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app\'s own privacy policy.'**
   String get privacyAiDesc;
+
+  /// Traditional January full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Wolf Moon'**
+  String get wolfMoon;
+
+  /// Traditional February full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Snow Moon'**
+  String get snowMoon;
+
+  /// Traditional March full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Worm Moon'**
+  String get wormMoon;
+
+  /// Traditional April full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Pink Moon'**
+  String get pinkMoon;
+
+  /// Traditional May full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Flower Moon'**
+  String get flowerMoon;
+
+  /// Traditional June full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Strawberry Moon'**
+  String get strawberryMoon;
+
+  /// Traditional July full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Buck Moon'**
+  String get buckMoon;
+
+  /// Traditional August full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Sturgeon Moon'**
+  String get sturgeonMoon;
+
+  /// Traditional September full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Corn Moon'**
+  String get cornMoon;
+
+  /// Traditional October full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Hunter\'s Moon'**
+  String get huntersMoon;
+
+  /// Traditional November full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Beaver Moon'**
+  String get beaverMoon;
+
+  /// Traditional December full moon name
+  ///
+  /// In en, this message translates to:
+  /// **'Cold Moon'**
+  String get coldMoon;
+
+  /// Full moon nearest the September equinox
+  ///
+  /// In en, this message translates to:
+  /// **'Harvest Moon'**
+  String get harvestMoon;
+
+  /// Second full moon in a Gregorian month
+  ///
+  /// In en, this message translates to:
+  /// **'Blue Moon'**
+  String get blueMoon;
+
+  /// Named Purnima in Ashadha
+  ///
+  /// In en, this message translates to:
+  /// **'Guru Purnima'**
+  String get guruPurnima;
+
+  /// Named Purnima in Shravana
+  ///
+  /// In en, this message translates to:
+  /// **'Shravani Purnima'**
+  String get shravaniPurnima;
+
+  /// Named Purnima in Ashwin
+  ///
+  /// In en, this message translates to:
+  /// **'Sharad Purnima'**
+  String get sharadPurnima;
+
+  /// Named Purnima in Kartika
+  ///
+  /// In en, this message translates to:
+  /// **'Kartiki Purnima'**
+  String get kartikiPurnima;
+
+  /// Named Purnima in Phalguna
+  ///
+  /// In en, this message translates to:
+  /// **'Holi Purnima'**
+  String get holiPurnima;
+
+  /// Named phase stage between new and first quarter
+  ///
+  /// In en, this message translates to:
+  /// **'Waxing Crescent'**
+  String get waxingCrescent;
+
+  /// Half-lit waxing phase
+  ///
+  /// In en, this message translates to:
+  /// **'First Quarter'**
+  String get firstQuarterMoon;
+
+  /// Waxing phase between first quarter and full
+  ///
+  /// In en, this message translates to:
+  /// **'Waxing Gibbous'**
+  String get waxingGibbous;
+
+  /// Waning phase between full and last quarter
+  ///
+  /// In en, this message translates to:
+  /// **'Waning Gibbous'**
+  String get waningGibbous;
+
+  /// Half-lit waning phase
+  ///
+  /// In en, this message translates to:
+  /// **'Last Quarter'**
+  String get lastQuarterMoon;
+
+  /// Named phase stage between last quarter and new
+  ///
+  /// In en, this message translates to:
+  /// **'Waning Crescent'**
+  String get waningCrescent;
+
+  /// Days since the previous new moon
+  ///
+  /// In en, this message translates to:
+  /// **'Moon age: {days} days'**
+  String moonAge(String days);
+
+  /// Heading of the offline moon-visibility card
+  ///
+  /// In en, this message translates to:
+  /// **'Best viewing time'**
+  String get bestViewingTime;
+
+  /// Shown when the Moon is down throughout darkness
+  ///
+  /// In en, this message translates to:
+  /// **'Moon is below the horizon during darkness'**
+  String get moonNotVisible;
+
+  /// Visibility window before sunrise
+  ///
+  /// In en, this message translates to:
+  /// **'Before sunrise'**
+  String get moonViewingMorning;
+
+  /// Visibility window after sunset
+  ///
+  /// In en, this message translates to:
+  /// **'After sunset'**
+  String get moonViewingEvening;
+
+  /// Heading of the Moon distance card
+  ///
+  /// In en, this message translates to:
+  /// **'Moon distance'**
+  String get moonDistance;
+
+  /// Moon distance in kilometres from Earth
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} km from Earth'**
+  String moonDistanceKm(String distance);
+
+  /// Label for a Moon closer than 360000 km
+  ///
+  /// In en, this message translates to:
+  /// **'Supermoon'**
+  String get supermoon;
+
+  /// Label for a Moon farther than 405000 km
+  ///
+  /// In en, this message translates to:
+  /// **'Micromoon'**
+  String get micromoon;
+
+  /// Label for a Moon at ordinary distance
+  ///
+  /// In en, this message translates to:
+  /// **'Average distance'**
+  String get averageDistance;
+
+  /// Heading of the next eclipse card
+  ///
+  /// In en, this message translates to:
+  /// **'Next eclipse'**
+  String get nextEclipse;
+
+  /// Action that opens the eclipse details sheet
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get viewEclipseDetails;
+
+  /// Action that opens the date picker on the moon screen
+  ///
+  /// In en, this message translates to:
+  /// **'Jump to date'**
+  String get chooseMoonDate;
+
+  /// Settings switch for moon and eclipse notifications
+  ///
+  /// In en, this message translates to:
+  /// **'Moon & eclipse alerts'**
+  String get moonEventsToggle;
+
+  /// Settings subtitle listing moon alert types
+  ///
+  /// In en, this message translates to:
+  /// **'Full Moon, New Moon, Blue Moon and eclipses'**
+  String get moonEventsToggleSubtitle;
+
+  /// Error when the moon alert toggle cannot be saved
+  ///
+  /// In en, this message translates to:
+  /// **'Could not update moon alerts'**
+  String get moonEventsToggleFailed;
+
+  /// Notification title for a full moon
+  ///
+  /// In en, this message translates to:
+  /// **'Full Moon tonight'**
+  String get fullMoonNotificationTitle;
+
+  /// Notification body for a full moon
+  ///
+  /// In en, this message translates to:
+  /// **'The Moon is full - a good night to look up.'**
+  String get fullMoonNotificationBody;
+
+  /// Notification title for a new moon
+  ///
+  /// In en, this message translates to:
+  /// **'New Moon tonight'**
+  String get newMoonNotificationTitle;
+
+  /// Notification body for a new moon
+  ///
+  /// In en, this message translates to:
+  /// **'The Moon is new - the darkest night for stargazing.'**
+  String get newMoonNotificationBody;
+
+  /// Notification title for a blue moon
+  ///
+  /// In en, this message translates to:
+  /// **'Blue Moon tonight'**
+  String get blueMoonNotificationTitle;
+
+  /// Notification body for a blue moon
+  ///
+  /// In en, this message translates to:
+  /// **'A second full moon this month - don\'t miss it.'**
+  String get blueMoonNotificationBody;
+
+  /// Notification title for an eclipse
+  ///
+  /// In en, this message translates to:
+  /// **'Eclipse today'**
+  String get eclipseNotificationTitle;
+
+  /// Notification body for an eclipse
+  ///
+  /// In en, this message translates to:
+  /// **'Check local eclipse timings in Tithi.'**
+  String get eclipseNotificationBody;
+
+  /// Heading above the upcoming Purnima/Amavasya list
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming dates'**
+  String get upcomingMoonDates;
 }
 
 class _AppLocalizationsDelegate

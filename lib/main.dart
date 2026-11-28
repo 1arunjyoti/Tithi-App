@@ -2,14 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter/services.dart';
+
 import 'widgets/error_display_widget.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+
 import 'l10n/app_localizations.dart';
 import 'l10n/fallback_localization_delegates.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:jyotish/jyotish.dart';
+
 import 'app/bootstrap.dart';
 import 'core/feedback/app_messages.dart';
 import 'core/location/place_clock.dart';
@@ -29,6 +35,8 @@ import 'theme/app_metrics.dart';
 import 'theme/app_typography.dart';
 import 'screens/home_shell.dart';
 import 'widgets/animated_splash.dart';
+import 'widgets/app_buttons.dart';
+import 'widgets/app_dialog.dart';
 import 'widgets/panchang_init_failure_overlay.dart';
 
 void main() {
@@ -421,51 +429,45 @@ class _LocationPermissionWrapperState
 
   Future<void> _showFirstLaunchDialog() async {
     final l10n = AppLocalizations.of(context);
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.location_on, color: AppTheme.locationAccent),
-            const SizedBox(width: AppSpacing.s8),
-            Text(l10n?.locationAccess ?? 'Location Access'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n?.locationAccessDescription ??
-                  'Tithi uses your location to calculate accurate Panchang data for your city.',
-              style: const TextStyle(fontSize: AppTypography.sizeSubtitle),
-            ),
-            const SizedBox(height: AppSpacing.s12),
-            Text(
-              l10n?.locationAccessBenefits ??
-                  '• More accurate tithi calculations\n'
-                      '• Location-specific moonrise/sunset times\n'
-                      '• Your location data stays on your device',
-              style: TextStyle(
-                fontSize: AppTypography.sizeBody,
-                color: context.secondaryInk,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n?.skip ?? 'Skip'),
+    final result = await AppDialog.show<bool>(
+      context,
+      title: l10n?.locationAccess ?? 'Location Access',
+      icon: const Icon(Icons.location_on, color: AppTheme.locationAccent),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n?.locationAccessDescription ?? 'Tithi uses your location to calculate accurate Panchang data for your city.',
+            style: const TextStyle(fontSize: AppTypography.sizeSubtitle),
           ),
-          FilledButton.icon(
-            onPressed: () => Navigator.of(context).pop(true),
-            icon: const Icon(Icons.check),
-            label: Text(l10n?.enableLocation ?? 'Enable Location'),
+          const SizedBox(height: AppSpacing.s12),
+          Text(
+            l10n?.locationAccessBenefits ??
+                '• More accurate tithi calculations\n'
+                    '• Location-specific moonrise/sunset times\n'
+                    '• Your location data stays on your device',
+            style: TextStyle(
+              fontSize: AppTypography.sizeBody,
+              color: context.secondaryInk,
+            ),
           ),
         ],
       ),
+      barrierDismissible: false,
+      actions: [
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () =>
+              Navigator.of(context, rootNavigator: true).pop(false),
+          child: Text(l10n?.skip ?? 'Skip'),
+        ),
+        AppButton(
+          icon: const Icon(Icons.check),
+          label: Text(l10n?.enableLocation ?? 'Enable Location'),
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+        ),
+      ],
     );
 
     if (result == true) {

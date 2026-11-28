@@ -39,6 +39,7 @@ void main() {
   late Box<dynamic> cacheBox;
 
   setUpAll(() async {
+    if (skipReason != null) return;
     tempDir = await Directory.systemTemp.createTemp('tithi_occurrence_scan');
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -50,6 +51,7 @@ void main() {
   });
 
   tearDownAll(() async {
+    if (skipReason != null) return;
     await cacheBox.close();
   });
 

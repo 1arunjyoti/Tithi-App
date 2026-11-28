@@ -18,11 +18,20 @@ import 'package:tithi/services/panchang/panchang_service.dart';
 // The Delhi default keeps the test independent of the device.
 
 void main() {
+  final libPath = Platform.environment['SWISSEPH_LIB_PATH'];
+  final libraryAvailable =
+      libPath != null && libPath.isNotEmpty && File(libPath).existsSync();
+  final skipReason = libraryAvailable
+      ? null
+      : 'Set SWISSEPH_LIB_PATH to a host Swiss Ephemeris library to run the '
+            'new-moon precision tests.';
+
   late PanchangService service;
   late Directory tempDir;
   late GeographicLocation location;
 
   setUpAll(() async {
+    if (skipReason != null) return;
     TestWidgetsFlutterBinding.ensureInitialized();
     tempDir = await Directory.systemTemp.createTemp('tithi_new_moon');
     const channel = MethodChannel('plugins.flutter.io/path_provider');
@@ -37,6 +46,7 @@ void main() {
   });
 
   tearDownAll(() async {
+    if (skipReason != null) return;
     try {
       await tempDir.delete(recursive: true);
     } on FileSystemException {
@@ -111,7 +121,7 @@ void main() {
         lessThanOrEqualTo(2),
       );
     });
-  });
+  }, skip: skipReason);
 
   group('Adhika verdict stability', () {
     test('every day of one lunation reports the same masa', () async {
@@ -145,7 +155,7 @@ void main() {
       // verdict changed mid-lunation, which is exactly the reported bug.
       expect(masas, hasLength(1));
     });
-  });
+  }, skip: skipReason);
 
   group('Sankranti crossing precision', () {
     test('the Simha ingress resolves to the second', () async {
@@ -167,5 +177,5 @@ void main() {
       expect(past, greaterThanOrEqualTo(0));
       expect(past, lessThan(0.9856 / 86400 * 2));
     });
-  });
+  }, skip: skipReason);
 }

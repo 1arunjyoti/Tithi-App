@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../../theme/app_motion.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_buttons.dart';
 import '../domain/hero_content.dart';
 
 /// Opens [images] (asset paths or http(s) URLs) in a floating window above the
@@ -141,13 +142,9 @@ class _ArtworkWindowState extends State<ArtworkWindow> {
               Positioned(
                 top: 4,
                 right: 4,
-                child: IconButton(
+                child: AppIconButton(
                   onPressed: () => Navigator.of(context).maybePop(),
                   tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                  color: Colors.white,
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.black.withValues(alpha: 0.4),
-                  ),
                   icon: const Icon(Icons.close),
                 ),
               ),

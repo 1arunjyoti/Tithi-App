@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:hive/hive.dart';
 import 'package:tithi/features/sheets/widgets/sheet_chip.dart';
 import 'package:tithi/features/sheets/widgets/sheet_explainer_card.dart';
@@ -569,7 +570,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('Lord: Moon'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      expect(find.byType(M3EProgressIndicator), findsOneWidget);
       expect(
         find.text(
           'Next: Mrigashira at ${jm(DateTime(2026, 10, 4, 15, 42))}',
@@ -621,7 +622,7 @@ void main() {
       // Assert: timings still render, nakshatra label is gone.
       expect(find.text('BEGINS'), findsOneWidget);
       expect(find.text('NAKSHATRA'), findsNothing);
-      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(find.byType(M3EProgressIndicator), findsNothing);
     });
 
     testWidgets('shows yoga and karana card with followers', (

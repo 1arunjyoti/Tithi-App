@@ -92,19 +92,20 @@ class FestivalRegionSetting extends ConsumerWidget {
           l10n?.festivalRegionSubtitle ??
           'Choose which region\'s festivals appear first when several fall '
               'on the same day',
-      children: FestivalRegion.values.map((region) {
-        return SettingsPickerItem(
-          title: festivalRegionLabel(l10n, region),
-          subtitle: festivalRegionDescription(l10n, region),
-          isSelected: region == currentRegion,
-          onTap: () async {
-            await ref
-                .read(calendarPreferencesProvider.notifier)
-                .setFestivalRegion(region);
-            if (context.mounted) Navigator.pop(context);
-          },
-        );
-      }).toList(),
+      selectedIndex: FestivalRegion.values.indexOf(currentRegion),
+      options: [
+        for (final region in FestivalRegion.values)
+          SettingsPickerOption(
+            title: festivalRegionLabel(l10n, region),
+            subtitle: festivalRegionDescription(l10n, region),
+            onSelected: () async {
+              await ref
+                  .read(calendarPreferencesProvider.notifier)
+                  .setFestivalRegion(region);
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+      ],
     );
   }
 }

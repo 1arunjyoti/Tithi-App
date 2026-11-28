@@ -1,4 +1,8 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<!-- `package` is kept for Flutter's tooling: Flutter 3.50's Gradle namespace
+     regex fails under Dart 3.14, so flutter run reads this attribute to find
+     the launch activity. AGP overrides it with applicationId per variant. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="app.tithi.pro">
     <!-- Location permissions for FOSS geolocation (uses native LocationManager, not Google Play Services) -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />

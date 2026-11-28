@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/settings/widgets/region_settings.dart';
@@ -6,9 +7,9 @@ import '../l10n/app_localizations.dart';
 import '../models/festival_filter.dart';
 import '../models/festival_region.dart';
 import '../core/feedback/app_haptics.dart';
-import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
-import '../theme/app_typography.dart';
+import 'app_bottom_sheet.dart';
+import 'app_buttons.dart';
 import 'festival_filter_chip.dart';
 import 'settings_widgets.dart';
 
@@ -22,11 +23,8 @@ Future<FestivalFilterSelection?> showFestivalFilterSheet(
   BuildContext context, {
   required FestivalFilterSelection initial,
 }) {
-  return showModalBottomSheet<FestivalFilterSelection>(
-    context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
+  return AppBottomSheet.show<FestivalFilterSelection>(
+    context,
     builder: (_) => _FestivalFilterSheet(initial: initial),
   );
 }
@@ -100,106 +98,88 @@ class _FestivalFilterSheetState extends ConsumerState<_FestivalFilterSheet> {
       return FestivalFilterChip(label: label, selected: selected, onTap: onTap);
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.card),
-        ),
+    final m3e = M3ETheme.of(context);
+    return SingleChildScrollView(
+      key: const Key('festival-filter-sheet'),
+      primary: true,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.s20,
+        AppSpacing.s12,
+        AppSpacing.s20,
+        AppSpacing.s24,
       ),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s20,
-            AppSpacing.s12,
-            AppSpacing.s20,
-            AppSpacing.s24,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n?.festivalFilterTitle ?? 'Filter festivals',
+            textAlign: TextAlign.center,
+            style: m3e.typeScale.headlineSmall.copyWith(
+              color: m3e.colorScheme.onSurface,
+            ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          const SizedBox(height: AppSpacing.s6),
+          Text(
+            l10n?.festivalFilterSubtitle ??
+                'Narrow the list by category and region',
+            textAlign: TextAlign.center,
+            style: m3e.typeScale.bodySmall.copyWith(
+              color: m3e.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.s24),
+          SettingsSectionHeader(l10n?.category ?? 'Category'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: context.colors.onSurface.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(AppRadius.micro),
-                  ),
+              for (final filter in FestivalCategoryFilter.values)
+                chip(
+                  label: festivalCategoryFilterLabel(l10n, filter),
+                  selected: _category == filter,
+                  onTap: () => _selectCategory(filter),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s24),
+          SettingsSectionHeader(l10n?.festivalFilterRegion ?? 'Region'),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final region in FestivalRegion.values)
+                chip(
+                  label: _regionLabel(l10n, region),
+                  selected: _region == region,
+                  onTap: () => _selectRegion(region),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s28),
+          Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  style: M3EButtonStyle.text,
+                  onPressed: _isActive ? _reset : null,
+                  // _reset already buzzes through the shared haptic helper.
+                  haptic: false,
+                  child: Text(l10n?.reset ?? 'Reset'),
                 ),
               ),
-              const SizedBox(height: AppSpacing.s16),
-              Text(
-                l10n?.festivalFilterTitle ?? 'Filter festivals',
-                textAlign: TextAlign.center,
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontWeight: AppTypography.bold,
-                  color: context.colors.onSurface,
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: AppButton(
+                  onPressed: _apply,
+                  // _apply already buzzes.
+                  haptic: false,
+                  child: Text(l10n?.done ?? 'Done'),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.s6),
-              Text(
-                l10n?.festivalFilterSubtitle ??
-                    'Narrow the list by category and region',
-                textAlign: TextAlign.center,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.secondaryInk,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.s24),
-              SettingsSectionHeader(l10n?.category ?? 'Category'),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final filter in FestivalCategoryFilter.values)
-                    chip(
-                      label: festivalCategoryFilterLabel(l10n, filter),
-                      selected: _category == filter,
-                      onTap: () => _selectCategory(filter),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s24),
-              SettingsSectionHeader(l10n?.festivalFilterRegion ?? 'Region'),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final region in FestivalRegion.values)
-                    chip(
-                      label: _regionLabel(l10n, region),
-                      selected: _region == region,
-                      onTap: () => _selectRegion(region),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s28),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: _isActive ? _reset : null,
-                      child: Text(l10n?.reset ?? 'Reset'),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: _apply,
-                      child: Text(l10n?.done ?? 'Done'),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }

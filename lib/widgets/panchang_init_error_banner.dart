@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
@@ -7,6 +8,7 @@ import '../services/panchang_init/panchang_init.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
+import 'app_buttons.dart';
 
 /// Shows why the panchang engine could not start, with a retry.
 ///
@@ -75,19 +77,16 @@ class PanchangInitErrorBanner extends ConsumerWidget {
                       const SizedBox(height: AppSpacing.s4),
                       Text(
                         detail,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colors.onErrorContainer,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: colors.onErrorContainer),
                       ),
                     ],
                   ),
                 ),
-                TextButton(
+                AppButton(
+                  style: M3EButtonStyle.text,
                   onPressed: () => ref.invalidate(panchangInitProvider),
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.onErrorContainer,
-                  ),
-                  child: Text(l10n?.retry ?? 'Retry'),
+                  label: Text(l10n?.retry ?? 'Retry'),
                 ),
               ],
             ),

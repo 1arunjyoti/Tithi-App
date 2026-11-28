@@ -1,12 +1,16 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+
 import '../../../providers/location_provider.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/app_theme.dart';
 import '../../../screens/location_picker_screen.dart';
 import '../../../core/feedback/app_messages.dart';
 import '../../../core/navigation/app_routes.dart';
+import '../../../widgets/app_buttons.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class LocationSettingsSection extends ConsumerWidget {
@@ -49,27 +53,29 @@ class LocationSettingsSection extends ConsumerWidget {
                 if (permission == LocationPermission.deniedForever) {
                   // Permission permanently denied, guide user to app settings
                   if (context.mounted) {
-                    final shouldOpenSettings = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: Text(
-                          l10n?.permissionRequired ?? 'Permission Required',
-                        ),
-                        content: Text(
-                          l10n?.locationPermissionPermanentlyDenied ??
-                              'Location permission was permanently denied. Please enable it in your device settings.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: Text(l10n?.cancel ?? 'Cancel'),
-                          ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: Text(l10n?.openSettings ?? 'Open Settings'),
-                          ),
-                        ],
+                    final shouldOpenSettings = await AppDialog.show<bool>(
+                      context,
+                      title: l10n?.permissionRequired ?? 'Permission Required',
+                      content: Text(
+                        l10n?.locationPermissionPermanentlyDenied ?? 'Location permission was permanently denied. Please enable it in your device settings.',
                       ),
+                      actions: [
+                        AppButton(
+                          style: M3EButtonStyle.text,
+                          onPressed: () => Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          ).pop(false),
+                          child: Text(l10n?.cancel ?? 'Cancel'),
+                        ),
+                        AppButton(
+                          onPressed: () => Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          ).pop(true),
+                          child: Text(l10n?.openSettings ?? 'Open Settings'),
+                        ),
+                      ],
                     );
 
                     if (shouldOpenSettings == true) {

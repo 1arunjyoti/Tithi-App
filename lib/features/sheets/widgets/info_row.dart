@@ -10,8 +10,8 @@ import '../../../theme/app_typography.dart';
 // unchanged.
 //
 // [dense] selects the compact eclipse-screen dialect (no vertical padding,
-// value pushed right with a Spacer instead of Expanded): same information,
-// tighter rows for data-dense screens.
+// small leading glyph, label and right-aligned value sharing the remaining
+// width): same information, tighter rows for data-dense screens.
 Widget buildInfoRow(
   BuildContext context,
   IconData icon,
@@ -25,17 +25,30 @@ Widget buildInfoRow(
       children: [
         Icon(icon, size: AppIconSize.medium, color: context.colors.primary),
         const SizedBox(width: AppSpacing.s12),
-        Text(
-          '$label:',
-          style: context.textTheme.bodyMedium?.copyWith(
-            color: context.secondaryInk,
+        Flexible(
+          child: Text(
+            '$label:',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: context.secondaryInk,
+            ),
           ),
         ),
-        const Spacer(),
-        Text(
-          value,
-          style: context.textTheme.bodyMedium?.copyWith(
-            fontWeight: AppTypography.semibold,
+        const SizedBox(width: AppSpacing.s8),
+        // A Spacer here split the row into three equal flex slots, so a long
+        // label was ellipsized long before the value ran out of room. The
+        // label takes what it needs; the value stays constrained (no unbounded
+        // Text) but can use the rest of the row.
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.bodyMedium?.copyWith(
+              fontWeight: AppTypography.semibold,
+            ),
           ),
         ),
         if (trailing != null) ...[

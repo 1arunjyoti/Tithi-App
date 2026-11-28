@@ -1,16 +1,19 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+
 import '../../providers/sankalpa_provider.dart';
 import '../../models/sankalpa.dart';
 import '../../l10n/app_localizations.dart';
-import '../../core/anim/press_scale.dart';
 import '../../core/navigation/haptic_back_button.dart';
 import '../../core/navigation/app_routes.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_metrics.dart';
 import '../../theme/app_typography.dart';
+import '../../widgets/app_buttons.dart';
 import '../../widgets/app_card.dart';
+import '../../widgets/app_dialog.dart';
 import '../../widgets/page_scaffold.dart';
 import '../../widgets/state_views.dart';
 import 'sankalpa_create_screen.dart';
@@ -42,15 +45,13 @@ class SankalpaListScreen extends ConsumerWidget {
             Tab(text: l10n.completed),
           ],
         ),
-        floatingActionButton: PressScale(
-          child: FloatingActionButton.extended(
-            onPressed: () {
-              // Hierarchical drill: list → create form.
-              AppRoutes.pushSharedX(context, const SankalpaCreateScreen());
-            },
-            label: Text(l10n.newIntention),
-            icon: const Icon(Icons.add),
-          ),
+        floatingActionButton: M3EExtendedFab(
+          label: l10n.newIntention,
+          icon: const Icon(Icons.add),
+          onPressed: () {
+            // Hierarchical drill: list → create form.
+            AppRoutes.pushSharedX(context, const SankalpaCreateScreen());
+          },
         ),
         body: Center(
           child: ConstrainedBox(
@@ -121,22 +122,22 @@ class _SankalpaCard extends ConsumerWidget {
     BuildContext context,
     AppLocalizations l10n,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteSankalpa),
-        content: Text(l10n.deleteSankalpaMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.show<bool>(
+      context,
+      title: l10n.deleteSankalpa,
+      content: Text(l10n.deleteSankalpaMessage),
+      actions: [
+        AppButton(
+          style: M3EButtonStyle.text,
+          onPressed: () =>
+              Navigator.of(context, rootNavigator: true).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        AppButton(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(true),
+          child: Text(l10n.delete),
+        ),
+      ],
     );
 
     return confirmed ?? false;
@@ -165,13 +166,16 @@ class _SankalpaCard extends ConsumerWidget {
               Expanded(
                 child: Text(
                   sankalpa.title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: AppTypography.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: AppTypography.bold),
                 ),
               ),
               if (!isHistory)
-                PopupMenuButton<String>(
+                M3EMenu.entries(
+                  anchorBuilder: (context, open) => AppIconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: open,
+                  ),
                   onSelected: (value) async {
                     if (value == 'delete') {
                       final confirmed = await _confirmDelete(context, l10n);
@@ -185,19 +189,15 @@ class _SankalpaCard extends ConsumerWidget {
                           .toggleCompletion(sankalpa.id);
                     }
                   },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
+                  entries: [
+                    M3EMenuEntry(
+                      label: l10n.markCompleteIncomplete,
                       value: 'toggle',
-                      child: Text(l10n.markCompleteIncomplete),
                     ),
-                    PopupMenuItem(
+                    M3EMenuEntry(
+                      label: l10n.delete,
                       value: 'delete',
-                      child: Text(
-                        l10n.delete,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
+                      isDestructive: true,
                     ),
                   ],
                 ),
@@ -226,12 +226,10 @@ class _SankalpaCard extends ConsumerWidget {
                         style: Theme.of(context).textTheme.labelMedium,
                       ),
                       const SizedBox(height: AppSpacing.s4),
-                      LinearProgressIndicator(
+                      M3EProgressIndicator.linear(
                         value: clampedProgress,
-                        borderRadius: BorderRadius.circular(AppRadius.small),
-                        backgroundColor: Theme.of(
-                          context,
-                        ).dividerColor.withValues(alpha: 0.2),
+                        trackColor: Theme.of(context).dividerColor
+                            .withValues(alpha: 0.2),
                       ),
                     ],
                   ),
@@ -260,9 +258,8 @@ class _SankalpaCard extends ConsumerWidget {
                   minute: sankalpa.reminderMinute,
                 ).format(context),
               ),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: Theme.of(context).disabledColor,
-              ),
+              style: Theme.of(context).textTheme.labelSmall
+                  ?.copyWith(color: Theme.of(context).disabledColor),
             ),
           ] else ...[
             Text(

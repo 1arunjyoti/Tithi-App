@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2045,4 +2046,162 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get privacyAiDesc =>
       'AI assist is off by default. When you turn it on and choose to ask AI, Tithi builds a short summary — the panchang for your city (date, tithi, nakshatra, sunrise and sunset), the festival details when you ask about one, and the question you type — and hands it to the AI app you chose in Settings, or to the system share sheet when that app is not available. Your GPS coordinates are never included, Tithi sends nothing by itself, and the conversation afterwards is governed by that app\'s own privacy policy.';
+
+  @override
+  String get wolfMoon => 'Wolf Moon';
+
+  @override
+  String get snowMoon => 'Snow Moon';
+
+  @override
+  String get wormMoon => 'Worm Moon';
+
+  @override
+  String get pinkMoon => 'Pink Moon';
+
+  @override
+  String get flowerMoon => 'Flower Moon';
+
+  @override
+  String get strawberryMoon => 'Strawberry Moon';
+
+  @override
+  String get buckMoon => 'Buck Moon';
+
+  @override
+  String get sturgeonMoon => 'Sturgeon Moon';
+
+  @override
+  String get cornMoon => 'Corn Moon';
+
+  @override
+  String get huntersMoon => 'Hunter\'s Moon';
+
+  @override
+  String get beaverMoon => 'Beaver Moon';
+
+  @override
+  String get coldMoon => 'Cold Moon';
+
+  @override
+  String get harvestMoon => 'Harvest Moon';
+
+  @override
+  String get blueMoon => 'Blue Moon';
+
+  @override
+  String get guruPurnima => 'Guru Purnima';
+
+  @override
+  String get shravaniPurnima => 'Shravani Purnima';
+
+  @override
+  String get sharadPurnima => 'Sharad Purnima';
+
+  @override
+  String get kartikiPurnima => 'Kartiki Purnima';
+
+  @override
+  String get holiPurnima => 'Holi Purnima';
+
+  @override
+  String get waxingCrescent => 'Waxing Crescent';
+
+  @override
+  String get firstQuarterMoon => 'First Quarter';
+
+  @override
+  String get waxingGibbous => 'Waxing Gibbous';
+
+  @override
+  String get waningGibbous => 'Waning Gibbous';
+
+  @override
+  String get lastQuarterMoon => 'Last Quarter';
+
+  @override
+  String get waningCrescent => 'Waning Crescent';
+
+  @override
+  String moonAge(String days) {
+    return 'Moon age: $days days';
+  }
+
+  @override
+  String get bestViewingTime => 'Best viewing time';
+
+  @override
+  String get moonNotVisible => 'Moon is below the horizon during darkness';
+
+  @override
+  String get moonViewingMorning => 'Before sunrise';
+
+  @override
+  String get moonViewingEvening => 'After sunset';
+
+  @override
+  String get moonDistance => 'Moon distance';
+
+  @override
+  String moonDistanceKm(String distance) {
+    return '$distance km from Earth';
+  }
+
+  @override
+  String get supermoon => 'Supermoon';
+
+  @override
+  String get micromoon => 'Micromoon';
+
+  @override
+  String get averageDistance => 'Average distance';
+
+  @override
+  String get nextEclipse => 'Next eclipse';
+
+  @override
+  String get viewEclipseDetails => 'View details';
+
+  @override
+  String get chooseMoonDate => 'Jump to date';
+
+  @override
+  String get moonEventsToggle => 'Moon & eclipse alerts';
+
+  @override
+  String get moonEventsToggleSubtitle =>
+      'Full Moon, New Moon, Blue Moon and eclipses';
+
+  @override
+  String get moonEventsToggleFailed => 'Could not update moon alerts';
+
+  @override
+  String get fullMoonNotificationTitle => 'Full Moon tonight';
+
+  @override
+  String get fullMoonNotificationBody =>
+      'The Moon is full - a good night to look up.';
+
+  @override
+  String get newMoonNotificationTitle => 'New Moon tonight';
+
+  @override
+  String get newMoonNotificationBody =>
+      'The Moon is new - the darkest night for stargazing.';
+
+  @override
+  String get blueMoonNotificationTitle => 'Blue Moon tonight';
+
+  @override
+  String get blueMoonNotificationBody =>
+      'A second full moon this month - don\'t miss it.';
+
+  @override
+  String get eclipseNotificationTitle => 'Eclipse today';
+
+  @override
+  String get eclipseNotificationBody => 'Check local eclipse timings in Tithi.';
+
+  @override
+  String get upcomingMoonDates => 'Upcoming dates';
 }

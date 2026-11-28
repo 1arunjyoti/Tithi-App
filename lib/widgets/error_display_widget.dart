@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
+import 'app_buttons.dart';
 
 /// The last-resort screen shown when a widget throws.
 ///
@@ -66,7 +67,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               ),
               if (onRetry != null) ...[
                 const SizedBox(height: AppSpacing.s24),
-                FilledButton.icon(
+                AppButton(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),
                   label: Text(l10n?.retry ?? 'Retry'),

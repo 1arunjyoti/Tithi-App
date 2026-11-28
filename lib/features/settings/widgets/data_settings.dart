@@ -1,7 +1,9 @@
 import 'dart:convert' show JsonEncoder;
 
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/location_provider.dart';
 import '../../../providers/notification_provider.dart';
@@ -14,6 +16,8 @@ import '../../../providers/accessibility_provider.dart';
 import '../../../services/festival_calendar_export_service.dart';
 import 'festival_export_flow.dart';
 import 'festival_export_year_sheet.dart';
+import '../../../widgets/app_buttons.dart';
+import '../../../widgets/app_dialog.dart';
 import '../../../widgets/settings_widgets.dart';
 
 class ClearCacheSetting extends ConsumerWidget {
@@ -114,9 +118,7 @@ class ExportFestivalsCalendarSetting extends ConsumerWidget {
       onTap: () => FestivalExportYearSheet.show(
         context: context,
         title: l10n?.exportFestivalsCalendar ?? 'Add to Google Calendar (.ics)',
-        subtitle:
-            l10n?.exportCalendarYearSheetSubtitle ??
-            "Choose a year. You'll then pick where to save the .ics file for Google Calendar.",
+        subtitle: l10n?.exportCalendarYearSheetSubtitle ?? "Choose a year. You'll then pick where to save the .ics file for Google Calendar.",
         onExport: (year) => _runCalendarExport(context, ref, year, l10n),
       ),
     );
@@ -168,28 +170,31 @@ class ResetSettingsTile extends ConsumerWidget {
       icon: Icons.restore_rounded,
       title: l10n?.resetAppSettings ?? 'Reset App Settings',
       onTap: () async {
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (c) => AlertDialog(
-            title: Text(l10n?.resetSettingsTitle ?? 'Reset Settings?'),
-            content: Text(
-              l10n?.resetSettingsMessage ??
-                  'This will reset all your preferences and data to default. This cannot be undone.',
-            ),
-            actions: [
-              TextButton(
+        final confirm = await AppDialog.show<bool>(
+          context,
+          title: l10n?.resetSettingsTitle ?? 'Reset Settings?',
+          content: Text(
+            l10n?.resetSettingsMessage ?? 'This will reset all your preferences and data to default. This cannot be undone.',
+          ),
+          actions: [
+            Builder(
+              builder: (c) => AppButton(
+                style: M3EButtonStyle.text,
                 onPressed: () => Navigator.pop(c, false),
                 child: Text(l10n?.cancel ?? 'Cancel'),
               ),
-              TextButton(
+            ),
+            Builder(
+              builder: (c) => AppButton(
+                style: M3EButtonStyle.text,
                 onPressed: () => Navigator.pop(c, true),
                 child: Text(
                   l10n?.reset ?? 'Reset',
                   style: TextStyle(color: Theme.of(c).colorScheme.error),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
 
         if (confirm == true) {
@@ -223,6 +228,7 @@ class ResetSettingsTile extends ConsumerWidget {
           ref
               .read(shlokaNotificationEnabledProvider.notifier)
               .setEnabled(false);
+          ref.read(moonNotificationEnabledProvider.notifier).setEnabled(false);
           ref.read(notificationTimeProvider.notifier).setTime((
             hour: 8,
             minute: 0,

@@ -13,6 +13,7 @@ import '../../../providers/panchang_provider.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../../widgets/festival_thumbnail.dart';
 import '../../../widgets/state_views.dart';
 import '../../countdown/domain/target_resolution.dart';
@@ -113,14 +114,12 @@ class FestivalSearchDelegate extends FestivalSearchShell<void> {
         margin: const EdgeInsets.only(bottom: AppSpacing.s12),
         padding: const EdgeInsets.all(AppSpacing.s16),
         decoration: BoxDecoration(
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          color: Theme.of(context).colorScheme.surfaceContainerHighest
+              .withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(AppRadius.tile),
           border: Border.all(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.1),
+            color: Theme.of(context).colorScheme.onSurface
+                .withValues(alpha: 0.1),
           ),
         ),
         child: Row(
@@ -129,9 +128,8 @@ class FestivalSearchDelegate extends FestivalSearchShell<void> {
               festival: festival,
               size: 44,
               borderRadius: AppRadius.dense,
-              backgroundColor: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: isMajor ? 0.2 : 0.1),
+              backgroundColor: Theme.of(context).colorScheme.primary
+                  .withValues(alpha: isMajor ? 0.2 : 0.1),
               glyphColor: Theme.of(context).colorScheme.primary,
               // Search results keep their own category glyphs (celebration /
               // event) rather than the row's sun/temple set.
@@ -164,7 +162,7 @@ class FestivalSearchDelegate extends FestivalSearchShell<void> {
 
             // Go to Date Button
             const SizedBox(width: AppSpacing.s8),
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.calendar_month_outlined),
               tooltip:
                   AppLocalizations.of(context)?.goToNextOccurrence ??

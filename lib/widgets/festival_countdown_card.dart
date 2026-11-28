@@ -1,8 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/app_localizations.dart';
-import '../core/anim/press_scale.dart';
 import '../core/format/festival_labels.dart';
 import '../models/festival.dart';
 import '../core/feedback/app_haptics.dart';
@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_motion.dart';
 import '../theme/app_typography.dart';
+import 'app_buttons.dart';
 import '../utils/tithi_localization.dart';
 import '../features/sheets/sheet_launcher.dart';
 import 'app_card.dart';
@@ -215,8 +216,7 @@ class FestivalCountdownTile extends ConsumerWidget {
               Text(
                 festivalDisplayName(
                   festival: target.festival,
-                  locale:
-                      AppLocalizations.of(context)?.localeName ?? 'en',
+                  locale: AppLocalizations.of(context)?.localeName ?? 'en',
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -330,55 +330,29 @@ class _CountdownActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final accent = AppTheme.festivalAccent(context);
-
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Tooltip(
+        M3ETooltip(
           message:
               AppLocalizations.of(context)?.removeFromHomeScreen ??
               'Remove from home screen',
-          // Scale only: the onToggleHome callback already buzzes.
-          child: PressScale(
-            haptic: false,
-            child: IconButton(
-              onPressed: onToggleHome,
-              icon: Icon(
-                isPinnedToHome ? Icons.home_rounded : Icons.home_outlined,
-              ),
-              color: isPinnedToHome
-                  ? accent
-                  : colors.onSurface.withValues(
-                      alpha: AppTheme.contrastAlpha(context, 0.56),
-                    ),
-              style: IconButton.styleFrom(
-                backgroundColor: isPinnedToHome
-                    ? accent.withValues(alpha: 0.12)
-                    : Colors.transparent,
-                minimumSize: const Size(40, 40),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
+          child: AppIconButton(
+            haptic: false, // the callback already buzzes
+            onPressed: onToggleHome,
+            icon: Icon(
+              isPinnedToHome ? Icons.home_rounded : Icons.home_outlined,
             ),
           ),
         ),
-        Tooltip(
+        M3ETooltip(
           message:
               AppLocalizations.of(context)?.removeCountdown ??
               'Remove countdown',
-          // Scale only: the onRemove callback already buzzes.
-          child: PressScale(
-            haptic: false,
-            child: IconButton(
-              onPressed: onRemove,
-              icon: const Icon(Icons.delete_outline_rounded),
-              color: colors.error,
-              style: IconButton.styleFrom(
-                minimumSize: const Size(40, 40),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
+          child: AppIconButton(
+            haptic: false, // the callback already buzzes
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline_rounded),
           ),
         ),
       ],

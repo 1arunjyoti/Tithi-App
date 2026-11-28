@@ -1,7 +1,7 @@
 name: tithi
 description: "A new Flutter project."
 publish_to: "none"
-version: 0.9.16+46
+version: 0.9.16+47
 environment:
   # `material_ui` (and the rest of the lock) already requires Dart 3.13 and
   # Flutter 3.47; declaring less than that only pushes the failure into a
@@ -54,6 +54,8 @@ dependencies:
 
   material_ui: any
   cupertino_ui: any
+  # Material 3 Expressive components (M3E* widgets). Requires Flutter >=3.47.
+  material_3_expressive: ^1.2.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

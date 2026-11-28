@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:timezone/timezone.dart' as tz;
+
 import '../core/notifications/background_entrypoint.dart'
     show initNotificationWork;
 import '../core/notifications/notification_keys.dart';
@@ -88,6 +89,14 @@ class NotificationService {
 
   Future<void> cancelFestivalNotifications() =>
       _scheduler.cancelFestivalNotifications();
+
+  Future<void> _scheduleUpcomingMoonEvents() {
+    _ensureInitialized();
+    return _scheduler.scheduleUpcomingMoonEvents();
+  }
+
+  Future<void> cancelMoonNotifications() =>
+      _scheduler.cancelMoonNotifications();
 
   Future<void> cancelAllNotifications() => _scheduler.cancelAllNotifications();
 
@@ -218,13 +227,16 @@ class NotificationService {
     final festivalsEnabled =
         _box?.get(NotificationKeys.festivalEnabled, defaultValue: false) ??
         false;
+    final moonEnabled =
+        _box?.get(NotificationKeys.moonEnabled, defaultValue: false) ?? false;
 
     if (kDebugMode) {
       if (notificationsEnabled || festivalsEnabled) {
         print(
           'NotificationService ready - notifications ON'
           '${shlokasEnabled ? ', shloka ON' : ''}'
-          '${festivalsEnabled ? ', festival ON' : ''}',
+          '${festivalsEnabled ? ', festival ON' : ''}'
+          '${moonEnabled ? ', moon ON' : ''}',
         );
       } else {
         print(
@@ -256,6 +268,14 @@ class NotificationService {
         await _scheduleUpcomingFestivals();
       } catch (e) {
         debugPrint('Failed to reschedule festivals: $e');
+      }
+    }
+    // Moon alerts are independent of the daily master switch.
+    if (moonEnabled) {
+      try {
+        await _scheduleUpcomingMoonEvents();
+      } catch (e) {
+        debugPrint('Failed to reschedule moon events: $e');
       }
     }
   }
@@ -401,6 +421,11 @@ class NotificationService {
       if (festivalsEnabled) {
         await _scheduleUpcomingFestivals();
       }
+      final moonEnabled =
+          _box?.get(NotificationKeys.moonEnabled, defaultValue: false) ?? false;
+      if (moonEnabled) {
+        await _scheduleUpcomingMoonEvents();
+      }
     } catch (e) {
       try {
         await _box?.put(NotificationKeys.hour, prevHour);
@@ -486,6 +511,42 @@ class NotificationService {
         debugPrint('Failed to roll back festival flag: $rollbackError');
       }
       debugPrint('Failed to set festival notifications to $enabled: $e');
+      rethrow;
+    }
+  }
+
+  /// Check if moon/eclipse alerts are enabled.
+  Future<bool> isMoonEnabled() async {
+    _ensureInitialized();
+    return _box?.get(NotificationKeys.moonEnabled, defaultValue: false) ??
+        false;
+  }
+
+  /// Enable or disable moon and eclipse alerts.
+  ///
+  /// Independent of the daily master switch, like festival/shloka reminders,
+  /// with the same rollback contract on scheduling failure.
+  Future<void> setMoonEnabled(bool enabled) async {
+    _ensureInitialized();
+    final previous =
+        _box?.get(NotificationKeys.moonEnabled, defaultValue: false) as bool? ??
+        false;
+    await _box?.put(NotificationKeys.moonEnabled, enabled);
+
+    try {
+      if (enabled) {
+        await _assertSystemNotificationsAllowed();
+        await _scheduleUpcomingMoonEvents();
+      } else {
+        await cancelMoonNotifications();
+      }
+    } catch (e) {
+      try {
+        await _box?.put(NotificationKeys.moonEnabled, previous);
+      } catch (rollbackError) {
+        debugPrint('Failed to roll back moon flag: $rollbackError');
+      }
+      debugPrint('Failed to set moon notifications to $enabled: $e');
       rethrow;
     }
   }

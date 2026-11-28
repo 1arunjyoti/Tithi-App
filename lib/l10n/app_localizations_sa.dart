@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2054,4 +2055,162 @@ class AppLocalizationsSa extends AppLocalizations {
   @override
   String get privacyAiDesc =>
       'कृत्रिमबुद्धिसहायः मूलरूपेण निष्क्रियः अस्ति। यदा भवान् तं सक्रियं कृत्वा कृत्रिमबुद्धिं पृच्छितुम् इच्छति, तदा तिथिः लघुसङ्क्षेपं निर्माति — भवतः नगरस्य पञ्चाङ्गं (दिनाङ्कः, तिथिः, नक्षत्रम्, सूर्योदयः, सूर्यास्तः), उत्सवविषये पृष्टे तस्य विवरणं, भवता लिखितं प्रश्नं च — तं च भवता संस्थापनेषु चिताय कृत्रिमबुद्धि-अनुप्रयोगाय समर्पयति, सः अनुप्रयोगः अनुपलब्धः चेत् तन्त्रस्य सम्प्रेषणपटलाय। भवतः GPS-निर्देशाङ्काः कदापि न समाविष्टाः, तिथिः स्वयम् किमपि न प्रेषयति, ततः परं संवादः तस्य अनुप्रयोगस्य स्वकीयगोपनीयतानीत्या नियम्यते।';
+
+  @override
+  String get wolfMoon => 'वृकचन्द्रः';
+
+  @override
+  String get snowMoon => 'हिमचन्द्रः';
+
+  @override
+  String get wormMoon => 'कृमिचन्द्रः';
+
+  @override
+  String get pinkMoon => 'लोहितचन्द्रः';
+
+  @override
+  String get flowerMoon => 'पुष्पचन्द्रः';
+
+  @override
+  String get strawberryMoon => 'सर्तकचन्द्रः';
+
+  @override
+  String get buckMoon => 'हरिणचन्द्रः';
+
+  @override
+  String get sturgeonMoon => 'शफरीचन्द्रः';
+
+  @override
+  String get cornMoon => 'धान्यचन्द्रः';
+
+  @override
+  String get huntersMoon => 'लुब्धकचन्द्रः';
+
+  @override
+  String get beaverMoon => 'अवदारचन्द्रः';
+
+  @override
+  String get coldMoon => 'शीतचन्द्रः';
+
+  @override
+  String get harvestMoon => 'कर्तनचन्द्रः';
+
+  @override
+  String get blueMoon => 'नीलचन्द्रः';
+
+  @override
+  String get guruPurnima => 'गुरुपूर्णिमा';
+
+  @override
+  String get shravaniPurnima => 'श्रावणीपूर्णिमा';
+
+  @override
+  String get sharadPurnima => 'शारदीयपूर्णिमा';
+
+  @override
+  String get kartikiPurnima => 'कार्तिकीपूर्णिमा';
+
+  @override
+  String get holiPurnima => 'होलिकापूर्णिमा';
+
+  @override
+  String get waxingCrescent => 'वर्धमानचन्द्रः';
+
+  @override
+  String get firstQuarterMoon => 'प्रथमपादचन्द्रः';
+
+  @override
+  String get waxingGibbous => 'वर्धमानगिब्बसः';
+
+  @override
+  String get waningGibbous => 'क्षीयमाणगिब्बसः';
+
+  @override
+  String get lastQuarterMoon => 'अन्तिमपादचन्द्रः';
+
+  @override
+  String get waningCrescent => 'क्षीयमाणचन्द्रः';
+
+  @override
+  String moonAge(String days) {
+    return 'चन्द्रस्य आयुः: $days दिनानि';
+  }
+
+  @override
+  String get bestViewingTime => 'दर्शनस्य उत्तमः समयः';
+
+  @override
+  String get moonNotVisible => 'अन्धकारे चन्द्रः क्षितिजाधः';
+
+  @override
+  String get moonViewingMorning => 'सूर्योदयात् पूर्वम्';
+
+  @override
+  String get moonViewingEvening => 'सूर्यास्तात् परम्';
+
+  @override
+  String get moonDistance => 'चन्द्रस्य दूरम्';
+
+  @override
+  String moonDistanceKm(String distance) {
+    return 'पृथिव्याः $distance किमि';
+  }
+
+  @override
+  String get supermoon => 'महाचन्द्रः';
+
+  @override
+  String get micromoon => 'लघुचन्द्रः';
+
+  @override
+  String get averageDistance => 'मध्यमदूरम्';
+
+  @override
+  String get nextEclipse => 'अग्रिमग्रहणम्';
+
+  @override
+  String get viewEclipseDetails => 'विवरणम् पश्यतु';
+
+  @override
+  String get chooseMoonDate => 'दिनाङ्कं गच्छतु';
+
+  @override
+  String get moonEventsToggle => 'चन्द्रग्रहणसूचनाः';
+
+  @override
+  String get moonEventsToggleSubtitle =>
+      'पूर्णिमा, अमावास्या, नीलचन्द्रः च ग्रहणानि च';
+
+  @override
+  String get moonEventsToggleFailed => 'चन्द्रसूचनाः अद्यतुम् न शक्यन्ते';
+
+  @override
+  String get fullMoonNotificationTitle => 'अद्य रात्रौ पूर्णिमा';
+
+  @override
+  String get fullMoonNotificationBody =>
+      'चन्द्रः पूर्णः - आकाशदर्शनस्य शुभा रात्रिः।';
+
+  @override
+  String get newMoonNotificationTitle => 'अद्य रात्रौ अमावास्या';
+
+  @override
+  String get newMoonNotificationBody =>
+      'चन्द्रः नवः - तारकादर्शने अन्धतमः रात्रिः।';
+
+  @override
+  String get blueMoonNotificationTitle => 'अद्य रात्रौ नीलचन्द्रः';
+
+  @override
+  String get blueMoonNotificationBody =>
+      'अस्मिन् मासे द्वितीया पूर्णिमा - मा विस्मरतु।';
+
+  @override
+  String get eclipseNotificationTitle => 'अद्य ग्रहणम्';
+
+  @override
+  String get eclipseNotificationBody => 'तिथौ स्थानीयग्रहणसमयः पश्यतु।';
+
+  @override
+  String get upcomingMoonDates => 'अग्रिम दिनाङ्कानि';
 }

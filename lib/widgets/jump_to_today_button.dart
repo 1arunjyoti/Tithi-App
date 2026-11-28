@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/anim/press_scale.dart';
@@ -40,7 +41,7 @@ class JumpToTodayButton extends ConsumerWidget {
     return PressScale(
       child: SizedBox.square(
         dimension: size,
-        child: Tooltip(
+        child: M3ETooltip(
           message: l10n?.goToToday ?? 'Go to Today',
           child: Material(
             // An action, not navigation: it keeps the primary fill the FAB had

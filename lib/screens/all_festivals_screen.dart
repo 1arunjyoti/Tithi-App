@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
@@ -20,9 +21,10 @@ import '../widgets/festival_filter_chip.dart';
 import '../widgets/festival_filter_sheet.dart';
 import '../widgets/festival_row_tile.dart';
 import '../widgets/major_festival_card.dart';
+import '../widgets/app_buttons.dart';
 import '../widgets/app_drawer_button.dart';
+import '../widgets/app_search_field.dart';
 import '../widgets/app_drawer.dart';
-import '../widgets/app_card.dart';
 import '../widgets/page_scaffold.dart';
 import '../widgets/screen_body.dart';
 import '../widgets/skeleton.dart';
@@ -205,29 +207,17 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
     setState(() => _selectedYear = next);
   }
 
-  /// Opens the same Material year picker the calendar header uses
+  /// Opens the same expressive year picker the calendar header uses
   /// (`features/calendar/widgets/calendar_year_picker.dart`), bounded to the
   /// ephemeris window, and applies the picked year.
   Future<void> _pickYear() async {
     AppHaptics.tap(ref);
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await M3EDatePicker.show(
+      context,
       initialDate: DateTime(_selectedYear),
       firstDate: DateTime(kFestivalFirstYear),
       lastDate: DateTime(kFestivalLastYear, 12, 31),
-      initialDatePickerMode: DatePickerMode.year,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: context.colors.primary,
-              onPrimary: Theme.of(context).colorScheme.onPrimary,
-              surface: Theme.of(context).scaffoldBackgroundColor,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      initialCalendarMode: M3EDatePickerMode.year,
     );
     if (picked == null || picked.year == _selectedYear) return;
     if (!mounted) return;
@@ -307,12 +297,11 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       centerTitle: false,
       actions: [
         _buildYearStepper(context),
-        IconButton(
+        AppIconButton(
           tooltip: l10n?.festivalFilterTitle ?? 'Filter festivals',
           onPressed: _openFilters,
-          icon: Badge(
-            isLabelVisible: _filters.isActive,
-            smallSize: 8,
+          icon: M3EBadge(
+            showDot: _filters.isActive,
             backgroundColor: context.colors.primary,
             child: Icon(
               Icons.tune_rounded,
@@ -368,14 +357,15 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       key: AllFestivalsScreen.yearSelectorKey,
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
+        AppIconButton(
           tooltip: l10n?.previousYear ?? 'Previous year',
           onPressed: canGoBack ? () => _shiftYear(-1) : null,
-          icon: const Icon(Icons.chevron_left_rounded, size: AppIconSize.medium),
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+          icon: const Icon(
+            Icons.chevron_left_rounded,
+            size: AppIconSize.medium,
+          ),
         ),
-        Tooltip(
+        M3ETooltip(
           message: l10n?.selectYear ?? 'Select year',
           child: InkWell(
             onTap: _pickYear,
@@ -390,9 +380,8 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
                 children: [
                   Text(
                     '$_selectedYear',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: AppTypography.semibold,
-                    ),
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.copyWith(fontWeight: AppTypography.semibold),
                   ),
                   const Icon(
                     Icons.expand_more_rounded,
@@ -403,12 +392,13 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
             ),
           ),
         ),
-        IconButton(
+        AppIconButton(
           tooltip: l10n?.nextYear ?? 'Next year',
           onPressed: canGoForward ? () => _shiftYear(1) : null,
-          icon: const Icon(Icons.chevron_right_rounded, size: AppIconSize.medium),
-          visualDensity: VisualDensity.compact,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s2),
+          icon: const Icon(
+            Icons.chevron_right_rounded,
+            size: AppIconSize.medium,
+          ),
         ),
       ],
     );
@@ -433,28 +423,20 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
         top: AppSpacing.s8,
         bottom: AppSpacing.s12,
       ),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: TextField(
-          controller: _searchController,
-          focusNode: _searchFocusNode,
-          onChanged: _onSearchChanged,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
-            prefixIcon: Icon(Icons.search_rounded, color: context.hintInk),
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.close_rounded),
-              tooltip: l10n?.closeFestivalSearch ?? 'Close search',
-              onPressed: _closeSearch,
-            ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.s16,
-              vertical: AppSpacing.s14,
-            ),
+      child: AppSearchField(
+        controller: _searchController,
+        focusNode: _searchFocusNode,
+        hintText: l10n?.searchFestivalsHint ?? 'Search festivals',
+        trailing: [
+          AppIconButton(
+            icon: const Icon(Icons.close_rounded),
+            tooltip: l10n?.closeFestivalSearch ?? 'Close search',
+            onPressed: _closeSearch,
+            // _closeSearch already calls AppHaptics.tap.
+            haptic: false,
           ),
-        ),
+        ],
+        onChanged: _onSearchChanged,
       ),
     );
   }
@@ -477,11 +459,11 @@ class _AllFestivalsScreenState extends ConsumerState<AllFestivalsScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
+          AppIconButton(
             key: AllFestivalsScreen.searchButtonKey,
             tooltip: l10n?.searchFestivalsHint ?? 'Search festivals',
             onPressed: _openSearch,
-            icon: Icon(Icons.search_rounded, color: context.colors.primary),
+            icon: const Icon(Icons.search_rounded),
           ),
           const SizedBox(width: AppSpacing.s4),
           Expanded(

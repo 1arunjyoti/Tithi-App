@@ -536,18 +536,20 @@ void main() {
       );
     });
 
-    test('Rash Purnima keeps one day of an extended tithi run', () {
-      // 2026: Purnima begins 23 Nov ~23:42, so the nishita window of the 23rd
-      // and the sunset of the 24th both satisfy the rule. Without a vriddhi
-      // preference the home card (per-day panchang) shows both days while the
-      // all-festivals occurrence scan shows only the first - pin 'first' so
-      // the shared applyVriddhiFilter trims the extra day everywhere.
+    test('Rash Purnima uses the default sunrise rule', () {
+      // Rash Purnima is observed on the Kartika Purnima sunrise day. It has no
+      // nishita checkpoint or vriddhi preference: the shared matcher resolves
+      // it from the sunrise tithi like most festivals, so both the home card
+      // and the forward scan land on the same single day.
       final entry = _loadFestivalJson().firstWhere(
         (f) => f['id'] == 'rash_purnima',
       );
       final rules = (entry['panchang_rules'] as Map).cast<String, dynamic>();
-      expect(rules['vriddhi'], equals('first'));
-      expect(Festival.fromJson(entry).panchangRules.vriddhi, equals('first'));
+      expect(rules['timingOverride'], isNull);
+      expect(rules['vriddhi'], isNull);
+      final festival = Festival.fromJson(entry);
+      expect(festival.panchangRules.timingOverride, isNull);
+      expect(festival.panchangRules.vriddhi, equals('both'));
     });
   });
 }

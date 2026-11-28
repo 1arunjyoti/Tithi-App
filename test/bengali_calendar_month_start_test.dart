@@ -35,6 +35,7 @@ void main() {
   late Directory tempDir;
 
   setUpAll(() async {
+    if (skipReason != null) return;
     tempDir = await Directory.systemTemp.createTemp('tithi_bengali_start');
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -53,6 +54,7 @@ void main() {
   });
 
   tearDownAll(() async {
+    if (skipReason != null) return;
     container.dispose();
     try {
       await tempDir.delete(recursive: true);

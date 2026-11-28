@@ -1,11 +1,17 @@
-import 'package:material_ui/material_ui.dart';
+// material_ui and material_3_expressive both export these shape helpers;
+// keep the expressive ones (the package re-exports material_new_shapes).
+import 'package:material_ui/material_ui.dart'
+    hide CornerRounding, RoundedPolygon;
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
-import '../theme/app_motion.dart';
 import '../core/feedback/app_haptics.dart';
+import 'app_bottom_sheet.dart';
 import 'app_card.dart';
+import 'app_switch.dart';
 import 'skeleton.dart';
 
 class SettingsSectionHeader extends StatelessWidget {
@@ -185,15 +191,23 @@ class SettingsSwitchTile extends ConsumerWidget {
               ],
             ),
           ),
-          Switch(
+          // Expressive switch: spring-driven handle (16 -> 24 -> 28 pressed),
+          // 52x32 track, state layer + focus ring, drag-to-toggle. Colours
+          // resolve from M3ETheme (adapted from the ambient Material theme by
+          // default), so the active accent still tracks the app palette.
+          // AppSwitch is the single gate for Reduce Motion: M3E's spring
+          // ignores MediaQuery.disableAnimations.
+          AppSwitch(
             value: value,
             onChanged: isLoading
                 ? null
                 : (val) {
                     AppHaptics.tap(ref);
+                    // The tile's callback owns its own async work/errors;
+                    // M3ESwitch takes a void ValueChanged.
                     onChanged?.call(val);
                   },
-            activeThumbColor: context.colors.primary,
+            selectedIcon: const Icon(M3EIcons.check),
           ),
           if (isLoading) ...[
             const SizedBox(width: AppSpacing.s8),
@@ -209,188 +223,173 @@ class SettingsSwitchTile extends ConsumerWidget {
   }
 }
 
-class ThemeOptionButton extends ConsumerWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const ThemeOptionButton({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
+/// One choice in a settings picker sheet.
+@immutable
+class SettingsPickerOption {
+  const SettingsPickerOption({
+    required this.title,
+    this.subtitle,
+    required this.onSelected,
   });
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () {
-        AppHaptics.tap(ref);
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: AppMotion.of(context, AppMotion.standard),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s20,
-          vertical: AppSpacing.s12,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? context.colors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.tile),
-          border: Border.all(
-            color: context.colors.primary.withValues(alpha: 0.2),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected
-                  ? context.colors.onPrimary
-                  : context.secondaryInk,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              label,
-              style: context.textTheme.labelSmall?.copyWith(
-                fontWeight: isSelected
-                    ? AppTypography.bold
-                    : AppTypography.regular,
-                color: isSelected
-                    ? context.colors.onPrimary
-                    : context.secondaryInk,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Reusable bottom sheet container for settings pickers
-class SettingsBottomSheet extends StatelessWidget {
   final String title;
   final String? subtitle;
-  final List<Widget> children;
+  final VoidCallback onSelected;
+}
 
+/// Reusable bottom sheet container for settings pickers.
+///
+/// The chrome (28dp corners, drag handle, 640dp max width, scrim, spring
+/// entrance and detents) comes from [M3EBottomSheet]. The choices live in an
+/// [M3EList], which owns the segmented card surfaces and the spec gap between
+/// them - the parent, not each row, paints the rest fill. [M3EList] also routes
+/// taps by index and provides keyboard group navigation, so callers pass data
+/// plus callbacks instead of prebuilt widgets with their own `onTap`.
+class SettingsBottomSheet extends StatefulWidget {
   const SettingsBottomSheet({
     super.key,
     required this.title,
     this.subtitle,
-    required this.children,
+    required this.options,
+    this.selectedIndex,
+    this.footer,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.surface,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.card),
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: AppSpacing.s24),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: context.textTheme.headlineSmall?.copyWith(
-                fontWeight: AppTypography.bold,
-                color: context.colors.onSurface,
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: AppSpacing.s8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
-                child: Text(
-                  subtitle!,
-                  textAlign: TextAlign.center,
-                  style: context.textTheme.bodySmall?.copyWith(
-                    color: context.secondaryInk,
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: AppSpacing.s16),
-            ...children,
-            const SizedBox(height: AppSpacing.s16),
-          ],
-        ),
-      ),
-    );
-  }
+  final String title;
+  final String? subtitle;
+  final List<SettingsPickerOption> options;
+  final int? selectedIndex;
 
-  /// Helper method to show the bottom sheet
+  /// Content below the choices, e.g. an explicit confirm button.
+  final Widget? footer;
+
+  @override
+  State<SettingsBottomSheet> createState() => _SettingsBottomSheetState();
+
+  /// Helper method to show the bottom sheet.
   static Future<void> show({
     required BuildContext context,
     required String title,
     String? subtitle,
-    required List<Widget> children,
+    required List<SettingsPickerOption> options,
+    int? selectedIndex,
+    Widget? footer,
   }) {
-    return showModalBottomSheet(
-      context: context,
-      sheetAnimationStyle: AppTheme.sheetAnimationStyleOf(context),
-      backgroundColor: Colors.transparent,
-      builder: (context) => SettingsBottomSheet(
+    // Pickers carry all their choices at once (some with a trailing confirm
+    // action), so the shared wrapper opens at the content-height detent.
+    return AppBottomSheet.show<void>(
+      context,
+      builder: (_) => SettingsBottomSheet(
         title: title,
         subtitle: subtitle,
-        children: children,
+        options: options,
+        selectedIndex: selectedIndex,
+        footer: footer,
       ),
     );
   }
 }
 
-/// Reusable picker item for settings bottom sheets
-class SettingsPickerItem extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const SettingsPickerItem({
-    super.key,
-    required this.title,
-    this.subtitle,
-    required this.isSelected,
-    required this.onTap,
-  });
+class _SettingsBottomSheetState extends State<SettingsBottomSheet> {
+  // The parent M3EList paints the surfaces, so selection cannot live on the
+  // embedded M3EListItem alone. `colorBuilder`/`borderRadiusBuilder` are the
+  // list's documented per-index overrides. Do not turn on `selection`: once a
+  // selection exists M3EList treats taps as selection toggles and drops the
+  // picker's own onTap (its trigger is icon/double-tap, not single tap).
+  late int? _selectedIndex = widget.selectedIndex;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: ListTile(
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: isSelected ? AppTypography.bold : AppTypography.regular,
-            color: isSelected
-                ? context.colors.primary
-                : context.colors.onSurface,
+    final m3e = M3ETheme.of(context);
+    final isLight = m3e.brightness == Brightness.light;
+    // Light: the app's vermilion primary carries white selected text. The
+    // default secondaryContainer is a pale lavender and white would vanish
+    // on it. Dark: keep the spec container and its light on-container ink.
+    final selectedFill = isLight
+        ? m3e.colorScheme.primary
+        : m3e.colorScheme.secondaryContainer;
+    final itemTheme = m3e.listTheme.item;
+    final sheetTheme = isLight
+        ? m3e.copyWith(
+            listTheme: m3e.listTheme.copyWith(
+              item: itemTheme.copyWith(
+                selectedContainerColor: selectedFill,
+                selectedContentColor: m3e.colorScheme.onPrimary,
+                selectedStateIconColor: m3e.colorScheme.onPrimary,
+              ),
+            ),
+          )
+        : m3e;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+          child: Text(
+            widget.title,
+            textAlign: TextAlign.center,
+            style: m3e.typeScale.headlineSmall.copyWith(
+              color: m3e.colorScheme.onSurface,
+            ),
           ),
         ),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle!,
-                style: context.textTheme.bodySmall?.copyWith(
-                  color: context.secondaryInk,
-                ),
-              )
-            : null,
-        trailing: isSelected
-            ? Icon(Icons.check_circle_rounded, color: context.colors.primary)
-            : null,
-        onTap: onTap,
-      ),
+        if (widget.subtitle != null) ...[
+          const SizedBox(height: AppSpacing.s8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s24),
+            child: Text(
+              widget.subtitle!,
+              textAlign: TextAlign.center,
+              style: m3e.typeScale.bodySmall.copyWith(
+                color: m3e.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.s16),
+        // shrinkWrap keeps the sheet at content height; the list inherits the
+        // sheet's PrimaryScrollController so scrolling grows the sheet first.
+        Flexible(
+          child: M3ETheme(
+            data: sheetTheme,
+            child: M3EList.scrollable(
+              shrinkWrap: true,
+              listPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s8,
+              ),
+              itemCount: widget.options.length,
+              colorBuilder: (index) =>
+                  _selectedIndex == index ? selectedFill : null,
+              borderRadiusBuilder: (index, _) => _selectedIndex == index
+                  ? BorderRadius.circular(AppRadius.tile)
+                  : null,
+              onTap: (index) {
+                setState(() => _selectedIndex = index);
+                widget.options[index].onSelected();
+              },
+              itemBuilder: (context, index) {
+                final option = widget.options[index];
+                final selected = _selectedIndex == index;
+                return M3EListItem(
+                  headline: option.title,
+                  supportingText: option.subtitle,
+                  // The parent paints the fill via colorBuilder; this flag
+                  // switches the row's text/icon tokens to the selected ones
+                  // (white on light, from the scoped M3ETheme above).
+                  selected: selected,
+                  trailing: selected ? const Icon(M3EIcons.check) : null,
+                );
+              },
+            ),
+          ),
+        ),
+        if (widget.footer != null) ...[
+          const SizedBox(height: AppSpacing.s16),
+          widget.footer!,
+        ],
+        const SizedBox(height: AppSpacing.s16),
+      ],
     );
   }
 }

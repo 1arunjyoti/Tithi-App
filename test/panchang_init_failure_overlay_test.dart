@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/providers/panchang_provider.dart';
 import 'package:tithi/services/panchang_init/panchang_init.dart';
 import 'package:tithi/widgets/panchang_init_error_banner.dart';
@@ -11,6 +12,11 @@ import 'package:tithi/widgets/panchang_init_failure_overlay.dart';
 // about two dozen other call sites await panchangInitProvider and degrade to
 // empty data. The overlay is mounted from MaterialApp.builder so the failure
 // follows the user onto every pushed route.
+
+class _StubAccessibility extends AccessibilityNotifier {
+  @override
+  AccessibilityState build() => const AccessibilityState();
+}
 
 void main() {
   /// A body that reports the status-bar inset it sees, which is how the
@@ -31,7 +37,10 @@ void main() {
     addTearDown(tester.view.resetPadding);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [override],
+        overrides: [
+          override,
+          accessibilityProvider.overrideWith(_StubAccessibility.new),
+        ],
         child: MaterialApp(
           builder: (context, child) =>
               PanchangInitFailureOverlay(child: child!),

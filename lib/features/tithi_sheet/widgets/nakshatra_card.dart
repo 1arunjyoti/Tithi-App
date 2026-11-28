@@ -1,4 +1,5 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_metrics.dart';
@@ -66,13 +67,11 @@ class NakshatraCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.s10),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.pill),
-                    child: LinearProgressIndicator(
+                    child: M3EProgressIndicator.linear(
                       value: progress!.clamp(0.0, 1.0),
-                      minHeight: 6,
-                      backgroundColor: track,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        context.colors.primary,
-                      ),
+                      strokeWidth: 6,
+                      trackColor: track,
+                      color: context.colors.primary,
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'panchang_service.dart';
 import '../providers/panchang_provider.dart';
 import '../core/location/location_defaults.dart';
@@ -213,9 +214,13 @@ class MoonPhaseService {
     int count = 15, // 15 phases guarantees > 12 months coverage
     double latitude = kDefaultLatitude,
     double longitude = kDefaultLongitude,
+
+    /// Zone-free civil day to search from; defaults to the device's today.
+    /// Background scheduling passes its place-clock day explicitly.
+    DateTime? from,
   }) async {
     final dates = <DateTime>[];
-    var searchFrom = DateTime.now();
+    var searchFrom = from ?? DateTime.now();
 
     for (int i = 0; i < count; i++) {
       final date = await _findNextMoonPhase(
@@ -236,9 +241,10 @@ class MoonPhaseService {
     int count = 15, // 15 phases guarantees > 12 months coverage
     double latitude = kDefaultLatitude,
     double longitude = kDefaultLongitude,
+    DateTime? from,
   }) async {
     final dates = <DateTime>[];
-    var searchFrom = DateTime.now();
+    var searchFrom = from ?? DateTime.now();
 
     for (int i = 0; i < count; i++) {
       final date = await _findNextMoonPhase(

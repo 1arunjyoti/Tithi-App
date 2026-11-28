@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:hive/hive.dart';
 import 'package:tithi/features/ai/domain/ai_app_target.dart';
 import 'package:tithi/features/ai/providers/ai_providers.dart';
@@ -44,7 +45,7 @@ void main() {
   }
 
   Finder inDialog(Finder matching) => find.descendant(
-    of: find.byType(AlertDialog),
+    of: find.byType(M3EDialog),
     matching: matching,
   );
 

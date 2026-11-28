@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../providers/calendar_provider.dart';
 import '../../../providers/locale_provider.dart';
 import '../../../services/notification_service.dart';
@@ -38,37 +39,41 @@ class LanguageSetting extends ConsumerWidget {
     final currentLocale = ref.read(localeProvider);
     final l10n = AppLocalizations.of(context);
 
+    final localeIndex = currentLocale == null
+        ? -1
+        : supportedLocales.indexWhere(
+            (supported) =>
+                supported.locale.languageCode == currentLocale.languageCode,
+          );
     await SettingsBottomSheet.show(
       context: context,
       title: l10n?.selectLanguage ?? 'Select Language',
-      children: [
-        // System Default option
-        SettingsPickerItem(
+      // Index 0 is System Default; supported locales follow it.
+      selectedIndex: currentLocale == null
+          ? 0
+          : (localeIndex >= 0 ? localeIndex + 1 : null),
+      options: [
+        SettingsPickerOption(
           title: l10n?.systemDefault ?? 'System Default',
-          isSelected: currentLocale == null,
-          onTap: () async {
+          onSelected: () async {
             await ref.read(localeProvider.notifier).clearLocale();
             // Scheduled notifications already carry the old-language title.
             await NotificationService().rescheduleAfterLanguageChange();
             if (context.mounted) Navigator.pop(context);
           },
         ),
-        // Supported locales
-        ...supportedLocales.map((supported) {
-          return SettingsPickerItem(
+        for (final supported in supportedLocales)
+          SettingsPickerOption(
             title: supported.nativeName,
             subtitle: supported.name,
-            isSelected:
-                supported.locale.languageCode == currentLocale?.languageCode,
-            onTap: () async {
+            onSelected: () async {
               await ref
                   .read(localeProvider.notifier)
                   .setLocale(supported.locale);
               await NotificationService().rescheduleAfterLanguageChange();
               if (context.mounted) Navigator.pop(context);
             },
-          );
-        }),
+          ),
       ],
     );
   }

@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/navigation/home_tab.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/calendar_provider.dart';
@@ -13,6 +14,7 @@ import '../widgets/event_list_widget.dart';
 import '../features/schedule/widgets/schedule_view_widget.dart';
 import '../widgets/app_drawer.dart';
 import '../features/quote/widgets/daily_quote_widget.dart';
+import '../widgets/app_buttons.dart';
 import '../widgets/app_drawer_button.dart';
 import '../widgets/festival_countdown_card.dart';
 import '../features/festival_search/widgets/festival_search_delegate.dart';
@@ -20,7 +22,6 @@ import '../widgets/jump_to_today_button.dart';
 import '../features/hero/widgets/paksha_hero_card.dart';
 import '../widgets/responsive_layout.dart';
 import '../widgets/page_scaffold.dart';
-import '../core/anim/press_scale.dart';
 import '../widgets/home_widget_card.dart';
 import '../providers/home_widget_provider.dart';
 
@@ -89,23 +90,17 @@ class _HomeScreenState extends State<HomeScreen> {
       leading: isWideScreen ? null : const AppDrawerButton(),
       title: Text(l10n?.appTitle ?? 'Tithi'),
       actions: [
-        // Search button (press-scale owns the gated haptic + press feel)
         Consumer(
           builder: (context, ref, _) {
-            return PressScale(
-              child: IconButton(
-                icon: Icon(
-                  Icons.search_rounded,
-                  color: context.colors.onSurface,
-                ),
-                tooltip: l10n?.searchFestivals ?? 'Search Festivals',
-                onPressed: () {
-                  showSearch(
-                    context: context,
-                    delegate: FestivalSearchDelegate(ref: ref),
-                  );
-                },
-              ),
+            return AppIconButton(
+              icon: const Icon(Icons.search_rounded),
+              tooltip: l10n?.searchFestivals ?? 'Search Festivals',
+              onPressed: () {
+                showSearch(
+                  context: context,
+                  delegate: FestivalSearchDelegate(ref: ref),
+                );
+              },
             );
           },
         ),

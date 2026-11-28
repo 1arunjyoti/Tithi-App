@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -2052,4 +2053,162 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get privacyAiDesc =>
       'AI सहायता डिफ़ॉल्ट रूप से बंद है। जब आप इसे चालू करके AI से पूछते हैं, तिथि एक संक्षिप्त सारांश बनाकर — आपके शहर का पंचांग (तिथि, नक्षत्र, सूर्योदय और सूर्यास्त), त्योहार के बारे में पूछने पर उसका विवरण, और आपका लिखा हुआ प्रश्न — आपके द्वारा सेटिंग्स में चुने गए AI ऐप को देता है, और वह ऐप उपलब्ध न हो तो सिस्टम शेयर शीट को देता है। आपके GPS निर्देशांक कभी शामिल नहीं होते, तिथि स्वयं कुछ नहीं भेजता, और उसके बाद की बातचीत उस ऐप की अपनी गोपनीयता नीति के अधीन होती है।';
+
+  @override
+  String get wolfMoon => 'भेड़िया चाँद';
+
+  @override
+  String get snowMoon => 'बर्फ चाँद';
+
+  @override
+  String get wormMoon => 'कीड़ा चाँद';
+
+  @override
+  String get pinkMoon => 'गुलाबी चाँद';
+
+  @override
+  String get flowerMoon => 'फूल चाँद';
+
+  @override
+  String get strawberryMoon => 'स्ट्रॉबेरी चाँद';
+
+  @override
+  String get buckMoon => 'हरिन चाँद';
+
+  @override
+  String get sturgeonMoon => 'स्टर्जन चाँद';
+
+  @override
+  String get cornMoon => 'मक्का चाँद';
+
+  @override
+  String get huntersMoon => 'शिकारी चाँद';
+
+  @override
+  String get beaverMoon => 'बीवर चाँद';
+
+  @override
+  String get coldMoon => 'ठंडा चाँद';
+
+  @override
+  String get harvestMoon => 'फसल चाँद';
+
+  @override
+  String get blueMoon => 'नीला चाँद';
+
+  @override
+  String get guruPurnima => 'गुरु पूर्णिमा';
+
+  @override
+  String get shravaniPurnima => 'श्रावणी पूर्णिमा';
+
+  @override
+  String get sharadPurnima => 'शरद पूर्णिमा';
+
+  @override
+  String get kartikiPurnima => 'कार्तिकी पूर्णिमा';
+
+  @override
+  String get holiPurnima => 'होली पूर्णिमा';
+
+  @override
+  String get waxingCrescent => 'बढ़ता चंद्रमा';
+
+  @override
+  String get firstQuarterMoon => 'पहली तिमाही';
+
+  @override
+  String get waxingGibbous => 'बढ़ता गिब्बस';
+
+  @override
+  String get waningGibbous => 'घटता गिब्बस';
+
+  @override
+  String get lastQuarterMoon => 'अंतिम तिमाही';
+
+  @override
+  String get waningCrescent => 'घटता चंद्रमा';
+
+  @override
+  String moonAge(String days) {
+    return 'चंद्रमा की आयु: $days दिन';
+  }
+
+  @override
+  String get bestViewingTime => 'सबसे अच्छा देखने का समय';
+
+  @override
+  String get moonNotVisible => 'अंधेरे के दौरान चंद्रमा क्षितिज के नीचे है';
+
+  @override
+  String get moonViewingMorning => 'सूर्योदय से पहले';
+
+  @override
+  String get moonViewingEvening => 'सूर्यास्त के बाद';
+
+  @override
+  String get moonDistance => 'चंद्रमा की दूरी';
+
+  @override
+  String moonDistanceKm(String distance) {
+    return 'पृथ्वी से $distance किमी';
+  }
+
+  @override
+  String get supermoon => 'सुपरमून';
+
+  @override
+  String get micromoon => 'माइक्रोमून';
+
+  @override
+  String get averageDistance => 'औसत दूरी';
+
+  @override
+  String get nextEclipse => 'अगला ग्रहण';
+
+  @override
+  String get viewEclipseDetails => 'विवरण देखें';
+
+  @override
+  String get chooseMoonDate => 'तारीख पर जाएँ';
+
+  @override
+  String get moonEventsToggle => 'चंद्रमा और ग्रहण अलर्ट';
+
+  @override
+  String get moonEventsToggleSubtitle =>
+      'पूर्णिमा, अमावस्या, नीला चाँद और ग्रहण';
+
+  @override
+  String get moonEventsToggleFailed => 'चंद्र अलर्ट अपडेट नहीं हो सके';
+
+  @override
+  String get fullMoonNotificationTitle => 'आज रात पूर्णिमा';
+
+  @override
+  String get fullMoonNotificationBody =>
+      'चंद्रमा पूर्ण है - आकाश देखने की अच्छी रात।';
+
+  @override
+  String get newMoonNotificationTitle => 'आज रात अमावस्या';
+
+  @override
+  String get newMoonNotificationBody =>
+      'चंद्रमा नया है - तारों को देखने की सबसे अंधेरी रात।';
+
+  @override
+  String get blueMoonNotificationTitle => 'आज रात नीला चाँद';
+
+  @override
+  String get blueMoonNotificationBody =>
+      'इस महीने दूसरी पूर्णिमा - इसे न चूकें।';
+
+  @override
+  String get eclipseNotificationTitle => 'आज ग्रहण';
+
+  @override
+  String get eclipseNotificationBody => 'तिथि में स्थानीय ग्रहण समय देखें।';
+
+  @override
+  String get upcomingMoonDates => 'आगामी तिथियाँ';
 }

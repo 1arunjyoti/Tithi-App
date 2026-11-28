@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/calendar_provider.dart' as cp;
@@ -165,21 +166,11 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
   }
 
   Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await M3EDatePicker.show(
+      context,
       initialDate: _currentVisibleMonth,
       firstDate: DateTime(1900),
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: context.colors.primary.computeLuminance() > 0.5
-                ? ColorScheme.light(primary: context.colors.primary)
-                : ColorScheme.dark(primary: context.colors.primary),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -272,11 +263,11 @@ class _ScheduleViewWidgetState extends ConsumerState<ScheduleViewWidget> {
         Positioned(
           bottom: 16,
           right: 16,
-          child: FloatingActionButton.small(
-            heroTag: 'schedule_today_fab',
+          child: M3EFab(
+            icon: const Icon(Icons.today_rounded),
+            size: M3EFabSize.small,
             onPressed: () => _scrollToToday(),
             tooltip: l10n?.goToToday ?? 'Go to Today',
-            child: const Icon(Icons.today_rounded),
           ),
         ),
 

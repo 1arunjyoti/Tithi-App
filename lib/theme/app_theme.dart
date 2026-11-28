@@ -88,6 +88,13 @@ class AppTheme {
   static const Color moonDiscLightB = Color(0xFFFFB74D); // orange.shade300
   static const Color moonGlowDark = Color(0xFF3F51B5); // indigo
   static const Color moonGlowLight = Color(0xFFFFC107); // amber
+  // Layered moon bloom (the hero's halo, not a UI accent):
+  // warm ivory core -> luminous amber rim -> faint cool sky scatter.
+  // Keeping the warm centre preserves the familiar glow while the cool edge
+  // gives it depth instead of a flat, washed-out silhouette.
+  static const Color moonGlowCore = Color(0xFFFFF6DF);
+  static const Color moonGlowRim = Color(0xFFFFD97A);
+  static const Color moonGlowScatter = Color(0xFFB9CFFF);
   static const Color moonIconDark = Color(0xFF1A237E); // indigo.shade900
   static const Color moonIconLight = Color(0xFFEF6C00); // orange.shade800
   static const Color purnimaIconDark = Color(0xFFFFC107); // amber

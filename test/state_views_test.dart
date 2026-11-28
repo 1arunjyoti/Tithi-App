@@ -1,16 +1,28 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
+import 'package:tithi/providers/accessibility_provider.dart';
 import 'package:tithi/theme/app_metrics.dart';
 import 'package:tithi/theme/app_theme.dart';
+import 'package:tithi/widgets/app_buttons.dart';
 import 'package:tithi/widgets/skeleton.dart';
 import 'package:tithi/widgets/state_views.dart';
+
+class _StubAccessibility extends AccessibilityNotifier {
+  @override
+  AccessibilityState build() => const AccessibilityState();
+}
 
 /// Pumps [child] under the Shukla theme; the state views read their inks from
 /// the theme extensions, so they need a real palette to resolve.
 Widget _host(Widget child) {
-  return MaterialApp(
-    theme: AppTheme.shuklaTheme,
-    home: Scaffold(body: Center(child: child)),
+  return ProviderScope(
+    overrides: [accessibilityProvider.overrideWith(_StubAccessibility.new)],
+    child: MaterialApp(
+      theme: AppTheme.shuklaTheme,
+      home: Scaffold(body: Center(child: child)),
+    ),
   );
 }
 
@@ -45,8 +57,7 @@ void main() {
         _host(const EmptyState(icon: Icons.inbox, title: 'Nothing here')),
       );
 
-      expect(find.byType(FilledButton), findsNothing);
-      expect(find.byType(TextButton), findsNothing);
+      expect(find.byType(AppButton), findsNothing);
     });
 
     testWidgets('inline variant is a 20dp glyph on one line', (tester) async {
@@ -163,8 +174,7 @@ void main() {
         _host(const ErrorState(message: 'Something went wrong.')),
       );
 
-      expect(find.byType(FilledButton), findsNothing);
-      expect(find.byType(TextButton), findsNothing);
+      expect(find.byType(AppButton), findsNothing);
     });
 
     testWidgets('renders the friendly copy verbatim, never an exception', (
@@ -201,9 +211,9 @@ void main() {
       );
 
       expect(find.byType(Row), findsOneWidget);
-      expect(find.byType(FilledButton), findsNothing);
+      expect(find.byType(AppButton), findsOneWidget);
 
-      await tester.tap(find.byType(TextButton));
+      await tester.tap(find.byType(AppButton));
       expect(retries, 1);
     });
   });
@@ -264,8 +274,8 @@ void main() {
       expect(size.width, AppIconSize.small);
       expect(size.height, AppIconSize.small);
 
-      final spinner = tester.widget<CircularProgressIndicator>(
-        find.byType(CircularProgressIndicator),
+      final spinner = tester.widget<M3EProgressIndicator>(
+        find.byType(M3EProgressIndicator),
       );
       expect(spinner.strokeWidth, 2);
       expect(spinner.color, AppTheme.shuklaTheme.colorScheme.primary);
@@ -277,8 +287,8 @@ void main() {
       );
 
       expect(tester.getSize(find.byType(InlineSpinner)).width, 22);
-      final spinner = tester.widget<CircularProgressIndicator>(
-        find.byType(CircularProgressIndicator),
+      final spinner = tester.widget<M3EProgressIndicator>(
+        find.byType(M3EProgressIndicator),
       );
       expect(spinner.color, Colors.teal);
     });

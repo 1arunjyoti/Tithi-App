@@ -1,9 +1,11 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_theme.dart';
+import 'app_buttons.dart';
 
 /// Where a state view sits, which decides its alignment and scale.
 enum StateViewVariant {
@@ -148,16 +150,15 @@ class ErrorState extends StatelessWidget {
           ),
           if (onRetry != null) ...[
             const SizedBox(width: AppSpacing.s8),
-            TextButton(
+            AppButton(
+              style: M3EButtonStyle.text,
               onPressed: onRetry,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.s12,
-                  vertical: AppSpacing.s4,
-                ),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.s12,
+                vertical: AppSpacing.s4,
               ),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               child: Text(retry),
             ),
           ],
@@ -183,7 +184,7 @@ class ErrorState extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: AppSpacing.s20),
-              FilledButton.icon(
+              AppButton(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh_rounded),
                 label: Text(retry),

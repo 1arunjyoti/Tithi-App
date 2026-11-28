@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/anim/press_scale.dart';
 import '../core/feedback/app_messages.dart';
 import '../features/home_widget/providers/home_widget_promo_providers.dart';
 import '../l10n/app_localizations.dart';
@@ -14,7 +14,9 @@ import '../theme/app_theme.dart';
 import '../theme/app_metrics.dart';
 import '../theme/app_typography.dart';
 import '../theme/app_motion.dart';
+import 'app_buttons.dart';
 import 'app_card.dart';
+import 'app_dialog.dart';
 import 'skeleton.dart';
 
 export '../features/home_widget/providers/home_widget_promo_providers.dart'
@@ -217,10 +219,8 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
                                     const SizedBox(height: AppSpacing.s2),
                                     Text(
                                       canPin
-                                          ? l10n?.homeWidgetGallerySubtitle ??
-                                                'Add panchang widgets to your home screen'
-                                          : l10n?.homeWidgetManualHint ??
-                                                'Long-press home screen → Widgets → Tithi',
+                                          ? l10n?.homeWidgetGallerySubtitle ?? 'Add panchang widgets to your home screen'
+                                          : l10n?.homeWidgetManualHint ?? 'Long-press home screen → Widgets → Tithi',
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: context.textTheme.bodySmall
@@ -264,23 +264,14 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
                 ),
                 if (widget.showDismiss) ...[
                   const SizedBox(width: AppSpacing.s4),
-                  PressScale(
-                    child: IconButton(
-                      tooltip: l10n?.dismissTooltip ?? 'Dismiss',
-                      onPressed: () => ref
-                          .read(homeWidgetPromoDismissedProvider.notifier)
-                          .dismiss(),
-                      icon: const Icon(
-                        Icons.close_rounded,
-                        size: AppIconSize.dense,
-                      ),
-                      color: colors.onSurface.withValues(
-                        alpha: AppTheme.contrastAlpha(context, 0.5),
-                      ),
-                      style: IconButton.styleFrom(
-                        minimumSize: const Size(32, 32),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
+                  AppIconButton(
+                    tooltip: l10n?.dismissTooltip ?? 'Dismiss',
+                    onPressed: () => ref
+                        .read(homeWidgetPromoDismissedProvider.notifier)
+                        .dismiss(),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: AppIconSize.dense,
                     ),
                   ),
                 ],
@@ -332,8 +323,7 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
     } else {
       showAppMessage(
         context,
-        l10n?.couldNotPinWidget ??
-            'Could not pin widget. Try adding manually: long-press → Widgets → Tithi',
+        l10n?.couldNotPinWidget ?? 'Could not pin widget. Try adding manually: long-press → Widgets → Tithi',
         kind: AppMessageKind.error,
       );
     }
@@ -342,21 +332,19 @@ class _HomeWidgetCardState extends ConsumerState<HomeWidgetCard> {
   void _showManualInstructions(BuildContext context, String label) {
     final l10n = AppLocalizations.of(context);
     unawaited(
-      showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(l10n?.addWidgetManually ?? 'Add Widget Manually'),
-          content: Text(
-            '${l10n?.homeWidgetManualInstructions ?? '1. Long-press on your home screen\n2. Tap "Widgets"\n3. Find "Tithi" and drag the widget to your home screen'}\n\n'
-            '$label',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n?.gotIt ?? 'Got it'),
-            ),
-          ],
+      AppDialog.show<void>(
+        context,
+        title: l10n?.addWidgetManually ?? 'Add Widget Manually',
+        content: Text(
+          '${l10n?.homeWidgetManualInstructions ?? '1. Long-press on your home screen\n2. Tap "Widgets"\n3. Find "Tithi" and drag the widget to your home screen'}\n\n'
+          '$label',
         ),
+        actions: [
+          AppButton(
+            onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+            child: Text(l10n?.gotIt ?? 'Got it'),
+          ),
+        ],
       ),
     );
   }
@@ -419,37 +407,24 @@ class _WidgetTile extends StatelessWidget {
           if (isLoading)
             InlineSpinner(size: AppIconSize.dense, color: accent)
           else if (canPin)
-            Tooltip(
+            M3ETooltip(
               message: l10n?.widgetAddTooltip ?? 'Add to home screen',
-              child: PressScale(
-                child: FilledButton.tonal(
-                  onPressed: onAdd,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.festivalTileBackground(context),
-                    foregroundColor: accent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.s14,
-                    ),
-                    minimumSize: const Size(0, 34),
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: Text(l10n?.add ?? 'Add'),
-                ),
+              child: AppButton(
+                style: M3EButtonStyle.tonal,
+                onPressed: onAdd,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s14),
+                minimumSize: const Size(0, 34),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                label: Text(l10n?.add ?? 'Add'),
               ),
             )
           else
-            PressScale(
-              child: IconButton(
-                tooltip: l10n?.infoTooltip ?? 'Info',
-                onPressed: onInfo,
-                icon: const Icon(
-                  Icons.info_outline_rounded,
-                  size: AppIconSize.medium,
-                ),
-                style: IconButton.styleFrom(
-                  minimumSize: const Size(34, 34),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
+            AppIconButton(
+              tooltip: l10n?.infoTooltip ?? 'Info',
+              onPressed: onInfo,
+              icon: const Icon(
+                Icons.info_outline_rounded,
+                size: AppIconSize.medium,
               ),
             ),
         ],

@@ -1,7 +1,8 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:material_3_expressive/material_3_expressive.dart';
 
-import '../../../core/anim/press_scale.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../widgets/app_buttons.dart';
 import '../../../theme/app_metrics.dart';
 import '../../../theme/app_theme.dart';
 import '../../../theme/app_typography.dart';
@@ -52,23 +53,16 @@ class QuoteTranslationPanel extends StatelessWidget {
               _TranslationText(text: secondary, isHindi: view.secondaryIsHindi),
               const SizedBox(height: AppSpacing.s4),
             ],
-            PressScale(
-              child: TextButton(
-                onPressed: onToggleShowAll,
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s8,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  visualDensity: VisualDensity.compact,
-                ),
-                child: Text(
-                  view.showAll
-                      ? (l10n?.showLess ?? 'Show less')
-                      : (l10n?.showMoreTranslations ??
-                            'Show more translations'),
-                ),
+            AppButton(
+              style: M3EButtonStyle.text,
+              onPressed: onToggleShowAll,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.s8),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              label: Text(
+                view.showAll
+                    ? (l10n?.showLess ?? 'Show less')
+                    : (l10n?.showMoreTranslations ?? 'Show more translations'),
               ),
             ),
           ],

@@ -55,7 +55,9 @@ fun missingReleaseSigningValues(): List<String> {
 }
 
 android {
-    namespace = baseApplicationId
+    // Keep this a string literal: Flutter's tool parses the namespace with a
+    // regex and cannot resolve a variable reference here.
+    namespace = "app.tithi.pro"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -66,7 +68,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = baseApplicationId
+        // Also a literal for the same reason (Flutter reads this too).
+        applicationId = "app.tithi.pro"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
